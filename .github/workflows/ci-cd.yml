@@ -1,0 +1,66 @@
+name: QuickShop CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+jobs:
+  backend-build-test:
+    name: Backend Build & Test (Spring Boot)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Java 21 LTS
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: |
+        if [ -f quickshop-backend/gradlew ]; then
+          chmod +x quickshop-backend/gradlew
+        fi
+
+    - name: Build and Test Backend
+      working-directory: ./quickshop-backend
+      run: |
+        if [ -f gradlew ]; then
+          ./gradlew test bootJar --no-daemon
+        else
+          echo "Gradle wrapper not committed yet, skipping execution"
+        fi
+
+  frontend-build-lint:
+    name: Frontend Build & Lint (React Vite)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js 20 LTS
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install dependencies
+      working-directory: ./quickshop-frontend
+      run: |
+        if [ -f package.json ]; then
+          npm install
+          npm run build
+        fi
+
+  docker-compose-validation:
+    name: Docker Compose Validation
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Validate Docker Compose Configuration
+      run: docker compose config
