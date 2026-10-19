@@ -1,0 +1,30 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: traveleasy-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/traveleasy_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:traveleasy_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:traveleasy_password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dHJhdmVsZWFzeV9wbGF0Zm9ybV9qd3Rfc2VjcmV0X2tleV8yMDI2!}
+    expiration-ms: 86400000 # 24h
+  cors:
+    allowed-origins: "http://localhost:3000,http://localhost:5173"
+  ai:
+    openai-api-key: ${SPRING_AI_OPENAI_API_KEY:mock_key}

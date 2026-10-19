@@ -23,7 +23,7 @@ services:
 
   backend:
     build:
-      context: ./quickshop-backend
+      context: ./backend
       dockerfile: Dockerfile
     container_name: traveleasy-backend
     restart: always
@@ -41,7 +41,7 @@ services:
 
   frontend:
     build:
-      context: ./quickshop-frontend
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: traveleasy-frontend
     restart: always
