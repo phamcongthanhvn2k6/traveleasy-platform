@@ -74,4 +74,6 @@ export interface DashboardStats {
   totalBookings: number;
   confirmedBookings: number;
   totalRevenue: number;
+  totalUsers: number;
 }
+
