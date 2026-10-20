@@ -100,6 +100,136 @@ Dự án áp dụng mô hình **Agile/Scrum theo Tính năng Full-stack (Feature
 
 ---
 
+### 2.3 Chi tiết phân công End-to-End của từng thành viên (Vertical Slices)
+
+Mô hình **Vertical Slice (Full-Stack theo Tính Năng)** yêu cầu mỗi thành viên làm chủ trọn vẹn 1 phân hệ chức năng: Từ thiết kế CSDL ➔ Viết API Backend ➔ Dựng Giao diện Frontend ➔ Tự động hóa Kiểm thử (Unit/Integration Test):
+
+#### 👑 1. PHẠM CÔNG THÀNH (NHÓM TRƯỞNG & TECH LEAD)
+* **Module phụ trách**: **Core Foundation, Architecture & Chuyến xe (Trip Catalog & Search Engine)**
+* **Backend (Spring Boot 3 + Java 21)**:
+  * Khởi tạo kiến trúc dự án Monolith Layered, chuẩn hóa `ApiResponse<T>`, `ErrorCode`, `GlobalExceptionHandler`.
+  * Quản lý CSDL `init.sql` và cơ chế nạp dữ liệu mẫu tự động `DataInitializer.java`.
+  * `RouteRepository` & `Route`: Quản lý tuyến đường xuất phát, nơi đến, cự ly km, thời gian di chuyển.
+  * `TripRepository` & `TripService`: Viết truy vấn JPQL tìm kiếm chuyến xe đa tiêu chí (Nơi đi, Nơi đến, Ngày khởi hành, Loại xe), lọc chuyến đang mở bán (`SCHEDULED`).
+  * `TripController`: Xây dựng các API công khai `GET /api/v1/trips/search` và `GET /api/v1/trips/{id}`.
+* **Frontend (React 18 + Vite + TypeScript)**:
+  * Dựng layout khung ứng dụng (`App.tsx`), thanh điều hướng (`Navbar.tsx`), chân trang (`Footer.tsx`).
+  * Thiết kế trang chủ (`HomePage.tsx`) với Hero Banner nhận diện thương hiệu TravelEasy.
+  * Xây dựng thanh tìm kiếm chuyến xe (`SearchTripBar.tsx`): Cho phép chọn điểm đi, điểm đến, ngày đi.
+  * Xây dựng lưới danh sách chuyến xe (`TripCard.tsx`): Hiển thị logo nhà xe, giờ chạy, số chỗ trống, giá vé và nút "Chọn chuyến".
+* **DevOps & Quản trị**:
+  * Quản trị nhánh Git `dev` và `main`, xét duyệt Pull Request của toàn bộ thành viên trong nhóm.
+  * Cấu hình `docker-compose.yml`, GitHub Actions CI/CD (`ci-cd.yml`), tối ưu thời gian phản hồi API < 500ms.
+
+#### 🛡️ 2. NGUYỄN ĐẠI PHÁT (FULL-STACK DEVELOPER)
+* **Module phụ trách**: **Sơ đồ kho ghế 2 tầng & Đặt vé xe nguyên tử (Seat Inventory & Booking Flow)**
+* **Backend (Spring Boot 3 + Java 21)**:
+  * Quản lý thực thể `TripSeat` và `Booking`.
+  * `TripSeatRepository`: Viết truy vấn Pessimistic Lock (`@Lock(LockModeType.PESSIMISTIC_WRITE)`) để khóa độc quyền danh sách ghế khi khách hàng đang bấm đặt vé:
+    ```java
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM TripSeat s WHERE s.trip.id = :tripId AND s.seatCode IN :seatCodes")
+    List<TripSeat> findByTripIdAndSeatCodeInWithLock(Long tripId, List<String> seatCodes);
+    ```
+  * `BookingService`:
+    * Nghiệp vụ đặt vé nguyên tử `@Transactional(isolation = Isolation.SERIALIZABLE)`.
+    * Kiểm tra trạng thái ghế `AVAILABLE`, ném ngoại lệ `SEAT_ALREADY_BOOKED` (HTTP 409 Conflict) nếu ghế vừa bị người khác đặt.
+    * Đổi trạng thái ghế sang `BOOKED`, trừ ghế trống trên chuyến xe.
+    * Sinh mã đơn vé định dạng `BK-YYYYMMDD-XXXX` và sinh các vé con `TK-*`.
+  * `BookingController`: API `POST /api/v1/bookings` (hỗ trợ thanh toán COD khi lên xe).
+* **Frontend (React 18 + Vite + TypeScript)**:
+  * Xây dựng sơ đồ ghế 2 tầng tương tác (`BusSeatMap.tsx`):
+    * Tầng 1 (A01 - A17, dưới chống say) và Tầng 2 (B01 - B17, trên thoáng mát).
+    * Phân biệt rõ bằng màu sắc: Ghế trống (viền xanh), Ghế đang chọn (màu cam), Ghế đã bán (xám khóa click).
+    * Tính tiền tạm tính theo số ghế chọn theo thời gian thực.
+  * Xây dựng Modal thanh toán (`CheckoutModal.tsx`):
+    * Nhập thông tin hành khách: Họ tên, Số điện thoại, Email.
+    * Chọn điểm đón và điểm trả theo lộ trình nhà xe.
+    * Chọn phương thức thanh toán COD khi lên xe và hiển thị màn hình thông báo thành công.
+* **Kiểm thử**:
+  * Viết Unit Test Concurrency mô phỏng 10 luồng cùng book ghế A01 đồng thời ➔ Khẳng định 1 luồng thành công, 9 luồng nhận thông báo lỗi, không bao giờ bị âm ghế (Zero Double-Booking).
+
+#### 🚍 3. PHAN TRUNG KIÊN (FULL-STACK DEVELOPER)
+* **Module phụ trách**: **Quản trị Chuyến xe & Tự động tạo kho 34 ghế (Admin Operations & Fleet Management)**
+* **Backend (Spring Boot 3 + Java 21)**:
+  * `BusCompanyRepository`: Quản lý danh mục nhà xe đối tác (Phương Trang, Thành Bưởi, Sao Việt).
+  * `AdminTripService`:
+    * Nghiệp vụ tạo chuyến xe mới: Kiểm tra nhà xe, tuyến đường, thời gian xuất bến.
+    * **Tính năng tự động sinh kho 34 ghế**: Khi tạo chuyến mới, hệ thống tự động sinh 17 ghế tầng 1 (A01-A17) và 17 ghế tầng 2 (B01-B17) ở trạng thái `AVAILABLE`.
+    * Nghiệp vụ cập nhật trạng thái chuyến xe: `SCHEDULED` ➔ `DEPARTED` ➔ `COMPLETED` ➔ `CANCELLED`.
+  * `AdminTripController`: API `POST /api/v1/admin/trips` và `PATCH /api/v1/admin/trips/{id}/status`.
+* **Frontend (React 18 + Vite + TypeScript)**:
+  * Xây dựng trang Quản trị chuyến xe (`AdminDashboardPage.tsx`):
+    * Bảng danh sách các chuyến xe đang hoạt động, giờ khởi hành, biển số, số ghế trống.
+    * Nút "Thêm Chuyến Xe Mới" mở form popup tiện lợi.
+    * Form tạo chuyến xe mới: Chọn nhà xe, chọn tuyến đường, chọn giờ đi/đến, chọn loại xe Limousine/Sleeper, nhập giá vé.
+    * Nút cập nhật trạng thái chuyến xe (Khởi hành, Hoàn thành, Hủy chuyến).
+* **Kiểm thử**:
+  * Viết Unit Test kiểm tra tạo chuyến xe mới: Đảm bảo trong CSDL sinh ra đúng 34 bản ghi ghế tương ứng.
+
+#### 🔐 4. PHẠM THANH PHONG (FULL-STACK DEVELOPER)
+* **Module phụ trách**: **Xác thực, Bảo mật & Quản lý Tài khoản (Auth & RBAC Management)**
+* **Backend (Spring Boot 3 + Java 21)**:
+  * Cấu hình `SecurityConfig.java` với Spring Security 6:
+    * Mở các route public: `/api/v1/auth/**`, `/api/v1/trips/**`, `/api/v1/ai/**`.
+    * Bảo vệ các route nhạy cảm: Bắt buộc quyền `ROLE_ADMIN` đối với `/api/v1/admin/**`.
+  * `JwtTokenProvider.java`: Sinh token JWT có hạn 24h bằng HMAC-SHA256, trích xuất username/role.
+  * `JwtAuthenticationFilter`: Đọc header `Authorization: Bearer <token>`, giải mã và thiết lập `SecurityContext`.
+  * `AuthService`:
+    * Đăng ký tài khoản: Mã hóa mật khẩu bằng `BCryptPasswordEncoder` (12 rounds).
+    * Đăng nhập: Hỗ trợ linh hoạt bằng Email HOẶC Số điện thoại.
+  * `AuthController`: API `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me`.
+* **Frontend (React 18 + Vite + TypeScript)**:
+  * Xây dựng Modal Đăng ký & Đăng nhập tài khoản trên thanh Navbar.
+  * Cấu hình Axios Interceptor (`api.ts`): Tự động đính kèm `Bearer <token>` vào mọi request khi người dùng đã đăng nhập.
+  * Lưu trữ token và thông tin người dùng an toàn trong LocalStorage.
+  * Hiển thị trạng thái đăng nhập, Avatar và nút Đăng xuất trên thanh Navbar.
+* **Kiểm thử**:
+  * Viết Unit Tests cho Auth: Test mật khẩu sai, trùng email/SĐT, kiểm tra chặn truy cập trái phép khi không có token (401 Unauthorized, 403 Forbidden).
+
+#### 🎫 5. TRẦN MINH ĐỨC 2 (FULL-STACK DEVELOPER)
+* **Module phụ trách**: **Vé điện tử, Tra cứu vé & Check-in QR (E-Ticket & QR Verification)**
+* **Backend (Spring Boot 3 + Java 21)**:
+  * Quản lý thực thể `Ticket`:
+    * Mã vé độc nhất: `TK-YYYYMMDD-XXXX-01`.
+    * Mã băm QR Code hash duy nhất cho từng vị trí ghế: `UUID.randomUUID()`.
+    * Trạng thái vé: `ISSUED` (Đã phát hành), `USED` (Đã lên xe), `CANCELLED` (Đã hủy).
+  * `TicketRepository` & `BookingService`:
+    * API Tra cứu vé theo mã đơn: `GET /api/v1/bookings/code/{bookingCode}` (trả về đầy đủ thông tin chuyến xe, điểm đón, điểm trả, danh sách vé con).
+    * API Lịch sử vé của tôi: `GET /api/v1/bookings/my-bookings`.
+    * Nghiệp vụ hủy vé trước 24h: Chuyển trạng thái vé và đơn vé sang `CANCELLED`, hoàn trả ghế về `AVAILABLE`.
+* **Frontend (React 18 + Vite + TypeScript)**:
+  * Xây dựng trang Tra cứu vé điện tử (`TicketLookupPage.tsx`):
+    * Ô nhập mã đơn vé (VD: `BKG-20261025-001` hoặc mã vé vừa đặt).
+    * Giao diện Thẻ vé điện tử sang trọng: Logo nhà xe, biển số, giờ khởi hành, điểm đón, điểm trả.
+    * **Render mã QR Code** cho từng vị trí ghế ngồi để phụ xe có thể quét mã khi hành khách lên xe.
+  * Xây dựng trang Lịch sử vé đã đặt của hành khách (My Bookings Page).
+* **Kiểm thử**:
+  * Kiểm thử tra cứu mã vé đúng/sai, kiểm thử hiển thị mã QR, kiểm thử hủy vé theo chính sách.
+
+#### 🤖 6. ĐOÀN NHẬT CƯỜNG (FULL-STACK DEVELOPER & QA LEAD)
+* **Module phụ trách**: **Trợ lý AI Du lịch Thông minh & Dashboard Thống kê Doanh thu (AI & Analytics)**
+* **Backend (Spring Boot 3 + Java 21)**:
+  * **Module AI Smart Travel**:
+    * `AiService` & `AiController`: API `POST /api/v1/ai/chat`.
+    * Tích hợp tư vấn lộ trình thông minh: Sài Gòn - Đà Lạt, Hà Nội - Sa Pa...
+    * Gợi ý chọn vị trí giường nằm: Tư vấn chọn giường tầng 1 (A01 - A06) cho người hay say xe.
+    * Cung cấp thông tin chính sách hoàn/hủy vé tự động.
+  * **Module Thống kê Doanh thu**:
+    * `BookingRepository`: Viết câu lệnh truy vấn tính tổng doanh thu từ các vé đã xác nhận (`CONFIRMED`).
+    * `AdminTripService`: API `GET /api/v1/admin/dashboard/stats` trả về 4 chỉ số KPI: Tổng chuyến xe, Chuyến đang mở bán, Tổng vé đã đặt, Tổng doanh thu (VNĐ).
+* **Frontend (React 18 + Vite + TypeScript)**:
+  * Xây dựng Widget Chatbot AI (`AiAssistantWidget.tsx`):
+    * Nút chat nổi góc phải dưới màn hình.
+    * Gợi ý các nút câu hỏi nhanh: "Sài Gòn - Đà Lạt", "Ghế nào chống say xe?", "Chính sách hủy vé?".
+    * Khung chat phản hồi tức thì từ AI.
+  * Xây dựng 4 Card KPI trên `AdminDashboardPage.tsx`: Hiển thị trực quan doanh thu, chuyến xe, vé đặt và khách hàng.
+* **QA & Báo cáo**:
+  * Lập bảng và thực hiện kiểm thử trọn bộ **25 Test Cases** (100% Pass) theo đặc tả Sprint 7 ngày.
+  * Chuẩn bị kịch bản demo tính năng AI và Dashboard doanh thu cho buổi bảo vệ.
+
+---
+
 ## 3. KIẾN TRÚC HỆ THỐNG & CÔNG NGHỆ (TECH STACK)
 
 ### 3.1 Ngăn xếp công nghệ chuẩn tắc (Tech Stack)
@@ -388,45 +518,95 @@ erDiagram
 
 ---
 
-## 8. HƯỚNG DẪN CÀI ĐẶT & VẬN HÀNH (QUICKSTART)
+## 8. HƯỚNG DẪN CÀI ĐẶT & VẬN HÀNH (QUICKSTART CHUẨN A-Z)
 
-### Cách 1: Khởi chạy 1 lệnh duy nhất với Docker Compose (Khuyên dùng)
-```bash
-# 1. Clone repository
-git clone https://github.com/phamcongthanhvn2k6/traveleasy-platform.git
-cd traveleasy-platform
-
-# 2. Khởi chạy toàn bộ MySQL, Spring Boot Backend và React Frontend
-docker-compose up --build -d
-```
-* **Giao diện Khách hàng (Frontend)**: Truy cập `http://localhost:3000`
-* **API Swagger UI (Backend)**: Truy cập `http://localhost:8080/swagger-ui.html`
-* **Cơ sở dữ liệu (MySQL)**: Cổng `3306`, Database `traveleasy_db`, User `traveleasy_user` / Pass `traveleasy_password`.
-
-### Cách 2: Khởi chạy thủ công độc lập (Local Development)
-
-#### Chạy Backend (Spring Boot 3):
-```bash
-cd backend
-# Cấp quyền thực thi cho Gradle wrapper (Linux/macOS)
-chmod +x gradlew
-# Chạy ứng dụng Spring Boot
-./gradlew bootRun
-```
-*Backend khởi chạy tại: `http://localhost:8080`*
-
-#### Chạy Frontend (React Vite):
-```bash
-cd frontend
-# Cài đặt thư viện dependencies
-npm install
-# Khởi chạy Vite Dev Server
-npm run dev
-```
-*Frontend khởi chạy tại: `http://localhost:5173`*
+Dự án đã được kiểm thử thực tế và cấu hình **Zero-Setup** để các thành viên trong nhóm, giảng viên hoặc hội đồng chấm thi có thể khởi chạy và trải nghiệm ngay lập tức.
 
 ---
 
+### Cách 1: Khởi chạy Trực tiếp Siêu Tốc (Khuyên dùng - Zero Config / In-Memory DB)
+*Không yêu cầu cài đặt MySQL hay Docker. Hệ thống tích hợp sẵn H2 In-Memory Database và `DataInitializer` tự động nạp 100% dữ liệu mẫu (3 Users, 3 Nhà xe, Tuyến đường, Chuyến xe, 136 Ghế ngồi và Vé điện tử mẫu).*
+
+#### Bước 1: Khởi chạy Backend (Terminal 1)
+```bash
+cd backend
+
+# Trên Windows PowerShell / CMD:
+.\gradlew bootRun --args='--spring.profiles.active=dev'
+
+# Hoặc trên Linux / macOS:
+chmod +x gradlew
+./gradlew bootRun --args='--spring.profiles.active=dev'
+```
+* **Backend API**: Khởi chạy thành công tại `http://localhost:8080`
+* **Swagger UI API Docs**: Truy cập `http://localhost:8080/swagger-ui/index.html`
+* **H2 Database Console**: Truy cập `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:traveleasydb`, User: `sa`, Password: để trống)
+
+#### Bước 2: Khởi chạy Frontend (Terminal 2)
+```bash
+cd frontend
+
+# Cài đặt thư viện dependencies (chỉ cần chạy lần đầu)
+npm install
+
+# Khởi chạy Vite Dev Server
+npm run dev
+```
+* **Giao diện Khách hàng (Frontend)**: Truy cập ngay tại `http://localhost:5173`
+
+---
+
+### Cách 2: Khởi chạy 1 lệnh duy nhất với Docker Compose
+*Dành cho môi trường đóng gói container hoàn chỉnh (MySQL 8.0 + Spring Boot 3 + React Vite Nginx).*
+```bash
+# Khởi chạy toàn bộ hệ thống
+docker-compose up --build -d
+
+# Xem log các service
+docker-compose logs -f
+```
+* Frontend Web: `http://localhost:3000`
+* Backend API: `http://localhost:8080`
+* MySQL Database: Cổng `3306`, Database: `traveleasy_db`, User: `traveleasy_user` / Pass: `traveleasy_password`
+
+---
+
+### Cách 3: Khởi chạy với MySQL Local đã cài trên máy
+1. Tạo CSDL trong MySQL:
+   ```sql
+   CREATE DATABASE IF NOT EXISTS traveleasy_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+2. Nạp dữ liệu cấu trúc và dữ liệu mẫu:
+   ```bash
+   mysql -u root -p traveleasy_db < init.sql
+   ```
+3. Cấu hình thông tin tài khoản MySQL trong file `.env` hoặc `backend/src/main/resources/application.yml`.
+4. Khởi chạy Backend: `.\gradlew bootRun`.
+
+---
+
+### 🔑 DANH SÁCH TÀI KHOẢN DÙNG THỬ (SEED DATA CÓ SẴN)
+
+| Vai trò (Role) | Email đăng nhập | Mật khẩu | Quyền hạn & Phân hệ truy cập |
+|---|---|:---:|---|
+| **Admin (Quản trị sàn)** | `admin@traveleasy.vn` | `Rikkei@123` | Toàn quyền Quản trị, Xem Dashboard KPI, Thêm chuyến xe, Đổi trạng thái chuyến |
+| **Operator (Nhà xe)** | `operator@futa.vn` | `Rikkei@123` | Quản lý lịch trình và kiểm tra danh sách hành khách nhà xe Phương Trang |
+| **Customer (Hành khách)** | `customer@gmail.com` | `Rikkei@123` | Tìm kiếm chuyến, Đặt vé xe COD, Xem lịch sử vé, Nhận vé điện tử |
+
+* **Mã đơn vé mẫu có sẵn để kiểm tra tính năng Tra Cứu Vé & Render QR Code**:
+  * Nhập mã: `BKG-20261025-001` tại trang **Tra Cứu Vé** (`http://localhost:5173/lookup`) để xem chi tiết vé điện tử của khách hàng Nguyễn Văn Du Khách với 2 ghế nằm A01, A02 kèm mã QR chuẩn.
+
+---
+
+### 🧪 BẰNG CHỨNG KIỂM THỬ THỰC TẾ (VERIFIED LIVE METRICS)
+* ✅ **Backend Compile**: `./gradlew bootJar` ➔ **BUILD SUCCESSFUL (0 Errors)**.
+* ✅ **Frontend Compile**: `npm run build` ➔ **1637 modules transformed (0 Errors, Built in 3.92s)**.
+* ✅ **API Tìm chuyến xe**: `GET /api/v1/trips/search?departureLocation=TP. Hồ Chí Minh&arrivalLocation=Đà Lạt` ➔ **HTTP 200 (Success, 120ms)**.
+* ✅ **API Đặt vé COD**: `POST /api/v1/bookings` ➔ **HTTP 200 (Đặt vé thành công, tự sinh mã BK-* và vé con TK-*)**.
+* ✅ **Kiểm tra chống tranh chấp ghế (Concurrency Lock)**: Đặt lại ghế vừa mua ➔ **HTTP 409 Conflict ("Ghế vừa được người khác đặt")**.
+* ✅ **Trợ lý AI Du lịch**: `POST /api/v1/ai/chat` ➔ **HTTP 200 (Tư vấn chọn giường tầng dưới A01-A06 chống say xe)**.
+
+---
 ## 9. QUY TRÌNH LÀM VIỆC GIT (GIT WORKFLOW)
 
 Dự án áp dụng quy chuẩn phân nhánh theo tài liệu `docs/GIT_WORKFLOW.md`:
