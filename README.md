@@ -368,121 +368,183 @@ flowchart TD
 
 ---
 
-## 6. THIẾT KẾ CƠ SỞ DỮ LIỆU & ERD (8 BẢNG CHUẨN HÓA)
+## 6. THIẾT KẾ CƠ SỞ DỮ LIỆU & ERD (8 BẢNG CHUẨN HÓA KHỚP 100% TÀI LIỆU DỰ ÁN)
 
-### 6.1 Sơ đồ quan hệ thực thể (ERD Diagram)
+> **Căn cứ tài liệu kiến trúc**:  
+> Thiết kế cơ sở dữ liệu được rút gọn và chuẩn hóa từ bộ tài liệu đặc tả gốc của dự án (`docs/database_design.md`, `docs/schema.sql`, `docs/SRS_Vexere.md`), tối ưu hóa thành 8 bảng cốt lõi phục vụ hoàn hảo phạm vi đồ án tốt nghiệp Sprint 7 ngày mà vẫn đảm bảo tính toàn vẹn dữ liệu, chống Double-Booking và hỗ trợ đầy đủ quy trình đặt vé liên tỉnh.
+
+### 6.1 Sơ đồ quan hệ thực thể chuẩn hóa (ERD Diagram)
 
 ```mermaid
 erDiagram
-    USERS ||--o{ BOOKINGS : places
-    BUS_COMPANIES ||--o{ ROUTES : operates
-    BUS_COMPANIES ||--o{ TRIPS : provides
-    ROUTES ||--o{ PICKUP_DROPOFF_POINTS : includes
-    ROUTES ||--o{ TRIPS : schedules
-    TRIPS ||--o{ TRIP_SEATS : contains
-    TRIPS ||--o{ BOOKINGS : receives
-    BOOKINGS ||--o{ TICKETS : generates
+    USERS ||--o{ BOOKINGS : "places (1-N)"
+    BUS_COMPANIES ||--o{ ROUTES : "operates (1-N)"
+    BUS_COMPANIES ||--o{ TRIPS : "provides (1-N)"
+    ROUTES ||--o{ PICKUP_DROPOFF_POINTS : "includes (1-N)"
+    ROUTES ||--o{ TRIPS : "schedules (1-N)"
+    TRIPS ||--o{ TRIP_SEATS : "contains 34 seats (1-N)"
+    TRIPS ||--o{ BOOKINGS : "receives (1-N)"
+    BOOKINGS ||--o{ TICKETS : "generates tickets (1-N)"
 
     USERS {
-        bigint id PK
-        string email UK
-        string password
-        string full_name
-        string phone
+        bigint id PK "Khóa chính tự tăng"
+        string email UK "Email đăng nhập duy nhất"
+        string password "BCrypt hash 12 rounds"
+        string full_name "Họ và tên người dùng"
+        string phone "Số điện thoại liên hệ"
         string role "CUSTOMER | OPERATOR | ADMIN"
-        timestamp created_at
+        timestamp created_at "Thời gian tạo tài khoản"
     }
 
     BUS_COMPANIES {
-        bigint id PK
-        string name UK
-        string hotline
-        string email
-        string address
-        string logo_url
-        decimal average_rating
+        bigint id PK "Khóa chính tự tăng"
+        string name UK "Tên nhà xe đối tác"
+        string hotline "Tổng đài đặt vé"
+        string email "Email liên hệ"
+        string address "Địa chỉ văn phòng / bến"
+        string logo_url "URL logo thương hiệu"
+        decimal average_rating "Điểm đánh giá (1.0 - 5.0)"
     }
 
     ROUTES {
-        bigint id PK
-        bigint bus_company_id FK
-        string departure_location
-        string arrival_location
-        decimal duration_hours
-        decimal distance_km
+        bigint id PK "Khóa chính tự tăng"
+        bigint bus_company_id FK "Tham chiếu bus_companies(id)"
+        string departure_location "Nơi xuất phát (Search Anchor)"
+        string arrival_location "Nơi đến (Search Anchor)"
+        decimal duration_hours "Thời gian di chuyển dự kiến (giờ)"
+        decimal distance_km "Cự ly tuyến đường (km)"
     }
 
     PICKUP_DROPOFF_POINTS {
-        bigint id PK
-        bigint route_id FK
-        string name
-        string address
-        string point_type "PICKUP | DROPOFF"
-        int display_order
+        bigint id PK "Khóa chính tự tăng"
+        bigint route_id FK "Tham chiếu routes(id)"
+        string name "Tên điểm đón hoặc trả"
+        string address "Địa chỉ cụ thể của trạm/bến"
+        string point_type "PICKUP (Đón) | DROPOFF (Trả)"
+        int display_order "Thứ tự hiển thị lộ trình"
     }
 
     TRIPS {
-        bigint id PK
-        bigint route_id FK
-        bigint bus_company_id FK
-        datetime departure_time
-        datetime arrival_time
+        bigint id PK "Khóa chính tự tăng"
+        bigint route_id FK "Tham chiếu routes(id)"
+        bigint bus_company_id FK "Tham chiếu bus_companies(id)"
+        datetime departure_time "Thời gian xuất bến"
+        datetime arrival_time "Thời gian đến bến dự kiến"
         string bus_type "SLEEPER | LIMOUSINE | SEAT"
-        string license_plate
-        int total_seats
-        int available_seats
-        decimal price
+        string license_plate "Biển số xe điều phối"
+        int total_seats "Tổng số ghế (mặc định 34)"
+        int available_seats "Số ghế trống thời gian thực"
+        decimal price "Giá vé niêm yết (VNĐ)"
+        string description "Mô tả tiện ích chuyến xe"
         string status "SCHEDULED | DEPARTED | COMPLETED | CANCELLED"
     }
 
     TRIP_SEATS {
-        bigint id PK
-        bigint trip_id FK
-        string seat_code "A01..A17, B01..B17"
-        int floor "1 | 2"
-        int row_num
-        int col_num
-        string seat_type
-        string status "AVAILABLE | BOOKED"
+        bigint id PK "Khóa chính tự tăng"
+        bigint trip_id FK "Tham chiếu trips(id)"
+        string seat_code "Mã ghế (A01-A17, B01-B17)"
+        int floor "Tầng 1 (dưới) | Tầng 2 (trên)"
+        int row_num "Hàng ghế (1-9)"
+        int col_num "Cột ghế (1-2)"
+        string seat_type "STANDARD | VIP"
+        string status "AVAILABLE (Trống) | BOOKED (Đã bán)"
     }
 
     BOOKINGS {
-        bigint id PK
-        bigint user_id FK "nullable for guest"
-        bigint trip_id FK
-        string booking_code UK
-        string passenger_name
-        string passenger_phone
-        string passenger_email
-        string pickup_point
-        string dropoff_point
-        string seat_numbers
-        decimal total_amount
-        string payment_method "COD"
+        bigint id PK "Khóa chính tự tăng"
+        bigint user_id FK "Tham chiếu users(id) - Nullable cho khách vãng lai"
+        bigint trip_id FK "Tham chiếu trips(id)"
+        string booking_code UK "Mã đơn vé (BK-YYYYMMDD-XXXX)"
+        string passenger_name "Họ tên hành khách"
+        string passenger_phone "Số điện thoại nhận vé"
+        string passenger_email "Email nhận vé điện tử"
+        string pickup_point "Điểm đón khách chọn"
+        string dropoff_point "Điểm trả khách chọn"
+        string seat_numbers "Chuỗi mã ghế (VD: A01, A02)"
+        decimal total_amount "Tổng tiền thanh toán"
+        string payment_method "COD (Thanh toán khi lên xe)"
         string status "PENDING | CONFIRMED | COMPLETED | CANCELLED"
     }
 
     TICKETS {
-        bigint id PK
-        bigint booking_id FK
-        string ticket_code UK
-        string seat_number
-        decimal price
-        string qr_code_hash
+        bigint id PK "Khóa chính tự tăng"
+        bigint booking_id FK "Tham chiếu bookings(id)"
+        string ticket_code UK "Mã vé từng ghế (TK-*)"
+        string seat_number "Vị trí ghế (A01, B02...)"
+        decimal price "Giá vé riêng từng ghế"
+        string qr_code_hash "Mã băm QR Code phục vụ check-in"
         string status "ISSUED | USED | CANCELLED"
-        timestamp created_at
+        timestamp created_at "Thời điểm phát hành vé"
     }
 ```
 
-### 6.2 Dữ liệu khởi tạo mẫu (Seed Data sẵn sàng chấm thi)
-* **Tài khoản người dùng**:
-  * Admin: `admin@traveleasy.vn` / Mật khẩu: `Rikkei@123` (Quyền ADMIN).
-  * Nhà xe Phương Trang: `operator@phuongtrang.vn` / Mật khẩu: `Rikkei@123` (Quyền OPERATOR).
-  * Hành khách: `customer@gmail.com` / Mật khẩu: `Rikkei@123` (Quyền CUSTOMER).
-* **Nhà xe đối tác**: Phương Trang FUTA Bus Lines (5 sao), Thành Bưởi (4.8 sao), Sao Việt (4.7 sao).
-* **Tuyến đường**: Sài Gòn ➔ Đà Lạt (305km), Sài Gòn ➔ Cần Thơ (169km), Hà Nội ➔ Sa Pa (315km), Sài Gòn ➔ Nha Trang (435km).
-* **Chuyến xe mở bán**: 4 chuyến xe Limousine 34 phòng & Giường nằm sẵn sàng phục vụ tìm kiếm và đặt vé.
-* **Kho ghế chuyến số 1**: 34 ghế (Đã có sẵn 2 ghế bán mẫu A01, A02 để demo trạng thái "Đã bán").
+### 6.2 Bảng đặc tả chi tiết 8 thực thể CSDL (Khớp 100% file `init.sql`)
+
+| STT | Tên bảng (Table) | Mục đích nghiệp vụ & Cơ chế kỹ thuật | Ràng buộc chính (Keys & Constraints) | Các chỉ mục Index tối ưu |
+|:---:|:---|:---|:---|:---|
+| **1** | `users` | Quản lý danh tính đăng nhập, phân quyền RBAC 3 cấp (Khách hàng `CUSTOMER`, Nhà xe `OPERATOR`, Quản trị `ADMIN`). Mật khẩu mã hóa BCrypt 12 rounds. | PK: `id`<br/>UK: `email`<br/>CK: `CHECK(role IN (...))` | `idx_users_email`<br/>`idx_users_phone` |
+| **2** | `bus_companies` | Lưu trữ danh mục nhà xe đối tác vận tải (Phương Trang, Thành Bưởi, Sao Việt, Kumho Samco). | PK: `id`<br/>UK: `name` | `idx_companies_name` |
+| **3** | `routes` | Quản lý các trục tuyến đường cố định liên tỉnh (Hồ Chí Minh ➔ Đà Lạt, Nha Trang, Cần Thơ; Hà Nội ➔ Sa Pa). | PK: `id`<br/>FK: `bus_company_id` ➔ `bus_companies(id)` | `idx_routes_locations (departure_location, arrival_location)` |
+| **4** | `pickup_dropoff_points` | Danh sách các trạm đón và bến trả khách chi tiết của từng tuyến đường kèm thứ tự ghé bến `display_order`. | PK: `id`<br/>FK: `route_id` ➔ `routes(id)` | `idx_points_route (route_id, point_type)` |
+| **5** | `trips` | Lịch trình chuyến xe mở bán theo thời gian thực: giờ xuất phát, giờ đến, biển số, giá vé, trạng thái và số ghế trống tự động cập nhật. | PK: `id`<br/>FK: `route_id` ➔ `routes(id)`<br/>FK: `bus_company_id` ➔ `bus_companies(id)` | `idx_trips_search (route_id, departure_time, status)`<br/>`idx_trips_status` |
+| **6** | `trip_seats` | Sơ đồ kho 34 ghế ngồi 2 tầng (Tầng 1: A01-A17, Tầng 2: B01-B17). Áp dụng **Pessimistic Lock (`FOR UPDATE`)** để loại trừ hoàn toàn tranh chấp đặt vé (Anti Double-Booking). | PK: `id`<br/>FK: `trip_id` ➔ `trips(id)`<br/>UK: `uq_trip_seat (trip_id, seat_code)` | `idx_seats_status (trip_id, status)` |
+| **7** | `bookings` | Đơn đặt vé xe của hành khách. Hỗ trợ cả thành viên đã đăng nhập và khách vãng lai (`user_id NULLABLE`), thanh toán COD khi lên xe. | PK: `id`<br/>UK: `booking_code`<br/>FK: `user_id` ➔ `users(id)` (ON DELETE SET NULL)<br/>FK: `trip_id` ➔ `trips(id)` | `idx_bookings_code`<br/>`idx_bookings_user`<br/>`idx_bookings_status` |
+| **8** | `tickets` | Vé điện tử phát hành cho từng vị trí ghế ngồi. Mỗi vé sở hữu chuỗi băm QR Code độc nhất (`qr_code_hash`) để nhân viên phụ xe quét mã xác thực lúc đón khách. | PK: `id`<br/>UK: `ticket_code`<br/>FK: `booking_id` ➔ `bookings(id)` | `idx_tickets_code`<br/>`idx_tickets_qr` |
+
+---
+
+### 6.3 Dữ liệu mẫu khởi tạo trực quan (Seed Data chi tiết cho các bạn trong nhóm)
+
+File [`init.sql`](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/init.sql) và lớp [`DataInitializer.java`](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/backend/src/main/java/com/traveleasy/config/DataInitializer.java) được nạp sẵn 100% dữ liệu mẫu sinh động, giúp các thành viên nhóm dễ dàng chạy thử, kiểm thử và demo bảo vệ:
+
+#### 1. Bảng tài khoản người dùng (`users`) — Mật khẩu dùng chung: `Rikkei@123`
+| ID | Họ và tên | Email đăng nhập | Số điện thoại | Vai trò (Role) | Chức năng thử nghiệm |
+|:---:|:---|:---|:---:|:---:|:---|
+| `1` | **Phạm Công Thành** | `admin@traveleasy.vn` | `0901234567` | **ADMIN** | Quản trị hệ thống, duyệt chuyến xe, xem Dashboard doanh thu |
+| `2` | **Điều Hành Phương Trang** | `operator@futa.vn` | `0909888999` | **OPERATOR** | Điều phối đội xe, kiểm tra danh sách hành khách lên xe |
+| `3` | **Nguyễn Văn Du Khách** | `customer@gmail.com` | `0912345678` | **CUSTOMER** | Tìm kiếm chuyến xe, chọn ghế 2 tầng, đặt vé COD, tra cứu vé QR |
+
+#### 2. Bảng nhà xe đối tác vận tải (`bus_companies`)
+| ID | Tên nhà xe | Hotline | Điểm đánh giá | Trụ sở chính |
+|:---:|:---|:---:|:---:|:---|
+| `1` | **Phương Trang (FUTA Bus Lines)** | `1900 6067` | ⭐ **4.9** | Bến xe Miền Tây, 395 Kinh Dương Vương, An Lạc, Bình Tân, TP.HCM |
+| `2` | **Thành Bưởi** | `1900 6079` | ⭐ **4.8** | 266 Lê Hồng Phong, Phường 4, Quận 5, TP.HCM |
+| `3` | **Sao Việt** | `1900 6746` | ⭐ **4.7** | 779 Giải Phóng, Giáp Bát, Hoàng Mai, Hà Nội |
+| `4` | **Kumho Samco Buslines** | `1900 6065` | ⭐ **4.8** | 292 Đinh Bộ Lĩnh, Phường 26, Bình Thạnh, TP.HCM |
+
+#### 3. Bảng tuyến đường liên tỉnh (`routes`) & Điểm đón trả (`pickup_dropoff_points`)
+| Tuyến ID | Điểm xuất phát | Điểm đến | Cự ly & Thời gian | Các điểm đón (Pickups) | Các điểm trả (Dropoffs) |
+|:---:|:---|:---|:---:|:---|:---|
+| **1** | **TP. Hồ Chí Minh** | **Đà Lạt** | 305 km (6.5 giờ) | Bến xe Miền Tây, Trạm An Sương, Văn phòng Hàng Xanh | Bến xe Liên tỉnh Đà Lạt, Bưu điện Hồ Xuân Hương |
+| **2** | **TP. Hồ Chí Minh** | **Nha Trang** | 435 km (8.0 giờ) | Bến xe Miền Đông Mới, Ngã tư Thủ Đức | Bến xe Phía Nam Nha Trang, Văn phòng 14 Pasteur |
+| **3** | **TP. Hồ Chí Minh** | **Cần Thơ** | 169 km (3.5 giờ) | Bến xe Miền Tây | Bến xe Trung tâm Cần Thơ, Bến Ninh Kiều |
+| **4** | **Hà Nội** | **Sa Pa** | 315 km (5.5 giờ) | Bến xe Mỹ Đình, Văn phòng Phố Cổ, Sân bay Nội Bài | Bến xe Sa Pa, Nhà thờ Đá Sa Pa |
+
+#### 4. Bảng chuyến xe mở bán theo lịch trình (`trips`)
+| Chuyến ID | Tuyến đường | Nhà xe | Giờ khởi hành | Loại xe & Biển số | Giá vé | Chỗ trống | Trạng thái |
+|:---:|:---|:---|:---:|:---|:---:|:---:|:---:|
+| **1** | TP.HCM ➔ Đà Lạt | Phương Trang | Ngày mai, 08:00 | Giường nằm (`SLEEPER`) - 51B-123.45 | 290.000đ | **32 / 34** | `SCHEDULED` |
+| **2** | TP.HCM ➔ Đà Lạt | Phương Trang | Tối mai, 22:30 | Limousine VIP (`LIMOUSINE`) - 51B-999.88 | 340.000đ | **34 / 34** | `SCHEDULED` |
+| **3** | TP.HCM ➔ Nha Trang | Phương Trang | Ngày mai, 07:00 | Giường nằm (`SLEEPER`) - 51B-456.78 | 320.000đ | **34 / 34** | `SCHEDULED` |
+| **4** | Hà Nội ➔ Sa Pa | Sao Việt | Ngày mai, 06:30 | Cabin Cung Điện (`LIMOUSINE`) - 29B-888.66 | 380.000đ | **34 / 34** | `SCHEDULED` |
+
+#### 5. Sơ đồ kho ghế 2 tầng (`trip_seats`) — 136 ghế cho 4 chuyến xe
+* Mỗi chuyến xe sở hữu đúng **34 vị trí giường nằm** được bố trí khoa học:
+  * **Tầng 1 (Dưới - Chống say xe)**: 17 ghế ký hiệu `A01` đến `A17`.
+  * **Tầng 2 (Trên - Thoáng mát)**: 17 ghế ký hiệu `B01` đến `B17`.
+* **Trực quan trên giao diện đặt vé**:
+  * Chuyến 1 có 2 ghế **`A01` và `A02` hiển thị màu Xám (Đã bán)** để các thành viên kiểm thử trạng thái khóa click.
+  * Ghế `A03` đến `A17` và `B01` đến `B17` hiển thị **màu Xanh (Sẵn sàng mở bán)**, click chọn sẽ đổi sang **màu Cam** và cộng dồn tiền tức thì.
+  * Các chuyến 2, 3, 4 mở bán đủ 34/34 ghế trống.
+
+#### 6. Đơn vé mẫu & Vé điện tử QR Code (`bookings` & `tickets`)
+* **Mã đơn đặt vé**: `BKG-20261025-001`
+* **Hành khách**: Nguyễn Văn Du Khách (SĐT: `0912345678`)
+* **Hành trình**: Chuyến 1 (TP.HCM ➔ Đà Lạt) — Điểm đón: Bến xe Miền Tây ➔ Điểm trả: Bến xe Liên tỉnh Đà Lạt
+* **Danh sách vé con & Mã QR Check-in**:
+  1. Vé 1: Mã `TK-20261025-001-A01` | Ghế `A01` | Giá 290.000đ | QR Hash: `c5e26b88-5c42-4f01-8b21-7e8c3a19e001` | Trạng thái: `ISSUED`
+  2. Vé 2: Mã `TK-20261025-001-A02` | Ghế `A02` | Giá 290.000đ | QR Hash: `f7a14c99-7b33-4d22-9e32-8f9d4b28f002` | Trạng thái: `ISSUED`
+* **Cách kiểm thử trực quan**: Truy cập trang **Tra Cứu Vé** (`http://localhost:5173/lookup`), nhập mã `BKG-20261025-001` để xem thẻ vé điện tử và render 2 mã QR trực quan.
 
 ---
 
