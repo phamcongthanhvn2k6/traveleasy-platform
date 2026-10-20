@@ -27,7 +27,7 @@ export const CompanyRoutesPage: React.FC = () => {
     {
       id: 'rt2',
       name: 'Sai Gon - Nha Trang',
-      origin: 'Ben xe Mien Dong',
+      origin: 'Ban xe Mien Dong',
       destination: 'Ben xe Nha Trang',
       stopsCount: '2 tram',
       priceTypes: '2 loai',
