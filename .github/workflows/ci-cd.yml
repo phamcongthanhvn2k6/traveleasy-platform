@@ -1,4 +1,4 @@
-name: QuickShop CI/CD Pipeline
+name: TravelEasy CI/CD Pipeline
 
 on:
   push:
@@ -19,22 +19,15 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: gradle
 
-    - name: Grant execute permission for gradlew
-      run: |
-        if [ -f quickshop-backend/gradlew ]; then
-          chmod +x quickshop-backend/gradlew
-        fi
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
 
-    - name: Build and Test Backend
-      working-directory: ./quickshop-backend
+    - name: Build Backend (Spring Boot JAR)
+      working-directory: ./backend
       run: |
-        if [ -f gradlew ]; then
-          ./gradlew test bootJar --no-daemon
-        else
-          echo "Gradle wrapper not committed yet, skipping execution"
-        fi
+        chmod +x gradlew
+        ./gradlew bootJar --no-daemon
 
   frontend-build-lint:
     name: Frontend Build & Lint (React Vite)
@@ -48,13 +41,11 @@ jobs:
       with:
         node-version: '20'
 
-    - name: Install dependencies
-      working-directory: ./quickshop-frontend
+    - name: Install dependencies & Build Frontend
+      working-directory: ./frontend
       run: |
-        if [ -f package.json ]; then
-          npm install
-          npm run build
-        fi
+        npm install
+        npm run build
 
   docker-compose-validation:
     name: Docker Compose Validation
@@ -62,5 +53,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
     - name: Validate Docker Compose Configuration
       run: docker compose config

@@ -1,0 +1,78 @@
+package com.traveleasy.service;
+
+import com.traveleasy.common.exception.AppException;
+import com.traveleasy.common.exception.ErrorCode;
+import com.traveleasy.dto.auth.AuthResponse;
+import com.traveleasy.dto.auth.LoginRequest;
+import com.traveleasy.dto.auth.RegisterRequest;
+import com.traveleasy.entity.Role;
+import com.traveleasy.entity.User;
+import com.traveleasy.repository.UserRepository;
+import com.traveleasy.security.JwtTokenProvider;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class AuthService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    @Transactional
+    public AuthResponse register(RegisterRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.RESOURCE_ALREADY_EXISTS, "Email đã tồn tại trong hệ thống");
+        }
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorCode.RESOURCE_ALREADY_EXISTS, "Số điện thoại đã tồn tại trong hệ thống");
+        }
+
+        User user = User.builder()
+                .fullName(request.getFullName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.CUSTOMER)
+                .build();
+
+        userRepository.save(user);
+
+        String token = jwtTokenProvider.generateToken(user.getEmail(), user.getRole().name(), user.getId());
+
+        return AuthResponse.builder()
+                .token(token)
+                .tokenType("Bearer")
+                .userId(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .role(user.getRole().name())
+                .build();
+    }
+
+    public AuthResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getIdentifier())
+                .or(() -> userRepository.findByPhone(request.getIdentifier()))
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED, "Sai email/số điện thoại hoặc mật khẩu"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Sai email/số điện thoại hoặc mật khẩu");
+        }
+
+        String token = jwtTokenProvider.generateToken(user.getEmail(), user.getRole().name(), user.getId());
+
+        return AuthResponse.builder()
+                .token(token)
+                .tokenType("Bearer")
+                .userId(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .role(user.getRole().name())
+                .build();
+    }
+}

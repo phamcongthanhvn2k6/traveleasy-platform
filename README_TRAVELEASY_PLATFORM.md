@@ -97,23 +97,23 @@
 +-----------------------------------------------------------------------------------------+
 |                                CƠ CẤU NHÓM 6 NGƯỜI (TRAVELEASY)                         |
 +-----------------------------------------------------------------------------------------+
-| Member 1: Team Lead / AI Integrator (Spring AI Chatbot & SEO Generator)                 |
-| Member 2: Full-stack Developer (Authentication, Profile & Security)                     |
-| Member 3: Full-stack Developer (Routes, Trips Catalog & Search Engine)                  |
-| Member 4: Full-stack Developer (Bus Seat Map, Booking COD & Stock Reduction)           |
-| Member 5: Full-stack Developer (Admin/Operator Dashboard & Booking Lifecycle)          |
-| Member 6: QA / Tester / DevOps Engineer (Docker, CI/CD, Test Cases, Load Testing)      |
+| Phạm Công Thành (Nhóm trưởng): Fullstack Core (Architecture, Routes, Trip Catalog & Search) |
+| Nguyễn Đại Phát: Fullstack Booking (2-Tier Seat Map, Atomic Seat Locking & Anti-Race Cond)  |
+| Phan Trung Kiên: Fullstack Admin Fleet (Admin Dashboard, Trip Operations & 34-Seat Auto Gen)|
+| Phạm Thanh Phong: Fullstack Security (Spring Security 6, JWT, BCrypt, Auth Modal & RBAC)   |
+| Trần Minh Đức 2: Fullstack E-Ticket (Checkout Flow, Point Selection, QR Ticket Lookup)      |
+| Đoàn Nhật Cường: Fullstack AI & QA (AI Travel Assistant Chatbot, Revenue Stats & 25 Tests)  |
 +-----------------------------------------------------------------------------------------+
 ```
 
-| Vai trò | Thành viên | Trách nhiệm Backend | Trách nhiệm Frontend | Trách nhiệm Phối hợp & QA |
+| Chức năng Fullstack | Thành viên | Nhiệm vụ Backend | Nhiệm vụ Frontend | Kiểm thử & Phối hợp |
 |---|---|---|---|---|
-| **Member 1** | **Team Lead / AI** | Setup kiến trúc Spring Boot, tích hợp Spring AI cho 2 API: Sinh mô tả tuyến xe chuẩn SEO và Chatbot tư vấn chuyến xe. | Dựng UI Chatbot Widget góc phải màn hình, nút "Sinh mô tả AI" trong form tạo chuyến xe. | Review code, điều phối tiến độ, giải quyết blocker kỹ thuật. |
-| **Member 2** | **Full-stack (Auth)** | Xây dựng Spring Security, JWT Filter, BCrypt, AuthController, ProfileController. | Dựng trang Đăng ký, Đăng nhập, Hồ sơ cá nhân (Profile), Auth Guard theo Role. | Viết unit test cho Auth, kiểm tra bảo mật NFR-04, NFR-05. |
-| **Member 3** | **Full-stack (Trips)** | Xây dựng RouteController, TripController, API tìm kiếm Nơi đi - Nơi đến - Ngày đi, bộ lọc giờ/giá/loại xe. | Dựng Thanh tìm kiếm chuyến xe, Bộ lọc linh hoạt, Lưới danh sách chuyến xe (Trip Cards). | Tối ưu thời gian phản hồi API tra cứu < 500ms, FCP < 2s. |
-| **Member 4** | **Full-stack (Booking)** | Xây dựng BookingController, TicketController, xử lý trừ ghế trống nguyên tử (`@Transactional`), sinh mã vé. | Dựng Sơ đồ ghế tương tác (Interactive Bus Seat Map), Form đặt vé COD, Trang Lịch sử vé. | Kiểm thử chống đặt trùng ghế (Zero Double-Booking). |
-| **Member 5** | **Full-stack (Admin)** | Xây dựng AdminTripController (CRUD), AdminBookingController (Cập nhật trạng thái `PENDING` ➔ `CONFIRMED` ➔ `COMPLETED`/`CANCELLED`). | Dựng Admin Layout, Bảng quản lý chuyến xe, Modal thêm chuyến có AI, Bảng duyệt vé. | Kiểm thử phân quyền: Hành khách không được vào Admin API/Page. |
-| **Member 6** | **QA & DevOps** | Viết Dockerfile Backend, cấu hình logging SLF4J, chạy test container. | Viết Dockerfile Frontend (Nginx multi-stage). | Viết file `docker-compose.yml`, tạo GitHub Actions CI/CD, viết 25 test cases, chạy k6 đo tải 50 users. |
+| **1. Nền tảng & Tìm kiếm Chuyến xe** | **Phạm Công Thành** *(Nhóm trưởng)* | Quản lý kiến trúc Monolith, CSDL [init.sql](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/init.sql), Exception Handling, API Tìm kiếm chuyến xe linh hoạt (`TripController`). | Trang chủ ([HomePage.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/pages/HomePage.tsx)), Thanh tìm chuyến ([SearchTripBar.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/components/SearchTripBar.tsx)), Thẻ chuyến ([TripCard.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/components/TripCard.tsx)), Header/Footer. | Quản trị Git PR nhánh `dev` ➔ `main`, Docker Compose, CI/CD, Test tải API < 500ms, điều phối kịch bản Demo 100 điểm. |
+| **2. Kho ghế & Đặt vé nguyên tử** | **Nguyễn Đại Phát** | `TripSeatRepository` (Pessimistic Lock), `BookingService` (Trừ ghế nguyên tử `@Transactional(isolation = Isolation.SERIALIZABLE)`), sinh mã đơn vé `BK-*`. | Sơ đồ ghế 2 tầng tương tác ([BusSeatMap.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/components/BusSeatMap.tsx)), Modal đặt vé COD ([CheckoutModal.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/components/CheckoutModal.tsx)) chọn điểm đón/trả. | Viết Concurrency Unit Test (10 threads cùng book 1 ghế -> Zero Double-Booking). |
+| **3. Quản trị Chuyến xe & Kho 34 ghế** | **Phan Trung Kiên** | `AdminTripService`, API tạo chuyến xe mới kèm tự động tạo 34 ghế (Tầng 1 A01-A17, Tầng 2 B01-B17), API cập nhật trạng thái chuyến xe. | Giao diện Quản trị Chuyến xe ([AdminDashboardPage.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/pages/AdminDashboardPage.tsx)), Form popup tạo chuyến xe mới, bảng quản trị chuyến xe. | Test tạo chuyến tự động sinh 34 ghế, đổi trạng thái chuyến xe (`SCHEDULED` ➔ `DEPARTED` ➔ `COMPLETED`). |
+| **4. Xác thực, Bảo mật & Tài khoản** | **Phạm Thanh Phong** | Spring Security 6, JWT Filter, mã hóa mật khẩu BCrypt (12 rounds), `AuthService` (Đăng ký, Đăng nhập Email/SĐT), Phân quyền RBAC. | Form Modal Đăng ký, Đăng nhập trên Navbar, lưu JWT LocalStorage, Auth Header Axios Interceptor ([api.ts](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/services/api.ts)). | Viết unit test cho Auth, kiểm thử bảo mật chống truy cập trái phép khi không có token (401, 403). |
+| **5. Vé điện tử & Tra cứu vé QR** | **Trần Minh Đức 2** | Quản lý Entity `Ticket`, sinh mã vé `TK-*`, sinh mã QR hash, API tra cứu vé (`/api/v1/bookings/code/{code}`), API Lịch sử vé của tôi. | Trang Tra cứu vé điện tử ([TicketLookupPage.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/pages/TicketLookupPage.tsx)), Render thẻ vé kèm mã QR trực quan, Trang Lịch sử vé đã đặt. | Test tra cứu vé hợp lệ/không hợp lệ, test hiển thị mã QR, test hủy vé theo chính sách. |
+| **6. Trợ lý AI du lịch & Thống kê KPI** | **Đoàn Nhật Cường** | `AiService` (Chatbot tư vấn lộ trình, vị trí ghế chống say, cẩm nang du lịch), API thống kê Dashboard (`/api/v1/admin/dashboard/stats`). | Widget Chatbot AI góc màn hình ([AiAssistantWidget.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/components/AiAssistantWidget.tsx)), Thẻ 4 KPI doanh thu trên Dashboard Admin. | Lập bảng 25 Test Cases toàn hệ thống (100% Pass), hỗ trợ kịch bản Demo tốt nghiệp 100 điểm. |
 
 ### 2.2 Kế hoạch thực hiện từng ngày (Day-by-Day Sprint Timeline)
 

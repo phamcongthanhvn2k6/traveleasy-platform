@@ -1,0 +1,45 @@
+package com.traveleasy.controller;
+
+import com.traveleasy.common.dto.ApiResponse;
+import com.traveleasy.dto.booking.BookingResponse;
+import com.traveleasy.dto.booking.CreateBookingRequest;
+import com.traveleasy.service.BookingService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/bookings")
+@RequiredArgsConstructor
+@Tag(name = "Booking Management", description = "Đặt vé xe, tra cứu vé và quản lý đơn đặt vé")
+public class BookingController {
+
+    private final BookingService bookingService;
+
+    @PostMapping
+    @Operation(summary = "Đặt vé xe khách (Trừ ghế nguyên tử chống Race Condition)")
+    public ApiResponse<BookingResponse> createBooking(
+            @Valid @RequestBody CreateBookingRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        return ApiResponse.success("Đặt vé thành công", bookingService.createBooking(request, email));
+    }
+
+    @GetMapping("/code/{bookingCode}")
+    @Operation(summary = "Tra cứu đơn đặt vé theo mã vé (VD: BK-20261019-XXXX)")
+    public ApiResponse<BookingResponse> getBookingByCode(@PathVariable String bookingCode) {
+        return ApiResponse.success(bookingService.getBookingByCode(bookingCode));
+    }
+
+    @GetMapping("/my-bookings")
+    @Operation(summary = "Lấy danh sách vé đã đặt của người dùng hiện tại")
+    public ApiResponse<List<BookingResponse>> getMyBookings(@AuthenticationPrincipal UserDetails userDetails) {
+        return ApiResponse.success(bookingService.getUserBookings(userDetails.getUsername()));
+    }
+}
