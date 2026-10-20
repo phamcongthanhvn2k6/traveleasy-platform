@@ -44,11 +44,13 @@
    - 1.1 Bối cảnh bài toán vận tải hành khách liên tỉnh
    - 1.2 Giải pháp nền tảng TravelEasy Platform
    - 1.3 Bảng phân bổ điểm số tốt nghiệp (Rubric 100/100 điểm)
-2. [CƠ CẤU NHÂN SỰ & PHÂN CHIA FULL-STACK VERTICAL SLICES (RACI)](#2-cơ-cấu-nhân-sự--phân-chia-full-stack-vertical-slices-raci)
-   - 2.1 Nguyên tắc phân chia Full-Stack End-to-End
-   - 2.2 Bảng phân công 6 tính năng cho 6 thành viên
-   - 2.3 Chi tiết công việc End-to-End của từng thành viên
-   - 2.4 Ma trận trách nhiệm RACI
+2. [CƠ CẤU NHÂN SỰ, PHÂN CHIA PHÂN HỆ & KIẾN TRÚC ĐIỀU HƯỚNG CHỐNG XUNG ĐỘT](#2-cơ-cấu-nhân-sự-phân-chia-phân-hệ--kiến-trúc-điều-hướng-chống-xung-đột)
+   - 2.1 Kiến trúc Phân định 2 Phân hệ Lớn (Two-Portal Architecture)
+   - 2.2 Đánh giá Thiết kế: "Quản lý các đường dẫn bằng 1 Router Controller có phù hợp không?"
+   - 2.3 Thiết kế Phân luồng Triệt tiêu Xung đột giữa Backend và Frontend (Zero-Conflict & Non-Blocking Design)
+   - 2.4 Bảng Phân Công Nhiệm Vụ 6 Thành Viên (1 Admin + 5 Users Full-Stack)
+   - 2.5 Chi tiết Công việc End-to-End của Từng Thành Viên
+   - 2.6 Ma trận Trách nhiệm RACI Cập Nhật
 3. [KIẾN TRÚC HỆ THỐNG & CÔNG NGHỆ (TECH STACK)](#3-kiến-trúc-hệ-thống--công-nghệ-tech-stack)
    - 3.1 Mô hình kiến trúc Modular Monolith & Clean Architecture
    - 3.2 Ngăn xếp công nghệ chi tiết (Full Tech Stack)
@@ -117,182 +119,253 @@ Hệ thống giải quyết triệt để các vấn đề trên thông qua:
 
 ---
 
-## 2. CƠ CẤU NHÂN SỰ & PHÂN CHIA FULL-STACK VERTICAL SLICES (RACI)
+## 2. CƠ CẤU NHÂN SỰ, PHÂN CHIA PHÂN HỆ & KIẾN TRÚC ĐIỀU HƯỚNG CHỐNG XUNG ĐỘT
 
-### 2.1 Nguyên tắc phân chia Full-Stack End-to-End
-Dự án áp dụng mô hình **Agile / Scrum theo Tính năng Full-Stack (Feature-Driven / Vertical Slice)**:
-1. **Sở hữu trọn gói (End-to-End Ownership)**: Mỗi thành viên chịu trách nhiệm 100% về tính năng của mình (từ thiết kế CSDL ➔ Viết API Backend ➔ Dựng Giao diện Frontend ➔ Tự động hóa Kiểm thử).
-2. **Không chờ đợi, không nghẽn cổ chai**: Loại bỏ hoàn toàn tình trạng "Frontend phải chờ Backend làm xong API mới ghép".
-3. **Tự tin khi bảo vệ tốt nghiệp**: Khi báo cáo, mỗi thành viên đều có một phân hệ hoàn chỉnh để thuyết trình và demo trước hội đồng chấm thi.
+### 2.1 Kiến trúc Phân định 2 Phân hệ Lớn (Two-Portal Architecture)
+Để tối ưu hóa năng suất và đáp ứng đúng năng lực làm **Full-Stack** của từng cá nhân, dự án chia thành 2 phân hệ độc lập hoàn toàn về giao diện và API:
+1. **Phân hệ 1: ADMIN PORTAL (Quản trị Hệ thống & Điều hành Nhà xe)**:
+   - **Độc quyền đảm nhận**: **Phạm Công Thành** (Nhóm trưởng / System Architect & Tech Lead).
+   - **Phạm vi nghiệp vụ**: Toàn bộ nghiệp vụ quản trị nhà xe đối tác, quản lý phương tiện/xe, sơ đồ ghế mẫu, quản lý tuyến đường & điểm dừng, quản lý chuyến xe & tự động sinh kho 34 ghế, thiết lập chính sách giá vé động và quy tắc hủy vé/hoàn tiền, quản lý người dùng & phân quyền RBAC, bảng điều khiển thống kê KPI (doanh thu, đơn hàng, tỷ lệ lấp đầy) và nhật ký kiểm toán hệ thống (`audit_logs`).
+2. **Phân hệ 2: USERS / CLIENT PORTAL (Hành khách & Đặt vé Trực tuyến)**:
+   - **Đảm nhận**: **5 Thành viên còn lại** trong nhóm (mỗi bạn phụ trách 1 Lát cắt Dọc Full-Stack End-to-End từ CSDL ➔ Backend API ➔ Frontend UI ➔ Unit Test).
+   - **Phạm vi nghiệp vụ**: Toàn bộ luồng khách hàng từ tìm kiếm chuyến, chọn ghế, chọn điểm đón/trả, thanh toán, xuất vé điện tử QR, tra cứu vé và đánh giá nhà xe.
 
 ```
-+-----------------------------------------------------------------------------------------+
-| PHÂN CÔNG 6 TÍNH NĂNG FULL-STACK — NHÓM 7 (SĨ SỐ: 6 THÀNH VIÊN)                          |
-+-----------------------------------------------------------------------------------------+
-| 1. Phạm Công Thành (Nhóm trưởng): Fullstack Core (Architecture, Routes, Search & Engine)|
-| 2. Nguyễn Đại Phát: Fullstack Booking (2-Tier Seat Map, Atomic Seat Lock & Anti-Race)  |
-| 3. Phan Trung Kiên: Fullstack Admin Fleet (Admin Dashboard, Trip Ops & 34-Seat Auto)   |
-| 4. Phạm Thanh Phong: Fullstack Security (Spring Security 6, JWT, BCrypt, Auth & RBAC)  |
-| 5. Trần Minh Đức 2: Fullstack E-Ticket (Checkout Flow, Point Pick/Drop, QR Ticket)      |
-| 6. Đoàn Nhật Cường: Fullstack AI & QA (AI Travel Chatbot, Revenue Stats & 25 Tests)    |
-+-----------------------------------------------------------------------------------------+
++---------------------------------------------------------------------------------------------------+
+|                         TRAVELEASY PLATFORM — ARCHITECTURAL SEPARATION                            |
++---------------------------------------------------------------------------------------------------+
+|                                                                                                   |
+|  [PHÂN HỆ 1: ADMIN PORTAL]                                [PHÂN HỆ 2: USERS / CLIENT PORTAL]      |
+|  Phụ trách: PHẠM CÔNG THÀNH (Lead / Architect)            Phụ trách: 5 THÀNH VIÊN CÒN LẠI (Full-Stack)|
+|  * URL FE: /admin/*                                       * URL FE: /* (/search, /seats, /checkout)|
+|  * API BE: /api/v1/admin/**                               * API BE: /api/v1/trips, /bookings, ... |
+|  * Security: @PreAuthorize("hasRole('ADMIN')")            * Security: Public hoặc Bearer Token User |
+|  * Nghiệp vụ: Dashboard KPI, Quản lý Nhà xe, Xe,        * Nghiệp vụ: Tìm chuyến, Sơ đồ ghế, Giữ  |
+|    Tuyến, Chuyến xe, Giá vé, Chính sách hủy, User, Logs.     chỗ, Đặt vé, Thanh toán, QR & Review. |
++---------------------------------------------------------------------------------------------------+
 ```
-
-### 2.2 Bảng phân công 6 tính năng cho 6 thành viên
-
-| STT | Thành viên & Email | Tính năng phụ trách | Công việc Backend | Công việc Frontend | Kiểm thử & Nghiệm thu |
-|:---:|:---|:---|:---|:---|:---|
-| **1** | **Phạm Công Thành**<br/>`Phamcongt56@gmail.com`<br/>*(Nhóm trưởng / Tech Lead)* | **Chức năng 1: Kiến trúc nền tảng, Tuyến đường & Tìm kiếm Chuyến xe** | Quản lý kiến trúc Monolith, CSDL `init.sql`, Chuẩn hóa Exception/Response, CRUD Tuyến đường, API Tìm kiếm chuyến xe đa tiêu chí (`TripController`) | Trang chủ (`HomePage.tsx`), Thanh tìm chuyến (`SearchTripBar.tsx`), Thẻ chuyến xe (`TripCard.tsx`), Layout Header/Footer | Quản trị Git PR nhánh `dev` ➔ `main`, Docker Compose, CI/CD Actions, Test tải API < 500ms, Điều phối kịch bản Demo 100đ |
-| **2** | **Nguyễn Đại Phát**<br/>`nguyendaiphat06@gmail.com` | **Chức năng 2: Sơ đồ kho ghế 2 tầng & Đặt vé xe nguyên tử** | `TripSeatRepository` (Pessimistic Lock), `BookingService` (Trừ ghế nguyên tử `@Transactional(isolation = Isolation.SERIALIZABLE)`), sinh mã đơn vé `BK-*` | Sơ đồ ghế 2 tầng tương tác (`BusSeatMap.tsx`), Modal đặt vé COD (`CheckoutModal.tsx`) chọn điểm đón/trả | Viết Concurrency Unit Test (10 threads cùng book 1 ghế -> Zero Double-Booking) |
-| **3** | **Phan Trung Kiên**<br/>`phantrungkien2006@gmail.com` | **Chức năng 3: Quản trị Chuyến xe & Tự động tạo kho 34 ghế** | `AdminTripService`, API tạo chuyến xe mới kèm tự động tạo 34 ghế (Tầng 1 A01-A17, Tầng 2 B01-B17), API cập nhật trạng thái chuyến xe | Giao diện Quản trị Chuyến xe (`AdminDashboardPage.tsx`), Form popup tạo chuyến xe mới, Bảng điều phối chuyến xe | Test tạo chuyến tự động sinh 34 ghế, đổi trạng thái chuyến xe (`SCHEDULED` ➔ `DEPARTED` ➔ `COMPLETED`) |
-| **4** | **Phạm Thanh Phong**<br/>`thanhphong102006@gmail.com` | **Chức năng 4: Xác thực, Bảo mật & Quản lý Tài khoản** | Spring Security 6, JWT Filter, mã hóa mật khẩu BCrypt (12 rounds), `AuthService` (Đăng ký, Đăng nhập Email/SĐT), Phân quyền RBAC 3 cấp | Form Modal Đăng ký, Đăng nhập trên Navbar, lưu JWT LocalStorage, Auth Header Axios Interceptor (`api.ts`) | Viết unit test cho Auth, kiểm thử bảo mật chống truy cập trái phép khi không có token (401, 403) |
-| **5** | **Trần Minh Đức 2**<br/>`2601minhduc@gmail.com` | **Chức năng 5: Vé điện tử & Tra cứu vé QR Code** | Quản lý Entity `Ticket`, sinh mã vé `TK-*`, sinh mã QR hash, API tra cứu vé (`/api/v1/bookings/code/{code}`), API Lịch sử vé của tôi | Trang Tra cứu vé điện tử (`TicketLookupPage.tsx`), Render thẻ vé kèm mã QR trực quan, Trang Lịch sử vé đã đặt | Test tra cứu vé hợp lệ/không hợp lệ, test hiển thị mã QR, test hủy vé theo chính sách |
-| **6** | **Đoàn Nhật Cường**<br/>`Cuongclasspurpose@gmail.com` | **Chức năng 6: Trợ lý AI du lịch & Dashboard Doanh thu** | `AiService` (Chatbot tư vấn lộ trình, vị trí ghế chống say, cẩm nang du lịch), API thống kê Dashboard (`/api/v1/admin/dashboard/stats`) | Widget Chatbot AI góc màn hình (`AiAssistantWidget.tsx`), Thẻ 4 KPI doanh thu trên Dashboard Admin | Lập bảng 25 Test Cases toàn hệ thống (100% Pass), hỗ trợ kịch bản Demo tốt nghiệp 100 điểm |
-
-### 2.3 Chi tiết công việc End-to-End của từng thành viên
-
-#### 👑 1. PHẠM CÔNG THÀNH (NHÓM TRƯỞNG & TECH LEAD)
-* **Phân hệ**: **Core Foundation, Architecture & Chuyến xe (Trip Catalog & Search Engine)**
-* **Backend (Spring Boot 3 + Java 21)**:
-  * Khởi tạo kiến trúc dự án Monolith Layered, chuẩn hóa `ApiResponse<T>`, `ErrorCode`, `GlobalExceptionHandler`.
-  * Quản lý CSDL `init.sql` (36 bảng chuẩn hóa khớp `docs/schema.sql`) và cơ chế nạp dữ liệu mẫu tự động `DataInitializer.java`.
-  * `RouteRepository` & `Route`: Quản lý tuyến đường xuất phát, nơi đến, cự ly km, thời gian di chuyển.
-  * `TripRepository` & `TripService`: Viết truy vấn JPQL tìm kiếm chuyến xe đa tiêu chí (Nơi đi, Nơi đến, Ngày khởi hành, Loại xe), lọc chuyến đang mở bán (`SCHEDULED`).
-  * `TripController`: Xây dựng các API công khai `GET /api/v1/trips/search` và `GET /api/v1/trips/{id}`.
-* **Frontend (React 18 + Vite + TypeScript)**:
-  * Dựng layout khung ứng dụng (`App.tsx`), thanh điều hướng (`Navbar.tsx`), chân trang (`Footer.tsx`).
-  * Thiết kế trang chủ (`HomePage.tsx`) với Hero Banner nhận diện thương hiệu TravelEasy.
-  * Xây dựng thanh tìm kiếm chuyến xe (`SearchTripBar.tsx`): Cho phép chọn điểm đi, điểm đến, ngày đi.
-  * Xây dựng lưới danh sách chuyến xe (`TripCard.tsx`): Hiển thị logo nhà xe, giờ chạy, số chỗ trống, giá vé và nút "Chọn chuyến".
-* **DevOps & Quản trị**:
-  * Quản trị nhánh Git `dev` và `main`, xét duyệt Pull Request của toàn bộ thành viên trong nhóm.
-  * Cấu hình `docker-compose.yml`, GitHub Actions CI/CD (`ci-cd.yml`), tối ưu thời gian phản hồi API < 500ms.
-
-#### 🛡️ 2. NGUYỄN ĐẠI PHÁT (FULL-STACK DEVELOPER)
-* **Phân hệ**: **Sơ đồ kho ghế 2 tầng & Đặt vé xe nguyên tử (Seat Inventory & Booking Flow)**
-* **Backend (Spring Boot 3 + Java 21)**:
-  * Quản lý thực thể `TripSeat` và `Booking`.
-  * `TripSeatRepository`: Viết truy vấn Pessimistic Lock (`@Lock(LockModeType.PESSIMISTIC_WRITE)`) để khóa độc quyền danh sách ghế khi khách hàng đang bấm đặt vé:
-    ```java
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT s FROM TripSeat s WHERE s.trip.id = :tripId AND s.seatCode IN :seatCodes")
-    List<TripSeat> findByTripIdAndSeatCodeInWithLock(Long tripId, List<String> seatCodes);
-    ```
-  * `BookingService`:
-    * Nghiệp vụ đặt vé nguyên tử `@Transactional(isolation = Isolation.SERIALIZABLE)`.
-    * Kiểm tra trạng thái ghế `AVAILABLE`, ném ngoại lệ `SEAT_ALREADY_BOOKED` (HTTP 409 Conflict) nếu ghế vừa bị người khác đặt.
-    * Đổi trạng thái ghế sang `BOOKED`, trừ ghế trống trên chuyến xe.
-    * Sinh mã đơn vé định dạng `BK-YYYYMMDD-XXXX` và sinh các vé con `TK-*`.
-  * `BookingController`: API `POST /api/v1/bookings` (hỗ trợ thanh toán COD khi lên xe).
-* **Frontend (React 18 + Vite + TypeScript)**:
-  * Xây dựng sơ đồ ghế 2 tầng tương tác (`BusSeatMap.tsx`):
-    * Tầng 1 (A01 - A17, dưới chống say) và Tầng 2 (B01 - B17, trên thoáng mát).
-    * Phân biệt rõ bằng màu sắc: Ghế trống (viền xanh), Ghế đang chọn (màu cam), Ghế đã bán (xám khóa click).
-    * Tính tiền tạm tính theo số ghế chọn theo thời gian thực.
-  * Xây dựng Modal thanh toán (`CheckoutModal.tsx`):
-    * Nhập thông tin hành khách: Họ tên, Số điện thoại, Email.
-    * Chọn điểm đón và điểm trả theo lộ trình nhà xe.
-    * Chọn phương thức thanh toán COD khi lên xe và hiển thị màn hình thông báo thành công.
-* **Kiểm thử**:
-  * Viết Unit Test Concurrency mô phỏng 10 luồng cùng book ghế A01 đồng thời ➔ Khẳng định 1 luồng thành công, 9 luồng nhận thông báo lỗi, không bao giờ bị âm ghế (Zero Double-Booking).
-
-#### 🚍 3. PHAN TRUNG KIÊN (FULL-STACK DEVELOPER)
-* **Phân hệ**: **Quản trị Chuyến xe & Tự động tạo kho 34 ghế (Admin Operations & Fleet Management)**
-* **Backend (Spring Boot 3 + Java 21)**:
-  * `BusCompanyRepository`: Quản lý danh mục nhà xe đối tác (Phương Trang, Thành Bưởi, Sao Việt, Kumho Samco).
-  * `AdminTripService`:
-    * Nghiệp vụ tạo chuyến xe mới: Kiểm tra nhà xe, tuyến đường, thời gian xuất bến.
-    * **Tính năng tự động sinh kho 34 ghế**: Khi tạo chuyến mới, hệ thống tự động sinh 17 ghế tầng 1 (A01-A17) và 17 ghế tầng 2 (B01-B17) ở trạng thái `AVAILABLE`.
-    * Nghiệp vụ cập nhật trạng thái chuyến xe: `SCHEDULED` ➔ `DEPARTED` ➔ `COMPLETED` ➔ `CANCELLED`.
-  * `AdminTripController`: API `POST /api/v1/admin/trips` và `PATCH /api/v1/admin/trips/{id}/status`.
-* **Frontend (React 18 + Vite + TypeScript)**:
-  * Xây dựng trang Quản trị chuyến xe (`AdminDashboardPage.tsx`):
-    * Bảng danh sách các chuyến xe đang hoạt động, giờ khởi hành, biển số, số ghế trống.
-    * Nút "Thêm Chuyến Xe Mới" mở form popup tiện lợi.
-    * Form tạo chuyến xe mới: Chọn nhà xe, chọn tuyến đường, chọn giờ đi/đến, chọn loại xe Limousine/Sleeper, nhập giá vé.
-    * Nút cập nhật trạng thái chuyến xe (Khởi hành, Hoàn thành, Hủy chuyến).
-* **Kiểm thử**:
-  * Viết Unit Test kiểm tra tạo chuyến xe mới: Đảm bảo trong CSDL sinh ra đúng 34 bản ghi ghế tương ứng.
-
-#### 🔐 4. PHẠM THANH PHONG (FULL-STACK DEVELOPER)
-* **Phân hệ**: **Xác thực, Bảo mật & Quản lý Tài khoản (Auth & RBAC Management)**
-* **Backend (Spring Boot 3 + Java 21)**:
-  * Cấu hình `SecurityConfig.java` với Spring Security 6:
-    * Mở các route public: `/api/v1/auth/**`, `/api/v1/trips/**`, `/api/v1/ai/**`.
-    * Bảo vệ các route nhạy cảm: Bắt buộc quyền `ROLE_ADMIN` đối với `/api/v1/admin/**`.
-  * `JwtTokenProvider.java`: Sinh token JWT có hạn 24h bằng HMAC-SHA256, trích xuất username/role.
-  * `JwtAuthenticationFilter`: Đọc header `Authorization: Bearer <token>`, giải mã và thiết lập `SecurityContext`.
-  * `AuthService`:
-    * Đăng ký tài khoản: Mã hóa mật khẩu bằng `BCryptPasswordEncoder` (12 rounds).
-    * Đăng nhập: Hỗ trợ linh hoạt bằng Email HOẶC Số điện thoại.
-  * `AuthController`: API `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/me`.
-* **Frontend (React 18 + Vite + TypeScript)**:
-  * Xây dựng Modal Đăng ký & Đăng nhập tài khoản trên thanh Navbar.
-  * Cấu hình Axios Interceptor (`api.ts`): Tự động đính kèm `Bearer <token>` vào mọi request khi người dùng đã đăng nhập.
-  * Lưu trữ token và thông tin người dùng an toàn trong LocalStorage.
-  * Hiển thị trạng thái đăng nhập, Avatar và nút Đăng xuất trên thanh Navbar.
-* **Kiểm thử**:
-  * Viết Unit Tests cho Auth: Test mật khẩu sai, trùng email/SĐT, kiểm tra chặn truy cập trái phép khi không có token (401 Unauthorized, 403 Forbidden).
-
-#### 🎫 5. TRẦN MINH ĐỨC 2 (FULL-STACK DEVELOPER)
-* **Phân hệ**: **Vé điện tử, Tra cứu vé & Check-in QR (E-Ticket & QR Verification)**
-* **Backend (Spring Boot 3 + Java 21)**:
-  * Quản lý thực thể `Ticket`:
-    * Mã vé độc nhất: `TK-YYYYMMDD-XXXX-01`.
-    * Mã băm QR Code hash duy nhất cho từng vị trí ghế: `UUID.randomUUID()`.
-    * Trạng thái vé: `ISSUED` (Đã phát hành), `USED` (Đã lên xe), `CANCELLED` (Đã hủy).
-  * `TicketRepository` & `BookingService`:
-    * API Tra cứu vé theo mã đơn: `GET /api/v1/bookings/code/{bookingCode}` (trả về đầy đủ thông tin chuyến xe, điểm đón, điểm trả, danh sách vé con).
-    * API Lịch sử vé của tôi: `GET /api/v1/bookings/my-bookings`.
-    * Nghiệp vụ hủy vé trước 24h: Chuyển trạng thái vé và đơn vé sang `CANCELLED`, hoàn trả ghế về `AVAILABLE`.
-* **Frontend (React 18 + Vite + TypeScript)**:
-  * Xây dựng trang Tra cứu vé điện tử (`TicketLookupPage.tsx`):
-    * Ô nhập mã đơn vé (VD: `BKG-20261025-001` hoặc mã vé vừa đặt).
-    * Giao diện Thẻ vé điện tử sang trọng: Logo nhà xe, biển số, giờ khởi hành, điểm đón, điểm trả.
-    * **Render mã QR Code** cho từng vị trí ghế ngồi để phụ xe có thể quét mã khi hành khách lên xe.
-  * Xây dựng trang Lịch sử vé đã đặt của hành khách (My Bookings Page).
-* **Kiểm thử**:
-  * Kiểm thử tra cứu mã vé đúng/sai, kiểm thử hiển thị mã QR, kiểm thử hủy vé theo chính sách.
-
-#### 🤖 6. ĐOÀN NHẬT CƯỜNG (FULL-STACK DEVELOPER & QA LEAD)
-* **Phân hệ**: **Trợ lý AI Du lịch Thông minh & Dashboard Thống kê Doanh thu (AI & Analytics)**
-* **Backend (Spring Boot 3 + Java 21)**:
-  * **Module AI Smart Travel**:
-    * `AiService` & `AiController`: API `POST /api/v1/ai/chat`.
-    * Tích hợp tư vấn lộ trình thông minh: Sài Gòn - Đà Lạt, Hà Nội - Sa Pa...
-    * Gợi ý chọn vị trí giường nằm: Tư vấn chọn giường tầng 1 (A01 - A06) cho người hay say xe.
-    * Cung cấp thông tin chính sách hoàn/hủy vé tự động.
-  * **Module Thống kê Doanh thu**:
-    * `BookingRepository`: Viết câu lệnh truy vấn tính tổng doanh thu từ các vé đã xác nhận (`CONFIRMED`).
-    * `AdminTripService`: API `GET /api/v1/admin/dashboard/stats` trả về 4 chỉ số KPI: Tổng chuyến xe, Chuyến đang mở bán, Tổng vé đã đặt, Tổng doanh thu (VNĐ).
-* **Frontend (React 18 + Vite + TypeScript)**:
-  * Xây dựng Widget Chatbot AI (`AiAssistantWidget.tsx`):
-    * Nút chat nổi góc phải dưới màn hình.
-    * Gợi ý các nút câu hỏi nhanh: "Sài Gòn - Đà Lạt", "Ghế nào chống say xe?", "Chính sách hủy vé?".
-    * Khung chat phản hồi tức thì từ AI.
-  * Xây dựng 4 Card KPI trên `AdminDashboardPage.tsx`: Hiển thị trực quan doanh thu, chuyến xe, vé đặt và khách hàng.
-* **QA & Báo cáo**:
-  * Lập bảng và thực hiện kiểm thử trọn bộ **25 Test Cases** (100% Pass) theo đặc tả Sprint 7 ngày.
-  * Chuẩn bị kịch bản demo tính năng AI và Dashboard doanh thu cho buổi bảo vệ.
-
-### 2.4 Ma trận trách nhiệm RACI
-* **R** (Responsible): Trực tiếp code Full-stack
-* **A** (Accountable): Nhóm trưởng duyệt & chịu trách nhiệm chung (**Phạm Công Thành**)
-* **C** (Consulted): Tham vấn kỹ thuật
-* **I** (Informed): Nhận thông tin tiến độ
-
-| Chức năng Full-stack (Feature Slice) | Thành (Lead) | Phát | Kiên | Phong | Đức | Cường |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **1. Nền tảng, Tuyến đường & Tìm chuyến xe** | **R / A** | C | I | I | I | I |
-| **2. Sơ đồ ghế 2 tầng & Đặt vé nguyên tử** | **A** | **R** | C | I | C | I |
-| **3. Quản trị Chuyến xe & Tự động tạo 34 ghế** | **A** | I | **R** | I | I | C |
-| **4. Xác thực, JWT, BCrypt & Phân quyền RBAC** | **A** | I | I | **R** | I | I |
-| **5. Vé điện tử, Tra cứu vé & Check-in QR** | **A** | C | I | I | **R** | I |
-| **6. Trợ lý AI du lịch & Dashboard Doanh thu** | **A** | I | I | I | I | **R** |
-| **7. Review Pull Request, CI/CD, Tổng duyệt Demo** | **R / A** | C | C | C | C | C |
 
 ---
 
+### 2.2 Đánh giá Thiết kế: "Quản lý các đường dẫn bằng 1 Router Controller có phù hợp không?"
+
+#### ⚠️ Phân tích Rủi ro nếu gom toàn bộ vào "1 file Router Controller duy nhất":
+* **NGUY CƠ 1: Xung đột mã nguồn nghiêm trọng (Git Merge Hell)**: Nếu 6 thành viên cùng mở 1 file Controller ở Backend hoặc 1 file Router ở Frontend để khai báo thêm đường dẫn (`@GetMapping`, `<Route>`), mỗi lần `git push` hay `git merge` chắc chắn sẽ xung đột dòng, ghi đè code của nhau, làm đình trệ toàn bộ dự án.
+* **NGUY CƠ 2: Vi phạm nguyên lý SOLID (Single Responsibility Principle - SRP)**: 1 file Controller gánh từ Đăng nhập, Tìm chuyến, Giữ ghế, Thanh toán đến Admin CRUD sẽ biến thành **"God Class"** (hàng nghìn dòng lệnh), cực kỳ khó đọc, khó debug và không thể viết Unit Test cô lập.
+* **NGUY CƠ 3: Lỗ hổng bảo mật & Phân quyền**: Khi trộn lẫn API Admin và Client trong 1 file, nguy cơ cấu hình sót `@PreAuthorize` hoặc mở nhầm quyền truy cập nhạy cảm là rất cao.
+
+#### ✅ Giải pháp Kiến trúc Chuẩn mực: **Kiến trúc Điều hướng Tập trung Module hóa (Centralized Routing Convention + Modular Sub-Routers & Feature Controllers)**:
+* **Tập trung về mặt Quy ước (Convention-First)**: Toàn đội tuân thủ một ma trận định tuyến URL (URL Matrix) duy nhất.
+* **Phân rã về mặt Mã nguồn (Modular Implementation)**: 
+  * Phía **Frontend**: Tách thành 2 Sub-Routers vật lý độc lập: `src/routes/adminRoutes.tsx` (Thành quản lý) và `src/routes/clientRoutes.tsx` (5 thành viên quản lý). File `App.tsx` chỉ làm nhiệm vụ nạp 2 Sub-Routers này.
+  * Phía **Backend**: Tách thành các Controller độc lập theo Domain (`AdminTripController`, `TripSearchController`, `SeatLockController`, `BookingController`, `PaymentController`, `TicketLookupController`). `SecurityConfig.java` bảo vệ tập trung bằng URL pattern `/api/v1/admin/**`.
+
+---
+
+### 2.3 Thiết kế Phân luồng Triệt tiêu Xung đột giữa Backend và Frontend (Zero-Conflict & Non-Blocking Design)
+
+#### 1. Ma trận Phân vùng Định tuyến (URL Routing Matrix)
+
+| Phân hệ | Đường dẫn Frontend (Route) | File Router Frontend | Tiền tố Backend API | Controller Backend Phụ trách | Quyền truy cập (Security) | Người phụ trách |
+|:---|:---|:---|:---|:---|:---|:---|
+| **Admin** | `/admin`<br/>`/admin/dashboard` | `routes/adminRoutes.tsx` | `/api/v1/admin/dashboard/stats` | `AdminTripController` | `ROLE_ADMIN` | **Phạm Công Thành** |
+| **Admin** | `/admin/trips` | `routes/adminRoutes.tsx` | `/api/v1/admin/trips/**` | `AdminTripController` | `ROLE_ADMIN` | **Phạm Công Thành** |
+| **Admin** | `/admin/companies` | `routes/adminRoutes.tsx` | `/api/v1/admin/companies/**` | `AdminCompanyController` | `ROLE_ADMIN` | **Phạm Công Thành** |
+| **Admin** | `/admin/users` | `routes/adminRoutes.tsx` | `/api/v1/admin/users/**` | `AdminUserController` | `ROLE_ADMIN` | **Phạm Công Thành** |
+| **Users** | `/`<br/>`/search` | `routes/clientRoutes.tsx` | `/api/v1/trips/search`<br/>`/api/v1/trips/{id}` | `TripSearchController` | `permitAll()` | **Nguyễn Đại Phát** |
+| **Users** | `/trips/:id/seats` | `routes/clientRoutes.tsx` | `/api/v1/trips/{id}/seats`<br/>`/api/v1/seats/lock` | `SeatLockController` | `permitAll()` | **Phan Trung Kiên** |
+| **Users** | `/checkout` | `routes/clientRoutes.tsx` | `/api/v1/trips/{id}/points`<br/>`/api/v1/bookings` | `BookingProcessController`| `permitAll()` / Guest | **Phạm Thanh Phong** |
+| **Users** | `/payment/callback`<br/>`/tickets/:code` | `routes/clientRoutes.tsx` | `/api/v1/payments/**` | `PaymentController` | `permitAll()` | **Trần Minh Đức 2** |
+| **Users** | `/lookup`<br/>`/my-bookings` | `routes/clientRoutes.tsx` | `/api/v1/bookings/code/{code}`<br/>`/api/v1/tickets/{id}/cancel` | `TicketLookupController` | `permitAll()` / User | **Đoàn Nhật Cường** |
+
+#### 2. Kiến trúc Điều hướng Frontend (React Router v6 Modular)
+Cấu trúc cây Router trong thư mục `frontend/src/routes/`:
+```
+frontend/src/
+├── routes/
+│   ├── adminRoutes.tsx     <--- CHỈ MỘT MÌNH THÀNH CODE (Không bao giờ bị conflict!)
+│   └── clientRoutes.tsx    <--- 5 THÀNH VIÊN USERS ĐĂNG KÝ ROUTE CỦA MÌNH TẠI ĐÂY
+└── App.tsx                 <--- ROOT SWITCHER: Điều phối /admin/* và /*
+```
+
+* **`src/App.tsx`** đóng vai trò Root Orchestrator:
+```tsx
+export const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <Navbar />
+      <main>
+        <Routes>
+          {/* Phân hệ Quản trị (Admin) */}
+          <Route path="/admin/*" element={<AdminRoutes />} />
+          {/* Phân hệ Người dùng / Khách hàng (Users) */}
+          <Route path="/*" element={<ClientRoutes />} />
+        </Routes>
+      </main>
+      <AiAssistantWidget />
+      <Footer />
+    </BrowserRouter>
+  );
+};
+```
+
+#### 3. Bốn Nguyên tắc Vàng Chống Đình trệ giữa Backend và Frontend:
+1. **Giao ước DTO Chuẩn (Contract-First)**: Thống nhất cấu trúc Request/Response (`ApiResponse<T>`) và TypeScript Interface trong `frontend/src/types/index.ts` trước khi code.
+2. **Cơ chế Mock Data Fallback**: Khi Backend chưa hoàn thành API thật, Frontend lập tức sử dụng Mock Data mô phỏng đúng interface trong `services/mockData.ts` để tiếp tục dựng giao diện, không phải chờ đợi Backend dù chỉ 1 phút.
+3. **Phân nhánh Git theo Tính năng (Feature Isolation)**: Mỗi thành viên tạo nhánh độc lập `feature/<ten-thanh-vien>-<chuc-nang>`. Tuyệt đối không commit trực tiếp vào `dev` hay `main`.
+4. **Chuẩn hóa Error Format**: Mọi API Backend đều trả về format lỗi chuẩn mực:
+```json
+{
+  "success": false,
+  "code": "SEAT_ALREADY_BOOKED",
+  "message": "Ghế A01 vừa được hành khách khác giữ chỗ. Vui lòng chọn ghế khác!",
+  "data": null
+}
+```
+
+---
+
+### 2.4 Bảng Phân Công Nhiệm Vụ 6 Thành Viên (1 Admin + 5 Users Full-Stack)
+
+| STT | Thành viên & Email | Vai trò & Phân hệ | Lát cắt Tính năng End-to-End | Nhiệm vụ Backend (Spring Boot 3) | Nhiệm vụ Frontend (React 18 Vite) | Tiêu chí Nghiệm thu & Test |
+|:---:|:---|:---|:---|:---|:---|:---|
+| **1** | **Phạm Công Thành**<br/>`Phamcongt56@gmail.com`<br/>*(Nhóm trưởng / Architect)* | **Admin Lead & Core Architect** | **PHÂN HỆ 1: TOÀN BỘ ADMIN PORTAL & HẠ TẦNG HỆ THỐNG** | • Quản lý CSDL 36 bảng `init.sql`<br/>• Cấu hình Spring Security JWT & RBAC<br/>• CRUD Nhà xe, Xe, Sơ đồ ghế mẫu<br/>• CRUD Tuyến đường, Điểm dừng<br/>• Quản lý Chuyến xe & Tự động tạo 34 ghế<br/>• Cấu hình Giá vé động & Chính sách hủy<br/>• API Thống kê KPI Dashboard (`/admin/dashboard/stats`) | • Layout Quản trị `AdminDashboardPage.tsx`<br/>• Bảng điều khiển KPI & Biểu đồ doanh thu<br/>• Form popup Thêm chuyến xe mới & chọn nhà xe/tuyến<br/>• Bảng điều phối chuyến xe & đổi trạng thái (`SCHEDULED` ➔ `DEPARTED` ➔ `COMPLETED`)<br/>• Module quản lý đối tác nhà xe | • Quản trị Git PR nhánh `dev` ➔ `main`<br/>• Docker Compose & CI/CD Actions<br/>• Tự động tạo đúng 34 ghế khi tạo chuyến mới<br/>• Bảo mật chặn 403 Forbidden nếu không phải Admin<br/>• Chủ trì kịch bản bảo vệ 100/100 điểm |
+| **2** | **Nguyễn Đại Phát**<br/>`nguyendaiphat06@gmail.com` | **Full-Stack Developer** | **PHÂN HỆ 2 (USERS) - SLICE 1: Tìm kiếm Chuyến xe & Bộ lọc Đa tiêu chí** | • `TripSearchController` & `TripService`<br/>• API `GET /api/v1/trips/search` tìm theo Nơi đi, Nơi đến, Ngày đi<br/>• Bộ lọc nâng cao: Lọc khoảng giá min-max, giờ chạy (Sáng/Chiều/Tối), loại xe (Limousine/Giường nằm), nhà xe<br/>• Sắp xếp giá tăng/giảm | • Hoàn thiện `HomePage.tsx`<br/>• Nâng cấp `SearchTripBar.tsx` (Autosuggest địa điểm, Datepicker chuẩn)<br/>• Nâng cấp `TripCard.tsx` (Hiển thị tiện ích WiFi, nước uống, số chỗ trống thực tế)<br/>• Sidebar Bộ lọc thông minh | • Test tìm kiếm chính xác theo ngày<br/>• Test lọc kết hợp (Giá rẻ + Limousine)<br/>• Test hiển thị thông báo thân thiện khi không tìm thấy chuyến |
+| **3** | **Phan Trung Kiên**<br/>`phantrungkien2006@gmail.com` | **Full-Stack Developer** | **PHÂN HỆ 2 (USERS) - SLICE 2: Sơ đồ Chọn Ghế 2 Tầng & Khóa Giữ Chỗ Real-Time** | • `SeatLockController` & `SeatLockService`<br/>• API `GET /api/v1/trips/{id}/seats` lấy trạng thái 34 ghế<br/>• API `POST /api/v1/seats/lock` khóa ghế độc quyền bằng `@Lock(PESSIMISTIC_WRITE)`<br/>• Cơ chế đếm ngược giữ chỗ 10 phút (tự động nhả ghế nếu không thanh toán) | • Nâng cấp component `BusSeatMap.tsx`<br/>• Vẽ trực quan 2 tầng xe: Tầng 1 (A01-A17), Tầng 2 (B01-B17)<br/>• Mã màu 3 trạng thái: Xanh (Trống), Cam (Đang chọn), Xám (Đã bán)<br/>• Widget đếm ngược thời gian giữ chỗ 10:00 và tính tiền realtime | • Concurrency Unit Test: 10 threads cùng chọn ghế A01 đồng thời ➔ 1 thread thành công, 9 thread báo lỗi (Zero Overbooking)<br/>• Test tự động nhả ghế sau 10 phút |
+| **4** | **Phạm Thanh Phong**<br/>`thanhphong102006@gmail.com` | **Full-Stack Developer** | **PHÂN HỆ 2 (USERS) - SLICE 3: Điểm Đón/Trả, Thông Tin Hành Khách & Đặt Vé** | • `BookingProcessController` & `BookingService`<br/>• API `GET /api/v1/trips/{id}/points` lấy danh sách điểm đón/trả kèm ETA<br/>• API `POST /api/v1/bookings` tạo đơn vé nguyên tử `@Transactional(isolation = SERIALIZABLE)`<br/>• Sinh mã đơn định dạng `BK-YYYYMMDD-XXXX` | • Nâng cấp Modal đặt vé `CheckoutModal.tsx`<br/>• Dropdown chọn điểm đón và điểm trả theo mốc giờ xe chạy<br/>• Form nhập thông tin hành khách (Họ tên, SĐT, Email có regex validation)<br/>• Ô áp dụng mã giảm giá / Voucher ưu đãi (nếu có)<br/>• Nút xác nhận điều khoản đặt vé | • Test validation thông tin người đặt<br/>• Test tính tổng tiền vé khớp số lượng ghế đã chọn<br/>• Test tạo đơn thành công ở trạng thái `PENDING` |
+| **5** | **Trần Minh Đức 2**<br/>`2601minhduc@gmail.com` | **Full-Stack Developer** | **PHÂN HỆ 2 (USERS) - SLICE 4: Cổng Thanh Toán & Vé Điện Tử E-Ticket Kèm Mã QR** | • `PaymentController` & `PaymentService`<br/>• Xử lý thanh toán: VNPay / MoMo / ZaloPay Mock & COD khi lên xe<br/>• API sinh mã vé độc nhất `TK-YYYYMMDD-XXXX-01`<br/>• Thuật toán sinh mã băm QR Code hash SHA-256 chứa thông tin vé<br/>• Cập nhật đơn vé `PAID` và vé `ACTIVE` | • Trang Thanh toán trực quan (`PaymentPage.tsx`) với các phương thức thanh toán<br/>• Màn hình Thẻ vé điện tử E-Ticket sang trọng<br/>• Render mã QR Code sắc nét quét được bằng camera điện thoại<br/>• Nút Tải vé điện tử / In vé | • Test luồng thanh toán thành công chuyển trạng thái vé tức thì<br/>• Test quét mã QR giải mã đúng mã đơn và số ghế<br/>• Test không thể thanh toán trùng lặp đơn đã trả tiền |
+| **6** | **Đoàn Nhật Cường**<br/>`Cuongclasspurpose@gmail.com` | **Full-Stack Developer** | **PHÂN HỆ 2 (USERS) - SLICE 5: Tra Cứu Vé, Lịch Sử Đặt Chỗ, Hủy Vé & Đánh Giá** | • `TicketLookupController` & `ReviewController`<br/>• API Tra cứu vé theo mã `GET /api/v1/bookings/code/{code}`<br/>• API Lịch sử vé của tôi `GET /api/v1/users/my-bookings`<br/>• API Hủy vé `POST /api/v1/tickets/{id}/cancel` tự động tính tiền hoàn theo bảng `cancellation_policy_rules`<br/>• API Gửi đánh giá sao ⭐ và bình luận nhà xe | • Nâng cấp trang Tra cứu vé `TicketLookupPage.tsx` (Tìm bằng SĐT hoặc Mã vé)<br/>• Trang Lịch sử chuyến đi của tôi<br/>• Modal Hủy vé: Hiển thị minh bạch % hoàn tiền theo chính sách và số tiền thực nhận<br/>• Widget Đánh giá 1-5 sao và viết review trải nghiệm | • Test tra cứu vé chính xác thông tin hành khách & ghế<br/>• Test hủy vé trước 24h hoàn tiền đúng % chính sách<br/>• Test gửi đánh giá thành công cập nhật điểm trung bình nhà xe |
+
+---
+
+### 2.5 Chi tiết Công việc End-to-End của Từng Thành Viên
+
+#### 👑 1. PHẠM CÔNG THÀNH (NHÓM TRƯỞNG & SYSTEM ARCHITECT)
+* **Phân hệ**: **ADMIN PORTAL & NỀN TẢNG KIẾN TRÚC HỆ THỐNG**
+* **Trách nhiệm Backend (Spring Boot 3 + Java 21)**:
+  * Quản trị và duy trì CSDL 36 bảng `init.sql` khớp 100% với `docs/schema.sql`.
+  * Xây dựng tầng kiến trúc bảo mật trung tâm: `SecurityConfig.java`, `JwtTokenProvider.java`, `JwtAuthenticationFilter.java`, cấu hình bảo vệ `/api/v1/admin/**` với `hasRole('ADMIN')`.
+  * Xây dựng bộ điều khiển Quản trị `AdminTripController` & `AdminTripService`:
+    * API Thống kê KPI: `GET /api/v1/admin/dashboard/stats` (tổng chuyến, chuyến mở bán, tổng vé bán, doanh thu).
+    * API Tạo chuyến xe mới: `POST /api/v1/admin/trips` **kèm thuật toán tự động sinh 34 ghế** (17 ghế tầng 1 A01-A17, 17 ghế tầng 2 B01-B17) vào bảng `trip_seats`.
+    * API Đổi trạng thái chuyến xe: `PATCH /api/v1/admin/trips/{id}/status` (`SCHEDULED` ➔ `DEPARTED` ➔ `COMPLETED` ➔ `CANCELLED`).
+    * Quản lý nhà xe đối tác, xe, chính sách giá và chính sách hủy vé hoàn tiền.
+* **Trách nhiệm Frontend (React 18 + Vite + TypeScript)**:
+  * Quản lý độc quyền file định tuyến `src/routes/adminRoutes.tsx`.
+  * Phát triển giao diện `AdminDashboardPage.tsx`:
+    * 4 Thẻ KPI thống kê doanh thu, chuyến xe, vé bán và khách hàng.
+    * Nút & Form modal "Thêm Chuyến Xe Mới": Chọn nhà xe, tuyến đường, giờ khởi hành/đến, loại xe Limousine 34 phòng, nhập giá vé.
+    * Bảng điều phối danh sách chuyến xe với các nút chuyển trạng thái xuất bến / hoàn thành.
+* **Quản trị Kỹ thuật & DevOps**:
+  * Quản trị Git Flow: Review và xét duyệt toàn bộ Pull Request của 5 thành viên từ nhánh `feature/*` vào `dev`.
+  * Đảm bảo tính toàn vẹn CI/CD và Docker Compose (`traveleasy-mysql`, `traveleasy-backend`, `traveleasy-frontend`).
+  * Chủ trì kịch bản bảo vệ tốt nghiệp 15 phút đạt 100/100 điểm.
+
+#### 🔍 2. NGUYỄN ĐẠI PHÁT (FULL-STACK DEVELOPER)
+* **Phân hệ**: **USERS SLICE 1 — Tìm kiếm Chuyến xe, Gợi ý Tuyến & Bộ lọc Đa tiêu chí**
+* **Trách nhiệm Backend**:
+  * `TripSearchController.java`: API `GET /api/v1/trips/search`.
+  * Nhận các tham số: `departureLocationId`, `arrivalLocationId`, `departureDate`, `minPrice`, `maxPrice`, `busType`, `companyId`, `sortBy`.
+  * Viết câu truy vấn Spring Data JPA Dynamic Specification để lọc chuyến xe linh hoạt, chỉ lấy các chuyến có trạng thái `SCHEDULED` và còn chỗ trống.
+* **Trách nhiệm Frontend**:
+  * Đăng ký route `/` và `/search` trong `src/routes/clientRoutes.tsx`.
+  * Hoàn thiện giao diện `SearchTripBar.tsx`: Tự động gợi ý điểm đi/đến (TP.HCM, Đà Lạt, Nha Trang, Cần Thơ...), chọn ngày đi.
+  * Hoàn thiện danh sách chuyến `TripCard.tsx`: Logo nhà xe, giờ đi/đến, thời gian dự kiến (vd: 8 giờ), số chỗ còn trống, giá vé từ và nút "Chọn chỗ".
+  * Sidebar bộ lọc: Lọc khung giờ (Sáng 00:00-06:00, Trưa 06:00-12:00, Chiều 12:00-18:00, Tối 18:00-24:00), lọc giá vé bằng slider.
+* **Kiểm thử**: Viết Unit Test cho API tìm kiếm với đầy đủ các bộ tham số lọc.
+
+#### 💺 3. PHAN TRUNG KIÊN (FULL-STACK DEVELOPER)
+* **Phân hệ**: **USERS SLICE 2 — Sơ đồ Chọn Ghế 2 Tầng & Khóa Giữ Chỗ Real-Time**
+* **Trách nhiệm Backend**:
+  * `SeatLockController.java`:
+    * API `GET /api/v1/trips/{id}/seats`: Trả về toàn bộ danh sách 34 ghế kèm trạng thái (`AVAILABLE`, `LOCKED`, `BOOKED`).
+    * API `POST /api/v1/seats/lock`: Khóa giữ chỗ ghế trong 10 phút.
+  * Sử dụng kỹ thuật Khóa Bi quan (Pessimistic Write Lock) trên `TripSeatRepository` để loại bỏ 100% tình trạng hai người cùng chọn 1 ghế:
+    ```java
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM TripSeat s WHERE s.trip.id = :tripId AND s.seatCode IN :seatCodes")
+    List<TripSeat> lockSeatsForBooking(Long tripId, List<String> seatCodes);
+    ```
+* **Trách nhiệm Frontend**:
+  * Đăng ký route `/trips/:tripId/seats` trong `src/routes/clientRoutes.tsx`.
+  * Xây dựng Component `BusSeatMap.tsx`:
+    * Vẽ 2 tầng xe Limousine 34 phòng: Tầng dưới (A01 - A17), Tầng trên (B01 - B17).
+    * Phân biệt rõ: Ghế trống (viền xanh), Ghế đang chọn (màu cam nổi bật), Ghế đã có người mua (màu xám có gạch chéo, disabled).
+    * Bộ đếm thời gian giữ chỗ 10:00 đếm lùi, tự động cảnh báo khi sắp hết giờ giữ ghế.
+    * Hiển thị bảng tóm tắt: Danh sách ghế đã chọn và tổng tiền tạm tính.
+* **Kiểm thử**: Concurrency Test mô phỏng 10 người cùng bấm chọn ghế A01 đồng thời (Zero Double-Booking).
+
+#### 📝 4. PHẠM THANH PHONG (FULL-STACK DEVELOPER)
+* **Phân hệ**: **USERS SLICE 3 — Điểm Đón/Trả, Thông Tin Hành Khách & Tạo Đơn Đặt Vé**
+* **Trách nhiệm Backend**:
+  * `BookingProcessController.java`:
+    * API `GET /api/v1/trips/{id}/points`: Lấy danh mục điểm đón/trả và mốc giờ xe đón dự kiến (ETA).
+    * API `POST /api/v1/bookings`: Tạo đơn đặt vé nguyên tử `@Transactional(isolation = Isolation.SERIALIZABLE)`.
+  * Sinh mã đơn độc nhất `BK-YYYYMMDD-XXXX`.
+  * Xác thực dữ liệu hành khách: Số điện thoại Việt Nam (10 chữ số), Email đúng định dạng, Họ tên không để trống.
+  * Cập nhật trạng thái các ghế đã chọn sang `BOOKED` và giảm số ghế trống của chuyến xe.
+* **Trách nhiệm Frontend**:
+  * Đăng ký route `/checkout` trong `src/routes/clientRoutes.tsx`.
+  * Nâng cấp `CheckoutModal.tsx`:
+    * Bước 1: Chọn Điểm đón (ví dụ: Bến xe Miền Đông, Cây xăng số 47...) và Điểm trả (Bến xe Liên tỉnh Đà Lạt, Nội thành Đà Lạt...).
+    * Bước 2: Form nhập thông tin hành khách (Họ tên, Số điện thoại, Email nhận vé, Ghi chú đón xe).
+    * Bước 3: Xem lại thông tin chuyến đi, tổng tiền vé và nhấn nút "Tiến hành Đặt vé".
+* **Kiểm thử**: Test validation đầu vào, test tạo đơn đặt vé thành công và kiểm tra ghế tự động chuyển trạng thái `BOOKED`.
+
+#### 💳 5. TRẦN MINH ĐỨC 2 (FULL-STACK DEVELOPER)
+* **Phân hệ**: **USERS SLICE 4 — Cổng Thanh Toán & Vé Điện Tử E-Ticket Kèm Mã QR**
+* **Trách nhiệm Backend**:
+  * `PaymentController.java`:
+    * API `POST /api/v1/payments/create`: Tạo yêu cầu thanh toán (Hỗ trợ VNPay, MoMo, ZaloPay, COD khi lên xe).
+    * API `GET /api/v1/payments/callback`: Xử lý phản hồi thanh toán từ cổng.
+  * Khi thanh toán thành công:
+    * Chuyển trạng thái Booking sang `CONFIRMED` / `PAID`.
+    * Tự động sinh thực thể `Ticket` cho từng vị trí ghế: Mã vé `TK-YYYYMMDD-XXXX-01`.
+    * Sinh mã băm QR Code hash (SHA-256 an toàn chứa `ticketCode` + `bookingId` + `seatCode`).
+* **Trách nhiệm Frontend**:
+  * Đăng ký route `/payment/callback` và `/tickets/:code` trong `src/routes/clientRoutes.tsx`.
+  * Xây dựng giao diện `PaymentPage.tsx`: Lựa chọn phương thức thanh toán VNPay, MoMo, Chuyển khoản QR hoặc COD.
+  * Xây dựng Thẻ vé điện tử E-Ticket sang trọng:
+    * Đầy đủ thông tin: Tên nhà xe, Biển số, Tuyến đường, Giờ khởi hành, Điểm đón/trả, Họ tên khách, Vị trí ghế.
+    * **Render mã QR Code** sắc nét cho từng ghế để phụ xe dùng điện thoại quét khi lên xe.
+    * Nút "Tải vé điện tử (PDF)" hoặc "In vé".
+* **Kiểm thử**: Test quy trình thanh toán thành công/thất bại, test quét và giải mã mã QR vé điện tử.
+
+#### 🌟 6. ĐOÀN NHẬT CƯỜNG (FULL-STACK DEVELOPER)
+* **Phân hệ**: **USERS SLICE 5 — Tra Cứu Vé, Lịch Sử Đặt Chỗ, Hủy Vé & Đánh Giá**
+* **Trách nhiệm Backend**:
+  * `TicketLookupController.java`:
+    * API `GET /api/v1/bookings/code/{code}`: Tra cứu chi tiết đơn vé bằng mã đơn hoặc số điện thoại.
+    * API `GET /api/v1/users/my-bookings`: Danh sách lịch sử các chuyến đi của người dùng.
+    * API `POST /api/v1/tickets/{id}/cancel`: Hủy vé tự động áp dụng quy tắc hoàn tiền từ bảng `cancellation_policy_rules` (Trước 24h hoàn 90%, từ 12-24h hoàn 70%, sau 12h không hoàn).
+  * `ReviewController.java`: API `POST /api/v1/reviews` cho phép khách gửi đánh giá từ 1-5 sao và bình luận sau khi hoàn thành chuyến đi.
+* **Trách nhiệm Frontend**:
+  * Đăng ký route `/lookup` và `/my-bookings` trong `src/routes/clientRoutes.tsx`.
+  * Hoàn thiện trang Tra cứu vé `TicketLookupPage.tsx`: Nhập số điện thoại hoặc mã đơn để xem lại thẻ vé điện tử và mã QR.
+  * Giao diện Lịch sử chuyến đi: Danh sách vé Sắp đi, Đã đi, Đã hủy.
+  * Modal Hủy vé: Hiển thị minh bạch chính sách hoàn tiền, số tiền thực hoàn và xác nhận hủy vé.
+  * Form Đánh giá Chuyến đi: Chọn số sao ⭐ (1 đến 5 sao), viết nhận xét chất lượng phục vụ của nhà xe.
+* **Kiểm thử & QA**: Lập bảng kiểm thử và tự động hóa kiểm thử cho các kịch bản tra cứu, hủy vé và gửi đánh giá.
+
+---
+
+### 2.6 Ma trận Trách nhiệm RACI Cập Nhật
+* **R** (Responsible): Trực tiếp thực hiện Full-Stack (BE + FE + Test)
+* **A** (Accountable): Nhóm trưởng phê duyệt & chịu trách nhiệm chất lượng chung (**Phạm Công Thành**)
+* **C** (Consulted): Tham vấn chuyên môn kỹ thuật
+* **I** (Informed): Nhận thông báo tiến độ
+
+| Phân hệ & Tính năng Full-Stack | Thành (Lead) | Phát | Kiên | Phong | Đức | Cường |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **PHÂN HỆ 1: ADMIN PORTAL (Dashboard, Xe, Tuyến, Chuyến, Giá, User, Logs)** | **R / A** | I | I | I | I | I |
+| **USERS 1: Tìm kiếm Chuyến xe, Gợi ý Tuyến & Bộ lọc Nâng cao** | **A** | **R** | C | I | I | I |
+| **USERS 2: Sơ đồ Chọn Ghế 2 Tầng & Khóa Giữ Chỗ Real-Time** | **A** | C | **R** | C | I | I |
+| **USERS 3: Điểm Đón/Trả, Thông Tin Hành Khách & Đặt Vé** | **A** | I | C | **R** | C | I |
+| **USERS 4: Cổng Thanh Toán & Vé Điện Tử E-Ticket Mã QR** | **A** | I | I | C | **R** | I |
+| **USERS 5: Tra Cứu Vé, Lịch Sử Đặt Chỗ, Hủy Vé/Hoàn Tiền & Review** | **A** | I | I | I | C | **R** |
+| **Kiến trúc Hệ thống, Security JWT, DDL CSDL & Quản trị Git PR** | **R / A** | C | C | C | C | C |
+
+---
 ## 3. KIẾN TRÚC HỆ THỐNG & CÔNG NGHỆ (TECH STACK)
 
 ### 3.1 Mô hình kiến trúc Modular Monolith & Clean Architecture
