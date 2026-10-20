@@ -13,5 +13,5 @@ spring:
 
 app:
   jwt:
-    secret: dHJhdmVsZWFzeV9wbGF0Zm9ybV9qd3Rfc2VjcmV0X2tleV8yMDI2!
+    secret: TravelEasyDevSecretKeyForLocalDevelopmentOnlyDoNotUseInProduction2026
     expiration-ms: 86400000

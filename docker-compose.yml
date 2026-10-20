@@ -31,7 +31,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-traveleasy_db}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-traveleasy_user}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-traveleasy_password}
-      JWT_SECRET: ${JWT_SECRET:-dHJhdmVsZWFzeV9wbGF0Zm9ybV9qd3Rfc2VjcmV0X2tleV8yMDI2!}
+      JWT_SECRET: ${JWT_SECRET:-TravelEasyDevSecretKeyForLocalDevelopmentOnlyDoNotUseInProduction2026}
       SPRING_AI_OPENAI_API_KEY: ${SPRING_AI_OPENAI_API_KEY:-mock_key}
     ports:
       - "8080:8080"

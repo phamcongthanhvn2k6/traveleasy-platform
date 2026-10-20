@@ -5,6 +5,10 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum ErrorCode {
+    RESOURCE_NOT_FOUND("SYS_404", "Tài nguyên không tồn tại", HttpStatus.NOT_FOUND),
+    RESOURCE_ALREADY_EXISTS("SYS_409", "Tài nguyên đã tồn tại", HttpStatus.CONFLICT),
+    UNAUTHORIZED("AUTH_401", "Chưa xác thực hoặc không có quyền", HttpStatus.UNAUTHORIZED),
+    VALIDATION_ERROR("VAL_400", "Dữ liệu không hợp lệ", HttpStatus.BAD_REQUEST),
     USER_NOT_FOUND("USER_001", "Người dùng không tồn tại", HttpStatus.NOT_FOUND),
     EMAIL_ALREADY_EXISTS("USER_002", "Email này đã được đăng ký", HttpStatus.BAD_REQUEST),
     INVALID_CREDENTIALS("AUTH_001", "Email hoặc mật khẩu không chính xác", HttpStatus.UNAUTHORIZED),

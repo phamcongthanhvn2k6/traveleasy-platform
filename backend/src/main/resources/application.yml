@@ -22,7 +22,7 @@ spring:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:dHJhdmVsZWFzeV9wbGF0Zm9ybV9qd3Rfc2VjcmV0X2tleV8yMDI2!}
+    secret: ${JWT_SECRET:TravelEasyDevSecretKeyForLocalDevelopmentOnlyDoNotUseInProduction2026}
     expiration-ms: 86400000 # 24h
   cors:
     allowed-origins: "http://localhost:3000,http://localhost:5173"

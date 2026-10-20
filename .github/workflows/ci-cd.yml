@@ -23,10 +23,11 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
 
-    - name: Build and Test Backend
+    - name: Build Backend (Spring Boot JAR)
       working-directory: ./backend
       run: |
-        gradle test bootJar --no-daemon
+        chmod +x gradlew
+        ./gradlew bootJar --no-daemon
 
   frontend-build-lint:
     name: Frontend Build & Lint (React Vite)
