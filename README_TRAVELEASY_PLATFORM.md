@@ -97,23 +97,23 @@
 +-----------------------------------------------------------------------------------------+
 |                                CƠ CẤU NHÓM 6 NGƯỜI (TRAVELEASY)                         |
 +-----------------------------------------------------------------------------------------+
-| Member 1: Team Lead / AI Integrator (Spring AI Chatbot & SEO Generator)                 |
-| Member 2: Full-stack Developer (Authentication, Profile & Security)                     |
-| Member 3: Full-stack Developer (Routes, Trips Catalog & Search Engine)                  |
-| Member 4: Full-stack Developer (Bus Seat Map, Booking COD & Stock Reduction)           |
-| Member 5: Full-stack Developer (Admin/Operator Dashboard & Booking Lifecycle)          |
-| Member 6: QA / Tester / DevOps Engineer (Docker, CI/CD, Test Cases, Load Testing)      |
+| Phạm Công Thành (Nhóm trưởng): Fullstack Architect, Git Lead, DevOps & System Integration |
+| Nguyễn Đại Phát: Backend Core Specialist (Booking Flow, Concurrency & Pessimistic Lock)   |
+| Phan Trung Kiên: Frontend Lead (Trip Catalog, Search Engine & 2-Tier Bus Seat Map)       |
+| Phạm Thanh Phong: Backend & Security Specialist (Spring Security 6, JWT, BCrypt & RBAC)   |
+| Trần Minh Đức 2: Frontend Specialist (Checkout Flow, Điểm đón trả & Tra cứu vé QR)       |
+| Đoàn Nhật Cường: Fullstack Admin, AI Assistant Integrator & QA Lead (25 Test Cases)      |
 +-----------------------------------------------------------------------------------------+
 ```
 
 | Vai trò | Thành viên | Trách nhiệm Backend | Trách nhiệm Frontend | Trách nhiệm Phối hợp & QA |
 |---|---|---|---|---|
-| **Member 1** | **Team Lead / AI** | Setup kiến trúc Spring Boot, tích hợp Spring AI cho 2 API: Sinh mô tả tuyến xe chuẩn SEO và Chatbot tư vấn chuyến xe. | Dựng UI Chatbot Widget góc phải màn hình, nút "Sinh mô tả AI" trong form tạo chuyến xe. | Review code, điều phối tiến độ, giải quyết blocker kỹ thuật. |
-| **Member 2** | **Full-stack (Auth)** | Xây dựng Spring Security, JWT Filter, BCrypt, AuthController, ProfileController. | Dựng trang Đăng ký, Đăng nhập, Hồ sơ cá nhân (Profile), Auth Guard theo Role. | Viết unit test cho Auth, kiểm tra bảo mật NFR-04, NFR-05. |
-| **Member 3** | **Full-stack (Trips)** | Xây dựng RouteController, TripController, API tìm kiếm Nơi đi - Nơi đến - Ngày đi, bộ lọc giờ/giá/loại xe. | Dựng Thanh tìm kiếm chuyến xe, Bộ lọc linh hoạt, Lưới danh sách chuyến xe (Trip Cards). | Tối ưu thời gian phản hồi API tra cứu < 500ms, FCP < 2s. |
-| **Member 4** | **Full-stack (Booking)** | Xây dựng BookingController, TicketController, xử lý trừ ghế trống nguyên tử (`@Transactional`), sinh mã vé. | Dựng Sơ đồ ghế tương tác (Interactive Bus Seat Map), Form đặt vé COD, Trang Lịch sử vé. | Kiểm thử chống đặt trùng ghế (Zero Double-Booking). |
-| **Member 5** | **Full-stack (Admin)** | Xây dựng AdminTripController (CRUD), AdminBookingController (Cập nhật trạng thái `PENDING` ➔ `CONFIRMED` ➔ `COMPLETED`/`CANCELLED`). | Dựng Admin Layout, Bảng quản lý chuyến xe, Modal thêm chuyến có AI, Bảng duyệt vé. | Kiểm thử phân quyền: Hành khách không được vào Admin API/Page. |
-| **Member 6** | **QA & DevOps** | Viết Dockerfile Backend, cấu hình logging SLF4J, chạy test container. | Viết Dockerfile Frontend (Nginx multi-stage). | Viết file `docker-compose.yml`, tạo GitHub Actions CI/CD, viết 25 test cases, chạy k6 đo tải 50 users. |
+| **Nhóm trưởng** | **Phạm Công Thành** | Quản lý kiến trúc Monolith, CSDL [init.sql](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/init.sql), Exception Handling dùng chung, phân quyền RBAC & CORS. | Tích hợp liên thông Backend-Frontend, tối ưu hiệu năng FCP < 2s. | Điều phối dự án, Review PR nhánh `dev` ➔ `main`, Quản trị Docker Compose & GitHub Actions CI/CD. |
+| **Backend Core** | **Nguyễn Đại Phát** | Xây dựng BookingService & TripSeatRepository, xử lý trừ ghế nguyên tử (`@Transactional(isolation = Isolation.SERIALIZABLE)`), Pessimistic Locking chống Race Condition, sinh mã vé. | Phối hợp định dạng DTO Booking & Tickets với Frontend. | Viết Concurrency Unit Test (10 threads cùng book 1 ghế -> Zero Double-Booking). |
+| **Frontend Lead** | **Phan Trung Kiên** | Phối hợp API TripController và RouteController. | Dựng Thanh tìm kiếm chuyến xe ([SearchTripBar.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/components/SearchTripBar.tsx)), Lưới thẻ chuyến xe ([TripCard.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/components/TripCard.tsx)), và Sơ đồ ghế 2 tầng tương tác ([BusSeatMap.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/components/BusSeatMap.tsx)). | Đảm bảo UI Responsive, hiển thị trực quan trạng thái ghế trống/đang chọn/đã bán. |
+| **Backend & Security** | **Phạm Thanh Phong** | Xây dựng Spring Security 6, JWT Filter, mã hóa mật khẩu BCrypt (cost 12), AuthController, UserService. | Phối hợp lưu trữ JWT Token và Header Authorization. | Viết unit test cho Auth, kiểm thử bảo mật chống truy cập trái phép (401, 403). |
+| **Frontend** | **Trần Minh Đức 2** | Phối hợp API Booking (Tạo đơn & Tra cứu theo mã). | Xây dựng Modal đặt vé COD ([CheckoutModal.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/components/CheckoutModal.tsx)), chọn điểm đón/trả, Trang tra cứu vé ([TicketLookupPage.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/pages/TicketLookupPage.tsx)) kèm hiển thị mã QR. | Kiểm thử luồng đặt vé và tra cứu vé thực tế. |
+| **Fullstack & QA** | **Đoàn Nhật Cường** | Xây dựng AdminTripService (tự động tạo 34 ghế A01-A17, B01-B17), AiService tư vấn tuyến xe. | Dựng trang Quản trị Admin ([AdminDashboardPage.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/pages/AdminDashboardPage.tsx)), Widget Chatbot AI ([AiAssistantWidget.tsx](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/frontend/src/components/AiAssistantWidget.tsx)). | Lập bảng 25 Test Cases, đo tải API < 500ms, hỗ trợ kịch bản Demo tốt nghiệp 100 điểm. |
 
 ### 2.2 Kế hoạch thực hiện từng ngày (Day-by-Day Sprint Timeline)
 
