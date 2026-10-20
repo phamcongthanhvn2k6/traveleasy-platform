@@ -199,8 +199,15 @@ export const CompanyTripsPage: React.FC = () => {
                   <td style={{ padding: '14px 18px', fontWeight: 500, color: '#0f172a' }}>{item.routeName}</td>
                   <td style={{ padding: '14px 18px', color: '#334155' }}>{item.vehiclePlate}</td>
                   <td style={{ padding: '14px 18px', color: '#64748b' }}>{item.departureTime}</td>
-                  <td style={{ padding: '14px 18px', color: item.delayText !== '—' ? '#d97706' : '#94a3b8', fontWeight: item.delayText !== '—' ? 700 : 400 }}>
-                    {item.delayText}
+                  <td style={{ padding: '14px 18px', color: item.delayText !== '-' ? '#d97706' : '#94a3b8', fontWeight: item.delayText !== '-' ? 700 : 400 }}>
+                    {item.delayText !== '-' ? (
+                      <div style={{ lineHeight: 1.15, fontSize: '12px' }}>
+                        <div>+30</div>
+                        <div style={{ fontSize: '11px', fontWeight: 600 }}>phut</div>
+                      </div>
+                    ) : (
+                      <span>-</span>
+                    )}
                   </td>
                   <td style={{ padding: '14px 18px' }}>
                     <span
