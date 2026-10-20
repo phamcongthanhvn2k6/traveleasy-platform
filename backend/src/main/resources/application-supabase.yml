@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${SUPABASE_DB_URL:jdbc:postgresql://${SUPABASE_DB_HOST:db.YOUR_PROJECT_REF.supabase.co}:${SUPABASE_DB_PORT:5432}/${SUPABASE_DB_NAME:postgres}?sslmode=require}
-    username: ${SUPABASE_DB_USERNAME:postgres}
-    password: ${SUPABASE_DB_PASSWORD:YOUR_SUPABASE_PASSWORD}
+    url: ${SUPABASE_DB_URL:jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require}
+    username: ${SUPABASE_DB_USERNAME:postgres.ctvcwhdepzyvqsncbslf}
+    password: ${SUPABASE_DB_PASSWORD:thanhtyou123@}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
