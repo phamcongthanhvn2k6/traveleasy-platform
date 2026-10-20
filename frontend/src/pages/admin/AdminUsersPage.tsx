@@ -15,7 +15,7 @@ export const AdminUsersPage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  const users: UserItem[] = [
+  const [users, setUsers] = useState<UserItem[]>([
     {
       id: 'u1',
       phone: '0901234567',
@@ -79,7 +79,15 @@ export const AdminUsersPage: React.FC = () => {
       status: 'ACTIVE',
       createdAt: '16:00 01/04/2025',
     },
-  ];
+  ]);
+
+  const toggleUserLock = (id: string) => {
+    setUsers((prev) =>
+      prev.map((u) =>
+        u.id === id ? { ...u, status: u.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE' } : u
+      )
+    );
+  };
 
   const filteredUsers = users.filter((u) => {
     if (roleFilter !== 'ALL' && u.role !== roleFilter) return false;
@@ -92,7 +100,7 @@ export const AdminUsersPage: React.FC = () => {
       {/* Breadcrumb & Header Title */}
       <div style={{ marginBottom: '22px' }}>
         <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-          VeXeRe Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Nguoi dung
+          VeXeRe Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> <span style={{ color: '#0f172a' }}>Nguoi dung</span>
         </div>
         <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
           Quan ly nguoi dung
@@ -102,8 +110,8 @@ export const AdminUsersPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter Row */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+      {/* Filter Row: 2 Dropdowns side-by-side stretching across 50/50 */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
@@ -111,12 +119,13 @@ export const AdminUsersPage: React.FC = () => {
             backgroundColor: '#ffffff',
             border: '1px solid #e2e8f0',
             borderRadius: '8px',
-            padding: '8px 14px',
+            padding: '9px 14px',
             fontSize: '13px',
             color: '#334155',
             outline: 'none',
             cursor: 'pointer',
-            minWidth: '220px'
+            width: '100%',
+            boxSizing: 'border-box'
           }}
         >
           <option value="ALL">Tat ca vai tro</option>
@@ -132,12 +141,13 @@ export const AdminUsersPage: React.FC = () => {
             backgroundColor: '#ffffff',
             border: '1px solid #e2e8f0',
             borderRadius: '8px',
-            padding: '8px 14px',
+            padding: '9px 14px',
             fontSize: '13px',
             color: '#334155',
             outline: 'none',
             cursor: 'pointer',
-            minWidth: '220px'
+            width: '100%',
+            boxSizing: 'border-box'
           }}
         >
           <option value="ALL">Tat ca trang thai</option>
@@ -239,6 +249,7 @@ export const AdminUsersPage: React.FC = () => {
                         <Eye size={16} />
                       </button>
                       <button
+                        onClick={() => toggleUserLock(u.id)}
                         title={u.status === 'ACTIVE' ? 'Khoa tai khoan' : 'Mo khoa'}
                         style={{
                           background: 'none',
@@ -265,3 +276,4 @@ export const AdminUsersPage: React.FC = () => {
 };
 
 export default AdminUsersPage;
+

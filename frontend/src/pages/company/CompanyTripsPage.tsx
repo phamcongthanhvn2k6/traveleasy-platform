@@ -244,3 +244,4 @@ export const CompanyTripsPage: React.FC = () => {
 };
 
 export default CompanyTripsPage;
+

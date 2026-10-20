@@ -357,3 +357,4 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
 };
 
 export default CompanyLayout;
+

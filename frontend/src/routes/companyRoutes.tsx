@@ -45,3 +45,4 @@ export const CompanyRoutes: React.FC = () => {
 };
 
 export default CompanyRoutes;
+

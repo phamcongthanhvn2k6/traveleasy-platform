@@ -292,3 +292,4 @@ export const AdminSeatTemplatesPage: React.FC = () => {
 };
 
 export default AdminSeatTemplatesPage;
+

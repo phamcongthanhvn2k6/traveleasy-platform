@@ -347,3 +347,4 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
 };
 
 export default AdminCancellationPoliciesPage;
+

@@ -138,3 +138,4 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
 };
 
 export default CompanyCancellationPoliciesPage;
+

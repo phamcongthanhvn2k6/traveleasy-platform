@@ -243,3 +243,4 @@ export const CompanyDashboardPage: React.FC = () => {
 };
 
 export default CompanyDashboardPage;
+

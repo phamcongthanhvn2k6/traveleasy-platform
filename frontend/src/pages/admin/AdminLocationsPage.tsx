@@ -284,3 +284,4 @@ export const AdminLocationsPage: React.FC = () => {
 };
 
 export default AdminLocationsPage;
+

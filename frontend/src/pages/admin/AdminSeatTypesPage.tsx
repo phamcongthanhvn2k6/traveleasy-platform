@@ -252,3 +252,4 @@ export const AdminSeatTypesPage: React.FC = () => {
 };
 
 export default AdminSeatTypesPage;
+

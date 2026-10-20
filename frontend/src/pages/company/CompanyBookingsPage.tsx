@@ -268,3 +268,4 @@ export const CompanyBookingsPage: React.FC = () => {
 };
 
 export default CompanyBookingsPage;
+

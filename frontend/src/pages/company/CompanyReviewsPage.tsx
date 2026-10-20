@@ -155,3 +155,4 @@ export const CompanyReviewsPage: React.FC = () => {
 };
 
 export default CompanyReviewsPage;
+
