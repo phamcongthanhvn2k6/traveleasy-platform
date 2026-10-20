@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    # Supabase Transaction Pooler (Port 6543, prepareThreshold=0 for PgBouncer compatibility):
+    url: ${SUPABASE_DB_URL:jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0}
+    username: ${SUPABASE_DB_USERNAME:postgres.ctvcwhdepzyvqsncbslf}
+    password: ${SUPABASE_DB_PASSWORD:thanhtyou123@}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          lob:
+            non_contextual_creation: true

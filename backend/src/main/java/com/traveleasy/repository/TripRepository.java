@@ -16,10 +16,10 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
         SELECT t FROM Trip t
         JOIN FETCH t.route r
         JOIN FETCH t.busCompany c
-        WHERE (:origin IS NULL OR LOWER(r.departureLocation) LIKE LOWER(CONCAT('%', :origin, '%')))
-          AND (:destination IS NULL OR LOWER(r.arrivalLocation) LIKE LOWER(CONCAT('%', :destination, '%')))
-          AND (:startTime IS NULL OR t.departureTime >= :startTime)
-          AND (:endTime IS NULL OR t.departureTime <= :endTime)
+        WHERE (CAST(:origin AS string) IS NULL OR LOWER(r.departureLocation) LIKE CONCAT('%', LOWER(CAST(:origin AS string)), '%'))
+          AND (CAST(:destination AS string) IS NULL OR LOWER(r.arrivalLocation) LIKE CONCAT('%', LOWER(CAST(:destination AS string)), '%'))
+          AND (CAST(:startTime AS java.time.LocalDateTime) IS NULL OR t.departureTime >= :startTime)
+          AND (CAST(:endTime AS java.time.LocalDateTime) IS NULL OR t.departureTime <= :endTime)
           AND (:status IS NULL OR t.status = :status)
         ORDER BY t.departureTime ASC
     """)
