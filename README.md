@@ -13,6 +13,9 @@
 [![Vite](https://img.shields.io/badge/Vite-5.4-purple.svg)](https://vitejs.dev/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-blue.svg)](https://www.mysql.com/)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)](https://www.docker.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E.svg?logo=supabase)](https://supabase.com/dashboard/project/ctvcwhdepzyvqsncbslf/database/schemas)
+[![Trello](https://img.shields.io/badge/Trello-Board-0052CC.svg?logo=trello)](https://trello.com/b/AA5BYoe1/traveleasyplatform)
+[![Stitch](https://img.shields.io/badge/Stitch-UI%20Design-EA4335.svg)](https://stitch.withgoogle.com/projects/5774129554395496210?pli=1)
 
 ---
 
@@ -35,6 +38,11 @@
 * **Nhóm trưởng (Team Leader & Architect)**: **Phạm Công Thành** (`Phamcongt56@gmail.com` - GitHub: `phamcongthanhvn2k6`).
 * **Thời gian thực hiện**: Sprint 7 ngày (Agile / Scrum).
 * **Mục tiêu điểm số**: **100/100 ĐIỂM TUYỆT ĐỐI** (60 Điểm Functional Requirements + 40 Điểm Non-Functional Requirements & QA).
+
+### 🔗 HỆ THỐNG TÀI NGUYÊN TRỰC TUYẾN DỰ ÁN (PROJECT LIVE RESOURCES)
+* 📋 **Bảng Quản Trị Tiến Độ & Sprint Backlog (Trello)**: [TravelEasy_Platform | Trello Board](https://trello.com/b/AA5BYoe1/traveleasyplatform)
+* 🎨 **Hệ Thống Thiết Kế Giao Diện UI/UX (Google Stitch)**: [TravelEasy UI Prototype | Stitch Project](https://stitch.withgoogle.com/projects/5774129554395496210?pli=1)
+* 🗄️ **Cơ Sở Dữ Liệu Đám Mây & Schema Visualizer (Supabase PostgreSQL)**: [Schema Visualizer & Database | Supabase Console](https://supabase.com/dashboard/project/ctvcwhdepzyvqsncbslf/database/schemas)
 
 ---
 
@@ -239,6 +247,9 @@ Hệ thống giải quyết triệt để các vấn đề trên thông qua:
 ---
 
 ### 2.6 Kế Hoạch Sprint Backlog & 17 User Stories Chuẩn Agile Scrum (Trello Board)
+
+> 📋 **Bảng Trello Trực Tuyến**: [TravelEasy_Platform | Trello Board](https://trello.com/b/AA5BYoe1/traveleasyplatform)  
+> 🎨 **Bản Thiết Kế Stitch Trực Tuyến**: [TravelEasy UI Prototype | Stitch Project](https://stitch.withgoogle.com/projects/5774129554395496210?pli=1)
 
 #### 🎯 Quy ước Cấu trúc Thẻ Task trên Trello:
 * **Tiêu đề (Title)**: `({Điểm}) US-{Mã}: Là một {Vai trò}, tôi muốn {Hành động} để {Mục đích}` (Khớp 100% chuẩn Scrum & tiện ích Scrum for Trello).
@@ -1175,6 +1186,7 @@ cd backend
 ./gradlew bootRun --args='--spring.profiles.active=supabase'
 ```
 * **Thông số kết nối Cloud**:
+  * Trình trực quan hóa CSDL: [Schema Visualizer | traveleasy-platform | Supabase](https://supabase.com/dashboard/project/ctvcwhdepzyvqsncbslf/database/schemas)
   * Host: `aws-0-ap-southeast-2.pooler.supabase.com`
   * Port: `6543` (PgBouncer Transaction Pooler)
   * Database: `postgres`
