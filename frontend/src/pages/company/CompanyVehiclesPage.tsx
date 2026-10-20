@@ -95,7 +95,7 @@ export const CompanyVehiclesPage: React.FC = () => {
             Doi xe
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            {vehicles.length}/{vehicles.length} xe · Phuong Trang FUTA
+            {vehicles.length}/{vehicles.length} xe - Phuong Trang FUTA
           </div>
         </div>
 

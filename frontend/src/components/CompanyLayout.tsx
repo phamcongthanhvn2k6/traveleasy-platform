@@ -39,6 +39,9 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
     if (path === '/company/dashboard' && (location.pathname === '/company' || location.pathname === '/company/dashboard')) {
       return true;
     }
+    if (path === '/company/vehicles' && (location.pathname === '/company/vehicles' || location.pathname === '/company/fleet/vehicles')) {
+      return true;
+    }
     return location.pathname === path;
   };
 

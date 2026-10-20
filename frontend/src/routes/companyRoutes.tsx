@@ -28,6 +28,7 @@ export const CompanyRoutes: React.FC = () => {
 
         {/* Nhóm Vận hành */}
         <Route path="/vehicles" element={<CompanyVehiclesPage />} />
+        <Route path="/fleet/vehicles" element={<CompanyVehiclesPage />} />
         <Route path="/locations" element={<CompanyLocationsPage />} />
         <Route path="/routes" element={<CompanyRoutesPage />} />
         <Route path="/cancellation-policies" element={<CompanyCancellationPoliciesPage />} />
