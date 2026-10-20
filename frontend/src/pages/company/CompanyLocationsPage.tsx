@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Search, Plus, Edit2, Trash2, Info } from 'lucide-react';
+import { MapPin, Search, Plus, Edit2, Trash2, Building2 } from 'lucide-react';
 
 interface CompanyLocationItem {
   id: string;
@@ -54,7 +54,7 @@ export const CompanyLocationsPage: React.FC = () => {
             Dia diem nha xe
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            {locations.length}/{locations.length} cau hinh · Phuong Trang FUTA
+            {locations.length}/{locations.length} cau hinh - Phuong Trang FUTA
           </div>
         </div>
 
@@ -95,6 +95,7 @@ export const CompanyLocationsPage: React.FC = () => {
             fontWeight: 500
           }}
         >
+          <Building2 size={13} color="#15803d" />
           <span style={{ fontWeight: 700, color: '#15803d' }}>Phuong Trang FUTA</span>
           <span style={{ color: '#64748b' }}>Admin Location (master) — BusCompanyLocationConfig — Company hien tai</span>
         </span>
