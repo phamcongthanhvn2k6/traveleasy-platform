@@ -1,9 +1,9 @@
-package com.traveleasy.controller;
+package com.traveleasy.controller.ai;
 
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.dto.ai.AiChatRequest;
 import com.traveleasy.dto.ai.AiChatResponse;
-import com.traveleasy.service.AiService;
+import com.traveleasy.service.ai.AiService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

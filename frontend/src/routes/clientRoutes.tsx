@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { HomePage } from '../pages/HomePage';
-import { TicketLookupPage } from '../pages/TicketLookupPage';
+import { HomePage } from '../pages/customer/home/HomePage';
+import { TicketLookupPage } from '../pages/customer/ticket-lookup/TicketLookupPage';
 
 /**
  * =========================================================================

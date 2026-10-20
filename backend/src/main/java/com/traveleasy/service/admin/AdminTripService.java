@@ -1,4 +1,4 @@
-package com.traveleasy.service;
+package com.traveleasy.service.admin;
 
 import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.exception.ErrorCode;
@@ -7,6 +7,7 @@ import com.traveleasy.dto.admin.DashboardStatsResponse;
 import com.traveleasy.dto.trip.TripResponse;
 import com.traveleasy.entity.*;
 import com.traveleasy.repository.*;
+import com.traveleasy.service.customer.TripService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

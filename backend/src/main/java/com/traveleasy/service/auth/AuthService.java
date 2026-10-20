@@ -1,4 +1,4 @@
-package com.traveleasy.service;
+package com.traveleasy.service.auth;
 
 import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.exception.ErrorCode;

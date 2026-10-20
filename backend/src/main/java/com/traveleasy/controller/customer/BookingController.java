@@ -1,9 +1,9 @@
-package com.traveleasy.controller;
+package com.traveleasy.controller.customer;
 
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.dto.booking.BookingResponse;
 import com.traveleasy.dto.booking.CreateBookingRequest;
-import com.traveleasy.service.BookingService;
+import com.traveleasy.service.customer.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

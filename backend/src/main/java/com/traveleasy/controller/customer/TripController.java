@@ -1,9 +1,9 @@
-package com.traveleasy.controller;
+package com.traveleasy.controller.customer;
 
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.dto.trip.TripDetailResponse;
 import com.traveleasy.dto.trip.TripResponse;
-import com.traveleasy.service.TripService;
+import com.traveleasy.service.customer.TripService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

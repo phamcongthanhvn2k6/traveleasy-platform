@@ -1,17 +1,17 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AdminLayout } from '../components/AdminLayout';
-import { AdminDashboardPage } from '../pages/AdminDashboardPage';
-import { AdminUsersPage } from '../pages/admin/AdminUsersPage';
-import { AdminBusCompaniesPage } from '../pages/admin/AdminBusCompaniesPage';
-import { AdminSeatTypesPage } from '../pages/admin/AdminSeatTypesPage';
-import { AdminSeatTemplatesPage } from '../pages/admin/AdminSeatTemplatesPage';
-import { AdminLocationsPage } from '../pages/admin/AdminLocationsPage';
-import { AdminBannersPage } from '../pages/admin/AdminBannersPage';
-import { AdminPaymentsPage } from '../pages/admin/AdminPaymentsPage';
-import { AdminReviewsPage } from '../pages/admin/AdminReviewsPage';
-import { AdminCancellationPoliciesPage } from '../pages/admin/AdminCancellationPoliciesPage';
-import { AdminAuditLogsPage } from '../pages/admin/AdminAuditLogsPage';
+import { AdminDashboardPage } from '../pages/admin/dashboard/AdminDashboardPage';
+import { AdminUsersPage } from '../pages/admin/users/AdminUsersPage';
+import { AdminBusCompaniesPage } from '../pages/admin/bus-companies/AdminBusCompaniesPage';
+import { AdminSeatTypesPage } from '../pages/admin/seat-types/AdminSeatTypesPage';
+import { AdminSeatTemplatesPage } from '../pages/admin/seat-templates/AdminSeatTemplatesPage';
+import { AdminLocationsPage } from '../pages/admin/locations/AdminLocationsPage';
+import { AdminBannersPage } from '../pages/admin/banners/AdminBannersPage';
+import { AdminPaymentsPage } from '../pages/admin/payments/AdminPaymentsPage';
+import { AdminReviewsPage } from '../pages/admin/reviews/AdminReviewsPage';
+import { AdminCancellationPoliciesPage } from '../pages/admin/cancellation-policies/AdminCancellationPoliciesPage';
+import { AdminAuditLogsPage } from '../pages/admin/audit-logs/AdminAuditLogsPage';
 
 /**
  * =========================================================================

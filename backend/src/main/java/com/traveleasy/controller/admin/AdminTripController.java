@@ -1,11 +1,11 @@
-package com.traveleasy.controller;
+package com.traveleasy.controller.admin;
 
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.dto.admin.CreateTripRequest;
 import com.traveleasy.dto.admin.DashboardStatsResponse;
 import com.traveleasy.dto.trip.TripResponse;
 import com.traveleasy.entity.TripStatus;
-import com.traveleasy.service.AdminTripService;
+import com.traveleasy.service.admin.AdminTripService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

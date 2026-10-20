@@ -1,4 +1,4 @@
-package com.traveleasy.service;
+package com.traveleasy.service.ai;
 
 import com.traveleasy.dto.ai.AiChatRequest;
 import com.traveleasy.dto.ai.AiChatResponse;

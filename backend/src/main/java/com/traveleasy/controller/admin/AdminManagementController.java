@@ -1,9 +1,9 @@
-package com.traveleasy.controller;
+package com.traveleasy.controller.admin;
 
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.dto.admin.*;
 import com.traveleasy.entity.*;
-import com.traveleasy.service.AdminManagementService;
+import com.traveleasy.service.admin.AdminManagementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

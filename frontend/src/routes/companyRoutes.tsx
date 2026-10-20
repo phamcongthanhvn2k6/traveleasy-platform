@@ -1,14 +1,14 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { CompanyLayout } from '../components/CompanyLayout';
-import { CompanyDashboardPage } from '../pages/company/CompanyDashboardPage';
-import { CompanyVehiclesPage } from '../pages/company/CompanyVehiclesPage';
-import { CompanyLocationsPage } from '../pages/company/CompanyLocationsPage';
-import { CompanyRoutesPage } from '../pages/company/CompanyRoutesPage';
-import { CompanyCancellationPoliciesPage } from '../pages/company/CompanyCancellationPoliciesPage';
-import { CompanyTripsPage } from '../pages/company/CompanyTripsPage';
-import { CompanyBookingsPage } from '../pages/company/CompanyBookingsPage';
-import { CompanyReviewsPage } from '../pages/company/CompanyReviewsPage';
+import { CompanyDashboardPage } from '../pages/company/dashboard/CompanyDashboardPage';
+import { CompanyVehiclesPage } from '../pages/company/vehicles/CompanyVehiclesPage';
+import { CompanyLocationsPage } from '../pages/company/locations/CompanyLocationsPage';
+import { CompanyRoutesPage } from '../pages/company/routes/CompanyRoutesPage';
+import { CompanyCancellationPoliciesPage } from '../pages/company/cancellation-policies/CompanyCancellationPoliciesPage';
+import { CompanyTripsPage } from '../pages/company/trips/CompanyTripsPage';
+import { CompanyBookingsPage } from '../pages/company/bookings/CompanyBookingsPage';
+import { CompanyReviewsPage } from '../pages/company/reviews/CompanyReviewsPage';
 
 /**
  * =========================================================================
@@ -46,4 +46,3 @@ export const CompanyRoutes: React.FC = () => {
 };
 
 export default CompanyRoutes;
-

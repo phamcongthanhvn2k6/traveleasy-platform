@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import api from '../services/api';
-import { Booking } from '../types';
+import api from '../../../services/api';
+import { Booking } from '../../../types';
 import { Search, ShieldCheck, QrCode, MapPin } from 'lucide-react';
 
 export const TicketLookupPage: React.FC = () => {

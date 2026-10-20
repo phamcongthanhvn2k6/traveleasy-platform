@@ -1,10 +1,10 @@
-package com.traveleasy.controller;
+package com.traveleasy.controller.auth;
 
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.dto.auth.AuthResponse;
 import com.traveleasy.dto.auth.LoginRequest;
 import com.traveleasy.dto.auth.RegisterRequest;
-import com.traveleasy.service.AuthService;
+import com.traveleasy.service.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

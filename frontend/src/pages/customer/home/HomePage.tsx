@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { SearchTripBar } from '../components/SearchTripBar';
-import { TripCard } from '../components/TripCard';
-import { CheckoutModal } from '../components/CheckoutModal';
-import { Trip, Booking } from '../types';
-import api from '../services/api';
+import { SearchTripBar } from '../../../components/SearchTripBar';
+import { TripCard } from '../../../components/TripCard';
+import { CheckoutModal } from '../../../components/CheckoutModal';
+import { Trip, Booking } from '../../../types';
+import api from '../../../services/api';
 import { CheckCircle, Award, Clock, ShieldCheck } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
