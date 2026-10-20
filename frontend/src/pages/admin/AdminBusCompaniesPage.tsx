@@ -15,7 +15,7 @@ interface BusCompanyItem {
 export const AdminBusCompaniesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ALL' | 'PENDING' | 'ACTIVE' | 'SUSPENDED'>('ALL');
 
-  const companies: BusCompanyItem[] = [
+  const [companies, setCompanies] = useState<BusCompanyItem[]>([
     {
       id: 'bc1',
       name: 'Phuong Trang FUTA',
@@ -56,7 +56,21 @@ export const AdminBusCompaniesPage: React.FC = () => {
       statusLabel: 'Tam ngung',
       createdAt: '16:00 01/08/2025',
     },
-  ];
+  ]);
+
+  const toggleCompanyStatus = (id: string) => {
+    setCompanies((prev) =>
+      prev.map((c) => {
+        if (c.id !== id) return c;
+        if (c.status === 'ACTIVE') {
+          return { ...c, status: 'SUSPENDED', statusLabel: 'Tam ngung' };
+        }
+        return { ...c, status: 'ACTIVE', statusLabel: 'Hoat dong' };
+      })
+    );
+  };
+
+  const pendingCount = companies.filter((c) => c.status === 'PENDING').length;
 
   const filteredCompanies = companies.filter((c) => {
     if (activeTab === 'ALL') return true;
@@ -68,13 +82,13 @@ export const AdminBusCompaniesPage: React.FC = () => {
       {/* Breadcrumb & Header Title */}
       <div style={{ marginBottom: '22px' }}>
         <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-          VeXeRe Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Nha xe
+          VeXeRe Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> <span style={{ color: '#0f172a' }}>Nha xe</span>
         </div>
         <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
           Quan ly nha xe
         </h1>
         <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-          1 cho duyet, 4 tong cong
+          {pendingCount} cho duyet, {companies.length} tong cong
         </div>
       </div>
 
@@ -208,6 +222,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
                       </button>
                       {c.status === 'ACTIVE' ? (
                         <button
+                          onClick={() => toggleCompanyStatus(c.id)}
                           title="Tam ngung nha xe"
                           style={{
                             background: 'none',
@@ -223,6 +238,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
                         </button>
                       ) : (
                         <button
+                          onClick={() => toggleCompanyStatus(c.id)}
                           title="Kich hoat / Duyet"
                           style={{
                             background: 'none',
