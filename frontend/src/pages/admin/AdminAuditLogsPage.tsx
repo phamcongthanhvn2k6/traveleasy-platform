@@ -48,7 +48,7 @@ export const AdminAuditLogsPage: React.FC = () => {
       user: 'boss@futabus.vn',
       action: 'CREATE_VEHICLE',
       target: 'vehicles #v1',
-      before: '—',
+      before: '-',
       after: '{"license_plate": "51B-123.45", "vehicle_type": "SLEEPER"}',
     },
     {
@@ -66,7 +66,7 @@ export const AdminAuditLogsPage: React.FC = () => {
       user: 'boss@futabus.vn',
       action: 'CREATE_ROUTE',
       target: 'route_templates #rt1',
-      before: '—',
+      before: '-',
       after: '{"name": "Sai Gon - Da Lat"}',
     },
     {
