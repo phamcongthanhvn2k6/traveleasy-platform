@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Search, Plus, Edit2, Trash2, Navigation } from 'lucide-react';
+import { MapPin, Search, Plus, Edit2, Trash2, Map } from 'lucide-react';
 
 interface LocationItem {
   id: string;
@@ -178,7 +178,7 @@ export const AdminLocationsPage: React.FC = () => {
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TINH/TP</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>QUAN/HUYEN</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TOA DO</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px', textAlign: 'right' }}>HANH DONG</th>
+              <th style={{ padding: '12px 18px', width: '80px', textAlign: 'right' }}></th>
             </tr>
           </thead>
           <tbody>
@@ -202,8 +202,8 @@ export const AdminLocationsPage: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div
                         style={{
-                          width: '30px',
-                          height: '30px',
+                          width: '28px',
+                          height: '28px',
                           borderRadius: '50%',
                           backgroundColor: '#fee2e2',
                           color: '#ef4444',
@@ -213,7 +213,7 @@ export const AdminLocationsPage: React.FC = () => {
                           flexShrink: 0
                         }}
                       >
-                        <MapPin size={16} />
+                        <MapPin size={14} />
                       </div>
                       <span style={{ fontWeight: 600, color: '#0f172a' }}>{item.name}</span>
                     </div>
@@ -237,7 +237,7 @@ export const AdminLocationsPage: React.FC = () => {
                   <td style={{ padding: '14px 18px', color: '#334155' }}>{item.district}</td>
                   <td style={{ padding: '14px 18px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#059669', fontSize: '12px' }}>
-                      <Navigation size={13} color="#059669" />
+                      <Map size={13} color="#059669" />
                       <span>{item.coordinates}</span>
                     </div>
                   </td>
