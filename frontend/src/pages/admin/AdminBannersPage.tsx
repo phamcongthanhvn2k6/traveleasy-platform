@@ -26,7 +26,7 @@ export const AdminBannersPage: React.FC = () => {
       status: 'ACTIVE',
       statusLabel: 'Dang hien',
       duration: '07:00 01/09/2026 — 06:59 01/10/2026',
-      link: 'https://vexere.com/dalat-sale',
+      link: 'https://traveleasy.vn/dalat-sale',
     },
     {
       id: 'bn2',
@@ -45,7 +45,7 @@ export const AdminBannersPage: React.FC = () => {
       status: 'INACTIVE',
       statusLabel: 'An',
       duration: '07:00 01/11/2026 — 06:59 01/01/2027',
-      link: 'https://vexere.com/tet-early',
+      link: 'https://traveleasy.vn/tet-early',
     },
   ];
 
@@ -62,7 +62,7 @@ export const AdminBannersPage: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-            VeXeRe Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> He thong <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Banner
+            TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> He thong <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Banner
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
             Banner

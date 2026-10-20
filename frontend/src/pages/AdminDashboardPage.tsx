@@ -2,7 +2,7 @@ import React from 'react';
 import { Users, Bus, TrendingUp, Ticket } from 'lucide-react';
 
 export const AdminDashboardPage: React.FC = () => {
-  // Dữ liệu hiển thị chuẩn 100% theo ảnh prototype VeXeRe Admin
+  // Dữ liệu hiển thị chuẩn theo kiến trúc TravelEasy Admin
   const kpiStats = [
     {
       label: 'Nguoi dung',
@@ -93,13 +93,13 @@ export const AdminDashboardPage: React.FC = () => {
       {/* Breadcrumb & Header Title */}
       <div style={{ marginBottom: '22px' }}>
         <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-          VeXeRe Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Tong quan
+          TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Tong quan
         </div>
         <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
           Tong quan he thong
         </h1>
         <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-          VeXeRe Admin Dashboard
+          TravelEasy Admin Dashboard
         </div>
       </div>
 

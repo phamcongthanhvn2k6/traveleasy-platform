@@ -18,7 +18,7 @@ export const AdminAuditLogsPage: React.FC = () => {
     {
       id: 'log1',
       timestamp: '17:00 10/02/2025',
-      user: 'admin@vexere.vn',
+      user: 'admin@traveleasy.vn',
       action: 'APPROVE_COMPANY',
       target: 'bus_companies #bc1',
       before: '{"status": "PENDING_APPROVAL"}',
@@ -27,7 +27,7 @@ export const AdminAuditLogsPage: React.FC = () => {
     {
       id: 'log2',
       timestamp: '17:00 01/03/2025',
-      user: 'admin@vexere.vn',
+      user: 'admin@traveleasy.vn',
       action: 'APPROVE_COMPANY',
       target: 'bus_companies #bc2',
       before: '{"status": "PENDING_APPROVAL"}',
@@ -36,7 +36,7 @@ export const AdminAuditLogsPage: React.FC = () => {
     {
       id: 'log3',
       timestamp: '16:00 15/07/2026',
-      user: 'admin@vexere.vn',
+      user: 'admin@traveleasy.vn',
       action: 'SUSPEND_COMPANY',
       target: 'bus_companies #bc4',
       before: '{"status": "ACTIVE"}',
@@ -45,7 +45,7 @@ export const AdminAuditLogsPage: React.FC = () => {
     {
       id: 'log4',
       timestamp: '16:00 15/02/2025',
-      user: 'boss@futabus.vn',
+      user: 'partner@traveleasy.vn',
       action: 'CREATE_VEHICLE',
       target: 'vehicles #v1',
       before: '-',
@@ -54,7 +54,7 @@ export const AdminAuditLogsPage: React.FC = () => {
     {
       id: 'log5',
       timestamp: '17:00 20/09/2026',
-      user: 'admin@vexere.vn',
+      user: 'admin@traveleasy.vn',
       action: 'APPROVE_REVIEW_REPORT',
       target: 'review_reports #rp1',
       before: '{"status": "PENDING"}',
@@ -63,7 +63,7 @@ export const AdminAuditLogsPage: React.FC = () => {
     {
       id: 'log6',
       timestamp: '18:00 15/02/2025',
-      user: 'boss@futabus.vn',
+      user: 'partner@traveleasy.vn',
       action: 'CREATE_ROUTE',
       target: 'route_templates #rt1',
       before: '-',
@@ -72,7 +72,7 @@ export const AdminAuditLogsPage: React.FC = () => {
     {
       id: 'log7',
       timestamp: '16:00 01/09/2026',
-      user: 'admin@vexere.vn',
+      user: 'admin@traveleasy.vn',
       action: 'UPDATE_BANNER',
       target: 'banners #bn1',
       before: '{"is_active": false}',
@@ -81,7 +81,7 @@ export const AdminAuditLogsPage: React.FC = () => {
     {
       id: 'log8',
       timestamp: '01:00 20/09/2026',
-      user: 'boss@futabus.vn',
+      user: 'partner@traveleasy.vn',
       action: 'CANCEL_TRIP',
       target: 'trips #t5',
       before: '{"status": "SCHEDULED"}',
@@ -99,7 +99,7 @@ export const AdminAuditLogsPage: React.FC = () => {
       {/* Breadcrumb & Header Title */}
       <div style={{ marginBottom: '22px' }}>
         <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-          VeXeRe Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Nhat ky
+          TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Nhat ky
         </div>
         <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
           Nhat ky he thong

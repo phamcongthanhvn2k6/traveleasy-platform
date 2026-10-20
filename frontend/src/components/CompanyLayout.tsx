@@ -48,7 +48,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" }}>
       {/* ======================================================== */}
-      {/* 1. LEFT SIDEBAR (FUTA OPERATOR THEME)                    */}
+      {/* 1. LEFT SIDEBAR (TRAVELEASY PARTNER THEME)             */}
       {/* ======================================================== */}
       <aside
         style={{
@@ -73,22 +73,24 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                 width: '32px',
                 height: '32px',
                 borderRadius: '8px',
-                backgroundColor: '#10b981',
+                background: 'linear-gradient(135deg, #0ea5e9 0%, #10b981 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#ffffff',
                 fontWeight: 800,
-                fontSize: '16px',
+                fontSize: '13px',
+                letterSpacing: '0.5px',
+                boxShadow: '0 2px 8px rgba(14, 165, 233, 0.35)',
                 flexShrink: 0
               }}
             >
-              F
+              TE
             </div>
             <div>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff', lineHeight: 1.2 }}>FUTA Operator</div>
-              <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, letterSpacing: '0.6px', marginTop: '2px' }}>
-                BUS COMPANY PORTAL
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff', lineHeight: 1.2 }}>TravelEasy Partner</div>
+              <div style={{ fontSize: '10px', color: '#38bdf8', fontWeight: 600, letterSpacing: '0.6px', marginTop: '2px' }}>
+                BUS OPERATOR PORTAL
               </div>
             </div>
           </div>
@@ -221,7 +223,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
             }}
           >
             <LayoutDashboard size={15} color="#94a3b8" />
-            <span>Sang Admin workspace</span>
+            <span>Sang TravelEasy Admin</span>
           </Link>
         </div>
       </aside>
@@ -295,16 +297,16 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                 alignItems: 'center',
                 gap: '6px',
                 padding: '5px 10px',
-                backgroundColor: '#f0fdf4',
-                border: '1px solid #bbf7d0',
+                backgroundColor: '#f0f9ff',
+                border: '1px solid #bae6fd',
                 borderRadius: '6px',
                 fontSize: '12px',
-                color: '#166534',
+                color: '#0369a1',
                 cursor: 'pointer'
               }}
             >
-              <span>Nha xe hien tai: <strong style={{ color: '#15803d' }}>Phuong Trang FUTA</strong></span>
-              <ChevronDown size={13} color="#15803d" />
+              <span>Nha xe hien tai: <strong style={{ color: '#0284c7' }}>TravelEasy Express</strong></span>
+              <ChevronDown size={13} color="#0284c7" />
             </div>
 
             {/* Bell Icon */}
@@ -330,7 +332,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  backgroundColor: '#059669',
+                  background: 'linear-gradient(135deg, #0ea5e9, #0d9488)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
@@ -339,10 +341,10 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                   fontWeight: 700
                 }}
               >
-                PT
+                TE
               </div>
               <div style={{ lineHeight: 1.15 }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>Phuong Trang FUTA</div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>TravelEasy Express</div>
                 <div style={{ fontSize: '10px', fontWeight: 600, color: '#64748b' }}>BUS_COMPANY</div>
               </div>
               <ChevronDown size={14} color="#64748b" style={{ marginLeft: '2px' }} />

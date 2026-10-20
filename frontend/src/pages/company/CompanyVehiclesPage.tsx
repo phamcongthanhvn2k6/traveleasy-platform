@@ -28,7 +28,7 @@ export const CompanyVehiclesPage: React.FC = () => {
       type: 'SLEEPER',
       floors: 2,
       year: 2022,
-      operator: 'Phuong Trang',
+      operator: 'TravelEasy Express',
       status: 'ACTIVE',
       statusLabel: 'Hoat dong',
       seatLayout: 'Giuong nam 2 tang 34 ch...',
@@ -41,7 +41,7 @@ export const CompanyVehiclesPage: React.FC = () => {
       type: 'LIMOUSINE',
       floors: 1,
       year: 2023,
-      operator: 'Phuong Trang',
+      operator: 'TravelEasy Express',
       status: 'ACTIVE',
       statusLabel: 'Hoat dong',
       seatLayout: 'Ghe ngoi 1 tang 24 cho (Li...',
@@ -53,7 +53,7 @@ export const CompanyVehiclesPage: React.FC = () => {
       type: 'SEATED',
       floors: 1,
       year: 2018,
-      operator: 'Phuong Trang',
+      operator: 'TravelEasy Express',
       status: 'INACTIVE',
       statusLabel: 'Ngung hoat dong',
       seatLayout: '—',
@@ -95,7 +95,7 @@ export const CompanyVehiclesPage: React.FC = () => {
             Doi xe
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            {vehicles.length}/{vehicles.length} xe - Phuong Trang FUTA
+            {vehicles.length}/{vehicles.length} xe - TravelEasy Express
           </div>
         </div>
 

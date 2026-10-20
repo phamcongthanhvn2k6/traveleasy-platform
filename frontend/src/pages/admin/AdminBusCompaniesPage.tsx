@@ -18,9 +18,9 @@ export const AdminBusCompaniesPage: React.FC = () => {
   const [companies, setCompanies] = useState<BusCompanyItem[]>([
     {
       id: 'bc1',
-      name: 'Phuong Trang FUTA',
+      name: 'TravelEasy Express',
       code: 'SK-2024-001',
-      email: 'info@futabus.vn',
+      email: 'contact@traveleasy.vn',
       phone: '1900 6067',
       status: 'ACTIVE',
       statusLabel: 'Hoat dong',
@@ -82,7 +82,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
       {/* Breadcrumb & Header Title */}
       <div style={{ marginBottom: '22px' }}>
         <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-          VeXeRe Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> <span style={{ color: '#0f172a' }}>Nha xe</span>
+          TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> <span style={{ color: '#0f172a' }}>Nha xe</span>
         </div>
         <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
           Quan ly nha xe

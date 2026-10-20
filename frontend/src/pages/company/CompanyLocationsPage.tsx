@@ -18,7 +18,7 @@ export const CompanyLocationsPage: React.FC = () => {
     {
       id: 'cl1',
       code: 'b11',
-      displayName: 'PT - BX Mien Dong',
+      displayName: 'TE - BX Mien Dong',
       masterLocation: 'Ben xe Mien Dong',
       masterSub: 'TP. HCM · BUS_STATION',
       address: '292 Dinh Bo Linh, Q.Binh Thanh',
@@ -27,7 +27,7 @@ export const CompanyLocationsPage: React.FC = () => {
     {
       id: 'cl2',
       code: 'b12',
-      displayName: 'PT - BX Da Lat',
+      displayName: 'TE - BX Da Lat',
       masterLocation: 'Ben xe Lien Tinh Da Lat',
       masterSub: 'Lam Dong · BUS_STATION',
       address: '1 Duong 3/4, TP. Da Lat',
@@ -54,7 +54,7 @@ export const CompanyLocationsPage: React.FC = () => {
             Dia diem nha xe
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            {locations.length}/{locations.length} cau hinh - Phuong Trang FUTA
+            {locations.length}/{locations.length} cau hinh - TravelEasy Express
           </div>
         </div>
 
@@ -86,17 +86,17 @@ export const CompanyLocationsPage: React.FC = () => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            backgroundColor: '#f0fdf4',
-            border: '1px solid #bbf7d0',
-            color: '#166534',
+            backgroundColor: '#f0f9ff',
+            border: '1px solid #bae6fd',
+            color: '#0369a1',
             padding: '5px 12px',
             borderRadius: '9999px',
             fontSize: '12px',
             fontWeight: 500
           }}
         >
-          <Building2 size={13} color="#15803d" />
-          <span style={{ fontWeight: 700, color: '#15803d' }}>Phuong Trang FUTA</span>
+          <Building2 size={13} color="#0284c7" />
+          <span style={{ fontWeight: 700, color: '#0284c7' }}>TravelEasy Express</span>
           <span style={{ color: '#64748b' }}>Admin Location (master) — BusCompanyLocationConfig — Company hien tai</span>
         </span>
       </div>

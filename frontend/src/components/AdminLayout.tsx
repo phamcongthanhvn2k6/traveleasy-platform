@@ -92,22 +92,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 width: '32px',
                 height: '32px',
                 borderRadius: '8px',
-                backgroundColor: '#3b82f6',
+                background: 'linear-gradient(135deg, #6366f1 0%, #3b82f6 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#ffffff',
                 fontWeight: 800,
-                fontSize: '16px',
+                fontSize: '13px',
+                letterSpacing: '0.5px',
+                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.35)',
                 flexShrink: 0
               }}
             >
-              V
+              TE
             </div>
             <div>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff', lineHeight: 1.2 }}>VeXeRe Admin</div>
-              <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, letterSpacing: '0.6px', marginTop: '2px' }}>
-                SYSTEM CONTROL
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff', lineHeight: 1.2 }}>TravelEasy Admin</div>
+              <div style={{ fontSize: '10px', color: '#818cf8', fontWeight: 600, letterSpacing: '0.6px', marginTop: '2px' }}>
+                ENTERPRISE PORTAL
               </div>
             </div>
           </div>
@@ -246,7 +248,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             }}
           >
             <Store size={15} color="#94a3b8" />
-            <span>Sang portal nha xe</span>
+            <span>Sang TravelEasy Partner</span>
           </Link>
         </div>
       </aside>
@@ -336,7 +338,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  backgroundColor: '#2563eb',
+                  background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
@@ -345,10 +347,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   fontWeight: 700
                 }}
               >
-                AD
+                TE
               </div>
               <div style={{ lineHeight: 1.15 }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>Admin Vexere</div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>Admin TravelEasy</div>
                 <div style={{ fontSize: '10px', fontWeight: 600, color: '#64748b' }}>SYSTEM_ADMIN</div>
               </div>
               <ChevronDown size={14} color="#64748b" style={{ marginLeft: '2px' }} />

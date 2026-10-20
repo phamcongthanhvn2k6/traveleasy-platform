@@ -55,7 +55,7 @@ export const CompanyDashboardPage: React.FC = () => {
           Tong quan nha xe
         </h1>
         <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-          Phuong Trang FUTA
+          TravelEasy Express
         </div>
       </div>
 

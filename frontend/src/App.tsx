@@ -11,8 +11,8 @@ import { ClientRoutes } from './routes/clientRoutes';
  * =========================================================================
  * ROOT ROUTER ORCHESTRATOR — TRAVEL EASY PLATFORM
  * Kiến trúc điều hướng phân luồng độc lập, triệt tiêu xung đột code (Zero Merge Conflict)
- * - /admin/*   -> AdminRoutes (Hệ thống quản trị VeXeRe Admin - Dark Navy)
- * - /company/* -> CompanyRoutes (Cổng đối tác nhà xe FUTA Operator)
+ * - /admin/*   -> AdminRoutes (Hệ thống quản trị TravelEasy Admin - Dark Navy)
+ * - /company/* -> CompanyRoutes (Cổng đối tác nhà xe TravelEasy Partner)
  * - /*         -> ClientRoutes (Cổng người dùng & khách hàng đặt vé)
  * =========================================================================
  */

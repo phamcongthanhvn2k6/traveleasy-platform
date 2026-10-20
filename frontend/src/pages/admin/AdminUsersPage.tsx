@@ -19,7 +19,7 @@ export const AdminUsersPage: React.FC = () => {
     {
       id: 'u1',
       phone: '0901234567',
-      email: 'admin@vexere.vn',
+      email: 'admin@traveleasy.vn',
       role: 'ADMIN',
       roleLabel: 'Quan tri vien',
       status: 'ACTIVE',
@@ -28,7 +28,7 @@ export const AdminUsersPage: React.FC = () => {
     {
       id: 'u2',
       phone: '0912345678',
-      email: 'boss@futabus.vn',
+      email: 'partner@traveleasy.vn',
       role: 'OPERATOR',
       roleLabel: 'Nha xe',
       status: 'ACTIVE',
@@ -73,7 +73,7 @@ export const AdminUsersPage: React.FC = () => {
     {
       id: 'u7',
       phone: '0967890123',
-      email: 'staff@futabus.vn',
+      email: 'staff@traveleasy.vn',
       role: 'OPERATOR',
       roleLabel: 'Nha xe',
       status: 'ACTIVE',
@@ -100,7 +100,7 @@ export const AdminUsersPage: React.FC = () => {
       {/* Breadcrumb & Header Title */}
       <div style={{ marginBottom: '22px' }}>
         <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-          VeXeRe Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> <span style={{ color: '#0f172a' }}>Nguoi dung</span>
+          TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> <span style={{ color: '#0f172a' }}>Nguoi dung</span>
         </div>
         <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
           Quan ly nguoi dung

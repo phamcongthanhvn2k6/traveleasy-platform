@@ -12,7 +12,7 @@ import { CompanyReviewsPage } from '../pages/company/CompanyReviewsPage';
 
 /**
  * =========================================================================
- * ROUTER PHÂN HỆ ĐỐI TÁC NHÀ XE (FUTA OPERATOR PORTAL)
+ * ROUTER PHÂN HỆ ĐỐI TÁC NHÀ XE (TRAVELEASY PARTNER PORTAL)
  * Phụ trách: Phạm Công Thành (Nhóm trưởng / Architect)
  * Base Path: /company/*
  * Giao diện tối giản, chuẩn xác 100% theo bộ prototype ảnh chụp thực tế

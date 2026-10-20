@@ -57,7 +57,7 @@ export const AdminSeatTypesPage: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-            VeXeRe Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Danh muc <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Loai ghe
+            TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Danh muc <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Loai ghe
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
             Loai ghe
