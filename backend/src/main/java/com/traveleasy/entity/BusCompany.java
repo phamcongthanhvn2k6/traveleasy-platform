@@ -20,6 +20,9 @@ public class BusCompany {
     @Column(nullable = false, unique = true, length = 150)
     private String name;
 
+    @Column(name = "code", length = 50)
+    private String code;
+
     @Column(nullable = false, length = 20)
     private String hotline;
 
@@ -31,6 +34,10 @@ public class BusCompany {
 
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
+
+    @Column(name = "status", length = 30)
+    @Builder.Default
+    private String status = "ACTIVE"; // PENDING_APPROVAL, ACTIVE, SUSPENDED
 
     @Column(name = "average_rating", precision = 2, scale = 1)
     @Builder.Default
