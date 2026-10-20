@@ -82,25 +82,11 @@ export const AdminPaymentsPage: React.FC = () => {
                   transition: 'background-color 0.15s ease'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div
-                    style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '8px',
-                      backgroundColor: '#eff6ff',
-                      color: '#2563eb',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}
-                  >
-                    <CreditCard size={18} />
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <CreditCard size={18} color="#3b82f6" />
                   <div>
-                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>{p.name}</div>
-                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, letterSpacing: '0.4px', marginTop: '2px' }}>
+                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '13px' }}>{p.name}</div>
+                    <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, letterSpacing: '0.4px', marginTop: '2px' }}>
                       {p.env}
                     </div>
                   </div>
@@ -183,25 +169,11 @@ export const AdminPaymentsPage: React.FC = () => {
                   transition: 'background-color 0.15s ease'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div
-                    style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '8px',
-                      backgroundColor: '#f0fdf4',
-                      color: '#16a34a',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}
-                  >
-                    {n.name === 'SENDGRID' ? <Mail size={18} /> : <MessageSquare size={18} />}
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  {n.name === 'SENDGRID' ? <Mail size={18} color="#3b82f6" /> : <MessageSquare size={18} color="#3b82f6" />}
                   <div>
-                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>{n.name}</div>
-                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, letterSpacing: '0.4px', marginTop: '2px' }}>
+                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '13px' }}>{n.name}</div>
+                    <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, letterSpacing: '0.4px', marginTop: '2px' }}>
                       {n.env}
                     </div>
                   </div>

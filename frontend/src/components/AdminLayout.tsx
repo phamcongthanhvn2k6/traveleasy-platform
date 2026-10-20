@@ -39,7 +39,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const systemItems = [
     { label: 'Banner', path: '/admin/banners', icon: Image },
-    { label: 'Cong thanh toan', path: '/admin/payments', icon: CreditCard },
+    { label: 'Cong thanh toan', path: '/admin/gateways', icon: CreditCard },
     { label: 'Bao cao danh gia', path: '/admin/reviews', icon: Star },
     { label: 'Chinh sach huy', path: '/admin/cancellation-policies', icon: Shield },
     { label: 'Nhat ky he thong', path: '/admin/audit-logs', icon: Clock },
@@ -53,6 +53,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       return true;
     }
     if (path === '/admin/seat-catalog/templates' && (location.pathname === '/admin/seat-catalog/templates' || location.pathname === '/admin/seat-templates')) {
+      return true;
+    }
+    if (path === '/admin/gateways' && (location.pathname === '/admin/gateways' || location.pathname === '/admin/payments')) {
       return true;
     }
     return location.pathname === path;
