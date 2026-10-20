@@ -78,8 +78,10 @@
 7. [BỘ 25 TEST CASES KIỂM THỬ TOÀN DIỆN (100% PASS)](#7-bộ-25-test-cases-kiểm-thử-toàn-diện-100-pass)
 8. [HƯỚNG DẪN CÀI ĐẶT & VẬN HÀNH (QUICKSTART CHUẨN A-Z)](#8-hướng-dẫn-cài-đặt--vận-hành-quickstart-chuẩn-a-z)
    - Cách 1: Khởi chạy siêu tốc với Dev Profile (Zero-Setup / In-Memory H2 DB)
-   - Cách 2: Khởi chạy 1 lệnh với Docker Compose (Full Containers)
-   - Cách 3: Khởi chạy thủ công với MySQL vật lý
+   - Cách 2: Khởi chạy kết nối Supabase Cloud Database (PostgreSQL - Đồng bộ cả nhóm)
+   - Cách 3: Khởi chạy 1 lệnh với Docker Compose (Full Containers)
+   - Cách 4: Khởi chạy thủ công với MySQL vật lý
+   - 8.5 Quy chuẩn & Lưu ý sống còn cho thành viên khi code Backend & Kết nối Database
    - Danh sách tài khoản thử nghiệm có sẵn
 9. [QUY CHUẨN LÀM VIỆC VỚI GIT & QUY TRÌNH PHÂN NHÁNH (GIT WORKFLOW)](#9-quy-chuẩn-làm-việc-với-git--quy-trình-phân-nhánh-git-workflow)
    - 9.1 Mô hình phân nhánh chuẩn (Branching Strategy)
@@ -1160,7 +1162,29 @@ npm run dev
 
 ---
 
-### Cách 2: Khởi chạy 1 lệnh duy nhất với Docker Compose
+### Cách 2: Khởi chạy kết nối Supabase Cloud Database (PostgreSQL - Đồng bộ cả nhóm)
+*Dành cho cả nhóm 6 thành viên khi làm việc cùng nhau, đảm bảo dữ liệu test đồng nhất thời gian thực trên Cloud Supabase (Transaction Pooler).*
+
+```bash
+cd backend
+
+# Khởi chạy Backend với profile Supabase:
+.\gradlew bootRun --args='--spring.profiles.active=supabase'
+
+# Hoặc trên Linux/macOS:
+./gradlew bootRun --args='--spring.profiles.active=supabase'
+```
+* **Thông số kết nối Cloud**:
+  * Host: `aws-0-ap-southeast-2.pooler.supabase.com`
+  * Port: `6543` (PgBouncer Transaction Pooler)
+  * Database: `postgres`
+  * User: `postgres.ctvcwhdepzyvqsncbslf`
+  * JDBC URL: `jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0`
+* **Ưu điểm**: Toàn bộ bảng CSDL và 100% dữ liệu mẫu (Users, Buses, Trips, Seats, Tickets) tự động sinh và nạp sẵn trên Supabase, không cần cài đặt database nội bộ trên máy.
+
+---
+
+### Cách 3: Khởi chạy 1 lệnh duy nhất với Docker Compose
 *Dành cho môi trường đóng gói container hoàn chỉnh (MySQL 8.0 + Spring Boot 3 + React Vite Nginx).*
 ```bash
 # Khởi chạy toàn bộ hệ thống
@@ -1175,7 +1199,7 @@ docker-compose logs -f
 
 ---
 
-### Cách 3: Khởi chạy với MySQL Local đã cài trên máy
+### Cách 4: Khởi chạy với MySQL Local đã cài trên máy
 1. Tạo CSDL trong MySQL:
    ```sql
    CREATE DATABASE IF NOT EXISTS traveleasy_db CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
@@ -1186,6 +1210,68 @@ docker-compose logs -f
    ```
 3. Cấu hình thông tin tài khoản MySQL trong file `.env` hoặc `backend/src/main/resources/application.yml`.
 4. Khởi chạy Backend: `.\gradlew bootRun`.
+
+---
+
+### 8.5 Quy chuẩn & Lưu ý sống còn cho thành viên khi code Backend & Kết nối Database
+
+Để đảm bảo tiến độ chạy nước rút, không xảy ra lỗi xung đột Git (Merge Conflicts) và duy trì tính toàn vẹn dữ liệu cho toàn bộ nhóm 6 thành viên, mọi lập trình viên Backend **BẮT BUỘC** tuân thủ các quy tắc sau:
+
+#### 1. Lựa chọn Profile Database chuẩn xác
+* **Khi code offline / phát triển tính năng cục bộ độc lập**: Dùng profile `dev` (H2 In-Memory):
+  ```bash
+  .\gradlew bootRun --args='--spring.profiles.active=dev'
+  ```
+  *(Khởi động siêu nhanh trong 2 giây, dữ liệu reset sạch sẽ sau mỗi lần tắt).*
+* **Khi tích hợp End-to-End & kiểm thử chéo giữa các thành viên**: Dùng profile `supabase`:
+  ```bash
+  .\gradlew bootRun --args='--spring.profiles.active=supabase'
+  ```
+  *(Dữ liệu lưu trữ tập trung trên đám mây Supabase, các bạn Frontend gọi API là có dữ liệu thật tức thì).*
+
+#### 2. Quy tắc Concurrency Lock (Dành cho Phan Trung Kiên — Task U4)
+* **Khóa bi quan bắt buộc**: Khi viết API khóa giữ chỗ 10 phút (`POST /api/v1/seats/lock`), bắt buộc phải sử dụng `@Lock(LockModeType.PESSIMISTIC_WRITE)` trên phương thức truy vấn của `TripSeatRepository` để khóa hàng độc quyền ở tầng Database:
+  ```java
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("SELECT s FROM TripSeat s WHERE s.trip.id = :tripId AND s.seatCode IN :seatCodes")
+  List<TripSeat> findSeatsWithLock(@Param("tripId") Long tripId, @Param("seatCodes") List<String> seatCodes);
+  ```
+* **Tuyệt đối không dùng `synchronized` Java**: Khóa ở tầng RAM của JVM sẽ vô tác dụng khi scale nhiều instance hoặc chạy qua load balancer. Phải giao trách nhiệm khóa độc quyền cho PostgreSQL/MySQL.
+
+#### 3. Quy tắc Giao dịch Tài chính Nguyên tử (Dành cho Phạm Thanh Phong — Task U6)
+* **Giao dịch `@Transactional` Serializable**: Khi tạo đơn vé và thanh toán (`POST /api/v1/bookings`), phương thức xử lý phải được gắn annotation:
+  ```java
+  @Transactional(isolation = Isolation.SERIALIZABLE)
+  ```
+* **Tính nguyên tử (Atomicity)**: Các bước: *(1) Xác thực chỗ trống ➔ (2) Chuyển trạng thái ghế sang `BOOKED` ➔ (3) Giảm số chỗ trống trên `trips` ➔ (4) Tạo đơn `bookings` ➔ (5) Sinh vé `tickets` kèm mã QR* phải nằm trọn trong **CÙNG 1 TRANSACTION**. Nếu bất kỳ bước nào lỗi (vd: lỗi mạng cổng thanh toán), toàn bộ thao tác phải được tự động Rollback 100%.
+
+#### 4. Tuyệt đối không viết Native SQL đặc thù cơ sở dữ liệu
+* Hệ thống hỗ trợ đa nền tảng (H2, MySQL, Supabase PostgreSQL). Do đó:
+  * **CẤM**: Viết các câu lệnh native SQL chứa cú pháp riêng của MySQL như: `AUTO_INCREMENT`, `TINYINT(1)`, `LIMIT x, y`, hoặc bao tên bảng bằng dấu backtick ``` `table` ```.
+  * **BẮT BUỘC**: Sử dụng **Spring Data JPA Method Naming** (`findBy...`) hoặc viết truy vấn **JPQL** (`SELECT t FROM Trip t WHERE ...`). Khi cần tìm kiếm chuỗi không phân biệt hoa thường với tham số có thể `NULL`, hãy ép kiểu rõ ràng:
+    ```java
+    WHERE (CAST(:param AS string) IS NULL OR LOWER(field) LIKE CONCAT('%', LOWER(CAST(:param AS string)), '%'))
+    ```
+    để Hibernate tự động sinh SQL tối ưu tương thích với cả PostgreSQL và MySQL.
+
+#### 5. Phân chia Controller độc lập — Tuyệt đối không sửa chung file
+* Nhóm tuân thủ mô hình **Feature Controllers** (đã thống nhất tại Mục 2.2):
+  * **Nguyễn Đại Phát**: Phụ trách riêng `TripSearchController.java` & `TripDetailController.java`.
+  * **Phan Trung Kiên**: Phụ trách riêng `SeatCatalogController.java` & `SeatLockController.java`.
+  * **Phạm Thanh Phong**: Phụ trách riêng `BookingCheckoutController.java` & `PaymentController.java`.
+  * **Trần Minh Đức 2**: Phụ trách riêng `TicketDisplayController.java` & `GuideFaqController.java`.
+  * **Đoàn Nhật Cường**: Phụ trách riêng `TicketLookupController.java` & `ReviewController.java`.
+  * **Phạm Công Thành**: Độc quyền phụ trách phân hệ `com.traveleasy.controller.admin.*`.
+* **Không được phép** tự ý khai báo API của mình vào Controller của bạn khác để tránh xung đột mã nguồn (Merge Hell) khi push code lên nhánh `dev`.
+
+#### 6. Chuẩn hóa Phản hồi API & Xử lý Ngoại lệ
+* Mọi API Endpoint bắt buộc trả về đối tượng bọc thống nhất `ApiResponse<T>`:
+  ```java
+  return ResponseEntity.ok(ApiResponse.success(data));
+  ```
+* Khi có lỗi nghiệp vụ, hãy ném ngoại lệ thông qua `AppException(ErrorCode.xxx)`:
+  * Ví dụ: `throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe!");`
+  * Lớp `GlobalExceptionHandler` sẽ tự động bắt và trả về mã lỗi HTTP chuẩn (400, 401, 403, 404, 409, 500) kèm thông điệp tiếng Việt thân thiện cho Frontend.
 
 ---
 
