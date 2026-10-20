@@ -97,7 +97,16 @@ public class DataInitializer implements CommandLineRunner {
                 .averageRating(BigDecimal.valueOf(4.7))
                 .build();
 
-        busCompanyRepository.saveAll(List.of(futa, thanhBuoi, saoViet));
+        BusCompany kumho = BusCompany.builder()
+                .name("Kumho Samco Buslines")
+                .hotline("1900 6065")
+                .email("cskh@kumhosamco.com.vn")
+                .address("292 Đinh Bộ Lĩnh, Bình Thạnh, TP. Hồ Chí Minh")
+                .logoUrl("https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=150&auto=format&fit=crop&q=80")
+                .averageRating(BigDecimal.valueOf(4.8))
+                .build();
+
+        busCompanyRepository.saveAll(List.of(futa, thanhBuoi, saoViet, kumho));
 
         // 3. Seed Routes
         Route routeHcmDalat = Route.builder()
@@ -124,7 +133,15 @@ public class DataInitializer implements CommandLineRunner {
                 .distanceKm(BigDecimal.valueOf(315.0))
                 .build();
 
-        routeRepository.saveAll(List.of(routeHcmDalat, routeHcmNhaTrang, routeHnSapa));
+        Route routeHcmCanTho = Route.builder()
+                .busCompany(thanhBuoi)
+                .departureLocation("TP. Hồ Chí Minh")
+                .arrivalLocation("Cần Thơ")
+                .durationHours(BigDecimal.valueOf(3.5))
+                .distanceKm(BigDecimal.valueOf(169.0))
+                .build();
+
+        routeRepository.saveAll(List.of(routeHcmDalat, routeHcmNhaTrang, routeHcmCanTho, routeHnSapa));
 
         // 4. Seed Pickup & Dropoff Points
         List<PickupDropoffPoint> points = List.of(
@@ -135,6 +152,10 @@ public class DataInitializer implements CommandLineRunner {
 
                 PickupDropoffPoint.builder().route(routeHcmNhaTrang).name("Bến xe Miền Đông Mới").address("TP. Thủ Đức, TP.HCM").pointType(PointType.PICKUP).displayOrder(1).build(),
                 PickupDropoffPoint.builder().route(routeHcmNhaTrang).name("Bến xe Phía Nam Nha Trang").address("Đường 23/10, TP. Nha Trang").pointType(PointType.DROPOFF).displayOrder(1).build(),
+
+                PickupDropoffPoint.builder().route(routeHcmCanTho).name("Bến xe Miền Tây").address("395 Kinh Dương Vương, Bình Tân, TP.HCM").pointType(PointType.PICKUP).displayOrder(1).build(),
+                PickupDropoffPoint.builder().route(routeHcmCanTho).name("Bến xe Trung tâm Cần Thơ").address("Cầu Cần Thơ, Hưng Thành, Cái Răng, Cần Thơ").pointType(PointType.DROPOFF).displayOrder(1).build(),
+                PickupDropoffPoint.builder().route(routeHcmCanTho).name("Bến Ninh Kiều").address("Hai Bà Trưng, Tân An, Ninh Kiều, Cần Thơ").pointType(PointType.DROPOFF).displayOrder(2).build(),
 
                 PickupDropoffPoint.builder().route(routeHnSapa).name("Bến xe Mỹ Đình").address("Số 20 Phạm Hùng, Nam Từ Liêm, Hà Nội").pointType(PointType.PICKUP).displayOrder(1).build(),
                 PickupDropoffPoint.builder().route(routeHnSapa).name("Bến xe Sa Pa").address("Điện Biên Phủ, Sa Pa, Lào Cai").pointType(PointType.DROPOFF).displayOrder(1).build()
@@ -232,7 +253,7 @@ public class DataInitializer implements CommandLineRunner {
                 .ticketCode("TK-20261025-001-A01")
                 .seatNumber("A01")
                 .price(BigDecimal.valueOf(290000))
-                .qrCodeHash(UUID.randomUUID().toString())
+                .qrCodeHash("c5e26b88-5c42-4f01-8b21-7e8c3a19e001")
                 .status(TicketStatus.ISSUED)
                 .build();
 
@@ -241,7 +262,7 @@ public class DataInitializer implements CommandLineRunner {
                 .ticketCode("TK-20261025-001-A02")
                 .seatNumber("A02")
                 .price(BigDecimal.valueOf(290000))
-                .qrCodeHash(UUID.randomUUID().toString())
+                .qrCodeHash("f7a14c99-7b33-4d22-9e32-8f9d4b28f002")
                 .status(TicketStatus.ISSUED)
                 .build();
 
