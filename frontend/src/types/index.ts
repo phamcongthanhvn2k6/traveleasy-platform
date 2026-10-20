@@ -2,12 +2,10 @@ export interface Trip {
   id: number;
   busCompanyId: number;
   busCompanyName: string;
-  busCompanyLogo?: string;
+  busCompanyLogo: string;
   routeId: number;
   originCity: string;
   destinationCity: string;
-  departureLocation?: string;
-  arrivalLocation?: string;
   distanceKm: number;
   durationHours: number;
   departureTime: string;
@@ -22,7 +20,6 @@ export interface Trip {
 export interface TripSeat {
   id: number;
   seatNumber: string;
-  seatCode?: string;
   deck: number;
   status: 'AVAILABLE' | 'BOOKED' | 'LOCKED';
   price: number;
@@ -35,8 +32,6 @@ export interface Point {
   pointType: 'PICKUP' | 'DROPOFF';
   orderIndex: number;
 }
-
-export type PickupDropoffPoint = Point;
 
 export interface TripDetail {
   trip: Trip;
@@ -62,24 +57,15 @@ export interface Booking {
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
-  passengerName?: string;
-  passengerPhone?: string;
-  passengerEmail?: string;
-  seatNumbers?: string;
-  totalPrice?: number;
-  busCompanyName?: string;
-  departureLocation?: string;
-  arrivalLocation?: string;
-  departureTime?: string;
-  trip?: Trip;
+  trip: Trip;
   pickupPointName: string;
   dropoffPointName: string;
   totalAmount: number;
   paymentMethod: string;
   status: string;
   note?: string;
-  createdAt?: string;
-  tickets?: Ticket[];
+  createdAt: string;
+  tickets: Ticket[];
 }
 
 export interface DashboardStats {
@@ -89,5 +75,5 @@ export interface DashboardStats {
   confirmedBookings: number;
   totalRevenue: number;
   totalUsers: number;
-  totalCustomers?: number;
 }
+
