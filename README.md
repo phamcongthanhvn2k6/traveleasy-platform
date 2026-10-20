@@ -164,19 +164,40 @@ Hệ thống giải quyết triệt để các vấn đề trên thông qua:
 
 ### 2.3 Thiết kế Phân luồng Triệt tiêu Xung đột giữa Backend và Frontend (Zero-Conflict & Non-Blocking Design)
 
-#### 1. Ma trận Phân vùng Định tuyến (URL Routing Matrix)
+#### 1. Ma trận Trang Giao Diện, Định Tuyến & Điều Hướng Chi Tiết (Page & Component Sitemap)
 
-| Phân hệ | Đường dẫn Frontend (Route) | File Router Frontend | Tiền tố Backend API | Controller Backend Phụ trách | Quyền truy cập (Security) | Người phụ trách |
-|:---|:---|:---|:---|:---|:---|:---|
-| **Admin** | `/admin`<br/>`/admin/dashboard` | `routes/adminRoutes.tsx` | `/api/v1/admin/dashboard/stats` | `AdminTripController` | `ROLE_ADMIN` | **Phạm Công Thành** |
-| **Admin** | `/admin/trips` | `routes/adminRoutes.tsx` | `/api/v1/admin/trips/**` | `AdminTripController` | `ROLE_ADMIN` | **Phạm Công Thành** |
-| **Admin** | `/admin/companies` | `routes/adminRoutes.tsx` | `/api/v1/admin/companies/**` | `AdminCompanyController` | `ROLE_ADMIN` | **Phạm Công Thành** |
-| **Admin** | `/admin/users` | `routes/adminRoutes.tsx` | `/api/v1/admin/users/**` | `AdminUserController` | `ROLE_ADMIN` | **Phạm Công Thành** |
-| **Users** | `/`<br/>`/search` | `routes/clientRoutes.tsx` | `/api/v1/trips/search`<br/>`/api/v1/trips/{id}` | `TripSearchController` | `permitAll()` | **Nguyễn Đại Phát** |
-| **Users** | `/trips/:id/seats` | `routes/clientRoutes.tsx` | `/api/v1/trips/{id}/seats`<br/>`/api/v1/seats/lock` | `SeatLockController` | `permitAll()` | **Phan Trung Kiên** |
-| **Users** | `/checkout` | `routes/clientRoutes.tsx` | `/api/v1/trips/{id}/points`<br/>`/api/v1/bookings` | `BookingProcessController`| `permitAll()` / Guest | **Phạm Thanh Phong** |
-| **Users** | `/payment/callback`<br/>`/tickets/:code` | `routes/clientRoutes.tsx` | `/api/v1/payments/**` | `PaymentController` | `permitAll()` | **Trần Minh Đức 2** |
-| **Users** | `/lookup`<br/>`/my-bookings` | `routes/clientRoutes.tsx` | `/api/v1/bookings/code/{code}`<br/>`/api/v1/tickets/{id}/cancel` | `TicketLookupController` | `permitAll()` / User | **Đoàn Nhật Cường** |
+Hệ thống được chia thành 2 phân hệ rõ rệt, mỗi phân hệ đều sở hữu **1 Trang Chủ (Home)** điều phối trung tâm và các trang chức năng con chuyên biệt khớp 100% tài liệu `docs/SRS_Vexere.md`:
+
+##### 👑 A. PHÂN HỆ QUẢN TRỊ (ADMIN PORTAL) — Phụ trách độc quyền: PHẠM CÔNG THÀNH
+* **Thanh điều hướng chung**: `frontend/src/components/AdminNav.tsx` (Tabs chuyển trang nhanh).
+* **Router quản lý**: `frontend/src/routes/adminRoutes.tsx`.
+
+| STT | Trang Giao Diện (Page) | Đường Dẫn (Route) | File Component | Đặc Tả Nghiệp Vụ (docs/) | Nhiệm Vụ & Tính Năng Chi Tiết |
+|:---:|:---|:---|:---|:---|:---|
+| **A1** | **Trang Chủ Quản Trị (Admin Home)** | `/admin`<br/>`/admin/dashboard` | `AdminDashboardPage.tsx` | UC-3.5 & Architecture Overview | Thống kê 4 KPIs (Tổng chuyến, Chuyến mở bán, Đơn đặt vé, Doanh thu), Bảng điều phối 6 phân hệ quản trị, Form modal tạo chuyến xe tự động sinh 34 ghế. |
+| **A2** | **Quản Trị Lịch Trình & Chuyến Xe** | `/admin/trips` | `AdminTripsPage.tsx` | UC-3.5 & UC-2.5 | Lập lịch chạy, theo dõi số chỗ trống/34 ghế, điều phối xuất bến và chuyển trạng thái chuyến xe (`SCHEDULED` ➔ `DEPARTED` ➔ `COMPLETED` ➔ `CANCELLED`). |
+| **A3** | **Quản Lý Nhà Xe & Đội Xe (Fleet)** | `/admin/fleet`<br/>`/admin/companies` | `AdminFleetPage.tsx` | UC-3.2 & UC-2.2 | Danh mục nhà xe đối tác chiến lược (Phương Trang, Thành Bưởi), quản lý biển số xe (51B-123.45...), loại xe Limousine 34 phòng và sơ đồ tầng. |
+| **A4** | **Quản Lý Tuyến Đường & Điểm Dừng** | `/admin/routes` | `AdminRoutesPage.tsx` | UC-3.3 & UC-3.6 | Danh mục lộ trình liên tỉnh (Sài Gòn ➔ Đà Lạt), cự ly km, thời gian di chuyển dự kiến, danh sách trạm đón/trả và mốc giờ ETA. |
+| **A5** | **Chính Sách Giá Vé & Hủy Hoàn** | `/admin/policies` | `AdminPoliciesPage.tsx` | UC-2.9 & Invariants | Quy tắc hoàn tiền theo mốc thời gian (>24h hoàn 90%, 12-24h hoàn 70%, <12h không hoàn) khớp bảng `cancellation_policy_rules`, phụ thu ghế tầng 1 & cuối tuần. |
+| **A6** | **Quản Trị Người Dùng & Quyền (RBAC)** | `/admin/users` | `AdminUsersPage.tsx` | UC-3.1 & Security RBAC | Danh sách tài khoản hệ thống phân quyền 4 vai trò tĩnh: `ADMIN`, `OPERATOR`, `DRIVER`, `CUSTOMER`, trạng thái hoạt động và lịch sử đăng nhập. |
+| **A7** | **Nhật Ký Hệ Thống & Kiểm Duyệt** | `/admin/audit-logs` | `AdminAuditLogsPage.tsx` | UC-3.11 & UC-3.9 | Theo dõi nhật ký kiểm toán bất biến (Audit Logs) truy vết thao tác nhạy cảm, kiểm duyệt phản hồi đánh giá 5 sao từ khách hàng. |
+
+---
+
+##### 🚍 B. PHÂN HỆ KHÁCH HÀNG / NGƯỜI DÙNG (USERS PORTAL) — Phụ trách: 5 THÀNH VIÊN FULL-STACK
+* **Header / Footer chung**: `frontend/src/components/Navbar.tsx` & `Footer.tsx`.
+* **Router quản lý**: `frontend/src/routes/clientRoutes.tsx`.
+
+| STT | Trang Giao Diện (Page) | Đường Dẫn (Route) | File Component | Đặc Tả Nghiệp Vụ (docs/) | Người Phụ Trách & Nhiệm Vụ |
+|:---:|:---|:---|:---|:---|:---|
+| **U1** | **Trang Chủ Khách Hàng (User Home)** | `/` | `HomePage.tsx` | UC-1.3 & Overview | **Nguyễn Đại Phát & Team**: Hero Banner tìm chuyến nhanh, Danh mục phân hệ dịch vụ khách hàng, Danh sách chuyến xe mở bán trực tiếp. |
+| **U2** | **Tìm Kiếm & Bộ Lọc Nâng Cao** | `/search` | `TripSearchPage.tsx` | UC-1.4 & UC-1.5 | **Nguyễn Đại Phát**: Tìm kiếm chuyến xe theo ngày, bộ lọc thông minh (Slider khoảng giá min-max, Khung giờ sáng/tối, Hãng xe Phương Trang/Thành Bưởi). |
+| **U3** | **Sơ Đồ Ghế 2 Tầng & Khóa Giữ Chỗ** | `/trips/:tripId/seats` | `SeatSelectionPage.tsx` | UC-1.6 & Concurrency | **Phan Trung Kiên**: Sơ đồ 34 phòng Limousine VIP (Tầng 1 A01-A17 & Tầng 2 B01-B17), Widget đếm lùi thời gian giữ chỗ 10:00 (Pessimistic Lock). |
+| **U4** | **Điểm Đón/Trả & Xác Nhận Đặt Vé** | `/checkout` | `BookingCheckoutPage.tsx` | UC-1.7 & Booking Flow | **Phạm Thanh Phong**: Chọn điểm đón/trả có mốc giờ ETA xe chạy, Form thông tin hành khách regex validation, chọn phương thức COD/VNPay/MoMo. |
+| **U5** | **Vé Điện Tử E-Ticket & Mã QR Code** | `/tickets/:code`<br/>`/payment/success` | `PaymentSuccessPage.tsx` | UC-1.8 & UC-1.9 | **Trần Minh Đức 2**: Màn hình Thẻ vé điện tử sang trọng, Render mã QR Code sắc nét quét được bằng camera điện thoại để tài xế soát vé, nút In/Lưu vé PDF. |
+| **U6** | **Tra Cứu Vé & Lịch Sử / Hủy Vé** | `/lookup`<br/>`/my-bookings` | `TicketLookupPage.tsx` | UC-1.11 & UC-1.15 | **Đoàn Nhật Cường**: Tra cứu vé tức thì bằng Mã đơn hoặc Số điện thoại, xem lịch sử chuyến đi, Modal hủy vé tự động tính tiền hoàn theo chính sách. |
+
+---
 
 #### 2. Kiến trúc Điều hướng Frontend (React Router v6 Modular)
 Cấu trúc cây Router trong thư mục `frontend/src/routes/`:

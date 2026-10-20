@@ -86,8 +86,8 @@ export const TicketLookupPage: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px', fontSize: '14px' }}>
               <div>
                 <div style={{ color: '#64748b', fontSize: '12px' }}>Nhà xe & Tuyến đường</div>
-                <div style={{ fontWeight: 700 }}>{booking.trip.busCompanyName}</div>
-                <div>{booking.trip.originCity} ➔ {booking.trip.destinationCity}</div>
+                <div style={{ fontWeight: 700 }}>{booking.trip?.busCompanyName}</div>
+                <div>{booking.trip?.originCity} ➔ {booking.trip?.destinationCity}</div>
               </div>
               <div>
                 <div style={{ color: '#64748b', fontSize: '12px' }}>Hành khách</div>
@@ -103,7 +103,7 @@ export const TicketLookupPage: React.FC = () => {
 
             <h4 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '10px' }}>Danh Sách Vé Điện Tử</h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-              {booking.tickets.map(t => (
+              {booking.tickets?.map(t => (
                 <div key={t.id} style={{ backgroundColor: '#fff', padding: '14px', borderRadius: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
                   <QrCode size={40} color="#2563eb" style={{ margin: '0 auto 8px' }} />
                   <div style={{ fontSize: '12px', color: '#64748b' }}>Mã vé: {t.ticketCode}</div>
