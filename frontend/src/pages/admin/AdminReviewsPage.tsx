@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Eye, Check, XCircle } from 'lucide-react';
+import { Search, Eye, CheckCircle2, XCircle } from 'lucide-react';
 
 interface ReviewReportItem {
   id: string;
@@ -15,7 +15,7 @@ export const AdminReviewsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  const reports: ReviewReportItem[] = [
+  const [reports, setReports] = useState<ReviewReportItem[]>([
     {
       id: 'rp1',
       reviewContent: '"Huy chuyen bat ngo, rat that long!"',
@@ -25,7 +25,25 @@ export const AdminReviewsPage: React.FC = () => {
       statusLabel: 'Cho xu ly',
       reportedAt: '03:00 20/09/2026',
     },
-  ];
+  ]);
+
+  const handleApprove = (id: string) => {
+    setReports((prev) =>
+      prev.map((r) =>
+        r.id === id ? { ...r, status: 'RESOLVED', statusLabel: 'Da xu ly' } : r
+      )
+    );
+  };
+
+  const handleReject = (id: string) => {
+    setReports((prev) =>
+      prev.map((r) =>
+        r.id === id ? { ...r, status: 'REJECTED', statusLabel: 'Tu choi' } : r
+      )
+    );
+  };
+
+  const pendingCount = reports.filter((r) => r.status === 'PENDING').length;
 
   const filtered = reports.filter((r) => {
     if (search && !r.reviewContent.toLowerCase().includes(search.toLowerCase()) && !r.reason.toLowerCase().includes(search.toLowerCase())) {
@@ -40,13 +58,13 @@ export const AdminReviewsPage: React.FC = () => {
       {/* Breadcrumb & Header Title */}
       <div style={{ marginBottom: '22px' }}>
         <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-          VeXeRe Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Bao cao danh gia
+          VeXeRe Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> <span style={{ color: '#0f172a' }}>Bao cao danh gia</span>
         </div>
         <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
           Bao cao danh gia
         </h1>
         <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-          {reports.length} cho xu ly
+          {pendingCount} cho xu ly
         </div>
       </div>
 
@@ -172,6 +190,7 @@ export const AdminReviewsPage: React.FC = () => {
                       <Eye size={15} />
                     </button>
                     <button
+                      onClick={() => handleApprove(item.id)}
                       title="Duyet go bo"
                       style={{
                         background: 'none',
@@ -183,9 +202,10 @@ export const AdminReviewsPage: React.FC = () => {
                         borderRadius: '4px'
                       }}
                     >
-                      <Check size={16} />
+                      <CheckCircle2 size={16} />
                     </button>
                     <button
+                      onClick={() => handleReject(item.id)}
                       title="Tu choi yeu cau"
                       style={{
                         background: 'none',
@@ -197,7 +217,7 @@ export const AdminReviewsPage: React.FC = () => {
                         borderRadius: '4px'
                       }}
                     >
-                      <XCircle size={15} />
+                      <XCircle size={16} />
                     </button>
                   </div>
                 </td>
