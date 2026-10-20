@@ -32,8 +32,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   ];
 
   const categoryItems = [
-    { label: 'Loai ghe', path: '/admin/seat-types', icon: Armchair },
-    { label: 'Mau so do ghe', path: '/admin/seat-templates', icon: Grid },
+    { label: 'Loai ghe', path: '/admin/seat-catalog/types', icon: Armchair },
+    { label: 'Mau so do ghe', path: '/admin/seat-catalog/templates', icon: Grid },
     { label: 'Dia diem', path: '/admin/locations', icon: MapPin },
   ];
 
@@ -47,6 +47,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const isActive = (path: string) => {
     if (path === '/admin/dashboard' && (location.pathname === '/admin' || location.pathname === '/admin/dashboard')) {
+      return true;
+    }
+    if (path === '/admin/seat-catalog/types' && (location.pathname === '/admin/seat-catalog/types' || location.pathname === '/admin/seat-types')) {
+      return true;
+    }
+    if (path === '/admin/seat-catalog/templates' && (location.pathname === '/admin/seat-catalog/templates' || location.pathname === '/admin/seat-templates')) {
       return true;
     }
     return location.pathname === path;

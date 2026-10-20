@@ -34,13 +34,17 @@ export const AdminRoutes: React.FC = () => {
         <Route path="/bus-companies" element={<AdminBusCompaniesPage />} />
 
         {/* Nhóm Danh mục */}
+        <Route path="/seat-catalog/types" element={<AdminSeatTypesPage />} />
         <Route path="/seat-types" element={<AdminSeatTypesPage />} />
+        <Route path="/seat-catalog/templates" element={<AdminSeatTemplatesPage />} />
         <Route path="/seat-templates" element={<AdminSeatTemplatesPage />} />
         <Route path="/locations" element={<AdminLocationsPage />} />
 
         {/* Nhóm Hệ thống */}
         <Route path="/banners" element={<AdminBannersPage />} />
+        <Route path="/gateways" element={<AdminPaymentsPage />} />
         <Route path="/payments" element={<AdminPaymentsPage />} />
+        <Route path="/review-reports" element={<AdminReviewsPage />} />
         <Route path="/reviews" element={<AdminReviewsPage />} />
         <Route path="/cancellation-policies" element={<AdminCancellationPoliciesPage />} />
         <Route path="/audit-logs" element={<AdminAuditLogsPage />} />
