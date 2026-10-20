@@ -4,17 +4,17 @@ import { Plus, Shield } from 'lucide-react';
 export const CompanyCancellationPoliciesPage: React.FC = () => {
   const rules = [
     {
-      condition: 'Truoc khoi hanh 1 ngay — Den khong gioi han',
+      condition: 'Truoc khoi hanh 1 ngay - Den khong gioi han',
       refundRate: '100% hoan tien',
       type: 'FULL',
     },
     {
-      condition: 'Truoc khoi hanh 12 gio — Den 1 ngay',
+      condition: 'Truoc khoi hanh 12 gio - Den 1 ngay',
       refundRate: '50% hoan tien',
       type: 'PARTIAL',
     },
     {
-      condition: 'Truoc khoi hanh 0 gio — Den 12 gio',
+      condition: 'Truoc khoi hanh 0 gio - Den 12 gio',
       refundRate: '0% hoan tien',
       type: 'NONE',
     },

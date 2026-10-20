@@ -178,7 +178,7 @@ export const CompanyDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '12px', fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '14px', fontSize: '11px', color: '#10b981', fontWeight: 600 }}>
             <span style={{ width: '10px', height: '10px', backgroundColor: '#10b981', borderRadius: '2px' }} />
             <span>So chuyen</span>
           </div>

@@ -22,7 +22,7 @@ export const CompanyTripsPage: React.FC = () => {
       routeName: 'Sai Gon - Da Lat',
       vehiclePlate: '51B-123.45',
       departureTime: '02:00 22/09/2026',
-      delayText: '—',
+      delayText: '-',
       status: 'SCHEDULED',
       statusLabel: 'Da len lich',
     },
@@ -32,7 +32,7 @@ export const CompanyTripsPage: React.FC = () => {
       routeName: 'Sai Gon - Nha Trang',
       vehiclePlate: '51B-987.65',
       departureTime: '04:00 22/09/2026',
-      delayText: '—',
+      delayText: '-',
       status: 'SCHEDULED',
       statusLabel: 'Da len lich',
     },
@@ -42,7 +42,7 @@ export const CompanyTripsPage: React.FC = () => {
       routeName: 'Sai Gon - Da Lat',
       vehiclePlate: '51B-123.45',
       departureTime: '15:00 20/09/2026',
-      delayText: '—',
+      delayText: '-',
       status: 'COMPLETED',
       statusLabel: 'Hoan thanh',
     },
@@ -52,7 +52,7 @@ export const CompanyTripsPage: React.FC = () => {
       routeName: 'Sai Gon - Nha Trang',
       vehiclePlate: '51B-987.65',
       departureTime: '02:00 20/09/2026',
-      delayText: '—',
+      delayText: '-',
       status: 'CANCELLED',
       statusLabel: 'Da huy',
     },
@@ -72,7 +72,7 @@ export const CompanyTripsPage: React.FC = () => {
       routeName: 'Sai Gon - Da Lat',
       vehiclePlate: '51B-123.45',
       departureTime: '02:00 24/09/2026',
-      delayText: '—',
+      delayText: '-',
       status: 'SCHEDULED',
       statusLabel: 'Da len lich',
     },
@@ -172,7 +172,7 @@ export const CompanyTripsPage: React.FC = () => {
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>KHOI HANH</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TRE</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TRANG THAI</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px', textAlign: 'right' }}>HANH DONG</th>
+              <th style={{ padding: '12px 18px', width: '60px', textAlign: 'right' }}></th>
             </tr>
           </thead>
           <tbody>

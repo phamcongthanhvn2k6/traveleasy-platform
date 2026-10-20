@@ -54,7 +54,7 @@ export const CompanyLocationsPage: React.FC = () => {
             Dia diem nha xe
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            {locations.length}/{locations.length} cau hinh — Phuong Trang FUTA
+            {locations.length}/{locations.length} cau hinh · Phuong Trang FUTA
           </div>
         </div>
 
@@ -85,18 +85,18 @@ export const CompanyLocationsPage: React.FC = () => {
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '8px',
             backgroundColor: '#f0fdf4',
             border: '1px solid #bbf7d0',
             color: '#166534',
-            padding: '6px 12px',
-            borderRadius: '8px',
+            padding: '5px 12px',
+            borderRadius: '9999px',
             fontSize: '12px',
             fontWeight: 500
           }}
         >
-          <strong style={{ fontWeight: 700 }}>Phuong Trang FUTA</strong>
-          <span>Admin Location (master) → BusCompanyLocationConfig — Company hien tai</span>
+          <span style={{ fontWeight: 700, color: '#15803d' }}>Phuong Trang FUTA</span>
+          <span style={{ color: '#64748b' }}>Admin Location (master) — BusCompanyLocationConfig — Company hien tai</span>
         </span>
       </div>
 
@@ -153,7 +153,7 @@ export const CompanyLocationsPage: React.FC = () => {
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>DIA DIEM GOC (MASTER)</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>DIA CHI CHI TIET</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>HUONG DAN DON</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px', textAlign: 'right' }}>HANH DONG</th>
+              <th style={{ padding: '12px 18px', width: '80px', textAlign: 'right' }}></th>
             </tr>
           </thead>
           <tbody>
@@ -235,9 +235,8 @@ export const CompanyLocationsPage: React.FC = () => {
       </div>
 
       {/* Bottom Note */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', fontSize: '12px', color: '#64748b' }}>
-        <Info size={14} color="#94a3b8" />
-        <span>Khi Them: chi chon Location master dang ton tai — config thuoc dung bc1. Doi company o header → list loc lai ngay.</span>
+      <div style={{ marginTop: '12px', fontSize: '11px', color: '#94a3b8' }}>
+        Khi Them: chi chon Location master dang ton tai - config thuoc dung bc1. Doi company o header -&gt; list loc lai ngay.
       </div>
     </div>
   );

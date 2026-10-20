@@ -115,20 +115,22 @@ export const CompanyReviewsPage: React.FC = () => {
                 <td style={{ padding: '14px 18px', color: '#64748b' }}>{r.reviewedAt}</td>
                 <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                    <button
-                      title="Phan hoi"
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        color: '#64748b',
-                        display: 'flex',
-                        borderRadius: '4px'
-                      }}
-                    >
-                      <MessageSquare size={15} />
-                    </button>
+                    {!r.reply && (
+                      <button
+                        title="Phan hoi"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          color: '#64748b',
+                          display: 'flex',
+                          borderRadius: '4px'
+                        }}
+                      >
+                        <MessageSquare size={15} />
+                      </button>
+                    )}
                     <button
                       title="Bao cao"
                       style={{

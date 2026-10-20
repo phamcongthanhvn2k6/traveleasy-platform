@@ -12,6 +12,7 @@ interface VehicleItem {
   status: 'ACTIVE' | 'INACTIVE';
   statusLabel: string;
   seatLayout: string;
+  image?: string;
 }
 
 export const CompanyVehiclesPage: React.FC = () => {
@@ -31,6 +32,7 @@ export const CompanyVehiclesPage: React.FC = () => {
       status: 'ACTIVE',
       statusLabel: 'Hoat dong',
       seatLayout: 'Giuong nam 2 tang 34 ch...',
+      image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=100&auto=format&fit=crop&q=60',
     },
     {
       id: 'v2',
@@ -54,7 +56,7 @@ export const CompanyVehiclesPage: React.FC = () => {
       operator: 'Phuong Trang',
       status: 'INACTIVE',
       statusLabel: 'Ngung hoat dong',
-      seatLayout: '---',
+      seatLayout: '—',
     },
   ]);
 
@@ -93,7 +95,7 @@ export const CompanyVehiclesPage: React.FC = () => {
             Doi xe
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            {vehicles.length}/{vehicles.length} xe — Phuong Trang FUTA
+            {vehicles.length}/{vehicles.length} xe · Phuong Trang FUTA
           </div>
         </div>
 
@@ -217,7 +219,7 @@ export const CompanyVehiclesPage: React.FC = () => {
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>DON VI VAN HANH</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TRANG THAI</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>SEAT LAYOUT</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px', textAlign: 'right' }}>HANH DONG</th>
+              <th style={{ padding: '12px 18px', width: '80px', textAlign: 'right' }}></th>
             </tr>
           </thead>
           <tbody>
@@ -235,21 +237,36 @@ export const CompanyVehiclesPage: React.FC = () => {
                 >
                   <td style={{ padding: '14px 18px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div
-                        style={{
-                          width: '34px',
-                          height: '34px',
-                          borderRadius: '8px',
-                          backgroundColor: '#ecfdf5',
-                          color: '#10b981',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}
-                      >
-                        <Bus size={18} />
-                      </div>
+                      {v.image ? (
+                        <img
+                          src={v.image}
+                          alt={v.plate}
+                          style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '8px',
+                            objectFit: 'cover',
+                            flexShrink: 0,
+                            border: '1px solid #e2e8f0',
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '8px',
+                            backgroundColor: '#ecfdf5',
+                            color: '#10b981',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          <Bus size={18} />
+                        </div>
+                      )}
                       <div>
                         <div style={{ fontWeight: 700, color: '#0f172a' }}>{v.plate}</div>
                         <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{v.code}</div>
@@ -364,9 +381,8 @@ export const CompanyVehiclesPage: React.FC = () => {
       </div>
 
       {/* Bottom Scope Note */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', fontSize: '12px', color: '#64748b' }}>
-        <Info size={14} color="#94a3b8" />
-        <span>Scope: chi hien thi Vehicle co bus_company_id === bc1 · Tao moi tu dong gan company hien tai · So do ghe hien thi tu VehicleSeatLayout → Template.</span>
+      <div style={{ marginTop: '12px', fontSize: '11px', color: '#94a3b8' }}>
+        Scope: chi hien thi Vehicle co bus_company_id === bc1 · Tao moi tu dong gan company hien tai · So do ghe hien thi tu VehicleSeatLayout -&gt; Template.
       </div>
     </div>
   );
