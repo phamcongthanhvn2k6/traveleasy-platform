@@ -65,7 +65,7 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
           borderRadius: '12px',
           padding: '20px 24px',
           boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
-          maxWidth: '750px'
+          maxWidth: '580px'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
