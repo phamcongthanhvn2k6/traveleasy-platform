@@ -42,16 +42,16 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
   };
 
   const operationItems = [
-    { label: 'Đội xe', path: '/company/vehicles', icon: Bus },
-    { label: 'Địa điểm nhà xe', path: '/company/locations', icon: MapPin },
-    { label: 'Tuyến đường', path: '/company/routes', icon: Route },
-    { label: 'Chính sách hủy', path: '/company/cancellation-policies', icon: Shield },
+    { label: 'Đội xe của tôi', path: '/company/vehicles', icon: Bus },
+    { label: 'Điểm đón/trả riêng', path: '/company/locations', icon: MapPin },
+    { label: 'Tuyến đường đăng ký', path: '/company/routes', icon: Route },
+    { label: 'Chính sách hủy vé riêng', path: '/company/cancellation-policies', icon: Shield },
   ];
 
   const businessItems = [
-    { label: 'Chuyến xe', path: '/company/trips', icon: Calendar },
-    { label: 'Đặt vé', path: '/company/bookings', icon: Ticket },
-    { label: 'Đánh giá', path: '/company/reviews', icon: Star },
+    { label: 'Lịch chuyến xe xuất bến', path: '/company/trips', icon: Calendar },
+    { label: 'Hành khách & Vé đã đặt', path: '/company/bookings', icon: Ticket },
+    { label: 'Đánh giá từ khách hàng', path: '/company/reviews', icon: Star },
   ];
 
   const isActive = (path: string) => {
@@ -137,7 +137,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
               <span>Tổng quan</span>
             </Link>
 
-            {/* VẬN HÀNH Group */}
+            {/* VẬN HÀNH ĐỘI XE Group */}
             <div
               style={{
                 fontSize: '10px',
@@ -148,7 +148,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                 textTransform: 'uppercase'
               }}
             >
-              VẬN HÀNH
+              VẬN HÀNH ĐỘI XE
             </div>
             {operationItems.map((item) => {
               const Icon = item.icon;
@@ -177,7 +177,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
               );
             })}
 
-            {/* KINH DOANH Group */}
+            {/* KINH DOANH & BÁN VÉ Group */}
             <div
               style={{
                 fontSize: '10px',
@@ -188,7 +188,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                 textTransform: 'uppercase'
               }}
             >
-              KINH DOANH
+              KINH DOANH & BÁN VÉ
             </div>
             {businessItems.map((item) => {
               const Icon = item.icon;

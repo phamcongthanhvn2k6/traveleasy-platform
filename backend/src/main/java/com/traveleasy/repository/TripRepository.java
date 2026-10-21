@@ -35,4 +35,7 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     List<Trip> findByRouteIdAndDepartureTimeBetween(Long routeId, LocalDateTime start, LocalDateTime end);
     long countByStatus(TripStatus status);
     List<Trip> findAllByOrderByDepartureTimeDesc();
+    List<Trip> findByBusCompanyIdOrderByDepartureTimeDesc(Long busCompanyId);
+    long countByBusCompanyId(Long busCompanyId);
+    long countByBusCompanyIdAndStatus(Long busCompanyId, TripStatus status);
 }

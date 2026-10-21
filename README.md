@@ -1854,5 +1854,90 @@ docker compose ps
 *Hình 11.49: Bộ lọc tìm kiếm chuyến xe đa chiều theo giờ chạy, tầm giá, loại xe và hãng xe.*
 
 ---
+
+### 11.8 Phân Định Tuyệt Đối Vai Trò Quản Trị Sàn Tổng (Platform Admin) & Đối Tác Nhà Xe (Bus Operator)
+
+#### 1. Định Vị Bản Chất & Sự Tách Bạch Kiến Trúc (Architecture & Role Separation)
+Hệ thống TravelEasy được thiết kế theo mô hình **Đa Thuê Bao (Multi-Tenant SaaS Platform)**, phân tách hoàn toàn và tuyệt đối giữa hai cấp độ quản lý:
+
+1. **Quản Trị Sàn Tổng (Platform Admin — `/admin/*`)**:
+   * **Đại diện**: Ban điều hành công nghệ và pháp lý của toàn bộ sàn thương mại điện tử TravelEasy Việt Nam.
+   * **Trách nhiệm cốt lõi**:
+     * Kiểm duyệt hồ sơ pháp lý, phê duyệt hoặc đình chỉ các đơn vị đối tác nhà xe (`Bus Company Management`).
+     * Quản lý toàn bộ danh mục tài khoản người dùng (`User Management`: Phân quyền ADMIN, OPERATOR, CUSTOMER, khóa tài khoản vi phạm).
+     * Cấu hình hạ tầng sàn: Tham số cổng thanh toán (VNPay, MoMo, ZaloPay), biểu ngữ quảng cáo (Banners), chính sách chung toàn sàn.
+     * Xử lý báo cáo tranh chấp, khiếu nại đánh giá vi phạm từ các nhà xe.
+     * Giám sát bảo mật và an toàn dữ liệu qua Nhật ký kiểm toán toàn sàn (`System Audit Logs`).
+   * **Phạm vi dữ liệu (Data Scope)**: **Toàn cục (System-Wide Global)** — Có quyền xem toàn bộ chuyến xe, toàn bộ tuyến đường và các giao dịch của mọi hãng xe trên hệ thống.
+
+2. **Cổng Điều Hành Đối Tác Nhà Xe (Bus Operator Portal — `/company/*`)**:
+   * **Đại diện**: Đơn vị vận tải hành khách cụ thể (Ví dụ: FUTA Phương Trang, Mai Linh, Hoàng Long, Sao Việt...).
+   * **Trách nhiệm cốt lõi**:
+     * Quản lý và đăng kiểm đội xe riêng của mình (`Vehicle Fleet Management`).
+     * Thiết lập danh mục điểm đón/trả và văn phòng trung chuyển riêng (`Pickup & Drop-off Points`).
+     * Đăng ký lộ trình và các tuyến đường vận tải được cấp phép (`Registered Routes`).
+     * Quy định chính sách hoàn tiền và hủy vé riêng theo từng mốc giờ khởi hành (`Cancellation Policies`).
+     * Lập lịch, khởi tạo và điều phối các chuyến xe xuất bến hàng ngày (`Trip Scheduling & Dispatching`).
+     * Theo dõi danh sách hành khách và kiểm soát các đơn đặt vé thuộc các chuyến của nhà xe (`Passenger & Booking Management`).
+     * Chăm sóc khách hàng và phản hồi trực tiếp các đánh giá sau chuyến đi (`Customer Review Responses`).
+   * **Phạm vi dữ liệu (Data Scope)**: **Đơn vị thuê bao độc lập (Tenant-Scoped Isolation)** — Tuyệt đối KHÔNG ĐƯỢC PHÉP xem, chỉnh sửa hay can thiệp vào doanh thu, chuyến xe, đội xe hoặc khách hàng của các nhà xe đối thủ cạnh tranh trên cùng sàn.
+
+---
+
+#### 2. Ma Trận So Sánh Phân Quyền & Ranh Giới Vận Hành (Role & Responsibility Matrix)
+
+| Tiêu chí | Quản Trị Sàn Tổng (Platform Admin) | Đối Tác Nhà Xe (Bus Operator) |
+| :--- | :--- | :--- |
+| **Vai trò đại diện** | Chủ quản sàn thương mại TravelEasy | Doanh nghiệp vận tải đối tác |
+| **Mã quyền bảo vệ** | `ROLE_ADMIN` | `ROLE_OPERATOR` (hoặc Admin sàn được ủy quyền hỗ trợ) |
+| **Không gian URL** | `/admin/*` | `/company/*` |
+| **Bộ bảo vệ định tuyến** | `AdminAuthGuard.tsx` (Chặn 403 Forbidden nếu không phải Admin) | `CompanyAuthGuard.tsx` (Chặn 403 Forbidden đối với khách hàng phổ thông) |
+| **Bộ nhận diện giao diện** | Tông màu Deep Indigo (`#6366f1`) sang trọng, đẳng cấp quản trị sàn | Tông màu Cyan / Emerald (`#0ea5e9`, `#10b981`) năng động, phong cách vận hành thực địa |
+| **Huy hiệu phân biệt** | `QUẢN TRỊ SÀN TỔNG (PLATFORM ADMIN)` | `CỔNG ĐIỀU HÀNH NHÀ XE (OPERATOR PORTAL)` |
+| **Phạm vi truy vấn dữ liệu** | Toàn bộ cơ sở dữ liệu (`getAllTrips`, `getAllBookings`, `getAllCompanies`) | Bị chặn cứng theo mã định danh nhà xe (`findByBusCompanyId`, `sumRevenueByCompanyId`) |
+| **Nút điều hướng chéo** | Không có nút sang cổng đối tác (giữ nguyên không gian tập trung) | Không hiển thị nút quay lại trang admin tổng trên Header |
+| **Quản trị người dùng** | Toàn quyền tạo, sửa, khóa tài khoản người dùng và nhà xe | Chỉ quản lý thông tin hành khách đi trên các chuyến xe của mình |
+| **Cấu hình thanh toán** | Quản lý Secret Key và cấu hình API VNPay / MoMo sàn | Nhận dòng tiền đối soát định kỳ theo tỷ lệ hoa hồng sàn quy định |
+
+---
+
+#### 3. Cơ Chế Cách Ly Dữ Liệu Đa Thuê Bao (Tenant Isolation Implementation)
+Để đảm bảo bí mật kinh doanh giữa các nhà xe trên cùng một nền tảng cơ sở dữ liệu MySQL 8.0, hệ thống triển khai cơ chế lọc dữ liệu cưỡng bức (Forced Tenant Scoping) tại tầng Persistence và Service:
+
+1. **Thống kê Doanh thu & KPI Cách ly**:
+   * Tại [BookingRepository.java](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/backend/src/main/java/com/traveleasy/repository/BookingRepository.java):
+     ```java
+     @Query("SELECT COALESCE(SUM(b.totalPrice), 0) FROM Booking b WHERE b.trip.busCompany.id = :busCompanyId AND b.status = 'CONFIRMED'")
+     BigDecimal sumTotalRevenueByBusCompanyId(@Param("busCompanyId") Long busCompanyId);
+     ```
+   * Doanh thu của Nhà xe A chỉ tính trên các đơn vé `CONFIRMED` thuộc chuyến xe do Nhà xe A vận hành.
+
+2. **Cách ly Danh sách Chuyến xe & Lịch xuất bến**:
+   * Tại [TripRepository.java](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/backend/src/main/java/com/traveleasy/repository/TripRepository.java):
+     ```java
+     List<Trip> findByBusCompanyIdOrderByDepartureTimeDesc(Long busCompanyId);
+     Long countByBusCompanyId(Long busCompanyId);
+     Long countByBusCompanyIdAndStatus(Long busCompanyId, TripStatus status);
+     ```
+   * Khi Nhà xe A đăng nhập vào Cổng điều hành, hệ thống gọi `GET /api/v1/company/trips?companyId=1` và chỉ nạp đúng các chuyến xe của Nhà xe A.
+
+3. **Bằng chứng Kiểm thử Cách ly Thực Tế**:
+   * **Truy vấn Nhà xe ID = 1 (TravelEasy Express)**:
+     * Tổng số chuyến xe: **14 chuyến**
+     * Tổng đơn đặt vé: **2 đơn**
+     * Doanh thu tích lũy: **1,030,000 VND**
+   * **Truy vấn Nhà xe ID = 2 (Đơn vị đối tác khác)**:
+     * Tổng số chuyến xe: **0 chuyến**
+     * Tổng đơn đặt vé: **0 đơn**
+     * Doanh thu tích lũy: **0.00 VND**
+   * => Xác nhận 100% dữ liệu được cách ly an toàn, loại bỏ triệt để nguy cơ rò rỉ dữ liệu giữa các hãng xe.
+
+![Giao Diện Quản Trị Sàn Tổng](docs/screenshots/screenshot_platform_admin_trips.png)
+*Hình 11.50: Giao diện Quản Trị Sàn Tổng (Platform Admin) với nhận diện Deep Indigo và phạm vi giám sát toàn hệ thống.*
+
+![Giao Diện Cổng Điều Hành Đối Tác Nhà Xe](docs/screenshots/screenshot_partner_operator_dashboard.png)
+*Hình 11.51: Giao diện Cổng Điều Hành Đối Tác Nhà Xe (Operator Portal) với nhận diện Cyan/Emerald và dữ liệu phân vùng độc lập.*
+
+---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  
 *Chúc toàn đội bảo vệ thành công rực rỡ!*

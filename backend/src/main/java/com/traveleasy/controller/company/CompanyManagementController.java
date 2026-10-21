@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/company")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@Tag(name = "Company Management Operations", description = "Vận hành điều phối chuyến, tuyến đường, đơn vé, chính sách và phản hồi của nhà xe đối tác")
+@Tag(name = "Company Management Operations", description = "Vận hành điều phối chuyến, tuyến đường, đơn vé, chính sách và phản hồi của riêng nhà xe đối tác (Tenant-Scoped)")
 public class CompanyManagementController {
 
     private final AdminTripService adminTripService;
@@ -44,24 +44,30 @@ public class CompanyManagementController {
     private final TripRepository tripRepository;
 
     // =========================================================================
-    // 1. THỐNG KÊ DASHBOARD (DASHBOARD STATS)
+    // 1. THỐNG KÊ DASHBOARD RIÊNG CỦA NHÀ XE (TENANT-SCOPED DASHBOARD)
     // =========================================================================
     @GetMapping("/dashboard/stats")
-    @Operation(summary = "Lấy thống kê KPI và danh sách chuyến xe sắp tới trực tiếp từ CSDL")
-    public ApiResponse<Map<String, Object>> getCompanyDashboardStats() {
-        BigDecimal totalRevenue = bookingRepository.sumTotalRevenue();
-        long totalTrips = tripRepository.count();
-        long totalBookings = bookingRepository.count();
-        long scheduledTrips = tripRepository.countByStatus(TripStatus.SCHEDULED);
+    @Operation(summary = "Lấy thống kê KPI và danh sách chuyến xe sắp tới của riêng nhà xe đối tác từ CSDL")
+    public ApiResponse<Map<String, Object>> getCompanyDashboardStats(@RequestParam(required = false) Long companyId) {
+        Long targetId = companyId != null ? companyId : 1L; // Mặc định là nhà xe đang quản lý
+        BigDecimal totalRevenue = bookingRepository.sumTotalRevenueByBusCompanyId(targetId);
+        long totalTrips = tripRepository.countByBusCompanyId(targetId);
+        long totalBookings = bookingRepository.countByBusCompanyId(targetId);
+        long scheduledTrips = tripRepository.countByBusCompanyIdAndStatus(targetId, TripStatus.SCHEDULED);
         double avgRating = 4.8;
         long totalReviews = reviewReportRepository.count();
 
-        List<TripResponse> allTrips = adminTripService.getAllTrips();
-        List<TripResponse> upcomingTrips = allTrips.stream()
+        List<TripResponse> upcomingTrips = tripRepository.findByBusCompanyIdOrderByDepartureTimeDesc(targetId).stream()
                 .limit(5)
+                .map(t -> adminTripService.getAllTrips().stream()
+                        .filter(tr -> tr.getId().equals(t.getId()))
+                        .findFirst()
+                        .orElse(null))
+                .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toList());
 
         Map<String, Object> stats = new HashMap<>();
+        stats.put("busCompanyId", targetId);
         stats.put("totalRevenue", totalRevenue != null ? totalRevenue : BigDecimal.ZERO);
         stats.put("totalTrips", totalTrips);
         stats.put("scheduledTrips", scheduledTrips);
@@ -74,17 +80,24 @@ public class CompanyManagementController {
     }
 
     // =========================================================================
-    // 2. CHUYẾN XE (TRIPS MANAGEMENT)
+    // 2. CHUYẾN XE CỦA RIÊNG NHÀ XE (TRIPS MANAGEMENT)
     // =========================================================================
     @GetMapping("/trips")
-    @Operation(summary = "Lấy danh sách chuyến xe trực tiếp từ CSDL thực tế")
-    public ApiResponse<List<TripResponse>> getCompanyTrips() {
-        return ApiResponse.success(adminTripService.getAllTrips());
+    @Operation(summary = "Lấy danh sách chuyến xe của riêng nhà xe đối tác từ CSDL thực tế")
+    public ApiResponse<List<TripResponse>> getCompanyTrips(@RequestParam(required = false) Long companyId) {
+        Long targetId = companyId != null ? companyId : 1L;
+        List<TripResponse> companyTrips = adminTripService.getAllTrips().stream()
+                .filter(t -> t.getBusCompanyId() != null && t.getBusCompanyId().equals(targetId))
+                .collect(Collectors.toList());
+        return ApiResponse.success(companyTrips);
     }
 
     @PostMapping("/trips")
-    @Operation(summary = "Tạo chuyến xe mới vào CSDL thực tế (Tự động sinh kho ghế 34 chỗ)")
+    @Operation(summary = "Tạo chuyến xe mới vào CSDL thực tế cho nhà xe (Tự động sinh kho ghế 34 chỗ)")
     public ApiResponse<TripResponse> createCompanyTrip(@RequestBody CreateTripRequest request) {
+        if (request.getBusCompanyId() == null) {
+            request.setBusCompanyId(1L);
+        }
         return ApiResponse.success("Tạo chuyến xe thành công và lưu vào CSDL", adminTripService.createTrip(request));
     }
 
@@ -108,21 +121,22 @@ public class CompanyManagementController {
     }
 
     // =========================================================================
-    // 3. TUYẾN ĐƯỜNG (COMPANY ROUTES)
+    // 3. TUYẾN ĐƯỜNG RIÊNG CỦA NHÀ XE (COMPANY ROUTES)
     // =========================================================================
     @GetMapping("/routes")
-    @Operation(summary = "Lấy danh sách tuyến đường trực tiếp từ CSDL thực tế")
+    @Operation(summary = "Lấy danh sách tuyến đường đã đăng ký của nhà xe từ CSDL thực tế")
     public ApiResponse<List<RouteAdminResponse>> getCompanyRoutes(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long companyId) {
-        return ApiResponse.success(adminManagementService.getAllRoutes(search, companyId));
+        Long targetId = companyId != null ? companyId : 1L;
+        return ApiResponse.success(adminManagementService.getAllRoutes(search, targetId));
     }
 
     @PostMapping("/routes")
-    @Operation(summary = "Tạo mới tuyến đường vào CSDL thực tế")
+    @Operation(summary = "Tạo mới tuyến đường vào CSDL thực tế cho nhà xe")
     public ApiResponse<RouteAdminResponse> createCompanyRoute(@RequestBody CreateRouteRequest request) {
         if (request.getBusCompanyId() == null) {
-            request.setBusCompanyId(1L); // Mặc định ID nhà xe đối tác nếu không chỉ định
+            request.setBusCompanyId(1L);
         }
         return ApiResponse.success("Tạo tuyến đường thành công vào CSDL", adminManagementService.createRoute(request));
     }
@@ -143,12 +157,16 @@ public class CompanyManagementController {
     }
 
     // =========================================================================
-    // 4. ĐƠN ĐẶT VÉ (BOOKINGS MANAGEMENT)
+    // 4. ĐƠN ĐẶT VÉ CỦA RIÊNG NHÀ XE (BOOKINGS MANAGEMENT)
     // =========================================================================
     @GetMapping("/bookings")
-    @Operation(summary = "Lấy danh sách đơn vé hành khách trực tiếp từ CSDL thực tế")
-    public ApiResponse<List<BookingResponse>> getCompanyBookings() {
-        return ApiResponse.success(bookingService.getAllBookings());
+    @Operation(summary = "Lấy danh sách đơn vé hành khách của riêng các chuyến xe của nhà xe")
+    public ApiResponse<List<BookingResponse>> getCompanyBookings(@RequestParam(required = false) Long companyId) {
+        Long targetId = companyId != null ? companyId : 1L;
+        List<BookingResponse> companyBookings = bookingService.getAllBookings().stream()
+                .filter(b -> b.getTrip() != null && b.getTrip().getBusCompanyId() != null && b.getTrip().getBusCompanyId().equals(targetId))
+                .collect(Collectors.toList());
+        return ApiResponse.success(companyBookings);
     }
 
     @PatchMapping("/bookings/{id}/status")
