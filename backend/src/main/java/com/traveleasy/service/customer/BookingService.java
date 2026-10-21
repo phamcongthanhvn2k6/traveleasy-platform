@@ -147,6 +147,41 @@ public class BookingService {
         }).collect(Collectors.toList());
     }
 
+    @Transactional
+    public BookingResponse cancelBooking(Long bookingId, String userEmail) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé"));
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé này đã bị hủy trước đó");
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+
+        List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
+        List<String> seatCodes = new ArrayList<>();
+        for (Ticket ticket : tickets) {
+            ticket.setStatus(TicketStatus.CANCELLED);
+            seatCodes.add(ticket.getSeatNumber());
+        }
+        ticketRepository.saveAll(tickets);
+
+        // Giải phóng ghế về AVAILABLE
+        List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(booking.getTrip().getId(), seatCodes);
+        for (TripSeat seat : seats) {
+            seat.setStatus(SeatStatus.AVAILABLE);
+        }
+        tripSeatRepository.saveAll(seats);
+
+        // Cập nhật lại số ghế trống của chuyến
+        Trip trip = booking.getTrip();
+        trip.setAvailableSeats(trip.getAvailableSeats() + tickets.size());
+        tripRepository.save(trip);
+
+        return mapToBookingResponse(booking, tickets);
+    }
+
     private BookingResponse mapToBookingResponse(Booking b, List<Ticket> tickets) {
         List<TicketResponse> ticketResponses = tickets.stream().map(t -> TicketResponse.builder()
                 .id(t.getId())

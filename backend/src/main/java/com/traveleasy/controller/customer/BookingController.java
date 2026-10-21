@@ -42,4 +42,13 @@ public class BookingController {
     public ApiResponse<List<BookingResponse>> getMyBookings(@AuthenticationPrincipal UserDetails userDetails) {
         return ApiResponse.success(bookingService.getUserBookings(userDetails.getUsername()));
     }
+
+    @PostMapping("/{id}/cancel")
+    @Operation(summary = "Hủy đơn đặt vé và hoàn trả ghế trống")
+    public ApiResponse<BookingResponse> cancelBooking(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        return ApiResponse.success("Hủy vé thành công", bookingService.cancelBooking(id, email));
+    }
 }

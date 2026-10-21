@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bus, Search, ShieldCheck, PhoneCall, User, Info, Building2, LayoutDashboard, Globe, LogOut } from 'lucide-react';
+import { Bus, Search, ShieldCheck, PhoneCall, User, Info, Building2, LayoutDashboard, Globe, LogOut, Ticket } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
 
@@ -48,8 +48,8 @@ export const Navbar: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', fontSize: '13px' }}>
-            <Link to="/lookup" style={{ color: '#ffffff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px', opacity: 0.9 }}>
-              Đơn hàng của tôi
+            <Link to="/my-tickets" style={{ color: '#ffffff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px', opacity: 0.9 }}>
+              Vé của tôi
             </Link>
             <Link to="/company" style={{ color: '#ffffff', textDecoration: 'none', opacity: 0.9 }}>
               Mở bán vé trên TravelEasy
@@ -163,20 +163,36 @@ export const Navbar: React.FC = () => {
 
           <nav style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             <Link 
-              to="/" 
+              to="/search" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/' ? '#2563eb' : '#334155', 
-                fontWeight: location.pathname === '/' ? 700 : 600, 
+                color: location.pathname === '/search' || location.pathname === '/' ? '#2563eb' : '#334155', 
+                fontWeight: location.pathname === '/search' || location.pathname === '/' ? 700 : 600, 
                 fontSize: '14.5px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '6px',
-                borderBottom: location.pathname === '/' ? '2px solid #2563eb' : '2px solid transparent',
+                borderBottom: location.pathname === '/search' || location.pathname === '/' ? '2px solid #2563eb' : '2px solid transparent',
                 padding: '8px 0'
               }}
             >
               <Search size={16} /> Vé Xe Khách
+            </Link>
+            <Link 
+              to="/my-tickets" 
+              style={{ 
+                textDecoration: 'none', 
+                color: location.pathname === '/my-tickets' ? '#2563eb' : '#334155', 
+                fontWeight: location.pathname === '/my-tickets' ? 700 : 600, 
+                fontSize: '14.5px',
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                borderBottom: location.pathname === '/my-tickets' ? '2px solid #2563eb' : '2px solid transparent',
+                padding: '8px 0'
+              }}
+            >
+              <Ticket size={16} /> Vé Của Tôi
             </Link>
             <Link 
               to="/lookup" 
