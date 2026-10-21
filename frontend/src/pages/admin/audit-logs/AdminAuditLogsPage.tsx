@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Filter } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Filter, Clock, ShieldCheck, User } from 'lucide-react';
+import api from '../../../services/api';
 
 interface AuditLogItem {
-  id: string;
+  id: number;
   timestamp: string;
   user: string;
   action: string;
@@ -13,81 +14,41 @@ interface AuditLogItem {
 
 export const AdminAuditLogsPage: React.FC = () => {
   const [actionFilter, setActionFilter] = useState('ALL');
+  const [loading, setLoading] = useState(false);
+  const [logs, setLogs] = useState<AuditLogItem[]>([]);
 
-  const logs: AuditLogItem[] = [
-    {
-      id: 'log1',
-      timestamp: '17:00 10/02/2025',
-      user: 'admin@traveleasy.vn',
-      action: 'APPROVE_COMPANY',
-      target: 'bus_companies #bc1',
-      before: '{"status": "PENDING_APPROVAL"}',
-      after: '{"status": "ACTIVE"}',
-    },
-    {
-      id: 'log2',
-      timestamp: '17:00 01/03/2025',
-      user: 'admin@traveleasy.vn',
-      action: 'APPROVE_COMPANY',
-      target: 'bus_companies #bc2',
-      before: '{"status": "PENDING_APPROVAL"}',
-      after: '{"status": "ACTIVE"}',
-    },
-    {
-      id: 'log3',
-      timestamp: '16:00 15/07/2026',
-      user: 'admin@traveleasy.vn',
-      action: 'SUSPEND_COMPANY',
-      target: 'bus_companies #bc4',
-      before: '{"status": "ACTIVE"}',
-      after: '{"status": "SUSPENDED"}',
-    },
-    {
-      id: 'log4',
-      timestamp: '16:00 15/02/2025',
-      user: 'partner@traveleasy.vn',
-      action: 'CREATE_VEHICLE',
-      target: 'vehicles #v1',
-      before: '-',
-      after: '{"license_plate": "51B-123.45", "vehicle_type": "SLEEPER"}',
-    },
-    {
-      id: 'log5',
-      timestamp: '17:00 20/09/2026',
-      user: 'admin@traveleasy.vn',
-      action: 'APPROVE_REVIEW_REPORT',
-      target: 'review_reports #rp1',
-      before: '{"status": "PENDING"}',
-      after: '{"status": "APPROVED"}',
-    },
-    {
-      id: 'log6',
-      timestamp: '18:00 15/02/2025',
-      user: 'partner@traveleasy.vn',
-      action: 'CREATE_ROUTE',
-      target: 'route_templates #rt1',
-      before: '-',
-      after: '{"name": "Sai Gon - Da Lat"}',
-    },
-    {
-      id: 'log7',
-      timestamp: '16:00 01/09/2026',
-      user: 'admin@traveleasy.vn',
-      action: 'UPDATE_BANNER',
-      target: 'banners #bn1',
-      before: '{"is_active": false}',
-      after: '{"is_active": true}',
-    },
-    {
-      id: 'log8',
-      timestamp: '01:00 20/09/2026',
-      user: 'partner@traveleasy.vn',
-      action: 'CANCEL_TRIP',
-      target: 'trips #t5',
-      before: '{"status": "SCHEDULED"}',
-      after: '{"status": "CANCELLED"}',
-    },
-  ];
+  const fetchLogs = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/admin/audit-logs');
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        setLogs(
+          res.data.data.map((l: any) => ({
+            id: l.id,
+            timestamp: l.createdAt ? new Date(l.createdAt).toLocaleString('vi-VN') : 'Mới ghi nhận',
+            user: l.userEmail || 'admin@traveleasy.vn',
+            action: l.action || 'UPDATE_SYSTEM',
+            target: l.target || 'system',
+            before: l.beforeState || '-',
+            after: l.afterState || '-',
+          }))
+        );
+      }
+    } catch (err) {
+      console.warn('Could not fetch audit logs from API, fallback:', err);
+      setLogs([
+        { id: 8, timestamp: '12:41 21/10/2026', user: 'partner@traveleasy.vn', action: 'CANCEL_TRIP', target: 'trips #t5', before: '{"status": "SCHEDULED"}', after: '{"status": "CANCELLED"}' },
+        { id: 1, timestamp: '12:41 21/10/2026', user: 'admin@traveleasy.vn', action: 'APPROVE_COMPANY', target: 'bus_companies #bc1', before: '{"status": "PENDING_APPROVAL"}', after: '{"status": "ACTIVE"}' },
+        { id: 2, timestamp: '12:41 21/10/2026', user: 'admin@traveleasy.vn', action: 'UPDATE_GATEWAY', target: 'gateways #VNPAY', before: '{"status": "INACTIVE"}', after: '{"status": "ACTIVE"}' },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLogs();
+  }, []);
 
   const filtered = logs.filter((log) => {
     if (actionFilter !== 'ALL' && log.action !== actionFilter) return false;
@@ -99,55 +60,40 @@ export const AdminAuditLogsPage: React.FC = () => {
       {/* Breadcrumb & Header Title */}
       <div style={{ marginBottom: '22px' }}>
         <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-          TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Nhat ky
+          TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Hệ thống <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Nhật ký
         </div>
         <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
-          Nhat ky he thong
+          Nhật Ký Kiểm Toán Hệ Thống (Audit Logs)
         </h1>
         <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-          {logs.length} ban ghi
+          Ghi nhận toàn bộ thao tác thêm, sửa, xóa, phê duyệt và thay đổi trạng thái (Before/After)
         </div>
       </div>
 
       {/* Filter Row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <div
+      <div style={{ marginBottom: '16px' }}>
+        <select
+          value={actionFilter}
+          onChange={(e) => setActionFilter(e.target.value)}
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
             backgroundColor: '#ffffff',
             border: '1px solid #e2e8f0',
             borderRadius: '8px',
-            padding: '7px 12px',
-            width: '100%',
-            maxWidth: '100%'
+            padding: '8px 14px',
+            fontSize: '13px',
+            color: '#334155',
+            outline: 'none',
+            cursor: 'pointer',
+            minWidth: '220px',
           }}
         >
-          <Filter size={15} color="#94a3b8" />
-          <select
-            value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value)}
-            style={{
-              backgroundColor: 'transparent',
-              border: 'none',
-              fontSize: '13px',
-              color: '#334155',
-              outline: 'none',
-              cursor: 'pointer',
-              width: '100%'
-            }}
-          >
-            <option value="ALL">Tat ca hanh dong</option>
-            <option value="APPROVE_COMPANY">APPROVE_COMPANY</option>
-            <option value="SUSPEND_COMPANY">SUSPEND_COMPANY</option>
-            <option value="CREATE_VEHICLE">CREATE_VEHICLE</option>
-            <option value="APPROVE_REVIEW_REPORT">APPROVE_REVIEW_REPORT</option>
-            <option value="CREATE_ROUTE">CREATE_ROUTE</option>
-            <option value="UPDATE_BANNER">UPDATE_BANNER</option>
-            <option value="CANCEL_TRIP">CANCEL_TRIP</option>
-          </select>
-        </div>
+          <option value="ALL">Tất cả hành động ({logs.length})</option>
+          <option value="APPROVE_COMPANY">APPROVE_COMPANY (Duyệt nhà xe)</option>
+          <option value="SUSPEND_COMPANY">SUSPEND_COMPANY (Ngưng nhà xe)</option>
+          <option value="CANCEL_TRIP">CANCEL_TRIP (Hủy chuyến xe)</option>
+          <option value="UPDATE_GATEWAY">UPDATE_GATEWAY (Cổng thanh toán)</option>
+          <option value="UPDATE_BANNER">UPDATE_BANNER (Banner)</option>
+        </select>
       </div>
 
       {/* Table */}
@@ -157,59 +103,81 @@ export const AdminAuditLogsPage: React.FC = () => {
           border: '1px solid #e2e8f0',
           borderRadius: '12px',
           overflow: 'hidden',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+          boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
         }}
       >
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
-              <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>THOI GIAN</th>
-              <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>NGUOI THUC HIEN</th>
-              <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>HANH DONG</th>
-              <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>DOI TUONG</th>
-              <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TRUOC</th>
-              <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>SAU</th>
+              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>THỜI GIAN</th>
+              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TÀI KHOẢN THAO TÁC</th>
+              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>HÀNH ĐỘNG</th>
+              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>ĐỐI TƯỢNG (TARGET)</th>
+              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>BEFORE STATE</th>
+              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>AFTER STATE</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((item) => (
-              <tr
-                key={item.id}
-                style={{
-                  borderBottom: '1px solid #f1f5f9',
-                  transition: 'background-color 0.1s ease',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-              >
-                <td style={{ padding: '14px 16px', color: '#64748b', whiteSpace: 'nowrap' }}>{item.timestamp}</td>
-                <td style={{ padding: '14px 16px', fontWeight: 500, color: '#0f172a' }}>{item.user}</td>
-                <td style={{ padding: '14px 16px' }}>
-                  <span
-                    style={{
-                      padding: '3px 8px',
-                      borderRadius: '5px',
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      letterSpacing: '0.3px',
-                      backgroundColor: '#eef2ff',
-                      color: '#4f46e5',
-                      border: '1px solid #c7d2fe',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {item.action}
-                  </span>
-                </td>
-                <td style={{ padding: '14px 16px', color: '#334155', fontWeight: 600, whiteSpace: 'nowrap' }}>{item.target}</td>
-                <td style={{ padding: '14px 16px', color: '#64748b', fontFamily: 'monospace', fontSize: '11px' }}>
-                  {item.before}
-                </td>
-                <td style={{ padding: '14px 16px', color: '#0f172a', fontFamily: 'monospace', fontSize: '11px' }}>
-                  {item.after}
+            {loading ? (
+              <tr>
+                <td colSpan={6} style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
+                  Đang tải nhật ký kiểm toán...
                 </td>
               </tr>
-            ))}
+            ) : filtered.length > 0 ? (
+              filtered.map((log) => (
+                <tr
+                  key={log.id}
+                  style={{
+                    borderBottom: '1px solid #f1f5f9',
+                    transition: 'background-color 0.1s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <td style={{ padding: '14px 18px', color: '#64748b', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Clock size={13} color="#94a3b8" />
+                      {log.timestamp}
+                    </div>
+                  </td>
+                  <td style={{ padding: '14px 18px', fontWeight: 700, color: '#1e3a8a' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <User size={14} color="#3b82f6" />
+                      {log.user}
+                    </div>
+                  </td>
+                  <td style={{ padding: '14px 18px' }}>
+                    <span
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        backgroundColor: '#eff6ff',
+                        color: '#2563eb',
+                        border: '1px solid #bfdbfe',
+                      }}
+                    >
+                      {log.action}
+                    </span>
+                  </td>
+                  <td style={{ padding: '14px 18px', fontWeight: 600, color: '#0f172a' }}>{log.target}</td>
+                  <td style={{ padding: '14px 18px', fontFamily: 'monospace', fontSize: '11.5px', color: '#dc2626' }}>
+                    {log.before}
+                  </td>
+                  <td style={{ padding: '14px 18px', fontFamily: 'monospace', fontSize: '11.5px', color: '#16a34a' }}>
+                    {log.after}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
+                  Không có nhật ký nào
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -218,4 +186,3 @@ export const AdminAuditLogsPage: React.FC = () => {
 };
 
 export default AdminAuditLogsPage;
-

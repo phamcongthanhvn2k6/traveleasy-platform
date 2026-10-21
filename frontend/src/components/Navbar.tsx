@@ -219,9 +219,10 @@ export const Navbar: React.FC = () => {
 
         {/* Right Action Badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Cổng Đối Tác Nhà Xe */}
           <Link 
-            to="/company" 
-            title="Cổng đối tác nhà xe (Tính năng đang phát triển)"
+            to={user?.role === 'OPERATOR' || user?.role === 'ADMIN' ? '/company/dashboard' : '/company/login'} 
+            title="Cổng đối tác điều hành nhà xe"
             style={{ 
               textDecoration: 'none', 
               color: '#0f766e', 
@@ -238,10 +239,12 @@ export const Navbar: React.FC = () => {
             }}
           >
             <Building2 size={16} color="#0d9488" /> 
-            <span>Đối Tác Nhà Xe</span>
-            <span style={{ backgroundColor: '#fef3c7', color: '#b45309', fontSize: '9.5px', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
-              SẮP RA MẮT
-            </span>
+            <span>{user?.role === 'OPERATOR' ? 'Cổng Điều Hành Xe' : 'Đối Tác Nhà Xe'}</span>
+            {user?.role === 'OPERATOR' && (
+              <span style={{ backgroundColor: '#ccfbf1', color: '#0f766e', fontSize: '9.5px', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
+                OPERATOR
+              </span>
+            )}
           </Link>
 
           {/* CHỈ hiển thị Quản Trị Sàn khi tài khoản hiện tại ĐÃ ĐĂNG NHẬP và có vai trò ADMIN */}

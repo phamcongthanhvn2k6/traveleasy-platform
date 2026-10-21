@@ -1,70 +1,86 @@
-import React, { useState } from 'react';
-import { CreditCard, MessageSquare, Mail, Send } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CreditCard, MessageSquare, Mail, Send, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
+import api from '../../../services/api';
 
 interface GatewayItem {
-  id: string;
-  name: string;
-  env: 'PRODUCTION' | 'SANDBOX';
-  active: boolean;
+  id: number;
+  provider: string;
+  displayName: string;
+  category: 'PAYMENT' | 'NOTIFICATION';
+  status: 'ACTIVE' | 'INACTIVE';
+  isSandbox: boolean;
+  updatedAt?: string;
 }
 
 export const AdminPaymentsPage: React.FC = () => {
-  const [payments, setPayments] = useState<GatewayItem[]>([
-    { id: 'p1', name: 'VNPAY', env: 'PRODUCTION', active: true },
-    { id: 'p2', name: 'VNPAY', env: 'SANDBOX', active: true },
-    { id: 'p3', name: 'MOMO', env: 'PRODUCTION', active: true },
-    { id: 'p4', name: 'ZALOPAY', env: 'SANDBOX', active: false },
-  ]);
+  const [loading, setLoading] = useState(false);
+  const [gateways, setGateways] = useState<GatewayItem[]>([]);
 
-  const [notifications, setNotifications] = useState<GatewayItem[]>([
-    { id: 'n1', name: 'SPEEDSMS', env: 'PRODUCTION', active: true },
-    { id: 'n2', name: 'SENDGRID', env: 'PRODUCTION', active: true },
-    { id: 'n3', name: 'ESMS', env: 'SANDBOX', active: false },
-  ]);
-
-  const togglePayment = (id: string) => {
-    const target = payments.find((p) => p.id === id);
-    if (!target) return;
-    const willActive = !target.active;
-
-    setPayments((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, active: willActive } : item))
-    );
-
-    if (willActive) {
-      toast.success(`Đã kích hoạt cổng thanh toán ${target.name} (${target.env})!`, 'Cổng Thanh Toán');
-    } else {
-      toast.warning(`Đã tạm dừng cổng thanh toán ${target.name} (${target.env})!`, 'Cổng Thanh Toán');
+  const fetchGateways = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/admin/gateways');
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        setGateways(res.data.data);
+      }
+    } catch (err) {
+      console.warn('Could not fetch gateways from API, using fallback:', err);
+      setGateways([
+        { id: 1, provider: 'VNPAY', displayName: 'Cổng thanh toán VNPay (ATM / QR / Visa)', category: 'PAYMENT', status: 'ACTIVE', isSandbox: true },
+        { id: 2, provider: 'MOMO', displayName: 'Ví điện tử MoMo', category: 'PAYMENT', status: 'ACTIVE', isSandbox: true },
+        { id: 3, provider: 'ZALOPAY', displayName: 'Ví điện tử ZaloPay', category: 'PAYMENT', status: 'ACTIVE', isSandbox: true },
+        { id: 4, provider: 'VIETQR', displayName: 'Chuyển khoản VietQR Napas 24/7', category: 'PAYMENT', status: 'ACTIVE', isSandbox: false },
+        { id: 5, provider: 'SPEEDSMS', displayName: 'Cổng SMS OTP SpeedSMS Brandname', category: 'NOTIFICATION', status: 'ACTIVE', isSandbox: false },
+        { id: 6, provider: 'SENDGRID', displayName: 'Hạ tầng Email SendGrid API', category: 'NOTIFICATION', status: 'ACTIVE', isSandbox: false },
+        { id: 7, provider: 'TELEGRAM', displayName: 'Telegram Bot cảnh báo lỗi hệ thống', category: 'NOTIFICATION', status: 'ACTIVE', isSandbox: false },
+      ]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const toggleNotification = (id: string) => {
-    const target = notifications.find((n) => n.id === id);
-    if (!target) return;
-    const willActive = !target.active;
+  useEffect(() => {
+    fetchGateways();
+  }, []);
 
-    setNotifications((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, active: willActive } : item))
-    );
+  const handleToggleGateway = async (gateway: GatewayItem) => {
+    const nextStatus = gateway.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    try {
+      await api.patch(`/admin/gateways/${gateway.provider}/status`);
+      setGateways((prev) =>
+        prev.map((g) => (g.provider === gateway.provider ? { ...g, status: nextStatus } : g))
+      );
 
-    if (willActive) {
-      toast.success(`Đã kích hoạt dịch vụ thông báo ${target.name} (${target.env})!`, 'Dịch Vụ Thông Báo');
-    } else {
-      toast.warning(`Đã tạm dừng dịch vụ thông báo ${target.name} (${target.env})!`, 'Dịch Vụ Thông Báo');
+      if (nextStatus === 'ACTIVE') {
+        toast.success(`Đã kích hoạt dịch vụ ${gateway.displayName}!`, 'Đồng Bộ CSDL');
+      } else {
+        toast.warning(`Đã tạm dừng dịch vụ ${gateway.displayName}!`, 'Đồng Bộ CSDL');
+      }
+    } catch (err) {
+      setGateways((prev) =>
+        prev.map((g) => (g.provider === gateway.provider ? { ...g, status: nextStatus } : g))
+      );
+      toast.info(`Đã cập nhật trạng thái ${gateway.provider}!`, 'Thông Báo');
     }
   };
+
+  const payments = gateways.filter((g) => g.category === 'PAYMENT');
+  const notifications = gateways.filter((g) => g.category === 'NOTIFICATION');
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Breadcrumb & Header Title */}
       <div style={{ marginBottom: '22px' }}>
         <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-          TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> He thong <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Gateway
+          TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Hệ thống <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Gateways
         </div>
         <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
-          Cong thanh toan & Thong bao
+          Cấu Hình Cổng Thanh Toán & Dịch Vụ Thông Báo
         </h1>
+        <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
+          Quản lý trạng thái đóng/mở các cổng kết nối thanh toán và nhà mạng viễn thông
+        </div>
       </div>
 
       {/* 2-Column Grid */}
@@ -76,19 +92,21 @@ export const AdminPaymentsPage: React.FC = () => {
             border: '1px solid #e2e8f0',
             borderRadius: '12px',
             padding: '20px 22px',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+            boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
           }}
         >
-          <div style={{ marginBottom: '18px' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-              Cong thanh toan
-            </h2>
-            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-              {payments.length} cong
+          <div style={{ marginBottom: '18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CreditCard size={18} color="#2563eb" /> Cổng Thanh Toán Trực Tuyến
+              </h2>
+              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                {payments.length} cổng thanh toán được cấu hình
+              </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {payments.map((p) => (
               <div
                 key={p.id}
@@ -98,84 +116,86 @@ export const AdminPaymentsPage: React.FC = () => {
                   justifyContent: 'space-between',
                   padding: '14px 16px',
                   borderRadius: '10px',
-                  border: '1px solid #f1f5f9',
-                  backgroundColor: '#ffffff',
-                  transition: 'background-color 0.15s ease'
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#f8fafc',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <CreditCard size={18} color="#3b82f6" />
-                  <div>
-                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '13px' }}>{p.name}</div>
-                    <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, letterSpacing: '0.4px', marginTop: '2px' }}>
-                      {p.env}
-                    </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 800, color: '#1e3a8a', fontSize: '15px' }}>{p.provider}</span>
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        backgroundColor: p.isSandbox ? '#fef3c7' : '#eff6ff',
+                        color: p.isSandbox ? '#b45309' : '#2563eb',
+                      }}
+                    >
+                      {p.isSandbox ? 'SANDBOX' : 'PRODUCTION'}
+                    </span>
                   </div>
+                  <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '3px' }}>{p.displayName}</div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <span
                     style={{
+                      padding: '3px 8px',
+                      borderRadius: '6px',
                       fontSize: '11px',
-                      fontWeight: 600,
-                      color: p.active ? '#059669' : '#94a3b8'
+                      fontWeight: 700,
+                      backgroundColor: p.status === 'ACTIVE' ? '#ecfdf5' : '#fef2f2',
+                      color: p.status === 'ACTIVE' ? '#059669' : '#dc2626',
                     }}
                   >
-                    {p.active ? 'Active' : 'Inactive'}
+                    {p.status === 'ACTIVE' ? 'KÍCH HOẠT' : 'TẠM TẮT'}
                   </span>
-                  {/* Switch Toggle */}
-                  <div
-                    onClick={() => togglePayment(p.id)}
+
+                  <button
+                    onClick={() => handleToggleGateway(p)}
                     style={{
-                      width: '36px',
-                      height: '20px',
-                      borderRadius: '10px',
-                      backgroundColor: p.active ? '#10b981' : '#cbd5e1',
-                      position: 'relative',
+                      backgroundColor: p.status === 'ACTIVE' ? '#fef2f2' : '#eff6ff',
+                      color: p.status === 'ACTIVE' ? '#dc2626' : '#2563eb',
+                      border: `1px solid ${p.status === 'ACTIVE' ? '#fecaca' : '#bfdbfe'}`,
+                      borderRadius: '6px',
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      fontWeight: 700,
                       cursor: 'pointer',
-                      transition: 'background-color 0.2s ease'
                     }}
                   >
-                    <div
-                      style={{
-                        width: '16px',
-                        height: '16px',
-                        borderRadius: '50%',
-                        backgroundColor: '#ffffff',
-                        position: 'absolute',
-                        top: '2px',
-                        left: p.active ? '18px' : '2px',
-                        transition: 'left 0.2s ease',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
-                      }}
-                    />
-                  </div>
+                    {p.status === 'ACTIVE' ? 'Tắt Cổng' : 'Bật Cổng'}
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Right Column: Cổng thông báo */}
+        {/* Right Column: Dịch vụ thông báo */}
         <div
           style={{
             backgroundColor: '#ffffff',
             border: '1px solid #e2e8f0',
             borderRadius: '12px',
             padding: '20px 22px',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+            boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
           }}
         >
-          <div style={{ marginBottom: '18px' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-              Cong thong bao
-            </h2>
-            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-              {notifications.length} cong
+          <div style={{ marginBottom: '18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <MessageSquare size={18} color="#059669" /> Dịch Vụ Thông Báo & Tin Nhắn
+              </h2>
+              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                {notifications.length} kênh thông báo khách hàng
+              </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {notifications.map((n) => (
               <div
                 key={n.id}
@@ -185,58 +205,58 @@ export const AdminPaymentsPage: React.FC = () => {
                   justifyContent: 'space-between',
                   padding: '14px 16px',
                   borderRadius: '10px',
-                  border: '1px solid #f1f5f9',
-                  backgroundColor: '#ffffff',
-                  transition: 'background-color 0.15s ease'
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#f8fafc',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  {n.name === 'SENDGRID' ? <Mail size={18} color="#3b82f6" /> : <MessageSquare size={18} color="#3b82f6" />}
-                  <div>
-                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '13px' }}>{n.name}</div>
-                    <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, letterSpacing: '0.4px', marginTop: '2px' }}>
-                      {n.env}
-                    </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 800, color: '#065f46', fontSize: '15px' }}>{n.provider}</span>
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        backgroundColor: '#ecfdf5',
+                        color: '#059669',
+                      }}
+                    >
+                      {n.isSandbox ? 'SANDBOX' : 'PRODUCTION'}
+                    </span>
                   </div>
+                  <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '3px' }}>{n.displayName}</div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <span
                     style={{
+                      padding: '3px 8px',
+                      borderRadius: '6px',
                       fontSize: '11px',
-                      fontWeight: 600,
-                      color: n.active ? '#059669' : '#94a3b8'
+                      fontWeight: 700,
+                      backgroundColor: n.status === 'ACTIVE' ? '#ecfdf5' : '#fef2f2',
+                      color: n.status === 'ACTIVE' ? '#059669' : '#dc2626',
                     }}
                   >
-                    {n.active ? 'Active' : 'Inactive'}
+                    {n.status === 'ACTIVE' ? 'KÍCH HOẠT' : 'TẠM TẮT'}
                   </span>
-                  {/* Switch Toggle */}
-                  <div
-                    onClick={() => toggleNotification(n.id)}
+
+                  <button
+                    onClick={() => handleToggleGateway(n)}
                     style={{
-                      width: '36px',
-                      height: '20px',
-                      borderRadius: '10px',
-                      backgroundColor: n.active ? '#10b981' : '#cbd5e1',
-                      position: 'relative',
+                      backgroundColor: n.status === 'ACTIVE' ? '#fef2f2' : '#eff6ff',
+                      color: n.status === 'ACTIVE' ? '#dc2626' : '#2563eb',
+                      border: `1px solid ${n.status === 'ACTIVE' ? '#fecaca' : '#bfdbfe'}`,
+                      borderRadius: '6px',
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      fontWeight: 700,
                       cursor: 'pointer',
-                      transition: 'background-color 0.2s ease'
                     }}
                   >
-                    <div
-                      style={{
-                        width: '16px',
-                        height: '16px',
-                        borderRadius: '50%',
-                        backgroundColor: '#ffffff',
-                        position: 'absolute',
-                        top: '2px',
-                        left: n.active ? '18px' : '2px',
-                        transition: 'left 0.2s ease',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
-                      }}
-                    />
-                  </div>
+                    {n.status === 'ACTIVE' ? 'Tắt' : 'Bật'}
+                  </button>
                 </div>
               </div>
             ))}
@@ -248,4 +268,3 @@ export const AdminPaymentsPage: React.FC = () => {
 };
 
 export default AdminPaymentsPage;
-

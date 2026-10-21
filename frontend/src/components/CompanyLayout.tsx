@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutGrid,
   Bus,
@@ -12,8 +12,11 @@ import {
   Search,
   Bell,
   ChevronDown,
-  LayoutDashboard
+  LayoutDashboard,
+  LogOut
 } from 'lucide-react';
+import { toast } from '../context/ToastContext';
+import { AuthUser } from '../types';
 
 interface CompanyLayoutProps {
   children: React.ReactNode;
@@ -21,6 +24,23 @@ interface CompanyLayoutProps {
 
 export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const [currentUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('traveleasy_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const handleLogout = () => {
+    localStorage.removeItem('traveleasy_token');
+    localStorage.removeItem('traveleasy_user');
+    toast.info('Đã đăng xuất khỏi Cổng Đối Tác Nhà Xe.', 'Đăng Xuất');
+    navigate('/company/login', { replace: true });
+  };
 
   const operationItems = [
     { label: 'Doi xe', path: '/company/vehicles', icon: Bus },
@@ -326,7 +346,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
             </div>
 
             {/* Profile */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '9px', cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
               <div
                 style={{
                   width: '32px',
@@ -341,14 +361,39 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                   fontWeight: 700
                 }}
               >
-                TE
+                {currentUser?.fullName?.substring(0, 2)?.toUpperCase() || 'TE'}
               </div>
               <div style={{ lineHeight: 1.15 }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>TravelEasy Express</div>
-                <div style={{ fontSize: '10px', fontWeight: 600, color: '#64748b' }}>BUS_COMPANY</div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                  {currentUser?.fullName || 'Điều Hành Nhà Xe'}
+                </div>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: '#0d9488' }}>
+                  {currentUser?.role === 'ADMIN' ? 'QUẢN TRỊ VIÊN' : 'ĐỐI TÁC NHÀ XE'}
+                </div>
               </div>
-              <ChevronDown size={14} color="#64748b" style={{ marginLeft: '2px' }} />
             </div>
+
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              title="Đăng xuất Cổng Nhà Xe"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                backgroundColor: '#fef2f2',
+                color: '#dc2626',
+                border: '1px solid #fecaca',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <LogOut size={13} /> Đăng Xuất
+            </button>
           </div>
         </header>
 
