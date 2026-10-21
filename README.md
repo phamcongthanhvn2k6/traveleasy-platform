@@ -1556,8 +1556,18 @@ Hệ thống đã chuẩn bị sẵn Dashboard điều hành cho nhà xe (`/comp
 ![Dashboard Đối Tác Nhà Xe](docs/screenshots/screenshot_company_dashboard.png)
 *Hình 11.20: Dashboard điều hành dành riêng cho nhà xe đối tác.*
 
-![Thông Báo Tính Năng Đối Tác Đang Phát Triển](docs/screenshots/screenshot_company_unsupported.png)
-*Hình 11.21: Trang thông báo đăng ký đối tác nhà xe mới đang trong giai đoạn tiếp nhận hồ sơ.*
+#### 4. Quản Lý Đội Xe Vận Hành (Company Vehicles — Full CRUD)
+Tính năng quản lý toàn diện đội xe của từng nhà xe đối tác trên sàn:
+* **Thêm xe mới**: Hộp thoại thêm xe nhập biển số, loại xe (Giường nằm / Limousine VIP / Ghế ngồi), số tầng, năm sản xuất và sơ đồ ghế mẫu.
+* **Chỉnh sửa xe**: Cập nhật biển số, loại xe, năm sản xuất, và cấu hình ghế ngồi.
+* **Xem chi tiết xe**: Bảng thông số kỹ thuật xe chi tiết, tình trạng kiểm định và đơn vị vận hành.
+* **Bật / tắt trạng thái vận hành**: Chuyển đổi trạng thái hoạt động tức thì (`ACTIVE` <-> `INACTIVE`) và đồng bộ CSDL thời gian thực qua `PATCH /api/v1/company/vehicles/{id}/status`.
+* **Xóa xe**: Gỡ bỏ xe khỏi đội xe vận hành.
+![Quản Lý Đội Xe Nhà Xe](docs/screenshots/screenshot_company_vehicles_live.png)
+*Hình 11.21: Giao diện quản lý đội xe thời gian thực với đầy đủ các thao tác Xem, Sửa, Xóa và Đổi trạng thái.*
+
+![Modal Thêm Xe Mới Vào Đội Xe](docs/screenshots/screenshot_company_vehicles_modal.png)
+*Hình 11.22: Hộp thoại Thêm Xe Mới Vào Đội Xe — Kết nối CSDL và lưu trữ bền vững.*
 
 ---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  

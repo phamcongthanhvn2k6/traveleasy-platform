@@ -20,3 +20,4 @@ public class UpdateTripRequest {
     private BigDecimal price;
     private Integer totalSeats;
 }
+

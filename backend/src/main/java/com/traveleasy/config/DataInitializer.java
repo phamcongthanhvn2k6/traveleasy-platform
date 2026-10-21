@@ -35,12 +35,19 @@ public class DataInitializer implements CommandLineRunner {
     private final ReviewReportRepository reviewReportRepository;
     private final CancellationPolicyRepository cancellationPolicyRepository;
     private final AuditLogRepository auditLogRepository;
+    private final VehicleRepository vehicleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public void run(String... args) {
         if (userRepository.count() > 0) {
+            if (vehicleRepository.count() == 0) {
+                BusCompany futa = busCompanyRepository.findAll().stream().findFirst().orElse(null);
+                if (futa != null) {
+                    seedDefaultVehicles(futa);
+                }
+            }
             log.info("Database already seeded. Skipping DataInitializer.");
             return;
         }
@@ -209,6 +216,8 @@ public class DataInitializer implements CommandLineRunner {
         cancellationPolicyRepository.saveAll(policies);
 
         // 14. Seed Audit Logs
+        seedDefaultVehicles(futa);
+
         List<AuditLog> auditLogs = List.of(
                 AuditLog.builder().userEmail("admin@traveleasy.vn").action("APPROVE_COMPANY").target("bus_companies #bc1").beforeState("{\"status\": \"PENDING_APPROVAL\"}").afterState("{\"status\": \"ACTIVE\"}").build(),
                 AuditLog.builder().userEmail("admin@traveleasy.vn").action("APPROVE_COMPANY").target("bus_companies #bc2").beforeState("{\"status\": \"PENDING_APPROVAL\"}").afterState("{\"status\": \"ACTIVE\"}").build(),
@@ -257,5 +266,43 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         tripSeatRepository.saveAll(seats);
+    }
+
+    private void seedDefaultVehicles(BusCompany futa) {
+        List<Vehicle> vehicles = List.of(
+                Vehicle.builder()
+                        .busCompany(futa)
+                        .plateNumber("51B-123.45")
+                        .vehicleCode("v1")
+                        .vehicleType("SLEEPER")
+                        .floors(2)
+                        .manufactureYear(2022)
+                        .seatLayout("Giường nằm 2 tầng 34 chỗ")
+                        .imageUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=100&auto=format&fit=crop&q=60")
+                        .status("ACTIVE")
+                        .build(),
+                Vehicle.builder()
+                        .busCompany(futa)
+                        .plateNumber("51B-987.65")
+                        .vehicleCode("v2")
+                        .vehicleType("LIMOUSINE")
+                        .floors(1)
+                        .manufactureYear(2023)
+                        .seatLayout("Ghế ngồi 1 tầng 24 chỗ (Limousine)")
+                        .status("ACTIVE")
+                        .build(),
+                Vehicle.builder()
+                        .busCompany(futa)
+                        .plateNumber("51B-111.22")
+                        .vehicleCode("v4")
+                        .vehicleType("SEATED")
+                        .floors(1)
+                        .manufactureYear(2018)
+                        .seatLayout("Ghế ngồi 1 tầng 45 chỗ")
+                        .status("INACTIVE")
+                        .build()
+        );
+        vehicleRepository.saveAll(vehicles);
+        log.info("Default vehicles seeded successfully!");
     }
 }
