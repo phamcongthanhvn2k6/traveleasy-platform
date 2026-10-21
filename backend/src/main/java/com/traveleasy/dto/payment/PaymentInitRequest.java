@@ -22,3 +22,4 @@ public class PaymentInitRequest {
 
     private String bankCode; // VD: NCB, VCB, MB (Dành cho VNPAY nếu khách chọn đích danh ngân hàng)
 }
+

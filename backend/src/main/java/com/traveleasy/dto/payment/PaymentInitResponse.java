@@ -43,3 +43,4 @@ public class PaymentInitResponse {
         private BigDecimal amount;
     }
 }
+

@@ -18,3 +18,4 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
 
     Optional<PaymentTransaction> findFirstByBookingCodeOrderByCreatedAtDesc(String bookingCode);
 }
+

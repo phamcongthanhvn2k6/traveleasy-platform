@@ -316,6 +316,63 @@ public class PaymentService {
                 .build();
     }
 
+    @Transactional
+    public PaymentStatusResponse mockPaymentSuccess(String bookingCode, PaymentMethod paymentMethod) {
+        Booking booking = bookingRepository.findByBookingCode(bookingCode)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé: " + bookingCode));
+
+        PaymentMethod method = (paymentMethod != null) ? paymentMethod : PaymentMethod.VNPAY;
+
+        PaymentTransaction transaction = paymentTransactionRepository.findFirstByBookingCodeOrderByCreatedAtDesc(bookingCode)
+                .orElseGet(() -> {
+                    String randomSuffix = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+                    String txnRef = "TXN-" + booking.getBookingCode().replace("BK-", "") + "-" + randomSuffix;
+                    PaymentTransaction newTxn = PaymentTransaction.builder()
+                            .txnRef(txnRef)
+                            .bookingId(booking.getId())
+                            .bookingCode(booking.getBookingCode())
+                            .paymentMethod(method)
+                            .amount(booking.getTotalAmount())
+                            .status(PaymentStatus.PENDING)
+                            .orderInfo("Thanh toan ve xe TravelEasy - " + booking.getBookingCode())
+                            .build();
+                    return paymentTransactionRepository.save(newTxn);
+                });
+
+        String mockTxnNo = "VNP" + System.currentTimeMillis();
+        transaction.setPaymentMethod(method);
+        transaction.setStatus(PaymentStatus.SUCCESS);
+        transaction.setTransactionNo(mockTxnNo);
+        transaction.setBankCode("NCB");
+        transaction.setResponseCode("00");
+        transaction.setPayDate(LocalDateTime.now());
+        paymentTransactionRepository.save(transaction);
+
+        // Kích hoạt trạng thái đơn đặt vé
+        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setPaymentMethod(method);
+        bookingRepository.save(booking);
+
+        List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
+        tickets.forEach(t -> t.setStatus(TicketStatus.ISSUED));
+        ticketRepository.saveAll(tickets);
+
+        log.info("Mock Payment Demo: Giao dịch giả lập thành công cho đơn {} qua cổng {}", bookingCode, method);
+
+        return PaymentStatusResponse.builder()
+                .bookingCode(bookingCode)
+                .txnRef(transaction.getTxnRef())
+                .paymentStatus(PaymentStatus.SUCCESS)
+                .bookingStatus(BookingStatus.CONFIRMED)
+                .paymentMethod(method)
+                .amount(transaction.getAmount())
+                .transactionNo(mockTxnNo)
+                .payDate(transaction.getPayDate())
+                .isPaid(true)
+                .message("Xác nhận thanh toán Demo thành công (Đã cập nhật Database & Vé)!")
+                .build();
+    }
+
     @Transactional(readOnly = true)
     public PaymentStatusResponse getPaymentStatus(String bookingCode) {
         Booking booking = bookingRepository.findByBookingCode(bookingCode)
@@ -339,3 +396,4 @@ public class PaymentService {
                 .build();
     }
 }
+

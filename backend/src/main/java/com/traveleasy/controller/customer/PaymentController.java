@@ -4,6 +4,7 @@ import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.dto.payment.PaymentInitRequest;
 import com.traveleasy.dto.payment.PaymentInitResponse;
 import com.traveleasy.dto.payment.PaymentStatusResponse;
+import com.traveleasy.entity.PaymentMethod;
 import com.traveleasy.entity.PaymentStatus;
 import com.traveleasy.service.customer.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,6 +56,14 @@ public class PaymentController {
         return ApiResponse.success("Xác nhận chuyển khoản thành công", paymentService.confirmVietQrTransfer(bookingCode, manualRef));
     }
 
+    @PostMapping("/mock-success/{bookingCode}")
+    @Operation(summary = "Giả lập thanh toán VNPAY/Cổng thành công phục vụ Demo (Ghi nhận CSDL thật)")
+    public ApiResponse<PaymentStatusResponse> mockPaymentSuccess(
+            @PathVariable String bookingCode,
+            @RequestParam(defaultValue = "VNPAY") PaymentMethod paymentMethod) {
+        return ApiResponse.success("Giả lập thanh toán thành công", paymentService.mockPaymentSuccess(bookingCode, paymentMethod));
+    }
+
     @GetMapping("/vnpay-return")
     @Operation(summary = "Callback từ cổng VNPAY khi người dùng hoàn tất thanh toán trên trình duyệt")
     public void vnpayReturn(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -103,3 +112,4 @@ public class PaymentController {
         }
     }
 }
+

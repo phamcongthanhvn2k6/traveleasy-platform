@@ -28,3 +28,4 @@ public class PaymentStatusResponse {
     private boolean isPaid;
     private String message;
 }
+

@@ -63,3 +63,4 @@ public class PaymentTransaction {
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 }
+

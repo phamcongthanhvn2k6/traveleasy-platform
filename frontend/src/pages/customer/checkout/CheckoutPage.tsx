@@ -8,6 +8,7 @@ import { PassengerInfoForm, PassengerInfo } from './components/PassengerInfoForm
 import { PaymentMethodSelector, PaymentMethodType } from './components/PaymentMethodSelector';
 import { OrderSummaryPanel } from './components/OrderSummaryPanel';
 import { QrPaymentModal } from './components/QrPaymentModal';
+import { VnPayModal } from './components/VnPayModal';
 import { toast } from '../../../context/ToastContext';
 import { Check, ChevronRight, ShieldCheck, ArrowLeft } from 'lucide-react';
 
@@ -94,6 +95,7 @@ export const CheckoutPage: React.FC = () => {
 
   // QR Modal & Payment State
   const [showQrModal, setShowQrModal] = useState(false);
+  const [showVnPayModal, setShowVnPayModal] = useState(false);
   const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
   const [paymentInitData, setPaymentInitData] = useState<PaymentInitResponse | null>(null);
 
@@ -169,15 +171,8 @@ export const CheckoutPage: React.FC = () => {
       setPaymentInitData(initRes);
 
       if (paymentMethod === 'VNPAY') {
-        if (initRes.paymentUrl) {
-          toast.info('Đang chuyển hướng sang Cổng thanh toán VNPAY...', 'VNPAY Gateway');
-          // Chuyển hướng trình duyệt sang cổng VNPAY Sandbox chính thức
-          setTimeout(() => {
-            window.location.href = initRes.paymentUrl!;
-          }, 800);
-        } else {
-          toast.error('Không thể tạo liên kết thanh toán VNPAY.', 'Lỗi Cổng Thanh Toán');
-        }
+        // Mở Modal VNPAY với nút Demo duyệt ngay và nút chuyển hướng Sandbox
+        setShowVnPayModal(true);
       } else if (paymentMethod === 'VIETQR') {
         // Mở Modal VietQR Napas 24/7 tự động nhận diện giao dịch
         setShowQrModal(true);
@@ -198,6 +193,16 @@ export const CheckoutPage: React.FC = () => {
       toast.error(msg, 'Thất Bại');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVnPaySuccess = () => {
+    setShowVnPayModal(false);
+    sessionStorage.removeItem('traveleasy_checkout_data');
+    if (createdBooking) {
+      navigate(`/tickets/${createdBooking.bookingCode}?payment=success`);
+    } else {
+      navigate('/lookup');
     }
   };
 
@@ -333,6 +338,17 @@ export const CheckoutPage: React.FC = () => {
           bankDetails={paymentInitData?.bankDetails}
           onSuccess={handleQrSuccess}
           onClose={() => setShowQrModal(false)}
+        />
+      )}
+
+      {/* VNPAY Payment & Demo Approval Modal */}
+      {showVnPayModal && createdBooking && (
+        <VnPayModal
+          bookingCode={createdBooking.bookingCode}
+          totalAmount={createdBooking.totalAmount}
+          paymentUrl={paymentInitData?.paymentUrl}
+          onSuccess={handleVnPaySuccess}
+          onClose={() => setShowVnPayModal(false)}
         />
       )}
     </div>
