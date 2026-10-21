@@ -1423,7 +1423,11 @@ Toàn bộ 30 endpoints thuộc 7 nhóm nghiệp vụ chính của TravelEasy Pl
 | 17 | **Admin** | `GET` | `/api/v1/admin/bookings` | ADMIN | Quản lý và lọc danh sách đơn đặt vé | `200 OK` | ✅ Trả về danh sách đơn đặt vé |
 | 18 | **Admin** | `GET` | `/api/v1/admin/users` | ADMIN | Quản lý danh sách tài khoản & phân quyền | `200 OK` | ✅ Trả về danh sách 12 người dùng |
 | 19 | **Admin** | `PATCH` | `/api/v1/admin/users/{id}/status` | ADMIN | Khóa / Mở khóa tài khoản người dùng vi phạm | `200 OK` | ✅ Cập nhật trạng thái `ACTIVE` / `LOCKED` |
-| 20 | **Admin** | `GET` | `/api/v1/admin/companies` | ADMIN | Quản lý danh sách đối tác nhà xe liên kết | `200 OK` | ✅ Trả về danh sách 10 nhà xe đối tác |
+| 20 | **Admin** | `GET` | `/api/v1/admin/companies` | ADMIN | Quản lý danh sách đối tác nhà xe liên kết | `200 OK` | ✅ Trả về danh sách đối tác nhà xe |
+| 21 | **Admin** | `POST` | `/api/v1/admin/bus-companies` | ADMIN | Thêm mới đối tác nhà xe vào sàn | `200 OK` | ✅ Tạo nhà xe và đồng bộ CSDL |
+| 22 | **Admin** | `GET` | `/api/v1/admin/routes` | ADMIN | Quản lý danh sách tuyến đường liên tỉnh | `200 OK` | ✅ Trả về 15 tuyến đường kết nối |
+| 23 | **Admin** | `POST` | `/api/v1/admin/routes` | ADMIN | Thêm mới tuyến đường vận tải liên tỉnh | `200 OK` | ✅ Tạo tuyến đường và ghi nhận audit log |
+| 24 | **Admin** | `POST` | `/api/v1/admin/trips` | ADMIN | **Thêm chuyến xe mới & tự động sinh kho 34 ghế** | `200 OK` | ✅ Sinh đủ 34 ghế A01-A17, B01-B17 |
 | 21 | **Admin** | `GET` | `/api/v1/admin/seat-types` | ADMIN | Danh mục loại ghế chuẩn hóa (VIP, Thường, Đôi) | `200 OK` | ✅ Trả về danh mục loại ghế |
 | 22 | **Admin** | `GET` | `/api/v1/admin/seat-templates`| ADMIN | Danh mục sơ đồ ghế mẫu (Giường nằm 34, 40 chỗ) | `200 OK` | ✅ Trả về danh sách template ghế |
 | 23 | **Admin** | `GET` | `/api/v1/admin/locations` | ADMIN | Danh mục địa điểm & bến xe đón trả khách | `200 OK` | ✅ Trả về danh sách địa điểm |
@@ -1492,10 +1496,26 @@ Toàn bộ 4 thẻ KPI (Doanh thu, Vé đã bán, Chuyến xe hoạt động, Kh
 ![Admin Dashboard Đồng Bộ CSDL](docs/screenshots/screenshot_admin_dashboard_synced.png)
 *Hình 11.12: Dashboard quản trị hiển thị dữ liệu thực tế từ cơ sở dữ liệu.*
 
-#### 2. Quản Lý Chuyến Xe Toàn Sàn (Trips Management)
-Xem lịch trình, thêm mới chuyến xe tự động sinh 34 ghế ngồi, kích hoạt hoặc hủy chuyến xe.
+#### 2. Quản Lý Tuyến Đường Vận Tải (Routes Management)
+Quản lý danh sách các tuyến đường liên tỉnh, thời gian di chuyển, cự ly km và thêm mới tuyến đường trực tiếp vào CSDL.
+![Quản Lý Tuyến Đường](docs/screenshots/screenshot_admin_routes.png)
+*Hình 11.13: Danh sách các tuyến đường vận tải toàn sàn kết nối các đầu mối giao thông.*
+
+![Modal Thêm Tuyến Đường Mới](docs/screenshots/screenshot_admin_routes_modal.png)
+*Hình 11.14: Hộp thoại tạo mới tuyến đường liên tỉnh (chọn nhà xe, điểm đi, điểm đến, thời gian chạy, cự ly).*
+
+#### 3. Quản Lý & Thêm Mới Chuyến Xe Tự Sinh 34 Ghế (Trips Management)
+Xem lịch trình, lọc trạng thái và mở modal thêm chuyến xe mới tự động liên kết với tuyến đường và nhà xe, sinh đủ 34 ghế ngồi tầng 1/tầng 2.
 ![Quản Lý Chuyến Xe Admin](docs/screenshots/screenshot_admin_trips.png)
-*Hình 11.13: Danh sách chuyến xe với bộ lọc theo ngày, điểm đi, điểm đến và trạng thái vận hành.*
+*Hình 11.15: Danh sách chuyến xe với bộ lọc theo ngày, điểm đi, điểm đến và trạng thái vận hành.*
+
+![Modal Thêm Chuyến Xe Mới](docs/screenshots/screenshot_admin_trips_modal.png)
+*Hình 11.16: Hộp thoại Thêm Chuyến Xe Mới — Tự động sinh kho 34 ghế ngồi (A01-A17, B01-B17) trong cơ sở dữ liệu.*
+
+#### 4. Quản Lý & Thêm Mới Đối Tác Nhà Xe (Bus Companies)
+Quản lý thông tin các hãng xe đối tác, hotline, địa chỉ và mở modal thêm nhà xe mới vào sàn.
+![Modal Thêm Đối Tác Nhà Xe Mới](docs/screenshots/screenshot_admin_companies_modal.png)
+*Hình 11.17: Hộp thoại Thêm Đối Tác Nhà Xe Mới — Đồng bộ và kích hoạt mở bán trên sàn.*
 
 #### 3. Quản Lý Danh Mục Ghế & Sơ Đồ Mẫu (Seat Types & Templates)
 Chuẩn hóa loại ghế (VIP, Giường nằm tiêu chuẩn, Ghế ngả cao cấp) và sơ đồ 1 tầng / 2 tầng.

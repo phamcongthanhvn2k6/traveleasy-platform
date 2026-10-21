@@ -50,6 +50,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const navItems = [
     { label: 'Tong quan', path: '/admin/dashboard', icon: LayoutGrid },
     { label: 'Chuyen xe', path: '/admin/trips', icon: Calendar },
+    { label: 'Tuyen duong', path: '/admin/routes', icon: MapPin },
     { label: 'Don dat ve', path: '/admin/bookings', icon: Ticket },
     { label: 'Nguoi dung', path: '/admin/users', icon: Users },
     { label: 'Nha xe', path: '/admin/bus-companies', icon: Bus },

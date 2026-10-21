@@ -30,6 +30,7 @@ public class AdminManagementService {
     private final ReviewReportRepository reviewReportRepository;
     private final CancellationPolicyRepository cancellationPolicyRepository;
     private final AuditLogRepository auditLogRepository;
+    private final RouteRepository routeRepository;
     private final PasswordEncoder passwordEncoder;
 
     // ==========================================
@@ -402,6 +403,62 @@ public class AdminManagementService {
             return auditLogRepository.findByActionOrderByCreatedAtDesc(action.toUpperCase());
         }
         return auditLogRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    // ==========================================
+    // 10. ROUTE MANAGEMENT (/admin/routes)
+    // ==========================================
+    @Transactional(readOnly = true)
+    public List<RouteAdminResponse> getAllRoutes(String search, Long companyId) {
+        return routeRepository.findAll().stream()
+                .filter(r -> companyId == null || (r.getBusCompany() != null && r.getBusCompany().getId().equals(companyId)))
+                .filter(r -> search == null || search.isBlank() ||
+                        r.getDepartureLocation().toLowerCase().contains(search.toLowerCase()) ||
+                        r.getArrivalLocation().toLowerCase().contains(search.toLowerCase()) ||
+                        (r.getBusCompany() != null && r.getBusCompany().getName().toLowerCase().contains(search.toLowerCase())))
+                .map(this::mapToRouteResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public RouteAdminResponse createRoute(CreateRouteRequest request) {
+        BusCompany company = busCompanyRepository.findById(request.getBusCompanyId())
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
+
+        Route route = Route.builder()
+                .busCompany(company)
+                .departureLocation(request.getDepartureLocation())
+                .arrivalLocation(request.getArrivalLocation())
+                .durationHours(request.getDurationHours())
+                .distanceKm(request.getDistanceKm() != null ? request.getDistanceKm() : java.math.BigDecimal.valueOf(100))
+                .build();
+
+        Route saved = routeRepository.save(route);
+        logAction("admin@traveleasy.vn", "CREATE_ROUTE", "routes #" + saved.getId(), "-", 
+                "{\"company\": \"" + company.getName() + "\", \"from\": \"" + saved.getDepartureLocation() + "\", \"to\": \"" + saved.getArrivalLocation() + "\"}");
+        return mapToRouteResponse(saved);
+    }
+
+    @Transactional
+    public void deleteRoute(Long id) {
+        Route route = routeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy tuyến đường"));
+        routeRepository.delete(route);
+        logAction("admin@traveleasy.vn", "DELETE_ROUTE", "routes #" + id, "{\"from\": \"" + route.getDepartureLocation() + "\", \"to\": \"" + route.getArrivalLocation() + "\"}", "-");
+    }
+
+    private RouteAdminResponse mapToRouteResponse(Route r) {
+        return RouteAdminResponse.builder()
+                .id(r.getId())
+                .busCompanyId(r.getBusCompany() != null ? r.getBusCompany().getId() : null)
+                .busCompanyName(r.getBusCompany() != null ? r.getBusCompany().getName() : "TravelEasy Express")
+                .departureLocation(r.getDepartureLocation())
+                .arrivalLocation(r.getArrivalLocation())
+                .durationHours(r.getDurationHours())
+                .distanceKm(r.getDistanceKm())
+                .pointsCount(r.getPoints() != null ? r.getPoints().size() : 0)
+                .createdAt(r.getCreatedAt())
+                .build();
     }
 
     @Transactional

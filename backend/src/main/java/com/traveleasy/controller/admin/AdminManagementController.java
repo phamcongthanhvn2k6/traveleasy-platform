@@ -224,5 +224,29 @@ public class AdminManagementController {
     public ApiResponse<List<AuditLog>> getAuditLogs(@RequestParam(required = false) String action) {
         return ApiResponse.success(adminManagementService.getAllAuditLogs(action));
     }
+
+    // ==========================================
+    // 10. QUẢN LÝ TUYẾN ĐƯỜNG (/admin/routes)
+    // ==========================================
+    @GetMapping("/routes")
+    @Operation(summary = "Danh sách tuyến đường trên toàn sàn")
+    public ApiResponse<List<RouteAdminResponse>> getRoutes(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long companyId) {
+        return ApiResponse.success(adminManagementService.getAllRoutes(search, companyId));
+    }
+
+    @PostMapping("/routes")
+    @Operation(summary = "Tạo mới tuyến đường kết nối các tỉnh thành")
+    public ApiResponse<RouteAdminResponse> createRoute(@Valid @RequestBody CreateRouteRequest request) {
+        return ApiResponse.success("Tạo tuyến đường thành công", adminManagementService.createRoute(request));
+    }
+
+    @DeleteMapping("/routes/{id}")
+    @Operation(summary = "Xoá tuyến đường khỏi hệ thống")
+    public ApiResponse<Void> deleteRoute(@PathVariable Long id) {
+        adminManagementService.deleteRoute(id);
+        return ApiResponse.success("Xoá tuyến đường thành công", null);
+    }
 }
 

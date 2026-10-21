@@ -16,6 +16,7 @@ import { AdminCancellationPoliciesPage } from '../pages/admin/cancellation-polic
 import { AdminAuditLogsPage } from '../pages/admin/audit-logs/AdminAuditLogsPage';
 import { AdminTripsPage } from '../pages/admin/trips/AdminTripsPage';
 import { AdminBookingsPage } from '../pages/admin/bookings/AdminBookingsPage';
+import { AdminRoutesPage } from '../pages/admin/routes/AdminRoutesPage';
 
 /**
  * =========================================================================
@@ -50,6 +51,8 @@ export const AdminRoutes: React.FC = () => {
                 {/* Nhóm Chuyến xe & Đơn đặt vé */}
                 <Route path="trips" element={<AdminTripsPage />} />
                 <Route path="/trips" element={<AdminTripsPage />} />
+                <Route path="routes" element={<AdminRoutesPage />} />
+                <Route path="/routes" element={<AdminRoutesPage />} />
                 <Route path="bookings" element={<AdminBookingsPage />} />
                 <Route path="/bookings" element={<AdminBookingsPage />} />
 
