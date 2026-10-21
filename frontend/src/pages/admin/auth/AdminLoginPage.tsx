@@ -31,11 +31,13 @@ export const AdminLoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isOperatorAttempt, setIsOperatorAttempt] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
+    setIsOperatorAttempt(false);
 
     if (!identifier.trim()) {
       const msg = 'Vui lòng nhập Email hoặc Tài khoản quản trị.';
@@ -65,9 +67,18 @@ export const AdminLoginPage: React.FC = () => {
         // Hủy lưu thông tin và thông báo vi phạm phân quyền
         localStorage.removeItem('traveleasy_token');
         localStorage.removeItem('traveleasy_user');
-        const errText = `Từ chối quyền truy cập! Tài khoản "${identifier}" mang vai trò ${data?.role || 'CUSTOMER'}. Cổng Quản trị viên chỉ cho phép tài khoản có vai trò ADMIN.`;
-        toast.error(errText, 'Truy Cập Bị Từ Chối');
-        setErrorMsg(errText);
+
+        if (data?.role === 'OPERATOR') {
+          setIsOperatorAttempt(true);
+          const errText = `Từ chối quyền truy cập! Tài khoản "${identifier.trim()}" là Đối tác điều hành nhà xe (OPERATOR). Cổng này chỉ dành riêng cho Quản trị viên sàn (ADMIN). Vui lòng đăng nhập tại Cổng Đối Tác Nhà Xe.`;
+          toast.error('Tài khoản Nhà xe (OPERATOR) không được phép truy cập cổng Quản trị sàn!', 'Sai Cổng Đăng Nhập');
+          setErrorMsg(errText);
+        } else {
+          setIsOperatorAttempt(false);
+          const errText = `Từ chối quyền truy cập! Tài khoản "${identifier.trim()}" mang vai trò ${data?.role || 'CUSTOMER'}. Cổng Quản trị viên chỉ cho phép tài khoản có vai trò ADMIN.`;
+          toast.error(errText, 'Truy Cập Bị Từ Chối');
+          setErrorMsg(errText);
+        }
         setLoading(false);
         return;
       }
@@ -238,18 +249,38 @@ export const AdminLoginPage: React.FC = () => {
                 backgroundColor: 'rgba(239, 68, 68, 0.12)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
                 borderRadius: '10px',
-                padding: '12px 14px',
+                padding: '14px 16px',
                 marginBottom: '20px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                gap: '10px',
+                flexDirection: 'column',
+                gap: '8px',
                 color: '#fca5a5',
                 fontSize: '13px',
                 lineHeight: 1.45
               }}
             >
-              <AlertTriangle size={18} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <div>{errorMsg}</div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <AlertTriangle size={18} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>{errorMsg}</div>
+              </div>
+              {isOperatorAttempt && (
+                <div style={{ marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed rgba(239, 68, 68, 0.3)', paddingLeft: '28px' }}>
+                  <Link
+                    to="/company/login"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      color: '#2dd4bf',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      fontSize: '12.5px',
+                    }}
+                  >
+                    👉 Đến Cổng Điều Hành Đối Tác Nhà Xe (Operator Portal) ngay →
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 

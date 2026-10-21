@@ -19,7 +19,7 @@ import { PartnerComingSoonPage } from '../pages/company/unsupported/PartnerComin
  * Base Path: /company/*
  * Được bảo vệ nghiêm ngặt bằng CompanyAuthGuard:
  * - /company/login: Cổng đăng nhập đối tác nhà xe công khai
- * - /company/*: Yêu cầu JWT Token hợp lệ & Vai trò phải là ROLE_OPERATOR (hoặc ROLE_ADMIN)
+ * - /company/*: Yêu cầu JWT Token hợp lệ & Vai trò phải là ROLE_OPERATOR (nghiêm ngặt độc lập với ROLE_ADMIN)
  * =========================================================================
  */
 export const CompanyRoutes: React.FC = () => {

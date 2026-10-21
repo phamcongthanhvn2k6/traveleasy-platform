@@ -26,10 +26,12 @@ export const CompanyLoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isAdminAttempt, setIsAdminAttempt] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setIsAdminAttempt(false);
 
     if (!identifier.trim()) {
       const msg = 'Vui lòng nhập Email hoặc SĐT đối tác nhà xe.';
@@ -54,13 +56,22 @@ export const CompanyLoginPage: React.FC = () => {
 
       const data: AuthUser = response.data?.data;
 
-      // KIỂM TRA QUYỀN OPERATOR HOẶC ADMIN
-      if (!data || (data.role !== 'OPERATOR' && data.role !== 'ADMIN')) {
+      // PHÂN QUYỀN NGHIÊM NGẶT: CỔNG NÀY CHỈ DÀNH RIÊNG CHO ĐỐI TÁC NHÀ XE (OPERATOR)
+      if (!data || data.role !== 'OPERATOR') {
         localStorage.removeItem('traveleasy_token');
         localStorage.removeItem('traveleasy_user');
-        const errText = `Từ chối truy cập! Tài khoản "${identifier}" là Khách hàng (CUSTOMER). Cổng này chỉ dành cho Đối tác Nhà xe (OPERATOR).`;
-        toast.error(errText, 'Truy Cập Bị Từ Chối');
-        setErrorMsg(errText);
+
+        if (data?.role === 'ADMIN') {
+          setIsAdminAttempt(true);
+          const errText = `Từ chối truy cập! Tài khoản "${identifier.trim()}" là Quản trị viên hệ thống (ADMIN). Cổng này chỉ dành riêng cho Đối tác điều hành nhà xe (OPERATOR). Quản trị viên sàn vui lòng đăng nhập tại Cổng Quản Trị Hệ Thống.`;
+          toast.error('Tài khoản Quản trị viên (ADMIN) không được phép truy cập cổng Nhà xe!', 'Sai Cổng Đăng Nhập');
+          setErrorMsg(errText);
+        } else {
+          setIsAdminAttempt(false);
+          const errText = `Từ chối truy cập! Tài khoản "${identifier.trim()}" mang vai trò ${data?.role || 'CUSTOMER'}. Cổng này chỉ dành riêng cho Đối tác điều hành nhà xe (OPERATOR).`;
+          toast.error(errText, 'Truy Cập Bị Từ Chối');
+          setErrorMsg(errText);
+        }
         setLoading(false);
         return;
       }
@@ -158,14 +169,32 @@ export const CompanyLoginPage: React.FC = () => {
               backgroundColor: 'rgba(239, 68, 68, 0.15)',
               border: '1px solid rgba(239, 68, 68, 0.3)',
               color: '#fca5a5',
-              padding: '12px 14px',
+              padding: '14px 16px',
               borderRadius: '10px',
               fontSize: '13px',
               marginBottom: '20px',
               lineHeight: 1.5,
             }}
           >
-            {errorMsg}
+            <div>{errorMsg}</div>
+            {isAdminAttempt && (
+              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed rgba(239, 68, 68, 0.35)' }}>
+                <Link
+                  to="/admin/login"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: '#38bdf8',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    fontSize: '12.5px',
+                  }}
+                >
+                  🛡️ Đi đến Cổng Quản Trị Hệ Thống (Admin Portal) ngay →
+                </Link>
+              </div>
+            )}
           </div>
         )}
 

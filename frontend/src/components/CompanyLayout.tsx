@@ -342,7 +342,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                   {currentUser?.fullName || 'Điều Hành Nhà Xe'}
                 </div>
                 <div style={{ fontSize: '10px', fontWeight: 700, color: '#0d9488' }}>
-                  {currentUser?.role === 'ADMIN' ? 'QUẢN TRỊ VIÊN' : 'ĐỐI TÁC NHÀ XE'}
+                  ĐỐI TÁC NHÀ XE
                 </div>
               </div>
             </div>
