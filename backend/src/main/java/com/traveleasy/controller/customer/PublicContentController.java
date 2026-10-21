@@ -53,3 +53,4 @@ public class PublicContentController {
         private Integer rating;
     }
 }
+

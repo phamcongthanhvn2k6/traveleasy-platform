@@ -1,47 +1,33 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { CompanyLayout } from '../components/CompanyLayout';
-import { CompanyDashboardPage } from '../pages/company/dashboard/CompanyDashboardPage';
-import { CompanyVehiclesPage } from '../pages/company/vehicles/CompanyVehiclesPage';
-import { CompanyLocationsPage } from '../pages/company/locations/CompanyLocationsPage';
-import { CompanyRoutesPage } from '../pages/company/routes/CompanyRoutesPage';
-import { CompanyCancellationPoliciesPage } from '../pages/company/cancellation-policies/CompanyCancellationPoliciesPage';
-import { CompanyTripsPage } from '../pages/company/trips/CompanyTripsPage';
-import { CompanyBookingsPage } from '../pages/company/bookings/CompanyBookingsPage';
-import { CompanyReviewsPage } from '../pages/company/reviews/CompanyReviewsPage';
+import { PartnerComingSoonPage } from '../pages/company/unsupported/PartnerComingSoonPage';
 
 /**
  * =========================================================================
  * ROUTER PHÂN HỆ ĐỐI TÁC NHÀ XE (TRAVELEASY PARTNER PORTAL)
- * Phụ trách: Phạm Công Thành (Nhóm trưởng / Architect)
  * Base Path: /company/*
- * Giao diện tối giản, chuẩn xác 100% theo bộ prototype ảnh chụp thực tế
+ * Trạng thái: Tính năng Cổng Đối tác Nhà xe chưa được hỗ trợ / Đang phát triển.
+ * Chặn hoàn toàn khách vãng lai và người chưa đăng nhập truy cập vào layout nội bộ.
  * =========================================================================
  */
 export const CompanyRoutes: React.FC = () => {
   return (
-    <CompanyLayout>
-      <Routes>
-        {/* Trang tổng quan nhà xe */}
-        <Route path="/" element={<CompanyDashboardPage />} />
-        <Route path="/dashboard" element={<CompanyDashboardPage />} />
+    <Routes>
+      {/* Trang thông báo tính năng đối tác chưa hỗ trợ */}
+      <Route path="/" element={<PartnerComingSoonPage />} />
+      <Route path="/dashboard" element={<PartnerComingSoonPage />} />
+      <Route path="/unsupported" element={<PartnerComingSoonPage />} />
+      <Route path="/vehicles" element={<PartnerComingSoonPage />} />
+      <Route path="/routes" element={<PartnerComingSoonPage />} />
+      <Route path="/locations" element={<PartnerComingSoonPage />} />
+      <Route path="/cancellation-policies" element={<PartnerComingSoonPage />} />
+      <Route path="/trips" element={<PartnerComingSoonPage />} />
+      <Route path="/bookings" element={<PartnerComingSoonPage />} />
+      <Route path="/reviews" element={<PartnerComingSoonPage />} />
 
-        {/* Nhóm Vận hành */}
-        <Route path="/vehicles" element={<CompanyVehiclesPage />} />
-        <Route path="/fleet/vehicles" element={<CompanyVehiclesPage />} />
-        <Route path="/locations" element={<CompanyLocationsPage />} />
-        <Route path="/routes" element={<CompanyRoutesPage />} />
-        <Route path="/cancellation-policies" element={<CompanyCancellationPoliciesPage />} />
-
-        {/* Nhóm Kinh doanh */}
-        <Route path="/trips" element={<CompanyTripsPage />} />
-        <Route path="/bookings" element={<CompanyBookingsPage />} />
-        <Route path="/reviews" element={<CompanyReviewsPage />} />
-
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/company/dashboard" replace />} />
-      </Routes>
-    </CompanyLayout>
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/company" replace />} />
+    </Routes>
   );
 };
 

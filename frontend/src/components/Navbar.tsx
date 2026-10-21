@@ -221,6 +221,7 @@ export const Navbar: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Link 
             to="/company" 
+            title="Cổng đối tác nhà xe (Tính năng đang phát triển)"
             style={{ 
               textDecoration: 'none', 
               color: '#0f766e', 
@@ -236,7 +237,11 @@ export const Navbar: React.FC = () => {
               transition: 'all 0.2s'
             }}
           >
-            <Building2 size={16} color="#0d9488" /> Đối Tác Nhà Xe
+            <Building2 size={16} color="#0d9488" /> 
+            <span>Đối Tác Nhà Xe</span>
+            <span style={{ backgroundColor: '#fef3c7', color: '#b45309', fontSize: '9.5px', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
+              SẮP RA MẮT
+            </span>
           </Link>
 
           {/* CHỈ hiển thị Quản Trị Sàn khi tài khoản hiện tại ĐÃ ĐĂNG NHẬP và có vai trò ADMIN */}

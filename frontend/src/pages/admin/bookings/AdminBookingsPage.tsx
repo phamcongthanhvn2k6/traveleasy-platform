@@ -321,3 +321,4 @@ export const AdminBookingsPage: React.FC = () => {
 };
 
 export default AdminBookingsPage;
+
