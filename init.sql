@@ -113,7 +113,7 @@ CREATE TABLE vehicles (
   PRIMARY KEY (id),
   UNIQUE KEY uq_vehicles_plate (plate_number),
   KEY idx_vehicles_bus_company (bus_company_id),
-  CONSTRAINT ck_vehicles_type CHECK (vehicle_type IN ('SEATED','SLEEPER','LIMOUSINE')),
+  CONSTRAINT ck_vehicles_type CHECK (vehicle_type IN ('SEAT','SEATED','SLEEPER','LIMOUSINE')),
   CONSTRAINT ck_vehicles_status CHECK (status IN ('ACTIVE','INACTIVE')),
   CONSTRAINT fk_vehicles_bus_company
     FOREIGN KEY (bus_company_id) REFERENCES bus_companies (id) ON DELETE RESTRICT
@@ -263,7 +263,7 @@ CREATE TABLE administrative_provinces (
   id             CHAR(36)     NOT NULL DEFAULT (UUID()),
   official_code  CHAR(2)      NOT NULL,
   name           VARCHAR(100) NOT NULL,
-  unit_type      ENUM('PROVINCE','CENTRALLY_RUN_CITY') NOT NULL,
+  unit_type      ENUM('PROVINCE','CENTRALLY_RUN_CITY','CITY') NOT NULL,
   status         ENUM('ACTIVE','ARCHIVED') NOT NULL DEFAULT 'ACTIVE',
   created_at     DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at     DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
@@ -297,7 +297,7 @@ CREATE TABLE administrative_communes (
   KEY idx_administrative_communes_province_name (province_id, name),
   KEY idx_administrative_communes_status (status),
   CONSTRAINT ck_administrative_communes_official_code
-    CHECK (official_code REGEXP '^[0-9]{5}$'),
+    CHECK (official_code REGEXP '^[0-9]{3,5}$'),
   CONSTRAINT fk_administrative_communes_province
     FOREIGN KEY (province_id) REFERENCES administrative_provinces (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci

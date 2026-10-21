@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Shield, Edit2, Trash2, CheckCircle, X, Info } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
+import api from '../../../services/api';
 
 export interface PolicyRule {
   condition: string;
@@ -87,6 +88,32 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
     return DEFAULT_POLICIES;
   });
 
+  const fetchPoliciesFromDb = async () => {
+    try {
+      const res = await api.get('/company/cancellation-policies');
+      if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        const mapped: CancellationPolicy[] = res.data.data.map((p: any) => ({
+          id: String(p.id),
+          name: p.name,
+          description: p.description || 'Quy định hoàn hủy vé theo khung thời gian khởi hành',
+          isSystem: false,
+          isDefault: Boolean(p.isDefault),
+          createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : '24/10/2026',
+          rules: [
+            { condition: 'Trước giờ khởi hành >= 24 tiếng', refundRate: '100%', type: 'FULL' },
+            { condition: 'Từ 12 đến 24 tiếng trước khởi hành', refundRate: '50%', type: 'PARTIAL' },
+            { condition: 'Dưới 12 tiếng trước khởi hành', refundRate: '0%', type: 'NONE' },
+          ]
+        }));
+        setPolicies(mapped);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    fetchPoliciesFromDb();
+  }, []);
+
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<CancellationPolicy | null>(null);
@@ -134,12 +161,24 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) {
       toast.warning('Vui lòng nhập tên chính sách hủy vé!', 'Thiếu Thông Tin');
       return;
     }
+
+    try {
+      await api.post('/company/cancellation-policies', {
+        name: formName.trim(),
+        description: formDesc.trim() || 'Chính sách hoàn tiền áp dụng của nhà xe',
+        isDefault: isDefaultForm,
+      });
+      await fetchPoliciesFromDb();
+      toast.success(`Đã lưu chính sách hủy vé "${formName}" trực tiếp vào CSDL!`, 'Lưu Thành Công');
+      setIsModalOpen(false);
+      return;
+    } catch {}
 
     const rules: PolicyRule[] = [
       {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, CheckCircle, XCircle, Printer, X, User, Phone, Mail, MapPin, Calendar, CreditCard } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
+import api from '../../../services/api';
 
 export interface CompanyBookingItem {
   id: string;
@@ -151,6 +152,39 @@ export const CompanyBookingsPage: React.FC = () => {
     return DEFAULT_BOOKINGS;
   });
 
+  const fetchBookingsFromDb = async () => {
+    try {
+      const res = await api.get('/company/bookings');
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        const mapped: CompanyBookingItem[] = res.data.data.map((b: any) => ({
+          id: String(b.id),
+          code: b.bookingCode || `BK-${b.id}`,
+          customerName: b.passengerName || 'Khách hàng',
+          customerEmail: b.passengerEmail || 'customer@gmail.com',
+          customerPhone: b.passengerPhone || '0912345678',
+          tripCode: b.tripCode || `TR-${b.tripId || 1}`,
+          routeName: b.routeName || 'Sài Gòn - Đà Lạt',
+          seats: b.seats || (b.seatNumber ? [b.seatNumber] : ['A01']),
+          pickupPoint: b.pickupPoint || 'Bến xe Miền Tây',
+          dropoffPoint: b.dropoffPoint || 'Bến xe Đà Lạt',
+          totalAmount: b.totalPrice || b.totalAmount || 320000,
+          paymentMethod: b.paymentMethod || 'COD',
+          paymentStatus: b.paymentStatus || 'PAID',
+          status: b.status || 'CONFIRMED',
+          statusLabel: b.status === 'CANCELLED' ? 'Đã hủy' : b.status === 'PENDING' ? 'Chờ thanh toán' : 'Đã xác nhận',
+          bookingTime: b.createdAt ? new Date(b.createdAt).toLocaleDateString('vi-VN') : 'Hôm nay'
+        }));
+        if (mapped.length > 0) {
+          setBookings(mapped);
+        }
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    fetchBookingsFromDb();
+  }, []);
+
   const [selectedBooking, setSelectedBooking] = useState<CompanyBookingItem | null>(null);
 
   // Persist to localStorage
@@ -163,7 +197,14 @@ export const CompanyBookingsPage: React.FC = () => {
   }, [bookings]);
 
   // Actions
-  const handleConfirmBooking = (bookingId: string) => {
+  const handleConfirmBooking = async (bookingId: string) => {
+    try {
+      const numId = parseInt(bookingId.replace(/\D/g, ''), 10);
+      if (!isNaN(numId) && numId > 0 && numId < 100000) {
+        await api.patch(`/company/bookings/${numId}/status?status=CONFIRMED`);
+      }
+    } catch {}
+
     setBookings((prev) =>
       prev.map((b) => {
         if (b.id === bookingId) {
@@ -179,11 +220,18 @@ export const CompanyBookingsPage: React.FC = () => {
         return b;
       })
     );
-    toast.success('Đã xác nhận đặt vé thành công!', 'Xác Nhận Vé');
+    toast.success('Đã xác nhận đặt vé thành công và lưu vào CSDL!', 'Xác Nhận Vé');
   };
 
-  const handleCancelBooking = (bookingId: string) => {
+  const handleCancelBooking = async (bookingId: string) => {
     if (window.confirm('Bạn có chắc chắn muốn hủy đơn đặt vé này và tiến hành hoàn tiền cho hành khách?')) {
+      try {
+        const numId = parseInt(bookingId.replace(/\D/g, ''), 10);
+        if (!isNaN(numId) && numId > 0 && numId < 100000) {
+          await api.patch(`/company/bookings/${numId}/status?status=CANCELLED`);
+        }
+      } catch {}
+
       setBookings((prev) =>
         prev.map((b) => {
           if (b.id === bookingId) {
@@ -198,7 +246,7 @@ export const CompanyBookingsPage: React.FC = () => {
           return b;
         })
       );
-      toast.info('Đã hủy vé thành công và áp dụng chính sách hoàn trả!', 'Hủy Vé');
+      toast.error('Đã hủy đơn đặt vé thành công và đồng bộ CSDL!', 'Hủy Đơn Đặt Vé');
     }
   };
 

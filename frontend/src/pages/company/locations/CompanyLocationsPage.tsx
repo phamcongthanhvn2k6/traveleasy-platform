@@ -105,14 +105,31 @@ export const CompanyLocationsPage: React.FC = () => {
     }
   };
 
-  const loadLocations = () => {
+  const loadLocations = async () => {
+    try {
+      const res = await api.get('/company/locations');
+      if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        const mapped: CompanyLocationItem[] = res.data.data.map((l: any, idx: number) => ({
+          id: l.id,
+          code: `bl${idx + 1}`,
+          displayName: l.name,
+          masterLocationId: l.id,
+          masterLocation: l.name,
+          masterSub: `${l.province || 'Toàn quốc'} · ${l.locationType || 'BUS_STATION'}`,
+          address: l.address || l.province || 'Bến xe trung tâm',
+          pickupGuide: 'Đến quầy vé TravelEasy trước giờ xuất bến 30 phút.',
+        }));
+        setLocations(mapped);
+        return;
+      }
+    } catch {}
+
     try {
       const saved = localStorage.getItem('traveleasy_company_locations');
       if (saved) {
         setLocations(JSON.parse(saved));
       } else {
         setLocations(DEFAULT_COMPANY_LOCATIONS);
-        localStorage.setItem('traveleasy_company_locations', JSON.stringify(DEFAULT_COMPANY_LOCATIONS));
       }
     } catch {
       setLocations(DEFAULT_COMPANY_LOCATIONS);
@@ -152,7 +169,7 @@ export const CompanyLocationsPage: React.FC = () => {
   };
 
   // Submit Gán địa điểm
-  const handleAssignLocation = (e: React.FormEvent) => {
+  const handleAssignLocation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!displayName.trim()) {
       toast.warning('Vui lòng nhập tên hiển thị của địa điểm!', 'Thiếu Thông Tin');
@@ -161,6 +178,21 @@ export const CompanyLocationsPage: React.FC = () => {
 
     setSubmitting(true);
     const chosenMaster = masterLocations.find((m) => m.id === selectedMasterId);
+
+    try {
+      await api.post('/company/locations', {
+        name: displayName.trim(),
+        province: chosenMaster?.province || 'Toàn quốc',
+        address: customAddress.trim() || chosenMaster?.address || displayName.trim(),
+        locationType: 'BUS_STATION'
+      });
+      await loadLocations();
+      toast.success(`Đã lưu địa điểm "${displayName.trim()}" trực tiếp vào CSDL!`, 'Gán Địa Điểm Thành Công');
+      setShowAssignModal(false);
+      setSubmitting(false);
+      return;
+    } catch {}
+
     const newId = `cl_${Date.now()}`;
     const code = `bl${locations.length + 1}`;
 

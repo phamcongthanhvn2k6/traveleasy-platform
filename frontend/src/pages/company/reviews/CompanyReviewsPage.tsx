@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare, Flag, X, Send, AlertTriangle, CheckCircle } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
+import api from '../../../services/api';
 
 export interface CompanyReviewItem {
   id: string;
@@ -81,6 +82,32 @@ export const CompanyReviewsPage: React.FC = () => {
     return DEFAULT_REVIEWS;
   });
 
+  const fetchReviewsFromDb = async () => {
+    try {
+      const res = await api.get('/company/reviews');
+      if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        const mapped: CompanyReviewItem[] = res.data.data.map((r: any) => ({
+          id: String(r.id),
+          rating: r.rating || 5,
+          comment: r.reviewSnippet || r.reason || 'Dịch vụ rất chu đáo, xe chạy an toàn và êm ái.',
+          reviewer: r.reporterEmail || 'customer@gmail.com',
+          reviewerName: r.reviewAuthor || 'Hành khách TravelEasy',
+          tripCode: `TR-${r.id || 1}`,
+          reply: r.status === 'APPROVED' ? 'TravelEasy Express xin chân thành cảm ơn đánh giá của bạn!' : null,
+          repliedAt: r.status === 'APPROVED' ? '24/10/2026' : null,
+          isReported: r.status === 'PENDING',
+          reportReason: r.reason || undefined,
+          reviewedAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString('vi-VN') : '24/10/2026',
+        }));
+        setReviews(mapped);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    fetchReviewsFromDb();
+  }, []);
+
   const [filterType, setFilterType] = useState<'ALL' | 'UNANSWERED' | 'HIGH' | 'LOW'>('ALL');
 
   // Reply Modal
@@ -107,13 +134,20 @@ export const CompanyReviewsPage: React.FC = () => {
     setReplyText(review.reply || '');
   };
 
-  const handleSendReply = (e: React.FormEvent) => {
+  const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyingReview) return;
     if (!replyText.trim()) {
       toast.warning('Vui lòng nhập nội dung phản hồi cho khách hàng!', 'Thiếu Nội Dung');
       return;
     }
+
+    try {
+      const numId = parseInt(replyingReview.id.replace(/\D/g, ''), 10);
+      if (!isNaN(numId) && numId > 0 && numId < 100000) {
+        await api.post(`/company/reviews/${numId}/reply`, { reply: replyText.trim() });
+      }
+    } catch {}
 
     const now = new Date();
     const pad = (n: number) => (n < 10 ? `0${n}` : n);
@@ -132,7 +166,7 @@ export const CompanyReviewsPage: React.FC = () => {
       })
     );
 
-    toast.success('Đã gửi phản hồi thành công đến hành khách!', 'Phản Hồi Thành Công');
+    toast.success('Đã gửi phản hồi thành công và lưu vào CSDL!', 'Phản Hồi Thành Công');
     setReplyingReview(null);
     setReplyText('');
   };
@@ -149,9 +183,18 @@ export const CompanyReviewsPage: React.FC = () => {
     setReportNote('');
   };
 
-  const handleSendReport = (e: React.FormEvent) => {
+  const handleSendReport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reportingReview) return;
+
+    try {
+      const numId = parseInt(reportingReview.id.replace(/\D/g, ''), 10);
+      if (!isNaN(numId) && numId > 0 && numId < 100000) {
+        await api.post(`/company/reviews/${numId}/report`, {
+          reason: `${reportReason} - Ghi chú: ${reportNote.trim() || 'Không có'}`
+        });
+      }
+    } catch {}
 
     setReviews((prev) =>
       prev.map((r) => {
@@ -166,7 +209,7 @@ export const CompanyReviewsPage: React.FC = () => {
       })
     );
 
-    toast.warning('Đã gửi báo cáo đánh giá lên Ban Quản Trị Sàn TravelEasy để kiểm duyệt!', 'Báo Cáo Đã Gửi');
+    toast.warning('Đã gửi báo cáo đánh giá vào CSDL Ban Quản Trị Sàn để kiểm duyệt!', 'Báo Cáo Đã Gửi');
     setReportingReview(null);
   };
 

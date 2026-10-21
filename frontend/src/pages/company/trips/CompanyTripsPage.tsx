@@ -136,6 +136,37 @@ export const CompanyTripsPage: React.FC = () => {
     return DEFAULT_TRIPS;
   });
 
+  const fetchTripsFromDb = async () => {
+    try {
+      const res = await api.get('/company/trips');
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        const mapped: CompanyTripItem[] = res.data.data.map((item: any) => ({
+          id: String(item.id),
+          code: item.code || `TR-${item.id}`,
+          routeName: item.routeName || (item.originCity && item.destinationCity ? `${item.originCity} - ${item.destinationCity}` : 'Sài Gòn - Đà Lạt'),
+          vehiclePlate: item.licensePlate || item.vehiclePlate || '51B-123.45',
+          busType: item.busType || 'Limousine 34 Phòng VIP',
+          departureTime: item.departureTime ? formatDisplayTime(item.departureTime) : '08:00 24/10/2026',
+          arrivalTime: item.arrivalTime ? formatDisplayTime(item.arrivalTime) : '14:30 24/10/2026',
+          price: item.price || 300000,
+          totalSeats: item.totalSeats || 34,
+          delayText: item.delayText || '-',
+          status: item.status || 'SCHEDULED',
+          statusLabel: item.status === 'RUNNING' ? 'Đang chạy' : item.status === 'COMPLETED' ? 'Hoàn thành' : item.status === 'CANCELLED' ? 'Đã hủy' : 'Đã lên lịch',
+        }));
+        if (mapped.length > 0) {
+          setTrips(mapped);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    fetchTripsFromDb();
+  }, []);
+
   // Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<CompanyTripItem | null>(null);
@@ -210,11 +241,30 @@ export const CompanyTripsPage: React.FC = () => {
     }
   };
 
-  const handleCreateTrip = (e: React.FormEvent) => {
+  const handleCreateTrip = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formDepartureTime) {
       toast.warning('Vui lòng chọn thời gian khởi hành!', 'Thiếu Thông Tin');
       return;
+    }
+
+    try {
+      await api.post('/company/trips', {
+        busCompanyId: 1,
+        routeId: 1,
+        departureTime: formDepartureTime,
+        arrivalTime: formArrivalTime || formDepartureTime,
+        busType: formBusType.includes('Limousine') ? 'LIMOUSINE' : 'SLEEPER',
+        price: Number(formPrice),
+        totalSeats: Number(formSeats),
+        licensePlate: formVehiclePlate
+      });
+      await fetchTripsFromDb();
+      toast.success(`Đã tạo chuyến xe mới (${formRoute}) lưu trực tiếp vào CSDL!`, 'Tạo Chuyến Mới');
+      setIsCreateModalOpen(false);
+      return;
+    } catch {
+      // fallback local update
     }
 
     const nextId = `t${Date.now()}`;
@@ -239,12 +289,19 @@ export const CompanyTripsPage: React.FC = () => {
   };
 
   // Status Modifiers
-  const updateTripStatus = (
+  const updateTripStatus = async (
     tripId: string,
     newStatus: 'SCHEDULED' | 'DELAYED' | 'RUNNING' | 'COMPLETED' | 'CANCELLED',
     newLabel: string,
     delayText: string = '-'
   ) => {
+    try {
+      const numId = parseInt(tripId.replace(/\D/g, ''), 10);
+      if (!isNaN(numId) && numId > 0 && numId < 100000) {
+        await api.patch(`/company/trips/${numId}/status?status=${newStatus}`);
+      }
+    } catch {}
+
     setTrips((prev) =>
       prev.map((t) => {
         if (t.id === tripId) {

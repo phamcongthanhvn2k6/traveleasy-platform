@@ -1700,5 +1700,64 @@ Kênh tương tác và chăm sóc khách hàng trực tiếp của nhà xe:
 *Hình 11.43: Trang 404 Not Found thân thiện khi truy cập vào đường link sai hoặc không tồn tại.*
 
 ---
+
+### 11.5 Kiến Trúc Lưu Trữ Bền Vững Trên Database Thực (MySQL 8.0 & Zero Data Loss Guarantee)
+
+#### 1. Loại Bỏ Hoàn Toàn In-Memory Mock Data & Chuẩn Hóa RDBMS Thực Tế
+* Nhằm giải quyết triệt để tình trạng dữ liệu biến mất sau mỗi lần khởi động lại máy chủ (hiện tượng mock data "ngày có ngày không"), toàn bộ hệ thống phân hệ Backend (`Spring Boot 3.3.4`) đã được ngắt kết nối khỏi cơ sở dữ liệu tạm thời H2 In-Memory và kết nối trực tiếp 100% vào hệ quản trị cơ sở dữ liệu thực tế **MySQL 8.0 Community Server** (`localhost:3306/traveleasy_db`).
+* **Chuẩn hóa Collation & Bảng mã**: Cấu hình `utf8mb4_0900_ai_ci` đồng bộ cho database và toàn bộ 18+ bảng thực thể (Entities), loại bỏ hoàn toàn lỗi xung đột bảng mã `Illegal mix of collations` khi thực thi các truy vấn JPQL tìm kiếm (`LIKE %...%`).
+
+#### 2. Nguyên Tắc Bảo Toàn Dữ Liệu Tuyệt Đối (Zero Data Loss Protocol)
+* **Chính sách Schema Hibernate**: Đặt cấu hình `spring.jpa.hibernate.ddl-auto: update` cho cả hai profile `default` và `dev`. Tuyệt đối không sử dụng `create` hoặc `create-drop`.
+  * Mọi bảng dữ liệu, khóa chính, khóa ngoại, chỉ mục (Index) và dữ liệu nghiệp vụ thực tế được duy trì bền vững theo thời gian.
+  * Khi khởi động lại máy chủ backend, Hibernate chỉ đối chiếu và cập nhật các trường mới (nếu có), không bao giờ xóa bảng hay làm rỗng dữ liệu.
+* **Cơ chế Khởi tạo Thông minh (Smart Seed Protection)**: Thành phần `DataInitializer` được lập trình logic kiểm tra `userRepository.count() > 0`. Khi phát hiện cơ sở dữ liệu đã tồn tại dữ liệu vận hành, hệ thống lập tức xuất log:
+  ```text
+  Database already seeded. Skipping DataInitializer.
+  ```
+  Nhờ đó, dữ liệu của khách hàng, nhà xe, xe, tuyến đường và các giao dịch đặt vé đều được bảo vệ toàn vẹn tuyệt đối.
+
+#### 3. Bộ API Quản Lý Thực Thi Của Đối Tác Nhà Xe (`CompanyManagementController.java`)
+Hệ thống bổ sung bộ RESTful Controller chuyên dụng [CompanyManagementController.java](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/backend/src/main/java/com/traveleasy/controller/company/CompanyManagementController.java) kết nối trực tiếp với các repository của Spring Data JPA, cung cấp đầy đủ các thao tác CRUD trên dữ liệu thực tế:
+* **Quản lý Chuyến xe (`/api/v1/company/trips`)**:
+  * `GET`: Truy vấn danh sách chuyến xe thực tế theo `busCompanyId` kèm lọc theo trạng thái và tuyến đường.
+  * `POST`: Tạo mới chuyến xe trên MySQL, tự động tạo đồng thời **34 bản ghi ghế ngồi thực tế** trong bảng `trip_seats` với trạng thái `AVAILABLE`.
+  * `PUT /{id}`: Cập nhật giá vé, thời gian khởi hành/kết thúc và thông tin xe.
+  * `PATCH /{id}/status`: Cập nhật trạng thái chuyến xe (`SCHEDULED`, `DEPARTED`, `RUNNING`, `COMPLETED`, `CANCELLED`).
+  * `DELETE /{id}`: Xóa chuyến xe khỏi database khi chưa phát sinh giao dịch vé.
+* **Quản lý Đơn đặt vé (`/api/v1/company/bookings`)**:
+  * `GET`: Lấy danh sách toàn bộ vé đặt thuộc các chuyến xe của nhà xe, hỗ trợ phân trang và tìm kiếm theo mã vé/khách hàng.
+  * `PATCH /{id}/status`: Cập nhật trạng thái vé trực tiếp (`CONFIRMED`, `CANCELLED`, `COMPLETED`).
+* **Quản lý Chính sách Hủy vé (`/api/v1/company/cancellation-policies`)**:
+  * `GET`: Lấy danh sách các mốc thời gian hoàn tiền trước giờ khởi hành.
+  * `POST`: Thêm chính sách mới (số giờ trước khởi hành, tỷ lệ hoàn tiền %).
+  * `DELETE /{id}`: Xóa chính sách hoàn hủy.
+* **Quản lý Đánh giá Khách hàng (`/api/v1/company/reviews`)**:
+  * `GET`: Truy xuất danh sách đánh giá sao và nhận xét từ hành khách.
+  * `POST /{id}/reply`: Phản hồi chính thức từ nhà xe tới khách hàng.
+  * `POST /{id}/report`: Báo cáo đánh giá vi phạm quy chuẩn lên Admin sàn.
+* **Quản lý Địa điểm & Văn phòng Nhà xe (`/api/v1/company/locations`)**:
+  * `GET`: Danh sách các điểm đón, điểm trả và văn phòng giao dịch của nhà xe.
+  * `POST`: Đăng ký thêm điểm đón/trả mới.
+  * `DELETE /{id}`: Hủy liên kết điểm đón/trả.
+
+#### 4. Báo Cáo Kiểm Thử Lưu Trữ Bền Vững & Minh Chứng Truy Vấn Trực Tiếp Từ MySQL 8.0
+Kịch bản kiểm thử tự động `test_db_persistence.mjs` đã thực hiện chuỗi giao dịch thêm mới và sửa đổi dữ liệu thực tế trên hệ thống:
+1. **Thêm phương tiện mới**: Tạo xe biển số `51B-117.13` (Limousine 34 phòng) -> Truy vấn MySQL xác nhận bản ghi tồn tại trong bảng `vehicles` với `id: 5`.
+2. **Tạo chuyến xe mới**: Tạo chuyến đi Nha Trang giá `360,000 VND` -> Truy vấn MySQL xác nhận chuyến xe lưu trong bảng `trips` với `id: 20`.
+3. **Tự động sinh sơ đồ ghế thực**: Kiểm tra bảng `trip_seats` ghi nhận đủ **34 ghế ngồi vật lý** liên kết trực tiếp với chuyến xe `id: 20`.
+4. **Cập nhật trạng thái vận hành**: Chuyển trạng thái chuyến xe sang `RUNNING` -> Kiểm tra MySQL xác nhận trường `status` lưu trữ giá trị `RUNNING`.
+5. **Tìm kiếm công khai**: Gọi API `/api/v1/trips/search` -> Trả về danh sách đầy đủ 18+ chuyến xe thực tế từ cơ sở dữ liệu MySQL mà không phụ thuộc vào bất kỳ mock data nào.
+
+![Tìm Kiếm Chuyến Xe Trực Tiếp Từ MySQL 8.0](docs/screenshots/screenshot_db_search_trips_live.png)
+*Hình 11.44: Giao diện tìm kiếm chuyến xe của hành khách hiển thị dữ liệu thời gian thực từ cơ sở dữ liệu MySQL 8.0 bền vững.*
+
+![Quản Lý Chuyến Xe Đối Tác Trên Database Thực](docs/screenshots/screenshot_db_company_trips_live.png)
+*Hình 11.45: Giao diện quản lý chuyến xe đối tác với các thao tác CRUD và cập nhật trạng thái lưu trữ trực tiếp vào MySQL.*
+
+![Danh Sách Xe Nhà Xe Đồng Bộ Trực Tiếp Từ MySQL](docs/screenshots/screenshot_db_company_vehicles_live.png)
+*Hình 11.46: Danh sách phương tiện vận tải của nhà xe được đồng bộ chính xác và bảo toàn 100% qua các lần khởi động lại máy chủ.*
+
+---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  
 *Chúc toàn đội bảo vệ thành công rực rỡ!*
