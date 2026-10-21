@@ -1664,40 +1664,40 @@ Kênh tương tác và chăm sóc khách hàng trực tiếp của nhà xe:
 ![Chặn Truy Cập Phân Hệ Đối Tác Nhà Xe 403](docs/screenshots/screenshot_customer_403_company.png)
 *Hình 11.37: Màn hình từ chối quyền truy cập 403 Forbidden khi tài khoản Khách hàng cố tình vào `/company/*`.*
 
-#### 12. Tối Ưu Hóa Header Đa Dịch Vụ & Trang Roadmap / 404 Chuyên Nghiệp
-* **Loại bỏ trùng lặp tính năng trên Header**:
-  * Thanh tiện ích phía trên (Top bar) trước đây bị trùng lặp "Vé của tôi" với thanh điều hướng chính, đồng thời có 2 nút "Mở bán vé trên TravelEasy" và "Trở thành đối tác" nằm cạnh nhau.
-  * Đã chuẩn hóa: Gộp 2 nút đối tác thành 1 nút duy nhất **🤝 Hợp tác mở bán vé** (mở Hộp thoại thông tin và đăng ký đối tác), loại bỏ hoàn toàn liên kết "Vé của tôi" ở Top bar để giữ 1 nguồn duy nhất tại Thanh điều hướng chính.
-* **Mở rộng Menu đa phương thức vận tải (Multi-Modal Travel Platform)**:
-  * 🚌 **Vé Xe Khách** (`/search` - Dịch vụ lõi hiện hữu).
-  * ✈️ **Máy Bay** (`/flights` - Gắn nhãn badge *Sắp có*).
-  * 🚆 **Tàu Hỏa** (`/trains` - Gắn nhãn badge *Sắp có*).
-  * 🚗 **Thuê Xe** (`/car-rental`).
-  * 🎁 **Ưu Đãi** (`/promotions` - Gắn nhãn badge *Hot*).
-  * 🎟️ **Vé Của Tôi & Tra Cứu** (`/my-tickets` - Tích hợp xem vé đã đặt và tra cứu nhanh).
-* **Trang Tính Năng Đang Phát Triển (Coming Soon Roadmap Mode)**:
-  * Xây dựng trang `NotFoundPage.tsx` với chế độ thông minh: Tự động nhận diện đường dẫn các tính năng trong kế hoạch mở rộng (`/flights`, `/trains`, `/car-rental`, `/promotions`, `/hotel`).
-  * Hiển thị biểu tượng dịch vụ tương ứng, thông báo trạng thái "Tính năng đang hoàn thiện", dự kiến ra mắt (Q4/2026 - Q1/2027), và thanh tiến độ tích hợp 3 bước:
-    1. *Khảo sát & Thiết kế hệ thống* (Hoàn thành)
-    2. *Tích hợp API Đối tác Hàng không / Đường sắt* (Đang triển khai)
-    3. *Kiểm thử tải & Mở bán chính thức* (Dự kiến).
-  * Hỗ trợ nút đăng ký nhận thông báo ra mắt và chuyển hướng nhanh sang đặt vé xe khách hiện hữu.
-* **Trang 404 Not Found Thông Minh & Thân Thiện**:
-  * Bắt toàn bộ các đường dẫn sai hoặc không tồn tại (Catch-all route `path="*"`).
-  * Hiển thị giao diện 404 hiện đại với mã lỗi nổi bật, thông điệp hướng dẫn rõ ràng, nút quay lại trang trước, nút "Về Trang Chủ" và nút "Đặt Vé Xe Khách Ngay".
-  * Cung cấp số Hotline hỗ trợ 24/7 (1900 6868) giúp người dùng không bao giờ bị mắc kẹt.
+#### 12. Tối Ưu Hóa Header Theo Cụm Chức Năng Nghiệp Vụ & Trang Roadmap / 404 Chuyên Nghiệp
+* **Khôi phục độc lập và tách bạch chức năng "Tra Cứu Vé"**:
+  * Chức năng **Tra Cứu Vé** (`/lookup`) được tách bạch thành một nút riêng biệt, nổi bật trên thanh điều hướng chính (ngay cạnh *Đặt Vé Xe* và *Vé Của Tôi*).
+  * Cho phép hành khách vãng lai tra cứu tức thì thông tin vé bằng Mã đặt vé (`BK-*`) hoặc Số điện thoại, kiểm tra vị trí ghế ngồi, in vé và lấy mã QR Code lên xe mà **không bắt buộc phải đăng nhập tài khoản**.
+* **Phân chia Header theo Cụm Chức Năng Sàn (Functional Navigation)**:
+  * Thay vì chia theo phương tiện, toàn bộ thanh điều hướng được quy hoạch theo đúng nhu cầu và hành trình trải nghiệm của khách hàng:
+    1. 🚌 **Đặt Vé Xe** (`/search` hoặc `/` — Hoạt động cốt lõi): Tìm chuyến, chọn lộ trình, xem giá vé và đặt chỗ.
+    2. 🛡️ **Tra Cứu Vé** (`/lookup` — Hoạt động): Tra cứu nhanh thông tin vé và mã QR soát vé.
+    3. 🎟️ **Vé Của Tôi** (`/my-tickets` — Hoạt động): Quản lý lịch sử vé của tài khoản cá nhân, đổi/hủy vé trực tuyến.
+    4. ⏰ **Lịch Trình** (`/schedule` — Roadmap Coming Soon): Tra cứu bảng giờ xe xuất bến và danh mục tuyến đường liên tỉnh.
+    5. 🏷️ **Khuyến Mãi** (`/promotions` [HOT] — Roadmap Coming Soon): Voucher giảm giá đến 50% và chương trình hoàn tiền.
+    6. ⭐ **Đánh Giá** (`/reviews` — Roadmap Coming Soon): Nhận xét và chấm điểm chất lượng dịch vụ các nhà xe.
+    7. 📄 **Chính Sách & FAQ** (`/policy` — Hoạt động): Quy định hành lý, chính sách hoàn hủy và cẩm nang đi xe.
+* **Xử lý mượt mà các tính năng đang phát triển & Bắt lỗi 404**:
+  * Các tính năng chức năng dự kiến (`/schedule`, `/promotions`, `/reviews`...) tự động mở trang `NotFoundPage.tsx` ở chế độ **Lộ trình phát triển (Roadmap Mode)** với thanh tiến độ 3 bước và thời gian ra mắt dự kiến rõ ràng.
+  * Mọi đường link sai hoặc không tồn tại (Catch-all route `path="*"`) sẽ hiển thị trang báo lỗi 404 thân thiện, chuyên nghiệp kèm các nút quay về Trang chủ, Đặt vé xe ngay và hotline hỗ trợ 24/7 (`1900 6868`).
 
-![Giao Diện Header Mới Đã Loại Bỏ Trùng Lặp & Bổ Sung Đa Dịch Vụ](docs/screenshots/screenshot_new_header_layout.png)
-*Hình 11.38: Thanh điều hướng TravelEasy mới đã dọn sạch trùng lặp và mở rộng hệ sinh thái vé Máy Bay, Tàu Hỏa, Thuê Xe.*
+![Giao Diện Header Mới Phân Chia Theo Cụm Chức Năng Nghiệp Vụ](docs/screenshots/screenshot_new_header_layout.png)
+*Hình 11.38: Thanh điều hướng TravelEasy phân chia theo cụm chức năng nghiệp vụ rõ ràng, tách bạch Tra Cứu Vé và Vé Của Tôi.*
 
-![Trang Roadmap Tính Năng Vé Máy Bay Đang Phát Triển](docs/screenshots/screenshot_coming_soon_flights.png)
-*Hình 11.39: Giao diện Roadmap chuyên nghiệp cho tính năng Vé Máy Bay (`/flights`) với tiến độ tích hợp 3 bước.*
+![Giao Diện Tra Cứu Vé Nhanh Độc Lập Không Cần Đăng Nhập](docs/screenshots/screenshot_ticket_lookup_page.png)
+*Hình 11.39: Chức năng Tra Cứu Vé độc lập (`/lookup`) tra cứu nhanh bằng mã đặt vé hoặc số điện thoại kèm mã QR lên xe.*
 
-![Trang Roadmap Tính Năng Vé Tàu Hỏa Đang Phát Triển](docs/screenshots/screenshot_coming_soon_trains.png)
-*Hình 11.40: Giao diện Roadmap tính năng Vé Tàu Hỏa (`/trains`) sẵn sàng mở rộng.*
+![Trang Roadmap Chức Năng Lịch Trình & Bảng Giờ Chạy Xe](docs/screenshots/screenshot_coming_soon_schedule.png)
+*Hình 11.40: Trang Roadmap chuyên nghiệp cho chức năng Lịch Trình Tuyến Xe (`/schedule`) với tiến độ triển khai 3 bước.*
+
+![Trang Roadmap Chức Năng Đánh Giá & Xếp Hạng Nhà Xe](docs/screenshots/screenshot_coming_soon_reviews.png)
+*Hình 11.41: Trang Roadmap cho chức năng Đánh Giá & Xếp Hạng Chất Lượng Nhà Xe (`/reviews`).*
+
+![Trang Chính Sách Quy Chế & FAQ](docs/screenshots/screenshot_policy_faq_page.png)
+*Hình 11.42: Giao diện Chính Sách & Quy Định FAQ (`/policy`) với các tab hoàn hủy vé, quy định hành lý và cam kết dịch vụ.*
 
 ![Trang Báo Lỗi 404 Not Found Khi Nhập Sai URL](docs/screenshots/screenshot_404_wrong_url.png)
-*Hình 11.41: Trang 404 Not Found thân thiện khi truy cập vào đường link sai hoặc không tồn tại.*
+*Hình 11.43: Trang 404 Not Found thân thiện khi truy cập vào đường link sai hoặc không tồn tại.*
 
 ---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  

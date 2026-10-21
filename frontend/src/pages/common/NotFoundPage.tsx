@@ -14,7 +14,11 @@ import {
   Sparkles, 
   Calendar, 
   ShieldCheck,
-  AlertTriangle
+  AlertTriangle,
+  Clock,
+  MapPin,
+  Star,
+  FileText
 } from 'lucide-react';
 
 interface Props {
@@ -25,8 +29,40 @@ export const NotFoundPage: React.FC<Props> = ({ feature }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Tự động nhận diện nếu đường dẫn là tính năng dự kiến phát triển
+  // Tự động nhận diện nếu đường dẫn là tính năng chức năng dự kiến phát triển
   const knownFeatures: Record<string, { title: string; desc: string; icon: any; color: string; bg: string; eta: string }> = {
+    '/schedule': {
+      title: 'Lịch Trình & Bảng Giờ Chạy Xe',
+      desc: 'Hệ thống tra cứu bảng giờ xuất bến, danh mục các tuyến xe khách liên tỉnh Bắc - Trung - Nam, tần suất chạy hàng ngày và thông tin các nhà xe vận hành.',
+      icon: Clock,
+      color: '#0284c7',
+      bg: '#f0f9ff',
+      eta: 'Dự kiến hoàn thiện trong phiên bản v2.1',
+    },
+    '/routes': {
+      title: 'Mạng Lưới Tuyến Đường Toàn Quốc',
+      desc: 'Danh mục chi tiết mạng lưới các tuyến xe khách liên tỉnh, khoảng cách km, thời gian di chuyển dự kiến và giá vé tham khảo từ các đối tác nhà xe.',
+      icon: MapPin,
+      color: '#0284c7',
+      bg: '#f0f9ff',
+      eta: 'Dự kiến hoàn thiện trong phiên bản v2.1',
+    },
+    '/promotions': {
+      title: 'Chương Trình Khuyến Mãi & Voucher Giảm Giá',
+      desc: 'Tổng hợp hàng trăm mã giảm giá vé xe đến 50%, voucher hoàn tiền thanh toán VNPAY/VietQR và chương trình tích điểm tri ân khách hàng thân thiết.',
+      icon: Tag,
+      color: '#dc2626',
+      bg: '#fef2f2',
+      eta: 'Đang tổng hợp danh mục ưu đãi...',
+    },
+    '/reviews': {
+      title: 'Đánh Giá & Xếp Hạng Chất Lượng Nhà Xe',
+      desc: 'Cộng đồng chia sẻ trải nghiệm thực tế từ hành khách, chấm điểm chất lượng phương tiện, thái độ phục vụ và mức độ đúng giờ của các nhà xe đối tác.',
+      icon: Star,
+      color: '#d97706',
+      bg: '#fffbeb',
+      eta: 'Dự kiến hoàn thiện trong phiên bản v2.1',
+    },
     '/flights': {
       title: 'Vé Máy Bay Trực Tuyến',
       desc: 'Hệ thống đặt vé máy bay nội địa & quốc tế (Vietnam Airlines, Vietjet Air, Bamboo Airways). Tích hợp so sánh giá vé và giữ chỗ tức thì.',
@@ -51,14 +87,6 @@ export const NotFoundPage: React.FC<Props> = ({ feature }) => {
       bg: '#ecfdf5',
       eta: 'Dự kiến Quý 2 / 2027',
     },
-    '/promotions': {
-      title: 'Mã Giảm Giá & Ưu Đãi Nhà Xe',
-      desc: 'Tổng hợp hàng trăm voucher giảm giá đến 50%, mã hoàn tiền VNPAY và chương trình ưu đãi dành cho khách hàng thân thiết.',
-      icon: Tag,
-      color: '#dc2626',
-      bg: '#fef2f2',
-      eta: 'Đang cập nhật danh mục ưu đãi...',
-    },
     '/hotel': {
       title: 'Khách Sạn & Homestay Điểm Đến',
       desc: 'Combo vé xe khách + phòng nghỉ tiết kiệm tại Đà Lạt, Nha Trang, Vũng Tàu, Sa Pa... Xác nhận phòng tức thì không cần đặt cọc.',
@@ -72,11 +100,11 @@ export const NotFoundPage: React.FC<Props> = ({ feature }) => {
   const featureInfo = feature
     ? {
         title: feature,
-        desc: 'Tính năng này đang được đội ngũ kỹ sư TravelEasy tích hợp API và hoàn thiện trong lộ trình phát triển phiên bản mới.',
+        desc: 'Tính năng chức năng này đang được đội ngũ kỹ sư TravelEasy hoàn thiện giao diện và tích hợp API theo lộ trình nâng cấp.',
         icon: Sparkles,
         color: '#2563eb',
         bg: '#eff6ff',
-        eta: 'Lộ trình cập nhật v2.0',
+        eta: 'Lộ trình cập nhật v2.1',
       }
     : knownFeatures[location.pathname];
 
@@ -162,7 +190,7 @@ export const NotFoundPage: React.FC<Props> = ({ feature }) => {
                 letterSpacing: '-0.5px',
               }}
             >
-              Dịch Vụ {featureInfo.title}
+              {featureInfo.title}
             </h1>
 
             <p
@@ -189,7 +217,7 @@ export const NotFoundPage: React.FC<Props> = ({ feature }) => {
               }}
             >
               <div style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Sparkles size={14} color="#2563eb" /> TIẾN ĐỘ TÍCH HỢP HỆ THỐNG:
+                <Sparkles size={14} color="#2563eb" /> TIẾN ĐỘ TRIỂN KHAI TÍNH NĂNG:
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -198,11 +226,11 @@ export const NotFoundPage: React.FC<Props> = ({ feature }) => {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800 }}>⚙</span>
-                  <span style={{ color: '#2563eb', fontWeight: 600 }}>Đang kết nối API nhà cung cấp & Cổng thanh toán trực tuyến</span>
+                  <span style={{ color: '#2563eb', fontWeight: 600 }}>Lập trình giao diện & Tích hợp API Backend</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#f1f5f9', color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800 }}>•</span>
-                  <span style={{ color: '#64748b' }}>Kiểm thử End-to-End và phát hành chính thức toàn quốc</span>
+                  <span style={{ color: '#64748b' }}>Kiểm thử End-to-End và phát hành chính thức toàn sàn</span>
                 </div>
               </div>
             </div>
@@ -372,3 +400,4 @@ export const NotFoundPage: React.FC<Props> = ({ feature }) => {
 };
 
 export default NotFoundPage;
+

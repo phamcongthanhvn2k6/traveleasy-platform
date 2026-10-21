@@ -15,12 +15,12 @@ import {
   X, 
   CheckCircle, 
   Mail, 
-  Plane, 
-  Train, 
-  Car, 
   Tag, 
   Sparkles,
-  Handshake 
+  Handshake,
+  Clock,
+  Star,
+  FileText
 } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
@@ -205,113 +205,141 @@ export const Navbar: React.FC = () => {
             </div>
           </Link>
 
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+            {/* 1. Chức năng Đặt Vé Xe */}
             <Link 
               to="/search" 
               style={{ 
                 textDecoration: 'none', 
                 color: location.pathname === '/search' || location.pathname === '/' ? '#2563eb' : '#334155', 
                 fontWeight: location.pathname === '/search' || location.pathname === '/' ? 700 : 600, 
-                fontSize: '14px',
+                fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: '6px',
+                gap: '5px',
                 borderBottom: location.pathname === '/search' || location.pathname === '/' ? '2px solid #2563eb' : '2px solid transparent',
-                padding: '8px 0'
+                padding: '8px 0',
+                transition: 'all 0.15s ease'
               }}
             >
-              <Bus size={16} /> <span>Vé Xe Khách</span>
+              <Bus size={15} /> <span>Đặt Vé Xe</span>
             </Link>
 
+            {/* 2. Chức năng Tra Cứu Vé (Riêng biệt, Tra cứu nhanh bằng Mã / SĐT & In vé QR) */}
             <Link 
-              to="/flights" 
+              to="/lookup" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/flights' ? '#2563eb' : '#475569', 
-                fontWeight: location.pathname === '/flights' ? 700 : 600, 
-                fontSize: '14px',
+                color: location.pathname === '/lookup' || location.pathname.startsWith('/tickets') ? '#2563eb' : '#334155', 
+                fontWeight: location.pathname === '/lookup' || location.pathname.startsWith('/tickets') ? 700 : 600, 
+                fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: '6px',
-                borderBottom: location.pathname === '/flights' ? '2px solid #2563eb' : '2px solid transparent',
-                padding: '8px 0'
+                gap: '5px',
+                borderBottom: location.pathname === '/lookup' || location.pathname.startsWith('/tickets') ? '2px solid #2563eb' : '2px solid transparent',
+                padding: '8px 0',
+                transition: 'all 0.15s ease'
               }}
             >
-              <Plane size={15} /> <span>Máy Bay</span>
-              <span style={{ fontSize: '9px', fontWeight: 700, backgroundColor: '#e0f2fe', color: '#0369a1', padding: '1px 5px', borderRadius: '4px' }}>
-                Sắp có
-              </span>
+              <ShieldCheck size={15} /> <span>Tra Cứu Vé</span>
             </Link>
 
+            {/* 3. Chức năng Vé Của Tôi (Lịch sử đặt vé & Quản lý vé cá nhân) */}
             <Link 
-              to="/trains" 
+              to="/my-tickets" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/trains' ? '#2563eb' : '#475569', 
-                fontWeight: location.pathname === '/trains' ? 700 : 600, 
-                fontSize: '14px',
+                color: location.pathname === '/my-tickets' ? '#2563eb' : '#334155', 
+                fontWeight: location.pathname === '/my-tickets' ? 700 : 600, 
+                fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: '6px',
-                borderBottom: location.pathname === '/trains' ? '2px solid #2563eb' : '2px solid transparent',
-                padding: '8px 0'
+                gap: '5px',
+                borderBottom: location.pathname === '/my-tickets' ? '2px solid #2563eb' : '2px solid transparent',
+                padding: '8px 0',
+                transition: 'all 0.15s ease'
               }}
             >
-              <Train size={15} /> <span>Tàu Hỏa</span>
-              <span style={{ fontSize: '9px', fontWeight: 700, backgroundColor: '#fef3c7', color: '#b45309', padding: '1px 5px', borderRadius: '4px' }}>
-                Sắp có
-              </span>
+              <Ticket size={15} /> <span>Vé Của Tôi</span>
             </Link>
 
+            {/* 4. Chức năng Lịch Trình (Bảng giờ xe & Tuyến đường liên tỉnh) */}
             <Link 
-              to="/car-rental" 
+              to="/schedule" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/car-rental' ? '#2563eb' : '#475569', 
-                fontWeight: location.pathname === '/car-rental' ? 700 : 600, 
-                fontSize: '14px',
+                color: location.pathname === '/schedule' || location.pathname === '/routes' ? '#2563eb' : '#475569', 
+                fontWeight: location.pathname === '/schedule' || location.pathname === '/routes' ? 700 : 600, 
+                fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: '6px',
-                borderBottom: location.pathname === '/car-rental' ? '2px solid #2563eb' : '2px solid transparent',
-                padding: '8px 0'
+                gap: '5px',
+                borderBottom: location.pathname === '/schedule' || location.pathname === '/routes' ? '2px solid #2563eb' : '2px solid transparent',
+                padding: '8px 0',
+                transition: 'all 0.15s ease'
               }}
             >
-              <Car size={15} /> <span>Thuê Xe</span>
+              <Clock size={15} /> <span>Lịch Trình</span>
             </Link>
 
+            {/* 5. Chức năng Khuyến Mãi (Mã giảm giá, Voucher hoàn tiền) */}
             <Link 
               to="/promotions" 
               style={{ 
                 textDecoration: 'none', 
                 color: location.pathname === '/promotions' ? '#dc2626' : '#475569', 
                 fontWeight: location.pathname === '/promotions' ? 700 : 600, 
-                fontSize: '14px',
+                fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: '6px',
+                gap: '5px',
                 borderBottom: location.pathname === '/promotions' ? '2px solid #dc2626' : '2px solid transparent',
-                padding: '8px 0'
+                padding: '8px 0',
+                transition: 'all 0.15s ease'
               }}
             >
-              <Tag size={15} color="#dc2626" /> <span style={{ color: '#dc2626', fontWeight: 700 }}>Ưu Đãi</span>
+              <Tag size={15} color="#dc2626" /> <span style={{ color: '#dc2626', fontWeight: 700 }}>Khuyến Mãi</span>
+              <span style={{ fontSize: '9px', fontWeight: 800, backgroundColor: '#fef2f2', color: '#dc2626', padding: '1px 5px', borderRadius: '4px', border: '1px solid #fee2e2' }}>
+                HOT
+              </span>
             </Link>
 
+            {/* 6. Chức năng Đánh Giá (Nhận xét và xếp hạng chất lượng nhà xe) */}
             <Link 
-              to="/my-tickets" 
+              to="/reviews" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/my-tickets' || location.pathname === '/lookup' ? '#2563eb' : '#334155', 
-                fontWeight: location.pathname === '/my-tickets' || location.pathname === '/lookup' ? 700 : 600, 
-                fontSize: '14px',
+                color: location.pathname === '/reviews' ? '#2563eb' : '#475569', 
+                fontWeight: location.pathname === '/reviews' ? 700 : 600, 
+                fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: '6px',
-                borderBottom: location.pathname === '/my-tickets' || location.pathname === '/lookup' ? '2px solid #2563eb' : '2px solid transparent',
-                padding: '8px 0'
+                gap: '5px',
+                borderBottom: location.pathname === '/reviews' ? '2px solid #2563eb' : '2px solid transparent',
+                padding: '8px 0',
+                transition: 'all 0.15s ease'
               }}
             >
-              <Ticket size={16} /> <span>Vé Của Tôi & Tra Cứu</span>
+              <Star size={15} color="#f59e0b" /> <span>Đánh Giá</span>
+            </Link>
+
+            {/* 7. Chức năng Chính Sách & FAQ (Quy chế hoạt động, hành lý, quyền lợi) */}
+            <Link 
+              to="/policy" 
+              style={{ 
+                textDecoration: 'none', 
+                color: location.pathname === '/policy' || location.pathname === '/guide' ? '#2563eb' : '#475569', 
+                fontWeight: location.pathname === '/policy' || location.pathname === '/guide' ? 700 : 600, 
+                fontSize: '13.5px',
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '5px',
+                borderBottom: location.pathname === '/policy' || location.pathname === '/guide' ? '2px solid #2563eb' : '2px solid transparent',
+                padding: '8px 0',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <FileText size={15} /> <span>Chính Sách & FAQ</span>
             </Link>
           </nav>
         </div>

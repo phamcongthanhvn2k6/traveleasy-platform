@@ -42,15 +42,21 @@ export const ClientRoutes: React.FC = () => {
 
       {/* Chính sách, Quy chế hoạt động & Câu hỏi thường gặp */}
       <Route path="/policy" element={<PolicyPage />} />
+      <Route path="/guide" element={<PolicyPage />} />
 
       {/* =========================================================================
-          CÁC TÍNH NĂNG TƯƠNG LAI TRONG LỘ TRÌNH PHÁT TRIỂN (ROADMAP COMING SOON)
+          CÁC TÍNH NĂNG CHỨC NĂNG TRONG LỘ TRÌNH PHÁT TRIỂN (ROADMAP COMING SOON)
          ========================================================================= */}
+      <Route path="/schedule" element={<NotFoundPage feature="Lịch Trình & Bảng Giờ Chạy Xe" />} />
+      <Route path="/routes" element={<NotFoundPage feature="Mạng Lưới Tuyến Đường Toàn Quốc" />} />
+      <Route path="/promotions" element={<NotFoundPage feature="Chương Trình Khuyến Mãi & Voucher Giảm Giá" />} />
+      <Route path="/reviews" element={<NotFoundPage feature="Đánh Giá & Xếp Hạng Chất Lượng Nhà Xe" />} />
+
+      {/* Dịch vụ mở rộng khác */}
       <Route path="/flights" element={<NotFoundPage feature="Vé Máy Bay Trực Tuyến" />} />
       <Route path="/trains" element={<NotFoundPage feature="Vé Tàu Hỏa Đường Sắt Bắc Nam" />} />
       <Route path="/car-rental" element={<NotFoundPage feature="Thuê Xe Tự Lái & Du Lịch" />} />
-      <Route path="/promotions" element={<NotFoundPage feature="Mã Giảm Giá & Ưu Đãi" />} />
-      <Route path="/hotel" element={<NotFoundPage feature="Khách Sạn & Homestay" />} />
+      <Route path="/hotel" element={<NotFoundPage feature="Khách Sạn & Homestay Điểm Đến" />} />
 
       {/* =========================================================================
           CATCH-ALL 404: ĐIỀU HƯỚNG TẤT CẢ CÁC ĐƯỜNG LINK SAI / KHÔNG TỒN TẠI
