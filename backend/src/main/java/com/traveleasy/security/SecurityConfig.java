@@ -50,7 +50,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/trips/**").permitAll()
                         .requestMatchers("/api/v1/bookings/code/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/bookings").permitAll() // Cho phép khách vãng lai đặt vé
+                        .requestMatchers("/api/v1/bookings", "/api/v1/bookings/*/cancel", "/api/v1/bookings/*/cancel-partial", "/api/v1/bookings/*/reschedule").permitAll()
                         .requestMatchers("/api/v1/payments/**").permitAll() // Cổng thanh toán, callback VNPAY & VietQR
                         .requestMatchers(HttpMethod.GET, "/api/v1/banners/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/reviews/**").permitAll()
