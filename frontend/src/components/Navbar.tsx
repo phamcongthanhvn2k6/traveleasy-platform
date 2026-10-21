@@ -197,10 +197,10 @@ export const Navbar: React.FC = () => {
           </nav>
         </div>
 
-        {/* Portal Switching Badges */}
+        {/* Right Action Badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Link 
-            to="/company/dashboard" 
+            to="/company" 
             style={{ 
               textDecoration: 'none', 
               color: '#0f766e', 
@@ -216,28 +216,31 @@ export const Navbar: React.FC = () => {
               transition: 'all 0.2s'
             }}
           >
-            <Building2 size={16} color="#0d9488" /> Cổng Nhà Xe
+            <Building2 size={16} color="#0d9488" /> Đối Tác Nhà Xe
           </Link>
 
-          <Link 
-            to="/admin/dashboard" 
-            style={{ 
-              textDecoration: 'none', 
-              color: '#1e3a8a', 
-              backgroundColor: '#eff6ff',
-              border: '1px solid #dbeafe',
-              fontWeight: 700, 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              padding: '7px 14px',
-              borderRadius: '8px',
-              fontSize: '13px',
-              transition: 'all 0.2s'
-            }}
-          >
-            <LayoutDashboard size={16} color="#2563eb" /> Quản Trị Sàn
-          </Link>
+          {/* CHỈ hiển thị Quản Trị Sàn khi tài khoản hiện tại ĐÃ ĐĂNG NHẬP và có vai trò ADMIN */}
+          {user?.role === 'ADMIN' && (
+            <Link 
+              to="/admin/dashboard" 
+              style={{ 
+                textDecoration: 'none', 
+                color: '#1e3a8a', 
+                backgroundColor: '#eff6ff',
+                border: '1px solid #dbeafe',
+                fontWeight: 700, 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                transition: 'all 0.2s'
+              }}
+            >
+              <LayoutDashboard size={16} color="#2563eb" /> Quản Trị Sàn (ADMIN)
+            </Link>
+          )}
         </div>
       </div>
     </header>
