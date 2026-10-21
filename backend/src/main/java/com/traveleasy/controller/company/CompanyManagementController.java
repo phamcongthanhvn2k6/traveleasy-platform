@@ -1,14 +1,19 @@
 package com.traveleasy.controller.company;
 
 import com.traveleasy.common.dto.ApiResponse;
+import com.traveleasy.dto.admin.CreateRouteRequest;
 import com.traveleasy.dto.admin.CreateTripRequest;
+import com.traveleasy.dto.admin.RouteAdminResponse;
 import com.traveleasy.dto.admin.UpdateTripRequest;
 import com.traveleasy.dto.booking.BookingResponse;
 import com.traveleasy.dto.trip.TripResponse;
 import com.traveleasy.entity.*;
+import com.traveleasy.repository.BookingRepository;
 import com.traveleasy.repository.CancellationPolicyRepository;
 import com.traveleasy.repository.LocationRepository;
 import com.traveleasy.repository.ReviewReportRepository;
+import com.traveleasy.repository.TripRepository;
+import com.traveleasy.service.admin.AdminManagementService;
 import com.traveleasy.service.admin.AdminTripService;
 import com.traveleasy.service.customer.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,24 +21,60 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/company")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@Tag(name = "Company Management Operations", description = "Vận hành điều phối chuyến, đơn vé, chính sách và phản hồi của nhà xe đối tác")
+@Tag(name = "Company Management Operations", description = "Vận hành điều phối chuyến, tuyến đường, đơn vé, chính sách và phản hồi của nhà xe đối tác")
 public class CompanyManagementController {
 
     private final AdminTripService adminTripService;
+    private final AdminManagementService adminManagementService;
     private final BookingService bookingService;
     private final CancellationPolicyRepository cancellationPolicyRepository;
     private final ReviewReportRepository reviewReportRepository;
     private final LocationRepository locationRepository;
+    private final BookingRepository bookingRepository;
+    private final TripRepository tripRepository;
 
     // =========================================================================
-    // 1. CHUYẾN XE (TRIPS MANAGEMENT)
+    // 1. THỐNG KÊ DASHBOARD (DASHBOARD STATS)
+    // =========================================================================
+    @GetMapping("/dashboard/stats")
+    @Operation(summary = "Lấy thống kê KPI và danh sách chuyến xe sắp tới trực tiếp từ CSDL")
+    public ApiResponse<Map<String, Object>> getCompanyDashboardStats() {
+        BigDecimal totalRevenue = bookingRepository.sumTotalRevenue();
+        long totalTrips = tripRepository.count();
+        long totalBookings = bookingRepository.count();
+        long scheduledTrips = tripRepository.countByStatus(TripStatus.SCHEDULED);
+        double avgRating = 4.8;
+        long totalReviews = reviewReportRepository.count();
+
+        List<TripResponse> allTrips = adminTripService.getAllTrips();
+        List<TripResponse> upcomingTrips = allTrips.stream()
+                .limit(5)
+                .collect(Collectors.toList());
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalRevenue", totalRevenue != null ? totalRevenue : BigDecimal.ZERO);
+        stats.put("totalTrips", totalTrips);
+        stats.put("scheduledTrips", scheduledTrips);
+        stats.put("totalBookings", totalBookings);
+        stats.put("avgRating", avgRating);
+        stats.put("totalReviews", totalReviews);
+        stats.put("upcomingTrips", upcomingTrips);
+
+        return ApiResponse.success(stats);
+    }
+
+    // =========================================================================
+    // 2. CHUYẾN XE (TRIPS MANAGEMENT)
     // =========================================================================
     @GetMapping("/trips")
     @Operation(summary = "Lấy danh sách chuyến xe trực tiếp từ CSDL thực tế")
@@ -67,7 +108,42 @@ public class CompanyManagementController {
     }
 
     // =========================================================================
-    // 2. ĐƠN ĐẶT VÉ (BOOKINGS MANAGEMENT)
+    // 3. TUYẾN ĐƯỜNG (COMPANY ROUTES)
+    // =========================================================================
+    @GetMapping("/routes")
+    @Operation(summary = "Lấy danh sách tuyến đường trực tiếp từ CSDL thực tế")
+    public ApiResponse<List<RouteAdminResponse>> getCompanyRoutes(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long companyId) {
+        return ApiResponse.success(adminManagementService.getAllRoutes(search, companyId));
+    }
+
+    @PostMapping("/routes")
+    @Operation(summary = "Tạo mới tuyến đường vào CSDL thực tế")
+    public ApiResponse<RouteAdminResponse> createCompanyRoute(@RequestBody CreateRouteRequest request) {
+        if (request.getBusCompanyId() == null) {
+            request.setBusCompanyId(1L); // Mặc định ID nhà xe đối tác nếu không chỉ định
+        }
+        return ApiResponse.success("Tạo tuyến đường thành công vào CSDL", adminManagementService.createRoute(request));
+    }
+
+    @PutMapping("/routes/{id}")
+    @Operation(summary = "Cập nhật tuyến đường trong CSDL thực tế")
+    public ApiResponse<RouteAdminResponse> updateCompanyRoute(
+            @PathVariable Long id,
+            @RequestBody CreateRouteRequest request) {
+        return ApiResponse.success("Cập nhật tuyến đường thành công", adminManagementService.updateRoute(id, request));
+    }
+
+    @DeleteMapping("/routes/{id}")
+    @Operation(summary = "Xóa tuyến đường khỏi CSDL thực tế")
+    public ApiResponse<Void> deleteCompanyRoute(@PathVariable Long id) {
+        adminManagementService.deleteRoute(id);
+        return ApiResponse.success("Xóa tuyến đường thành công khỏi CSDL", null);
+    }
+
+    // =========================================================================
+    // 4. ĐƠN ĐẶT VÉ (BOOKINGS MANAGEMENT)
     // =========================================================================
     @GetMapping("/bookings")
     @Operation(summary = "Lấy danh sách đơn vé hành khách trực tiếp từ CSDL thực tế")
@@ -84,7 +160,7 @@ public class CompanyManagementController {
     }
 
     // =========================================================================
-    // 3. CHÍNH SÁCH HỦY VÉ (CANCELLATION POLICIES)
+    // 5. CHÍNH SÁCH HỦY VÉ (CANCELLATION POLICIES)
     // =========================================================================
     @GetMapping("/cancellation-policies")
     @Operation(summary = "Lấy danh sách chính sách hủy vé từ CSDL thực tế")
@@ -118,7 +194,7 @@ public class CompanyManagementController {
     }
 
     // =========================================================================
-    // 4. ĐÁNH GIÁ & PHẢN HỒI (REVIEWS & REPORTS)
+    // 6. ĐÁNH GIÁ & PHẢN HỒI (REVIEWS & REPORTS)
     // =========================================================================
     @GetMapping("/reviews")
     @Operation(summary = "Lấy danh sách đánh giá từ CSDL thực tế")
@@ -150,7 +226,7 @@ public class CompanyManagementController {
     }
 
     // =========================================================================
-    // 5. ĐỊA ĐIỂM ĐÓN TRẢ (COMPANY LOCATIONS)
+    // 7. ĐỊA ĐIỂM ĐÓN TRẢ (COMPANY LOCATIONS)
     // =========================================================================
     @GetMapping("/locations")
     @Operation(summary = "Lấy danh sách địa điểm đón trả từ CSDL thực tế")

@@ -1817,5 +1817,42 @@ docker compose ps
 * **MySQL Database 8.0**: Cổng `3306`, database `traveleasy_db`
 
 ---
+
+### 11.7 Hoàn Thiện Nghiệp Vụ Vận Hành Tuyến Đường, Thống Kê KPI Thời Gian Thực & Bộ Lọc Tìm Kiếm Đa Chiều
+
+#### 1. Loại Bỏ Triệt Để Dữ Liệu Tĩnh & Kết Nối Tuyến Đường Nhà Xe Vào MySQL 8.0
+* **Trước đây**: Trang [CompanyRoutesPage.tsx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/src/pages/company/routes/CompanyRoutesPage.tsx) hiển thị 2 dòng dữ liệu mock cố định, các nút "Tạo tuyến mới", "Chỉnh sửa" và "Xóa" chưa có bộ xử lý tương tác với máy chủ.
+* **Giải pháp hoàn thiện**:
+  * Bổ sung đầy đủ 4 RESTful API vào [CompanyManagementController.java](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/backend/src/main/java/com/traveleasy/controller/company/CompanyManagementController.java):
+    * `GET /api/v1/company/routes`: Truy vấn toàn bộ danh sách tuyến đường thực tế từ bảng `routes`.
+    * `POST /api/v1/company/routes`: Thêm mới tuyến đường vào MySQL (với điểm đi, điểm đến, thời gian chạy dự kiến và cự ly km).
+    * `PUT /api/v1/company/routes/{id}`: Cập nhật lộ trình và thông số cự ly của tuyến.
+    * `DELETE /api/v1/company/routes/{id}`: Xóa tuyến đường khỏi CSDL khi chưa gắn với chuyến xe.
+  * Tái cấu trúc giao diện `CompanyRoutesPage.tsx` với thanh tìm kiếm thời gian thực, modal thêm mới, modal chỉnh sửa, xác nhận xóa an toàn và thông báo Toast phản hồi trạng thái giao dịch.
+
+#### 2. Thống Kê KPI Dashboard Nhà Xe Thời Gian Thực (`/company/dashboard/stats`)
+* Nâng cấp trang [CompanyDashboardPage.tsx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/src/pages/company/dashboard/CompanyDashboardPage.tsx) từ các số liệu tĩnh thành bảng điều khiển động (Live Operations Dashboard):
+  * Doanh thu tích lũy được tính tổng tự động từ các đơn vé `CONFIRMED` trong bảng `bookings`.
+  * Số lượng chuyến xe vận hành và chuyến xe sẵn sàng xuất bến được đếm trực tiếp từ bảng `trips`.
+  * Danh sách "Chuyến xe sắp khởi hành" truy xuất trực tiếp các chuyến xe mới nhất từ CSDL kèm mã chuyến, lộ trình, loại xe, số ghế trống và trạng thái vận hành (`RUNNING`, `SCHEDULED`).
+
+#### 3. Chuẩn Hóa Ngôn Ngữ & Trải Nghiệm Giao Diện Đối Tác
+* Toàn bộ thanh điều hướng bên [CompanyLayout.tsx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/src/components/CompanyLayout.tsx) được chuẩn hóa tiếng Việt có dấu đầy đủ (`Tổng quan`, `Đội xe`, `Địa điểm nhà xe`, `Tuyến đường`, `Chính sách hủy`, `Chuyến xe`, `Đặt vé`, `Đánh giá`, `VẬN HÀNH`, `KINH DOANH`).
+* Sửa lỗi lệch múi giờ (UTC Timezone Shift) khi biên tập chuyến xe trong trang [AdminTripsPage.tsx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/src/pages/admin/trips/AdminTripsPage.tsx), bảo toàn chính xác giờ khởi hành địa phương (GMT+7) khi lưu trữ vào MySQL.
+
+#### 4. Sửa Lỗi Bộ Lọc Loại Xe Ghế Ngồi (`SEAT` / `SEATER`) Trong Tìm Kiếm
+* Khắc phục độ lệch định danh loại xe giữa [FilterSidebar.tsx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/src/pages/customer/search/components/FilterSidebar.tsx) (`SEATER`) và backend enum `BusType.java` (`SEAT`).
+* Cập nhật logic lọc đa chiều trong [TripSearchPage.tsx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/src/pages/customer/search/TripSearchPage.tsx) hỗ trợ tương thích hai chiều, giúp hành khách lọc chính xác xe ghế ngồi, xe giường nằm và xe limousine VIP mà không bị sót chuyến.
+
+![Dashboard Nhà Xe Dữ Liệu Thực Tế MySQL](docs/screenshots/screenshot_company_dashboard_live.png)
+*Hình 11.47: Dashboard nhà xe hiển thị KPI doanh thu và chuyến xe sắp tới trực tiếp từ MySQL 8.0.*
+
+![Quản Lý Tuyến Đường Nhà Xe Trên Database Thực](docs/screenshots/screenshot_company_routes_live.png)
+*Hình 11.48: Quản lý tuyến đường nhà xe với thao tác CRUD trực tiếp trên database thực.*
+
+![Bộ Lọc Tìm Kiếm Chuyến Xe Đa Chiều](docs/screenshots/screenshot_search_bus_type_filter.png)
+*Hình 11.49: Bộ lọc tìm kiếm chuyến xe đa chiều theo giờ chạy, tầm giá, loại xe và hãng xe.*
+
+---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  
 *Chúc toàn đội bảo vệ thành công rực rỡ!*

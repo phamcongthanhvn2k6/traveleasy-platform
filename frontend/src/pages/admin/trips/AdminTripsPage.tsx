@@ -138,11 +138,16 @@ export const AdminTripsPage: React.FC = () => {
 
   const openEditModal = (t: TripItem) => {
     setEditingTrip(t);
-    // Format datetime-local string (YYYY-MM-DDTHH:mm)
+    // Format datetime-local string (YYYY-MM-DDTHH:mm) bảo toàn giờ địa phương
     const formatDt = (dtStr: string) => {
+      if (!dtStr) return '';
+      if (dtStr.includes('T')) {
+        return dtStr.slice(0, 16);
+      }
       try {
         const d = new Date(dtStr);
-        return d.toISOString().slice(0, 16);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
       } catch {
         return dtStr.slice(0, 16);
       }

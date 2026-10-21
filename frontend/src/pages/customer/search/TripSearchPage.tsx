@@ -140,7 +140,13 @@ export const TripSearchPage: React.FC = () => {
 
         // 3. Bus type filter
         if (filters.busTypes.length > 0) {
-          if (!filters.busTypes.includes(t.busType)) {
+          const matchBusType = filters.busTypes.some(
+            (bt) =>
+              bt === t.busType ||
+              (bt === 'SEATER' && t.busType === 'SEAT') ||
+              (bt === 'SEAT' && t.busType === 'SEATER')
+          );
+          if (!matchBusType) {
             return false;
           }
         }
