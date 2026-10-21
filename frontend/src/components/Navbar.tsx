@@ -1,6 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bus, Search, ShieldCheck, PhoneCall, User, Info, Building2, LayoutDashboard, Globe, LogOut, Ticket, X, CheckCircle, Mail } from 'lucide-react';
+import { 
+  Bus, 
+  Search, 
+  ShieldCheck, 
+  PhoneCall, 
+  User, 
+  Info, 
+  Building2, 
+  LayoutDashboard, 
+  Globe, 
+  LogOut, 
+  Ticket, 
+  X, 
+  CheckCircle, 
+  Mail, 
+  Plane, 
+  Train, 
+  Car, 
+  Tag, 
+  Sparkles,
+  Handshake 
+} from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
 
@@ -50,9 +71,6 @@ export const Navbar: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', fontSize: '13px' }}>
-            <Link to="/my-tickets" style={{ color: '#ffffff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px', opacity: 0.9 }}>
-              Vé của tôi
-            </Link>
             <button
               type="button"
               onClick={() => {
@@ -66,34 +84,18 @@ export const Navbar: React.FC = () => {
                 background: 'none',
                 border: 'none',
                 color: '#ffffff',
-                opacity: 0.9,
+                opacity: 0.95,
                 cursor: 'pointer',
-                fontSize: '13px',
-                padding: 0
+                fontSize: '12.5px',
+                padding: '2px 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontWeight: 600
               }}
             >
-              Mở bán vé trên TravelEasy
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (user?.role === 'OPERATOR') {
-                  navigate('/company/dashboard');
-                } else {
-                  setShowPartnerModal(true);
-                }
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#ffffff',
-                opacity: 0.9,
-                cursor: 'pointer',
-                fontSize: '13px',
-                padding: 0
-              }}
-            >
-              Trở thành đối tác
+              <Handshake size={14} />
+              <span>Hợp tác mở bán vé</span>
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.9, cursor: 'pointer' }}>
               <Globe size={14} /> 🇻🇳 VN
@@ -203,14 +205,14 @@ export const Navbar: React.FC = () => {
             </div>
           </Link>
 
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             <Link 
               to="/search" 
               style={{ 
                 textDecoration: 'none', 
                 color: location.pathname === '/search' || location.pathname === '/' ? '#2563eb' : '#334155', 
                 fontWeight: location.pathname === '/search' || location.pathname === '/' ? 700 : 600, 
-                fontSize: '14.5px',
+                fontSize: '14px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '6px',
@@ -218,39 +220,98 @@ export const Navbar: React.FC = () => {
                 padding: '8px 0'
               }}
             >
-              <Search size={16} /> Vé Xe Khách
+              <Bus size={16} /> <span>Vé Xe Khách</span>
             </Link>
+
+            <Link 
+              to="/flights" 
+              style={{ 
+                textDecoration: 'none', 
+                color: location.pathname === '/flights' ? '#2563eb' : '#475569', 
+                fontWeight: location.pathname === '/flights' ? 700 : 600, 
+                fontSize: '14px',
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                borderBottom: location.pathname === '/flights' ? '2px solid #2563eb' : '2px solid transparent',
+                padding: '8px 0'
+              }}
+            >
+              <Plane size={15} /> <span>Máy Bay</span>
+              <span style={{ fontSize: '9px', fontWeight: 700, backgroundColor: '#e0f2fe', color: '#0369a1', padding: '1px 5px', borderRadius: '4px' }}>
+                Sắp có
+              </span>
+            </Link>
+
+            <Link 
+              to="/trains" 
+              style={{ 
+                textDecoration: 'none', 
+                color: location.pathname === '/trains' ? '#2563eb' : '#475569', 
+                fontWeight: location.pathname === '/trains' ? 700 : 600, 
+                fontSize: '14px',
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                borderBottom: location.pathname === '/trains' ? '2px solid #2563eb' : '2px solid transparent',
+                padding: '8px 0'
+              }}
+            >
+              <Train size={15} /> <span>Tàu Hỏa</span>
+              <span style={{ fontSize: '9px', fontWeight: 700, backgroundColor: '#fef3c7', color: '#b45309', padding: '1px 5px', borderRadius: '4px' }}>
+                Sắp có
+              </span>
+            </Link>
+
+            <Link 
+              to="/car-rental" 
+              style={{ 
+                textDecoration: 'none', 
+                color: location.pathname === '/car-rental' ? '#2563eb' : '#475569', 
+                fontWeight: location.pathname === '/car-rental' ? 700 : 600, 
+                fontSize: '14px',
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                borderBottom: location.pathname === '/car-rental' ? '2px solid #2563eb' : '2px solid transparent',
+                padding: '8px 0'
+              }}
+            >
+              <Car size={15} /> <span>Thuê Xe</span>
+            </Link>
+
+            <Link 
+              to="/promotions" 
+              style={{ 
+                textDecoration: 'none', 
+                color: location.pathname === '/promotions' ? '#dc2626' : '#475569', 
+                fontWeight: location.pathname === '/promotions' ? 700 : 600, 
+                fontSize: '14px',
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                borderBottom: location.pathname === '/promotions' ? '2px solid #dc2626' : '2px solid transparent',
+                padding: '8px 0'
+              }}
+            >
+              <Tag size={15} color="#dc2626" /> <span style={{ color: '#dc2626', fontWeight: 700 }}>Ưu Đãi</span>
+            </Link>
+
             <Link 
               to="/my-tickets" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/my-tickets' ? '#2563eb' : '#334155', 
-                fontWeight: location.pathname === '/my-tickets' ? 700 : 600, 
-                fontSize: '14.5px',
+                color: location.pathname === '/my-tickets' || location.pathname === '/lookup' ? '#2563eb' : '#334155', 
+                fontWeight: location.pathname === '/my-tickets' || location.pathname === '/lookup' ? 700 : 600, 
+                fontSize: '14px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '6px',
-                borderBottom: location.pathname === '/my-tickets' ? '2px solid #2563eb' : '2px solid transparent',
+                borderBottom: location.pathname === '/my-tickets' || location.pathname === '/lookup' ? '2px solid #2563eb' : '2px solid transparent',
                 padding: '8px 0'
               }}
             >
-              <Ticket size={16} /> Vé Của Tôi
-            </Link>
-            <Link 
-              to="/lookup" 
-              style={{ 
-                textDecoration: 'none', 
-                color: location.pathname === '/lookup' ? '#2563eb' : '#334155', 
-                fontWeight: location.pathname === '/lookup' ? 700 : 600, 
-                fontSize: '14.5px',
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '6px',
-                borderBottom: location.pathname === '/lookup' ? '2px solid #2563eb' : '2px solid transparent',
-                padding: '8px 0'
-              }}
-            >
-              <ShieldCheck size={16} /> Tra Cứu Vé
+              <Ticket size={16} /> <span>Vé Của Tôi & Tra Cứu</span>
             </Link>
           </nav>
         </div>

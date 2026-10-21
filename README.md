@@ -1664,6 +1664,41 @@ Kênh tương tác và chăm sóc khách hàng trực tiếp của nhà xe:
 ![Chặn Truy Cập Phân Hệ Đối Tác Nhà Xe 403](docs/screenshots/screenshot_customer_403_company.png)
 *Hình 11.37: Màn hình từ chối quyền truy cập 403 Forbidden khi tài khoản Khách hàng cố tình vào `/company/*`.*
 
+#### 12. Tối Ưu Hóa Header Đa Dịch Vụ & Trang Roadmap / 404 Chuyên Nghiệp
+* **Loại bỏ trùng lặp tính năng trên Header**:
+  * Thanh tiện ích phía trên (Top bar) trước đây bị trùng lặp "Vé của tôi" với thanh điều hướng chính, đồng thời có 2 nút "Mở bán vé trên TravelEasy" và "Trở thành đối tác" nằm cạnh nhau.
+  * Đã chuẩn hóa: Gộp 2 nút đối tác thành 1 nút duy nhất **🤝 Hợp tác mở bán vé** (mở Hộp thoại thông tin và đăng ký đối tác), loại bỏ hoàn toàn liên kết "Vé của tôi" ở Top bar để giữ 1 nguồn duy nhất tại Thanh điều hướng chính.
+* **Mở rộng Menu đa phương thức vận tải (Multi-Modal Travel Platform)**:
+  * 🚌 **Vé Xe Khách** (`/search` - Dịch vụ lõi hiện hữu).
+  * ✈️ **Máy Bay** (`/flights` - Gắn nhãn badge *Sắp có*).
+  * 🚆 **Tàu Hỏa** (`/trains` - Gắn nhãn badge *Sắp có*).
+  * 🚗 **Thuê Xe** (`/car-rental`).
+  * 🎁 **Ưu Đãi** (`/promotions` - Gắn nhãn badge *Hot*).
+  * 🎟️ **Vé Của Tôi & Tra Cứu** (`/my-tickets` - Tích hợp xem vé đã đặt và tra cứu nhanh).
+* **Trang Tính Năng Đang Phát Triển (Coming Soon Roadmap Mode)**:
+  * Xây dựng trang `NotFoundPage.tsx` với chế độ thông minh: Tự động nhận diện đường dẫn các tính năng trong kế hoạch mở rộng (`/flights`, `/trains`, `/car-rental`, `/promotions`, `/hotel`).
+  * Hiển thị biểu tượng dịch vụ tương ứng, thông báo trạng thái "Tính năng đang hoàn thiện", dự kiến ra mắt (Q4/2026 - Q1/2027), và thanh tiến độ tích hợp 3 bước:
+    1. *Khảo sát & Thiết kế hệ thống* (Hoàn thành)
+    2. *Tích hợp API Đối tác Hàng không / Đường sắt* (Đang triển khai)
+    3. *Kiểm thử tải & Mở bán chính thức* (Dự kiến).
+  * Hỗ trợ nút đăng ký nhận thông báo ra mắt và chuyển hướng nhanh sang đặt vé xe khách hiện hữu.
+* **Trang 404 Not Found Thông Minh & Thân Thiện**:
+  * Bắt toàn bộ các đường dẫn sai hoặc không tồn tại (Catch-all route `path="*"`).
+  * Hiển thị giao diện 404 hiện đại với mã lỗi nổi bật, thông điệp hướng dẫn rõ ràng, nút quay lại trang trước, nút "Về Trang Chủ" và nút "Đặt Vé Xe Khách Ngay".
+  * Cung cấp số Hotline hỗ trợ 24/7 (1900 6868) giúp người dùng không bao giờ bị mắc kẹt.
+
+![Giao Diện Header Mới Đã Loại Bỏ Trùng Lặp & Bổ Sung Đa Dịch Vụ](docs/screenshots/screenshot_new_header_layout.png)
+*Hình 11.38: Thanh điều hướng TravelEasy mới đã dọn sạch trùng lặp và mở rộng hệ sinh thái vé Máy Bay, Tàu Hỏa, Thuê Xe.*
+
+![Trang Roadmap Tính Năng Vé Máy Bay Đang Phát Triển](docs/screenshots/screenshot_coming_soon_flights.png)
+*Hình 11.39: Giao diện Roadmap chuyên nghiệp cho tính năng Vé Máy Bay (`/flights`) với tiến độ tích hợp 3 bước.*
+
+![Trang Roadmap Tính Năng Vé Tàu Hỏa Đang Phát Triển](docs/screenshots/screenshot_coming_soon_trains.png)
+*Hình 11.40: Giao diện Roadmap tính năng Vé Tàu Hỏa (`/trains`) sẵn sàng mở rộng.*
+
+![Trang Báo Lỗi 404 Not Found Khi Nhập Sai URL](docs/screenshots/screenshot_404_wrong_url.png)
+*Hình 11.41: Trang 404 Not Found thân thiện khi truy cập vào đường link sai hoặc không tồn tại.*
+
 ---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  
 *Chúc toàn đội bảo vệ thành công rực rỡ!*
