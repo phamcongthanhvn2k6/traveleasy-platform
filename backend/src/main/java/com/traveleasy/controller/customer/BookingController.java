@@ -2,7 +2,9 @@ package com.traveleasy.controller.customer;
 
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.dto.booking.BookingResponse;
+import com.traveleasy.dto.booking.CancelPartialRequest;
 import com.traveleasy.dto.booking.CreateBookingRequest;
+import com.traveleasy.dto.booking.RescheduleRequest;
 import com.traveleasy.service.customer.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,11 +46,32 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/cancel")
-    @Operation(summary = "Hủy đơn đặt vé và hoàn trả ghế trống")
+    @Operation(summary = "Hủy toàn bộ đơn đặt vé và hoàn trả ghế trống")
     public ApiResponse<BookingResponse> cancelBooking(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails != null ? userDetails.getUsername() : null;
         return ApiResponse.success("Hủy vé thành công", bookingService.cancelBooking(id, email));
+    }
+
+    @PostMapping("/{id}/cancel-partial")
+    @Operation(summary = "Hủy từng vé cụ thể trong đơn (Partial Cancellation - UC-1.11)")
+    public ApiResponse<BookingResponse> cancelPartial(
+            @PathVariable Long id,
+            @RequestBody CancelPartialRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        return ApiResponse.success("Hủy vé từng phần thành công", bookingService.cancelPartialTickets(id, request.getTicketIds(), email));
+    }
+
+    @PostMapping("/{id}/reschedule")
+    @Operation(summary = "Yêu cầu đổi ngày / đổi chuyến sang chuyến mới (Reschedule - UC-1.16)")
+    public ApiResponse<BookingResponse> reschedule(
+            @PathVariable Long id,
+            @RequestBody RescheduleRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        return ApiResponse.success("Đổi chuyến thành công", bookingService.rescheduleTicket(
+                id, request.getTicketId(), request.getNewTripId(), request.getNewSeatNumber(), email));
     }
 }

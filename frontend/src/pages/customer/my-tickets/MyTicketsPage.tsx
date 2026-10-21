@@ -17,6 +17,8 @@ import {
   Bus,
   Search,
 } from 'lucide-react';
+import { PartialCancelModal } from './components/PartialCancelModal';
+import { RescheduleModal } from './components/RescheduleModal';
 
 export const MyTicketsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,8 +26,9 @@ export const MyTicketsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'UPCOMING' | 'COMPLETED' | 'CANCELLED'>('ALL');
 
-  // Cancel Modal State
+  // Cancel & Reschedule Modals State
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
+  const [reschedulingBooking, setReschedulingBooking] = useState<Booking | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
 
   // Review Modal State
@@ -358,6 +361,27 @@ export const MyTicketsPage: React.FC = () => {
 
                     {isConfirmed && (
                       <button
+                        onClick={() => setReschedulingBooking(booking)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          backgroundColor: '#fff',
+                          color: '#2563eb',
+                          border: '1px solid #bfdbfe',
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          fontWeight: 700,
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Calendar size={15} /> Đổi ngày / Đổi chuyến
+                      </button>
+                    )}
+
+                    {isConfirmed && (
+                      <button
                         onClick={() => setCancellingBooking(booking)}
                         style={{
                           display: 'flex',
@@ -373,7 +397,7 @@ export const MyTicketsPage: React.FC = () => {
                           cursor: 'pointer',
                         }}
                       >
-                        <XCircle size={15} /> Yêu cầu hủy vé
+                        <XCircle size={15} /> Hủy vé / Hoàn tiền
                       </button>
                     )}
 
@@ -440,70 +464,28 @@ export const MyTicketsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Modal: Confirm Cancel Booking */}
+        {/* Modal: Partial Cancel Booking (UC-1.11) */}
         {cancellingBooking && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 120,
-              padding: '20px',
+          <PartialCancelModal
+            booking={cancellingBooking}
+            onClose={() => setCancellingBooking(null)}
+            onSuccess={(updated) => {
+              setBookings((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+              setCancellingBooking(null);
             }}
-          >
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                maxWidth: '460px',
-                width: '100%',
-                padding: '24px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#dc2626', marginBottom: '12px' }}>
-                <AlertTriangle size={24} />
-                <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0 }}>Xác Nhận Hủy Vé Xe?</h3>
-              </div>
-              <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.5, marginBottom: '18px' }}>
-                Bạn có chắc chắn muốn hủy đơn vé <strong>{cancellingBooking.bookingCode}</strong>?
-                Hệ thống sẽ giải phóng ghế ngồi và thực hiện hoàn tiền theo chính sách hủy nhà xe (hoàn tiền qua cổng thanh toán gốc).
-              </p>
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => setCancellingBooking(null)}
-                  style={{
-                    backgroundColor: '#f1f5f9',
-                    color: '#475569',
-                    border: '1px solid #cbd5e1',
-                    padding: '9px 18px',
-                    borderRadius: '8px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Không, giữ lại vé
-                </button>
-                <button
-                  onClick={handleCancelBooking}
-                  disabled={cancelLoading}
-                  style={{
-                    backgroundColor: '#dc2626',
-                    color: '#ffffff',
-                    border: 'none',
-                    padding: '9px 18px',
-                    borderRadius: '8px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {cancelLoading ? 'Đang hủy...' : 'Đồng ý hủy vé'}
-                </button>
-              </div>
-            </div>
-          </div>
+          />
+        )}
+
+        {/* Modal: Reschedule Trip (UC-1.16) */}
+        {reschedulingBooking && (
+          <RescheduleModal
+            booking={reschedulingBooking}
+            onClose={() => setReschedulingBooking(null)}
+            onSuccess={(newBooking) => {
+              setBookings((prev) => [newBooking, ...prev]);
+              setReschedulingBooking(null);
+            }}
+          />
         )}
 
         {/* Modal: Review Trip */}

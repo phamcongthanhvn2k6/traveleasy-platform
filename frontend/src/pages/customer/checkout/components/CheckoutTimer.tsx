@@ -83,3 +83,4 @@ export const CheckoutTimer: React.FC<Props> = ({ initialSeconds = 600, onExpire 
     </div>
   );
 };
+

@@ -238,3 +238,4 @@ export const OrderSummaryPanel: React.FC<Props> = ({
     </div>
   );
 };
+

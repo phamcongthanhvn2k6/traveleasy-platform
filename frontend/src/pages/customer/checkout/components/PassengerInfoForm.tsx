@@ -230,3 +230,4 @@ export const PassengerInfoForm: React.FC<Props> = ({ info, onChange, seatCount }
     </div>
   );
 };
+

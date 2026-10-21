@@ -151,3 +151,4 @@ export const PaymentMethodSelector: React.FC<Props> = ({ selectedMethod, onChang
     </div>
   );
 };
+
