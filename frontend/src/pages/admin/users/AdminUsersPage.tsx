@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Lock, Unlock, Search, Filter, Plus, RefreshCw, X, User } from 'lucide-react';
+import { Lock, Unlock, Search, Plus, RefreshCw, X, User, Edit2, Trash2 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 
 interface UserItem {
   id: string;
+  fullName: string;
   phone: string;
   email: string;
   role: 'ADMIN' | 'OPERATOR' | 'CUSTOMER';
@@ -29,6 +30,13 @@ export const AdminUsersPage: React.FC = () => {
   const [formRole, setFormRole] = useState<'CUSTOMER' | 'OPERATOR' | 'ADMIN'>('CUSTOMER');
   const [submitting, setSubmitting] = useState(false);
 
+  // Modal Edit
+  const [editingUser, setEditingUser] = useState<UserItem | null>(null);
+  const [editFullName, setEditFullName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editRole, setEditRole] = useState<'CUSTOMER' | 'OPERATOR' | 'ADMIN'>('CUSTOMER');
+  const [updating, setUpdating] = useState(false);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -37,6 +45,7 @@ export const AdminUsersPage: React.FC = () => {
         setUsers(
           res.data.data.map((u: any) => ({
             id: String(u.id),
+            fullName: u.fullName || u.email?.split('@')[0] || 'Người dùng',
             phone: u.phone || 'Chưa cập nhật',
             email: u.email,
             role: u.role,
@@ -91,6 +100,60 @@ export const AdminUsersPage: React.FC = () => {
     }
   };
 
+  const openEditModal = (u: UserItem) => {
+    setEditingUser(u);
+    setEditFullName(u.fullName);
+    setEditPhone(u.phone === 'Chưa cập nhật' ? '' : u.phone);
+    setEditRole(u.role);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    if (!editFullName.trim()) {
+      toast.warning('Vui lòng nhập họ và tên!', 'Thiếu Thông Tin');
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      await api.put(`/admin/users/${editingUser.id}`, {
+        fullName: editFullName.trim(),
+        phone: editPhone.trim(),
+        role: editRole,
+      });
+
+      toast.success(`Cập nhật thông tin tài khoản "${editingUser.email}" thành công!`, 'Cập Nhật Thành Công');
+      setEditingUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      console.error('Update user error:', err);
+      toast.error(err.response?.data?.message || 'Không thể cập nhật người dùng', 'Thất Bại');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDeleteUser = async (u: UserItem) => {
+    if (u.email === 'admin@traveleasy.vn') {
+      toast.error('Không thể xóa tài khoản Quản trị viên tối cao!', 'Bị Từ Chối');
+      return;
+    }
+
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa tài khoản "${u.email}" (${u.fullName}) khỏi hệ thống?`)) {
+      return;
+    }
+
+    try {
+      await api.delete(`/admin/users/${u.id}`);
+      setUsers((prev) => prev.filter((item) => item.id !== u.id));
+      toast.success(`Đã xóa người dùng "${u.email}" khỏi cơ sở dữ liệu!`, 'Đã Xóa');
+    } catch (err: any) {
+      console.error('Delete user error:', err);
+      toast.error(err.response?.data?.message || 'Không thể xóa người dùng này', 'Thất Bại');
+    }
+  };
+
   const toggleUserLock = async (id: string) => {
     const target = users.find((u) => u.id === id);
     if (!target) return;
@@ -118,7 +181,7 @@ export const AdminUsersPage: React.FC = () => {
     if (statusFilter !== 'ALL' && u.status !== statusFilter) return false;
     if (search) {
       const q = search.toLowerCase();
-      return u.email.toLowerCase().includes(q) || u.phone.includes(q);
+      return u.email.toLowerCase().includes(q) || u.phone.includes(q) || u.fullName.toLowerCase().includes(q);
     }
     return true;
   });
@@ -187,7 +250,7 @@ export const AdminUsersPage: React.FC = () => {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Tìm theo email hoặc SĐT..."
+          placeholder="Tìm theo họ tên, email hoặc SĐT..."
           style={{
             backgroundColor: '#ffffff',
             border: '1px solid #e2e8f0',
@@ -255,12 +318,12 @@ export const AdminUsersPage: React.FC = () => {
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TÀI KHOẢN & EMAIL</th>
+              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>HỌ TÊN & EMAIL</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>SỐ ĐIỆN THOẠI</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>VAI TRÒ (ROLE)</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TRẠNG THÁI</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>NGÀY TẠO</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px', textAlign: 'right' }}>HÀNH ĐỘNG</th>
+              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
           <tbody>
@@ -292,9 +355,12 @@ export const AdminUsersPage: React.FC = () => {
                       borderBottom: '1px solid #f1f5f9',
                       transition: 'background-color 0.1s ease',
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
                     <td style={{ padding: '14px 18px' }}>
-                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{u.email}</div>
+                      <div style={{ fontWeight: 800, color: '#0f172a' }}>{u.fullName}</div>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>{u.email}</div>
                       <div style={{ fontSize: '11px', color: '#94a3b8' }}>User #{u.id}</div>
                     </td>
                     <td style={{ padding: '14px 18px', color: '#334155' }}>{u.phone}</td>
@@ -330,26 +396,68 @@ export const AdminUsersPage: React.FC = () => {
                     </td>
                     <td style={{ padding: '14px 18px', color: '#64748b' }}>{u.createdAt}</td>
                     <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => toggleUserLock(u.id)}
-                        title={isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
-                        style={{
-                          backgroundColor: isLocked ? '#ecfdf5' : '#fee2e2',
-                          color: isLocked ? '#059669' : '#dc2626',
-                          border: `1px solid ${isLocked ? '#a7f3d0' : '#fecaca'}`,
-                          borderRadius: '6px',
-                          padding: '5px 12px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                        }}
-                      >
-                        {isLocked ? <Unlock size={13} /> : <Lock size={13} />}
-                        {isLocked ? 'Mở khóa' : 'Khóa'}
-                      </button>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <button
+                          onClick={() => toggleUserLock(u.id)}
+                          title={isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
+                          style={{
+                            backgroundColor: isLocked ? '#ecfdf5' : '#fee2e2',
+                            color: isLocked ? '#059669' : '#dc2626',
+                            border: `1px solid ${isLocked ? '#a7f3d0' : '#fecaca'}`,
+                            borderRadius: '6px',
+                            padding: '5px 10px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          {isLocked ? <Unlock size={12} /> : <Lock size={12} />}
+                          {isLocked ? 'Mở khóa' : 'Khóa'}
+                        </button>
+
+                        <button
+                          onClick={() => openEditModal(u)}
+                          title="Sửa thông tin"
+                          style={{
+                            backgroundColor: '#f1f5f9',
+                            color: '#2563eb',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '6px',
+                            padding: '5px 10px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Edit2 size={12} /> Sửa
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteUser(u)}
+                          title="Xóa tài khoản"
+                          style={{
+                            backgroundColor: '#fef2f2',
+                            color: '#dc2626',
+                            border: '1px solid #fecaca',
+                            borderRadius: '6px',
+                            padding: '5px 8px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -551,6 +659,158 @@ export const AdminUsersPage: React.FC = () => {
                   }}
                 >
                   {submitting ? 'Đang tạo...' : 'Tạo Tài Khoản'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Chỉnh Sửa Người Dùng */}
+      {editingUser && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '500px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Header */}
+            <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Edit2 size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
+                    Chỉnh Sửa Người Dùng #{editingUser.id}
+                  </h3>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>{editingUser.email}</div>
+                </div>
+              </div>
+              <button onClick={() => setEditingUser(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleUpdateUser} style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Họ Và Tên <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={editFullName}
+                    onChange={(e) => setEditFullName(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Số Điện Thoại
+                  </label>
+                  <input
+                    type="text"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    placeholder="VD: 0901234567"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Vai Trò (Role) <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value as any)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      outline: 'none',
+                      backgroundColor: '#ffffff',
+                    }}
+                  >
+                    <option value="CUSTOMER">Khách Hàng (CUSTOMER)</option>
+                    <option value="OPERATOR">Đối Tác Nhà Xe (OPERATOR)</option>
+                    <option value="ADMIN">Quản Trị Viên (ADMIN)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: '#f1f5f9',
+                    color: '#475569',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  style={{
+                    padding: '9px 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#2563eb',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: updating ? 'not-allowed' : 'pointer',
+                    opacity: updating ? 0.7 : 1,
+                  }}
+                >
+                  {updating ? 'Đang lưu...' : 'Lưu Thay Đổi'}
                 </button>
               </div>
             </form>

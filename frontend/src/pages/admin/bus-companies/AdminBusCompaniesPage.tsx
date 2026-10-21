@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bus, Eye, Ban, Check, Plus, RefreshCw, X, Phone, Mail, MapPin } from 'lucide-react';
+import { Bus, Eye, Ban, Check, Plus, RefreshCw, X, Edit2, Trash2 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 
@@ -28,6 +28,14 @@ export const AdminBusCompaniesPage: React.FC = () => {
   const [formEmail, setFormEmail] = useState('');
   const [formAddress, setFormAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Modal Edit
+  const [editingCompany, setEditingCompany] = useState<BusCompanyItem | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editCode, setEditCode] = useState('');
+  const [editHotline, setEditHotline] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editAddress, setEditAddress] = useState('');
 
   const fetchCompanies = async () => {
     try {
@@ -79,7 +87,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
 
       const res = await api.post('/admin/bus-companies', payload);
       if (res.data?.data) {
-        toast.success(`Đã thêm đối tác nhà xe "${payload.name}" vào hệ thống thành công!`, 'Thêm Nhà Xe Thành Công');
+        toast.success(`Đã thêm đối tác nhà xe "${payload.name}" thành công!`, 'Thêm Nhà Xe');
         setShowModal(false);
         setFormName('');
         setFormCode('');
@@ -93,6 +101,56 @@ export const AdminBusCompaniesPage: React.FC = () => {
       toast.error(err.response?.data?.message || 'Thêm đối tác nhà xe thất bại!', 'Lỗi');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const openEditModal = (c: BusCompanyItem) => {
+    setEditingCompany(c);
+    setEditName(c.name);
+    setEditCode(c.code);
+    setEditHotline(c.phone);
+    setEditEmail(c.email);
+    setEditAddress(c.address || '');
+  };
+
+  const handleUpdateCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCompany) return;
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        name: editName.trim(),
+        code: editCode.trim(),
+        hotline: editHotline.trim(),
+        email: editEmail.trim(),
+        address: editAddress.trim(),
+      };
+
+      await api.put(`/admin/bus-companies/${editingCompany.id}`, payload);
+      toast.success(`Đã cập nhật nhà xe "${payload.name}" thành công!`, 'Cập Nhật Thành Công');
+      setEditingCompany(null);
+      fetchCompanies();
+    } catch (err: any) {
+      console.error('Update company error:', err);
+      toast.error(err.response?.data?.message || 'Cập nhật nhà xe thất bại!', 'Lỗi');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteCompany = async (c: BusCompanyItem) => {
+    if (!window.confirm(`Bạn có chắc muốn XOÁ đối tác nhà xe "${c.name}"? Thao tác này không thể hoàn tác!`)) {
+      return;
+    }
+
+    try {
+      await api.delete(`/admin/bus-companies/${c.id}`);
+      setCompanies(prev => prev.filter(item => item.id !== c.id));
+      toast.info(`Đã xoá nhà xe "${c.name}" thành công!`, 'Xoá Nhà Xe');
+    } catch (err: any) {
+      console.error('Delete company error:', err);
+      toast.error(err.response?.data?.message || 'Xoá nhà xe thất bại!', 'Lỗi');
     }
   };
 
@@ -134,14 +192,14 @@ export const AdminBusCompaniesPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-      {/* Breadcrumb & Header Title */}
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
             TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> <span style={{ color: '#0f172a' }}>Nhà xe</span>
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
-            Quản Lý Đối Tác Nhà Xe
+            Quản Lý Đối Tác Nhà Xe (Thêm - Sửa - Xóa)
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
             {pendingCount} chờ duyệt, <strong>{companies.length}</strong> đối tác đang liên kết
@@ -314,15 +372,37 @@ export const AdminBusCompaniesPage: React.FC = () => {
                     </td>
                     <td style={{ padding: '14px 18px', color: '#64748b' }}>{c.createdAt}</td>
                     <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        {/* Nút Sửa */}
+                        <button
+                          onClick={() => openEditModal(c)}
+                          title="Sửa thông tin nhà xe"
+                          style={{
+                            backgroundColor: '#eff6ff',
+                            color: '#2563eb',
+                            border: '1px solid #bfdbfe',
+                            borderRadius: '6px',
+                            padding: '5px 10px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Edit2 size={13} /> Sửa
+                        </button>
+
+                        {/* Nút Tạm ngưng / Kích hoạt */}
                         {c.status === 'ACTIVE' ? (
                           <button
                             onClick={() => toggleCompanyStatus(c.id)}
                             title="Tạm ngưng nhà xe"
                             style={{
-                              backgroundColor: '#fee2e2',
-                              color: '#dc2626',
-                              border: '1px solid #fecaca',
+                              backgroundColor: '#fffbeb',
+                              color: '#d97706',
+                              border: '1px solid #fde68a',
                               borderRadius: '6px',
                               padding: '5px 10px',
                               fontSize: '12px',
@@ -333,7 +413,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
                               gap: '4px',
                             }}
                           >
-                            <Ban size={13} /> Tạm ngưng
+                            <Ban size={13} /> Ngưng
                           </button>
                         ) : (
                           <button
@@ -353,9 +433,30 @@ export const AdminBusCompaniesPage: React.FC = () => {
                               gap: '4px',
                             }}
                           >
-                            <Check size={13} /> Kích hoạt
+                            <Check size={13} /> Duyệt
                           </button>
                         )}
+
+                        {/* Nút Xoá */}
+                        <button
+                          onClick={() => handleDeleteCompany(c)}
+                          title="Xoá nhà xe"
+                          style={{
+                            backgroundColor: '#fee2e2',
+                            color: '#dc2626',
+                            border: '1px solid #fecaca',
+                            borderRadius: '6px',
+                            padding: '5px 10px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Trash2 size={13} /> Xóa
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -390,7 +491,6 @@ export const AdminBusCompaniesPage: React.FC = () => {
               overflow: 'hidden',
             }}
           >
-            {/* Header */}
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -406,7 +506,6 @@ export const AdminBusCompaniesPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleCreateCompany} style={{ padding: '24px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
@@ -419,15 +518,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder="VD: Phương Trang FUTA Bus Lines"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '13px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                   />
                 </div>
 
@@ -441,15 +532,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
                       value={formCode}
                       onChange={(e) => setFormCode(e.target.value.toUpperCase())}
                       placeholder="VD: FUTA, KUMHO"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '13px',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                     />
                   </div>
                   <div>
@@ -462,15 +545,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
                       onChange={(e) => setFormHotline(e.target.value)}
                       placeholder="VD: 1900 6067"
                       required
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '13px',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                     />
                   </div>
                 </div>
@@ -484,15 +559,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     placeholder="VD: contact@futabus.vn"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '13px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                   />
                 </div>
 
@@ -505,56 +572,151 @@ export const AdminBusCompaniesPage: React.FC = () => {
                     value={formAddress}
                     onChange={(e) => setFormAddress(e.target.value)}
                     placeholder="VD: 486-486A Lê Văn Lương, Q.7, TP.HCM"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '13px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                   />
                 </div>
               </div>
 
-              {/* Actions */}
               <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  style={{
-                    padding: '9px 16px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    backgroundColor: '#f1f5f9',
-                    color: '#475569',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
+                  style={{ padding: '9px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f1f5f9', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                 >
                   Hủy Bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  style={{
-                    padding: '9px 20px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    backgroundColor: '#2563eb',
-                    color: '#ffffff',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    opacity: submitting ? 0.7 : 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
+                  style={{ padding: '9px 20px', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', fontSize: '13px', fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer' }}
                 >
                   {submitting ? 'Đang lưu...' : 'Thêm Nhà Xe'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Sửa Nhà Xe */}
+      {editingCompany && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '520px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Edit2 size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>Cập Nhật Nhà Xe #{editingCompany.id}</h3>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>{editingCompany.name}</div>
+                </div>
+              </div>
+              <button onClick={() => setEditingCompany(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateCompany} style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Tên Nhà Xe <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                      Mã Nhà Xe
+                    </label>
+                    <input
+                      type="text"
+                      value={editCode}
+                      onChange={(e) => setEditCode(e.target.value.toUpperCase())}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                      Hotline Đặt Vé <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={editHotline}
+                      onChange={(e) => setEditHotline(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Email Liên Hệ
+                  </label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Địa Chỉ Trụ Sở
+                  </label>
+                  <input
+                    type="text"
+                    value={editAddress}
+                    onChange={(e) => setEditAddress(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingCompany(null)}
+                  style={{ padding: '9px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f1f5f9', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{ padding: '9px 20px', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', fontSize: '13px', fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer' }}
+                >
+                  {submitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
                 </button>
               </div>
             </form>

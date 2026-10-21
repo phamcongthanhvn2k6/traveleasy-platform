@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Search, Plus, Edit2, Trash2, Map, X } from 'lucide-react';
+import { MapPin, Search, Plus, Edit2, Trash2, X } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 
@@ -27,6 +27,15 @@ export const AdminLocationsPage: React.FC = () => {
   const [newAddress, setNewAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Edit Modal
+  const [editingLocation, setEditingLocation] = useState<LocationItem | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editType, setEditType] = useState('BUS_STATION');
+  const [editProvince, setEditProvince] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [editRoutesCount, setEditRoutesCount] = useState(0);
+  const [updating, setUpdating] = useState(false);
+
   const fetchLocations = async () => {
     setLoading(true);
     try {
@@ -40,7 +49,7 @@ export const AdminLocationsPage: React.FC = () => {
             typeLabel: l.locationType === 'TRANSIT_POINT' ? 'Trạm trung chuyển' : 'Bến xe khách',
             province: l.province || 'Toàn quốc',
             address: l.address || 'Chưa cập nhật địa chỉ chi tiết',
-            routesCount: l.routesCount || 5,
+            routesCount: l.routesCount ?? 0,
           }))
         );
       }
@@ -85,10 +94,10 @@ export const AdminLocationsPage: React.FC = () => {
     try {
       await api.post('/admin/locations', {
         name: newName.trim(),
-        type: newType,
+        locationType: newType,
         province: newProvince.trim(),
         address: newAddress.trim() || newName.trim(),
-        district: newProvince.trim(),
+        routesCount: 0,
       });
       toast.success(`Tạo mới địa điểm "${newName}" thành công!`, 'Thành Công');
       setShowModal(false);
@@ -100,6 +109,43 @@ export const AdminLocationsPage: React.FC = () => {
       toast.error(msg, 'Thất Bại');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const openEditModal = (loc: LocationItem) => {
+    setEditingLocation(loc);
+    setEditName(loc.name);
+    setEditType(loc.type);
+    setEditProvince(loc.province);
+    setEditAddress(loc.address);
+    setEditRoutesCount(loc.routesCount);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLocation) return;
+    if (!editName.trim()) {
+      toast.warning('Vui lòng nhập tên địa điểm!', 'Thiếu Thông Tin');
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      await api.put(`/admin/locations/${editingLocation.id}`, {
+        name: editName.trim(),
+        locationType: editType,
+        province: editProvince.trim(),
+        address: editAddress.trim(),
+        routesCount: Number(editRoutesCount) || 0,
+      });
+      toast.success(`Đã cập nhật địa điểm "${editName}" thành công!`, 'Cập Nhật Thành Công');
+      setEditingLocation(null);
+      fetchLocations();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Không thể cập nhật địa điểm';
+      toast.error(msg, 'Thất Bại');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -219,7 +265,7 @@ export const AdminLocationsPage: React.FC = () => {
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TỈNH / THÀNH PHỐ</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>ĐỊA CHỈ CHI TIẾT</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TUYẾN PHỤC VỤ</th>
-              <th style={{ padding: '12px 18px', width: '80px', textAlign: 'right' }}>THAO TÁC</th>
+              <th style={{ padding: '12px 18px', width: '120px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
           <tbody>
@@ -280,21 +326,46 @@ export const AdminLocationsPage: React.FC = () => {
                     {loc.routesCount} tuyến
                   </td>
                   <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                    <button
-                      onClick={() => handleDelete(loc.id, loc.name)}
-                      title="Xóa địa điểm"
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        color: '#dc2626',
-                        display: 'flex',
-                        borderRadius: '4px',
-                      }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <button
+                        onClick={() => openEditModal(loc)}
+                        title="Chỉnh sửa địa điểm"
+                        style={{
+                          background: '#f1f5f9',
+                          border: '1px solid #cbd5e1',
+                          cursor: 'pointer',
+                          padding: '6px 8px',
+                          color: '#2563eb',
+                          display: 'flex',
+                          alignItems: 'center',
+                          borderRadius: '6px',
+                          gap: '4px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Edit2 size={13} /> Sửa
+                      </button>
+                      <button
+                        onClick={() => handleDelete(loc.id, loc.name)}
+                        title="Xóa địa điểm"
+                        style={{
+                          background: '#fef2f2',
+                          border: '1px solid #fecaca',
+                          cursor: 'pointer',
+                          padding: '6px 8px',
+                          color: '#dc2626',
+                          display: 'flex',
+                          alignItems: 'center',
+                          borderRadius: '6px',
+                          gap: '4px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Trash2 size={13} /> Xóa
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -356,7 +427,7 @@ export const AdminLocationsPage: React.FC = () => {
                   placeholder="VD: Bến Xe Trung Tâm TP. Đà Nẵng"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                 />
               </div>
 
@@ -368,7 +439,7 @@ export const AdminLocationsPage: React.FC = () => {
                   <select
                     value={newType}
                     onChange={(e) => setNewType(e.target.value)}
-                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                   >
                     <option value="BUS_STATION">Bến xe khách</option>
                     <option value="TRANSIT_POINT">Trạm trung chuyển</option>
@@ -385,7 +456,7 @@ export const AdminLocationsPage: React.FC = () => {
                     placeholder="VD: Đà Nẵng"
                     value={newProvince}
                     onChange={(e) => setNewProvince(e.target.value)}
-                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                   />
                 </div>
               </div>
@@ -399,7 +470,7 @@ export const AdminLocationsPage: React.FC = () => {
                   placeholder="Số nhà, đường, phường..."
                   value={newAddress}
                   onChange={(e) => setNewAddress(e.target.value)}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                 />
               </div>
 
@@ -431,10 +502,153 @@ export const AdminLocationsPage: React.FC = () => {
                     color: '#fff',
                     fontSize: '13px',
                     fontWeight: 700,
-                    cursor: 'pointer',
+                    cursor: submitting ? 'not-allowed' : 'pointer',
                   }}
                 >
                   {submitting ? 'Đang tạo...' : 'Lưu Vào CSDL'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Sửa địa điểm */}
+      {editingLocation && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '480px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                Cập Nhật Địa Điểm #{editingLocation.id}
+              </h3>
+              <button
+                onClick={() => setEditingLocation(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Tên Địa Điểm / Bến Xe *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                    Loại Hình
+                  </label>
+                  <select
+                    value={editType}
+                    onChange={(e) => setEditType(e.target.value)}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                  >
+                    <option value="BUS_STATION">Bến xe khách</option>
+                    <option value="TRANSIT_POINT">Trạm trung chuyển</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                    Tỉnh / Thành Phố *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editProvince}
+                    onChange={(e) => setEditProvince(e.target.value)}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Địa Chỉ Cụ Thể
+                </label>
+                <input
+                  type="text"
+                  value={editAddress}
+                  onChange={(e) => setEditAddress(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Số Tuyến Phục Vụ
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={editRoutesCount}
+                  onChange={(e) => setEditRoutesCount(parseInt(e.target.value, 10) || 0)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingLocation(null)}
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: '#fff',
+                    color: '#475569',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  style={{
+                    padding: '9px 18px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#2563eb',
+                    color: '#fff',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: updating ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {updating ? 'Đang cập nhật...' : 'Lưu Thay Đổi'}
                 </button>
               </div>
             </form>

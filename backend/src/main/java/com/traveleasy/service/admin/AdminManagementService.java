@@ -90,6 +90,33 @@ public class AdminManagementService {
         return mapToUserResponse(saved);
     }
 
+    @Transactional
+    public UserAdminResponse updateUser(Long id, CreateUserRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy người dùng"));
+        if (request.getFullName() != null && !request.getFullName().isBlank()) user.setFullName(request.getFullName());
+        if (request.getPhone() != null) user.setPhone(request.getPhone());
+        if (request.getRole() != null) {
+            try {
+                user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+            } catch (Exception ignored) {}
+        }
+        User saved = userRepository.save(user);
+        logAction("admin@traveleasy.vn", "UPDATE_USER", "users #" + id, "-", "{\"email\": \"" + saved.getEmail() + "\"}");
+        return mapToUserResponse(saved);
+    }
+
+    @Transactional
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy người dùng"));
+        if ("admin@traveleasy.vn".equalsIgnoreCase(user.getEmail())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Không thể xoá tài khoản Quản trị viên tối cao!");
+        }
+        userRepository.delete(user);
+        logAction("admin@traveleasy.vn", "DELETE_USER", "users #" + id, "{\"email\": \"" + user.getEmail() + "\"}", "-");
+    }
+
     private UserAdminResponse mapToUserResponse(User user) {
         String roleLabel = switch (user.getRole()) {
             case ADMIN -> "Quản trị viên";
@@ -153,6 +180,28 @@ public class AdminManagementService {
         BusCompany saved = busCompanyRepository.save(company);
         logAction("admin@traveleasy.vn", "CREATE_COMPANY", "bus_companies #" + saved.getId(), "-", "{\"name\": \"" + saved.getName() + "\"}");
         return mapToCompanyResponse(saved);
+    }
+
+    @Transactional
+    public BusCompanyAdminResponse updateBusCompany(Long id, CreateBusCompanyRequest request) {
+        BusCompany company = busCompanyRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
+        if (request.getName() != null && !request.getName().isBlank()) company.setName(request.getName());
+        if (request.getCode() != null) company.setCode(request.getCode());
+        if (request.getHotline() != null && !request.getHotline().isBlank()) company.setHotline(request.getHotline());
+        if (request.getEmail() != null) company.setEmail(request.getEmail());
+        if (request.getAddress() != null) company.setAddress(request.getAddress());
+        BusCompany saved = busCompanyRepository.save(company);
+        logAction("admin@traveleasy.vn", "UPDATE_COMPANY", "bus_companies #" + id, "-", "{\"name\": \"" + saved.getName() + "\"}");
+        return mapToCompanyResponse(saved);
+    }
+
+    @Transactional
+    public void deleteBusCompany(Long id) {
+        BusCompany company = busCompanyRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
+        busCompanyRepository.delete(company);
+        logAction("admin@traveleasy.vn", "DELETE_COMPANY", "bus_companies #" + id, "{\"name\": \"" + company.getName() + "\"}", "-");
     }
 
     private BusCompanyAdminResponse mapToCompanyResponse(BusCompany c) {
@@ -436,6 +485,19 @@ public class AdminManagementService {
         Route saved = routeRepository.save(route);
         logAction("admin@traveleasy.vn", "CREATE_ROUTE", "routes #" + saved.getId(), "-", 
                 "{\"company\": \"" + company.getName() + "\", \"from\": \"" + saved.getDepartureLocation() + "\", \"to\": \"" + saved.getArrivalLocation() + "\"}");
+        return mapToRouteResponse(saved);
+    }
+
+    @Transactional
+    public RouteAdminResponse updateRoute(Long id, CreateRouteRequest request) {
+        Route route = routeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy tuyến đường"));
+        if (request.getDepartureLocation() != null) route.setDepartureLocation(request.getDepartureLocation());
+        if (request.getArrivalLocation() != null) route.setArrivalLocation(request.getArrivalLocation());
+        if (request.getDurationHours() != null) route.setDurationHours(request.getDurationHours());
+        if (request.getDistanceKm() != null) route.setDistanceKm(request.getDistanceKm());
+        Route saved = routeRepository.save(route);
+        logAction("admin@traveleasy.vn", "UPDATE_ROUTE", "routes #" + id, "-", "{\"from\": \"" + saved.getDepartureLocation() + "\", \"to\": \"" + saved.getArrivalLocation() + "\"}");
         return mapToRouteResponse(saved);
     }
 

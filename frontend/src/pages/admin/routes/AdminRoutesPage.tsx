@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Search, Plus, Trash2, Clock, Navigation, Bus, RefreshCw, X } from 'lucide-react';
+import { MapPin, Search, Plus, Trash2, Edit2, Clock, Navigation, Bus, RefreshCw, X } from 'lucide-react';
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
 
@@ -27,13 +27,20 @@ export const AdminRoutesPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  // Form fields
+  // Form fields Create
   const [formCompanyId, setFormCompanyId] = useState<number | ''>('');
   const [formDeparture, setFormDeparture] = useState('TP. Hồ Chí Minh');
   const [formArrival, setFormArrival] = useState('Đà Lạt');
   const [formDuration, setFormDuration] = useState('6.5');
   const [formDistance, setFormDistance] = useState('310');
   const [submitting, setSubmitting] = useState(false);
+
+  // Form fields Edit
+  const [editingRoute, setEditingRoute] = useState<RouteItem | null>(null);
+  const [editDeparture, setEditDeparture] = useState('');
+  const [editArrival, setEditArrival] = useState('');
+  const [editDuration, setEditDuration] = useState('');
+  const [editDistance, setEditDistance] = useState('');
 
   const fetchRoutes = async () => {
     try {
@@ -100,6 +107,42 @@ export const AdminRoutesPage: React.FC = () => {
     }
   };
 
+  const openEditModal = (r: RouteItem) => {
+    setEditingRoute(r);
+    setEditDeparture(r.departureLocation);
+    setEditArrival(r.arrivalLocation);
+    setEditDuration(String(r.durationHours));
+    setEditDistance(String(r.distanceKm));
+  };
+
+  const handleUpdateRoute = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRoute) return;
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        busCompanyId: editingRoute.busCompanyId,
+        departureLocation: editDeparture.trim(),
+        arrivalLocation: editArrival.trim(),
+        durationHours: parseFloat(editDuration) || 6.0,
+        distanceKm: parseFloat(editDistance) || 300.0,
+      };
+
+      const res = await api.put(`/admin/routes/${editingRoute.id}`, payload);
+      if (res.data?.data) {
+        setRoutes(prev => prev.map(item => item.id === editingRoute.id ? res.data.data : item));
+        toast.success(`Đã cập nhật tuyến đường #${editingRoute.id} thành công!`, 'Cập Nhật Thành Công');
+        setEditingRoute(null);
+      }
+    } catch (err: any) {
+      console.error('Update route error:', err);
+      toast.error(err.response?.data?.message || 'Cập nhật tuyến đường thất bại!', 'Lỗi');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleDeleteRoute = async (route: RouteItem) => {
     if (!window.confirm(`Bạn có chắc muốn xoá tuyến đường ${route.departureLocation} → ${route.arrivalLocation} (${route.busCompanyName})?`)) {
       return;
@@ -134,7 +177,7 @@ export const AdminRoutesPage: React.FC = () => {
             TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Quản trị <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Tuyến đường vận tải
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
-            Quản Lý Tuyến Đường Xe Khách
+            Quản Lý Tuyến Đường (Thêm - Sửa - Xóa)
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
             Tổng số: <strong>{routes.length}</strong> tuyến đường đang được khai thác trên toàn sàn
@@ -265,25 +308,47 @@ export const AdminRoutesPage: React.FC = () => {
                     </div>
                   </td>
                   <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                    <button
-                      onClick={() => handleDeleteRoute(r)}
-                      title="Xoá tuyến đường"
-                      style={{
-                        backgroundColor: '#fee2e2',
-                        color: '#dc2626',
-                        border: '1px solid #fecaca',
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
-                    >
-                      <Trash2 size={13} /> Xoá
-                    </button>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <button
+                        onClick={() => openEditModal(r)}
+                        title="Sửa tuyến đường"
+                        style={{
+                          backgroundColor: '#eff6ff',
+                          color: '#2563eb',
+                          border: '1px solid #bfdbfe',
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Edit2 size={13} /> Sửa
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteRoute(r)}
+                        title="Xoá tuyến đường"
+                        style={{
+                          backgroundColor: '#fee2e2',
+                          color: '#dc2626',
+                          border: '1px solid #fecaca',
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Trash2 size={13} /> Xoá
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -316,7 +381,6 @@ export const AdminRoutesPage: React.FC = () => {
               overflow: 'hidden',
             }}
           >
-            {/* Modal Header */}
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -332,10 +396,8 @@ export const AdminRoutesPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Modal Form */}
             <form onSubmit={handleCreateRoute} style={{ padding: '24px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {/* Nhà xe */}
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                     Nhà Xe Khai Thác <span style={{ color: '#ef4444' }}>*</span>
@@ -344,25 +406,14 @@ export const AdminRoutesPage: React.FC = () => {
                     value={formCompanyId}
                     onChange={e => setFormCompanyId(Number(e.target.value))}
                     required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '13px',
-                      outline: 'none',
-                      backgroundColor: '#ffffff',
-                    }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }}
                   >
                     {companies.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
+                      <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
                 </div>
 
-                {/* Điểm đi & Điểm đến */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
@@ -374,15 +425,7 @@ export const AdminRoutesPage: React.FC = () => {
                       onChange={e => setFormDeparture(e.target.value)}
                       placeholder="VD: TP. Hồ Chí Minh"
                       required
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '13px',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                     />
                   </div>
                   <div>
@@ -395,20 +438,11 @@ export const AdminRoutesPage: React.FC = () => {
                       onChange={e => setFormArrival(e.target.value)}
                       placeholder="VD: Đà Lạt"
                       required
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '13px',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                     />
                   </div>
                 </div>
 
-                {/* Thời gian & Quãng đường */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
@@ -420,17 +454,8 @@ export const AdminRoutesPage: React.FC = () => {
                       min="0.5"
                       value={formDuration}
                       onChange={e => setFormDuration(e.target.value)}
-                      placeholder="VD: 6.5"
                       required
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '13px',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                     />
                   </div>
                   <div>
@@ -444,57 +469,146 @@ export const AdminRoutesPage: React.FC = () => {
                       value={formDistance}
                       onChange={e => setFormDistance(e.target.value)}
                       placeholder="VD: 310"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '13px',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Actions */}
               <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  style={{
-                    padding: '9px 16px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    backgroundColor: '#f1f5f9',
-                    color: '#475569',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
+                  style={{ padding: '9px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f1f5f9', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                 >
                   Hủy Bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  style={{
-                    padding: '9px 20px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    backgroundColor: '#2563eb',
-                    color: '#ffffff',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    opacity: submitting ? 0.7 : 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
+                  style={{ padding: '9px 20px', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', fontSize: '13px', fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer' }}
                 >
                   {submitting ? 'Đang tạo...' : 'Tạo Tuyến Đường'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Sửa Tuyến Đường */}
+      {editingRoute && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '520px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Edit2 size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>Cập Nhật Tuyến Đường #{editingRoute.id}</h3>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>Hãng xe: {editingRoute.busCompanyName}</div>
+                </div>
+              </div>
+              <button onClick={() => setEditingRoute(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateRoute} style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                      Điểm Khởi Hành <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={editDeparture}
+                      onChange={e => setEditDeparture(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                      Điểm Đến <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={editArrival}
+                      onChange={e => setEditArrival(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                      Thời Gian Chạy (Giờ) <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      value={editDuration}
+                      onChange={e => setEditDuration(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                      Quãng Đường (Km)
+                    </label>
+                    <input
+                      type="number"
+                      step="1"
+                      min="1"
+                      value={editDistance}
+                      onChange={e => setEditDistance(e.target.value)}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingRoute(null)}
+                  style={{ padding: '9px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f1f5f9', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{ padding: '9px 20px', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', fontSize: '13px', fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer' }}
+                >
+                  {submitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
                 </button>
               </div>
             </form>

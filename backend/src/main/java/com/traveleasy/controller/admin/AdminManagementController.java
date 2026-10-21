@@ -38,6 +38,19 @@ public class AdminManagementController {
         return ApiResponse.success("Tạo người dùng thành công", adminManagementService.createUser(request));
     }
 
+    @PutMapping("/users/{id}")
+    @Operation(summary = "Cập nhật thông tin người dùng (Họ tên, SĐT, Vai trò)")
+    public ApiResponse<UserAdminResponse> updateUser(@PathVariable Long id, @RequestBody CreateUserRequest request) {
+        return ApiResponse.success("Cập nhật người dùng thành công", adminManagementService.updateUser(id, request));
+    }
+
+    @DeleteMapping("/users/{id}")
+    @Operation(summary = "Xoá tài khoản người dùng")
+    public ApiResponse<Void> deleteUser(@PathVariable Long id) {
+        adminManagementService.deleteUser(id);
+        return ApiResponse.success("Xoá người dùng thành công", null);
+    }
+
     @PatchMapping("/users/{id}/status")
     @Operation(summary = "Khoá hoặc mở khoá tài khoản người dùng (ACTIVE <-> LOCKED)")
     public ApiResponse<UserAdminResponse> toggleUserStatus(@PathVariable Long id) {
@@ -59,6 +72,21 @@ public class AdminManagementController {
     @Operation(summary = "Thêm mới đối tác nhà xe vào sàn")
     public ApiResponse<BusCompanyAdminResponse> createBusCompany(@Valid @RequestBody CreateBusCompanyRequest request) {
         return ApiResponse.success("Tạo nhà xe thành công", adminManagementService.createBusCompany(request));
+    }
+
+    @PutMapping("/bus-companies/{id}")
+    @Operation(summary = "Cập nhật thông tin đối tác nhà xe")
+    public ApiResponse<BusCompanyAdminResponse> updateBusCompany(
+            @PathVariable Long id,
+            @RequestBody CreateBusCompanyRequest request) {
+        return ApiResponse.success("Cập nhật nhà xe thành công", adminManagementService.updateBusCompany(id, request));
+    }
+
+    @DeleteMapping("/bus-companies/{id}")
+    @Operation(summary = "Xoá đối tác nhà xe khỏi hệ thống")
+    public ApiResponse<Void> deleteBusCompany(@PathVariable Long id) {
+        adminManagementService.deleteBusCompany(id);
+        return ApiResponse.success("Xoá nhà xe thành công", null);
     }
 
     @PatchMapping("/bus-companies/{id}/status")
@@ -240,6 +268,14 @@ public class AdminManagementController {
     @Operation(summary = "Tạo mới tuyến đường kết nối các tỉnh thành")
     public ApiResponse<RouteAdminResponse> createRoute(@Valid @RequestBody CreateRouteRequest request) {
         return ApiResponse.success("Tạo tuyến đường thành công", adminManagementService.createRoute(request));
+    }
+
+    @PutMapping("/routes/{id}")
+    @Operation(summary = "Cập nhật lộ trình, cự ly và thời gian của tuyến đường")
+    public ApiResponse<RouteAdminResponse> updateRoute(
+            @PathVariable Long id,
+            @RequestBody CreateRouteRequest request) {
+        return ApiResponse.success("Cập nhật tuyến đường thành công", adminManagementService.updateRoute(id, request));
     }
 
     @DeleteMapping("/routes/{id}")

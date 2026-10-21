@@ -52,6 +52,21 @@ public class AdminTripController {
         return ApiResponse.success("Tạo chuyến xe thành công", adminTripService.createTrip(request));
     }
 
+    @PutMapping("/trips/{id}")
+    @Operation(summary = "Cập nhật thông tin chuyến xe (giờ chạy, loại xe, giá vé)")
+    public ApiResponse<TripResponse> updateTrip(
+            @PathVariable Long id,
+            @RequestBody com.traveleasy.dto.admin.UpdateTripRequest request) {
+        return ApiResponse.success("Cập nhật chuyến xe thành công", adminTripService.updateTrip(id, request));
+    }
+
+    @DeleteMapping("/trips/{id}")
+    @Operation(summary = "Xoá chuyến xe và giải phóng kho ghế liên quan")
+    public ApiResponse<Void> deleteTrip(@PathVariable Long id) {
+        adminTripService.deleteTrip(id);
+        return ApiResponse.success("Xoá chuyến xe thành công", null);
+    }
+
     @PatchMapping("/trips/{id}/status")
     @Operation(summary = "Cập nhật trạng thái chuyến xe (SCHEDULED, DEPARTED, CANCELLED)")
     public ApiResponse<TripResponse> updateStatus(@PathVariable Long id, @RequestParam TripStatus status) {
