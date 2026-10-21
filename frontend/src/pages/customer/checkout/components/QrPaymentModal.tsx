@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QrCode, CheckCircle2, Copy, Check, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { QrCode, CheckCircle2, Copy, Check, AlertCircle, RefreshCw, Loader2, Zap } from 'lucide-react';
 import { toast } from '../../../../context/ToastContext';
 import { paymentService, BankTransferDetails } from '../../../../services/paymentService';
 
@@ -23,6 +23,7 @@ export const QrPaymentModal: React.FC<Props> = ({
   const [copiedAccount, setCopiedAccount] = useState(false);
   const [copiedContent, setCopiedContent] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [mocking, setMocking] = useState(false);
   const [checking, setChecking] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -85,6 +86,30 @@ export const QrPaymentModal: React.FC<Props> = ({
       toast.error('Có lỗi khi xác nhận giao dịch. Vui lòng thử lại!', 'Lỗi');
     } finally {
       setConfirming(false);
+    }
+  };
+
+  /**
+   * Demo giả lập chuyển khoản thành công không mất tiền thật
+   * Ghi nhận CSDL thật, cập nhật trạng thái đơn CONFIRMED, kích hoạt vé ISSUED
+   */
+  const handleMockTransfer = async () => {
+    setMocking(true);
+    try {
+      const res = await paymentService.mockPaymentSuccess(bookingCode, 'VIETQR');
+      if (res.isPaid || res.paymentStatus === 'SUCCESS') {
+        setIsSuccess(true);
+        toast.success(
+          `Demo VietQR: Đã giả lập chuyển khoản thành công (Không mất tiền thật)! Mã GD: ${res.transactionNo || 'VQR-DEMO'}.`,
+          'Giả Lập Chuyển Khoản'
+        );
+      } else {
+        toast.error('Có lỗi khi giả lập chuyển khoản.', 'Lỗi');
+      }
+    } catch (err: any) {
+      toast.error('Có lỗi kết nối hệ thống khi giả lập. Vui lòng thử lại!', 'Lỗi');
+    } finally {
+      setMocking(false);
     }
   };
 
@@ -342,6 +367,38 @@ export const QrPaymentModal: React.FC<Props> = ({
               >
                 {confirming ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
                 {confirming ? 'Đang kích hoạt vé...' : 'Tôi Đã Chuyển Khoản Thành Công'}
+              </button>
+
+              {/* NÚT DEMO GIẢ LẬP CHUYỂN KHOẢN THÀNH CÔNG (KHÔNG MẤT TIỀN THẬT) */}
+              <button
+                type="button"
+                onClick={handleMockTransfer}
+                disabled={mocking || confirming}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: '#eff6ff',
+                  color: '#1d4ed8',
+                  border: '1.5px dashed #3b82f6',
+                  borderRadius: '10px',
+                  fontWeight: 800,
+                  fontSize: '13.5px',
+                  cursor: mocking || confirming ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#dbeafe';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#eff6ff';
+                }}
+              >
+                {mocking ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} color="#2563eb" />}
+                <span>{mocking ? 'Đang kích hoạt vé trên CSDL...' : '⚡ Demo Chuyển Khoản Thành Công (Không Mất Tiền Thật)'}</span>
               </button>
 
               <div style={{ display: 'flex', gap: '10px' }}>
