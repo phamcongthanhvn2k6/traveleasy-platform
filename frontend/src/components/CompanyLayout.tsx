@@ -12,7 +12,6 @@ import {
   Search,
   Bell,
   ChevronDown,
-  LayoutDashboard,
   LogOut
 } from 'lucide-react';
 import { toast } from '../context/ToastContext';
@@ -220,32 +219,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
           </nav>
         </div>
 
-        {/* Bottom Pinned Button -> Link to Admin */}
-        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <Link
-            to="/admin/dashboard"
-            style={{
-              width: '100%',
-              backgroundColor: '#151e34',
-              border: '1px solid #1e293b',
-              borderRadius: '8px',
-              padding: '9px 12px',
-              color: '#94a3b8',
-              fontSize: '12px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              boxSizing: 'border-box',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <LayoutDashboard size={15} color="#94a3b8" />
-            <span>Sang TravelEasy Admin</span>
-          </Link>
-        </div>
+
       </aside>
 
       {/* ======================================================== */}

@@ -1581,6 +1581,68 @@ Mô hình cấu hình địa điểm đón trả (`BusCompanyLocationConfig`) ch
 ![Modal Gán Địa Điểm Cho Nhà Xe](docs/screenshots/screenshot_company_locations_modal.png)
 *Hình 11.24: Hộp thoại Gán Địa Điểm Cho Nhà Xe — Chọn Master Location từ CSDL toàn sàn.*
 
+#### 6. Quản Lý Chính Sách Hủy Vé Nhà Xe (Cancellation Policies)
+Hỗ trợ nhà xe chủ động thiết lập và quản lý các quy định hoàn tiền khi hành khách yêu cầu hủy vé:
+* **Tạo chính sách mới**: Thiết lập tên chính sách (VD: Chính sách Limousine VIP & Cao điểm Lễ Tết), mô tả điều kiện áp dụng.
+* **Cấu hình tỷ lệ hoàn vé linh hoạt theo mốc giờ**:
+  * Trước khởi hành trên 24 giờ: 100%, 90%, 80%, 70%, 50% hoàn tiền.
+  * Trước khởi hành 12 - 24 giờ: 70%, 50%, 30%, 20%, 0% hoàn tiền.
+  * Trước khởi hành dưới 12 giờ: 0% (Không hoàn tiền), 20%, 30%.
+* **Phân định rõ ràng**: Chính sách chuẩn mặc định của Sàn (`Hệ thống`) được bảo vệ không bị xóa; chính sách do Nhà xe tự tạo có thể chỉnh sửa, xóa hoặc kích hoạt làm chính sách mặc định áp dụng.
+* **Lưu trữ bền vững**: Dữ liệu được lưu trữ và duy trì ổn định qua các lần tải lại trang (F5).
+![Danh Sách Chính Sách Hủy Vé Nhà Xe](docs/screenshots/screenshot_company_cancellation_policies.png)
+*Hình 11.25: Danh mục chính sách hủy vé của nhà xe và chính sách chuẩn sàn TravelEasy.*
+
+![Modal Tạo Chính Sách Hủy Vé Mới](docs/screenshots/screenshot_company_cancellation_modal.png)
+*Hình 11.26: Hộp thoại cấu hình tỷ lệ hoàn vé linh hoạt theo các mốc giờ khởi hành.*
+
+#### 7. Quản Lý Điều Phối Chuyến Xe Nhà Xe (Trips Management)
+Cổng điều phối chuyến xe phục vụ trực tiếp nghiệp vụ vận hành hàng ngày của nhà xe:
+* **Tạo chuyến xe mới**: Lựa chọn tuyến đường, xe điều phối từ danh mục phương tiện sẵn có, thiết lập giờ xuất bến, giờ đến dự kiến, giá vé và số lượng chỗ.
+* **Bộ lọc trạng thái theo Tab**: Phân loại tức thì theo `Tất cả`, `SCHEDULED` (Đã lên lịch), `DELAYED` (Trễ giờ), `RUNNING` (Đang chạy), `COMPLETED` (Hoàn thành), `CANCELLED` (Đã hủy).
+* **Bảng điều phối chi tiết**: Xem đầy đủ thông tin mã chuyến, biển số xe, loại xe, giờ xuất bến, giá vé và tình trạng trễ.
+* **Thao tác nhanh trên chuyến**: Hỗ trợ Báo trễ giờ (+30 phút), Khởi hành xuất bến ngay (`RUNNING`), Xác nhận hoàn thành chuyến (`COMPLETED`), hoặc Hủy chuyến xe khẩn cấp (`CANCELLED`) kèm thông báo tức thì.
+![Danh Sách Chuyến Xe Nhà Xe](docs/screenshots/screenshot_company_trips.png)
+*Hình 11.27: Bảng quản lý chuyến xe của đối tác nhà xe với đầy đủ trạng thái và giá vé.*
+
+![Modal Tạo Chuyến Xe Mới](docs/screenshots/screenshot_company_trip_create_modal.png)
+*Hình 11.28: Hộp thoại lên lịch khởi hành chuyến xe mới kết nối với đội xe của nhà xe.*
+
+![Modal Xem Chi Tiết & Điều Phối Chuyến](docs/screenshots/screenshot_company_trip_detail_modal.png)
+*Hình 11.29: Xem chi tiết chuyến xe và cụm nút thao tác điều phối nhanh (Báo trễ giờ, Xuất bến, Hoàn thành, Hủy).*
+
+#### 8. Quản Lý Đơn Đặt Vé Khách Hàng (Bookings Management)
+Công cụ tra cứu, kiểm soát vé và phục vụ khách hàng tại quầy / trên xe:
+* **Tìm kiếm thông minh**: Tìm nhanh theo Mã đặt vé, Họ tên hành khách, Email hoặc Số điện thoại.
+* **Bộ lọc trạng thái vé**: Phân nhóm theo `Tất cả`, `CONFIRMED` (Đã xác nhận), `PENDING` (Chờ thanh toán), `CANCELLED` (Đã hủy).
+* **Xem chi tiết đơn vé**: Hiển thị họ tên, số điện thoại liên hệ, email, tuyến đường, điểm đón, điểm trả, danh sách mã ghế đã đặt (VD: `A01`, `A02`), phương thức thanh toán (VNPAY, Tiền mặt) và tổng tiền.
+* **Hành động nghiệp vụ**:
+  * Xác nhận đặt vé đối với các đơn đang chờ thanh toán tại quầy (`PENDING` -> `CONFIRMED`).
+  * Hủy vé và xử lý hoàn tiền cho hành khách theo chính sách nhà xe.
+  * In vé / Xuất lệnh in vé cho hành khách lên xe.
+![Quản Lý Đơn Đặt Vé Nhà Xe](docs/screenshots/screenshot_company_bookings.png)
+*Hình 11.30: Bảng theo dõi danh sách đặt vé hành khách thời gian thực.*
+
+![Chi Tiết Đơn Đặt Vé Khách Hàng](docs/screenshots/screenshot_company_booking_modal.png)
+*Hình 11.31: Hộp thoại xem chi tiết vé hành khách, số ghế, điểm đón trả và nút In vé / Hủy vé.*
+
+#### 9. Quản Lý Đánh Giá & Phản Hồi Khách Hàng (Customer Reviews & Reports)
+Kênh tương tác và chăm sóc khách hàng trực tiếp của nhà xe:
+* **Bảng danh sách đánh giá**: Hiển thị số sao (1 đến 5 sao), trích dẫn nhận xét của hành khách, tên/email người đánh giá, mã chuyến xe và ngày gửi.
+* **Phân loại đánh giá**: Lọc theo `Tất cả`, `Chưa phản hồi`, `Tốt (4-5 ★)`, `Cần chú ý (1-2 ★)`.
+* **Gửi phản hồi công khai (Reply)**: Mở hộp thoại phản hồi với các mẫu trả lời nhanh ("Lời cảm ơn chuẩn", "Xin lỗi & cam kết khắc phục chất lượng") hoặc soạn nội dung riêng biệt. Phản hồi lập tức hiển thị công khai trên ứng dụng.
+* **Báo cáo vi phạm (Report to Platform Admin)**: Cho phép nhà xe báo cáo các đánh giá spam, sử dụng ngôn từ thô tục hoặc cạnh tranh không lành mạnh lên Ban Quản Trị Sàn TravelEasy để kiểm duyệt và gỡ bỏ.
+![Quản Lý Đánh Giá Khách Hàng](docs/screenshots/screenshot_company_reviews.png)
+*Hình 11.32: Giao diện quản lý đánh giá khách hàng với xếp hạng sao và trạng thái phản hồi.*
+
+![Hộp Thoại Phản Hồi Đánh Giá](docs/screenshots/screenshot_company_reviews_reply_modal.png)
+*Hình 11.33: Hộp thoại gửi phản hồi chính thức từ nhà xe kèm các mẫu trả lời nhanh tiện lợi.*
+
+#### 10. Phân Quyền Bảo Mật & Ẩn Hoàn Toàn Liên Kết Admin Tổng
+* **Bảo mật phân tầng nghiêm ngặt**: Khi người dùng đăng nhập với tư cách Quản trị viên/Điều hành viên Nhà Xe (`ROLE_OPERATOR`), nút `"Sang TravelEasy Admin"` ở chân thanh điều hướng Sidebar được loại bỏ hoàn toàn.
+* **Ngăn chặn vượt quyền**: Đảm bảo nhân viên đối tác nhà xe chỉ hoạt động trong phạm vi tài nguyên được cấp phép (`/company/*`), không nhìn thấy và không thể truy cập trái phép vào phân hệ Quản Trị Sàn Tổng (`/admin/*`).
+* **Trải nghiệm chuyên biệt**: Giao diện gọn gàng, tập trung 100% vào nghiệp vụ điều hành và kinh doanh vận tải của nhà xe.
+
 ---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  
 *Chúc toàn đội bảo vệ thành công rực rỡ!*
