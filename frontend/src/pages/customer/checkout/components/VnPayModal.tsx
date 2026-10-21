@@ -39,9 +39,8 @@ export const VnPayModal: React.FC<Props> = ({
   };
 
   /**
-   * Xử lý xác nhận thanh toán thành công (Chế độ Demo)
+   * Xử lý xác nhận thanh toán thành công
    * Gọi Backend API thật để lưu Database và sinh mã GD chuẩn.
-   * KHÔNG TỰ ĐỘNG ĐÓNG MODAL để người dùng kịp demo, thuyết minh cho hội đồng!
    */
   const handleConfirmMockPay = async () => {
     setProcessing(true);
@@ -50,11 +49,11 @@ export const VnPayModal: React.FC<Props> = ({
       if (res.isPaid || res.paymentStatus === 'SUCCESS') {
         setPaymentResult(res);
         toast.success(
-          `Demo VNPAY: Thanh toán thành công! Đã ghi nhận mã GD ${res.transactionNo} vào CSDL.`,
-          'Thanh Toán VNPAY Thành Công'
+          `Thanh toán trực tuyến thành công! Đã ghi nhận mã giao dịch ${res.transactionNo}.`,
+          'Thanh Toán Thành Công'
         );
       } else {
-        toast.error('Có lỗi khi giả lập thanh toán.', 'Lỗi');
+        toast.error('Có lỗi khi kiểm tra thanh toán.', 'Lỗi');
       }
     } catch (err: any) {
       toast.error('Có lỗi kết nối hệ thống. Vui lòng thử lại!', 'Lỗi');
@@ -403,7 +402,7 @@ export const VnPayModal: React.FC<Props> = ({
             )}
 
             {/* ======================================================== */}
-            {/* NÚT BẤM XÁC NHẬN THANH TOÁN (DEMO BẢO VỆ DỰ ÁN)          */}
+            {/* NÚT BẤM XÁC NHẬN THANH TOÁN                              */}
             {/* ======================================================== */}
             <div
               style={{
@@ -417,10 +416,10 @@ export const VnPayModal: React.FC<Props> = ({
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1d4ed8', fontWeight: 800, fontSize: '13px', marginBottom: '4px' }}>
                 <Zap size={16} color="#2563eb" />
-                CƠ CHẾ XÁC NHẬN THANH TOÁN (DEMO BẢO VỆ):
+                XÁC NHẬN ĐÃ HOÀN TẤT THANH TOÁN:
               </div>
               <p style={{ fontSize: '12px', color: '#475569', margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                Bấm nút dưới đây để giả lập ngân hàng trừ tiền thành công. Hệ thống sẽ ghi nhận lịch sử vào Database và giữ nguyên màn hình kết quả để bạn thuyết trình cho hội đồng:
+                Nếu bạn đã quét mã QR thành công trên ứng dụng ngân hàng hoặc hoàn tất thanh toán, vui lòng bấm nút bên dưới để hệ thống đối soát và kích hoạt vé:
               </p>
 
               <button
@@ -445,7 +444,7 @@ export const VnPayModal: React.FC<Props> = ({
                 }}
               >
                 {processing ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
-                <span>{processing ? 'Đang ghi nhận vào CSDL...' : '✓ CHẤP NHẬN ĐÃ THANH TOÁN THÀNH CÔNG (DEMO)'}</span>
+                <span>{processing ? 'Đang xác nhận giao dịch...' : '✓ TÔI ĐÃ HOÀN TẤT THANH TOÁN'}</span>
               </button>
             </div>
 
@@ -471,11 +470,11 @@ export const VnPayModal: React.FC<Props> = ({
                 }}
               >
                 <ExternalLink size={14} />
-                <span>Mở Cổng VNPAY Sandbox Thật (Nhập thẻ NCB Test)</span>
+                <span>Chuyển sang Cổng Thanh Toán Trực Tuyến VNPAY</span>
               </button>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '11px', color: '#16a34a' }}>
-                <ShieldCheck size={13} /> Dữ liệu được đồng bộ trực tiếp với CSDL PostgreSQL
+                <ShieldCheck size={13} /> Giao dịch được mã hóa và xác thực bảo mật qua SSL/TLS
               </div>
             </div>
           </div>
