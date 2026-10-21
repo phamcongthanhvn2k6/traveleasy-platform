@@ -17,6 +17,30 @@ interface Props {
 }
 
 export const PassengerInfoForm: React.FC<Props> = ({ info, onChange, seatCount }) => {
+  const [frequentTravelers, setFrequentTravelers] = React.useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('traveleasy_frequent_travelers');
+      if (saved) return JSON.parse(saved);
+      const userStr = localStorage.getItem('traveleasy_user');
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        return [{ id: 'user', name: u.fullName || 'Khách hàng', phone: u.phone || '', email: u.email || '', relationship: 'Bản thân' }];
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleSelectFrequentTraveler = (traveler: any) => {
+    onChange({
+      ...info,
+      fullName: traveler.name || info.fullName,
+      phone: traveler.phone || info.phone,
+      email: traveler.email || info.email,
+    });
+  };
+
   const updateField = (field: keyof PassengerInfo, value: any) => {
     onChange({
       ...info,
@@ -52,6 +76,62 @@ export const PassengerInfoForm: React.FC<Props> = ({ info, onChange, seatCount }
         <User size={18} color="#2563eb" />
         Thông Tin Hành Khách Đi Xe
       </h3>
+
+      {/* Sổ tay hành khách thân quen - Điền nhanh 1 chạm */}
+      {frequentTravelers.length > 0 && (
+        <div
+          style={{
+            backgroundColor: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '8px',
+          }}
+        >
+          <span style={{ fontSize: '12px', fontWeight: 700, color: '#475569' }}>
+            ⚡ Điền nhanh từ danh bạ:
+          </span>
+          {frequentTravelers.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => handleSelectFrequentTraveler(t)}
+              style={{
+                backgroundColor: info.fullName === t.name ? '#eff6ff' : '#ffffff',
+                border: info.fullName === t.name ? '1px solid #2563eb' : '1px solid #cbd5e1',
+                color: info.fullName === t.name ? '#1d4ed8' : '#334155',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span>{t.name}</span>
+              {t.relationship && (
+                <span
+                  style={{
+                    backgroundColor: info.fullName === t.name ? '#dbeafe' : '#f1f5f9',
+                    fontSize: '10px',
+                    padding: '1px 4px',
+                    borderRadius: '4px',
+                  }}
+                >
+                  {t.relationship}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
         {/* Full Name */}
