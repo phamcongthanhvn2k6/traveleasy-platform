@@ -1569,6 +1569,18 @@ Tính năng quản lý toàn diện đội xe của từng nhà xe đối tác t
 ![Modal Thêm Xe Mới Vào Đội Xe](docs/screenshots/screenshot_company_vehicles_modal.png)
 *Hình 11.22: Hộp thoại Thêm Xe Mới Vào Đội Xe — Kết nối CSDL và lưu trữ bền vững.*
 
+#### 5. Quản Lý Điểm Đón Trả Nhà Xe (Company Locations — Full CRUD)
+Mô hình cấu hình địa điểm đón trả (`BusCompanyLocationConfig`) cho phép nhà xe liên kết linh hoạt với mạng lưới bến xe Master Data toàn quốc:
+* **Gán địa điểm mới**: Chọn bến xe Master Data từ CSDL (Bến xe Miền Đông, Bến xe Đà Lạt, Bến xe Mỹ Đình...), đặt tên hiển thị thương hiệu của nhà xe, địa chỉ văn phòng/quầy vé và hướng dẫn đón trả khách.
+* **Chỉnh sửa cấu hình**: Cập nhật tên hiển thị, quầy vé đón trả và hướng dẫn in vé cho hành khách.
+* **Xóa cấu hình địa điểm**: Gỡ bỏ điểm đón trả khỏi lịch trình của nhà xe.
+* **Đồng bộ thời gian thực**: Toàn bộ dữ liệu được lưu bền vững, không bị mất khi F5.
+![Quản Lý Địa Điểm Đón Trả Nhà Xe](docs/screenshots/screenshot_company_locations_live.png)
+*Hình 11.23: Danh sách điểm đón trả của nhà xe kết nối với bến xe Master Data.*
+
+![Modal Gán Địa Điểm Cho Nhà Xe](docs/screenshots/screenshot_company_locations_modal.png)
+*Hình 11.24: Hộp thoại Gán Địa Điểm Cho Nhà Xe — Chọn Master Location từ CSDL toàn sàn.*
+
 ---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  
 *Chúc toàn đội bảo vệ thành công rực rỡ!*

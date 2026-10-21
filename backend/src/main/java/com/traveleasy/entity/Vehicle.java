@@ -51,3 +51,4 @@ public class Vehicle {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }
+

@@ -26,3 +26,4 @@ public class VehicleResponse {
     private String image;
     private LocalDateTime createdAt;
 }
+

@@ -23,3 +23,4 @@ public class VehicleRequest {
     private String imageUrl;
     private String status;
 }
+
