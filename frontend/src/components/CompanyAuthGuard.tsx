@@ -149,9 +149,8 @@ export const CompanyAuthGuard: React.FC<CompanyAuthGuardProps> = ({ children }) 
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {/* Quick Login Test Partner */}
             <button
-              onClick={handleQuickLoginPartner}
+              onClick={handleBackHome}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -163,12 +162,11 @@ export const CompanyAuthGuard: React.FC<CompanyAuthGuardProps> = ({ children }) 
                 borderRadius: '8px',
                 padding: '12px 18px',
                 fontSize: '13px',
-                fontWeight: 800,
+                fontWeight: 700,
                 cursor: 'pointer',
-                transition: 'all 0.2s',
               }}
             >
-              <Zap size={16} /> ⚡ [DEMO BẢO VỆ] Đăng Nhập Nhà Xe (TravelEasy Express)
+              <ArrowLeft size={16} /> Quay Lại Trang Chủ Đặt Vé
             </button>
 
             <button
@@ -184,30 +182,11 @@ export const CompanyAuthGuard: React.FC<CompanyAuthGuardProps> = ({ children }) 
                 borderRadius: '8px',
                 padding: '11px 18px',
                 fontSize: '13px',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              <LogOut size={16} /> Đăng Xuất & Chuyển Tài Khoản Khác
-            </button>
-
-            <button
-              onClick={handleBackHome}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                backgroundColor: 'transparent',
-                color: '#94a3b8',
-                border: 'none',
-                padding: '10px 18px',
-                fontSize: '12.5px',
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
             >
-              <ArrowLeft size={15} /> Quay Lại Trang Chủ Đặt Vé
+              <LogOut size={16} /> Đăng Xuất Tài Khoản Khách Hàng
             </button>
           </div>
         </div>

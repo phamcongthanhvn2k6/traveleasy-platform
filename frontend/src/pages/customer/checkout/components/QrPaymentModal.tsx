@@ -49,9 +49,6 @@ export const QrPaymentModal: React.FC<Props> = ({
           setIsSuccess(true);
           toast.success('Hệ thống đã nhận được tiền chuyển khoản! Đang phát hành vé...', 'Thanh Toán Thành Công');
           clearInterval(interval);
-          setTimeout(() => {
-            onSuccess();
-          }, 1500);
         }
       } catch (err) {
         // Silent fail on polling error
@@ -81,9 +78,6 @@ export const QrPaymentModal: React.FC<Props> = ({
       if (res.isPaid || res.paymentStatus === 'SUCCESS') {
         setIsSuccess(true);
         toast.success('Xác nhận chuyển khoản thành công! Vé đã được kích hoạt.', 'Thành Công');
-        setTimeout(() => {
-          onSuccess();
-        }, 1200);
       } else {
         toast.info('Đang kiểm tra giao dịch với ngân hàng, vui lòng đợi trong giây lát...', 'Kiểm Tra');
       }
@@ -101,9 +95,6 @@ export const QrPaymentModal: React.FC<Props> = ({
       if (res.isPaid || res.paymentStatus === 'SUCCESS') {
         setIsSuccess(true);
         toast.success('Đã nhận thanh toán thành công!', 'Thành Công');
-        setTimeout(() => {
-          onSuccess();
-        }, 1000);
       } else {
         toast.info('Hệ thống chưa ghi nhận biến động số dư. Vui lòng kiểm tra lại app ngân hàng hoặc bấm xác nhận.', 'Chờ Thanh Toán');
       }
@@ -143,7 +134,7 @@ export const QrPaymentModal: React.FC<Props> = ({
         }}
       >
         {isSuccess ? (
-          <div style={{ padding: '30px 10px' }}>
+          <div style={{ padding: '24px 10px', textAlign: 'center' }}>
             <div
               style={{
                 width: '72px',
@@ -154,17 +145,52 @@ export const QrPaymentModal: React.FC<Props> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                margin: '0 auto 20px auto',
+                margin: '0 auto 16px auto',
               }}
             >
               <CheckCircle2 size={44} />
             </div>
-            <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#166534', margin: '0 0 10px 0' }}>
+            <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#166534', margin: '0 0 8px 0' }}>
               Thanh Toán Thành Công!
             </h3>
-            <p style={{ color: '#475569', fontSize: '14px', lineHeight: 1.6 }}>
-              Mã đặt vé <strong>{bookingCode}</strong> đã được thanh toán và kích hoạt. Đang chuyển sang màn hình vé điện tử...
+            <p style={{ color: '#475569', fontSize: '13.5px', lineHeight: 1.6, marginBottom: '20px' }}>
+              Hệ thống đã nhận được tiền chuyển khoản cho mã đơn <strong>{bookingCode}</strong> ({totalAmount.toLocaleString('vi-VN')} đ). Vé đã được kích hoạt thành công trên CSDL.
             </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                onClick={onSuccess}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: '#16a34a',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontWeight: 800,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)'
+                }}
+              >
+                Xem Chi Tiết Vé Điện Tử Ngay
+              </button>
+              <button
+                onClick={onClose}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  backgroundColor: 'transparent',
+                  color: '#64748b',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
+              >
+                Đóng cửa sổ
+              </button>
+            </div>
           </div>
         ) : (
           <>

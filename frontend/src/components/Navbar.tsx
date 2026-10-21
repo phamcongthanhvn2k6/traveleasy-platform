@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bus, Search, ShieldCheck, PhoneCall, User, Info, Building2, LayoutDashboard, Globe, LogOut, Ticket } from 'lucide-react';
+import { Bus, Search, ShieldCheck, PhoneCall, User, Info, Building2, LayoutDashboard, Globe, LogOut, Ticket, X, CheckCircle, Mail } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
 
@@ -16,6 +16,8 @@ export const Navbar: React.FC = () => {
       return null;
     }
   });
+
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
 
   useEffect(() => {
     try {
@@ -51,12 +53,48 @@ export const Navbar: React.FC = () => {
             <Link to="/my-tickets" style={{ color: '#ffffff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px', opacity: 0.9 }}>
               Vé của tôi
             </Link>
-            <Link to="/company" style={{ color: '#ffffff', textDecoration: 'none', opacity: 0.9 }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (user?.role === 'OPERATOR') {
+                  navigate('/company/dashboard');
+                } else {
+                  setShowPartnerModal(true);
+                }
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#ffffff',
+                opacity: 0.9,
+                cursor: 'pointer',
+                fontSize: '13px',
+                padding: 0
+              }}
+            >
               Mở bán vé trên TravelEasy
-            </Link>
-            <Link to="/company" style={{ color: '#ffffff', textDecoration: 'none', opacity: 0.9 }}>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (user?.role === 'OPERATOR') {
+                  navigate('/company/dashboard');
+                } else {
+                  setShowPartnerModal(true);
+                }
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#ffffff',
+                opacity: 0.9,
+                cursor: 'pointer',
+                fontSize: '13px',
+                padding: 0
+              }}
+            >
               Trở thành đối tác
-            </Link>
+            </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.9, cursor: 'pointer' }}>
               <Globe size={14} /> 🇻🇳 VN
             </div>
@@ -219,33 +257,33 @@ export const Navbar: React.FC = () => {
 
         {/* Right Action Badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Cổng Đối Tác Nhà Xe */}
-          <Link 
-            to={user?.role === 'OPERATOR' || user?.role === 'ADMIN' ? '/company/dashboard' : '/company/login'} 
-            title="Cổng đối tác điều hành nhà xe"
-            style={{ 
-              textDecoration: 'none', 
-              color: '#0f766e', 
-              backgroundColor: '#f0fdfa',
-              border: '1px solid #ccfbf1',
-              fontWeight: 700, 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              padding: '7px 14px',
-              borderRadius: '8px',
-              fontSize: '13px',
-              transition: 'all 0.2s'
-            }}
-          >
-            <Building2 size={16} color="#0d9488" /> 
-            <span>{user?.role === 'OPERATOR' ? 'Cổng Điều Hành Xe' : 'Đối Tác Nhà Xe'}</span>
-            {user?.role === 'OPERATOR' && (
+          {/* Cổng Đối Tác Nhà Xe CHỈ hiển thị nếu tài khoản đang đăng nhập là OPERATOR */}
+          {user?.role === 'OPERATOR' && (
+            <Link 
+              to="/company/dashboard" 
+              title="Cổng đối tác điều hành nhà xe"
+              style={{ 
+                textDecoration: 'none', 
+                color: '#0f766e', 
+                backgroundColor: '#f0fdfa',
+                border: '1px solid #ccfbf1',
+                fontWeight: 700, 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Building2 size={16} color="#0d9488" /> 
+              <span>Cổng Điều Hành Xe</span>
               <span style={{ backgroundColor: '#ccfbf1', color: '#0f766e', fontSize: '9.5px', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
                 OPERATOR
               </span>
-            )}
-          </Link>
+            </Link>
+          )}
 
           {/* CHỈ hiển thị Quản Trị Sàn khi tài khoản hiện tại ĐÃ ĐĂNG NHẬP và có vai trò ADMIN */}
           {user?.role === 'ADMIN' && (
@@ -271,6 +309,154 @@ export const Navbar: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Partner Registration & Info Modal */}
+      {showPartnerModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '16px',
+            backdropFilter: 'blur(3px)'
+          }}
+          onClick={() => setShowPartnerModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '560px',
+              width: '100%',
+              padding: '28px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowPartnerModal(false)}
+              style={{
+                position: 'absolute',
+                top: '18px',
+                right: '18px',
+                background: '#f1f5f9',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#64748b'
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+              <div style={{ backgroundColor: '#f0fdfa', padding: '8px', borderRadius: '10px', color: '#0d9488' }}>
+                <Building2 size={24} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Hợp Tác Mở Bán Vé Cùng TravelEasy
+                </h3>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>
+                  Dành cho các doanh nghiệp vận tải, nhà xe khách liên tỉnh
+                </span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.6, margin: '0 0 16px 0' }}>
+              TravelEasy là nền tảng kết nối hành khách và hơn 50+ nhà xe uy tín trên toàn quốc. Đăng ký tham gia hệ thống để mở rộng thị trường và tối ưu hiệu suất lấp đầy ghế:
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', backgroundColor: '#f8fafc', padding: '12px 14px', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                <CheckCircle size={18} color="#0d9488" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>
+                  <strong style={{ fontSize: '13px', color: '#0f172a' }}>Tăng trưởng doanh thu 30 - 50%</strong>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Tiếp cận mạng lưới hơn 500.000 khách du lịch và hành khách đặt vé trực tuyến mỗi tháng.</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', backgroundColor: '#f8fafc', padding: '12px 14px', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                <CheckCircle size={18} color="#0d9488" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>
+                  <strong style={{ fontSize: '13px', color: '#0f172a' }}>Phần mềm điều phối thông minh</strong>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Cung cấp phần mềm quản lý đội xe, chuyến xe, giá vé, bến đón trả và sơ đồ ghế thời gian thực.</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', backgroundColor: '#f8fafc', padding: '12px 14px', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                <CheckCircle size={18} color="#0d9488" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>
+                  <strong style={{ fontSize: '13px', color: '#0f172a' }}>Đối soát tự động & Thanh toán tức thì</strong>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Tích hợp sẵn VNPAY, VietQR Napas 24/7, báo cáo doanh thu minh bạch và chu kỳ quyết toán nhanh.</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Box */}
+            <div style={{ backgroundColor: '#f0fdfa', border: '1px solid #ccfbf1', borderRadius: '12px', padding: '14px 18px', marginBottom: '20px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', marginBottom: '6px' }}>LIÊN HỆ BỘ PHẬN PHÁT TRIỂN ĐỐI TÁC:</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#134e4a', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <PhoneCall size={14} color="#0d9488" /> <strong>Hotline:</strong> 1900 6868 (Nhánh 2)
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Mail size={14} color="#0d9488" /> <strong>Email:</strong> doitac@traveleasy.vn
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPartnerModal(false);
+                  navigate('/company/login');
+                }}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#ffffff',
+                  color: '#0f766e',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Đã là đối tác? Đăng nhập cổng nhà xe
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowPartnerModal(false)}
+                style={{
+                  padding: '9px 20px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#0d9488',
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

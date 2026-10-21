@@ -1464,13 +1464,18 @@ Hệ thống hỗ trợ VietQR sinh mã QR động kèm thông tin chuyển kho�
 ![Modal Thanh Toán VietQR Tự Động](docs/screenshots/screenshot_payment_vietqr_modal.png)
 *Hình 11.5: Mã VietQR tự động sinh khớp số tiền đơn hàng và nội dung chuyển khoản để khách quét trên app ngân hàng.*
 
-#### 4. Cơ chế Mock Thanh toán 1-Click Demo & VNPAY Sandbox
-Để phục vụ việc trình diễn bảo vệ không cần chuyển tiền thật mà vẫn đảm bảo toàn bộ luồng Backend, API và CSDL ghi nhận đầy đủ, hệ thống trang bị nút **"Xác nhận đã thanh toán (1-Click Demo)"**.
-![Modal Demo Thanh Toán VNPAY 1-Click](docs/screenshots/screenshot_vnpay_demo_modal.png)
-*Hình 11.6: Hộp thoại xác nhận thanh toán Demo — Gửi lệnh `POST /api/v1/payments/mock-success` kích hoạt cập nhật trạng thái đơn vé sang `CONFIRMED` và xuất vé `ISSUED`.*
+#### 4. Cơ chế Mock Thanh toán 1-Click Demo & VNPAY Sandbox (Không Tự Động Đóng)
+Để phục vụ việc trình diễn bảo vệ không cần chuyển tiền thật mà vẫn đảm bảo toàn bộ luồng Backend, API và CSDL ghi nhận đầy đủ, hệ thống trang bị nút **"✓ CHẤP NHẬN ĐÃ THANH TOÁN THÀNH CÔNG (DEMO)"**:
+* **Giao diện Cổng VNPAY Gateway**: Tích hợp các tab VNPAY-QR, Thẻ ATM 36 ngân hàng nội địa (Vietcombank, BIDV, Techcombank, NCB...), và Thẻ quốc tế Visa/Master.
+* **Nút bấm Demo nổi bật**: Bấm nút gửi lệnh `POST /api/v1/payments/mock-success/{bookingCode}?paymentMethod=VNPAY` đến Backend.
+* **Ghi nhận CSDL thật**: Tạo bản ghi trong bảng `payment_transactions`, sinh mã giao dịch chuẩn VNPAY (VD: `VNP173456...`), cập nhật trạng thái đơn vé sang `CONFIRMED` và `PAID`.
+* **Không tự động đóng / Không ngắt demo**: Modal giữ nguyên màn hình kết quả thành công với đầy đủ mã giao dịch VNPAY, số tiền, thời gian và trạng thái CSDL để người dùng thong thả thuyết minh cho hội đồng bảo vệ.
+* **Người dùng chủ động điều hướng**: Chỉ chuyển sang trang vé khi người dùng bấm nút **"Xem Chi Tiết Vé Điện Tử Ngay"**.
+![Hộp Thoại Thanh Toán VNPAY Sẵn Sàng](docs/screenshots/screenshot_vnpay_modal_ready.png)
+*Hình 11.6: Hộp thoại VNPAY Gateway với nút bấm chấp nhận thanh toán thành công rõ ràng phục vụ Demo.*
 
-![Thông Báo Thanh Toán Thành Công](docs/screenshots/screenshot_ticket_paid_success.png)
-*Hình 11.7: Xác nhận thanh toán thành công tức thì, hiển thị mã đơn vé điện tử và nút xem vé ngay.*
+![Kết Quả Giao Dịch VNPAY Thành Công Lưu CSDL](docs/screenshots/screenshot_vnpay_modal_success.png)
+*Hình 11.7: Màn hình kết quả thanh toán VNPAY được giữ nguyên hiển thị mã giao dịch và CSDL đã ghi nhận.*
 
 #### 5. Vé Điện Tử Kèm Mã QR Code & Tra Cứu Vé
 Hành khách có thể tra cứu mã vé bất kỳ lúc nào để xuất trình mã QR cho phụ xe quét lên xe mà không cần in giấy.
@@ -1642,6 +1647,22 @@ Kênh tương tác và chăm sóc khách hàng trực tiếp của nhà xe:
 * **Bảo mật phân tầng nghiêm ngặt**: Khi người dùng đăng nhập với tư cách Quản trị viên/Điều hành viên Nhà Xe (`ROLE_OPERATOR`), nút `"Sang TravelEasy Admin"` ở chân thanh điều hướng Sidebar được loại bỏ hoàn toàn.
 * **Ngăn chặn vượt quyền**: Đảm bảo nhân viên đối tác nhà xe chỉ hoạt động trong phạm vi tài nguyên được cấp phép (`/company/*`), không nhìn thấy và không thể truy cập trái phép vào phân hệ Quản Trị Sàn Tổng (`/admin/*`).
 * **Trải nghiệm chuyên biệt**: Giao diện gọn gàng, tập trung 100% vào nghiệp vụ điều hành và kinh doanh vận tải của nhà xe.
+
+#### 11. Bảo Vệ Header Khách Hàng & Chặn 403 Forbidden Nghiêm Ngặt
+* **Ẩn toàn bộ nút quản trị đối với Khách hàng**: Khi người dùng đăng nhập tài khoản Khách hàng (`ROLE_CUSTOMER`) hoặc khách vãng lai, hệ thống tự động ẩn hoàn toàn các nút "Quản Trị Sàn (ADMIN)" và "Cổng Điều Hành Xe (OPERATOR)" trên Header.
+* **Điều hướng thông tin đối tác hợp chuẩn**: Các liên kết "Mở bán vé trên TravelEasy" và "Trở thành đối tác" trên Header không còn dẫn thẳng vào cổng quản lý mà mở Hộp thoại Giới thiệu Hợp tác Đối tác với đầy đủ chính sách, hotline hỗ trợ nhà xe và nút đăng nhập riêng cho đối tác đã có tài khoản.
+* **Chặn đứng truy cập trái phép bằng Route Guards**: Nếu tài khoản Khách hàng cố tình nhập thủ công URL `/admin/*` hoặc `/company/*` trên thanh địa chỉ trình duyệt, hệ thống kích hoạt màn hình chặn 403 Forbidden với giao diện cảnh báo nghiêm ngặt và không có bất kỳ nút backdoor nào.
+![Header Khách Hàng Sạch Sẽ Không Có Nút Admin](docs/screenshots/screenshot_customer_header_clean.png)
+*Hình 11.34: Header phân hệ khách hàng sạch sẽ, không hiển thị bất kỳ lối tắt quản trị viên nào.*
+
+![Modal Giới Thiệu Hợp Tác Bán Vé Cho Nhà Xe](docs/screenshots/screenshot_partner_info_modal.png)
+*Hình 11.35: Hộp thoại thông tin hợp tác mở bán vé chuẩn mực khi khách hàng bấm vào liên kết đối tác.*
+
+![Chặn Truy Cập Phân Hệ Quản Trị Sàn 403](docs/screenshots/screenshot_customer_403_admin.png)
+*Hình 11.36: Màn hình từ chối quyền truy cập 403 Forbidden khi tài khoản Khách hàng cố tình vào `/admin/*`.*
+
+![Chặn Truy Cập Phân Hệ Đối Tác Nhà Xe 403](docs/screenshots/screenshot_customer_403_company.png)
+*Hình 11.37: Màn hình từ chối quyền truy cập 403 Forbidden khi tài khoản Khách hàng cố tình vào `/company/*`.*
 
 ---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  
