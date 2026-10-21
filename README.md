@@ -1759,5 +1759,63 @@ Kịch bản kiểm thử tự động `test_db_persistence.mjs` đã thực hi�
 *Hình 11.46: Danh sách phương tiện vận tải của nhà xe được đồng bộ chính xác và bảo toàn 100% qua các lần khởi động lại máy chủ.*
 
 ---
+
+### 11.6 Hệ Thống CI/CD Pipeline & Triển Khai Containerization Tự Động (GitHub Actions & Docker Compose)
+
+#### 1. Kiến Trúc Pipeline CI/CD Toàn Diện (Enterprise CI/CD Workflow)
+Hệ thống TravelEasy tích hợp đường ống tích hợp và triển khai liên tục (CI/CD) tự động hóa thông qua **GitHub Actions** tại [.github/workflows/ci-cd.yml](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/.github/workflows/ci-cd.yml) với 3 giai đoạn (Stages) độc lập và đồng bộ:
+
+```mermaid
+flowchart LR
+    GitPush["Git Push / PR (main, dev)"] --> BackendCI["1. Backend CI<br/>(Java 21 LTS + Gradle 8.13<br/>Spring Boot bootJar)"]
+    GitPush --> FrontendCI["2. Frontend CI<br/>(Node 20 LTS + TypeScript<br/>Vite Production Build)"]
+    BackendCI --> Artifacts["Upload Artifacts<br/>(JAR & Dist bundles)"]
+    FrontendCI --> Artifacts
+    Artifacts --> DockerCD["3. Docker CD & Packaging<br/>(Docker Compose Config &<br/>Build Container Images)"]
+    DockerCD --> Ready["Deployment Ready<br/>(Zero-Downtime Ready)"]
+```
+
+#### 2. Các Giai Đoạn Trong Đường Ống CI/CD
+1. **Giai đoạn 1 - Backend CI (`backend-ci`)**:
+   * **Môi trường**: `ubuntu-latest`, **Java 21 LTS** (phân phối Temurin).
+   * **Công cụ**: Gradle v3 GitHub Action với cơ chế cache thông minh.
+   * **Nhiệm vụ**: Biên dịch toàn bộ mã nguồn Java, đóng gói artifact JAR Spring Boot 3.3.4 (`./gradlew bootJar --no-daemon`).
+   * **Lưu trữ Artifact**: Tự động xuất xưởng và lưu trữ file `traveleasy-backend-jar` phục vụ deploy.
+2. **Giai đoạn 2 - Frontend CI (`frontend-ci`)**:
+   * **Môi trường**: `ubuntu-latest`, **Node.js 20 LTS**.
+   * **Nhiệm vụ**: Cài đặt phụ thuộc (`npm install`), kiểm tra kiểu tĩnh TypeScript nghiêm ngặt (`tsc`) và đóng gói tài nguyên tối ưu (`vite build`).
+   * **Lưu trữ Artifact**: Tự động lưu trữ gói thư mục tĩnh `frontend/dist` (`traveleasy-frontend-dist`).
+3. **Giai đoạn 3 - Docker Containerization & Verification (`docker-cd-verification`)**:
+   * **Điều kiện tiên quyết**: Chờ cả 2 giai đoạn `backend-ci` và `frontend-ci` hoàn thành xuất sắc (`needs: [backend-ci, frontend-ci]`).
+   * **Xác thực Compose Spec**: Kiểm tra cú pháp và liên kết mạng trong `docker-compose.yml` (`docker compose config`).
+   * **Đóng gói Image**: Xây dựng đồng thời các Docker Image chuyên dụng (`traveleasy-backend`, `traveleasy-frontend`, `traveleasy-mysql:8.0`).
+   * **Nginx Reverse Proxy**: Tích hợp cấu hình [frontend/nginx.conf](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/nginx.conf) với SPA routing `try_files $uri $uri/ /index.html;` và tự động điều hướng proxy `/api/` về container `backend:8080`.
+
+#### 3. Khắc Phục Lỗi CI/CD Cốt Lõi Trên GitHub Actions
+* **Sự cố Wrapper Jar bị Gitignore**: Trước đây file cấu hình `.gitignore` có quy tắc chặn `*.jar` khiến tệp nhị phân `backend/gradle/wrapper/gradle-wrapper.jar` không được đẩy lên GitHub, dẫn đến runner Linux báo lỗi `ClassNotFoundException: org.gradle.wrapper.GradleWrapperMain`.
+* **Giải pháp khắc phục triệt để**:
+  1. Thêm ngoại lệ `!**/gradle-wrapper.jar` vào [.gitignore](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/.gitignore).
+  2. Bổ sung [.gitattributes](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/.gitattributes) chuẩn hóa ký tự xuống dòng `LF` cho toàn bộ các script khởi chạy Linux `gradlew` và `.sh`.
+  3. Cập nhật [backend/Dockerfile](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/backend/Dockerfile) hỗ trợ `dos2unix` và `bash` trong môi trường container Alpine.
+  4. Đưa `gradle-wrapper.jar` vào git tracking và kích hoạt pipeline tự động trên mọi nhánh `dev` và `main`.
+
+#### 4. Hướng Dẫn Triển Khai Trực Tiếp Bằng Docker Compose (Single-Command Deployment)
+Để triển khai toàn bộ nền tảng TravelEasy (gồm Database MySQL 8.0, Backend Spring Boot và Frontend Nginx React) trên bất kỳ máy chủ nào:
+```bash
+# 1. Clone repository
+git clone -b dev https://github.com/phamcongthanhvn2k6/traveleasy-platform.git
+cd traveleasy-platform
+
+# 2. Khởi chạy toàn bộ hệ sinh thái với 1 dòng lệnh duy nhất
+docker compose up -d --build
+
+# 3. Kiểm tra trạng thái các container
+docker compose ps
+```
+* **Frontend Application**: Truy cập tại `http://localhost:3000`
+* **Backend API & Swagger**: Truy cập tại `http://localhost:8080/swagger-ui.html`
+* **MySQL Database 8.0**: Cổng `3306`, database `traveleasy_db`
+
+---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  
 *Chúc toàn đội bảo vệ thành công rực rỡ!*

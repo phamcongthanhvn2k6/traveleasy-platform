@@ -1,0 +1,15 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Ensure shell scripts and Gradle wrappers always have LF line endings
+gradlew text eol=lf
+*.sh text eol=lf
+backend/gradlew text eol=lf
+
+# Binary files
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
