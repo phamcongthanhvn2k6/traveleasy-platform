@@ -32,6 +32,27 @@ export const HomePage: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [searchParams, setSearchParams] = useState({ origin: 'TP. Hồ Chí Minh', destination: 'Đà Lạt' });
 
+  // Dynamic Banners from Database
+  const [activeBanners, setActiveBanners] = useState<any[]>([]);
+
+  useEffect(() => {
+    api.get('/banners')
+      .then(res => {
+        if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          setActiveBanners(res.data.data.map((b: any, idx: number) => ({
+            id: b.id,
+            tag: b.position || 'ƯU ĐÃI SÀN',
+            title: b.title,
+            badge: 'HOT DEAL',
+            accent: idx % 2 === 0 ? '#d97706' : '#2563eb',
+            image: b.imagePath?.startsWith('http') ? b.imagePath : 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500',
+            link: b.link
+          })));
+        }
+      })
+      .catch(e => console.warn('Could not load banners from API:', e));
+  }, []);
+
   // Booking state
   const [bookingTrip, setBookingTrip] = useState<Trip | null>(null);
   const [bookingSeats, setBookingSeats] = useState<string[]>([]);
@@ -584,7 +605,7 @@ export const HomePage: React.FC = () => {
           gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
           gap: '20px'
         }}>
-          {featuredPromos.map(p => (
+          {(activeBanners.length > 0 ? activeBanners : featuredPromos).map(p => (
             <div
               key={p.id}
               style={{

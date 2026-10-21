@@ -16,7 +16,9 @@ import {
   Search,
   Bell,
   ChevronDown,
-  LogOut
+  LogOut,
+  Calendar,
+  Ticket
 } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
@@ -47,6 +49,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const navItems = [
     { label: 'Tong quan', path: '/admin/dashboard', icon: LayoutGrid },
+    { label: 'Chuyen xe', path: '/admin/trips', icon: Calendar },
+    { label: 'Don dat ve', path: '/admin/bookings', icon: Ticket },
     { label: 'Nguoi dung', path: '/admin/users', icon: Users },
     { label: 'Nha xe', path: '/admin/bus-companies', icon: Bus },
   ];

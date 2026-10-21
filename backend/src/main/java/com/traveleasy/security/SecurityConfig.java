@@ -51,6 +51,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/trips/**").permitAll()
                         .requestMatchers("/api/v1/bookings/code/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/bookings").permitAll() // Cho phép khách vãng lai đặt vé
+                        .requestMatchers(HttpMethod.GET, "/api/v1/banners/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/reviews/**").permitAll()
                         .requestMatchers("/api/v1/ai/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Phân quyền nghiêm ngặt: Chỉ ROLE_ADMIN mới có quyền gọi API quản trị

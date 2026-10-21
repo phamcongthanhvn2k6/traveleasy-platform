@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { Image, Search, Plus, ExternalLink, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Image, Search, Plus, ExternalLink, Trash2, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
+import api from '../../../services/api';
 
 interface BannerItem {
   id: string;
   title: string;
   imagePath: string;
-  position: 'Trang chu - Top' | 'Trang chu - Bottom';
+  position: string;
   status: 'ACTIVE' | 'INACTIVE';
   statusLabel: string;
   duration: string;
@@ -17,38 +18,66 @@ export const AdminBannersPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [positionFilter, setPositionFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [loading, setLoading] = useState(false);
+  const [banners, setBanners] = useState<BannerItem[]>([]);
 
-  const banners: BannerItem[] = [
-    {
-      id: 'bn1',
-      title: 'Khuyen mai 20% ve Da Lat',
-      imagePath: '/img/banners/dalat-sale.jpg',
-      position: 'Trang chu - Top',
-      status: 'ACTIVE',
-      statusLabel: 'Dang hien',
-      duration: '07:00 01/09/2026 — 06:59 01/10/2026',
-      link: 'https://traveleasy.vn/dalat-sale',
-    },
-    {
-      id: 'bn2',
-      title: 'Uu dai LIMOUSINE cao cap',
-      imagePath: '/img/banners/limo-promo.jpg',
-      position: 'Trang chu - Bottom',
-      status: 'ACTIVE',
-      statusLabel: 'Dang hien',
-      duration: '07:00 15/09/2026 — 06:59 15/10/2026',
-    },
-    {
-      id: 'bn3',
-      title: 'Ve Tet som - Dat ngay',
-      imagePath: '/img/banners/tet-early.jpg',
-      position: 'Trang chu - Top',
-      status: 'INACTIVE',
-      statusLabel: 'An',
-      duration: '07:00 01/11/2026 — 06:59 01/01/2027',
-      link: 'https://traveleasy.vn/tet-early',
-    },
-  ];
+  const fetchBanners = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/admin/banners');
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        setBanners(res.data.data.map((b: any) => ({
+          id: String(b.id),
+          title: b.title,
+          imagePath: b.imagePath || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500',
+          position: b.position || 'Trang chu - Top',
+          status: b.status,
+          statusLabel: b.status === 'ACTIVE' ? 'Đang hiện' : 'Đang ẩn',
+          duration: b.duration || '07:00 01/01/2026 - 23:59 31/12/2026',
+          link: b.link,
+        })));
+      }
+    } catch (err) {
+      console.warn('Could not load banners from API:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBanners();
+  }, []);
+
+  const handleToggleStatus = async (banner: BannerItem) => {
+    const nextStatus = banner.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    try {
+      await api.patch(`/admin/banners/${banner.id}/status`);
+      setBanners(prev => prev.map(b => b.id === banner.id ? {
+        ...b,
+        status: nextStatus,
+        statusLabel: nextStatus === 'ACTIVE' ? 'Đang hiện' : 'Đang ẩn'
+      } : b));
+
+      if (nextStatus === 'ACTIVE') {
+        toast.success(`Đã hiển thị banner "${banner.title}" lên Trang chủ cho người dùng!`, 'Đồng Bộ CSDL');
+      } else {
+        toast.warning(`Đã ẩn banner "${banner.title}" khỏi Trang chủ người dùng!`, 'Đồng Bộ CSDL');
+      }
+    } catch (err) {
+      toast.error('Lỗi khi cập nhật trạng thái banner', 'Thất Bại');
+    }
+  };
+
+  const handleDeleteBanner = async (id: string, title: string) => {
+    if (!window.confirm(`Bạn có chắc muốn xóa vĩnh viễn banner "${title}" khỏi hệ thống?`)) return;
+    try {
+      await api.delete(`/admin/banners/${id}`);
+      setBanners(prev => prev.filter(b => b.id !== id));
+      toast.success(`Đã xóa banner "${title}" thành công!`, 'Đồng Bộ CSDL');
+    } catch (err) {
+      toast.error('Lỗi khi xóa banner', 'Thất Bại');
+    }
+  };
 
   const filtered = banners.filter((b) => {
     if (search && !b.title.toLowerCase().includes(search.toLowerCase())) return false;
@@ -63,183 +92,130 @@ export const AdminBannersPage: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-            TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> He thong <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Banner
+            TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Hệ thống <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Banner
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
-            Banner
+            Quản Lý Banner Quảng Cáo & Khuyến Mãi
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            {banners.length} banner trong he thong
+            Đồng bộ trực tiếp với mục Khuyến Mãi trên Trang Chủ của người dùng
           </div>
         </div>
 
         <button
-          onClick={() => toast.info('Đang mở form tải lên banner quảng cáo mới...', 'Banner')}
+          onClick={fetchBanners}
           style={{
-            backgroundColor: '#4f46e5',
-            color: '#ffffff',
-            border: 'none',
+            backgroundColor: '#f1f5f9',
+            color: '#334155',
+            border: '1px solid #cbd5e1',
             borderRadius: '8px',
-            padding: '9px 16px',
+            padding: '9px 14px',
             fontSize: '13px',
             fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '6px',
             cursor: 'pointer',
-            boxShadow: '0 1px 2px rgba(79, 70, 229, 0.2)'
           }}
         >
-          <Plus size={16} />
-          <span>Them banner</span>
+          <RefreshCw size={14} /> Làm mới
         </button>
       </div>
 
       {/* Filter Row */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            padding: '8px 12px',
-            width: '280px',
-            gap: '8px'
-          }}
-        >
-          <Search size={15} color="#94a3b8" />
+        <div style={{ position: 'relative', flex: 1 }}>
           <input
             type="text"
-            placeholder="Tim theo tieu de, vi tri, link..."
+            placeholder="Tìm theo tiêu đề banner..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
-              border: 'none',
-              background: 'transparent',
-              outline: 'none',
+              width: '100%',
+              padding: '9px 12px 9px 36px',
+              borderRadius: '8px',
+              border: '1px solid #cbd5e1',
               fontSize: '13px',
-              color: '#0f172a',
-              flex: 1
+              outline: 'none',
+              boxSizing: 'border-box'
             }}
           />
+          <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
         </div>
-
-        <select
-          value={positionFilter}
-          onChange={(e) => setPositionFilter(e.target.value)}
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            padding: '8px 14px',
-            fontSize: '13px',
-            color: '#334155',
-            outline: 'none',
-            cursor: 'pointer',
-            minWidth: '160px'
-          }}
-        >
-          <option value="ALL">Tat ca vi tri</option>
-          <option value="Trang chu - Top">Trang chu - Top</option>
-          <option value="Trang chu - Bottom">Trang chu - Bottom</option>
-        </select>
 
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
+            padding: '9px 12px',
             borderRadius: '8px',
-            padding: '8px 14px',
+            border: '1px solid #cbd5e1',
             fontSize: '13px',
             color: '#334155',
             outline: 'none',
-            cursor: 'pointer',
-            minWidth: '160px'
+            backgroundColor: '#ffffff'
           }}
         >
-          <option value="ALL">Tat ca trang thai</option>
-          <option value="ACTIVE">Dang hien</option>
-          <option value="INACTIVE">An</option>
+          <option value="ALL">Tất cả trạng thái</option>
+          <option value="ACTIVE">Đang hiện trên Web</option>
+          <option value="INACTIVE">Đang ẩn</option>
         </select>
       </div>
 
       {/* Table */}
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
-        }}
-      >
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TIEU DE</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>VI TRI</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TRANG THAI</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>THOI GIAN</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>LINK</th>
-              <th style={{ padding: '12px 18px', width: '80px', textAlign: 'right' }}></th>
+            <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
+              <th style={{ padding: '12px 18px' }}>ẢNH & TIÊU ĐỀ BANNER</th>
+              <th style={{ padding: '12px 18px' }}>VỊ TRÍ HIỂN THỊ</th>
+              <th style={{ padding: '12px 18px' }}>TRẠNG THÁI</th>
+              <th style={{ padding: '12px 18px' }}>THỜI HẠN</th>
+              <th style={{ padding: '12px 18px' }}>LIÊN KẾT ĐÍCH</th>
+              <th style={{ padding: '12px 18px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((b) => {
-              const statusStyle = b.status === 'ACTIVE'
-                ? { bg: '#ecfdf5', text: '#059669', border: '#a7f3d0' }
-                : { bg: '#f1f5f9', text: '#64748b', border: '#e2e8f0' };
-
-              return (
-                <tr
-                  key={b.id}
-                  style={{
-                    borderBottom: '1px solid #f1f5f9',
-                    transition: 'background-color 0.1s ease',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
+            {loading ? (
+              <tr>
+                <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                  Đang tải danh sách banner từ CSDL...
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                  Không tìm thấy banner nào.
+                </td>
+              </tr>
+            ) : (
+              filtered.map((b) => (
+                <tr key={b.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '14px 18px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div
                         style={{
-                          width: '42px',
-                          height: '28px',
-                          borderRadius: '4px',
+                          width: '72px',
+                          height: '42px',
+                          borderRadius: '6px',
                           backgroundColor: '#f1f5f9',
-                          border: '1px solid #e2e8f0',
+                          overflow: 'hidden',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: '#94a3b8',
                           flexShrink: 0
                         }}
                       >
-                        <Image size={15} />
+                        <Image size={20} color="#94a3b8" />
                       </div>
                       <div>
-                        <div style={{ fontWeight: 600, color: '#0f172a' }}>{b.title}</div>
-                        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{b.imagePath}</div>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{b.title}</div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>ID: #{b.id}</div>
                       </div>
                     </div>
                   </td>
                   <td style={{ padding: '14px 18px' }}>
-                    <span
-                      style={{
-                        padding: '3px 9px',
-                        borderRadius: '6px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        backgroundColor: '#f1f5f9',
-                        color: '#475569',
-                        border: '1px solid #e2e8f0',
-                      }}
-                    >
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
                       {b.position}
                     </span>
                   </td>
@@ -248,17 +224,19 @@ export const AdminBannersPage: React.FC = () => {
                       style={{
                         padding: '3px 9px',
                         borderRadius: '6px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        backgroundColor: statusStyle.bg,
-                        color: statusStyle.text,
-                        border: `1px solid ${statusStyle.border}`,
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        backgroundColor: b.status === 'ACTIVE' ? '#f0fdf4' : '#f8fafc',
+                        color: b.status === 'ACTIVE' ? '#16a34a' : '#64748b',
+                        border: `1px solid ${b.status === 'ACTIVE' ? '#bbf7d0' : '#cbd5e1'}`,
                       }}
                     >
-                      {b.statusLabel}
+                      {b.status === 'ACTIVE' ? 'Đang hiện trên Web' : 'Đang ẩn'}
                     </span>
                   </td>
-                  <td style={{ padding: '14px 18px', color: '#64748b', fontSize: '12px' }}>{b.duration}</td>
+                  <td style={{ padding: '14px 18px', color: '#64748b', fontSize: '12px' }}>
+                    {b.duration}
+                  </td>
                   <td style={{ padding: '14px 18px' }}>
                     {b.link ? (
                       <a
@@ -266,7 +244,7 @@ export const AdminBannersPage: React.FC = () => {
                         target="_blank"
                         rel="noreferrer"
                         style={{
-                          color: '#4f46e5',
+                          color: '#2563eb',
                           textDecoration: 'none',
                           fontWeight: 600,
                           fontSize: '12px',
@@ -275,7 +253,7 @@ export const AdminBannersPage: React.FC = () => {
                           gap: '4px'
                         }}
                       >
-                        <span>Xem</span>
+                        <span>Mở liên kết</span>
                         <ExternalLink size={12} />
                       </a>
                     ) : (
@@ -285,40 +263,45 @@ export const AdminBannersPage: React.FC = () => {
                   <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                       <button
-                        onClick={() => toast.info(`Đang mở chỉnh sửa banner "${b.title}"`, 'Chỉnh Sửa')}
-                        title="Chinh sua"
+                        onClick={() => handleToggleStatus(b)}
+                        title={b.status === 'ACTIVE' ? 'Ẩn khỏi web' : 'Hiển thị lên web'}
                         style={{
-                          background: 'none',
-                          border: 'none',
+                          backgroundColor: b.status === 'ACTIVE' ? '#fff1f2' : '#f0fdf4',
+                          border: `1px solid ${b.status === 'ACTIVE' ? '#fecdd3' : '#bbf7d0'}`,
+                          color: b.status === 'ACTIVE' ? '#e11d48' : '#16a34a',
                           cursor: 'pointer',
-                          padding: '4px',
-                          color: '#64748b',
+                          padding: '5px 10px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: 600,
                           display: 'flex',
-                          borderRadius: '4px'
+                          alignItems: 'center',
+                          gap: '4px'
                         }}
                       >
-                        <Edit2 size={15} />
+                        {b.status === 'ACTIVE' ? <EyeOff size={13} /> : <Eye size={13} />}
+                        <span>{b.status === 'ACTIVE' ? 'Ẩn' : 'Hiện'}</span>
                       </button>
                       <button
-                        onClick={() => toast.warning(`Đã xóa banner "${b.title}" khỏi hệ thống!`, 'Xóa Banner')}
-                        title="Xoa"
+                        onClick={() => handleDeleteBanner(b.id, b.title)}
+                        title="Xóa banner"
                         style={{
                           background: 'none',
                           border: 'none',
                           cursor: 'pointer',
                           padding: '4px',
-                          color: '#64748b',
+                          color: '#94a3b8',
                           display: 'flex',
                           borderRadius: '4px'
                         }}
                       >
-                        <Trash2 size={15} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>
                 </tr>
-              );
-            })}
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -327,4 +310,3 @@ export const AdminBannersPage: React.FC = () => {
 };
 
 export default AdminBannersPage;
-

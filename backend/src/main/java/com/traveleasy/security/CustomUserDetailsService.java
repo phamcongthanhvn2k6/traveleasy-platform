@@ -23,9 +23,14 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .or(() -> userRepository.findByPhone(identifier))
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng với: " + identifier));
 
+        boolean isNotLocked = !"LOCKED".equalsIgnoreCase(user.getStatus());
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
+                isNotLocked,
+                true,
+                true,
+                isNotLocked,
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
         );
     }

@@ -7,3 +7,4 @@ public class UpdateProfileRequest {
     private String fullName;
     private String phone;
 }
+

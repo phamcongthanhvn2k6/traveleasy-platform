@@ -133,10 +133,22 @@ export const MyTicketsPage: React.FC = () => {
     }
   };
 
-  const handleSendReview = () => {
+  const handleSendReview = async () => {
     if (!reviewBooking) return;
+    try {
+      await api.post('/reviews', {
+        email: reviewBooking.customerEmail || 'customer@gmail.com',
+        author: reviewBooking.customerName || 'Khách hàng',
+        reason: `Đánh giá chuyến xe ${reviewBooking.trip?.busCompanyName} (${reviewBooking.trip?.originCity} → ${reviewBooking.trip?.destinationCity})`,
+        comment: comment || 'Chuyến xe tốt, chạy đúng giờ và tài xế thân thiện.',
+        rating: rating,
+      });
+    } catch (e) {
+      console.warn('Could not post review report to backend:', e);
+    }
+
     toast.success(
-      `Cảm ơn bạn đã đánh giá ${rating} sao cho chuyến xe của ${reviewBooking.trip?.busCompanyName}!`,
+      `Cảm ơn bạn đã đánh giá ${rating} sao cho chuyến xe của ${reviewBooking.trip?.busCompanyName}! Đánh giá đã được ghi nhận vào hệ thống kiểm duyệt.`,
       'Đánh Giá Thành Công'
     );
     setReviewBooking(null);

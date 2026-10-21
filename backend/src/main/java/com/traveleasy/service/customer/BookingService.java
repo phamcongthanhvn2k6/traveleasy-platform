@@ -41,6 +41,10 @@ public class BookingService {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe không còn mở bán vé");
         }
 
+        if (trip.getBusCompany() != null && "SUSPENDED".equalsIgnoreCase(trip.getBusCompany().getStatus())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Nhà xe " + trip.getBusCompany().getName() + " hiện đang tạm ngừng hoạt động trên sàn.");
+        }
+
         // PESSIMISTIC LOCK: Lock các ghế được chọn để chống xung đột đặt trùng
         List<TripSeat> requestedSeats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(
                 trip.getId(), request.getSeatNumbers());
@@ -288,7 +292,27 @@ public class BookingService {
         return mapToBookingResponse(savedNewBooking, List.of(newTicket));
     }
 
-    private BookingResponse mapToBookingResponse(Booking b, List<Ticket> tickets) {
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getAllBookings() {
+        return bookingRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"))
+                .stream()
+                .map(b -> {
+                    List<Ticket> tickets = ticketRepository.findByBookingId(b.getId());
+                    return mapToBookingResponse(b, tickets);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public BookingResponse updateBookingStatus(Long id, BookingStatus status) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé"));
+        booking.setStatus(status);
+        List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
+        return mapToBookingResponse(bookingRepository.save(booking), tickets);
+    }
+
+    public BookingResponse mapToBookingResponse(Booking b, List<Ticket> tickets) {
         List<TicketResponse> ticketResponses = tickets.stream().map(t -> TicketResponse.builder()
                 .id(t.getId())
                 .ticketCode(t.getTicketCode())

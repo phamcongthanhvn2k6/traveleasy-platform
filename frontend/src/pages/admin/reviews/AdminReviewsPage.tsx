@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Eye, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
+import api from '../../../services/api';
 
 interface ReviewReportItem {
   id: string;
@@ -15,35 +16,62 @@ interface ReviewReportItem {
 export const AdminReviewsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [loading, setLoading] = useState(false);
 
-  const [reports, setReports] = useState<ReviewReportItem[]>([
-    {
-      id: 'rp1',
-      reviewContent: '"Huy chuyen bat ngo, rat that long!"',
-      rating: 'Rating: 2/5',
-      reason: 'Khach phan ung khong chinh xac vi huy som',
-      status: 'PENDING',
-      statusLabel: 'Cho xu ly',
-      reportedAt: '03:00 20/09/2026',
-    },
-  ]);
+  const [reports, setReports] = useState<ReviewReportItem[]>([]);
 
-  const handleApprove = (id: string) => {
-    setReports((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, status: 'RESOLVED', statusLabel: 'Da xu ly' } : r
-      )
-    );
-    toast.success('Đã phê duyệt xử lý gỡ bỏ đánh giá vi phạm!', 'Xử Lý Báo Cáo');
+  const fetchReports = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/admin/review-reports');
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        setReports(res.data.data.map((r: any) => ({
+          id: String(r.id),
+          reviewContent: r.reviewSnippet || 'Nội dung đánh giá',
+          rating: `Rating: ${r.rating || 5}/5`,
+          reason: r.reason || 'Đánh giá chuyến đi',
+          status: r.status === 'APPROVED' ? 'RESOLVED' : r.status,
+          statusLabel: r.status === 'APPROVED' ? 'Đã duyệt' : r.status === 'REJECTED' ? 'Từ chối' : 'Chờ xử lý',
+          reportedAt: r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : 'Mới gửi',
+        })));
+      }
+    } catch (err) {
+      console.warn('Could not fetch review reports from API, fallback:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReject = (id: string) => {
-    setReports((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, status: 'REJECTED', statusLabel: 'Tu choi' } : r
-      )
-    );
-    toast.warning('Đã từ chối yêu cầu gỡ bỏ đánh giá!', 'Từ Chối Yêu Cầu');
+  React.useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const handleApprove = async (id: string) => {
+    try {
+      await api.patch(`/admin/review-reports/${id}/status`, null, { params: { status: 'APPROVED' } });
+      setReports((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, status: 'RESOLVED', statusLabel: 'Đã duyệt' } : r
+        )
+      );
+      toast.success('Đã phê duyệt xử lý đánh giá thành công!', 'Đồng Bộ CSDL');
+    } catch (err) {
+      toast.error('Lỗi khi phê duyệt báo cáo', 'Thất Bại');
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      await api.patch(`/admin/review-reports/${id}/status`, null, { params: { status: 'REJECTED' } });
+      setReports((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, status: 'REJECTED', statusLabel: 'Từ chối' } : r
+        )
+      );
+      toast.warning('Đã từ chối yêu cầu xử lý đánh giá!', 'Đồng Bộ CSDL');
+    } catch (err) {
+      toast.error('Lỗi khi từ chối báo cáo', 'Thất Bại');
+    }
   };
 
   const pendingCount = reports.filter((r) => r.status === 'PENDING').length;

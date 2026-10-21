@@ -14,6 +14,8 @@ import { AdminPaymentsPage } from '../pages/admin/payments/AdminPaymentsPage';
 import { AdminReviewsPage } from '../pages/admin/reviews/AdminReviewsPage';
 import { AdminCancellationPoliciesPage } from '../pages/admin/cancellation-policies/AdminCancellationPoliciesPage';
 import { AdminAuditLogsPage } from '../pages/admin/audit-logs/AdminAuditLogsPage';
+import { AdminTripsPage } from '../pages/admin/trips/AdminTripsPage';
+import { AdminBookingsPage } from '../pages/admin/bookings/AdminBookingsPage';
 
 /**
  * =========================================================================
@@ -44,6 +46,12 @@ export const AdminRoutes: React.FC = () => {
                 <Route path="/" element={<AdminDashboardPage />} />
                 <Route path="dashboard" element={<AdminDashboardPage />} />
                 <Route path="/dashboard" element={<AdminDashboardPage />} />
+
+                {/* Nhóm Chuyến xe & Đơn đặt vé */}
+                <Route path="trips" element={<AdminTripsPage />} />
+                <Route path="/trips" element={<AdminTripsPage />} />
+                <Route path="bookings" element={<AdminBookingsPage />} />
+                <Route path="/bookings" element={<AdminBookingsPage />} />
 
                 {/* Nhóm Tài khoản & Đối tác */}
                 <Route path="users" element={<AdminUsersPage />} />
