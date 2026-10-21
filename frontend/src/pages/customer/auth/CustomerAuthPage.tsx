@@ -19,6 +19,7 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import api from '../../../services/api';
+import { toast } from '../../../context/ToastContext';
 
 export const CustomerAuthPage: React.FC = () => {
   const navigate = useNavigate();
@@ -65,6 +66,7 @@ export const CustomerAuthPage: React.FC = () => {
         localStorage.setItem('traveleasy_token', authData.token);
         localStorage.setItem('traveleasy_user', JSON.stringify(authData));
 
+        toast.success(`Đăng nhập thành công! Chào mừng ${authData.fullName}.`, 'Xác Thực Thành Công');
         setSuccessMessage(`Đăng nhập thành công! Chào mừng ${authData.fullName}.`);
         setTimeout(() => {
           // If customer, redirect home. If admin, redirect admin dashboard.
@@ -77,11 +79,14 @@ export const CustomerAuthPage: React.FC = () => {
           }
         }, 600);
       } else {
-        setErrorMessage(res.data?.message || 'Đăng nhập không thành công');
+        const msg = res.data?.message || 'Đăng nhập không thành công';
+        toast.error(msg, 'Đăng Nhập Thất Bại');
+        setErrorMessage(msg);
       }
     } catch (err: any) {
       console.error('Login error:', err);
       const msg = err.response?.data?.message || 'Sai thông tin đăng nhập hoặc tài khoản không tồn tại';
+      toast.error(msg, 'Đăng Nhập Thất Bại');
       setErrorMessage(msg);
     } finally {
       setLoading(false);
@@ -93,12 +98,16 @@ export const CustomerAuthPage: React.FC = () => {
     setErrorMessage(null);
 
     if (regPassword !== regConfirmPassword) {
-      setErrorMessage('Mật khẩu xác nhận không khớp');
+      const msg = 'Mật khẩu xác nhận không khớp với mật khẩu đã nhập';
+      toast.warning(msg, 'Mật Khẩu Không Khớp');
+      setErrorMessage(msg);
       return;
     }
 
     if (!agreeTerms) {
-      setErrorMessage('Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật');
+      const msg = 'Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách bảo mật';
+      toast.warning(msg, 'Chưa Xác Nhận');
+      setErrorMessage(msg);
       return;
     }
 
@@ -117,16 +126,20 @@ export const CustomerAuthPage: React.FC = () => {
         localStorage.setItem('traveleasy_token', authData.token);
         localStorage.setItem('traveleasy_user', JSON.stringify(authData));
 
+        toast.success(`Đăng ký tài khoản thành công! Xin chào ${authData.fullName}.`, 'Đăng Ký Thành Công');
         setSuccessMessage('Đăng ký tài khoản thành công! Tự động đăng nhập...');
         setTimeout(() => {
           navigate('/');
         }, 800);
       } else {
-        setErrorMessage(res.data?.message || 'Đăng ký không thành công');
+        const msg = res.data?.message || 'Đăng ký không thành công';
+        toast.error(msg, 'Đăng Ký Thất Bại');
+        setErrorMessage(msg);
       }
     } catch (err: any) {
       console.error('Register error:', err);
       const msg = err.response?.data?.message || 'Đăng ký thất bại. Email hoặc số điện thoại có thể đã được sử dụng.';
+      toast.error(msg, 'Đăng Ký Thất Bại');
       setErrorMessage(msg);
     } finally {
       setLoading(false);
@@ -136,6 +149,7 @@ export const CustomerAuthPage: React.FC = () => {
   const handleFillDemo = (identifier: string, pass: string) => {
     setLoginIdentifier(identifier);
     setLoginPassword(pass);
+    toast.info(`Đã điền tài khoản mẫu (${identifier}).`, 'Tài Khoản Mẫu');
   };
 
   return (

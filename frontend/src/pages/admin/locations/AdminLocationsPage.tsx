@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MapPin, Search, Plus, Edit2, Trash2, Map } from 'lucide-react';
+import { toast } from '../../../context/ToastContext';
 
 interface LocationItem {
   id: string;
@@ -88,6 +89,7 @@ export const AdminLocationsPage: React.FC = () => {
         </div>
 
         <button
+          onClick={() => toast.info('Đang mở form thêm địa điểm mới...', 'Địa Điểm')}
           style={{
             backgroundColor: '#4f46e5',
             color: '#ffffff',
@@ -244,6 +246,7 @@ export const AdminLocationsPage: React.FC = () => {
                   <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                       <button
+                        onClick={() => toast.info(`Đang mở chỉnh sửa địa điểm: ${item.name}`, 'Chỉnh Sửa')}
                         title="Chinh sua"
                         style={{
                           background: 'none',
@@ -258,6 +261,7 @@ export const AdminLocationsPage: React.FC = () => {
                         <Edit2 size={15} />
                       </button>
                       <button
+                        onClick={() => toast.warning(`Đã xóa địa điểm "${item.name}" khỏi danh mục!`, 'Xóa Địa Điểm')}
                         title="Xoa"
                         style={{
                           background: 'none',

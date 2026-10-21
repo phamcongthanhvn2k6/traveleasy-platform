@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Bus, Search, ShieldCheck, PhoneCall, User, Info, Building2, LayoutDashboard, Globe, LogOut } from 'lucide-react';
 import { AuthUser } from '../types';
+import { toast } from '../context/ToastContext';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
@@ -29,6 +30,7 @@ export const Navbar: React.FC = () => {
     localStorage.removeItem('traveleasy_token');
     localStorage.removeItem('traveleasy_user');
     setUser(null);
+    toast.info('Bạn đã đăng xuất khỏi hệ thống thành công.', 'Đăng Xuất');
     navigate('/');
   };
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Armchair, Search, Plus, Edit2, Trash2 } from 'lucide-react';
+import { toast } from '../../../context/ToastContext';
 
 interface SeatTypeItem {
   code: string;
@@ -68,6 +69,7 @@ export const AdminSeatTypesPage: React.FC = () => {
         </div>
 
         <button
+          onClick={() => toast.info('Đang mở form tạo loại ghế mới...', 'Thêm Loại Ghế')}
           style={{
             backgroundColor: '#4f46e5',
             color: '#ffffff',
@@ -213,6 +215,7 @@ export const AdminSeatTypesPage: React.FC = () => {
                 <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                     <button
+                      onClick={() => toast.info(`Đang mở chỉnh sửa loại ghế "${item.name}"...`, 'Chỉnh Sửa')}
                       title="Chinh sua"
                       style={{
                         background: 'none',
@@ -227,6 +230,7 @@ export const AdminSeatTypesPage: React.FC = () => {
                       <Edit2 size={15} />
                     </button>
                     <button
+                      onClick={() => toast.warning(`Đã xóa loại ghế "${item.name}" khỏi danh mục!`, 'Xóa Loại Ghế')}
                       title="Xoa"
                       style={{
                         background: 'none',

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Image, Search, Plus, ExternalLink, Edit2, Trash2 } from 'lucide-react';
+import { toast } from '../../../context/ToastContext';
 
 interface BannerItem {
   id: string;
@@ -73,6 +74,7 @@ export const AdminBannersPage: React.FC = () => {
         </div>
 
         <button
+          onClick={() => toast.info('Đang mở form tải lên banner quảng cáo mới...', 'Banner')}
           style={{
             backgroundColor: '#4f46e5',
             color: '#ffffff',
@@ -283,6 +285,7 @@ export const AdminBannersPage: React.FC = () => {
                   <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                       <button
+                        onClick={() => toast.info(`Đang mở chỉnh sửa banner "${b.title}"`, 'Chỉnh Sửa')}
                         title="Chinh sua"
                         style={{
                           background: 'none',
@@ -297,6 +300,7 @@ export const AdminBannersPage: React.FC = () => {
                         <Edit2 size={15} />
                       </button>
                       <button
+                        onClick={() => toast.warning(`Đã xóa banner "${b.title}" khỏi hệ thống!`, 'Xóa Banner')}
                         title="Xoa"
                         style={{
                           background: 'none',

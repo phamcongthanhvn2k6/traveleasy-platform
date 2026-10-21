@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Eye, CheckCircle2, XCircle } from 'lucide-react';
+import { toast } from '../../../context/ToastContext';
 
 interface ReviewReportItem {
   id: string;
@@ -33,6 +34,7 @@ export const AdminReviewsPage: React.FC = () => {
         r.id === id ? { ...r, status: 'RESOLVED', statusLabel: 'Da xu ly' } : r
       )
     );
+    toast.success('Đã phê duyệt xử lý gỡ bỏ đánh giá vi phạm!', 'Xử Lý Báo Cáo');
   };
 
   const handleReject = (id: string) => {
@@ -41,6 +43,7 @@ export const AdminReviewsPage: React.FC = () => {
         r.id === id ? { ...r, status: 'REJECTED', statusLabel: 'Tu choi' } : r
       )
     );
+    toast.warning('Đã từ chối yêu cầu gỡ bỏ đánh giá!', 'Từ Chối Yêu Cầu');
   };
 
   const pendingCount = reports.filter((r) => r.status === 'PENDING').length;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CreditCard, MessageSquare, Mail, Send } from 'lucide-react';
+import { toast } from '../../../context/ToastContext';
 
 interface GatewayItem {
   id: string;
@@ -23,15 +24,35 @@ export const AdminPaymentsPage: React.FC = () => {
   ]);
 
   const togglePayment = (id: string) => {
+    const target = payments.find((p) => p.id === id);
+    if (!target) return;
+    const willActive = !target.active;
+
     setPayments((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, active: !item.active } : item))
+      prev.map((item) => (item.id === id ? { ...item, active: willActive } : item))
     );
+
+    if (willActive) {
+      toast.success(`Đã kích hoạt cổng thanh toán ${target.name} (${target.env})!`, 'Cổng Thanh Toán');
+    } else {
+      toast.warning(`Đã tạm dừng cổng thanh toán ${target.name} (${target.env})!`, 'Cổng Thanh Toán');
+    }
   };
 
   const toggleNotification = (id: string) => {
+    const target = notifications.find((n) => n.id === id);
+    if (!target) return;
+    const willActive = !target.active;
+
     setNotifications((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, active: !item.active } : item))
+      prev.map((item) => (item.id === id ? { ...item, active: willActive } : item))
     );
+
+    if (willActive) {
+      toast.success(`Đã kích hoạt dịch vụ thông báo ${target.name} (${target.env})!`, 'Dịch Vụ Thông Báo');
+    } else {
+      toast.warning(`Đã tạm dừng dịch vụ thông báo ${target.name} (${target.env})!`, 'Dịch Vụ Thông Báo');
+    }
   };
 
   return (

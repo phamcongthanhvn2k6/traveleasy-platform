@@ -6,6 +6,7 @@ import { AiAssistantWidget } from './components/AiAssistantWidget';
 import { AdminRoutes } from './routes/adminRoutes';
 import { CompanyRoutes } from './routes/companyRoutes';
 import { ClientRoutes } from './routes/clientRoutes';
+import { ToastProvider } from './context/ToastContext';
 
 /**
  * =========================================================================
@@ -44,7 +45,9 @@ const AppContent: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </BrowserRouter>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, Lock, Unlock, Search, Filter } from 'lucide-react';
+import { toast } from '../../../context/ToastContext';
 
 interface UserItem {
   id: string;
@@ -82,11 +83,21 @@ export const AdminUsersPage: React.FC = () => {
   ]);
 
   const toggleUserLock = (id: string) => {
+    const target = users.find((u) => u.id === id);
+    if (!target) return;
+    const willLock = target.status === 'ACTIVE';
+
     setUsers((prev) =>
       prev.map((u) =>
-        u.id === id ? { ...u, status: u.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE' } : u
+        u.id === id ? { ...u, status: willLock ? 'LOCKED' : 'ACTIVE' } : u
       )
     );
+
+    if (willLock) {
+      toast.warning(`Đã khóa tài khoản "${target.email}" thành công!`, 'Khóa Tài Khoản');
+    } else {
+      toast.success(`Đã mở khóa tài khoản "${target.email}" thành công!`, 'Mở Khóa Tài Khoản');
+    }
   };
 
   const filteredUsers = users.filter((u) => {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Trip, Booking } from '../types';
 import api from '../services/api';
 import { X, CheckCircle, ShieldCheck } from 'lucide-react';
+import { toast } from '../context/ToastContext';
 
 interface Props {
   trip: Trip;
@@ -41,9 +42,12 @@ export const CheckoutModal: React.FC<Props> = ({ trip, selectedSeats, points, on
       };
 
       const res = await api.post('/bookings', payload);
+      toast.success(`Đặt vé thành công! Mã đơn của bạn là: ${res.data.data.bookingCode}`, 'Đặt Vé Thành Công');
       onSuccess(res.data.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Có lỗi xảy ra khi đặt vé. Vui lòng thử lại!');
+      const msg = err.response?.data?.message || 'Có lỗi xảy ra khi đặt vé. Vui lòng thử lại!';
+      toast.error(msg, 'Đặt Vé Thất Bại');
+      setError(msg);
     } finally {
       setLoading(false);
     }

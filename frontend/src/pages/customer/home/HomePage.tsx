@@ -4,6 +4,7 @@ import { TripCard } from '../../../components/TripCard';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { Trip, Booking } from '../../../types';
 import api from '../../../services/api';
+import { toast } from '../../../context/ToastContext';
 import { 
   ShieldCheck, 
   Headphones, 
@@ -44,10 +45,17 @@ export const HomePage: React.FC = () => {
       const res = await api.get('/trips/search', {
         params: { origin, destination }
       });
-      setTrips(res.data.data || []);
+      const data = res.data.data || [];
+      setTrips(data);
+      if (data.length > 0) {
+        toast.success(`Tìm thấy ${data.length} chuyến xe phù hợp từ ${origin} đi ${destination}!`, 'Kết Quả Tìm Kiếm');
+      } else {
+        toast.info(`Không có chuyến xe trực tiếp từ ${origin} đi ${destination}. Đang hiển thị danh sách gợi ý.`, 'Thông Báo Chuyến Xe');
+      }
     } catch (err) {
       console.error('Error fetching trips:', err);
       setTrips([]);
+      toast.error('Lỗi khi tải danh sách chuyến xe. Vui lòng thử lại!', 'Lỗi Tìm Kiếm');
     } finally {
       setLoading(false);
     }
@@ -56,6 +64,7 @@ export const HomePage: React.FC = () => {
   const handleSearch = (origin: string, destination: string, date: string) => {
     setSearchParams({ origin, destination });
     setHasSearched(true);
+    toast.info(`Đang tìm kiếm chuyến xe từ ${origin} đi ${destination} ngày ${date}...`, 'Tìm Chuyến Xe');
     fetchTrips(origin, destination);
     setTimeout(() => {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -65,6 +74,7 @@ export const HomePage: React.FC = () => {
   const handleQuickRouteClick = (origin: string, destination: string) => {
     setSearchParams({ origin, destination });
     setHasSearched(true);
+    toast.info(`Đang tải chuyến xe tuyến ${origin} đi ${destination}...`, 'Tuyến Phổ Biến');
     fetchTrips(origin, destination);
     setTimeout(() => {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth' });

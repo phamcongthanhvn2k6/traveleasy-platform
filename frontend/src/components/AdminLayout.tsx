@@ -19,6 +19,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { AuthUser } from '../types';
+import { toast } from '../context/ToastContext';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -40,6 +41,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const handleLogout = () => {
     localStorage.removeItem('traveleasy_token');
     localStorage.removeItem('traveleasy_user');
+    toast.info('Bạn đã đăng xuất an toàn khỏi Cổng Quản trị.', 'Đăng Xuất Quản Trị');
     navigate('/admin/login', { replace: true });
   };
 

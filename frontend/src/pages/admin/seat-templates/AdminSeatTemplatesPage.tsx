@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Armchair, Search, Plus, Eye, Edit2, Grid, Trash2 } from 'lucide-react';
+import { toast } from '../../../context/ToastContext';
 
 interface SeatTemplateItem {
   id: string;
@@ -72,6 +73,7 @@ export const AdminSeatTemplatesPage: React.FC = () => {
         </div>
 
         <button
+          onClick={() => toast.info('Đang mở trình tạo mẫu sơ đồ ghế mới...', 'Mẫu Ghế')}
           style={{
             backgroundColor: '#4f46e5',
             color: '#ffffff',
@@ -224,6 +226,7 @@ export const AdminSeatTemplatesPage: React.FC = () => {
                   <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                       <button
+                        onClick={() => toast.info(`Xem chi tiết sơ đồ ghế: ${item.name}`, 'Sơ Đồ Ghế')}
                         title="Xem so do"
                         style={{
                           background: 'none',
@@ -238,6 +241,7 @@ export const AdminSeatTemplatesPage: React.FC = () => {
                         <Eye size={15} />
                       </button>
                       <button
+                        onClick={() => toast.info(`Mở chỉnh sửa mẫu: ${item.name}`, 'Chỉnh Sửa')}
                         title="Chinh sua"
                         style={{
                           background: 'none',
@@ -252,6 +256,7 @@ export const AdminSeatTemplatesPage: React.FC = () => {
                         <Edit2 size={15} />
                       </button>
                       <button
+                        onClick={() => toast.info(`Mở bảng thiết kế cấu hình ghế: ${item.name}`, 'Cấu Hình')}
                         title="Cau hinh ghe"
                         style={{
                           background: 'none',
@@ -266,6 +271,7 @@ export const AdminSeatTemplatesPage: React.FC = () => {
                         <Grid size={15} />
                       </button>
                       <button
+                        onClick={() => toast.warning(`Đã xóa mẫu sơ đồ ghế "${item.name}"!`, 'Xóa Mẫu')}
                         title="Xoa"
                         style={{
                           background: 'none',

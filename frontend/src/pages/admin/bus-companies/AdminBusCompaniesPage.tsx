@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bus, Eye, Ban, Check } from 'lucide-react';
+import { toast } from '../../../context/ToastContext';
 
 interface BusCompanyItem {
   id: string;
@@ -59,6 +60,10 @@ export const AdminBusCompaniesPage: React.FC = () => {
   ]);
 
   const toggleCompanyStatus = (id: string) => {
+    const target = companies.find((c) => c.id === id);
+    if (!target) return;
+    const willSuspend = target.status === 'ACTIVE';
+
     setCompanies((prev) =>
       prev.map((c) => {
         if (c.id !== id) return c;
@@ -68,6 +73,12 @@ export const AdminBusCompaniesPage: React.FC = () => {
         return { ...c, status: 'ACTIVE', statusLabel: 'Hoat dong' };
       })
     );
+
+    if (willSuspend) {
+      toast.warning(`Đã tạm ngưng hoạt động nhà xe "${target.name}"!`, 'Tạm Ngưng Nhà Xe');
+    } else {
+      toast.success(`Đã kích hoạt nhà xe "${target.name}" hoạt động trở lại!`, 'Kích Hoạt Nhà Xe');
+    }
   };
 
   const pendingCount = companies.filter((c) => c.status === 'PENDING').length;

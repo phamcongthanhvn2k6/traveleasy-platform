@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import api from '../../../services/api';
 import { Booking } from '../../../types';
 import { Search, ShieldCheck, QrCode, MapPin } from 'lucide-react';
+import { toast } from '../../../context/ToastContext';
 
 export const TicketLookupPage: React.FC = () => {
   const [code, setCode] = useState('');
@@ -11,7 +12,10 @@ export const TicketLookupPage: React.FC = () => {
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code.trim()) return;
+    if (!code.trim()) {
+      toast.warning('Vui lòng nhập mã đặt vé để tra cứu!', 'Thiếu Mã Vé');
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -19,9 +23,18 @@ export const TicketLookupPage: React.FC = () => {
 
     try {
       const res = await api.get(`/bookings/code/${code.trim()}`);
-      setBooking(res.data.data);
+      if (res.data?.data) {
+        setBooking(res.data.data);
+        toast.success(`Tra cứu thành công đơn vé ${res.data.data.bookingCode}!`, 'Tra Cứu Vé');
+      } else {
+        const msg = 'Không tìm thấy thông tin đơn đặt vé với mã này!';
+        setError(msg);
+        toast.error(msg, 'Tra Cứu Thất Bại');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Không tìm thấy thông tin đơn đặt vé với mã này!');
+      const msg = err.response?.data?.message || 'Không tìm thấy thông tin đơn đặt vé với mã này!';
+      setError(msg);
+      toast.error(msg, 'Tra Cứu Thất Bại');
     } finally {
       setLoading(false);
     }

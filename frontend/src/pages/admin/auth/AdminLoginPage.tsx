@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import api from '../../../services/api';
 import { AuthUser } from '../../../types';
+import { toast } from '../../../context/ToastContext';
 
 export const AdminLoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export const AdminLoginPage: React.FC = () => {
     setIdentifier(emailVal);
     setPassword('Rikkei@123');
     setErrorMsg(null);
+    toast.info(`Đã điền tài khoản mẫu (${emailVal}).`, 'Tài Khoản Quản Trị');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,11 +46,15 @@ export const AdminLoginPage: React.FC = () => {
     setSuccessMsg(null);
 
     if (!identifier.trim()) {
-      setErrorMsg('Vui lòng nhập Email hoặc Tài khoản quản trị.');
+      const msg = 'Vui lòng nhập Email hoặc Tài khoản quản trị.';
+      toast.warning(msg, 'Thiếu Thông Tin');
+      setErrorMsg(msg);
       return;
     }
     if (!password) {
-      setErrorMsg('Vui lòng nhập mật khẩu quản trị.');
+      const msg = 'Vui lòng nhập mật khẩu quản trị.';
+      toast.warning(msg, 'Thiếu Mật Khẩu');
+      setErrorMsg(msg);
       return;
     }
 
@@ -67,9 +73,9 @@ export const AdminLoginPage: React.FC = () => {
         // Hủy lưu thông tin và thông báo vi phạm phân quyền
         localStorage.removeItem('traveleasy_token');
         localStorage.removeItem('traveleasy_user');
-        setErrorMsg(
-          `Từ chối quyền truy cập! Tài khoản "${identifier}" mang vai trò ${data?.role || 'CUSTOMER'}. Cổng Quản trị viên chỉ cho phép tài khoản có vai trò ADMIN.`
-        );
+        const errText = `Từ chối quyền truy cập! Tài khoản "${identifier}" mang vai trò ${data?.role || 'CUSTOMER'}. Cổng Quản trị viên chỉ cho phép tài khoản có vai trò ADMIN.`;
+        toast.error(errText, 'Truy Cập Bị Từ Chối');
+        setErrorMsg(errText);
         setLoading(false);
         return;
       }
@@ -78,6 +84,7 @@ export const AdminLoginPage: React.FC = () => {
       localStorage.setItem('traveleasy_token', data.token);
       localStorage.setItem('traveleasy_user', JSON.stringify(data));
 
+      toast.success(`Xác thực thành công! Xin chào Quản trị viên ${data.fullName}.`, 'Đăng Nhập Thành Công');
       setSuccessMsg(`Xác thực thành công! Xin chào Quản trị viên ${data.fullName}. Đang chuyển hướng...`);
 
       // Chuyển hướng tới trang Admin Dashboard hoặc trang trước đó
@@ -89,6 +96,7 @@ export const AdminLoginPage: React.FC = () => {
     } catch (err: any) {
       console.error('Admin Login failed:', err);
       const serverMsg = err.response?.data?.message || 'Tài khoản hoặc mật khẩu quản trị không chính xác.';
+      toast.error(serverMsg, 'Xác Thực Thất Bại');
       setErrorMsg(serverMsg);
     } finally {
       setLoading(false);

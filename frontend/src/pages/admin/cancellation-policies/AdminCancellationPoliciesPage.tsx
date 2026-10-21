@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, Search, Plus, Eye, Edit2, Trash2, Building, Settings2, Info } from 'lucide-react';
+import { toast } from '../../../context/ToastContext';
 
 interface PolicyItem {
   id: string;
@@ -71,6 +72,7 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
 
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
+            onClick={() => toast.info('Đang mở form tạo quy tắc hoàn hủy mới...', 'Quy Tắc Hủy')}
             style={{
               backgroundColor: '#ffffff',
               color: '#334155',
@@ -89,6 +91,7 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
             <span>Them quy tac</span>
           </button>
           <button
+            onClick={() => toast.info('Đang mở form tạo chính sách hủy vé mới...', 'Chính Sách Hủy')}
             style={{
               backgroundColor: '#4f46e5',
               color: '#ffffff',
@@ -288,6 +291,7 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
                 <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                     <button
+                      onClick={() => toast.info(`Xem chi tiết chính sách: ${item.name}`, 'Chính Sách')}
                       title="Xem quy tac"
                       style={{
                         background: 'none',
@@ -302,6 +306,7 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
                       <Eye size={15} />
                     </button>
                     <button
+                      onClick={() => toast.info(`Mở chỉnh sửa chính sách: ${item.name}`, 'Chỉnh Sửa')}
                       title="Chinh sua"
                       style={{
                         background: 'none',
@@ -316,6 +321,7 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
                       <Edit2 size={15} />
                     </button>
                     <button
+                      onClick={() => toast.warning(`Đã xóa chính sách "${item.name}"!`, 'Xóa Chính Sách')}
                       title="Xoa"
                       style={{
                         background: 'none',
