@@ -7,6 +7,7 @@ import { TicketLookupPage } from '../pages/customer/ticket-lookup/TicketLookupPa
 import { CustomerAuthPage } from '../pages/customer/auth/CustomerAuthPage';
 import { MyTicketsPage } from '../pages/customer/my-tickets/MyTicketsPage';
 import { UserProfilePage } from '../pages/customer/profile/UserProfilePage';
+import { PolicyPage } from '../pages/customer/policy/PolicyPage';
 
 /**
  * =========================================================================
@@ -37,6 +38,9 @@ export const ClientRoutes: React.FC = () => {
 
       {/* Chức năng 8: Hồ sơ cá nhân & Sổ tay hành khách thân quen */}
       <Route path="/profile" element={<UserProfilePage />} />
+
+      {/* Chính sách, Quy chế hoạt động & Câu hỏi thường gặp */}
+      <Route path="/policy" element={<PolicyPage />} />
 
       {/* Các route mở rộng của phân hệ Users:
           - /trips/:tripId/seats: Chọn sơ đồ ghế 2 tầng (Thành viên 3)

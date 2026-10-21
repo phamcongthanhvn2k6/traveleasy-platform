@@ -17,6 +17,7 @@ export const TripSearchPage: React.FC = () => {
   const origin = searchParams.get('origin') || 'TP. Hồ Chí Minh';
   const destination = searchParams.get('destination') || 'Đà Lạt';
   const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+  const companyParam = searchParams.get('company') || '';
 
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(false);
@@ -27,8 +28,19 @@ export const TripSearchPage: React.FC = () => {
     timeSlots: [],
     priceRanges: [],
     busTypes: [],
-    companies: [],
+    companies: companyParam ? [companyParam] : [],
   });
+
+  useEffect(() => {
+    if (companyParam) {
+      setFilters((prev) => ({
+        ...prev,
+        companies: prev.companies.some((c) => c.toLowerCase() === companyParam.toLowerCase())
+          ? prev.companies
+          : [...prev.companies, companyParam],
+      }));
+    }
+  }, [companyParam]);
 
   // Booking Modal State
   const [bookingTrip, setBookingTrip] = useState<Trip | null>(null);
@@ -135,7 +147,10 @@ export const TripSearchPage: React.FC = () => {
 
         // 4. Company filter
         if (filters.companies.length > 0) {
-          if (!filters.companies.includes(t.busCompanyName)) {
+          const matched = filters.companies.some(
+            (c) => t.busCompanyName && (t.busCompanyName === c || t.busCompanyName.toLowerCase().includes(c.toLowerCase()))
+          );
+          if (!matched) {
             return false;
           }
         }
