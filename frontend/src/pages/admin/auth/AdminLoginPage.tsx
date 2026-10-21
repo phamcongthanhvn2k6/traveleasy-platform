@@ -22,8 +22,8 @@ export const AdminLoginPage: React.FC = () => {
   const location = useLocation();
 
   // Form State
-  const [identifier, setIdentifier] = useState('admin@traveleasy.vn');
-  const [password, setPassword] = useState('Rikkei@123');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
@@ -31,14 +31,6 @@ export const AdminLoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
-  // Quick fill helper
-  const handleQuickFill = (emailVal: string) => {
-    setIdentifier(emailVal);
-    setPassword('Rikkei@123');
-    setErrorMsg(null);
-    toast.info(`Đã điền tài khoản mẫu (${emailVal}).`, 'Tài Khoản Quản Trị');
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -313,7 +305,7 @@ export const AdminLoginPage: React.FC = () => {
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="admin@traveleasy.vn"
+                  placeholder="Nhập email quản trị viên..."
                   required
                   style={{
                     width: '100%',
@@ -363,7 +355,7 @@ export const AdminLoginPage: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
+                  placeholder="Nhập mật khẩu quản trị..."
                   required
                   style={{
                     width: '100%',
@@ -459,79 +451,6 @@ export const AdminLoginPage: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Filling Bar */}
-          <div
-            style={{
-              marginTop: '24px',
-              paddingTop: '20px',
-              borderTop: '1px solid #1e293b',
-              textAlign: 'center'
-            }}
-          >
-            <div
-              style={{
-                fontSize: '11.5px',
-                color: '#64748b',
-                textTransform: 'uppercase',
-                fontWeight: 700,
-                letterSpacing: '0.6px',
-                marginBottom: '10px'
-              }}
-            >
-              Tài khoản Quản trị viên mẫu
-            </div>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('admin@traveleasy.vn')}
-                style={{
-                  backgroundColor: '#1e293b',
-                  border: '1px solid #334155',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  fontSize: '11.5px',
-                  color: '#93c5fd',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                👑 Admin Tổng
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('phanthanhphong.admin@traveleasy.vn')}
-                style={{
-                  backgroundColor: '#1e293b',
-                  border: '1px solid #334155',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  fontSize: '11.5px',
-                  color: '#c4b5fd',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                🛡️ Admin Kỹ Thuật
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('trungkien.admin@traveleasy.vn')}
-                style={{
-                  backgroundColor: '#1e293b',
-                  border: '1px solid #334155',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  fontSize: '11.5px',
-                  color: '#a7f3d0',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                🛡️ Admin Vận Hành
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Card Footer: Security Notice */}

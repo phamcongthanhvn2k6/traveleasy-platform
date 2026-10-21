@@ -30,8 +30,8 @@ export const CustomerAuthPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(isRegisterParam ? 'register' : 'login');
 
   // Login form state
-  const [loginIdentifier, setLoginIdentifier] = useState('0912345678');
-  const [loginPassword, setLoginPassword] = useState('Rikkei@123');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
@@ -149,12 +149,6 @@ export const CustomerAuthPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleFillDemo = (identifier: string, pass: string) => {
-    setLoginIdentifier(identifier);
-    setLoginPassword(pass);
-    toast.info(`Đã điền tài khoản mẫu (${identifier}).`, 'Tài Khoản Mẫu');
   };
 
   return (
@@ -638,38 +632,6 @@ export const CustomerAuthPage: React.FC = () => {
                   {loading ? 'Đang xác thực...' : 'ĐĂNG NHẬP NGAY →'}
                 </button>
 
-                {/* DEMO 1-CLICK TEST CUSTOMER LOGIN */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoginIdentifier('0912345678');
-                    setLoginPassword('Rikkei@123');
-                    setTimeout(() => {
-                      const form = document.querySelector('form');
-                      if (form) form.requestSubmit();
-                    }, 150);
-                  }}
-                  style={{
-                    marginTop: '12px',
-                    backgroundColor: '#eff6ff',
-                    color: '#2563eb',
-                    border: '1.5px dashed #3b82f6',
-                    borderRadius: '10px',
-                    padding: '11px',
-                    width: '100%',
-                    fontSize: '13px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  ⚡ [DEMO BẢO VỆ] Đăng Nhập Nhanh Khách Hàng (0912 345 678)
-                </button>
-
                 {/* SOCIAL DIVIDER */}
                 <div style={{
                   display: 'flex',
@@ -686,11 +648,11 @@ export const CustomerAuthPage: React.FC = () => {
                   <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
                 </div>
 
-                {/* SOCIAL QUICK LOGIN BUTTONS */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '22px' }}>
+                {/* SOCIAL LOGIN BUTTONS */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <button
                     type="button"
-                    onClick={() => handleFillDemo('customer@gmail.com', 'Rikkei@123')}
+                    onClick={() => toast.info('Tính năng đăng nhập Google đang được đồng bộ OAuth2.', 'Google ID')}
                     style={{
                       border: '1px solid #e2e8f0',
                       backgroundColor: '#ffffff',
@@ -711,7 +673,7 @@ export const CustomerAuthPage: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={() => handleFillDemo('0912345678', 'Rikkei@123')}
+                    onClick={() => toast.info('Vui lòng nhập Số điện thoại và Mật khẩu ở trên để đăng nhập.', 'Đăng Nhập')}
                     style={{
                       border: '1px solid #e2e8f0',
                       backgroundColor: '#ffffff',
@@ -729,40 +691,6 @@ export const CustomerAuthPage: React.FC = () => {
                   >
                     <span style={{ color: '#059669' }}>📱</span> Số điện thoại OTP
                   </button>
-                </div>
-
-                {/* DEMO ACCOUNTS HINT BOX */}
-                <div style={{
-                  backgroundColor: '#f8fafc',
-                  border: '1px dashed #cbd5e1',
-                  borderRadius: '12px',
-                  padding: '12px 14px',
-                  fontSize: '12px',
-                  color: '#475569'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: '#1e293b', marginBottom: '4px' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#059669' }} />
-                    Tài khoản thử nghiệm có sẵn:
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
-                    <span>SĐT: <strong>0912345678</strong> | Pass: <strong>Rikkei@123</strong> (CUSTOMER)</span>
-                    <button
-                      type="button"
-                      onClick={() => handleFillDemo('0912345678', 'Rikkei@123')}
-                      style={{
-                        backgroundColor: '#e2e8f0',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '3px 8px',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        color: '#0f172a'
-                      }}
-                    >
-                      Dùng tài khoản này
-                    </button>
-                  </div>
                 </div>
               </form>
             ) : (

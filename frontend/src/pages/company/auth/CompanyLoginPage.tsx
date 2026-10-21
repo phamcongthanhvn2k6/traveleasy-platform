@@ -21,18 +21,11 @@ export const CompanyLoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [identifier, setIdentifier] = useState('partner@traveleasy.vn');
-  const [password, setPassword] = useState('Rikkei@123');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const handleQuickFill = (emailVal: string) => {
-    setIdentifier(emailVal);
-    setPassword('Rikkei@123');
-    setErrorMsg(null);
-    toast.info(`Đã điền tài khoản đối tác: ${emailVal}`, 'Chọn Nhà Xe');
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,7 +180,7 @@ export const CompanyLoginPage: React.FC = () => {
                 required
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="partner@traveleasy.vn"
+                placeholder="Nhập email hoặc số điện thoại điều hành..."
                 style={{
                   width: '100%',
                   backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -214,7 +207,7 @@ export const CompanyLoginPage: React.FC = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Nhập mật khẩu tài khoản..."
                 style={{
                   width: '100%',
                   backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -271,127 +264,8 @@ export const CompanyLoginPage: React.FC = () => {
           </button>
         </form>
 
-        {/* Demo Fast Fill Buttons */}
-        <div style={{ marginTop: '24px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '18px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.5px' }}>
-            ⚡ TÀI KHOẢN ĐỐI TÁC THỬ NGHIỆM (DEMO BẢO VỆ):
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={() => handleQuickFill('partner@traveleasy.vn')}
-              style={{
-                backgroundColor: 'rgba(13, 148, 136, 0.12)',
-                border: '1px solid rgba(13, 148, 136, 0.3)',
-                color: '#2dd4bf',
-                padding: '9px 12px',
-                borderRadius: '8px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <span>1. TravelEasy Express</span>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>partner@traveleasy.vn</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickFill('dieuhanh@hoamaivungtau.com.vn')}
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#e2e8f0',
-                padding: '9px 12px',
-                borderRadius: '8px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <span>2. Xe Hoa Mai Vũng Tàu</span>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>dieuhanh@hoamaivungtau...</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickFill('dieuhanh@hoanglongasia.com')}
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#e2e8f0',
-                padding: '9px 12px',
-                borderRadius: '8px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <span>3. Xe Hoàng Long</span>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>dieuhanh@hoanglong...</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickFill('dieuhanh@thanhbuoi.com.vn')}
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#e2e8f0',
-                padding: '9px 12px',
-                borderRadius: '8px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <span>4. Thành Bưởi Limousine</span>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>dieuhanh@thanhbuoi...</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickFill('dieuhanh@xesaoviet.com.vn')}
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#e2e8f0',
-                padding: '9px 12px',
-                borderRadius: '8px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <span>5. Sao Việt Express</span>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>dieuhanh@xesaoviet...</span>
-            </button>
-          </div>
-        </div>
-
         {/* Back Link & Switch Portal Link */}
-        <div style={{ textAlign: 'center', marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ textAlign: 'center', marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <Link
             to="/"
             style={{
