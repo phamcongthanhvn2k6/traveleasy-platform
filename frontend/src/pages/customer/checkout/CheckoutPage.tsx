@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
+import { paymentService, PaymentInitResponse } from '../../../services/paymentService';
 import { Trip, Booking } from '../../../types';
 import { CheckoutTimer } from './components/CheckoutTimer';
 import { PassengerInfoForm, PassengerInfo } from './components/PassengerInfoForm';
@@ -87,13 +88,26 @@ export const CheckoutPage: React.FC = () => {
     }
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('VNPAY_QR');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('VIETQR');
   const [loading, setLoading] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
 
-  // QR Modal State
+  // QR Modal & Payment State
   const [showQrModal, setShowQrModal] = useState(false);
   const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
+  const [paymentInitData, setPaymentInitData] = useState<PaymentInitResponse | null>(null);
+
+  // Check if returning from VNPAY with failure
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('vnpay_status') === 'failed') {
+      const bookingCode = params.get('bookingCode');
+      toast.warning(
+        `Giao dịch VNPAY cho đơn ${bookingCode || ''} chưa hoàn tất hoặc bạn đã hủy thao tác. Bạn vẫn còn thời gian giữ chỗ để thử lại!`,
+        'Thanh Toán Chưa Hoàn Tất'
+      );
+    }
+  }, [location.search]);
 
   const handleTimerExpire = () => {
     toast.error('Thời gian giữ chỗ 10 phút đã hết hạn! Ghế đã được giải phóng.', 'Hết Hạn');
@@ -138,19 +152,43 @@ export const CheckoutPage: React.FC = () => {
         customerEmail: passengerInfo.email,
         pickupPointId: points.pickup,
         dropoffPointId: points.dropoff,
-        paymentMethod: paymentMethod === 'VNPAY_QR' ? 'VNPAY' : paymentMethod,
+        paymentMethod: paymentMethod,
         note: passengerInfo.note,
       };
 
+      // 1. Tạo đơn đặt vé trong database
       const res = await api.post('/bookings', payload);
       const bookingData: Booking = res.data.data;
       setCreatedBooking(bookingData);
 
-      if (paymentMethod === 'VNPAY_QR') {
-        // Open QR Modal
+      // 2. Khởi tạo phiên thanh toán qua Payment API
+      const initRes = await paymentService.initiatePayment({
+        bookingCode: bookingData.bookingCode,
+        paymentMethod: paymentMethod,
+      });
+      setPaymentInitData(initRes);
+
+      if (paymentMethod === 'VNPAY') {
+        if (initRes.paymentUrl) {
+          toast.info('Đang chuyển hướng sang Cổng thanh toán VNPAY...', 'VNPAY Gateway');
+          // Chuyển hướng trình duyệt sang cổng VNPAY Sandbox chính thức
+          setTimeout(() => {
+            window.location.href = initRes.paymentUrl!;
+          }, 800);
+        } else {
+          toast.error('Không thể tạo liên kết thanh toán VNPAY.', 'Lỗi Cổng Thanh Toán');
+        }
+      } else if (paymentMethod === 'VIETQR') {
+        // Mở Modal VietQR Napas 24/7 tự động nhận diện giao dịch
+        setShowQrModal(true);
+      } else if (paymentMethod === 'MOMO' || paymentMethod === 'ZALOPAY') {
+        if (initRes.paymentUrl) {
+          toast.info(`Đang mở cổng thanh toán ${paymentMethod}...`, 'Ví Điện Tử');
+          window.open(initRes.paymentUrl, '_blank');
+        }
         setShowQrModal(true);
       } else {
-        // Direct Success
+        // COD - Tiền mặt khi lên xe
         toast.success(`Đặt vé thành công! Mã đơn: ${bookingData.bookingCode}`, 'Thành Công');
         sessionStorage.removeItem('traveleasy_checkout_data');
         navigate(`/tickets/${bookingData.bookingCode}`);
@@ -168,7 +206,7 @@ export const CheckoutPage: React.FC = () => {
     sessionStorage.removeItem('traveleasy_checkout_data');
     if (createdBooking) {
       toast.success('Hệ thống đã nhận được thanh toán chuyển khoản! Vé đã được kích hoạt.', 'Thanh Toán Thành Công');
-      navigate(`/tickets/${createdBooking.bookingCode}`);
+      navigate(`/tickets/${createdBooking.bookingCode}?payment=success`);
     } else {
       navigate('/lookup');
     }
@@ -286,11 +324,13 @@ export const CheckoutPage: React.FC = () => {
         </div>
       </div>
 
-      {/* QR Payment Banking Modal */}
+      {/* QR Payment Banking Modal (VietQR Napas 24/7) */}
       {showQrModal && createdBooking && (
         <QrPaymentModal
           bookingCode={createdBooking.bookingCode}
           totalAmount={createdBooking.totalAmount}
+          qrCodeUrl={paymentInitData?.qrCodeUrl}
+          bankDetails={paymentInitData?.bankDetails}
           onSuccess={handleQrSuccess}
           onClose={() => setShowQrModal(false)}
         />
@@ -299,3 +339,4 @@ export const CheckoutPage: React.FC = () => {
   );
 };
 
+export default CheckoutPage;

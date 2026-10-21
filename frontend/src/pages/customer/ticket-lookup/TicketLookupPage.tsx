@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../../services/api';
 import { Booking } from '../../../types';
-import { Search, ShieldCheck, QrCode, MapPin, Printer, ArrowLeft, Copy, Check } from 'lucide-react';
+import { Search, ShieldCheck, QrCode, MapPin, Printer, ArrowLeft, Copy, Check, CheckCircle2 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 
 export const TicketLookupPage: React.FC = () => {
   const { code: routeCode } = useParams<{ code?: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isPaymentSuccess = new URLSearchParams(location.search).get('payment') === 'success';
 
   const [code, setCode] = useState(routeCode || '');
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -109,6 +112,33 @@ export const TicketLookupPage: React.FC = () => {
         {error && (
           <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '14px', borderRadius: '8px', fontSize: '14px', textAlign: 'center', marginBottom: '20px' }}>
             {error}
+          </div>
+        )}
+
+        {isPaymentSuccess && (
+          <div
+            style={{
+              backgroundColor: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              color: '#065f46',
+              padding: '14px 18px',
+              borderRadius: '12px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              fontSize: '14px',
+              fontWeight: 600,
+              boxShadow: '0 2px 4px rgba(5,150,105,0.08)',
+            }}
+          >
+            <CheckCircle2 size={24} color="#059669" style={{ flexShrink: 0 }} />
+            <div>
+              <div style={{ fontWeight: 800, color: '#047857' }}>Thanh Toán Thành Công!</div>
+              <div style={{ fontSize: '13px', color: '#065f46', marginTop: '2px' }}>
+                Hệ thống TravelEasy đã xác nhận thanh toán hợp lệ. Vé điện tử và mã QR lên xe của bạn đã sẵn sàng dưới đây.
+              </div>
+            </div>
           </div>
         )}
 

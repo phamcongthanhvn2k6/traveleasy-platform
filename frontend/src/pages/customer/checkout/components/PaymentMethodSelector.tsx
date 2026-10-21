@@ -1,7 +1,7 @@
 import React from 'react';
 import { QrCode, CreditCard, Wallet, Banknote, ShieldCheck } from 'lucide-react';
 
-export type PaymentMethodType = 'VNPAY_QR' | 'MOMO' | 'CARD' | 'CASH_ON_BOARD';
+export type PaymentMethodType = 'VIETQR' | 'VNPAY' | 'MOMO' | 'ZALOPAY' | 'COD';
 
 interface Props {
   selectedMethod: PaymentMethodType;
@@ -11,36 +11,45 @@ interface Props {
 export const PaymentMethodSelector: React.FC<Props> = ({ selectedMethod, onChange }) => {
   const methods = [
     {
-      id: 'VNPAY_QR' as PaymentMethodType,
-      name: 'Chuyển khoản QR Ngân hàng / VNPay-QR (Khuyên dùng)',
-      desc: 'Quét mã QR tức thì qua 40+ ứng dụng Ngân hàng (Vietcombank, Techcombank, MB, BIDV...) không cần nhập số tài khoản.',
+      id: 'VIETQR' as PaymentMethodType,
+      name: 'Chuyển khoản VietQR QuickPay (Khuyên dùng)',
+      desc: 'Quét mã QR Napas 24/7 tức thì từ 40+ App Ngân hàng (Vietcombank, MB, Techcombank, BIDV...). Hệ thống tự động xác nhận trong 3 giây.',
       badge: 'Khuyên dùng - Nhanh nhất',
       icon: QrCode,
       iconColor: '#2563eb',
       iconBg: '#eff6ff',
     },
     {
+      id: 'VNPAY' as PaymentMethodType,
+      name: 'Cổng VNPAY (Thẻ ATM nội địa, Thẻ quốc tế Visa/Master, VNPAY-QR)',
+      desc: 'Cổng thanh toán điện tử chuẩn Ngân hàng Nhà nước. Hỗ trợ thẻ ATM nội địa 36 ngân hàng và thẻ Visa/MasterCard bảo mật 3D-Secure OTP.',
+      badge: 'Cổng Quốc Gia',
+      icon: CreditCard,
+      iconColor: '#dc2626',
+      iconBg: '#fef2f2',
+    },
+    {
       id: 'MOMO' as PaymentMethodType,
       name: 'Ví Điện Tử MoMo',
-      desc: 'Thanh toán bảo mật một chạm qua ứng dụng Ví MoMo tiện lợi.',
-      badge: 'Hoàn tiền tích lũy',
+      desc: 'Thanh toán bảo mật một chạm qua ứng dụng Ví MoMo tiện lợi và nhận điểm tích lũy.',
+      badge: 'Tích điểm',
       icon: Wallet,
       iconColor: '#d946ef',
       iconBg: '#fdf4ff',
     },
     {
-      id: 'CARD' as PaymentMethodType,
-      name: 'Thẻ ATM Nội Địa / Thẻ Quốc Tế (Visa, Master, JCB)',
-      desc: 'Hỗ trợ tất cả thẻ ngân hàng nội địa qua cổng Napas và thẻ tín dụng quốc tế bảo mật 3D Secure.',
+      id: 'ZALOPAY' as PaymentMethodType,
+      name: 'Ví Điện Tử ZaloPay',
+      desc: 'Thanh toán tức thì ngay trong ứng dụng Zalo hoặc ZaloPay không cần liên kết phức tạp.',
       badge: null,
-      icon: CreditCard,
-      iconColor: '#059669',
-      iconBg: '#ecfdf5',
+      icon: Wallet,
+      iconColor: '#0284c7',
+      iconBg: '#f0f9ff',
     },
     {
-      id: 'CASH_ON_BOARD' as PaymentMethodType,
+      id: 'COD' as PaymentMethodType,
       name: 'Thanh toán tiền mặt khi lên xe',
-      desc: 'Nhận mã đặt vé trước, thanh toán trực tiếp cho tài xế hoặc phụ xe khi có mặt tại điểm đón.',
+      desc: 'Nhận mã đặt vé trước, xuất trình mã vé và thanh toán trực tiếp cho tài xế hoặc phụ xe khi có mặt tại điểm đón.',
       badge: null,
       icon: Banknote,
       iconColor: '#d97706',
@@ -151,4 +160,3 @@ export const PaymentMethodSelector: React.FC<Props> = ({ selectedMethod, onChang
     </div>
   );
 };
-
