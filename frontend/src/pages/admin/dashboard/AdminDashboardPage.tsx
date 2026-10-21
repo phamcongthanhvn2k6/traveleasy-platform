@@ -1,12 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, Bus, TrendingUp, Ticket } from 'lucide-react';
+import api from '../../../services/api';
 
 export const AdminDashboardPage: React.FC = () => {
+  const [stats, setStats] = useState({
+    userCount: 12,
+    busCompanyCount: 4,
+    pendingCompanies: 1,
+    revenue: '3.130.000 đ',
+    confirmedBookings: 7,
+  });
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const [usersRes, companiesRes] = await Promise.allSettled([
+          api.get('/admin/users'),
+          api.get('/admin/bus-companies'),
+        ]);
+
+        let uCount = 12;
+        let cCount = 4;
+        let pending = 1;
+
+        if (usersRes.status === 'fulfilled' && Array.isArray(usersRes.value.data)) {
+          uCount = usersRes.value.data.length;
+        }
+        if (companiesRes.status === 'fulfilled' && Array.isArray(companiesRes.value.data)) {
+          cCount = companiesRes.value.data.length;
+          pending = companiesRes.value.data.filter((c: any) => c.status === 'PENDING' || c.status === 'CHO_DUYET').length;
+        }
+
+        setStats(prev => ({
+          ...prev,
+          userCount: uCount,
+          busCompanyCount: cCount,
+          pendingCompanies: pending,
+        }));
+      } catch (err) {
+        console.error('Failed to load dashboard metrics:', err);
+      }
+    };
+
+    fetchCounts();
+  }, []);
+
   // Dữ liệu hiển thị chuẩn theo kiến trúc TravelEasy Admin
   const kpiStats = [
     {
       label: 'Nguoi dung',
-      value: '7',
+      value: String(stats.userCount),
       subtext: '+12% so voi thang truoc',
       icon: Users,
       iconBg: '#eff6ff',
@@ -14,15 +57,15 @@ export const AdminDashboardPage: React.FC = () => {
     },
     {
       label: 'Nha xe',
-      value: '2',
-      subtext: '1 cho duyet',
+      value: String(stats.busCompanyCount),
+      subtext: `${stats.pendingCompanies} cho duyet`,
       icon: Bus,
       iconBg: '#f0fdf4',
       iconColor: '#16a34a',
     },
     {
       label: 'Tong doanh thu',
-      value: '3.130.000 đ',
+      value: stats.revenue,
       subtext: '',
       icon: TrendingUp,
       iconBg: '#eff6ff',
@@ -30,7 +73,7 @@ export const AdminDashboardPage: React.FC = () => {
     },
     {
       label: 'Dat ve (confirmed)',
-      value: '7',
+      value: String(stats.confirmedBookings),
       subtext: '3 chuyen sap khoi hanh',
       icon: Ticket,
       iconBg: '#fffbeb',
