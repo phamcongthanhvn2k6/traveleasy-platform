@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutGrid,
   Users,
@@ -15,8 +15,10 @@ import {
   Store,
   Search,
   Bell,
-  ChevronDown
+  ChevronDown,
+  LogOut
 } from 'lucide-react';
+import { AuthUser } from '../types';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -24,6 +26,22 @@ interface AdminLayoutProps {
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const [currentUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('traveleasy_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const handleLogout = () => {
+    localStorage.removeItem('traveleasy_token');
+    localStorage.removeItem('traveleasy_user');
+    navigate('/admin/login', { replace: true });
+  };
 
   const navItems = [
     { label: 'Tong quan', path: '/admin/dashboard', icon: LayoutGrid },
@@ -226,7 +244,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
 
         {/* Bottom Pinned Button */}
-        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <Link
             to="/company/dashboard"
             style={{
@@ -250,6 +268,29 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             <Store size={15} color="#94a3b8" />
             <span>Sang TravelEasy Partner</span>
           </Link>
+
+          <button
+            onClick={handleLogout}
+            style={{
+              width: '100%',
+              backgroundColor: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              borderRadius: '8px',
+              padding: '8px 12px',
+              color: '#f87171',
+              fontSize: '12px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              boxSizing: 'border-box',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <LogOut size={14} color="#f87171" />
+            <span>Đăng xuất Quản trị</span>
+          </button>
         </div>
       </aside>
 
@@ -331,29 +372,65 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               />
             </div>
 
-            {/* Profile */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '9px', cursor: 'pointer' }}>
-              <div
+            {/* Profile & Logout */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+                <div
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    fontWeight: 700
+                  }}
+                >
+                  {currentUser?.fullName
+                    ? currentUser.fullName.split(' ').map((n) => n[0]).slice(-2).join('').toUpperCase()
+                    : 'AD'}
+                </div>
+                <div style={{ lineHeight: 1.15 }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                    {currentUser?.fullName || 'Admin TravelEasy'}
+                  </div>
+                  <div style={{ fontSize: '10px', fontWeight: 600, color: '#64748b' }}>
+                    {currentUser?.role ? `ROLE_${currentUser.role}` : 'SYSTEM_ADMIN'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Direct Logout Button */}
+              <button
+                onClick={handleLogout}
+                title="Đăng xuất khỏi Cổng Quản trị"
                 style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
-                  color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
+                  gap: '5px',
+                  backgroundColor: '#fee2e2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '6px',
+                  padding: '5px 9px',
+                  color: '#dc2626',
                   fontSize: '12px',
-                  fontWeight: 700
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#fecaca';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#fee2e2';
                 }}
               >
-                TE
-              </div>
-              <div style={{ lineHeight: 1.15 }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>Admin TravelEasy</div>
-                <div style={{ fontSize: '10px', fontWeight: 600, color: '#64748b' }}>SYSTEM_ADMIN</div>
-              </div>
-              <ChevronDown size={14} color="#64748b" style={{ marginLeft: '2px' }} />
+                <LogOut size={13} color="#dc2626" />
+                <span>Đăng xuất</span>
+              </button>
             </div>
           </div>
         </header>

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AdminLayout } from '../components/AdminLayout';
+import { AdminAuthGuard } from '../components/AdminAuthGuard';
+import { AdminLoginPage } from '../pages/admin/auth/AdminLoginPage';
 import { AdminDashboardPage } from '../pages/admin/dashboard/AdminDashboardPage';
 import { AdminUsersPage } from '../pages/admin/users/AdminUsersPage';
 import { AdminBusCompaniesPage } from '../pages/admin/bus-companies/AdminBusCompaniesPage';
@@ -16,43 +18,57 @@ import { AdminAuditLogsPage } from '../pages/admin/audit-logs/AdminAuditLogsPage
 /**
  * =========================================================================
  * ROUTER PHÂN HỆ QUẢN TRỊ (ADMIN PORTAL)
- * Phụ trách: Phạm Công Thành (Nhóm trưởng / Architect)
  * Base Path: /admin/*
- * Giao diện tối giản, chuẩn xác 100% theo bộ prototype ảnh chụp thực tế
+ * Bảo vệ nghiêm ngặt bằng AdminAuthGuard:
+ * - /admin/login: Trang xác thực quản trị viên công khai (Không cho phép đăng ký mới)
+ * - /admin/*: Yêu cầu JWT Token hợp lệ & Vai trò phải là ROLE_ADMIN
  * =========================================================================
  */
 export const AdminRoutes: React.FC = () => {
   return (
-    <AdminLayout>
-      <Routes>
-        {/* Trang tổng quan hệ thống */}
-        <Route path="/" element={<AdminDashboardPage />} />
-        <Route path="/dashboard" element={<AdminDashboardPage />} />
+    <Routes>
+      {/* 1. Cổng đăng nhập Quản Trị Viên (Không hiển thị Sidebar & Không cho đăng ký) */}
+      <Route path="/login" element={<AdminLoginPage />} />
 
-        {/* Nhóm Tài khoản & Đối tác */}
-        <Route path="/users" element={<AdminUsersPage />} />
-        <Route path="/bus-companies" element={<AdminBusCompaniesPage />} />
+      {/* 2. Toàn bộ các trang nghiệp vụ Quản trị được bảo vệ bởi AdminAuthGuard */}
+      <Route
+        path="/*"
+        element={
+          <AdminAuthGuard>
+            <AdminLayout>
+              <Routes>
+                {/* Trang tổng quan hệ thống */}
+                <Route path="/" element={<AdminDashboardPage />} />
+                <Route path="/dashboard" element={<AdminDashboardPage />} />
 
-        {/* Nhóm Danh mục */}
-        <Route path="/seat-catalog/types" element={<AdminSeatTypesPage />} />
-        <Route path="/seat-types" element={<AdminSeatTypesPage />} />
-        <Route path="/seat-catalog/templates" element={<AdminSeatTemplatesPage />} />
-        <Route path="/seat-templates" element={<AdminSeatTemplatesPage />} />
-        <Route path="/locations" element={<AdminLocationsPage />} />
+                {/* Nhóm Tài khoản & Đối tác */}
+                <Route path="/users" element={<AdminUsersPage />} />
+                <Route path="/bus-companies" element={<AdminBusCompaniesPage />} />
 
-        {/* Nhóm Hệ thống */}
-        <Route path="/banners" element={<AdminBannersPage />} />
-        <Route path="/gateways" element={<AdminPaymentsPage />} />
-        <Route path="/payments" element={<AdminPaymentsPage />} />
-        <Route path="/review-reports" element={<AdminReviewsPage />} />
-        <Route path="/reviews" element={<AdminReviewsPage />} />
-        <Route path="/cancellation-policies" element={<AdminCancellationPoliciesPage />} />
-        <Route path="/audit-logs" element={<AdminAuditLogsPage />} />
+                {/* Nhóm Danh mục */}
+                <Route path="/seat-catalog/types" element={<AdminSeatTypesPage />} />
+                <Route path="/seat-types" element={<AdminSeatTypesPage />} />
+                <Route path="/seat-catalog/templates" element={<AdminSeatTemplatesPage />} />
+                <Route path="/seat-templates" element={<AdminSeatTemplatesPage />} />
+                <Route path="/locations" element={<AdminLocationsPage />} />
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
-      </Routes>
-    </AdminLayout>
+                {/* Nhóm Hệ thống */}
+                <Route path="/banners" element={<AdminBannersPage />} />
+                <Route path="/gateways" element={<AdminPaymentsPage />} />
+                <Route path="/payments" element={<AdminPaymentsPage />} />
+                <Route path="/review-reports" element={<AdminReviewsPage />} />
+                <Route path="/reviews" element={<AdminReviewsPage />} />
+                <Route path="/cancellation-policies" element={<AdminCancellationPoliciesPage />} />
+                <Route path="/audit-logs" element={<AdminAuditLogsPage />} />
+
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+              </Routes>
+            </AdminLayout>
+          </AdminAuthGuard>
+        }
+      />
+    </Routes>
   );
 };
 

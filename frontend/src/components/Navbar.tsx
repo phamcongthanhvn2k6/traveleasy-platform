@@ -1,9 +1,36 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Bus, Search, ShieldCheck, PhoneCall, User, Info, Building2, LayoutDashboard, Globe } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Bus, Search, ShieldCheck, PhoneCall, User, Info, Building2, LayoutDashboard, Globe, LogOut } from 'lucide-react';
+import { AuthUser } from '../types';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('traveleasy_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('traveleasy_user');
+      setUser(saved ? JSON.parse(saved) : null);
+    } catch {
+      setUser(null);
+    }
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('traveleasy_token');
+    localStorage.removeItem('traveleasy_user');
+    setUser(null);
+    navigate('/');
+  };
 
   return (
     <header style={{ backgroundColor: '#ffffff', position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
@@ -47,23 +74,69 @@ export const Navbar: React.FC = () => {
             >
               <PhoneCall size={13} /> Hotline 24/7
             </a>
-            <button 
-              style={{
-                backgroundColor: '#ffffff',
-                color: '#1d4ed8',
-                border: 'none',
-                padding: '4px 14px',
-                borderRadius: '6px',
-                fontWeight: 700,
-                fontSize: '12.5px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px'
-              }}
-            >
-              <User size={13} /> Đăng nhập
-            </button>
+            {user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.18)',
+                    color: '#ffffff',
+                    padding: '3px 10px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <User size={13} /> {user.fullName || user.email}
+                  {user.role === 'ADMIN' && (
+                    <span style={{ backgroundColor: '#fbbf24', color: '#1e3a8a', padding: '1px 5px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>
+                      ADMIN
+                    </span>
+                  )}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  title="Đăng xuất"
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    color: '#ffffff',
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <LogOut size={12} /> Thoát
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/auth"
+                style={{
+                  backgroundColor: '#ffffff',
+                  color: '#1d4ed8',
+                  border: 'none',
+                  padding: '4px 14px',
+                  borderRadius: '6px',
+                  fontWeight: 700,
+                  fontSize: '12.5px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  textDecoration: 'none'
+                }}
+              >
+                <User size={13} /> Đăng nhập / Đăng ký
+              </Link>
+            )}
           </div>
         </div>
       </div>

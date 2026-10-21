@@ -77,3 +77,11 @@ export interface DashboardStats {
   totalUsers: number;
 }
 
+export interface AuthUser {
+  userId: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  role: 'ADMIN' | 'OPERATOR' | 'CUSTOMER';
+  token: string;
+}

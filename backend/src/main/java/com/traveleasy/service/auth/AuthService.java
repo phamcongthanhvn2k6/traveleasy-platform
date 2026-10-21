@@ -37,6 +37,7 @@ public class AuthService {
                 .phone(request.getPhone())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.CUSTOMER)
+                .status("ACTIVE")
                 .build();
 
         userRepository.save(user);
@@ -61,6 +62,10 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new AppException(ErrorCode.UNAUTHORIZED, "Sai email/số điện thoại hoặc mật khẩu");
+        }
+
+        if ("LOCKED".equalsIgnoreCase(user.getStatus())) {
+            throw new AppException(ErrorCode.ACCOUNT_LOCKED, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
         }
 
         String token = jwtTokenProvider.generateToken(user.getEmail(), user.getRole().name(), user.getId());
