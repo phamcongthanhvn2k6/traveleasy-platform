@@ -1939,5 +1939,68 @@ Hệ thống TravelEasy được thiết kế theo mô hình **Đa Thuê Bao (Mu
 *Hình 11.51: Giao diện Cổng Điều Hành Đối Tác Nhà Xe (Operator Portal) với nhận diện Cyan/Emerald và dữ liệu phân vùng độc lập.*
 
 ---
+
+### 11.9 Làm Giàu & Đa Dạng Hóa Toàn Diện Cơ Sở Dữ Liệu Thực Tế (Comprehensive Database Enrichment)
+
+#### 1. Tổng Quan Quy Mô Dữ Liệu Sau Khi Làm Giàu
+Nhằm đáp ứng yêu cầu kiểm thử toàn diện, báo cáo đồ án và trải nghiệm vận hành thực tế sống động, toàn bộ hệ thống cơ sở dữ liệu **MySQL 8.0** (`traveleasy_db`) đã được bổ sung khối lượng lớn dữ liệu nghiệp vụ thực tế, phong phú và chuẩn hóa 100%:
+
+| Thực Thể (Entity) | Trước Khi Làm Giàu | Sau Khi Làm Giàu | Mức Độ Tăng Trưởng | Chi Tiết Nghiệp Vụ Bổ Sung |
+| :--- | :---: | :---: | :---: | :--- |
+| **Người dùng (`users`)** | 12 | **28** | **+133%** | Đầy đủ tài khoản Admin sàn, Operator của 10 hãng xe và 16 khách hàng 3 miền với SĐT 10 số & mật khẩu chuẩn `Rikkei@123` |
+| **Đội xe vận tải (`vehicles`)** | 5 | **26** | **+420%** | Biển số các tỉnh (51B, 29B, 72B, 15B, 43B, 79B...), đủ 3 dòng xe Limousine VIP, Giường nằm 2 tầng, Ghế ngồi cao cấp |
+| **Tuyến đường (`routes`)** | 14 | **20** | **+43%** | Mở rộng mạng lưới: Sài Gòn - Cà Mau, Hà Nội - Ninh Bình, Đà Nẵng - Nha Trang, Sài Gòn - Rạch Giá, Châu Đốc |
+| **Chuyến xe (`trips`)** | 20 | **101** | **+405%** | Phủ đều các khung giờ (Sáng, Trưa, Tối, Đêm), các ngày (Hôm nay, Ngày mai, Tuần tới, Quá khứ) và trạng thái `SCHEDULED`, `RUNNING`, `COMPLETED` |
+| **Sơ đồ ghế ngồi (`trip_seats`)** | 680 | **3,434** | **+405%** | Mỗi chuyến xe có đủ 34 ghế vật lý (Tầng 1 A01-A17, Tầng 2 B01-B17) đồng bộ chính xác với trạng thái `AVAILABLE` / `BOOKED` |
+| **Đơn đặt vé (`bookings`)** | 3 | **28** | **+833%** | Mã đơn chuẩn `BK-20261021-XXXX`, đầy đủ thông tin hành khách, điểm đón/trả, phương thức thanh toán VNPay, MoMo, VietQR, COD |
+| **Vé điện tử (`tickets`)** | 4 | **38** | **+850%** | Mã vé `TK-*` gắn với từng ghế, mã QR Hash an toàn, trạng thái `ISSUED` hoặc `USED` |
+| **Chính sách hoàn hủy (`cancellation_policies`)** | 2 | **7** | **+250%** | Chính sách riêng biệt của các hãng xe (FUTA Phương Trang, Thành Bưởi, Hoa Mai, Sao Việt, Văn Minh...) |
+| **Đánh giá & Phản hồi (`review_reports`)** | 3 | **11** | **+267%** | Nhận xét đa dạng từ 3 đến 5 sao về chất lượng xe, độ êm ái, cổng sạc, wifi và thái độ tài xế |
+| **Địa danh & Bến xe (`locations`)** | 5 | **14** | **+180%** | Bến xe Miền Đông mới, Bến xe Miền Tây, Bến xe Giáp Bát, Bến xe Nước Ngầm, Bến xe Vũng Tàu, Bến xe Sa Pa... |
+
+---
+
+#### 2. Danh Sách Tài Khoản Thử Nghiệm Chuẩn Hóa
+Mọi tài khoản trong hệ thống đều có thể đăng nhập ngay bằng mật khẩu chung: `Rikkei@123`
+
+1. **Quản Trị Viên Sàn Tổng (Platform Admin)**:
+   * `admin@traveleasy.vn` — Quản Trị Viên Hệ Thống
+   * `phanthanhphong.admin@traveleasy.vn` — Phạm Thanh Phong
+   * `trungkien.admin@traveleasy.vn` — Phan Trung Kiên
+2. **Điều Hành Đối Tác Nhà Xe (Bus Operators)**:
+   * `partner@traveleasy.vn` — Điều Hành TravelEasy Express (Nhà xe 1)
+   * `dieuhanh@thanhbuoi.com.vn` — Điều Hành Thành Bưởi Limousine (Nhà xe 2)
+   * `dieuhanh@xesaoviet.com.vn` — Điều Hành Sao Việt Express (Nhà xe 3)
+   * `dieuhanh@kumhosamco.com.vn` — Điều Hành Kumho Samco (Nhà xe 4)
+   * `dieuhanh@hoamaivungtau.com.vn` — Điều Hành Xe Hoa Mai Vũng Tàu (Nhà xe 5)
+   * `dieuhanh@hoanglongasia.com` — Điều Hành Hoàng Long Asia (Nhà xe 6)
+   * `dieuhanh@cuctunglimousine.com` — Điều Hành Cúc Tùng Limousine (Nhà xe 8)
+   * `dieuhanh@haivan.com` — Điều Hành Xe Hải Vân (Nhà xe 9)
+   * `dieuhanh@chinnghia.com.vn` — Điều Hành Xe Chín Nghĩa (Nhà xe 10)
+3. **Khách Hàng Trải Nghiệm (Customers)**:
+   * `customer@gmail.com` — Nguyễn Văn Du Khách
+   * `dangvanlam@gmail.com` — Đặng Văn Lâm
+   * `thuylinh.travel@gmail.com` — Nguyễn Thùy Linh
+   * `khoi.vu@gmail.com` — Vũ Minh Khôi
+   * `haidang.do@gmail.com` — Đỗ Hải Đăng
+   * `thaophuong.bui@gmail.com` — Bùi Phương Thảo
+
+---
+
+#### 3. Minh Chứng Trải Nghiệm Giao Diện Với Dữ Liệu Phong Phú
+
+![Danh Sách 28 Người Dùng Hệ Thống Phong Phú](docs/screenshots/screenshot_admin_users_enriched.png)
+*Hình 11.52: Giao diện Quản trị Người Dùng hiển thị đầy đủ 28 tài khoản phân loại theo vai trò ADMIN, OPERATOR, CUSTOMER.*
+
+![Hệ Thống 101 Chuyến Xe Toàn Sàn Đa Dạng](docs/screenshots/screenshot_admin_trips_enriched.png)
+*Hình 11.53: Giao diện Quản trị Chuyến Xe sàn tổng với hơn 100 chuyến xe đa dạng tuyến đường, loại xe và trạng thái vận hành.*
+
+![Tìm Kiếm Chuyến Xe Của Khách Hàng Với Đa Dạng Lựa Chọn](docs/screenshots/screenshot_customer_search_enriched.png)
+*Hình 11.54: Khách hàng tìm kiếm chuyến xe nhận được hàng chục kết quả thời gian thực từ nhiều nhà xe và khung giờ khác nhau.*
+
+![Cổng Điều Hành Đối Tác Quản Lý Chuyến Xe Thực Tế](docs/screenshots/screenshot_company_trips_enriched.png)
+*Hình 11.55: Cổng điều hành đối tác nhà xe quản lý lịch xe xuất bến, trạng thái khởi hành và số ghế trống trực tiếp trên MySQL 8.0.*
+
+---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  
 *Chúc toàn đội bảo vệ thành công rực rỡ!*
