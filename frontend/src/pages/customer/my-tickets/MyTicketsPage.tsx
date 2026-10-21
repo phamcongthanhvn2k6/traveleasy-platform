@@ -191,6 +191,69 @@ export const MyTicketsPage: React.FC = () => {
           </p>
         </div>
 
+        {/* Guest mode warning if unauthenticated */}
+        {!localStorage.getItem('traveleasy_token') && (
+          <div
+            style={{
+              backgroundColor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: '12px',
+              padding: '14px 18px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <AlertTriangle size={20} color="#2563eb" style={{ flexShrink: 0 }} />
+              <div>
+                <div style={{ fontWeight: 800, fontSize: '14px', color: '#1e3a8a' }}>
+                  Bạn đang xem ở chế độ Khách vãng lai
+                </div>
+                <div style={{ fontSize: '12.5px', color: '#475569', marginTop: '2px' }}>
+                  Đăng nhập để hệ thống tự động đồng bộ tất cả vé đã đặt của bạn, hoặc dùng mã đơn để tra cứu vé.
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => navigate('/auth?redirect=/my-tickets')}
+                style={{
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
+              >
+                Đăng Nhập Ngay
+              </button>
+              <button
+                onClick={() => navigate('/lookup')}
+                style={{
+                  backgroundColor: '#ffffff',
+                  color: '#2563eb',
+                  border: '1px solid #bfdbfe',
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
+              >
+                Tra Cứu Mã Vé
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Status Tabs */}
         <div
           style={{

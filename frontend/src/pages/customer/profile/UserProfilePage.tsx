@@ -218,6 +218,48 @@ export const UserProfilePage: React.FC = () => {
           </p>
         </div>
 
+        {/* Guest Warning */}
+        {!localStorage.getItem('traveleasy_token') && (
+          <div
+            style={{
+              backgroundColor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              marginBottom: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '15px', color: '#1e3a8a' }}>
+                Bạn chưa đăng nhập tài khoản TravelEasy
+              </div>
+              <div style={{ fontSize: '13px', color: '#475569', marginTop: '2px' }}>
+                Đăng nhập để đồng bộ thông tin cá nhân, lưu trữ danh bạ người thân và tích điểm thành viên.
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/auth?redirect=/profile')}
+              style={{
+                backgroundColor: '#2563eb',
+                color: '#ffffff',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              Đăng Nhập Ngay →
+            </button>
+          </div>
+        )}
+
         {/* 2-Column Grid Layout */}
         <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', alignItems: 'start' }}>
           {/* Left Column: Profile Card & Sidebar Navigation */}

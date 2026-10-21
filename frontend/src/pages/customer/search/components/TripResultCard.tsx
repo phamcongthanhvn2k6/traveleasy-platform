@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Trip, TripDetail } from '../../../../types';
 import { BusSeatMap } from '../../../../components/BusSeatMap';
 import api from '../../../../services/api';
+import { toast } from '../../../../context/ToastContext';
 import {
   Clock,
   MapPin,
@@ -61,6 +62,10 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
     if (selectedSeats.includes(seatNumber)) {
       setSelectedSeats(selectedSeats.filter((s) => s !== seatNumber));
     } else {
+      if (selectedSeats.length >= 6) {
+        toast.warning('Mỗi đơn đặt tối đa 6 vé theo quy định vận chuyển.', 'Giới Hạn Vé');
+        return;
+      }
       setSelectedSeats([...selectedSeats, seatNumber]);
     }
   };
