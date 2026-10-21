@@ -78,7 +78,7 @@ export const paymentService = {
   },
 
   /**
-   * Giả lập thanh toán VNPAY/Cổng trực tuyến thành công tức thì phục vụ Demo
+   * Xác nhận thanh toán VNPAY/Cổng trực tuyến thành công
    * (Ghi nhận CSDL thật, sinh mã giao dịch chuẩn, kích hoạt vé)
    */
   async mockPaymentSuccess(bookingCode: string, paymentMethod: PaymentMethod = 'VNPAY'): Promise<PaymentStatusResponse> {

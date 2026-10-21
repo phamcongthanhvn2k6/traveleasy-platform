@@ -22,8 +22,8 @@ export const AdminLoginPage: React.FC = () => {
   const location = useLocation();
 
   // Form State
-  const [identifier, setIdentifier] = useState('admin@traveleasy.vn');
-  const [password, setPassword] = useState('Rikkei@123');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
@@ -31,19 +31,13 @@ export const AdminLoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
-  // Quick fill helper
-  const handleQuickFill = (emailVal: string) => {
-    setIdentifier(emailVal);
-    setPassword('Rikkei@123');
-    setErrorMsg(null);
-    toast.info(`Đã điền tài khoản mẫu (${emailVal}).`, 'Tài Khoản Quản Trị');
-  };
+  const [isOperatorAttempt, setIsOperatorAttempt] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
+    setIsOperatorAttempt(false);
 
     if (!identifier.trim()) {
       const msg = 'Vui lòng nhập Email hoặc Tài khoản quản trị.';
@@ -73,9 +67,18 @@ export const AdminLoginPage: React.FC = () => {
         // Hủy lưu thông tin và thông báo vi phạm phân quyền
         localStorage.removeItem('traveleasy_token');
         localStorage.removeItem('traveleasy_user');
-        const errText = `Từ chối quyền truy cập! Tài khoản "${identifier}" mang vai trò ${data?.role || 'CUSTOMER'}. Cổng Quản trị viên chỉ cho phép tài khoản có vai trò ADMIN.`;
-        toast.error(errText, 'Truy Cập Bị Từ Chối');
-        setErrorMsg(errText);
+
+        if (data?.role === 'OPERATOR') {
+          setIsOperatorAttempt(true);
+          const errText = `Từ chối quyền truy cập! Tài khoản "${identifier.trim()}" là Đối tác điều hành nhà xe (OPERATOR). Cổng này chỉ dành riêng cho Quản trị viên sàn (ADMIN). Vui lòng đăng nhập tại Cổng Đối Tác Nhà Xe.`;
+          toast.error('Tài khoản Nhà xe (OPERATOR) không được phép truy cập cổng Quản trị sàn!', 'Sai Cổng Đăng Nhập');
+          setErrorMsg(errText);
+        } else {
+          setIsOperatorAttempt(false);
+          const errText = `Từ chối quyền truy cập! Tài khoản "${identifier.trim()}" mang vai trò ${data?.role || 'CUSTOMER'}. Cổng Quản trị viên chỉ cho phép tài khoản có vai trò ADMIN.`;
+          toast.error(errText, 'Truy Cập Bị Từ Chối');
+          setErrorMsg(errText);
+        }
         setLoading(false);
         return;
       }
@@ -246,18 +249,38 @@ export const AdminLoginPage: React.FC = () => {
                 backgroundColor: 'rgba(239, 68, 68, 0.12)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
                 borderRadius: '10px',
-                padding: '12px 14px',
+                padding: '14px 16px',
                 marginBottom: '20px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                gap: '10px',
+                flexDirection: 'column',
+                gap: '8px',
                 color: '#fca5a5',
                 fontSize: '13px',
                 lineHeight: 1.45
               }}
             >
-              <AlertTriangle size={18} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <div>{errorMsg}</div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <AlertTriangle size={18} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>{errorMsg}</div>
+              </div>
+              {isOperatorAttempt && (
+                <div style={{ marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed rgba(239, 68, 68, 0.3)', paddingLeft: '28px' }}>
+                  <Link
+                    to="/company/login"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      color: '#2dd4bf',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      fontSize: '12.5px',
+                    }}
+                  >
+                    👉 Đến Cổng Điều Hành Đối Tác Nhà Xe (Operator Portal) ngay →
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
@@ -313,7 +336,7 @@ export const AdminLoginPage: React.FC = () => {
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="admin@traveleasy.vn"
+                  placeholder="Nhập email quản trị viên..."
                   required
                   style={{
                     width: '100%',
@@ -363,7 +386,7 @@ export const AdminLoginPage: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
+                  placeholder="Nhập mật khẩu quản trị..."
                   required
                   style={{
                     width: '100%',
@@ -459,63 +482,6 @@ export const AdminLoginPage: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Filling Bar */}
-          <div
-            style={{
-              marginTop: '24px',
-              paddingTop: '20px',
-              borderTop: '1px solid #1e293b',
-              textAlign: 'center'
-            }}
-          >
-            <div
-              style={{
-                fontSize: '11.5px',
-                color: '#64748b',
-                textTransform: 'uppercase',
-                fontWeight: 700,
-                letterSpacing: '0.6px',
-                marginBottom: '10px'
-              }}
-            >
-              Tài khoản Quản trị viên mẫu
-            </div>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('admin@traveleasy.vn')}
-                style={{
-                  backgroundColor: '#1e293b',
-                  border: '1px solid #334155',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  fontSize: '11.5px',
-                  color: '#93c5fd',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                👑 Admin Tổng
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('phanthanhphong.admin@traveleasy.vn')}
-                style={{
-                  backgroundColor: '#1e293b',
-                  border: '1px solid #334155',
-                  borderRadius: '6px',
-                  padding: '6px 10px',
-                  fontSize: '11.5px',
-                  color: '#c4b5fd',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                🛡️ Admin Kỹ Thuật
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Card Footer: Security Notice */}
@@ -535,6 +501,22 @@ export const AdminLoginPage: React.FC = () => {
         >
           <Lock size={13} color="#10b981" />
           <span>Hệ thống ghi nhận địa chỉ IP &amp; Nhật ký kiểm toán thời gian thực</span>
+        </div>
+
+        {/* Switch Portal Link */}
+        <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <span style={{ color: '#64748b', fontSize: '12px' }}>Bạn là Đối tác Nhà xe? </span>
+          <Link
+            to="/company/login"
+            style={{
+              color: '#38bdf8',
+              fontSize: '12px',
+              fontWeight: 700,
+              textDecoration: 'none',
+            }}
+          >
+            Đến Cổng Điều Hành Nhà Xe (Operator Portal) →
+          </Link>
         </div>
       </div>
     </div>

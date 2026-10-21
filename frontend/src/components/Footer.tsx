@@ -92,8 +92,8 @@ export const Footer: React.FC = () => {
               </Link>
             </li>
             <li>
-              <Link to="/company" style={{ ...linkStyle, color: '#38bdf8', fontWeight: 700 }}>
-                → Mở bán vé trên sàn TravelEasy
+              <Link to="/company/login" style={{ ...linkStyle, color: '#38bdf8', fontWeight: 700 }}>
+                → Cổng đăng nhập đối tác nhà xe
               </Link>
             </li>
           </ul>

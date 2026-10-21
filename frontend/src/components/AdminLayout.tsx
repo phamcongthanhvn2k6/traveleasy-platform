@@ -48,26 +48,26 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   };
 
   const navItems = [
-    { label: 'Tong quan', path: '/admin/dashboard', icon: LayoutGrid },
-    { label: 'Chuyen xe', path: '/admin/trips', icon: Calendar },
-    { label: 'Tuyen duong', path: '/admin/routes', icon: MapPin },
-    { label: 'Don dat ve', path: '/admin/bookings', icon: Ticket },
-    { label: 'Nguoi dung', path: '/admin/users', icon: Users },
-    { label: 'Nha xe', path: '/admin/bus-companies', icon: Bus },
+    { label: 'Tổng quan', path: '/admin/dashboard', icon: LayoutGrid },
+    { label: 'Chuyến xe toàn sàn', path: '/admin/trips', icon: Calendar },
+    { label: 'Tuyến đường toàn quốc', path: '/admin/routes', icon: MapPin },
+    { label: 'Đơn đặt vé toàn sàn', path: '/admin/bookings', icon: Ticket },
+    { label: 'Quản lý người dùng', path: '/admin/users', icon: Users },
+    { label: 'Duyệt & Quản lý nhà xe', path: '/admin/bus-companies', icon: Bus },
   ];
 
   const categoryItems = [
-    { label: 'Loai ghe', path: '/admin/seat-catalog/types', icon: Armchair },
-    { label: 'Mau so do ghe', path: '/admin/seat-catalog/templates', icon: Grid },
-    { label: 'Dia diem', path: '/admin/locations', icon: MapPin },
+    { label: 'Loại ghế chuẩn hóa', path: '/admin/seat-catalog/types', icon: Armchair },
+    { label: 'Mẫu sơ đồ ghế master', path: '/admin/seat-catalog/templates', icon: Grid },
+    { label: 'Địa điểm & Bến xe master', path: '/admin/locations', icon: MapPin },
   ];
 
   const systemItems = [
-    { label: 'Banner', path: '/admin/banners', icon: Image },
-    { label: 'Cong thanh toan', path: '/admin/gateways', icon: CreditCard },
-    { label: 'Bao cao danh gia', path: '/admin/review-reports', icon: Star },
-    { label: 'Chinh sach huy', path: '/admin/cancellation-policies', icon: Shield },
-    { label: 'Nhat ky he thong', path: '/admin/audit-logs', icon: Clock },
+    { label: 'Banner chiến dịch sàn', path: '/admin/banners', icon: Image },
+    { label: 'Cổng thanh toán sàn', path: '/admin/gateways', icon: CreditCard },
+    { label: 'Báo cáo đánh giá vi phạm', path: '/admin/review-reports', icon: Star },
+    { label: 'Chính sách hoàn hủy sàn', path: '/admin/cancellation-policies', icon: Shield },
+    { label: 'Nhật ký kiểm toán (Audit Logs)', path: '/admin/audit-logs', icon: Clock },
   ];
 
   const isActive = (path: string) => {
@@ -168,7 +168,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               );
             })}
 
-            {/* DANH MUC Group */}
+            {/* DANH MỤC HỆ THỐNG Group */}
             <div
               style={{
                 fontSize: '10px',
@@ -179,7 +179,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 textTransform: 'uppercase'
               }}
             >
-              DANH MUC
+              DANH MỤC HỆ THỐNG
             </div>
             {categoryItems.map((item) => {
               const Icon = item.icon;
@@ -208,7 +208,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               );
             })}
 
-            {/* HE THONG Group */}
+            {/* HỆ THỐNG SÀN TỔNG Group */}
             <div
               style={{
                 fontSize: '10px',
@@ -219,7 +219,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 textTransform: 'uppercase'
               }}
             >
-              HE THONG
+              HỆ THỐNG SÀN TỔNG
             </div>
             {systemItems.map((item) => {
               const Icon = item.icon;

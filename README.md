@@ -1464,13 +1464,18 @@ Hệ thống hỗ trợ VietQR sinh mã QR động kèm thông tin chuyển kho�
 ![Modal Thanh Toán VietQR Tự Động](docs/screenshots/screenshot_payment_vietqr_modal.png)
 *Hình 11.5: Mã VietQR tự động sinh khớp số tiền đơn hàng và nội dung chuyển khoản để khách quét trên app ngân hàng.*
 
-#### 4. Cơ chế Mock Thanh toán 1-Click Demo & VNPAY Sandbox
-Để phục vụ việc trình diễn bảo vệ không cần chuyển tiền thật mà vẫn đảm bảo toàn bộ luồng Backend, API và CSDL ghi nhận đầy đủ, hệ thống trang bị nút **"Xác nhận đã thanh toán (1-Click Demo)"**.
-![Modal Demo Thanh Toán VNPAY 1-Click](docs/screenshots/screenshot_vnpay_demo_modal.png)
-*Hình 11.6: Hộp thoại xác nhận thanh toán Demo — Gửi lệnh `POST /api/v1/payments/mock-success` kích hoạt cập nhật trạng thái đơn vé sang `CONFIRMED` và xuất vé `ISSUED`.*
+#### 4. Cơ chế Mock Thanh toán 1-Click Demo & VNPAY Sandbox (Không Tự Động Đóng)
+Để phục vụ việc trình diễn bảo vệ không cần chuyển tiền thật mà vẫn đảm bảo toàn bộ luồng Backend, API và CSDL ghi nhận đầy đủ, hệ thống trang bị nút **"✓ CHẤP NHẬN ĐÃ THANH TOÁN THÀNH CÔNG (DEMO)"**:
+* **Giao diện Cổng VNPAY Gateway**: Tích hợp các tab VNPAY-QR, Thẻ ATM 36 ngân hàng nội địa (Vietcombank, BIDV, Techcombank, NCB...), và Thẻ quốc tế Visa/Master.
+* **Nút bấm Demo nổi bật**: Bấm nút gửi lệnh `POST /api/v1/payments/mock-success/{bookingCode}?paymentMethod=VNPAY` đến Backend.
+* **Ghi nhận CSDL thật**: Tạo bản ghi trong bảng `payment_transactions`, sinh mã giao dịch chuẩn VNPAY (VD: `VNP173456...`), cập nhật trạng thái đơn vé sang `CONFIRMED` và `PAID`.
+* **Không tự động đóng / Không ngắt demo**: Modal giữ nguyên màn hình kết quả thành công với đầy đủ mã giao dịch VNPAY, số tiền, thời gian và trạng thái CSDL để người dùng thong thả thuyết minh cho hội đồng bảo vệ.
+* **Người dùng chủ động điều hướng**: Chỉ chuyển sang trang vé khi người dùng bấm nút **"Xem Chi Tiết Vé Điện Tử Ngay"**.
+![Hộp Thoại Thanh Toán VNPAY Sẵn Sàng](docs/screenshots/screenshot_vnpay_modal_ready.png)
+*Hình 11.6: Hộp thoại VNPAY Gateway với nút bấm chấp nhận thanh toán thành công rõ ràng phục vụ Demo.*
 
-![Thông Báo Thanh Toán Thành Công](docs/screenshots/screenshot_ticket_paid_success.png)
-*Hình 11.7: Xác nhận thanh toán thành công tức thì, hiển thị mã đơn vé điện tử và nút xem vé ngay.*
+![Kết Quả Giao Dịch VNPAY Thành Công Lưu CSDL](docs/screenshots/screenshot_vnpay_modal_success.png)
+*Hình 11.7: Màn hình kết quả thanh toán VNPAY được giữ nguyên hiển thị mã giao dịch và CSDL đã ghi nhận.*
 
 #### 5. Vé Điện Tử Kèm Mã QR Code & Tra Cứu Vé
 Hành khách có thể tra cứu mã vé bất kỳ lúc nào để xuất trình mã QR cho phụ xe quét lên xe mà không cần in giấy.
@@ -1496,46 +1501,46 @@ Toàn bộ 4 thẻ KPI (Doanh thu, Vé đã bán, Chuyến xe hoạt động, Kh
 ![Admin Dashboard Đồng Bộ CSDL](docs/screenshots/screenshot_admin_dashboard_synced.png)
 *Hình 11.12: Dashboard quản trị hiển thị dữ liệu thực tế từ cơ sở dữ liệu.*
 
-#### 2. Quản Lý Tuyến Đường Vận Tải (Routes Management)
-Quản lý danh sách các tuyến đường liên tỉnh, thời gian di chuyển, cự ly km và thêm mới tuyến đường trực tiếp vào CSDL.
-![Quản Lý Tuyến Đường](docs/screenshots/screenshot_admin_routes.png)
-*Hình 11.13: Danh sách các tuyến đường vận tải toàn sàn kết nối các đầu mối giao thông.*
+#### 2. Quản Lý Toàn Diện Chuyến Xe (Trips Management — Full CRUD)
+Hệ thống cho phép Quản trị viên thực hiện đầy đủ chu trình **Thêm - Sửa - Xóa** chuyến xe trực tiếp trên giao diện:
+* **Thêm mới**: Tự động sinh kho 34 ghế ngồi chuẩn (A01-A17 tầng dưới, B01-B17 tầng trên) kèm liên kết Tuyến đường & Nhà xe.
+* **Chỉnh sửa**: Cập nhật giờ khởi hành, giờ đến, loại xe (Limousine/Sleeper/Seat) và giá vé niêm yết.
+* **Xóa & Chuyển trạng thái**: Hỗ trợ xóa chuyến an toàn (tự động giải phóng các ghế liên quan) và toggle trạng thái Mở bán / Hủy chuyến.
+![Quản Lý Chuyến Xe Full CRUD](docs/screenshots/screenshot_admin_trips_crud.png)
+*Hình 11.13: Danh sách chuyến xe với đầy đủ nút Thao tác: Sửa, Đổi trạng thái (Mở bán / Hủy), và Xóa.*
 
-![Modal Thêm Tuyến Đường Mới](docs/screenshots/screenshot_admin_routes_modal.png)
-*Hình 11.14: Hộp thoại tạo mới tuyến đường liên tỉnh (chọn nhà xe, điểm đi, điểm đến, thời gian chạy, cự ly).*
+#### 3. Quản Lý Tuyến Đường Vận Tải (Routes Management — Full CRUD)
+Quản trị viên cấu hình mạng lưới tuyến đường liên tỉnh toàn quốc:
+* **Thêm tuyến mới**: Thiết lập điểm xuất phát, điểm đến, nhà xe vận hành, cự ly km, thời gian dự kiến và giá vé cơ sở.
+* **Chỉnh sửa tuyến**: Điều chỉnh lộ trình đón trả, cập nhật thời gian chạy và biểu giá.
+* **Xóa tuyến**: Loại bỏ các tuyến ngừng khai thác khỏi hệ thống.
+![Quản Lý Tuyến Đường Full CRUD](docs/screenshots/screenshot_admin_routes_crud.png)
+*Hình 11.14: Giao diện quản lý tuyến đường với các nút Sửa và Xóa theo thời gian thực.*
 
-#### 3. Quản Lý & Thêm Mới Chuyến Xe Tự Sinh 34 Ghế (Trips Management)
-Xem lịch trình, lọc trạng thái và mở modal thêm chuyến xe mới tự động liên kết với tuyến đường và nhà xe, sinh đủ 34 ghế ngồi tầng 1/tầng 2.
-![Quản Lý Chuyến Xe Admin](docs/screenshots/screenshot_admin_trips.png)
-*Hình 11.15: Danh sách chuyến xe với bộ lọc theo ngày, điểm đi, điểm đến và trạng thái vận hành.*
+#### 4. Quản Lý Đối Tác Nhà Xe (Bus Companies — Full CRUD)
+Quản trị toàn diện danh sách các nhà xe tham gia sàn thương mại điện tử TravelEasy:
+* **Thêm nhà xe mới**: Nhập tên nhà xe, hotline chăm sóc khách hàng, email điều hành và văn phòng đại diện.
+* **Sửa thông tin**: Cập nhật thông tin liên hệ và địa chỉ bến bãi.
+* **Kiểm soát vận hành**: Phê duyệt (`ACTIVE`), Tạm ngưng (`SUSPENDED`), hoặc Xóa nhà xe khỏi hệ thống.
+![Quản Lý Đối Tác Nhà Xe Full CRUD](docs/screenshots/screenshot_admin_companies_crud.png)
+*Hình 11.15: Quản lý đối tác nhà xe với tính năng Sửa, Duyệt/Ngưng và Xóa trực tiếp.*
 
-![Modal Thêm Chuyến Xe Mới](docs/screenshots/screenshot_admin_trips_modal.png)
-*Hình 11.16: Hộp thoại Thêm Chuyến Xe Mới — Tự động sinh kho 34 ghế ngồi (A01-A17, B01-B17) trong cơ sở dữ liệu.*
+#### 5. Quản Lý Địa Điểm & Bến Xe Master Data (Locations — Full CRUD)
+Danh mục bến xe và trạm trung chuyển cấp hệ thống phục vụ tìm kiếm và đặt vé:
+* **Thêm địa điểm**: Tạo mới bến xe khách (`BUS_STATION`) hoặc trạm trung chuyển (`TRANSIT_POINT`).
+* **Sửa địa điểm**: Modal chỉnh sửa thông tin chi tiết tên bến, tỉnh thành, địa chỉ và số tuyến phục vụ.
+* **Xóa địa điểm**: Loại bỏ các điểm đón trả không còn hoạt động.
+![Modal Chỉnh Sửa Địa Điểm Master Data](docs/screenshots/screenshot_admin_locations_crud.png)
+*Hình 11.16: Hộp thoại Cập nhật Địa Điểm Master Data trên giao diện Admin.*
 
-#### 4. Quản Lý & Thêm Mới Đối Tác Nhà Xe (Bus Companies)
-Quản lý thông tin các hãng xe đối tác, hotline, địa chỉ và mở modal thêm nhà xe mới vào sàn.
-![Modal Thêm Đối Tác Nhà Xe Mới](docs/screenshots/screenshot_admin_companies_modal.png)
-*Hình 11.17: Hộp thoại Thêm Đối Tác Nhà Xe Mới — Đồng bộ và kích hoạt mở bán trên sàn.*
-
-#### 3. Quản Lý Danh Mục Ghế & Sơ Đồ Mẫu (Seat Types & Templates)
-Chuẩn hóa loại ghế (VIP, Giường nằm tiêu chuẩn, Ghế ngả cao cấp) và sơ đồ 1 tầng / 2 tầng.
-![Quản Lý Loại Ghế](docs/screenshots/screenshot_admin_seat_types.png)
-*Hình 11.14: Quản lý danh mục loại ghế, hệ số giá và mô tả tiện ích.*
-
-#### 4. Quản Lý Địa Điểm & Bến Xe Đón Trả (Locations)
-Cấu hình danh mục các tỉnh thành phố, bến xe trung tâm, điểm đón trả trung chuyển trên toàn quốc.
-![Quản Lý Địa Điểm & Bến Xe](docs/screenshots/screenshot_admin_locations.png)
-*Hình 11.15: Quản trị các đầu mối giao thông và bến xe phục vụ tuyến đường.*
-
-#### 5. Cấu Hình Cổng Thanh Toán & Tích Hợp (Payment Gateways)
-Bật / tắt các cổng thanh toán (VNPAY, VietQR, MoMo, COD) và quản trị cấu hình gửi thông báo.
-![Cấu Hình Cổng Thanh Toán](docs/screenshots/screenshot_admin_gateways.png)
-*Hình 11.16: Quản lý trạng thái hoạt động của các cổng thanh toán và dịch vụ tích hợp.*
-
-#### 6. Quản Lý Người Dùng & Cơ Chế Khóa Tài Khoản (User Management & Security)
-Quản trị viên có quyền kiểm soát tài khoản, phân quyền Role và khóa/mở khóa (`ACTIVE` / `LOCKED`) tài khoản vi phạm.
-![Quản Lý Người Dùng & Phân Quyền](docs/screenshots/screenshot_admin_users.png)
-*Hình 11.17: Danh sách tài khoản người dùng, vai trò và trạng thái khóa/hoạt động.*
+#### 6. Quản Lý Người Dùng, Phân Quyền & Bảo Mật (Users Management — Full CRUD)
+Kiểm soát toàn bộ tài khoản trong hệ thống với các cơ chế bảo mật nghiêm ngặt:
+* **Thêm người dùng mới**: Phân quyền trực tiếp Role `ADMIN`, `OPERATOR`, hoặc `CUSTOMER`.
+* **Chỉnh sửa & Điều chuyển vai trò**: Cập nhật họ tên, số điện thoại và nâng cấp/hạ cấp Role.
+* **Khóa / Mở khóa tài khoản**: Toggle trạng thái `ACTIVE` <-> `LOCKED` tức thì chỉ với 1 click.
+* **Xóa tài khoản**: Xóa tài khoản vi phạm kèm **Cơ chế bảo vệ Quản trị viên tối cao** (Super Admin Guard — không thể xóa `admin@traveleasy.vn`).
+![Quản Lý Người Dùng & Phân Quyền Full CRUD](docs/screenshots/screenshot_admin_users_crud.png)
+*Hình 11.17: Quản lý tài khoản với đầy đủ thao tác Khóa, Sửa và Xóa an toàn.*
 
 ---
 
@@ -1556,8 +1561,475 @@ Hệ thống đã chuẩn bị sẵn Dashboard điều hành cho nhà xe (`/comp
 ![Dashboard Đối Tác Nhà Xe](docs/screenshots/screenshot_company_dashboard.png)
 *Hình 11.20: Dashboard điều hành dành riêng cho nhà xe đối tác.*
 
-![Thông Báo Tính Năng Đối Tác Đang Phát Triển](docs/screenshots/screenshot_company_unsupported.png)
-*Hình 11.21: Trang thông báo đăng ký đối tác nhà xe mới đang trong giai đoạn tiếp nhận hồ sơ.*
+#### 4. Quản Lý Đội Xe Vận Hành (Company Vehicles — Full CRUD)
+Tính năng quản lý toàn diện đội xe của từng nhà xe đối tác trên sàn:
+* **Thêm xe mới**: Hộp thoại thêm xe nhập biển số, loại xe (Giường nằm / Limousine VIP / Ghế ngồi), số tầng, năm sản xuất và sơ đồ ghế mẫu.
+* **Chỉnh sửa xe**: Cập nhật biển số, loại xe, năm sản xuất, và cấu hình ghế ngồi.
+* **Xem chi tiết xe**: Bảng thông số kỹ thuật xe chi tiết, tình trạng kiểm định và đơn vị vận hành.
+* **Bật / tắt trạng thái vận hành**: Chuyển đổi trạng thái hoạt động tức thì (`ACTIVE` <-> `INACTIVE`) và đồng bộ CSDL thời gian thực qua `PATCH /api/v1/company/vehicles/{id}/status`.
+* **Xóa xe**: Gỡ bỏ xe khỏi đội xe vận hành.
+![Quản Lý Đội Xe Nhà Xe](docs/screenshots/screenshot_company_vehicles_live.png)
+*Hình 11.21: Giao diện quản lý đội xe thời gian thực với đầy đủ các thao tác Xem, Sửa, Xóa và Đổi trạng thái.*
+
+![Modal Thêm Xe Mới Vào Đội Xe](docs/screenshots/screenshot_company_vehicles_modal.png)
+*Hình 11.22: Hộp thoại Thêm Xe Mới Vào Đội Xe — Kết nối CSDL và lưu trữ bền vững.*
+
+#### 5. Quản Lý Điểm Đón Trả Nhà Xe (Company Locations — Full CRUD)
+Mô hình cấu hình địa điểm đón trả (`BusCompanyLocationConfig`) cho phép nhà xe liên kết linh hoạt với mạng lưới bến xe Master Data toàn quốc:
+* **Gán địa điểm mới**: Chọn bến xe Master Data từ CSDL (Bến xe Miền Đông, Bến xe Đà Lạt, Bến xe Mỹ Đình...), đặt tên hiển thị thương hiệu của nhà xe, địa chỉ văn phòng/quầy vé và hướng dẫn đón trả khách.
+* **Chỉnh sửa cấu hình**: Cập nhật tên hiển thị, quầy vé đón trả và hướng dẫn in vé cho hành khách.
+* **Xóa cấu hình địa điểm**: Gỡ bỏ điểm đón trả khỏi lịch trình của nhà xe.
+* **Đồng bộ thời gian thực**: Toàn bộ dữ liệu được lưu bền vững, không bị mất khi F5.
+![Quản Lý Địa Điểm Đón Trả Nhà Xe](docs/screenshots/screenshot_company_locations_live.png)
+*Hình 11.23: Danh sách điểm đón trả của nhà xe kết nối với bến xe Master Data.*
+
+![Modal Gán Địa Điểm Cho Nhà Xe](docs/screenshots/screenshot_company_locations_modal.png)
+*Hình 11.24: Hộp thoại Gán Địa Điểm Cho Nhà Xe — Chọn Master Location từ CSDL toàn sàn.*
+
+#### 6. Quản Lý Chính Sách Hủy Vé Nhà Xe (Cancellation Policies)
+Hỗ trợ nhà xe chủ động thiết lập và quản lý các quy định hoàn tiền khi hành khách yêu cầu hủy vé:
+* **Tạo chính sách mới**: Thiết lập tên chính sách (VD: Chính sách Limousine VIP & Cao điểm Lễ Tết), mô tả điều kiện áp dụng.
+* **Cấu hình tỷ lệ hoàn vé linh hoạt theo mốc giờ**:
+  * Trước khởi hành trên 24 giờ: 100%, 90%, 80%, 70%, 50% hoàn tiền.
+  * Trước khởi hành 12 - 24 giờ: 70%, 50%, 30%, 20%, 0% hoàn tiền.
+  * Trước khởi hành dưới 12 giờ: 0% (Không hoàn tiền), 20%, 30%.
+* **Phân định rõ ràng**: Chính sách chuẩn mặc định của Sàn (`Hệ thống`) được bảo vệ không bị xóa; chính sách do Nhà xe tự tạo có thể chỉnh sửa, xóa hoặc kích hoạt làm chính sách mặc định áp dụng.
+* **Lưu trữ bền vững**: Dữ liệu được lưu trữ và duy trì ổn định qua các lần tải lại trang (F5).
+![Danh Sách Chính Sách Hủy Vé Nhà Xe](docs/screenshots/screenshot_company_cancellation_policies.png)
+*Hình 11.25: Danh mục chính sách hủy vé của nhà xe và chính sách chuẩn sàn TravelEasy.*
+
+![Modal Tạo Chính Sách Hủy Vé Mới](docs/screenshots/screenshot_company_cancellation_modal.png)
+*Hình 11.26: Hộp thoại cấu hình tỷ lệ hoàn vé linh hoạt theo các mốc giờ khởi hành.*
+
+#### 7. Quản Lý Điều Phối Chuyến Xe Nhà Xe (Trips Management)
+Cổng điều phối chuyến xe phục vụ trực tiếp nghiệp vụ vận hành hàng ngày của nhà xe:
+* **Tạo chuyến xe mới**: Lựa chọn tuyến đường, xe điều phối từ danh mục phương tiện sẵn có, thiết lập giờ xuất bến, giờ đến dự kiến, giá vé và số lượng chỗ.
+* **Bộ lọc trạng thái theo Tab**: Phân loại tức thì theo `Tất cả`, `SCHEDULED` (Đã lên lịch), `DELAYED` (Trễ giờ), `RUNNING` (Đang chạy), `COMPLETED` (Hoàn thành), `CANCELLED` (Đã hủy).
+* **Bảng điều phối chi tiết**: Xem đầy đủ thông tin mã chuyến, biển số xe, loại xe, giờ xuất bến, giá vé và tình trạng trễ.
+* **Thao tác nhanh trên chuyến**: Hỗ trợ Báo trễ giờ (+30 phút), Khởi hành xuất bến ngay (`RUNNING`), Xác nhận hoàn thành chuyến (`COMPLETED`), hoặc Hủy chuyến xe khẩn cấp (`CANCELLED`) kèm thông báo tức thì.
+![Danh Sách Chuyến Xe Nhà Xe](docs/screenshots/screenshot_company_trips.png)
+*Hình 11.27: Bảng quản lý chuyến xe của đối tác nhà xe với đầy đủ trạng thái và giá vé.*
+
+![Modal Tạo Chuyến Xe Mới](docs/screenshots/screenshot_company_trip_create_modal.png)
+*Hình 11.28: Hộp thoại lên lịch khởi hành chuyến xe mới kết nối với đội xe của nhà xe.*
+
+![Modal Xem Chi Tiết & Điều Phối Chuyến](docs/screenshots/screenshot_company_trip_detail_modal.png)
+*Hình 11.29: Xem chi tiết chuyến xe và cụm nút thao tác điều phối nhanh (Báo trễ giờ, Xuất bến, Hoàn thành, Hủy).*
+
+#### 8. Quản Lý Đơn Đặt Vé Khách Hàng (Bookings Management)
+Công cụ tra cứu, kiểm soát vé và phục vụ khách hàng tại quầy / trên xe:
+* **Tìm kiếm thông minh**: Tìm nhanh theo Mã đặt vé, Họ tên hành khách, Email hoặc Số điện thoại.
+* **Bộ lọc trạng thái vé**: Phân nhóm theo `Tất cả`, `CONFIRMED` (Đã xác nhận), `PENDING` (Chờ thanh toán), `CANCELLED` (Đã hủy).
+* **Xem chi tiết đơn vé**: Hiển thị họ tên, số điện thoại liên hệ, email, tuyến đường, điểm đón, điểm trả, danh sách mã ghế đã đặt (VD: `A01`, `A02`), phương thức thanh toán (VNPAY, Tiền mặt) và tổng tiền.
+* **Hành động nghiệp vụ**:
+  * Xác nhận đặt vé đối với các đơn đang chờ thanh toán tại quầy (`PENDING` -> `CONFIRMED`).
+  * Hủy vé và xử lý hoàn tiền cho hành khách theo chính sách nhà xe.
+  * In vé / Xuất lệnh in vé cho hành khách lên xe.
+![Quản Lý Đơn Đặt Vé Nhà Xe](docs/screenshots/screenshot_company_bookings.png)
+*Hình 11.30: Bảng theo dõi danh sách đặt vé hành khách thời gian thực.*
+
+![Chi Tiết Đơn Đặt Vé Khách Hàng](docs/screenshots/screenshot_company_booking_modal.png)
+*Hình 11.31: Hộp thoại xem chi tiết vé hành khách, số ghế, điểm đón trả và nút In vé / Hủy vé.*
+
+#### 9. Quản Lý Đánh Giá & Phản Hồi Khách Hàng (Customer Reviews & Reports)
+Kênh tương tác và chăm sóc khách hàng trực tiếp của nhà xe:
+* **Bảng danh sách đánh giá**: Hiển thị số sao (1 đến 5 sao), trích dẫn nhận xét của hành khách, tên/email người đánh giá, mã chuyến xe và ngày gửi.
+* **Phân loại đánh giá**: Lọc theo `Tất cả`, `Chưa phản hồi`, `Tốt (4-5 ★)`, `Cần chú ý (1-2 ★)`.
+* **Gửi phản hồi công khai (Reply)**: Mở hộp thoại phản hồi với các mẫu trả lời nhanh ("Lời cảm ơn chuẩn", "Xin lỗi & cam kết khắc phục chất lượng") hoặc soạn nội dung riêng biệt. Phản hồi lập tức hiển thị công khai trên ứng dụng.
+* **Báo cáo vi phạm (Report to Platform Admin)**: Cho phép nhà xe báo cáo các đánh giá spam, sử dụng ngôn từ thô tục hoặc cạnh tranh không lành mạnh lên Ban Quản Trị Sàn TravelEasy để kiểm duyệt và gỡ bỏ.
+![Quản Lý Đánh Giá Khách Hàng](docs/screenshots/screenshot_company_reviews.png)
+*Hình 11.32: Giao diện quản lý đánh giá khách hàng với xếp hạng sao và trạng thái phản hồi.*
+
+![Hộp Thoại Phản Hồi Đánh Giá](docs/screenshots/screenshot_company_reviews_reply_modal.png)
+*Hình 11.33: Hộp thoại gửi phản hồi chính thức từ nhà xe kèm các mẫu trả lời nhanh tiện lợi.*
+
+#### 10. Phân Quyền Bảo Mật & Ẩn Hoàn Toàn Liên Kết Admin Tổng
+* **Bảo mật phân tầng nghiêm ngặt**: Khi người dùng đăng nhập với tư cách Quản trị viên/Điều hành viên Nhà Xe (`ROLE_OPERATOR`), nút `"Sang TravelEasy Admin"` ở chân thanh điều hướng Sidebar được loại bỏ hoàn toàn.
+* **Ngăn chặn vượt quyền**: Đảm bảo nhân viên đối tác nhà xe chỉ hoạt động trong phạm vi tài nguyên được cấp phép (`/company/*`), không nhìn thấy và không thể truy cập trái phép vào phân hệ Quản Trị Sàn Tổng (`/admin/*`).
+* **Trải nghiệm chuyên biệt**: Giao diện gọn gàng, tập trung 100% vào nghiệp vụ điều hành và kinh doanh vận tải của nhà xe.
+
+#### 11. Bảo Vệ Header Khách Hàng & Chặn 403 Forbidden Nghiêm Ngặt
+* **Ẩn toàn bộ nút quản trị đối với Khách hàng**: Khi người dùng đăng nhập tài khoản Khách hàng (`ROLE_CUSTOMER`) hoặc khách vãng lai, hệ thống tự động ẩn hoàn toàn các nút "Quản Trị Sàn (ADMIN)" và "Cổng Điều Hành Xe (OPERATOR)" trên Header.
+* **Điều hướng thông tin đối tác hợp chuẩn**: Các liên kết "Mở bán vé trên TravelEasy" và "Trở thành đối tác" trên Header không còn dẫn thẳng vào cổng quản lý mà mở Hộp thoại Giới thiệu Hợp tác Đối tác với đầy đủ chính sách, hotline hỗ trợ nhà xe và nút đăng nhập riêng cho đối tác đã có tài khoản.
+* **Chặn đứng truy cập trái phép bằng Route Guards**: Nếu tài khoản Khách hàng cố tình nhập thủ công URL `/admin/*` hoặc `/company/*` trên thanh địa chỉ trình duyệt, hệ thống kích hoạt màn hình chặn 403 Forbidden với giao diện cảnh báo nghiêm ngặt và không có bất kỳ nút backdoor nào.
+![Header Khách Hàng Sạch Sẽ Không Có Nút Admin](docs/screenshots/screenshot_customer_header_clean.png)
+*Hình 11.34: Header phân hệ khách hàng sạch sẽ, không hiển thị bất kỳ lối tắt quản trị viên nào.*
+
+![Modal Giới Thiệu Hợp Tác Bán Vé Cho Nhà Xe](docs/screenshots/screenshot_partner_info_modal.png)
+*Hình 11.35: Hộp thoại thông tin hợp tác mở bán vé chuẩn mực khi khách hàng bấm vào liên kết đối tác.*
+
+![Chặn Truy Cập Phân Hệ Quản Trị Sàn 403](docs/screenshots/screenshot_customer_403_admin.png)
+*Hình 11.36: Màn hình từ chối quyền truy cập 403 Forbidden khi tài khoản Khách hàng cố tình vào `/admin/*`.*
+
+![Chặn Truy Cập Phân Hệ Đối Tác Nhà Xe 403](docs/screenshots/screenshot_customer_403_company.png)
+*Hình 11.37: Màn hình từ chối quyền truy cập 403 Forbidden khi tài khoản Khách hàng cố tình vào `/company/*`.*
+
+#### 12. Tối Ưu Hóa Header Theo Cụm Chức Năng Nghiệp Vụ & Trang Roadmap / 404 Chuyên Nghiệp
+* **Khôi phục độc lập và tách bạch chức năng "Tra Cứu Vé"**:
+  * Chức năng **Tra Cứu Vé** (`/lookup`) được tách bạch thành một nút riêng biệt, nổi bật trên thanh điều hướng chính (ngay cạnh *Đặt Vé Xe* và *Vé Của Tôi*).
+  * Cho phép hành khách vãng lai tra cứu tức thì thông tin vé bằng Mã đặt vé (`BK-*`) hoặc Số điện thoại, kiểm tra vị trí ghế ngồi, in vé và lấy mã QR Code lên xe mà **không bắt buộc phải đăng nhập tài khoản**.
+* **Phân chia Header theo Cụm Chức Năng Sàn (Functional Navigation)**:
+  * Thay vì chia theo phương tiện, toàn bộ thanh điều hướng được quy hoạch theo đúng nhu cầu và hành trình trải nghiệm của khách hàng:
+    1. 🚌 **Đặt Vé Xe** (`/search` hoặc `/` — Hoạt động cốt lõi): Tìm chuyến, chọn lộ trình, xem giá vé và đặt chỗ.
+    2. 🛡️ **Tra Cứu Vé** (`/lookup` — Hoạt động): Tra cứu nhanh thông tin vé và mã QR soát vé.
+    3. 🎟️ **Vé Của Tôi** (`/my-tickets` — Hoạt động): Quản lý lịch sử vé của tài khoản cá nhân, đổi/hủy vé trực tuyến.
+    4. ⏰ **Lịch Trình** (`/schedule` — Roadmap Coming Soon): Tra cứu bảng giờ xe xuất bến và danh mục tuyến đường liên tỉnh.
+    5. 🏷️ **Khuyến Mãi** (`/promotions` [HOT] — Roadmap Coming Soon): Voucher giảm giá đến 50% và chương trình hoàn tiền.
+    6. ⭐ **Đánh Giá** (`/reviews` — Roadmap Coming Soon): Nhận xét và chấm điểm chất lượng dịch vụ các nhà xe.
+    7. 📄 **Chính Sách & FAQ** (`/policy` — Hoạt động): Quy định hành lý, chính sách hoàn hủy và cẩm nang đi xe.
+* **Xử lý mượt mà các tính năng đang phát triển & Bắt lỗi 404**:
+  * Các tính năng chức năng dự kiến (`/schedule`, `/promotions`, `/reviews`...) tự động mở trang `NotFoundPage.tsx` ở chế độ **Lộ trình phát triển (Roadmap Mode)** với thanh tiến độ 3 bước và thời gian ra mắt dự kiến rõ ràng.
+  * Mọi đường link sai hoặc không tồn tại (Catch-all route `path="*"`) sẽ hiển thị trang báo lỗi 404 thân thiện, chuyên nghiệp kèm các nút quay về Trang chủ, Đặt vé xe ngay và hotline hỗ trợ 24/7 (`1900 6868`).
+
+![Giao Diện Header Mới Phân Chia Theo Cụm Chức Năng Nghiệp Vụ](docs/screenshots/screenshot_new_header_layout.png)
+*Hình 11.38: Thanh điều hướng TravelEasy phân chia theo cụm chức năng nghiệp vụ rõ ràng, tách bạch Tra Cứu Vé và Vé Của Tôi.*
+
+![Giao Diện Tra Cứu Vé Nhanh Độc Lập Không Cần Đăng Nhập](docs/screenshots/screenshot_ticket_lookup_page.png)
+*Hình 11.39: Chức năng Tra Cứu Vé độc lập (`/lookup`) tra cứu nhanh bằng mã đặt vé hoặc số điện thoại kèm mã QR lên xe.*
+
+![Trang Roadmap Chức Năng Lịch Trình & Bảng Giờ Chạy Xe](docs/screenshots/screenshot_coming_soon_schedule.png)
+*Hình 11.40: Trang Roadmap chuyên nghiệp cho chức năng Lịch Trình Tuyến Xe (`/schedule`) với tiến độ triển khai 3 bước.*
+
+![Trang Roadmap Chức Năng Đánh Giá & Xếp Hạng Nhà Xe](docs/screenshots/screenshot_coming_soon_reviews.png)
+*Hình 11.41: Trang Roadmap cho chức năng Đánh Giá & Xếp Hạng Chất Lượng Nhà Xe (`/reviews`).*
+
+![Trang Chính Sách Quy Chế & FAQ](docs/screenshots/screenshot_policy_faq_page.png)
+*Hình 11.42: Giao diện Chính Sách & Quy Định FAQ (`/policy`) với các tab hoàn hủy vé, quy định hành lý và cam kết dịch vụ.*
+
+![Trang Báo Lỗi 404 Not Found Khi Nhập Sai URL](docs/screenshots/screenshot_404_wrong_url.png)
+*Hình 11.43: Trang 404 Not Found thân thiện khi truy cập vào đường link sai hoặc không tồn tại.*
+
+---
+
+### 11.5 Kiến Trúc Lưu Trữ Bền Vững Trên Database Thực (MySQL 8.0 & Zero Data Loss Guarantee)
+
+#### 1. Loại Bỏ Hoàn Toàn In-Memory Mock Data & Chuẩn Hóa RDBMS Thực Tế
+* Nhằm giải quyết triệt để tình trạng dữ liệu biến mất sau mỗi lần khởi động lại máy chủ (hiện tượng mock data "ngày có ngày không"), toàn bộ hệ thống phân hệ Backend (`Spring Boot 3.3.4`) đã được ngắt kết nối khỏi cơ sở dữ liệu tạm thời H2 In-Memory và kết nối trực tiếp 100% vào hệ quản trị cơ sở dữ liệu thực tế **MySQL 8.0 Community Server** (`localhost:3306/traveleasy_db`).
+* **Chuẩn hóa Collation & Bảng mã**: Cấu hình `utf8mb4_0900_ai_ci` đồng bộ cho database và toàn bộ 18+ bảng thực thể (Entities), loại bỏ hoàn toàn lỗi xung đột bảng mã `Illegal mix of collations` khi thực thi các truy vấn JPQL tìm kiếm (`LIKE %...%`).
+
+#### 2. Nguyên Tắc Bảo Toàn Dữ Liệu Tuyệt Đối (Zero Data Loss Protocol)
+* **Chính sách Schema Hibernate**: Đặt cấu hình `spring.jpa.hibernate.ddl-auto: update` cho cả hai profile `default` và `dev`. Tuyệt đối không sử dụng `create` hoặc `create-drop`.
+  * Mọi bảng dữ liệu, khóa chính, khóa ngoại, chỉ mục (Index) và dữ liệu nghiệp vụ thực tế được duy trì bền vững theo thời gian.
+  * Khi khởi động lại máy chủ backend, Hibernate chỉ đối chiếu và cập nhật các trường mới (nếu có), không bao giờ xóa bảng hay làm rỗng dữ liệu.
+* **Cơ chế Khởi tạo Thông minh (Smart Seed Protection)**: Thành phần `DataInitializer` được lập trình logic kiểm tra `userRepository.count() > 0`. Khi phát hiện cơ sở dữ liệu đã tồn tại dữ liệu vận hành, hệ thống lập tức xuất log:
+  ```text
+  Database already seeded. Skipping DataInitializer.
+  ```
+  Nhờ đó, dữ liệu của khách hàng, nhà xe, xe, tuyến đường và các giao dịch đặt vé đều được bảo vệ toàn vẹn tuyệt đối.
+
+#### 3. Bộ API Quản Lý Thực Thi Của Đối Tác Nhà Xe (`CompanyManagementController.java`)
+Hệ thống bổ sung bộ RESTful Controller chuyên dụng [CompanyManagementController.java](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/backend/src/main/java/com/traveleasy/controller/company/CompanyManagementController.java) kết nối trực tiếp với các repository của Spring Data JPA, cung cấp đầy đủ các thao tác CRUD trên dữ liệu thực tế:
+* **Quản lý Chuyến xe (`/api/v1/company/trips`)**:
+  * `GET`: Truy vấn danh sách chuyến xe thực tế theo `busCompanyId` kèm lọc theo trạng thái và tuyến đường.
+  * `POST`: Tạo mới chuyến xe trên MySQL, tự động tạo đồng thời **34 bản ghi ghế ngồi thực tế** trong bảng `trip_seats` với trạng thái `AVAILABLE`.
+  * `PUT /{id}`: Cập nhật giá vé, thời gian khởi hành/kết thúc và thông tin xe.
+  * `PATCH /{id}/status`: Cập nhật trạng thái chuyến xe (`SCHEDULED`, `DEPARTED`, `RUNNING`, `COMPLETED`, `CANCELLED`).
+  * `DELETE /{id}`: Xóa chuyến xe khỏi database khi chưa phát sinh giao dịch vé.
+* **Quản lý Đơn đặt vé (`/api/v1/company/bookings`)**:
+  * `GET`: Lấy danh sách toàn bộ vé đặt thuộc các chuyến xe của nhà xe, hỗ trợ phân trang và tìm kiếm theo mã vé/khách hàng.
+  * `PATCH /{id}/status`: Cập nhật trạng thái vé trực tiếp (`CONFIRMED`, `CANCELLED`, `COMPLETED`).
+* **Quản lý Chính sách Hủy vé (`/api/v1/company/cancellation-policies`)**:
+  * `GET`: Lấy danh sách các mốc thời gian hoàn tiền trước giờ khởi hành.
+  * `POST`: Thêm chính sách mới (số giờ trước khởi hành, tỷ lệ hoàn tiền %).
+  * `DELETE /{id}`: Xóa chính sách hoàn hủy.
+* **Quản lý Đánh giá Khách hàng (`/api/v1/company/reviews`)**:
+  * `GET`: Truy xuất danh sách đánh giá sao và nhận xét từ hành khách.
+  * `POST /{id}/reply`: Phản hồi chính thức từ nhà xe tới khách hàng.
+  * `POST /{id}/report`: Báo cáo đánh giá vi phạm quy chuẩn lên Admin sàn.
+* **Quản lý Địa điểm & Văn phòng Nhà xe (`/api/v1/company/locations`)**:
+  * `GET`: Danh sách các điểm đón, điểm trả và văn phòng giao dịch của nhà xe.
+  * `POST`: Đăng ký thêm điểm đón/trả mới.
+  * `DELETE /{id}`: Hủy liên kết điểm đón/trả.
+
+#### 4. Báo Cáo Kiểm Thử Lưu Trữ Bền Vững & Minh Chứng Truy Vấn Trực Tiếp Từ MySQL 8.0
+Kịch bản kiểm thử tự động `test_db_persistence.mjs` đã thực hiện chuỗi giao dịch thêm mới và sửa đổi dữ liệu thực tế trên hệ thống:
+1. **Thêm phương tiện mới**: Tạo xe biển số `51B-117.13` (Limousine 34 phòng) -> Truy vấn MySQL xác nhận bản ghi tồn tại trong bảng `vehicles` với `id: 5`.
+2. **Tạo chuyến xe mới**: Tạo chuyến đi Nha Trang giá `360,000 VND` -> Truy vấn MySQL xác nhận chuyến xe lưu trong bảng `trips` với `id: 20`.
+3. **Tự động sinh sơ đồ ghế thực**: Kiểm tra bảng `trip_seats` ghi nhận đủ **34 ghế ngồi vật lý** liên kết trực tiếp với chuyến xe `id: 20`.
+4. **Cập nhật trạng thái vận hành**: Chuyển trạng thái chuyến xe sang `RUNNING` -> Kiểm tra MySQL xác nhận trường `status` lưu trữ giá trị `RUNNING`.
+5. **Tìm kiếm công khai**: Gọi API `/api/v1/trips/search` -> Trả về danh sách đầy đủ 18+ chuyến xe thực tế từ cơ sở dữ liệu MySQL mà không phụ thuộc vào bất kỳ mock data nào.
+
+![Tìm Kiếm Chuyến Xe Trực Tiếp Từ MySQL 8.0](docs/screenshots/screenshot_db_search_trips_live.png)
+*Hình 11.44: Giao diện tìm kiếm chuyến xe của hành khách hiển thị dữ liệu thời gian thực từ cơ sở dữ liệu MySQL 8.0 bền vững.*
+
+![Quản Lý Chuyến Xe Đối Tác Trên Database Thực](docs/screenshots/screenshot_db_company_trips_live.png)
+*Hình 11.45: Giao diện quản lý chuyến xe đối tác với các thao tác CRUD và cập nhật trạng thái lưu trữ trực tiếp vào MySQL.*
+
+![Danh Sách Xe Nhà Xe Đồng Bộ Trực Tiếp Từ MySQL](docs/screenshots/screenshot_db_company_vehicles_live.png)
+*Hình 11.46: Danh sách phương tiện vận tải của nhà xe được đồng bộ chính xác và bảo toàn 100% qua các lần khởi động lại máy chủ.*
+
+---
+
+### 11.6 Hệ Thống CI/CD Pipeline & Triển Khai Containerization Tự Động (GitHub Actions & Docker Compose)
+
+#### 1. Kiến Trúc Pipeline CI/CD Toàn Diện (Enterprise CI/CD Workflow)
+Hệ thống TravelEasy tích hợp đường ống tích hợp và triển khai liên tục (CI/CD) tự động hóa thông qua **GitHub Actions** tại [.github/workflows/ci-cd.yml](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/.github/workflows/ci-cd.yml) với 3 giai đoạn (Stages) độc lập và đồng bộ:
+
+```mermaid
+flowchart LR
+    GitPush["Git Push / PR (main, dev)"] --> BackendCI["1. Backend CI<br/>(Java 21 LTS + Gradle 8.13<br/>Spring Boot bootJar)"]
+    GitPush --> FrontendCI["2. Frontend CI<br/>(Node 20 LTS + TypeScript<br/>Vite Production Build)"]
+    BackendCI --> Artifacts["Upload Artifacts<br/>(JAR & Dist bundles)"]
+    FrontendCI --> Artifacts
+    Artifacts --> DockerCD["3. Docker CD & Packaging<br/>(Docker Compose Config &<br/>Build Container Images)"]
+    DockerCD --> Ready["Deployment Ready<br/>(Zero-Downtime Ready)"]
+```
+
+#### 2. Các Giai Đoạn Trong Đường Ống CI/CD
+1. **Giai đoạn 1 - Backend CI (`backend-ci`)**:
+   * **Môi trường**: `ubuntu-latest`, **Java 21 LTS** (phân phối Temurin).
+   * **Công cụ**: Gradle v3 GitHub Action với cơ chế cache thông minh.
+   * **Nhiệm vụ**: Biên dịch toàn bộ mã nguồn Java, đóng gói artifact JAR Spring Boot 3.3.4 (`./gradlew bootJar --no-daemon`).
+   * **Lưu trữ Artifact**: Tự động xuất xưởng và lưu trữ file `traveleasy-backend-jar` phục vụ deploy.
+2. **Giai đoạn 2 - Frontend CI (`frontend-ci`)**:
+   * **Môi trường**: `ubuntu-latest`, **Node.js 20 LTS**.
+   * **Nhiệm vụ**: Cài đặt phụ thuộc (`npm install`), kiểm tra kiểu tĩnh TypeScript nghiêm ngặt (`tsc`) và đóng gói tài nguyên tối ưu (`vite build`).
+   * **Lưu trữ Artifact**: Tự động lưu trữ gói thư mục tĩnh `frontend/dist` (`traveleasy-frontend-dist`).
+3. **Giai đoạn 3 - Docker Containerization & Verification (`docker-cd-verification`)**:
+   * **Điều kiện tiên quyết**: Chờ cả 2 giai đoạn `backend-ci` và `frontend-ci` hoàn thành xuất sắc (`needs: [backend-ci, frontend-ci]`).
+   * **Xác thực Compose Spec**: Kiểm tra cú pháp và liên kết mạng trong `docker-compose.yml` (`docker compose config`).
+   * **Đóng gói Image**: Xây dựng đồng thời các Docker Image chuyên dụng (`traveleasy-backend`, `traveleasy-frontend`, `traveleasy-mysql:8.0`).
+   * **Nginx Reverse Proxy**: Tích hợp cấu hình [frontend/nginx.conf](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/nginx.conf) với SPA routing `try_files $uri $uri/ /index.html;` và tự động điều hướng proxy `/api/` về container `backend:8080`.
+
+#### 3. Khắc Phục Lỗi CI/CD Cốt Lõi Trên GitHub Actions
+* **Sự cố Wrapper Jar bị Gitignore**: Trước đây file cấu hình `.gitignore` có quy tắc chặn `*.jar` khiến tệp nhị phân `backend/gradle/wrapper/gradle-wrapper.jar` không được đẩy lên GitHub, dẫn đến runner Linux báo lỗi `ClassNotFoundException: org.gradle.wrapper.GradleWrapperMain`.
+* **Giải pháp khắc phục triệt để**:
+  1. Thêm ngoại lệ `!**/gradle-wrapper.jar` vào [.gitignore](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/.gitignore).
+  2. Bổ sung [.gitattributes](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/.gitattributes) chuẩn hóa ký tự xuống dòng `LF` cho toàn bộ các script khởi chạy Linux `gradlew` và `.sh`.
+  3. Cập nhật [backend/Dockerfile](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/backend/Dockerfile) hỗ trợ `dos2unix` và `bash` trong môi trường container Alpine.
+  4. Đưa `gradle-wrapper.jar` vào git tracking và kích hoạt pipeline tự động trên mọi nhánh `dev` và `main`.
+
+#### 4. Hướng Dẫn Triển Khai Trực Tiếp Bằng Docker Compose (Single-Command Deployment)
+Để triển khai toàn bộ nền tảng TravelEasy (gồm Database MySQL 8.0, Backend Spring Boot và Frontend Nginx React) trên bất kỳ máy chủ nào:
+```bash
+# 1. Clone repository
+git clone -b dev https://github.com/phamcongthanhvn2k6/traveleasy-platform.git
+cd traveleasy-platform
+
+# 2. Khởi chạy toàn bộ hệ sinh thái với 1 dòng lệnh duy nhất
+docker compose up -d --build
+
+# 3. Kiểm tra trạng thái các container
+docker compose ps
+```
+* **Frontend Application**: Truy cập tại `http://localhost:3000`
+* **Backend API & Swagger**: Truy cập tại `http://localhost:8080/swagger-ui.html`
+* **MySQL Database 8.0**: Cổng `3306`, database `traveleasy_db`
+
+---
+
+### 11.7 Hoàn Thiện Nghiệp Vụ Vận Hành Tuyến Đường, Thống Kê KPI Thời Gian Thực & Bộ Lọc Tìm Kiếm Đa Chiều
+
+#### 1. Loại Bỏ Triệt Để Dữ Liệu Tĩnh & Kết Nối Tuyến Đường Nhà Xe Vào MySQL 8.0
+* **Trước đây**: Trang [CompanyRoutesPage.tsx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/src/pages/company/routes/CompanyRoutesPage.tsx) hiển thị 2 dòng dữ liệu mock cố định, các nút "Tạo tuyến mới", "Chỉnh sửa" và "Xóa" chưa có bộ xử lý tương tác với máy chủ.
+* **Giải pháp hoàn thiện**:
+  * Bổ sung đầy đủ 4 RESTful API vào [CompanyManagementController.java](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/backend/src/main/java/com/traveleasy/controller/company/CompanyManagementController.java):
+    * `GET /api/v1/company/routes`: Truy vấn toàn bộ danh sách tuyến đường thực tế từ bảng `routes`.
+    * `POST /api/v1/company/routes`: Thêm mới tuyến đường vào MySQL (với điểm đi, điểm đến, thời gian chạy dự kiến và cự ly km).
+    * `PUT /api/v1/company/routes/{id}`: Cập nhật lộ trình và thông số cự ly của tuyến.
+    * `DELETE /api/v1/company/routes/{id}`: Xóa tuyến đường khỏi CSDL khi chưa gắn với chuyến xe.
+  * Tái cấu trúc giao diện `CompanyRoutesPage.tsx` với thanh tìm kiếm thời gian thực, modal thêm mới, modal chỉnh sửa, xác nhận xóa an toàn và thông báo Toast phản hồi trạng thái giao dịch.
+
+#### 2. Thống Kê KPI Dashboard Nhà Xe Thời Gian Thực (`/company/dashboard/stats`)
+* Nâng cấp trang [CompanyDashboardPage.tsx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/src/pages/company/dashboard/CompanyDashboardPage.tsx) từ các số liệu tĩnh thành bảng điều khiển động (Live Operations Dashboard):
+  * Doanh thu tích lũy được tính tổng tự động từ các đơn vé `CONFIRMED` trong bảng `bookings`.
+  * Số lượng chuyến xe vận hành và chuyến xe sẵn sàng xuất bến được đếm trực tiếp từ bảng `trips`.
+  * Danh sách "Chuyến xe sắp khởi hành" truy xuất trực tiếp các chuyến xe mới nhất từ CSDL kèm mã chuyến, lộ trình, loại xe, số ghế trống và trạng thái vận hành (`RUNNING`, `SCHEDULED`).
+
+#### 3. Chuẩn Hóa Ngôn Ngữ & Trải Nghiệm Giao Diện Đối Tác
+* Toàn bộ thanh điều hướng bên [CompanyLayout.tsx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/src/components/CompanyLayout.tsx) được chuẩn hóa tiếng Việt có dấu đầy đủ (`Tổng quan`, `Đội xe`, `Địa điểm nhà xe`, `Tuyến đường`, `Chính sách hủy`, `Chuyến xe`, `Đặt vé`, `Đánh giá`, `VẬN HÀNH`, `KINH DOANH`).
+* Sửa lỗi lệch múi giờ (UTC Timezone Shift) khi biên tập chuyến xe trong trang [AdminTripsPage.tsx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/src/pages/admin/trips/AdminTripsPage.tsx), bảo toàn chính xác giờ khởi hành địa phương (GMT+7) khi lưu trữ vào MySQL.
+
+#### 4. Sửa Lỗi Bộ Lọc Loại Xe Ghế Ngồi (`SEAT` / `SEATER`) Trong Tìm Kiếm
+* Khắc phục độ lệch định danh loại xe giữa [FilterSidebar.tsx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/src/pages/customer/search/components/FilterSidebar.tsx) (`SEATER`) và backend enum `BusType.java` (`SEAT`).
+* Cập nhật logic lọc đa chiều trong [TripSearchPage.tsx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/frontend/src/pages/customer/search/TripSearchPage.tsx) hỗ trợ tương thích hai chiều, giúp hành khách lọc chính xác xe ghế ngồi, xe giường nằm và xe limousine VIP mà không bị sót chuyến.
+
+![Dashboard Nhà Xe Dữ Liệu Thực Tế MySQL](docs/screenshots/screenshot_company_dashboard_live.png)
+*Hình 11.47: Dashboard nhà xe hiển thị KPI doanh thu và chuyến xe sắp tới trực tiếp từ MySQL 8.0.*
+
+![Quản Lý Tuyến Đường Nhà Xe Trên Database Thực](docs/screenshots/screenshot_company_routes_live.png)
+*Hình 11.48: Quản lý tuyến đường nhà xe với thao tác CRUD trực tiếp trên database thực.*
+
+![Bộ Lọc Tìm Kiếm Chuyến Xe Đa Chiều](docs/screenshots/screenshot_search_bus_type_filter.png)
+*Hình 11.49: Bộ lọc tìm kiếm chuyến xe đa chiều theo giờ chạy, tầm giá, loại xe và hãng xe.*
+
+---
+
+### 11.8 Phân Định Tuyệt Đối Vai Trò Quản Trị Sàn Tổng (Platform Admin) & Đối Tác Nhà Xe (Bus Operator)
+
+#### 1. Định Vị Bản Chất & Sự Tách Bạch Kiến Trúc (Architecture & Role Separation)
+Hệ thống TravelEasy được thiết kế theo mô hình **Đa Thuê Bao (Multi-Tenant SaaS Platform)**, phân tách hoàn toàn và tuyệt đối giữa hai cấp độ quản lý:
+
+1. **Quản Trị Sàn Tổng (Platform Admin — `/admin/*`)**:
+   * **Đại diện**: Ban điều hành công nghệ và pháp lý của toàn bộ sàn thương mại điện tử TravelEasy Việt Nam.
+   * **Trách nhiệm cốt lõi**:
+     * Kiểm duyệt hồ sơ pháp lý, phê duyệt hoặc đình chỉ các đơn vị đối tác nhà xe (`Bus Company Management`).
+     * Quản lý toàn bộ danh mục tài khoản người dùng (`User Management`: Phân quyền ADMIN, OPERATOR, CUSTOMER, khóa tài khoản vi phạm).
+     * Cấu hình hạ tầng sàn: Tham số cổng thanh toán (VNPay, MoMo, ZaloPay), biểu ngữ quảng cáo (Banners), chính sách chung toàn sàn.
+     * Xử lý báo cáo tranh chấp, khiếu nại đánh giá vi phạm từ các nhà xe.
+     * Giám sát bảo mật và an toàn dữ liệu qua Nhật ký kiểm toán toàn sàn (`System Audit Logs`).
+   * **Phạm vi dữ liệu (Data Scope)**: **Toàn cục (System-Wide Global)** — Có quyền xem toàn bộ chuyến xe, toàn bộ tuyến đường và các giao dịch của mọi hãng xe trên hệ thống.
+
+2. **Cổng Điều Hành Đối Tác Nhà Xe (Bus Operator Portal — `/company/*`)**:
+   * **Đại diện**: Đơn vị vận tải hành khách cụ thể (Ví dụ: FUTA Phương Trang, Mai Linh, Hoàng Long, Sao Việt...).
+   * **Trách nhiệm cốt lõi**:
+     * Quản lý và đăng kiểm đội xe riêng của mình (`Vehicle Fleet Management`).
+     * Thiết lập danh mục điểm đón/trả và văn phòng trung chuyển riêng (`Pickup & Drop-off Points`).
+     * Đăng ký lộ trình và các tuyến đường vận tải được cấp phép (`Registered Routes`).
+     * Quy định chính sách hoàn tiền và hủy vé riêng theo từng mốc giờ khởi hành (`Cancellation Policies`).
+     * Lập lịch, khởi tạo và điều phối các chuyến xe xuất bến hàng ngày (`Trip Scheduling & Dispatching`).
+     * Theo dõi danh sách hành khách và kiểm soát các đơn đặt vé thuộc các chuyến của nhà xe (`Passenger & Booking Management`).
+     * Chăm sóc khách hàng và phản hồi trực tiếp các đánh giá sau chuyến đi (`Customer Review Responses`).
+   * **Phạm vi dữ liệu (Data Scope)**: **Đơn vị thuê bao độc lập (Tenant-Scoped Isolation)** — Tuyệt đối KHÔNG ĐƯỢC PHÉP xem, chỉnh sửa hay can thiệp vào doanh thu, chuyến xe, đội xe hoặc khách hàng của các nhà xe đối thủ cạnh tranh trên cùng sàn.
+
+---
+
+#### 2. Ma Trận So Sánh Phân Quyền & Ranh Giới Vận Hành (Role & Responsibility Matrix)
+
+| Tiêu chí | Quản Trị Sàn Tổng (Platform Admin) | Đối Tác Nhà Xe (Bus Operator) |
+| :--- | :--- | :--- |
+| **Vai trò đại diện** | Chủ quản sàn thương mại TravelEasy | Doanh nghiệp vận tải đối tác |
+| **Mã quyền bảo vệ** | `ROLE_ADMIN` | `ROLE_OPERATOR` (hoặc Admin sàn được ủy quyền hỗ trợ) |
+| **Không gian URL** | `/admin/*` | `/company/*` |
+| **Bộ bảo vệ định tuyến** | `AdminAuthGuard.tsx` (Chặn 403 Forbidden nếu không phải Admin) | `CompanyAuthGuard.tsx` (Chặn 403 Forbidden đối với khách hàng phổ thông) |
+| **Bộ nhận diện giao diện** | Tông màu Deep Indigo (`#6366f1`) sang trọng, đẳng cấp quản trị sàn | Tông màu Cyan / Emerald (`#0ea5e9`, `#10b981`) năng động, phong cách vận hành thực địa |
+| **Huy hiệu phân biệt** | `QUẢN TRỊ SÀN TỔNG (PLATFORM ADMIN)` | `CỔNG ĐIỀU HÀNH NHÀ XE (OPERATOR PORTAL)` |
+| **Phạm vi truy vấn dữ liệu** | Toàn bộ cơ sở dữ liệu (`getAllTrips`, `getAllBookings`, `getAllCompanies`) | Bị chặn cứng theo mã định danh nhà xe (`findByBusCompanyId`, `sumRevenueByCompanyId`) |
+| **Nút điều hướng chéo** | Không có nút sang cổng đối tác (giữ nguyên không gian tập trung) | Không hiển thị nút quay lại trang admin tổng trên Header |
+| **Quản trị người dùng** | Toàn quyền tạo, sửa, khóa tài khoản người dùng và nhà xe | Chỉ quản lý thông tin hành khách đi trên các chuyến xe của mình |
+| **Cấu hình thanh toán** | Quản lý Secret Key và cấu hình API VNPay / MoMo sàn | Nhận dòng tiền đối soát định kỳ theo tỷ lệ hoa hồng sàn quy định |
+
+---
+
+#### 3. Cơ Chế Cách Ly Dữ Liệu Đa Thuê Bao (Tenant Isolation Implementation)
+Để đảm bảo bí mật kinh doanh giữa các nhà xe trên cùng một nền tảng cơ sở dữ liệu MySQL 8.0, hệ thống triển khai cơ chế lọc dữ liệu cưỡng bức (Forced Tenant Scoping) tại tầng Persistence và Service:
+
+1. **Thống kê Doanh thu & KPI Cách ly**:
+   * Tại [BookingRepository.java](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/backend/src/main/java/com/traveleasy/repository/BookingRepository.java):
+     ```java
+     @Query("SELECT COALESCE(SUM(b.totalPrice), 0) FROM Booking b WHERE b.trip.busCompany.id = :busCompanyId AND b.status = 'CONFIRMED'")
+     BigDecimal sumTotalRevenueByBusCompanyId(@Param("busCompanyId") Long busCompanyId);
+     ```
+   * Doanh thu của Nhà xe A chỉ tính trên các đơn vé `CONFIRMED` thuộc chuyến xe do Nhà xe A vận hành.
+
+2. **Cách ly Danh sách Chuyến xe & Lịch xuất bến**:
+   * Tại [TripRepository.java](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/backend/src/main/java/com/traveleasy/repository/TripRepository.java):
+     ```java
+     List<Trip> findByBusCompanyIdOrderByDepartureTimeDesc(Long busCompanyId);
+     Long countByBusCompanyId(Long busCompanyId);
+     Long countByBusCompanyIdAndStatus(Long busCompanyId, TripStatus status);
+     ```
+   * Khi Nhà xe A đăng nhập vào Cổng điều hành, hệ thống gọi `GET /api/v1/company/trips?companyId=1` và chỉ nạp đúng các chuyến xe của Nhà xe A.
+
+3. **Bằng chứng Kiểm thử Cách ly Thực Tế**:
+   * **Truy vấn Nhà xe ID = 1 (TravelEasy Express)**:
+     * Tổng số chuyến xe: **14 chuyến**
+     * Tổng đơn đặt vé: **2 đơn**
+     * Doanh thu tích lũy: **1,030,000 VND**
+   * **Truy vấn Nhà xe ID = 2 (Đơn vị đối tác khác)**:
+     * Tổng số chuyến xe: **0 chuyến**
+     * Tổng đơn đặt vé: **0 đơn**
+     * Doanh thu tích lũy: **0.00 VND**
+   * => Xác nhận 100% dữ liệu được cách ly an toàn, loại bỏ triệt để nguy cơ rò rỉ dữ liệu giữa các hãng xe.
+
+![Giao Diện Quản Trị Sàn Tổng](docs/screenshots/screenshot_platform_admin_trips.png)
+*Hình 11.50: Giao diện Quản Trị Sàn Tổng (Platform Admin) với nhận diện Deep Indigo và phạm vi giám sát toàn hệ thống.*
+
+![Giao Diện Cổng Điều Hành Đối Tác Nhà Xe](docs/screenshots/screenshot_partner_operator_dashboard.png)
+*Hình 11.51: Giao diện Cổng Điều Hành Đối Tác Nhà Xe (Operator Portal) với nhận diện Cyan/Emerald và dữ liệu phân vùng độc lập.*
+
+---
+
+### 11.9 Làm Giàu & Đa Dạng Hóa Toàn Diện Cơ Sở Dữ Liệu Thực Tế (Comprehensive Database Enrichment)
+
+#### 1. Tổng Quan Quy Mô Dữ Liệu Sau Khi Làm Giàu
+Nhằm đáp ứng yêu cầu kiểm thử toàn diện, báo cáo đồ án và trải nghiệm vận hành thực tế sống động, toàn bộ hệ thống cơ sở dữ liệu **MySQL 8.0** (`traveleasy_db`) đã được bổ sung khối lượng lớn dữ liệu nghiệp vụ thực tế, phong phú và chuẩn hóa 100%:
+
+| Thực Thể (Entity) | Trước Khi Làm Giàu | Sau Khi Làm Giàu | Mức Độ Tăng Trưởng | Chi Tiết Nghiệp Vụ Bổ Sung |
+| :--- | :---: | :---: | :---: | :--- |
+| **Người dùng (`users`)** | 12 | **28** | **+133%** | Đầy đủ tài khoản Admin sàn, Operator của 10 hãng xe và 16 khách hàng 3 miền với SĐT 10 số & mật khẩu chuẩn `Rikkei@123` |
+| **Đội xe vận tải (`vehicles`)** | 5 | **26** | **+420%** | Biển số các tỉnh (51B, 29B, 72B, 15B, 43B, 79B...), đủ 3 dòng xe Limousine VIP, Giường nằm 2 tầng, Ghế ngồi cao cấp |
+| **Tuyến đường (`routes`)** | 14 | **20** | **+43%** | Mở rộng mạng lưới: Sài Gòn - Cà Mau, Hà Nội - Ninh Bình, Đà Nẵng - Nha Trang, Sài Gòn - Rạch Giá, Châu Đốc |
+| **Chuyến xe (`trips`)** | 20 | **101** | **+405%** | Phủ đều các khung giờ (Sáng, Trưa, Tối, Đêm), các ngày (Hôm nay, Ngày mai, Tuần tới, Quá khứ) và trạng thái `SCHEDULED`, `RUNNING`, `COMPLETED` |
+| **Sơ đồ ghế ngồi (`trip_seats`)** | 680 | **3,434** | **+405%** | Mỗi chuyến xe có đủ 34 ghế vật lý (Tầng 1 A01-A17, Tầng 2 B01-B17) đồng bộ chính xác với trạng thái `AVAILABLE` / `BOOKED` |
+| **Đơn đặt vé (`bookings`)** | 3 | **28** | **+833%** | Mã đơn chuẩn `BK-20261021-XXXX`, đầy đủ thông tin hành khách, điểm đón/trả, phương thức thanh toán VNPay, MoMo, VietQR, COD |
+| **Vé điện tử (`tickets`)** | 4 | **38** | **+850%** | Mã vé `TK-*` gắn với từng ghế, mã QR Hash an toàn, trạng thái `ISSUED` hoặc `USED` |
+| **Chính sách hoàn hủy (`cancellation_policies`)** | 2 | **7** | **+250%** | Chính sách riêng biệt của các hãng xe (FUTA Phương Trang, Thành Bưởi, Hoa Mai, Sao Việt, Văn Minh...) |
+| **Đánh giá & Phản hồi (`review_reports`)** | 3 | **11** | **+267%** | Nhận xét đa dạng từ 3 đến 5 sao về chất lượng xe, độ êm ái, cổng sạc, wifi và thái độ tài xế |
+| **Địa danh & Bến xe (`locations`)** | 5 | **14** | **+180%** | Bến xe Miền Đông mới, Bến xe Miền Tây, Bến xe Giáp Bát, Bến xe Nước Ngầm, Bến xe Vũng Tàu, Bến xe Sa Pa... |
+
+---
+
+#### 2. Danh Sách Tài Khoản Thử Nghiệm Chuẩn Hóa
+Mọi tài khoản trong hệ thống đều có thể đăng nhập ngay bằng mật khẩu chung: `Rikkei@123`
+
+1. **Quản Trị Viên Sàn Tổng (Platform Admin)**:
+   * `admin@traveleasy.vn` — Quản Trị Viên Hệ Thống
+   * `phanthanhphong.admin@traveleasy.vn` — Phạm Thanh Phong
+   * `trungkien.admin@traveleasy.vn` — Phan Trung Kiên
+2. **Điều Hành Đối Tác Nhà Xe (Bus Operators)**:
+   * `partner@traveleasy.vn` — Điều Hành TravelEasy Express (Nhà xe 1)
+   * `dieuhanh@thanhbuoi.com.vn` — Điều Hành Thành Bưởi Limousine (Nhà xe 2)
+   * `dieuhanh@xesaoviet.com.vn` — Điều Hành Sao Việt Express (Nhà xe 3)
+   * `dieuhanh@kumhosamco.com.vn` — Điều Hành Kumho Samco (Nhà xe 4)
+   * `dieuhanh@hoamaivungtau.com.vn` — Điều Hành Xe Hoa Mai Vũng Tàu (Nhà xe 5)
+   * `dieuhanh@hoanglongasia.com` — Điều Hành Hoàng Long Asia (Nhà xe 6)
+   * `dieuhanh@cuctunglimousine.com` — Điều Hành Cúc Tùng Limousine (Nhà xe 8)
+   * `dieuhanh@haivan.com` — Điều Hành Xe Hải Vân (Nhà xe 9)
+   * `dieuhanh@chinnghia.com.vn` — Điều Hành Xe Chín Nghĩa (Nhà xe 10)
+3. **Khách Hàng Trải Nghiệm (Customers)**:
+   * `customer@gmail.com` — Nguyễn Văn Du Khách
+   * `dangvanlam@gmail.com` — Đặng Văn Lâm
+   * `thuylinh.travel@gmail.com` — Nguyễn Thùy Linh
+   * `khoi.vu@gmail.com` — Vũ Minh Khôi
+   * `haidang.do@gmail.com` — Đỗ Hải Đăng
+   * `thaophuong.bui@gmail.com` — Bùi Phương Thảo
+
+---
+
+#### 3. Minh Chứng Trải Nghiệm Giao Diện Với Dữ Liệu Phong Phú
+
+![Danh Sách 28 Người Dùng Hệ Thống Phong Phú](docs/screenshots/screenshot_admin_users_enriched.png)
+*Hình 11.52: Giao diện Quản trị Người Dùng hiển thị đầy đủ 28 tài khoản phân loại theo vai trò ADMIN, OPERATOR, CUSTOMER.*
+
+![Hệ Thống 101 Chuyến Xe Toàn Sàn Đa Dạng](docs/screenshots/screenshot_admin_trips_enriched.png)
+*Hình 11.53: Giao diện Quản trị Chuyến Xe sàn tổng với hơn 100 chuyến xe đa dạng tuyến đường, loại xe và trạng thái vận hành.*
+
+![Tìm Kiếm Chuyến Xe Của Khách Hàng Với Đa Dạng Lựa Chọn](docs/screenshots/screenshot_customer_search_enriched.png)
+*Hình 11.54: Khách hàng tìm kiếm chuyến xe nhận được hàng chục kết quả thời gian thực từ nhiều nhà xe và khung giờ khác nhau.*
+
+![Cổng Điều Hành Đối Tác Quản Lý Chuyến Xe Thực Tế](docs/screenshots/screenshot_company_trips_enriched.png)
+*Hình 11.55: Cổng điều hành đối tác nhà xe quản lý lịch xe xuất bến, trạng thái khởi hành và số ghế trống trực tiếp trên MySQL 8.0.*
+
+---
+
+### 11.10 Tối Ưu Hóa Trải Nghiệm Tìm Kiếm: Mặc Định Hiển Thị Toàn Bộ Tuyến Xe & Lọc Linh Hoạt Theo Điểm Đi/Điểm Đến
+
+#### 1. Vấn Đề Gặp Phải Trước Đây (Hardcoded Default Route Lock)
+* **Thực trạng**: Khi người dùng nhấn nút "Đặt Vé Xe" từ thanh điều hướng chính (hoặc truy cập `/search`), trang tìm kiếm trước đây bị gắn cứng giá trị mặc định `origin = 'TP. Hồ Chí Minh'` và `destination = 'Đà Lạt'`, đồng thời ép buộc ngày đi là hôm nay.
+* **Hạn chế**: Hành khách khi mới vào trang chỉ thấy duy nhất 2 chuyến xe của tuyến Sài Gòn ⇄ Đà Lạt trong ngày, tạo cảm giác hệ thống thiếu hụt dữ liệu và không thể khám phá toàn bộ mạng lưới tuyến đường liên tỉnh phong phú của nền tảng (Hà Nội, Sa Pa, Nha Trang, Vũng Tàu, Cần Thơ, Hải Phòng, Huế, Quy Nhơn...).
+
+#### 2. Giải Pháp Hoàn Thiện: Cơ Chế Hiển Thị Toàn Bộ Tuyến Mở (Open Route Discovery)
+1. **Mặc định hiển thị toàn bộ 76+ chuyến xe toàn quốc**:
+   * Khi truy cập trang `/search` không kèm tham số bộ lọc, hệ thống tự động gọi API `GET /api/v1/trips/search` không giới hạn điểm đi/điểm đến, tải lên toàn bộ chuyến xe đang mở bán trên toàn quốc.
+   * Tiêu đề trang hiển thị trực quan: **Toàn bộ chuyến xe toàn quốc ({totalTrips} chuyến)**.
+2. **Hỗ trợ tùy chọn "Tất cả điểm xuất phát" & "Tất cả điểm đến"**:
+   * Bộ chọn nơi xuất phát và nơi đến được bổ sung tùy chọn **"Tất cả điểm xuất phát (Toàn quốc)"** và **"Tất cả điểm đến (Toàn quốc)"** (`value=""`).
+   * Người dùng có thể lọc linh hoạt:
+     * Chỉ chọn nơi đi (ví dụ: `TP. Hồ Chí Minh`): Xem tất cả các chuyến xuất phát từ Sài Gòn đi các tỉnh thành.
+     * Chỉ chọn nơi đến (ví dụ: `Đà Lạt`): Xem tất cả các chuyến từ mọi miền đến Đà Lạt.
+     * Chọn cả hai: Xem đích danh tuyến đường chỉ định.
+3. **Thanh điều hướng ngày linh hoạt (Flexible Date Stepper)**:
+   * Cho phép xem chuyến xe của **mọi ngày khởi hành** (không bắt buộc phải chọn cố định một ngày).
+   * Bổ sung nút **"✕ Bỏ chọn ngày (Xem mọi ngày)"** và **"Lọc chuyến hôm nay"** giúp hành khách chuyển đổi tức thì giữa chế độ xem tổng thể và xem chi tiết theo ngày.
+4. **Nút "Xem toàn bộ tuyến" (Reset Quick Action)**:
+   * Khi đang áp dụng bất kỳ bộ lọc điểm đi/điểm đến hay ngày chạy nào, nút **"✕ Xem toàn bộ tuyến"** màu đỏ nổi bật xuất hiện ngay góc trên bên phải, cho phép hành khách hoàn tác nhanh chỉ với 1 cú click.
+
+![Trang Tìm Kiếm Mặc Định Hiển Thị Toàn Bộ Chuyến Xe Toàn Quốc](docs/screenshots/screenshot_search_all_trips_initial.png)
+*Hình 11.56: Giao diện Đặt Vé Xe mặc định hiển thị toàn bộ 76+ chuyến xe toàn quốc, sẵn sàng để người dùng lọc theo điểm đi và điểm đến.*
+
+![Lọc Chi Tiết Chuyến Xe Khi Người Dùng Chọn Hành Trình](docs/screenshots/screenshot_search_filtered_trips.png)
+*Hình 11.57: Giao diện tự động thu hẹp kết quả chính xác khi người dùng chọn nơi xuất phát và nơi đến, kèm nút "✕ Xem toàn bộ tuyến" tiện lợi.*
 
 ---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  

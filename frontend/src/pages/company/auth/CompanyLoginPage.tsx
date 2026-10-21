@@ -21,22 +21,17 @@ export const CompanyLoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [identifier, setIdentifier] = useState('partner@traveleasy.vn');
-  const [password, setPassword] = useState('Rikkei@123');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const handleQuickFill = (emailVal: string) => {
-    setIdentifier(emailVal);
-    setPassword('Rikkei@123');
-    setErrorMsg(null);
-    toast.info(`Đã điền tài khoản đối tác: ${emailVal}`, 'Chọn Nhà Xe');
-  };
+  const [isAdminAttempt, setIsAdminAttempt] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setIsAdminAttempt(false);
 
     if (!identifier.trim()) {
       const msg = 'Vui lòng nhập Email hoặc SĐT đối tác nhà xe.';
@@ -61,13 +56,22 @@ export const CompanyLoginPage: React.FC = () => {
 
       const data: AuthUser = response.data?.data;
 
-      // KIỂM TRA QUYỀN OPERATOR HOẶC ADMIN
-      if (!data || (data.role !== 'OPERATOR' && data.role !== 'ADMIN')) {
+      // PHÂN QUYỀN NGHIÊM NGẶT: CỔNG NÀY CHỈ DÀNH RIÊNG CHO ĐỐI TÁC NHÀ XE (OPERATOR)
+      if (!data || data.role !== 'OPERATOR') {
         localStorage.removeItem('traveleasy_token');
         localStorage.removeItem('traveleasy_user');
-        const errText = `Từ chối truy cập! Tài khoản "${identifier}" là Khách hàng (CUSTOMER). Cổng này chỉ dành cho Đối tác Nhà xe (OPERATOR).`;
-        toast.error(errText, 'Truy Cập Bị Từ Chối');
-        setErrorMsg(errText);
+
+        if (data?.role === 'ADMIN') {
+          setIsAdminAttempt(true);
+          const errText = `Từ chối truy cập! Tài khoản "${identifier.trim()}" là Quản trị viên hệ thống (ADMIN). Cổng này chỉ dành riêng cho Đối tác điều hành nhà xe (OPERATOR). Quản trị viên sàn vui lòng đăng nhập tại Cổng Quản Trị Hệ Thống.`;
+          toast.error('Tài khoản Quản trị viên (ADMIN) không được phép truy cập cổng Nhà xe!', 'Sai Cổng Đăng Nhập');
+          setErrorMsg(errText);
+        } else {
+          setIsAdminAttempt(false);
+          const errText = `Từ chối truy cập! Tài khoản "${identifier.trim()}" mang vai trò ${data?.role || 'CUSTOMER'}. Cổng này chỉ dành riêng cho Đối tác điều hành nhà xe (OPERATOR).`;
+          toast.error(errText, 'Truy Cập Bị Từ Chối');
+          setErrorMsg(errText);
+        }
         setLoading(false);
         return;
       }
@@ -165,14 +169,32 @@ export const CompanyLoginPage: React.FC = () => {
               backgroundColor: 'rgba(239, 68, 68, 0.15)',
               border: '1px solid rgba(239, 68, 68, 0.3)',
               color: '#fca5a5',
-              padding: '12px 14px',
+              padding: '14px 16px',
               borderRadius: '10px',
               fontSize: '13px',
               marginBottom: '20px',
               lineHeight: 1.5,
             }}
           >
-            {errorMsg}
+            <div>{errorMsg}</div>
+            {isAdminAttempt && (
+              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed rgba(239, 68, 68, 0.35)' }}>
+                <Link
+                  to="/admin/login"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: '#38bdf8',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    fontSize: '12.5px',
+                  }}
+                >
+                  🛡️ Đi đến Cổng Quản Trị Hệ Thống (Admin Portal) ngay →
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
@@ -187,7 +209,7 @@ export const CompanyLoginPage: React.FC = () => {
                 required
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="partner@traveleasy.vn"
+                placeholder="Nhập email hoặc số điện thoại điều hành..."
                 style={{
                   width: '100%',
                   backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -214,7 +236,7 @@ export const CompanyLoginPage: React.FC = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Nhập mật khẩu tài khoản..."
                 style={{
                   width: '100%',
                   backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -271,83 +293,8 @@ export const CompanyLoginPage: React.FC = () => {
           </button>
         </form>
 
-        {/* Demo Fast Fill Buttons */}
-        <div style={{ marginTop: '24px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '18px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.5px' }}>
-            ⚡ TÀI KHOẢN ĐỐI TÁC THỬ NGHIỆM (DEMO BẢO VỆ):
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={() => handleQuickFill('partner@traveleasy.vn')}
-              style={{
-                backgroundColor: 'rgba(13, 148, 136, 0.12)',
-                border: '1px solid rgba(13, 148, 136, 0.3)',
-                color: '#2dd4bf',
-                padding: '9px 12px',
-                borderRadius: '8px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <span>1. TravelEasy Express</span>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>partner@traveleasy.vn</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickFill('dieuhanh@hoamaivungtau.com.vn')}
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#e2e8f0',
-                padding: '9px 12px',
-                borderRadius: '8px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <span>2. Xe Hoa Mai Vũng Tàu</span>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>dieuhanh@hoamaivungtau...</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickFill('dieuhanh@hoanglongasia.com')}
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#e2e8f0',
-                padding: '9px 12px',
-                borderRadius: '8px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <span>3. Xe Hoàng Long</span>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>dieuhanh@hoanglong...</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Back Link */}
-        <div style={{ textAlign: 'center', marginTop: '22px' }}>
+        {/* Back Link & Switch Portal Link */}
+        <div style={{ textAlign: 'center', marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <Link
             to="/"
             style={{
@@ -356,11 +303,27 @@ export const CompanyLoginPage: React.FC = () => {
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '6px',
             }}
           >
             <ArrowLeft size={14} /> Quay lại Trang Chủ Đặt Vé
           </Link>
+
+          <div style={{ paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <span style={{ color: '#94a3b8', fontSize: '12px' }}>Bạn là Quản trị viên Sàn tổng? </span>
+            <Link
+              to="/admin/login"
+              style={{
+                color: '#38bdf8',
+                fontSize: '12px',
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              Đăng nhập Quản Trị Hệ Thống (Admin) →
+            </Link>
+          </div>
         </div>
       </div>
     </div>

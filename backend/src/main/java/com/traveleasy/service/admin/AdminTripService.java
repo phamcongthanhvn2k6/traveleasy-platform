@@ -98,6 +98,28 @@ public class AdminTripService {
         return tripService.mapToTripResponse(tripRepository.save(trip));
     }
 
+    @Transactional
+    public TripResponse updateTrip(Long tripId, com.traveleasy.dto.admin.UpdateTripRequest request) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe"));
+
+        if (request.getDepartureTime() != null) trip.setDepartureTime(request.getDepartureTime());
+        if (request.getArrivalTime() != null) trip.setArrivalTime(request.getArrivalTime());
+        if (request.getBusType() != null) trip.setBusType(request.getBusType());
+        if (request.getPrice() != null) trip.setPrice(request.getPrice());
+
+        return tripService.mapToTripResponse(tripRepository.save(trip));
+    }
+
+    @Transactional
+    public void deleteTrip(Long tripId) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe"));
+
+        tripSeatRepository.deleteAll(tripSeatRepository.findByTripIdOrderByFloorAscSeatCodeAsc(tripId));
+        tripRepository.delete(trip);
+    }
+
     @Transactional(readOnly = true)
     public DashboardStatsResponse getDashboardStats() {
         long totalTrips = tripRepository.count();

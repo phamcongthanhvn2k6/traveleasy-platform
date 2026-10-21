@@ -1,62 +1,140 @@
-import React from 'react';
-import { TrendingUp, Calendar, Ticket, Star } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { TrendingUp, Calendar, Ticket, Star, RefreshCw, Bus, Clock, MapPin, CheckCircle } from 'lucide-react';
+import api from '../../../services/api';
+import { toast } from '../../../context/ToastContext';
+
+interface DashboardStats {
+  totalRevenue: number;
+  totalTrips: number;
+  scheduledTrips: number;
+  totalBookings: number;
+  avgRating: number;
+  totalReviews: number;
+  upcomingTrips: any[];
+}
 
 export const CompanyDashboardPage: React.FC = () => {
+  const [stats, setStats] = useState<DashboardStats>({
+    totalRevenue: 0,
+    totalTrips: 0,
+    scheduledTrips: 0,
+    totalBookings: 0,
+    avgRating: 4.8,
+    totalReviews: 0,
+    upcomingTrips: [],
+  });
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/company/dashboard/stats');
+      if (res.data?.data) {
+        setStats(res.data.data);
+      }
+    } catch (err: any) {
+      console.error('Failed to load company dashboard stats:', err);
+      toast.error('Không thể tải thống kê nhà xe từ CSDL', 'Lỗi Kết Nối');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
+  };
+
+  const formatDateTime = (dtStr: string) => {
+    if (!dtStr) return '-';
+    try {
+      const d = new Date(dtStr);
+      return d.toLocaleString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+    } catch {
+      return dtStr;
+    }
+  };
+
   const kpis = [
     {
-      label: 'Doanh thu thang',
-      value: '2.740.000 đ',
-      subtext: '',
+      label: 'Doanh thu tích lũy',
+      value: formatCurrency(stats.totalRevenue),
+      subtext: 'Đã thanh toán thực tế',
       icon: TrendingUp,
       iconBg: '#ecfdf5',
       iconColor: '#10b981',
     },
     {
-      label: 'Chuyen da dat',
-      value: '6',
-      subtext: '',
+      label: 'Chuyến xe vận hành',
+      value: `${stats.totalTrips}`,
+      subtext: `${stats.scheduledTrips || 0} chuyến sẵn sàng chạy`,
       icon: Calendar,
       iconBg: '#f5f3ff',
       iconColor: '#8b5cf6',
     },
     {
-      label: 'Ve da dat',
-      value: '6',
-      subtext: '',
+      label: 'Vé đã đặt',
+      value: `${stats.totalBookings}`,
+      subtext: 'Hành khách trên sàn',
       icon: Ticket,
       iconBg: '#eff6ff',
       iconColor: '#2563eb',
     },
     {
-      label: 'Danh gia TB',
-      value: '3.7/5',
-      subtext: '3 danh gia',
+      label: 'Đánh giá trung bình',
+      value: `${stats.avgRating}/5`,
+      subtext: `${stats.totalReviews} phản hồi hành khách`,
       icon: Star,
       iconBg: '#fffbeb',
       iconColor: '#f59e0b',
     },
   ];
 
-  const upcomingTrips = [
-    { code: 'Chuyen t1', departure: 'Khoi hanh: 02:00:00 22/9/2026', status: 'SCHEDULED' },
-    { code: 'Chuyen t2', departure: 'Khoi hanh: 04:00:00 22/9/2026', status: 'SCHEDULED' },
-    { code: 'Chuyen t5', departure: 'Khoi hanh: 02:00:00 23/9/2026', status: 'DELAYED' },
-    { code: 'Chuyen t7', departure: 'Khoi hanh: 02:00:00 24/9/2026', status: 'SCHEDULED' },
-  ];
-
   return (
-    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '1400px', margin: '0 auto', paddingBottom: '40px' }}>
       {/* Breadcrumb & Header Title */}
-      <div style={{ marginBottom: '22px' }}>
-        <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-          Nha xe <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Tong quan
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+        <div>
+          <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
+            Nhà xe <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Tổng quan vận hành
+          </div>
+          <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
+            Tổng Quan Điều Hành Nhà Xe
+          </h1>
+          <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
+            TravelEasy Express — Dữ liệu thời gian thực đồng bộ trực tiếp từ CSDL MySQL 8.0
+          </div>
         </div>
-        <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
-          Tong quan nha xe
-        </h1>
-        <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-          TravelEasy Express
-        </div>
+
+        <button
+          onClick={fetchStats}
+          disabled={loading}
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #cbd5e1',
+            borderRadius: '8px',
+            padding: '9px 14px',
+            fontSize: '13px',
+            fontWeight: 600,
+            color: '#475569',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+          }}
+        >
+          <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+          <span>Làm mới chỉ số</span>
+        </button>
       </div>
 
       {/* Row of 4 KPI Cards */}
@@ -65,7 +143,7 @@ export const CompanyDashboardPage: React.FC = () => {
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '16px',
-          marginBottom: '22px',
+          marginBottom: '26px',
         }}
       >
         {kpis.map((kpi, idx) => {
@@ -76,9 +154,9 @@ export const CompanyDashboardPage: React.FC = () => {
               style={{
                 backgroundColor: '#ffffff',
                 border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                padding: '18px 20px',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+                borderRadius: '14px',
+                padding: '20px 22px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                 display: 'flex',
                 alignItems: 'flex-start',
                 justifyContent: 'space-between',
@@ -88,159 +166,131 @@ export const CompanyDashboardPage: React.FC = () => {
                 <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>
                   {kpi.label}
                 </div>
-                <div style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
                   {kpi.value}
                 </div>
-                {kpi.subtext ? (
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#16a34a', marginTop: '8px' }}>
-                    {kpi.subtext}
-                  </div>
-                ) : (
-                  <div style={{ height: '17px', marginTop: '8px' }} />
-                )}
+                <div style={{ fontSize: '11px', fontWeight: 600, color: '#16a34a', marginTop: '8px' }}>
+                  {kpi.subtext}
+                </div>
               </div>
+
               <div
                 style={{
-                  width: '38px',
-                  height: '38px',
+                  width: '42px',
+                  height: '42px',
                   borderRadius: '10px',
                   backgroundColor: kpi.iconBg,
+                  color: kpi.iconColor,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <Icon size={19} color={kpi.iconColor} />
+                <Icon size={20} />
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* 2-Column Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '18px' }}>
-        {/* Left: Bar Chart */}
-        <div
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '20px 22px',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
-          }}
-        >
-          <div style={{ marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-              So chuyen theo thang
+      {/* Upcoming Trips Card */}
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '14px',
+          padding: '22px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+          <div>
+            <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+              Chuyến Xe Sắp Khởi Hành
             </h2>
-          </div>
-
-          {/* Bar Chart Canvas Simulation */}
-          <div style={{ height: '220px', position: 'relative', display: 'flex', alignItems: 'flex-end', paddingBottom: '28px', paddingLeft: '40px', paddingRight: '20px' }}>
-            {/* Grid horizontal lines */}
-            {[60, 45, 30, 15, 0].map((val) => {
-              const bottomPercent = (val / 60) * 180 + 28;
-              return (
-                <div
-                  key={val}
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    bottom: `${bottomPercent}px`,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <span style={{ width: '32px', fontSize: '10px', color: '#94a3b8', textAlign: 'right', paddingRight: '8px' }}>
-                    {val}
-                  </span>
-                  <div style={{ flex: 1, borderBottom: '1px dashed #e2e8f0' }} />
-                </div>
-              );
-            })}
-
-            {/* Bars */}
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', zIndex: 2, height: '180px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '25%' }}>
-                <div style={{ width: '100%', height: '135px', backgroundColor: '#10b981', borderRadius: '4px 4px 0 0' }} />
-                <span style={{ fontSize: '11px', color: '#64748b', marginTop: '8px' }}>T7</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '25%' }}>
-                <div style={{ width: '100%', height: '155px', backgroundColor: '#10b981', borderRadius: '4px 4px 0 0' }} />
-                <span style={{ fontSize: '11px', color: '#64748b', marginTop: '8px' }}>T8</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '25%' }}>
-                <div style={{ width: '100%', height: '115px', backgroundColor: '#10b981', borderRadius: '4px 4px 0 0' }} />
-                <span style={{ fontSize: '11px', color: '#64748b', marginTop: '8px' }}>T9</span>
-              </div>
+            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+              Danh sách các chuyến xe mới nhất từ CSDL thực tế
             </div>
           </div>
-
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '14px', fontSize: '11px', color: '#10b981', fontWeight: 600 }}>
-            <span style={{ width: '10px', height: '10px', backgroundColor: '#10b981', borderRadius: '2px' }} />
-            <span>So chuyen</span>
-          </div>
+          <span style={{ fontSize: '12px', color: '#0284c7', fontWeight: 600 }}>
+            {stats.upcomingTrips?.length || 0} chuyến xe
+          </span>
         </div>
 
-        {/* Right: Chuyến xe tới hành */}
-        <div
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '20px 22px',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
-          }}
-        >
-          <div style={{ marginBottom: '18px' }}>
-            <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-              Chuyen toi hanh
-            </h2>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {upcomingTrips.map((trip, idx) => {
-              const isDelayed = trip.status === 'DELAYED';
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '8px',
-                    border: '1px solid #f1f5f9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{trip.code}</div>
-                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{trip.departure}</div>
-                  </div>
-                  <span
+        {stats.upcomingTrips && stats.upcomingTrips.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {stats.upcomingTrips.map((trip: any) => (
+              <div
+                key={trip.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 18px',
+                  borderRadius: '10px',
+                  border: '1px solid #f1f5f9',
+                  backgroundColor: '#f8fafc',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div
                     style={{
-                      fontSize: '10px',
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '8px',
+                      backgroundColor: '#e0f2fe',
+                      color: '#0284c7',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       fontWeight: 700,
-                      padding: '3px 8px',
-                      borderRadius: '5px',
-                      backgroundColor: isDelayed ? '#fffbeb' : '#eff6ff',
-                      color: isDelayed ? '#d97706' : '#2563eb',
-                      border: isDelayed ? '1px solid #fde68a' : '1px solid #bfdbfe',
+                      fontSize: '12px',
                     }}
                   >
-                    {trip.status}
+                    #{trip.id}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '14px', color: '#0f172a' }}>
+                      {trip.originCity || 'TP. Hồ Chí Minh'} → {trip.destinationCity || 'Đà Lạt'}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Clock size={13} color="#f59e0b" /> {formatDateTime(trip.departureTime)}
+                      </span>
+                      <span>Loại: {trip.busType || 'SLEEPER'}</span>
+                      <span>Chỗ trống: {trip.availableSeats || 34}/{trip.totalSeats || 34}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontWeight: 700, fontSize: '14px', color: '#0284c7' }}>
+                    {formatCurrency(trip.price)}
+                  </span>
+                  <span
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '999px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      backgroundColor: trip.status === 'RUNNING' ? '#fef3c7' : '#dcfce7',
+                      color: trip.status === 'RUNNING' ? '#b45309' : '#166534',
+                    }}
+                  >
+                    {trip.status === 'RUNNING' ? 'ĐANG CHẠY' : 'SẴN SÀNG'}
                   </span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
-        </div>
+        ) : (
+          <div style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>
+            <Calendar size={32} style={{ margin: '0 auto 8px' }} />
+            <div>Chưa có chuyến xe nào được tạo trong CSDL</div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
-
-export default CompanyDashboardPage;
-

@@ -35,12 +35,19 @@ public class DataInitializer implements CommandLineRunner {
     private final ReviewReportRepository reviewReportRepository;
     private final CancellationPolicyRepository cancellationPolicyRepository;
     private final AuditLogRepository auditLogRepository;
+    private final VehicleRepository vehicleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public void run(String... args) {
         if (userRepository.count() > 0) {
+            if (vehicleRepository.count() == 0) {
+                BusCompany futa = busCompanyRepository.findAll().stream().findFirst().orElse(null);
+                if (futa != null) {
+                    seedDefaultVehicles(futa);
+                }
+            }
             log.info("Database already seeded. Skipping DataInitializer.");
             return;
         }
@@ -65,7 +72,31 @@ public class DataInitializer implements CommandLineRunner {
         User cust4 = User.builder().email("phamquocd@gmail.com").password(encodedPass).fullName("Phạm Quốc Dũng").phone("0933445566").role(Role.CUSTOMER).status("LOCKED").build();
         User cust5 = User.builder().email("hoangmaie@gmail.com").password(encodedPass).fullName("Hoàng Thị Mai").phone("0944556677").role(Role.CUSTOMER).status("ACTIVE").build();
 
-        userRepository.saveAll(List.of(admin1, admin2, admin3, opFuta, opHoaMai, opHoangLong, opVanMinh, cust1, cust2, cust3, cust4, cust5));
+        // More Diverse Operators & Customers
+        User opThanhBuoi = User.builder().email("dieuhanh@thanhbuoi.com.vn").password(encodedPass).fullName("Điều Hành Thành Bưởi").phone("0908123456").role(Role.OPERATOR).status("ACTIVE").build();
+        User opSaoViet = User.builder().email("dieuhanh@xesaoviet.com.vn").password(encodedPass).fullName("Điều Hành Sao Việt Express").phone("0907234567").role(Role.OPERATOR).status("ACTIVE").build();
+        User opKumho = User.builder().email("dieuhanh@kumhosamco.com.vn").password(encodedPass).fullName("Điều Hành Kumho Samco").phone("0906345678").role(Role.OPERATOR).status("ACTIVE").build();
+        User opCucTung = User.builder().email("dieuhanh@cuctunglimousine.com").password(encodedPass).fullName("Điều Hành Cúc Tùng Limousine").phone("0905456789").role(Role.OPERATOR).status("ACTIVE").build();
+        User opHaiVan = User.builder().email("dieuhanh@haivan.com").password(encodedPass).fullName("Điều Hành Xe Hải Vân").phone("0904567890").role(Role.OPERATOR).status("ACTIVE").build();
+        User opChinNghia = User.builder().email("dieuhanh@chinnghia.com.vn").password(encodedPass).fullName("Điều Hành Xe Chín Nghĩa").phone("0903678901").role(Role.OPERATOR).status("ACTIVE").build();
+
+        User cust6 = User.builder().email("dangvanlam@gmail.com").password(encodedPass).fullName("Đặng Văn Lâm").phone("0918112233").role(Role.CUSTOMER).status("ACTIVE").build();
+        User cust7 = User.builder().email("thuylinh.travel@gmail.com").password(encodedPass).fullName("Nguyễn Thùy Linh").phone("0935667788").role(Role.CUSTOMER).status("ACTIVE").build();
+        User cust8 = User.builder().email("khoi.vu@gmail.com").password(encodedPass).fullName("Vũ Minh Khôi").phone("0904889900").role(Role.CUSTOMER).status("ACTIVE").build();
+        User cust9 = User.builder().email("haidang.do@gmail.com").password(encodedPass).fullName("Đỗ Hải Đăng").phone("0923445566").role(Role.CUSTOMER).status("ACTIVE").build();
+        User cust10 = User.builder().email("thaophuong.bui@gmail.com").password(encodedPass).fullName("Bùi Phương Thảo").phone("0966778899").role(Role.CUSTOMER).status("ACTIVE").build();
+        User cust11 = User.builder().email("tuanmai@gmail.com").password(encodedPass).fullName("Mai Anh Tuấn").phone("0977112244").role(Role.CUSTOMER).status("ACTIVE").build();
+        User cust12 = User.builder().email("ngale@gmail.com").password(encodedPass).fullName("Lê Thanh Nga").phone("0989223355").role(Role.CUSTOMER).status("ACTIVE").build();
+        User cust13 = User.builder().email("ducanh.tran@gmail.com").password(encodedPass).fullName("Trần Đức Anh").phone("0914556677").role(Role.CUSTOMER).status("ACTIVE").build();
+        User cust14 = User.builder().email("lanhuong.nguyen@gmail.com").password(encodedPass).fullName("Nguyễn Lan Hương").phone("0922334455").role(Role.CUSTOMER).status("ACTIVE").build();
+        User cust15 = User.builder().email("quanghuy.pham@gmail.com").password(encodedPass).fullName("Phạm Quang Huy").phone("0933557799").role(Role.CUSTOMER).status("ACTIVE").build();
+
+        userRepository.saveAll(List.of(
+                admin1, admin2, admin3, opFuta, opHoaMai, opHoangLong, opVanMinh,
+                opThanhBuoi, opSaoViet, opKumho, opCucTung, opHaiVan, opChinNghia,
+                cust1, cust2, cust3, cust4, cust5,
+                cust6, cust7, cust8, cust9, cust10, cust11, cust12, cust13, cust14, cust15
+        ));
 
         // 2. Seed 10 Bus Companies
         BusCompany futa = BusCompany.builder().name("TravelEasy Express").code("SK-2024-001").hotline("1900 6067").email("contact@traveleasy.vn").address("Bến xe Miền Tây, TP. Hồ Chí Minh").logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.9)).build();
@@ -209,6 +240,8 @@ public class DataInitializer implements CommandLineRunner {
         cancellationPolicyRepository.saveAll(policies);
 
         // 14. Seed Audit Logs
+        seedDefaultVehicles(futa);
+
         List<AuditLog> auditLogs = List.of(
                 AuditLog.builder().userEmail("admin@traveleasy.vn").action("APPROVE_COMPANY").target("bus_companies #bc1").beforeState("{\"status\": \"PENDING_APPROVAL\"}").afterState("{\"status\": \"ACTIVE\"}").build(),
                 AuditLog.builder().userEmail("admin@traveleasy.vn").action("APPROVE_COMPANY").target("bus_companies #bc2").beforeState("{\"status\": \"PENDING_APPROVAL\"}").afterState("{\"status\": \"ACTIVE\"}").build(),
@@ -257,5 +290,43 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         tripSeatRepository.saveAll(seats);
+    }
+
+    private void seedDefaultVehicles(BusCompany futa) {
+        List<Vehicle> vehicles = List.of(
+                Vehicle.builder()
+                        .busCompany(futa)
+                        .plateNumber("51B-123.45")
+                        .vehicleCode("v1")
+                        .vehicleType("SLEEPER")
+                        .floors(2)
+                        .manufactureYear(2022)
+                        .seatLayout("Giường nằm 2 tầng 34 chỗ")
+                        .imageUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=100&auto=format&fit=crop&q=60")
+                        .status("ACTIVE")
+                        .build(),
+                Vehicle.builder()
+                        .busCompany(futa)
+                        .plateNumber("51B-987.65")
+                        .vehicleCode("v2")
+                        .vehicleType("LIMOUSINE")
+                        .floors(1)
+                        .manufactureYear(2023)
+                        .seatLayout("Ghế ngồi 1 tầng 24 chỗ (Limousine)")
+                        .status("ACTIVE")
+                        .build(),
+                Vehicle.builder()
+                        .busCompany(futa)
+                        .plateNumber("51B-111.22")
+                        .vehicleCode("v4")
+                        .vehicleType("SEATED")
+                        .floors(1)
+                        .manufactureYear(2018)
+                        .seatLayout("Ghế ngồi 1 tầng 45 chỗ")
+                        .status("INACTIVE")
+                        .build()
+        );
+        vehicleRepository.saveAll(vehicles);
+        log.info("Default vehicles seeded successfully!");
     }
 }

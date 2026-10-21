@@ -8,6 +8,7 @@ import { CustomerAuthPage } from '../pages/customer/auth/CustomerAuthPage';
 import { MyTicketsPage } from '../pages/customer/my-tickets/MyTicketsPage';
 import { UserProfilePage } from '../pages/customer/profile/UserProfilePage';
 import { PolicyPage } from '../pages/customer/policy/PolicyPage';
+import { NotFoundPage } from '../pages/common/NotFoundPage';
 
 /**
  * =========================================================================
@@ -41,12 +42,26 @@ export const ClientRoutes: React.FC = () => {
 
       {/* Chính sách, Quy chế hoạt động & Câu hỏi thường gặp */}
       <Route path="/policy" element={<PolicyPage />} />
+      <Route path="/guide" element={<PolicyPage />} />
 
-      {/* Các route mở rộng của phân hệ Users:
-          - /trips/:tripId/seats: Chọn sơ đồ ghế 2 tầng (Thành viên 3)
-          - /checkout: Xác nhận điểm đón/trả & nhập thông tin (Thành viên 4)
-          - /payment/callback: Trả về trạng thái thanh toán & QR Code (Thành viên 5)
-      */}
+      {/* =========================================================================
+          CÁC TÍNH NĂNG CHỨC NĂNG TRONG LỘ TRÌNH PHÁT TRIỂN (ROADMAP COMING SOON)
+         ========================================================================= */}
+      <Route path="/schedule" element={<NotFoundPage feature="Lịch Trình & Bảng Giờ Chạy Xe" />} />
+      <Route path="/routes" element={<NotFoundPage feature="Mạng Lưới Tuyến Đường Toàn Quốc" />} />
+      <Route path="/promotions" element={<NotFoundPage feature="Chương Trình Khuyến Mãi & Voucher Giảm Giá" />} />
+      <Route path="/reviews" element={<NotFoundPage feature="Đánh Giá & Xếp Hạng Chất Lượng Nhà Xe" />} />
+
+      {/* Dịch vụ mở rộng khác */}
+      <Route path="/flights" element={<NotFoundPage feature="Vé Máy Bay Trực Tuyến" />} />
+      <Route path="/trains" element={<NotFoundPage feature="Vé Tàu Hỏa Đường Sắt Bắc Nam" />} />
+      <Route path="/car-rental" element={<NotFoundPage feature="Thuê Xe Tự Lái & Du Lịch" />} />
+      <Route path="/hotel" element={<NotFoundPage feature="Khách Sạn & Homestay Điểm Đến" />} />
+
+      {/* =========================================================================
+          CATCH-ALL 404: ĐIỀU HƯỚNG TẤT CẢ CÁC ĐƯỜNG LINK SAI / KHÔNG TỒN TẠI
+         ========================================================================= */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };

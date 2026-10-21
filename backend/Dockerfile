@@ -1,11 +1,12 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
+RUN apk add --no-cache bash dos2unix
 COPY gradlew* .
 COPY gradle gradle
 COPY build.gradle settings.gradle ./
-RUN if [ -f gradlew ]; then chmod +x gradlew; fi
+RUN dos2unix gradlew && chmod +x gradlew
 COPY src src
-RUN if [ -f gradlew ]; then ./gradlew bootJar --no-daemon -x test; else echo "Build local jar"; fi
+RUN ./gradlew bootJar --no-daemon -x test
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app

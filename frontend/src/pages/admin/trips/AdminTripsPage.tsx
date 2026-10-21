@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Search, Plus, Ban, CheckCircle, Clock, MapPin, Bus, RefreshCw, X } from 'lucide-react';
+import { Calendar, Search, Plus, Ban, CheckCircle, Clock, MapPin, Bus, RefreshCw, X, Edit2, Trash2 } from 'lucide-react';
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
 
@@ -39,7 +39,7 @@ export const AdminTripsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'SCHEDULED' | 'DEPARTED' | 'CANCELLED'>('ALL');
 
-  // Modal create trip
+  // Modal Create
   const [showModal, setShowModal] = useState(false);
   const [formCompanyId, setFormCompanyId] = useState<number | ''>('');
   const [formRouteId, setFormRouteId] = useState<number | ''>('');
@@ -49,6 +49,13 @@ export const AdminTripsPage: React.FC = () => {
   const [formPrice, setFormPrice] = useState('280000');
   const [formTotalSeats, setFormTotalSeats] = useState('34');
   const [submitting, setSubmitting] = useState(false);
+
+  // Modal Edit
+  const [editingTrip, setEditingTrip] = useState<TripItem | null>(null);
+  const [editDepartureTime, setEditDepartureTime] = useState('');
+  const [editArrivalTime, setEditArrivalTime] = useState('');
+  const [editBusType, setEditBusType] = useState('SLEEPER');
+  const [editPrice, setEditPrice] = useState('');
 
   const fetchTrips = async () => {
     setLoading(true);
@@ -129,6 +136,68 @@ export const AdminTripsPage: React.FC = () => {
     }
   };
 
+  const openEditModal = (t: TripItem) => {
+    setEditingTrip(t);
+    // Format datetime-local string (YYYY-MM-DDTHH:mm) bảo toàn giờ địa phương
+    const formatDt = (dtStr: string) => {
+      if (!dtStr) return '';
+      if (dtStr.includes('T')) {
+        return dtStr.slice(0, 16);
+      }
+      try {
+        const d = new Date(dtStr);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      } catch {
+        return dtStr.slice(0, 16);
+      }
+    };
+    setEditDepartureTime(formatDt(t.departureTime));
+    setEditArrivalTime(formatDt(t.arrivalTime));
+    setEditBusType(t.busType || 'SLEEPER');
+    setEditPrice(String(t.price));
+  };
+
+  const handleUpdateTrip = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTrip) return;
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        departureTime: editDepartureTime,
+        arrivalTime: editArrivalTime,
+        busType: editBusType,
+        price: parseFloat(editPrice),
+      };
+
+      await api.put(`/admin/trips/${editingTrip.id}`, payload);
+      toast.success(`Đã cập nhật thông tin chuyến xe #${editingTrip.id} thành công!`, 'Cập Nhật Thành Công');
+      setEditingTrip(null);
+      fetchTrips();
+    } catch (err: any) {
+      console.error('Update trip error:', err);
+      toast.error(err.response?.data?.message || 'Cập nhật chuyến xe thất bại!', 'Lỗi');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteTrip = async (t: TripItem) => {
+    if (!window.confirm(`Bạn có chắc muốn XOÁ chuyến xe #${t.id} (${t.originCity} → ${t.destinationCity})? Toàn bộ kho ghế sẽ bị giải phóng vĩnh viễn!`)) {
+      return;
+    }
+
+    try {
+      await api.delete(`/admin/trips/${t.id}`);
+      setTrips(prev => prev.filter(item => item.id !== t.id));
+      toast.info(`Đã xoá hoàn toàn chuyến xe #${t.id} khỏi cơ sở dữ liệu!`, 'Xoá Chuyến Xe');
+    } catch (err: any) {
+      console.error('Delete trip error:', err);
+      toast.error(err.response?.data?.message || 'Xoá chuyến xe thất bại!', 'Lỗi');
+    }
+  };
+
   const handleToggleTripStatus = async (trip: TripItem) => {
     const nextStatus = trip.status === 'SCHEDULED' ? 'CANCELLED' : 'SCHEDULED';
     const actionLabel = nextStatus === 'CANCELLED' ? 'HỦY BỎ' : 'KÍCH HOẠT MỞ BÁN';
@@ -146,12 +215,12 @@ export const AdminTripsPage: React.FC = () => {
 
       if (nextStatus === 'CANCELLED') {
         toast.warning(
-          `Đã chuyển chuyến xe #${trip.id} sang trạng thái CANCELLED. Chuyến xe sẽ không hiển thị trên trang tìm kiếm của khách hàng.`,
+          `Đã chuyển chuyến xe #${trip.id} sang trạng thái CANCELLED.`,
           'Đồng Bộ CSDL'
         );
       } else {
         toast.success(
-          `Đã mở bán lại chuyến xe #${trip.id}. Khách hàng có thể tìm kiếm và đặt vé ngay lập tức.`,
+          `Đã mở bán lại chuyến xe #${trip.id}.`,
           'Đồng Bộ CSDL'
         );
       }
@@ -184,7 +253,7 @@ export const AdminTripsPage: React.FC = () => {
             TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Quản trị <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Chuyến xe sàn
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
-            Quản Lý Chuyến Xe & Mở Bán Vé
+            Quản Lý Chuyến Xe (Thêm - Sửa - Xóa)
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
             Tổng số: <strong>{trips.length}</strong> chuyến • <strong>{scheduledCount}</strong> đang mở bán • <strong>{cancelledCount}</strong> tạm hủy
@@ -208,7 +277,7 @@ export const AdminTripsPage: React.FC = () => {
               cursor: 'pointer',
             }}
           >
-            <RefreshCw size={14} /> Làm mới CSDL
+            <RefreshCw size={14} /> Làm mới
           </button>
 
           <button
@@ -286,13 +355,13 @@ export const AdminTripsPage: React.FC = () => {
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
           <thead>
             <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
-              <th style={{ padding: '12px 18px', width: '70px' }}>MÃ</th>
+              <th style={{ padding: '12px 18px', width: '60px' }}>MÃ</th>
               <th style={{ padding: '12px 18px' }}>NHÀ XE</th>
               <th style={{ padding: '12px 18px' }}>LỘ TRÌNH</th>
               <th style={{ padding: '12px 18px' }}>KHỞI HÀNH</th>
               <th style={{ padding: '12px 18px' }}>LOẠI XE</th>
               <th style={{ padding: '12px 18px' }}>GIÁ VÉ</th>
-              <th style={{ padding: '12px 18px' }}>KHO GHẾ TRỐNG</th>
+              <th style={{ padding: '12px 18px' }}>CHỖ TRỐNG</th>
               <th style={{ padding: '12px 18px' }}>TRẠNG THÁI</th>
               <th style={{ padding: '12px 18px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
@@ -319,7 +388,6 @@ export const AdminTripsPage: React.FC = () => {
                   minute: '2-digit',
                   day: '2-digit',
                   month: '2-digit',
-                  year: 'numeric',
                 });
 
                 return (
@@ -336,7 +404,7 @@ export const AdminTripsPage: React.FC = () => {
                       </div>
                     </td>
                     <td style={{ padding: '14px 18px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontWeight: 700, color: '#1e3a8a' }}>{t.originCity}</span>
                         <span style={{ color: '#94a3b8' }}>→</span>
                         <span style={{ fontWeight: 700, color: '#d97706' }}>{t.destinationCity}</span>
@@ -357,12 +425,10 @@ export const AdminTripsPage: React.FC = () => {
                       {t.price.toLocaleString('vi-VN')} đ
                     </td>
                     <td style={{ padding: '14px 18px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontWeight: 700, color: t.availableSeats > 0 ? '#10b981' : '#ef4444' }}>
-                          {t.availableSeats}
-                        </span>
-                        <span style={{ color: '#94a3b8' }}>/ {t.totalSeats} chỗ</span>
-                      </div>
+                      <span style={{ fontWeight: 700, color: t.availableSeats > 0 ? '#10b981' : '#ef4444' }}>
+                        {t.availableSeats}
+                      </span>
+                      <span style={{ color: '#94a3b8' }}>/{t.totalSeats}</span>
                     </td>
                     <td style={{ padding: '14px 18px' }}>
                       <span
@@ -374,31 +440,73 @@ export const AdminTripsPage: React.FC = () => {
                           borderRadius: '6px',
                           fontSize: '11px',
                           fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
                         }}
                       >
-                        {isScheduled ? <CheckCircle size={12} /> : <Ban size={12} />}
                         {isScheduled ? 'MỞ BÁN' : 'TẠM HỦY'}
                       </span>
                     </td>
                     <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleToggleTripStatus(t)}
-                        style={{
-                          backgroundColor: isScheduled ? '#fef2f2' : '#ecfdf5',
-                          color: isScheduled ? '#dc2626' : '#059669',
-                          border: `1px solid ${isScheduled ? '#fecaca' : '#a7f3d0'}`,
-                          padding: '6px 12px',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {isScheduled ? 'Hủy chuyến' : 'Mở bán lại'}
-                      </button>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        {/* Nút Sửa */}
+                        <button
+                          onClick={() => openEditModal(t)}
+                          title="Sửa chuyến xe"
+                          style={{
+                            backgroundColor: '#eff6ff',
+                            color: '#2563eb',
+                            border: '1px solid #bfdbfe',
+                            padding: '5px 9px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Edit2 size={13} /> Sửa
+                        </button>
+
+                        {/* Nút Hủy / Mở bán */}
+                        <button
+                          onClick={() => handleToggleTripStatus(t)}
+                          title={isScheduled ? 'Tạm hủy chuyến' : 'Mở bán lại'}
+                          style={{
+                            backgroundColor: isScheduled ? '#fffbeb' : '#ecfdf5',
+                            color: isScheduled ? '#d97706' : '#059669',
+                            border: `1px solid ${isScheduled ? '#fde68a' : '#a7f3d0'}`,
+                            padding: '5px 9px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {isScheduled ? 'Hủy' : 'Bán'}
+                        </button>
+
+                        {/* Nút Xoá */}
+                        <button
+                          onClick={() => handleDeleteTrip(t)}
+                          title="Xoá vĩnh viễn"
+                          style={{
+                            backgroundColor: '#fee2e2',
+                            color: '#dc2626',
+                            border: '1px solid #fecaca',
+                            padding: '5px 9px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Trash2 size={13} /> Xóa
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -408,7 +516,7 @@ export const AdminTripsPage: React.FC = () => {
         </table>
       </div>
 
-      {/* Modal Thêm Chuyến Xe Mới */}
+      {/* Modal: Thêm Chuyến Xe Mới */}
       {showModal && (
         <div
           style={{
@@ -432,7 +540,6 @@ export const AdminTripsPage: React.FC = () => {
               overflow: 'hidden',
             }}
           >
-            {/* Header */}
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -448,10 +555,8 @@ export const AdminTripsPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleCreateTrip} style={{ padding: '24px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {/* Nhà xe */}
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                     Nhà Xe Khai Thác <span style={{ color: '#ef4444' }}>*</span>
@@ -460,25 +565,14 @@ export const AdminTripsPage: React.FC = () => {
                     value={formCompanyId}
                     onChange={e => setFormCompanyId(Number(e.target.value))}
                     required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '13px',
-                      outline: 'none',
-                      backgroundColor: '#ffffff',
-                    }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }}
                   >
                     {companies.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
+                      <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
                 </div>
 
-                {/* Tuyến đường */}
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                     Tuyến Đường Vận Tải <span style={{ color: '#ef4444' }}>*</span>
@@ -487,15 +581,7 @@ export const AdminTripsPage: React.FC = () => {
                     value={formRouteId}
                     onChange={e => setFormRouteId(Number(e.target.value))}
                     required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '13px',
-                      outline: 'none',
-                      backgroundColor: '#ffffff',
-                    }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none' }}
                   >
                     {routes.map(r => (
                       <option key={r.id} value={r.id}>
@@ -505,7 +591,6 @@ export const AdminTripsPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Thời gian đi & đến */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
@@ -516,15 +601,7 @@ export const AdminTripsPage: React.FC = () => {
                       value={formDepartureTime}
                       onChange={e => setFormDepartureTime(e.target.value)}
                       required
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '13px',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                     />
                   </div>
                   <div>
@@ -536,20 +613,11 @@ export const AdminTripsPage: React.FC = () => {
                       value={formArrivalTime}
                       onChange={e => setFormArrivalTime(e.target.value)}
                       required
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '13px',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                     />
                   </div>
                 </div>
 
-                {/* Loại xe & Giá vé */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
@@ -558,15 +626,7 @@ export const AdminTripsPage: React.FC = () => {
                     <select
                       value={formBusType}
                       onChange={e => setFormBusType(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '13px',
-                        outline: 'none',
-                        backgroundColor: '#ffffff',
-                      }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
                     >
                       <option value="SLEEPER">Giường Nằm (SLEEPER)</option>
                       <option value="LIMOUSINE">Limousine VIP</option>
@@ -583,83 +643,148 @@ export const AdminTripsPage: React.FC = () => {
                       min="50000"
                       value={formPrice}
                       onChange={e => setFormPrice(e.target.value)}
-                      placeholder="VD: 280000"
                       required
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '13px',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
                     />
                   </div>
                 </div>
-
-                {/* Kho ghế */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                    Quy Mô Ghế Ngồi (Mặc định 34 chỗ 2 tầng)
-                  </label>
-                  <input
-                    type="number"
-                    value={formTotalSeats}
-                    onChange={e => setFormTotalSeats(e.target.value)}
-                    min="10"
-                    max="60"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '13px',
-                      outline: 'none',
-                      backgroundColor: '#f8fafc',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
               </div>
 
-              {/* Actions */}
               <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  style={{
-                    padding: '9px 16px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    backgroundColor: '#f1f5f9',
-                    color: '#475569',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
+                  style={{ padding: '9px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f1f5f9', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                 >
                   Hủy Bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  style={{
-                    padding: '9px 20px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    backgroundColor: '#2563eb',
-                    color: '#ffffff',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    opacity: submitting ? 0.7 : 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
+                  style={{ padding: '9px 20px', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', fontSize: '13px', fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer' }}
                 >
                   {submitting ? 'Đang tạo...' : 'Tạo Chuyến Xe'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Sửa Chuyến Xe */}
+      {editingTrip && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '520px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Edit2 size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>Cập Nhật Chuyến Xe #{editingTrip.id}</h3>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>{editingTrip.originCity} → {editingTrip.destinationCity} ({editingTrip.busCompanyName})</div>
+                </div>
+              </div>
+              <button onClick={() => setEditingTrip(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateTrip} style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                      Giờ Khởi Hành <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={editDepartureTime}
+                      onChange={e => setEditDepartureTime(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                      Giờ Đến Dự Kiến <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={editArrivalTime}
+                      onChange={e => setEditArrivalTime(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                      Loại Xe
+                    </label>
+                    <select
+                      value={editBusType}
+                      onChange={e => setEditBusType(e.target.value)}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                    >
+                      <option value="SLEEPER">Giường Nằm</option>
+                      <option value="LIMOUSINE">Limousine VIP</option>
+                      <option value="SEAT">Ghế Ngồi</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                      Giá Vé (VNĐ) <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="10000"
+                      min="50000"
+                      value={editPrice}
+                      onChange={e => setEditPrice(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingTrip(null)}
+                  style={{ padding: '9px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f1f5f9', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{ padding: '9px 20px', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', fontSize: '13px', fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer' }}
+                >
+                  {submitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
                 </button>
               </div>
             </form>

@@ -12,7 +12,6 @@ import {
   Search,
   Bell,
   ChevronDown,
-  LayoutDashboard,
   LogOut
 } from 'lucide-react';
 import { toast } from '../context/ToastContext';
@@ -43,16 +42,16 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
   };
 
   const operationItems = [
-    { label: 'Doi xe', path: '/company/vehicles', icon: Bus },
-    { label: 'Dia diem nha xe', path: '/company/locations', icon: MapPin },
-    { label: 'Tuyen duong', path: '/company/routes', icon: Route },
-    { label: 'Chinh sach huy', path: '/company/cancellation-policies', icon: Shield },
+    { label: 'Đội xe của tôi', path: '/company/vehicles', icon: Bus },
+    { label: 'Điểm đón/trả riêng', path: '/company/locations', icon: MapPin },
+    { label: 'Tuyến đường đăng ký', path: '/company/routes', icon: Route },
+    { label: 'Chính sách hủy vé riêng', path: '/company/cancellation-policies', icon: Shield },
   ];
 
   const businessItems = [
-    { label: 'Chuyen xe', path: '/company/trips', icon: Calendar },
-    { label: 'Dat ve', path: '/company/bookings', icon: Ticket },
-    { label: 'Danh gia', path: '/company/reviews', icon: Star },
+    { label: 'Lịch chuyến xe xuất bến', path: '/company/trips', icon: Calendar },
+    { label: 'Hành khách & Vé đã đặt', path: '/company/bookings', icon: Ticket },
+    { label: 'Đánh giá từ khách hàng', path: '/company/reviews', icon: Star },
   ];
 
   const isActive = (path: string) => {
@@ -135,10 +134,10 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
               }}
             >
               <LayoutGrid size={17} color={isActive('/company/dashboard') ? '#ffffff' : '#94a3b8'} />
-              <span>Tong quan</span>
+              <span>Tổng quan</span>
             </Link>
 
-            {/* VAN HANH Group */}
+            {/* VẬN HÀNH ĐỘI XE Group */}
             <div
               style={{
                 fontSize: '10px',
@@ -149,7 +148,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                 textTransform: 'uppercase'
               }}
             >
-              VAN HANH
+              VẬN HÀNH ĐỘI XE
             </div>
             {operationItems.map((item) => {
               const Icon = item.icon;
@@ -178,7 +177,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
               );
             })}
 
-            {/* KINH DOANH Group */}
+            {/* KINH DOANH & BÁN VÉ Group */}
             <div
               style={{
                 fontSize: '10px',
@@ -189,7 +188,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                 textTransform: 'uppercase'
               }}
             >
-              KINH DOANH
+              KINH DOANH & BÁN VÉ
             </div>
             {businessItems.map((item) => {
               const Icon = item.icon;
@@ -220,32 +219,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
           </nav>
         </div>
 
-        {/* Bottom Pinned Button -> Link to Admin */}
-        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <Link
-            to="/admin/dashboard"
-            style={{
-              width: '100%',
-              backgroundColor: '#151e34',
-              border: '1px solid #1e293b',
-              borderRadius: '8px',
-              padding: '9px 12px',
-              color: '#94a3b8',
-              fontSize: '12px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              boxSizing: 'border-box',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <LayoutDashboard size={15} color="#94a3b8" />
-            <span>Sang TravelEasy Admin</span>
-          </Link>
-        </div>
+
       </aside>
 
       {/* ======================================================== */}
@@ -368,7 +342,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                   {currentUser?.fullName || 'Điều Hành Nhà Xe'}
                 </div>
                 <div style={{ fontSize: '10px', fontWeight: 700, color: '#0d9488' }}>
-                  {currentUser?.role === 'ADMIN' ? 'QUẢN TRỊ VIÊN' : 'ĐỐI TÁC NHÀ XE'}
+                  ĐỐI TÁC NHÀ XE
                 </div>
               </div>
             </div>

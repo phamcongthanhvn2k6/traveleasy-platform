@@ -12,13 +12,14 @@
 .gradle/
 build/
 bin/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
 *.class
 *.jar
+!**/gradle-wrapper.jar
+!**/gradle/wrapper/gradle-wrapper.jar
 *.war
 *.ear
+!**/src/main/**/build/
+!**/src/test/**/build/
 
 # Node & Frontend
 node_modules/

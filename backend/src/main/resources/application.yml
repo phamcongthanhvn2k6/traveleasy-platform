@@ -7,17 +7,17 @@ spring:
   application:
     name: traveleasy-backend
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/traveleasy_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/traveleasy_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&characterEncoding=UTF-8}
     username: ${SPRING_DATASOURCE_USERNAME:traveleasy_user}
     password: ${SPRING_DATASOURCE_PASSWORD:traveleasy_password}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         dialect: org.hibernate.dialect.MySQLDialect
 
 app:
@@ -25,6 +25,6 @@ app:
     secret: ${JWT_SECRET:TravelEasyDevSecretKeyForLocalDevelopmentOnlyDoNotUseInProduction2026}
     expiration-ms: 86400000 # 24h
   cors:
-    allowed-origins: "http://localhost:3000,http://localhost:5173"
+    allowed-origins: "http://localhost:3000,http://localhost:5173,http://localhost:5174"
   ai:
     openai-api-key: ${SPRING_AI_OPENAI_API_KEY:mock_key}

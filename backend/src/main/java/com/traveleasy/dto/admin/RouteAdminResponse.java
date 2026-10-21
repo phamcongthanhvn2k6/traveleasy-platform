@@ -23,3 +23,4 @@ public class RouteAdminResponse {
     private Integer pointsCount;
     private LocalDateTime createdAt;
 }
+

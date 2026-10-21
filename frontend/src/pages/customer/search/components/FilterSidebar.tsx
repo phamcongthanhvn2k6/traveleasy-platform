@@ -222,7 +222,7 @@ export const FilterSidebar: React.FC<Props> = ({
           {[
             { id: 'SLEEPER', label: 'Xe Giường nằm tiêu chuẩn' },
             { id: 'LIMOUSINE', label: 'Xe Limousine VIP phòng riêng' },
-            { id: 'SEATER', label: 'Xe Ghế ngồi' },
+            { id: 'SEAT', label: 'Xe Ghế ngồi' },
           ].map((type) => {
             const checked = filters.busTypes.includes(type.id);
             return (

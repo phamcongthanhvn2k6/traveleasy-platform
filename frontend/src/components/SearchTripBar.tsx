@@ -265,6 +265,7 @@ export const SearchTripBar: React.FC<Props> = ({
                 cursor: 'pointer'
               }}
             >
+              <option value="">Tất cả điểm xuất phát (Toàn quốc)</option>
               {popularCities.map(city => (
                 <option key={city} value={city}>{city}</option>
               ))}
@@ -319,6 +320,7 @@ export const SearchTripBar: React.FC<Props> = ({
                 cursor: 'pointer'
               }}
             >
+              <option value="">Tất cả điểm đến (Toàn quốc)</option>
               {popularCities.map(city => (
                 <option key={city} value={city}>{city}</option>
               ))}

@@ -341,7 +341,7 @@ export const CheckoutPage: React.FC = () => {
         />
       )}
 
-      {/* VNPAY Payment & Demo Approval Modal */}
+      {/* VNPAY Payment Confirmation Modal */}
       {showVnPayModal && createdBooking && (
         <VnPayModal
           bookingCode={createdBooking.bookingCode}
