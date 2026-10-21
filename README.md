@@ -1496,46 +1496,46 @@ Toàn bộ 4 thẻ KPI (Doanh thu, Vé đã bán, Chuyến xe hoạt động, Kh
 ![Admin Dashboard Đồng Bộ CSDL](docs/screenshots/screenshot_admin_dashboard_synced.png)
 *Hình 11.12: Dashboard quản trị hiển thị dữ liệu thực tế từ cơ sở dữ liệu.*
 
-#### 2. Quản Lý Tuyến Đường Vận Tải (Routes Management)
-Quản lý danh sách các tuyến đường liên tỉnh, thời gian di chuyển, cự ly km và thêm mới tuyến đường trực tiếp vào CSDL.
-![Quản Lý Tuyến Đường](docs/screenshots/screenshot_admin_routes.png)
-*Hình 11.13: Danh sách các tuyến đường vận tải toàn sàn kết nối các đầu mối giao thông.*
+#### 2. Quản Lý Toàn Diện Chuyến Xe (Trips Management — Full CRUD)
+Hệ thống cho phép Quản trị viên thực hiện đầy đủ chu trình **Thêm - Sửa - Xóa** chuyến xe trực tiếp trên giao diện:
+* **Thêm mới**: Tự động sinh kho 34 ghế ngồi chuẩn (A01-A17 tầng dưới, B01-B17 tầng trên) kèm liên kết Tuyến đường & Nhà xe.
+* **Chỉnh sửa**: Cập nhật giờ khởi hành, giờ đến, loại xe (Limousine/Sleeper/Seat) và giá vé niêm yết.
+* **Xóa & Chuyển trạng thái**: Hỗ trợ xóa chuyến an toàn (tự động giải phóng các ghế liên quan) và toggle trạng thái Mở bán / Hủy chuyến.
+![Quản Lý Chuyến Xe Full CRUD](docs/screenshots/screenshot_admin_trips_crud.png)
+*Hình 11.13: Danh sách chuyến xe với đầy đủ nút Thao tác: Sửa, Đổi trạng thái (Mở bán / Hủy), và Xóa.*
 
-![Modal Thêm Tuyến Đường Mới](docs/screenshots/screenshot_admin_routes_modal.png)
-*Hình 11.14: Hộp thoại tạo mới tuyến đường liên tỉnh (chọn nhà xe, điểm đi, điểm đến, thời gian chạy, cự ly).*
+#### 3. Quản Lý Tuyến Đường Vận Tải (Routes Management — Full CRUD)
+Quản trị viên cấu hình mạng lưới tuyến đường liên tỉnh toàn quốc:
+* **Thêm tuyến mới**: Thiết lập điểm xuất phát, điểm đến, nhà xe vận hành, cự ly km, thời gian dự kiến và giá vé cơ sở.
+* **Chỉnh sửa tuyến**: Điều chỉnh lộ trình đón trả, cập nhật thời gian chạy và biểu giá.
+* **Xóa tuyến**: Loại bỏ các tuyến ngừng khai thác khỏi hệ thống.
+![Quản Lý Tuyến Đường Full CRUD](docs/screenshots/screenshot_admin_routes_crud.png)
+*Hình 11.14: Giao diện quản lý tuyến đường với các nút Sửa và Xóa theo thời gian thực.*
 
-#### 3. Quản Lý & Thêm Mới Chuyến Xe Tự Sinh 34 Ghế (Trips Management)
-Xem lịch trình, lọc trạng thái và mở modal thêm chuyến xe mới tự động liên kết với tuyến đường và nhà xe, sinh đủ 34 ghế ngồi tầng 1/tầng 2.
-![Quản Lý Chuyến Xe Admin](docs/screenshots/screenshot_admin_trips.png)
-*Hình 11.15: Danh sách chuyến xe với bộ lọc theo ngày, điểm đi, điểm đến và trạng thái vận hành.*
+#### 4. Quản Lý Đối Tác Nhà Xe (Bus Companies — Full CRUD)
+Quản trị toàn diện danh sách các nhà xe tham gia sàn thương mại điện tử TravelEasy:
+* **Thêm nhà xe mới**: Nhập tên nhà xe, hotline chăm sóc khách hàng, email điều hành và văn phòng đại diện.
+* **Sửa thông tin**: Cập nhật thông tin liên hệ và địa chỉ bến bãi.
+* **Kiểm soát vận hành**: Phê duyệt (`ACTIVE`), Tạm ngưng (`SUSPENDED`), hoặc Xóa nhà xe khỏi hệ thống.
+![Quản Lý Đối Tác Nhà Xe Full CRUD](docs/screenshots/screenshot_admin_companies_crud.png)
+*Hình 11.15: Quản lý đối tác nhà xe với tính năng Sửa, Duyệt/Ngưng và Xóa trực tiếp.*
 
-![Modal Thêm Chuyến Xe Mới](docs/screenshots/screenshot_admin_trips_modal.png)
-*Hình 11.16: Hộp thoại Thêm Chuyến Xe Mới — Tự động sinh kho 34 ghế ngồi (A01-A17, B01-B17) trong cơ sở dữ liệu.*
+#### 5. Quản Lý Địa Điểm & Bến Xe Master Data (Locations — Full CRUD)
+Danh mục bến xe và trạm trung chuyển cấp hệ thống phục vụ tìm kiếm và đặt vé:
+* **Thêm địa điểm**: Tạo mới bến xe khách (`BUS_STATION`) hoặc trạm trung chuyển (`TRANSIT_POINT`).
+* **Sửa địa điểm**: Modal chỉnh sửa thông tin chi tiết tên bến, tỉnh thành, địa chỉ và số tuyến phục vụ.
+* **Xóa địa điểm**: Loại bỏ các điểm đón trả không còn hoạt động.
+![Modal Chỉnh Sửa Địa Điểm Master Data](docs/screenshots/screenshot_admin_locations_crud.png)
+*Hình 11.16: Hộp thoại Cập nhật Địa Điểm Master Data trên giao diện Admin.*
 
-#### 4. Quản Lý & Thêm Mới Đối Tác Nhà Xe (Bus Companies)
-Quản lý thông tin các hãng xe đối tác, hotline, địa chỉ và mở modal thêm nhà xe mới vào sàn.
-![Modal Thêm Đối Tác Nhà Xe Mới](docs/screenshots/screenshot_admin_companies_modal.png)
-*Hình 11.17: Hộp thoại Thêm Đối Tác Nhà Xe Mới — Đồng bộ và kích hoạt mở bán trên sàn.*
-
-#### 3. Quản Lý Danh Mục Ghế & Sơ Đồ Mẫu (Seat Types & Templates)
-Chuẩn hóa loại ghế (VIP, Giường nằm tiêu chuẩn, Ghế ngả cao cấp) và sơ đồ 1 tầng / 2 tầng.
-![Quản Lý Loại Ghế](docs/screenshots/screenshot_admin_seat_types.png)
-*Hình 11.14: Quản lý danh mục loại ghế, hệ số giá và mô tả tiện ích.*
-
-#### 4. Quản Lý Địa Điểm & Bến Xe Đón Trả (Locations)
-Cấu hình danh mục các tỉnh thành phố, bến xe trung tâm, điểm đón trả trung chuyển trên toàn quốc.
-![Quản Lý Địa Điểm & Bến Xe](docs/screenshots/screenshot_admin_locations.png)
-*Hình 11.15: Quản trị các đầu mối giao thông và bến xe phục vụ tuyến đường.*
-
-#### 5. Cấu Hình Cổng Thanh Toán & Tích Hợp (Payment Gateways)
-Bật / tắt các cổng thanh toán (VNPAY, VietQR, MoMo, COD) và quản trị cấu hình gửi thông báo.
-![Cấu Hình Cổng Thanh Toán](docs/screenshots/screenshot_admin_gateways.png)
-*Hình 11.16: Quản lý trạng thái hoạt động của các cổng thanh toán và dịch vụ tích hợp.*
-
-#### 6. Quản Lý Người Dùng & Cơ Chế Khóa Tài Khoản (User Management & Security)
-Quản trị viên có quyền kiểm soát tài khoản, phân quyền Role và khóa/mở khóa (`ACTIVE` / `LOCKED`) tài khoản vi phạm.
-![Quản Lý Người Dùng & Phân Quyền](docs/screenshots/screenshot_admin_users.png)
-*Hình 11.17: Danh sách tài khoản người dùng, vai trò và trạng thái khóa/hoạt động.*
+#### 6. Quản Lý Người Dùng, Phân Quyền & Bảo Mật (Users Management — Full CRUD)
+Kiểm soát toàn bộ tài khoản trong hệ thống với các cơ chế bảo mật nghiêm ngặt:
+* **Thêm người dùng mới**: Phân quyền trực tiếp Role `ADMIN`, `OPERATOR`, hoặc `CUSTOMER`.
+* **Chỉnh sửa & Điều chuyển vai trò**: Cập nhật họ tên, số điện thoại và nâng cấp/hạ cấp Role.
+* **Khóa / Mở khóa tài khoản**: Toggle trạng thái `ACTIVE` <-> `LOCKED` tức thì chỉ với 1 click.
+* **Xóa tài khoản**: Xóa tài khoản vi phạm kèm **Cơ chế bảo vệ Quản trị viên tối cao** (Super Admin Guard — không thể xóa `admin@traveleasy.vn`).
+![Quản Lý Người Dùng & Phân Quyền Full CRUD](docs/screenshots/screenshot_admin_users_crud.png)
+*Hình 11.17: Quản lý tài khoản với đầy đủ thao tác Khóa, Sửa và Xóa an toàn.*
 
 ---
 
