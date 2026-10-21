@@ -587,3 +587,4 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
     </div>
   );
 };
+

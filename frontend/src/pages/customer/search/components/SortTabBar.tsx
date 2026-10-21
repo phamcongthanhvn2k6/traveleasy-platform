@@ -79,3 +79,4 @@ export const SortTabBar: React.FC<Props> = ({ currentSort, onChangeSort, resultC
     </div>
   );
 };
+

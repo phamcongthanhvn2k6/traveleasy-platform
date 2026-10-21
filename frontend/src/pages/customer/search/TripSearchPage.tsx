@@ -170,9 +170,13 @@ export const TripSearchPage: React.FC = () => {
   };
 
   const handleOpenBooking = (trip: Trip, seats: string[], points: any) => {
-    setBookingTrip(trip);
-    setBookingSeats(seats);
-    setBookingPoints(points);
+    const checkoutPayload = { trip, selectedSeats: seats, points };
+    try {
+      sessionStorage.setItem('traveleasy_checkout_data', JSON.stringify(checkoutPayload));
+    } catch (e) {
+      console.warn(e);
+    }
+    navigate('/checkout', { state: checkoutPayload });
   };
 
   const handleBookingSuccess = (booking: Booking) => {
@@ -388,3 +392,4 @@ export const TripSearchPage: React.FC = () => {
     </div>
   );
 };
+

@@ -345,3 +345,4 @@ export const TripSearchHeader: React.FC<Props> = ({
     </div>
   );
 };
+

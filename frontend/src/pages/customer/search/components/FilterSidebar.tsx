@@ -300,3 +300,4 @@ export const FilterSidebar: React.FC<Props> = ({
     </div>
   );
 };
+
