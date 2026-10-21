@@ -514,6 +514,22 @@ export const AdminLoginPage: React.FC = () => {
               >
                 🛡️ Admin Kỹ Thuật
               </button>
+              <button
+                type="button"
+                onClick={() => handleQuickFill('trungkien.admin@traveleasy.vn')}
+                style={{
+                  backgroundColor: '#1e293b',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  padding: '6px 10px',
+                  fontSize: '11.5px',
+                  color: '#a7f3d0',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                🛡️ Admin Vận Hành
+              </button>
             </div>
           </div>
         </div>
@@ -535,6 +551,22 @@ export const AdminLoginPage: React.FC = () => {
         >
           <Lock size={13} color="#10b981" />
           <span>Hệ thống ghi nhận địa chỉ IP &amp; Nhật ký kiểm toán thời gian thực</span>
+        </div>
+
+        {/* Switch Portal Link */}
+        <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <span style={{ color: '#64748b', fontSize: '12px' }}>Bạn là Đối tác Nhà xe? </span>
+          <Link
+            to="/company/login"
+            style={{
+              color: '#38bdf8',
+              fontSize: '12px',
+              fontWeight: 700,
+              textDecoration: 'none',
+            }}
+          >
+            Đến Cổng Điều Hành Nhà Xe (Operator Portal) →
+          </Link>
         </div>
       </div>
     </div>

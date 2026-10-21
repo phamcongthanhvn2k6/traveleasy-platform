@@ -343,11 +343,55 @@ export const CompanyLoginPage: React.FC = () => {
               <span>3. Xe Hoàng Long</span>
               <span style={{ fontSize: '11px', color: '#94a3b8' }}>dieuhanh@hoanglong...</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickFill('dieuhanh@thanhbuoi.com.vn')}
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#e2e8f0',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span>4. Thành Bưởi Limousine</span>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>dieuhanh@thanhbuoi...</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickFill('dieuhanh@xesaoviet.com.vn')}
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#e2e8f0',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span>5. Sao Việt Express</span>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>dieuhanh@xesaoviet...</span>
+            </button>
           </div>
         </div>
 
-        {/* Back Link */}
-        <div style={{ textAlign: 'center', marginTop: '22px' }}>
+        {/* Back Link & Switch Portal Link */}
+        <div style={{ textAlign: 'center', marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <Link
             to="/"
             style={{
@@ -356,11 +400,27 @@ export const CompanyLoginPage: React.FC = () => {
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '6px',
             }}
           >
             <ArrowLeft size={14} /> Quay lại Trang Chủ Đặt Vé
           </Link>
+
+          <div style={{ paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <span style={{ color: '#94a3b8', fontSize: '12px' }}>Bạn là Quản trị viên Sàn tổng? </span>
+            <Link
+              to="/admin/login"
+              style={{
+                color: '#38bdf8',
+                fontSize: '12px',
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              Đăng nhập Quản Trị Hệ Thống (Admin) →
+            </Link>
+          </div>
         </div>
       </div>
     </div>
