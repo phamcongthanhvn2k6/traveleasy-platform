@@ -16,10 +16,17 @@ export const TripSearchHeader: React.FC<Props> = ({
   totalTrips,
   onSearchChange,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
   const [tempOrigin, setTempOrigin] = useState(origin);
   const [tempDestination, setTempDestination] = useState(destination);
   const [tempDate, setTempDate] = useState(departureDate);
+
+  // Synchronize internal state with incoming props
+  React.useEffect(() => {
+    setTempOrigin(origin);
+    setTempDestination(destination);
+    setTempDate(departureDate);
+  }, [origin, destination, departureDate]);
 
   const popularCities = [
     'TP. Hồ Chí Minh',
@@ -45,11 +52,17 @@ export const TripSearchHeader: React.FC<Props> = ({
   const handleApplyEdit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearchChange(tempOrigin, tempDestination, tempDate);
-    setIsEditing(false);
+  };
+
+  const handleShowAll = () => {
+    setTempOrigin('');
+    setTempDestination('');
+    setTempDate('');
+    onSearchChange('', '', '');
   };
 
   const changeDateByDays = (days: number) => {
-    const current = new Date(departureDate);
+    const current = departureDate ? new Date(departureDate) : new Date();
     current.setDate(current.getDate() + days);
     const newDateStr = current.toISOString().split('T')[0];
     onSearchChange(origin, destination, newDateStr);
@@ -87,7 +100,7 @@ export const TripSearchHeader: React.FC<Props> = ({
         >
           <div>
             <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 500, marginBottom: '2px' }}>
-              Vé xe khách <span style={{ color: '#94a3b8' }}>/</span> Tuyến đường phổ biến
+              Vé xe khách <span style={{ color: '#94a3b8' }}>/</span> {!origin && !destination ? 'Tất cả tuyến đường toàn quốc' : 'Tuyến đường đang chọn'}
             </div>
             <h1
               style={{
@@ -97,12 +110,19 @@ export const TripSearchHeader: React.FC<Props> = ({
                 margin: 0,
                 display: 'flex',
                 alignItems: 'center',
+                flexWrap: 'wrap',
                 gap: '8px',
               }}
             >
-              <span>{origin}</span>
-              <span style={{ color: '#2563eb' }}>→</span>
-              <span>{destination}</span>
+              {!origin && !destination ? (
+                <span>Toàn bộ chuyến xe toàn quốc</span>
+              ) : (
+                <>
+                  <span>{origin || 'Tất cả điểm đi'}</span>
+                  <span style={{ color: '#2563eb' }}>→</span>
+                  <span>{destination || 'Tất cả điểm đến'}</span>
+                </>
+              )}
               <span
                 style={{
                   fontSize: '13px',
@@ -118,26 +138,51 @@ export const TripSearchHeader: React.FC<Props> = ({
             </h1>
           </div>
 
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              backgroundColor: isEditing ? '#f1f5f9' : '#eff6ff',
-              color: '#2563eb',
-              border: '1px solid #bfdbfe',
-              padding: '8px 16px',
-              borderRadius: '8px',
-              fontWeight: 700,
-              fontSize: '14px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <Search size={16} />
-            {isEditing ? 'Đóng bộ tìm kiếm' : 'Đổi hành trình'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {(origin || destination || departureDate) && (
+              <button
+                type="button"
+                onClick={handleShowAll}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: '#fef2f2',
+                  color: '#dc2626',
+                  border: '1px solid #fecaca',
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                title="Bỏ lọc để xem toàn bộ danh sách chuyến xe trên toàn hệ thống"
+              >
+                ✕ Xem toàn bộ tuyến
+              </button>
+            )}
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: isEditing ? '#f1f5f9' : '#eff6ff',
+                color: '#2563eb',
+                border: '1px solid #bfdbfe',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Search size={16} />
+              {isEditing ? 'Đóng bộ tìm kiếm' : 'Đổi hành trình'}
+            </button>
+          </div>
         </div>
 
         {/* Collapsible Edit Search Form */}
@@ -174,6 +219,7 @@ export const TripSearchHeader: React.FC<Props> = ({
                   backgroundColor: '#ffffff',
                 }}
               >
+                <option value="">Tất cả điểm xuất phát (Toàn quốc)</option>
                 {popularCities.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -222,6 +268,7 @@ export const TripSearchHeader: React.FC<Props> = ({
                   backgroundColor: '#ffffff',
                 }}
               >
+                <option value="">Tất cả điểm đến (Toàn quốc)</option>
                 {popularCities.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -233,7 +280,7 @@ export const TripSearchHeader: React.FC<Props> = ({
             {/* Departure Date */}
             <div>
               <label style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                Ngày đi
+                Ngày đi (Tùy chọn)
               </label>
               <input
                 type="date"
@@ -252,7 +299,7 @@ export const TripSearchHeader: React.FC<Props> = ({
             </div>
 
             {/* Submit */}
-            <div style={{ paddingTop: '16px' }}>
+            <div style={{ paddingTop: '16px', display: 'flex', gap: '8px' }}>
               <button
                 type="submit"
                 style={{
@@ -265,6 +312,7 @@ export const TripSearchHeader: React.FC<Props> = ({
                   fontSize: '14px',
                   cursor: 'pointer',
                   boxShadow: '0 2px 4px rgba(37,99,235,0.3)',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 Tìm Chuyến
@@ -273,73 +321,131 @@ export const TripSearchHeader: React.FC<Props> = ({
           </form>
         )}
 
-        {/* Date Stepper Bar: Hôm qua | [Thứ Tư, 21/10/2026] | Ngày mai */}
+        {/* Date Stepper Bar: Hôm qua | [Thứ Tư, 21/10/2026] | Ngày mai | Bỏ lọc ngày */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexWrap: 'wrap',
             gap: '12px',
             marginTop: '16px',
             paddingTop: '12px',
             borderTop: '1px solid #f1f5f9',
           }}
         >
-          <button
-            onClick={() => changeDateByDays(-1)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              padding: '6px 14px',
-              borderRadius: '6px',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: '#475569',
-              cursor: 'pointer',
-            }}
-          >
-            <ChevronLeft size={16} /> Hôm trước
-          </button>
+          {departureDate ? (
+            <>
+              <button
+                onClick={() => changeDateByDays(-1)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: '#475569',
+                  cursor: 'pointer',
+                }}
+              >
+                <ChevronLeft size={16} /> Hôm trước
+              </button>
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              backgroundColor: '#eff6ff',
-              border: '1px solid #bfdbfe',
-              color: '#1d4ed8',
-              padding: '6px 18px',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: 700,
-            }}
-          >
-            <Calendar size={15} />
-            <span>{formatDateVietnamese(departureDate)}</span>
-          </div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  color: '#1d4ed8',
+                  padding: '6px 18px',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                }}
+              >
+                <Calendar size={15} />
+                <span>{formatDateVietnamese(departureDate)}</span>
+              </div>
 
-          <button
-            onClick={() => changeDateByDays(1)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              padding: '6px 14px',
-              borderRadius: '6px',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: '#475569',
-              cursor: 'pointer',
-            }}
-          >
-            Hôm sau <ChevronRight size={16} />
-          </button>
+              <button
+                onClick={() => changeDateByDays(1)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: '#475569',
+                  cursor: 'pointer',
+                }}
+              >
+                Hôm sau <ChevronRight size={16} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onSearchChange(origin, destination, '')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  backgroundColor: '#ffffff',
+                  border: '1px dashed #94a3b8',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#64748b',
+                  cursor: 'pointer',
+                }}
+                title="Bỏ lọc theo ngày để xem chuyến xe của mọi ngày"
+              >
+                ✕ Xem mọi ngày
+              </button>
+            </>
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                color: '#475569',
+                fontSize: '13px',
+                fontWeight: 600,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#2563eb' }}>
+                <Calendar size={16} />
+                <span>Đang hiển thị chuyến xe của <strong>tất cả các ngày</strong></span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onSearchChange(origin, destination, new Date().toISOString().split('T')[0])}
+                style={{
+                  backgroundColor: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  color: '#334155',
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Lọc chuyến hôm nay
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

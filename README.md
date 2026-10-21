@@ -2002,5 +2002,35 @@ Mọi tài khoản trong hệ thống đều có thể đăng nhập ngay bằng
 *Hình 11.55: Cổng điều hành đối tác nhà xe quản lý lịch xe xuất bến, trạng thái khởi hành và số ghế trống trực tiếp trên MySQL 8.0.*
 
 ---
+
+### 11.10 Tối Ưu Hóa Trải Nghiệm Tìm Kiếm: Mặc Định Hiển Thị Toàn Bộ Tuyến Xe & Lọc Linh Hoạt Theo Điểm Đi/Điểm Đến
+
+#### 1. Vấn Đề Gặp Phải Trước Đây (Hardcoded Default Route Lock)
+* **Thực trạng**: Khi người dùng nhấn nút "Đặt Vé Xe" từ thanh điều hướng chính (hoặc truy cập `/search`), trang tìm kiếm trước đây bị gắn cứng giá trị mặc định `origin = 'TP. Hồ Chí Minh'` và `destination = 'Đà Lạt'`, đồng thời ép buộc ngày đi là hôm nay.
+* **Hạn chế**: Hành khách khi mới vào trang chỉ thấy duy nhất 2 chuyến xe của tuyến Sài Gòn ⇄ Đà Lạt trong ngày, tạo cảm giác hệ thống thiếu hụt dữ liệu và không thể khám phá toàn bộ mạng lưới tuyến đường liên tỉnh phong phú của nền tảng (Hà Nội, Sa Pa, Nha Trang, Vũng Tàu, Cần Thơ, Hải Phòng, Huế, Quy Nhơn...).
+
+#### 2. Giải Pháp Hoàn Thiện: Cơ Chế Hiển Thị Toàn Bộ Tuyến Mở (Open Route Discovery)
+1. **Mặc định hiển thị toàn bộ 76+ chuyến xe toàn quốc**:
+   * Khi truy cập trang `/search` không kèm tham số bộ lọc, hệ thống tự động gọi API `GET /api/v1/trips/search` không giới hạn điểm đi/điểm đến, tải lên toàn bộ chuyến xe đang mở bán trên toàn quốc.
+   * Tiêu đề trang hiển thị trực quan: **Toàn bộ chuyến xe toàn quốc ({totalTrips} chuyến)**.
+2. **Hỗ trợ tùy chọn "Tất cả điểm xuất phát" & "Tất cả điểm đến"**:
+   * Bộ chọn nơi xuất phát và nơi đến được bổ sung tùy chọn **"Tất cả điểm xuất phát (Toàn quốc)"** và **"Tất cả điểm đến (Toàn quốc)"** (`value=""`).
+   * Người dùng có thể lọc linh hoạt:
+     * Chỉ chọn nơi đi (ví dụ: `TP. Hồ Chí Minh`): Xem tất cả các chuyến xuất phát từ Sài Gòn đi các tỉnh thành.
+     * Chỉ chọn nơi đến (ví dụ: `Đà Lạt`): Xem tất cả các chuyến từ mọi miền đến Đà Lạt.
+     * Chọn cả hai: Xem đích danh tuyến đường chỉ định.
+3. **Thanh điều hướng ngày linh hoạt (Flexible Date Stepper)**:
+   * Cho phép xem chuyến xe của **mọi ngày khởi hành** (không bắt buộc phải chọn cố định một ngày).
+   * Bổ sung nút **"✕ Bỏ chọn ngày (Xem mọi ngày)"** và **"Lọc chuyến hôm nay"** giúp hành khách chuyển đổi tức thì giữa chế độ xem tổng thể và xem chi tiết theo ngày.
+4. **Nút "Xem toàn bộ tuyến" (Reset Quick Action)**:
+   * Khi đang áp dụng bất kỳ bộ lọc điểm đi/điểm đến hay ngày chạy nào, nút **"✕ Xem toàn bộ tuyến"** màu đỏ nổi bật xuất hiện ngay góc trên bên phải, cho phép hành khách hoàn tác nhanh chỉ với 1 cú click.
+
+![Trang Tìm Kiếm Mặc Định Hiển Thị Toàn Bộ Chuyến Xe Toàn Quốc](docs/screenshots/screenshot_search_all_trips_initial.png)
+*Hình 11.56: Giao diện Đặt Vé Xe mặc định hiển thị toàn bộ 76+ chuyến xe toàn quốc, sẵn sàng để người dùng lọc theo điểm đi và điểm đến.*
+
+![Lọc Chi Tiết Chuyến Xe Khi Người Dùng Chọn Hành Trình](docs/screenshots/screenshot_search_filtered_trips.png)
+*Hình 11.57: Giao diện tự động thu hẹp kết quả chính xác khi người dùng chọn nơi xuất phát và nơi đến, kèm nút "✕ Xem toàn bộ tuyến" tiện lợi.*
+
+---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  
 *Chúc toàn đội bảo vệ thành công rực rỡ!*

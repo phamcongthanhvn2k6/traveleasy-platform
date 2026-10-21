@@ -14,9 +14,9 @@ export const TripSearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const origin = searchParams.get('origin') || 'TP. Hồ Chí Minh';
-  const destination = searchParams.get('destination') || 'Đà Lạt';
-  const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+  const origin = searchParams.get('origin') || '';
+  const destination = searchParams.get('destination') || '';
+  const date = searchParams.get('date') || '';
   const companyParam = searchParams.get('company') || '';
 
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -51,21 +51,28 @@ export const TripSearchPage: React.FC = () => {
   const fetchTrips = async (orig: string, dest: string, depDate: string) => {
     setLoading(true);
     try {
-      const res = await api.get('/trips/search', {
-        params: {
-          origin: orig,
-          destination: dest,
-          departureDate: depDate,
-        },
-      });
+      const params: Record<string, string> = {};
+      if (orig && orig.trim() !== '') params.origin = orig.trim();
+      if (dest && dest.trim() !== '') params.destination = dest.trim();
+      if (depDate && depDate.trim() !== '') params.departureDate = depDate.trim();
+
+      const res = await api.get('/trips/search', { params });
 
       const data = res.data?.data || [];
       setTrips(data);
 
       if (data.length > 0) {
-        toast.success(`Tìm thấy ${data.length} chuyến xe từ ${orig} đến ${dest}!`, 'Kết Quả');
+        if (!orig && !dest) {
+          toast.success(`Đang hiển thị toàn bộ ${data.length} chuyến xe toàn quốc!`, 'Tất Cả Chuyến Xe');
+        } else if (orig && dest) {
+          toast.success(`Tìm thấy ${data.length} chuyến xe từ ${orig} đến ${dest}!`, 'Kết Quả');
+        } else if (orig) {
+          toast.success(`Tìm thấy ${data.length} chuyến xe xuất phát từ ${orig}!`, 'Kết Quả');
+        } else {
+          toast.success(`Tìm thấy ${data.length} chuyến xe đến ${dest}!`, 'Kết Quả');
+        }
       } else {
-        toast.info(`Không có chuyến xe trực tiếp ngày ${depDate}. Đang gợi ý chuyến gần nhất.`, 'Thông Báo');
+        toast.info('Không tìm thấy chuyến xe nào phù hợp. Vui lòng thử nới lỏng bộ lọc!', 'Thông Báo');
       }
     } catch (err) {
       console.error('Failed to search trips:', err);
@@ -81,11 +88,12 @@ export const TripSearchPage: React.FC = () => {
   }, [origin, destination, date]);
 
   const handleSearchChange = (newOrigin: string, newDestination: string, newDate: string) => {
-    setSearchParams({
-      origin: newOrigin,
-      destination: newDestination,
-      date: newDate,
-    });
+    const nextParams: Record<string, string> = {};
+    if (newOrigin && newOrigin.trim() !== '') nextParams.origin = newOrigin.trim();
+    if (newDestination && newDestination.trim() !== '') nextParams.destination = newDestination.trim();
+    if (newDate && newDate.trim() !== '') nextParams.date = newDate.trim();
+    if (companyParam && companyParam.trim() !== '') nextParams.company = companyParam.trim();
+    setSearchParams(nextParams);
   };
 
   // Get list of unique available companies for sidebar
