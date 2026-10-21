@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -28,6 +27,14 @@ public class DataInitializer implements CommandLineRunner {
     private final TripSeatRepository tripSeatRepository;
     private final BookingRepository bookingRepository;
     private final TicketRepository ticketRepository;
+    private final SeatTypeRepository seatTypeRepository;
+    private final SeatLayoutTemplateRepository seatLayoutTemplateRepository;
+    private final LocationRepository locationRepository;
+    private final BannerRepository bannerRepository;
+    private final GatewayConfigRepository gatewayConfigRepository;
+    private final ReviewReportRepository reviewReportRepository;
+    private final CancellationPolicyRepository cancellationPolicyRepository;
+    private final AuditLogRepository auditLogRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -38,246 +45,192 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        log.info("Seeding initial data for TravelEasy Platform...");
+        log.info("Seeding rich initial data for TravelEasy Platform...");
 
-        // 1. Seed Users
+        // 1. Seed Users (Admins, Operators, Customers)
         String encodedPass = passwordEncoder.encode("Rikkei@123");
 
-        User admin = User.builder()
-                .email("admin@traveleasy.vn")
-                .password(encodedPass)
-                .fullName("Quản Trị Viên Hệ Thống")
-                .phone("0901234567")
-                .role(Role.ADMIN)
-                .build();
+        User admin1 = User.builder().email("admin@traveleasy.vn").password(encodedPass).fullName("Quản Trị Viên Hệ Thống").phone("0901234567").role(Role.ADMIN).status("ACTIVE").build();
+        User admin2 = User.builder().email("phanthanhphong.admin@traveleasy.vn").password(encodedPass).fullName("Phạm Thanh Phong").phone("0902223344").role(Role.ADMIN).status("ACTIVE").build();
+        User admin3 = User.builder().email("trungkien.admin@traveleasy.vn").password(encodedPass).fullName("Phan Trung Kiên").phone("0903334455").role(Role.ADMIN).status("ACTIVE").build();
 
-        User operator = User.builder()
-                .email("operator@futa.vn")
-                .password(encodedPass)
-                .fullName("Điều Hành Xe Phương Trang")
-                .phone("0909888999")
-                .role(Role.OPERATOR)
-                .build();
+        User opFuta = User.builder().email("partner@traveleasy.vn").password(encodedPass).fullName("Điều Hành TravelEasy Express").phone("0909888999").role(Role.OPERATOR).status("ACTIVE").build();
+        User opHoaMai = User.builder().email("dieuhanh@hoamaivungtau.com.vn").password(encodedPass).fullName("Điều Hành Xe Hoa Mai").phone("0905556677").role(Role.OPERATOR).status("ACTIVE").build();
+        User opHoangLong = User.builder().email("dieuhanh@hoanglongasia.com").password(encodedPass).fullName("Điều Hành Hoàng Long").phone("0906667788").role(Role.OPERATOR).status("ACTIVE").build();
+        User opVanMinh = User.builder().email("staff@traveleasy.vn").password(encodedPass).fullName("Nhân Viên Vận Hành").phone("0907778899").role(Role.OPERATOR).status("ACTIVE").build();
 
-        User customer = User.builder()
-                .email("customer@gmail.com")
-                .password(encodedPass)
-                .fullName("Nguyễn Văn Du Khách")
-                .phone("0912345678")
-                .role(Role.CUSTOMER)
-                .build();
+        User cust1 = User.builder().email("customer@gmail.com").password(encodedPass).fullName("Nguyễn Văn Du Khách").phone("0912345678").role(Role.CUSTOMER).status("ACTIVE").build();
+        User cust2 = User.builder().email("tranthib@gmail.com").password(encodedPass).fullName("Trần Thị Bích Ngọc").phone("0987654321").role(Role.CUSTOMER).status("ACTIVE").build();
+        User cust3 = User.builder().email("lehoangc@gmail.com").password(encodedPass).fullName("Lê Hoàng Cường").phone("0978112233").role(Role.CUSTOMER).status("ACTIVE").build();
+        User cust4 = User.builder().email("phamquocd@gmail.com").password(encodedPass).fullName("Phạm Quốc Dũng").phone("0933445566").role(Role.CUSTOMER).status("LOCKED").build();
+        User cust5 = User.builder().email("hoangmaie@gmail.com").password(encodedPass).fullName("Hoàng Thị Mai").phone("0944556677").role(Role.CUSTOMER).status("ACTIVE").build();
 
-        userRepository.saveAll(List.of(admin, operator, customer));
+        userRepository.saveAll(List.of(admin1, admin2, admin3, opFuta, opHoaMai, opHoangLong, opVanMinh, cust1, cust2, cust3, cust4, cust5));
 
-        // 2. Seed Bus Companies
-        BusCompany futa = BusCompany.builder()
-                .name("Phương Trang (FUTA Bus Lines)")
-                .hotline("1900 6067")
-                .email("hotro@futa.vn")
-                .address("Bến xe Miền Tây, TP. Hồ Chí Minh")
-                .logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80")
-                .averageRating(BigDecimal.valueOf(4.9))
-                .build();
+        // 2. Seed 10 Bus Companies
+        BusCompany futa = BusCompany.builder().name("TravelEasy Express").code("SK-2024-001").hotline("1900 6067").email("contact@traveleasy.vn").address("Bến xe Miền Tây, TP. Hồ Chí Minh").logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.9)).build();
+        BusCompany thanhBuoi = BusCompany.builder().name("Thành Bưởi Limousine").code("SK-2024-002").hotline("1900 6079").email("info@thanhbuoi.com.vn").address("266 Lê Hồng Phong, Quận 5, TP. Hồ Chí Minh").logoUrl("https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.8)).build();
+        BusCompany saoViet = BusCompany.builder().name("Sao Việt Express").code("SK-2024-003").hotline("1900 6746").email("contact@xesaoviet.com.vn").address("779 Giải Phóng, Hoàng Mai, Hà Nội").logoUrl("https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.7)).build();
+        BusCompany kumho = BusCompany.builder().name("Kumho Samco Buslines").code("SK-2024-004").hotline("1900 6065").email("cskh@kumhosamco.com.vn").address("292 Đinh Bộ Lĩnh, Bình Thạnh, TP. Hồ Chí Minh").logoUrl("https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=150&auto=format&fit=crop&q=80").status("PENDING_APPROVAL").averageRating(BigDecimal.valueOf(4.8)).build();
+        BusCompany hoaMai = BusCompany.builder().name("Xe Khách Hoa Mai").code("SK-2024-005").hotline("1900 599 997").email("info@hoamaivungtau.com.vn").address("47 Trưng Nhị, Phường 1, TP. Vũng Tàu").logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.9)).build();
+        BusCompany hoangLong = BusCompany.builder().name("Hoàng Long Asia").code("SK-2024-006").hotline("0225 3920 920").email("info@hoanglongasia.com").address("05 Phạm Ngũ Lão, Ngô Quyền, Hải Phòng").logoUrl("https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=150&auto=format&fit=crop&q=80").status("SUSPENDED").averageRating(BigDecimal.valueOf(4.7)).build();
+        BusCompany vanMinh = BusCompany.builder().name("Nhà Xe Văn Minh").code("SK-2024-007").hotline("1900 6467").email("vanminh@vanminh74.vn").address("101 Lý Thường Kiệt, TP. Vinh, Nghệ An").logoUrl("https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.9)).build();
+        BusCompany cucTung = BusCompany.builder().name("Cúc Tùng Limousine").code("SK-2024-008").hotline("1900 6606").email("cuctunglimousine@gmail.com").address("Bến xe phía Nam Nha Trang, Khánh Hòa").logoUrl("https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.8)).build();
+        BusCompany haiVan = BusCompany.builder().name("Hải Vân Express").code("SK-2024-009").hotline("1900 6763").email("cskh@haivan.com").address("Tòa nhà N2E Lê Văn Lương, Nhân Chính, Thanh Xuân, Hà Nội").logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.8)).build();
+        BusCompany chinNghia = BusCompany.builder().name("Chín Nghĩa").code("SK-2024-010").hotline("1900 636 636").email("chinnghiaquangngai@gmail.com").address("06 Đinh Tiên Hoàng, Nghĩa Chánh, TP. Quảng Ngãi").logoUrl("https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.7)).build();
 
-        BusCompany thanhBuoi = BusCompany.builder()
-                .name("Thành Bưởi")
-                .hotline("1900 6079")
-                .email("info@thanhbuoi.com.vn")
-                .address("266 Lê Hồng Phong, Quận 5, TP. Hồ Chí Minh")
-                .logoUrl("https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=150&auto=format&fit=crop&q=80")
-                .averageRating(BigDecimal.valueOf(4.8))
-                .build();
+        busCompanyRepository.saveAll(List.of(futa, thanhBuoi, saoViet, kumho, hoaMai, hoangLong, vanMinh, cucTung, haiVan, chinNghia));
 
-        BusCompany saoViet = BusCompany.builder()
-                .name("Sao Việt")
-                .hotline("1900 6746")
-                .email("contact@xesaoviet.com.vn")
-                .address("779 Giải Phóng, Hoàng Mai, Hà Nội")
-                .logoUrl("https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=150&auto=format&fit=crop&q=80")
-                .averageRating(BigDecimal.valueOf(4.7))
-                .build();
+        // 3. Seed 14 Routes
+        Route r1 = Route.builder().busCompany(futa).departureLocation("TP. Hồ Chí Minh").arrivalLocation("Đà Lạt").durationHours(BigDecimal.valueOf(6.5)).distanceKm(BigDecimal.valueOf(305.0)).build();
+        Route r2 = Route.builder().busCompany(futa).departureLocation("TP. Hồ Chí Minh").arrivalLocation("Nha Trang").durationHours(BigDecimal.valueOf(8.0)).distanceKm(BigDecimal.valueOf(435.0)).build();
+        Route r3 = Route.builder().busCompany(thanhBuoi).departureLocation("TP. Hồ Chí Minh").arrivalLocation("Cần Thơ").durationHours(BigDecimal.valueOf(3.5)).distanceKm(BigDecimal.valueOf(169.0)).build();
+        Route r4 = Route.builder().busCompany(saoViet).departureLocation("Hà Nội").arrivalLocation("Sa Pa").durationHours(BigDecimal.valueOf(5.5)).distanceKm(BigDecimal.valueOf(315.0)).build();
+        Route r5 = Route.builder().busCompany(hoaMai).departureLocation("TP. Hồ Chí Minh").arrivalLocation("Vũng Tàu").durationHours(BigDecimal.valueOf(2.0)).distanceKm(BigDecimal.valueOf(105.0)).build();
+        Route r6 = Route.builder().busCompany(hoaMai).departureLocation("Vũng Tàu").arrivalLocation("TP. Hồ Chí Minh").durationHours(BigDecimal.valueOf(2.0)).distanceKm(BigDecimal.valueOf(105.0)).build();
+        Route r7 = Route.builder().busCompany(futa).departureLocation("TP. Hồ Chí Minh").arrivalLocation("Phan Thiết").durationHours(BigDecimal.valueOf(4.0)).distanceKm(BigDecimal.valueOf(215.0)).build();
+        Route r8 = Route.builder().busCompany(thanhBuoi).departureLocation("TP. Hồ Chí Minh").arrivalLocation("Buôn Ma Thuột").durationHours(BigDecimal.valueOf(7.5)).distanceKm(BigDecimal.valueOf(350.0)).build();
+        Route r9 = Route.builder().busCompany(hoangLong).departureLocation("Hà Nội").arrivalLocation("Hải Phòng").durationHours(BigDecimal.valueOf(1.5)).distanceKm(BigDecimal.valueOf(120.0)).build();
+        Route r10 = Route.builder().busCompany(hoangLong).departureLocation("Hà Nội").arrivalLocation("Hạ Long").durationHours(BigDecimal.valueOf(2.5)).distanceKm(BigDecimal.valueOf(155.0)).build();
+        Route r11 = Route.builder().busCompany(vanMinh).departureLocation("Hà Nội").arrivalLocation("Vinh").durationHours(BigDecimal.valueOf(5.5)).distanceKm(BigDecimal.valueOf(300.0)).build();
+        Route r12 = Route.builder().busCompany(haiVan).departureLocation("Hà Nội").arrivalLocation("Hà Giang").durationHours(BigDecimal.valueOf(6.0)).distanceKm(BigDecimal.valueOf(320.0)).build();
+        Route r13 = Route.builder().busCompany(futa).departureLocation("Đà Nẵng").arrivalLocation("Huế").durationHours(BigDecimal.valueOf(2.5)).distanceKm(BigDecimal.valueOf(100.0)).build();
+        Route r14 = Route.builder().busCompany(chinNghia).departureLocation("Đà Nẵng").arrivalLocation("Quy Nhơn").durationHours(BigDecimal.valueOf(5.5)).distanceKm(BigDecimal.valueOf(320.0)).build();
 
-        BusCompany kumho = BusCompany.builder()
-                .name("Kumho Samco Buslines")
-                .hotline("1900 6065")
-                .email("cskh@kumhosamco.com.vn")
-                .address("292 Đinh Bộ Lĩnh, Bình Thạnh, TP. Hồ Chí Minh")
-                .logoUrl("https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=150&auto=format&fit=crop&q=80")
-                .averageRating(BigDecimal.valueOf(4.8))
-                .build();
-
-        busCompanyRepository.saveAll(List.of(futa, thanhBuoi, saoViet, kumho));
-
-        // 3. Seed Routes
-        Route routeHcmDalat = Route.builder()
-                .busCompany(futa)
-                .departureLocation("TP. Hồ Chí Minh")
-                .arrivalLocation("Đà Lạt")
-                .durationHours(BigDecimal.valueOf(6.5))
-                .distanceKm(BigDecimal.valueOf(305.0))
-                .build();
-
-        Route routeHcmNhaTrang = Route.builder()
-                .busCompany(futa)
-                .departureLocation("TP. Hồ Chí Minh")
-                .arrivalLocation("Nha Trang")
-                .durationHours(BigDecimal.valueOf(8.0))
-                .distanceKm(BigDecimal.valueOf(435.0))
-                .build();
-
-        Route routeHnSapa = Route.builder()
-                .busCompany(saoViet)
-                .departureLocation("Hà Nội")
-                .arrivalLocation("Sa Pa")
-                .durationHours(BigDecimal.valueOf(5.5))
-                .distanceKm(BigDecimal.valueOf(315.0))
-                .build();
-
-        Route routeHcmCanTho = Route.builder()
-                .busCompany(thanhBuoi)
-                .departureLocation("TP. Hồ Chí Minh")
-                .arrivalLocation("Cần Thơ")
-                .durationHours(BigDecimal.valueOf(3.5))
-                .distanceKm(BigDecimal.valueOf(169.0))
-                .build();
-
-        routeRepository.saveAll(List.of(routeHcmDalat, routeHcmNhaTrang, routeHcmCanTho, routeHnSapa));
+        routeRepository.saveAll(List.of(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14));
 
         // 4. Seed Pickup & Dropoff Points
         List<PickupDropoffPoint> points = List.of(
-                PickupDropoffPoint.builder().route(routeHcmDalat).name("Bến xe Miền Tây").address("395 Kinh Dương Vương, Bình Tân, TP.HCM").pointType(PointType.PICKUP).displayOrder(1).build(),
-                PickupDropoffPoint.builder().route(routeHcmDalat).name("Trạm An Sương").address("QL22, Bà Điểm, Hóc Môn, TP.HCM").pointType(PointType.PICKUP).displayOrder(2).build(),
-                PickupDropoffPoint.builder().route(routeHcmDalat).name("Bến xe Liên tỉnh Đà Lạt").address("01 Tô Hiến Thành, P.3, TP. Đà Lạt").pointType(PointType.DROPOFF).displayOrder(1).build(),
-                PickupDropoffPoint.builder().route(routeHcmDalat).name("Văn phòng Đà Lạt (Hồ Xuân Hương)").address("Trần Phú, TP. Đà Lạt").pointType(PointType.DROPOFF).displayOrder(2).build(),
-
-                PickupDropoffPoint.builder().route(routeHcmNhaTrang).name("Bến xe Miền Đông Mới").address("TP. Thủ Đức, TP.HCM").pointType(PointType.PICKUP).displayOrder(1).build(),
-                PickupDropoffPoint.builder().route(routeHcmNhaTrang).name("Bến xe Phía Nam Nha Trang").address("Đường 23/10, TP. Nha Trang").pointType(PointType.DROPOFF).displayOrder(1).build(),
-
-                PickupDropoffPoint.builder().route(routeHcmCanTho).name("Bến xe Miền Tây").address("395 Kinh Dương Vương, Bình Tân, TP.HCM").pointType(PointType.PICKUP).displayOrder(1).build(),
-                PickupDropoffPoint.builder().route(routeHcmCanTho).name("Bến xe Trung tâm Cần Thơ").address("Cầu Cần Thơ, Hưng Thành, Cái Răng, Cần Thơ").pointType(PointType.DROPOFF).displayOrder(1).build(),
-                PickupDropoffPoint.builder().route(routeHcmCanTho).name("Bến Ninh Kiều").address("Hai Bà Trưng, Tân An, Ninh Kiều, Cần Thơ").pointType(PointType.DROPOFF).displayOrder(2).build(),
-
-                PickupDropoffPoint.builder().route(routeHnSapa).name("Bến xe Mỹ Đình").address("Số 20 Phạm Hùng, Nam Từ Liêm, Hà Nội").pointType(PointType.PICKUP).displayOrder(1).build(),
-                PickupDropoffPoint.builder().route(routeHnSapa).name("Bến xe Sa Pa").address("Điện Biên Phủ, Sa Pa, Lào Cai").pointType(PointType.DROPOFF).displayOrder(1).build()
+                PickupDropoffPoint.builder().route(r1).name("Bến xe Miền Tây").address("395 Kinh Dương Vương, Bình Tân, TP.HCM").pointType(PointType.PICKUP).displayOrder(1).build(),
+                PickupDropoffPoint.builder().route(r1).name("Trạm An Sương").address("QL22, Bà Điểm, Hóc Môn, TP.HCM").pointType(PointType.PICKUP).displayOrder(2).build(),
+                PickupDropoffPoint.builder().route(r1).name("Bến xe Liên tỉnh Đà Lạt").address("01 Tô Hiến Thành, P.3, TP. Đà Lạt").pointType(PointType.DROPOFF).displayOrder(1).build(),
+                PickupDropoffPoint.builder().route(r1).name("Văn phòng Đà Lạt (Hồ Xuân Hương)").address("Trần Phú, TP. Đà Lạt").pointType(PointType.DROPOFF).displayOrder(2).build(),
+                PickupDropoffPoint.builder().route(r4).name("Bến xe Mỹ Đình").address("Số 20 Phạm Hùng, Nam Từ Liêm, Hà Nội").pointType(PointType.PICKUP).displayOrder(1).build(),
+                PickupDropoffPoint.builder().route(r4).name("Bến xe Sa Pa").address("Điện Biên Phủ, TT. Sa Pa, Lào Cai").pointType(PointType.DROPOFF).displayOrder(1).build()
         );
         pointRepository.saveAll(points);
 
-        // 5. Seed Trips
+        // 5. Seed Trips & Seats
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime tomorrow = now.plusDays(1).withHour(8).withMinute(0).withSecond(0).withNano(0);
+        List<Trip> trips = new ArrayList<>();
 
-        Trip trip1 = Trip.builder()
-                .route(routeHcmDalat)
-                .busCompany(futa)
-                .departureTime(tomorrow)
-                .arrivalTime(tomorrow.plusHours(6).plusMinutes(30))
-                .busType(BusType.SLEEPER)
-                .licensePlate("51B-123.45")
-                .totalSeats(34)
-                .availableSeats(32)
-                .price(BigDecimal.valueOf(290000))
-                .description("Xe giường nằm chất lượng cao FUTA, máy lạnh, wifi, nước suối, chăn ấm.")
-                .status(TripStatus.SCHEDULED)
-                .build();
+        for (int day = 0; day <= 5; day++) {
+            LocalDateTime depDate = now.plusDays(day);
 
-        Trip trip2 = Trip.builder()
-                .route(routeHcmDalat)
-                .busCompany(futa)
-                .departureTime(tomorrow.withHour(22).withMinute(30))
-                .arrivalTime(tomorrow.plusDays(1).withHour(5).withMinute(0))
-                .busType(BusType.LIMOUSINE)
-                .licensePlate("51B-999.88")
-                .totalSeats(34)
-                .availableSeats(34)
-                .price(BigDecimal.valueOf(340000))
-                .description("Xe phòng VIP Limousine 34 phòng riêng biệt, sạc điện thoại Type-C, rèm che kín đáo.")
-                .status(TripStatus.SCHEDULED)
-                .build();
+            Trip t1 = Trip.builder().busCompany(futa).route(r1).departureTime(depDate.withHour(7).withMinute(0)).arrivalTime(depDate.withHour(13).withMinute(30)).busType(BusType.SLEEPER).price(BigDecimal.valueOf(320000)).totalSeats(34).availableSeats(30).status(TripStatus.SCHEDULED).build();
+            Trip t2 = Trip.builder().busCompany(futa).route(r1).departureTime(depDate.withHour(23).withMinute(0)).arrivalTime(depDate.plusDays(1).withHour(5).withMinute(30)).busType(BusType.LIMOUSINE).price(BigDecimal.valueOf(390000)).totalSeats(34).availableSeats(28).status(TripStatus.SCHEDULED).build();
+            Trip t3 = Trip.builder().busCompany(saoViet).route(r4).departureTime(depDate.withHour(6).withMinute(30)).arrivalTime(depDate.withHour(12).withMinute(0)).busType(BusType.SLEEPER).price(BigDecimal.valueOf(450000)).totalSeats(34).availableSeats(25).status(TripStatus.SCHEDULED).build();
 
-        Trip trip3 = Trip.builder()
-                .route(routeHcmNhaTrang)
-                .busCompany(futa)
-                .departureTime(tomorrow.withHour(7).withMinute(0))
-                .arrivalTime(tomorrow.withHour(15).withMinute(0))
-                .busType(BusType.SLEEPER)
-                .licensePlate("51B-456.78")
-                .totalSeats(34)
-                .availableSeats(34)
-                .price(BigDecimal.valueOf(320000))
-                .description("Tuyến Sài Gòn đi phố biển Nha Trang, xe chạy êm, hỗ trợ khăn lạnh và đón tận nơi.")
-                .status(TripStatus.SCHEDULED)
-                .build();
+            trips.add(t1);
+            trips.add(t2);
+            trips.add(t3);
+        }
 
-        Trip trip4 = Trip.builder()
-                .route(routeHnSapa)
-                .busCompany(saoViet)
-                .departureTime(tomorrow.withHour(6).withMinute(30))
-                .arrivalTime(tomorrow.withHour(12).withMinute(0))
-                .busType(BusType.LIMOUSINE)
-                .licensePlate("29B-888.66")
-                .totalSeats(34)
-                .availableSeats(34)
-                .price(BigDecimal.valueOf(380000))
-                .description("Xe cabin đôi cao cấp chạy cao tốc Nội Bài - Lào Cai, massage thư giãn.")
-                .status(TripStatus.SCHEDULED)
-                .build();
+        tripRepository.saveAll(trips);
 
-        tripRepository.saveAll(List.of(trip1, trip2, trip3, trip4));
+        for (Trip trip : trips) {
+            seedSeatsForTrip(trip);
+        }
 
-        // 6. Generate 34 seats for each trip
-        seedSeatsForTrip(trip1, true); // Trip 1 has A01, A02 booked
-        seedSeatsForTrip(trip2, false);
-        seedSeatsForTrip(trip3, false);
-        seedSeatsForTrip(trip4, false);
+        // 6. Seed Bookings & Tickets
+        Booking b1 = Booking.builder().bookingCode("TE-2026-9812").passengerName("Nguyễn Văn Du Khách").passengerPhone("0912345678").passengerEmail("customer@gmail.com").trip(trips.get(0)).totalAmount(BigDecimal.valueOf(640000)).seatNumbers("A01, A02").status(BookingStatus.CONFIRMED).paymentMethod(PaymentMethod.VNPAY).build();
+        Booking b2 = Booking.builder().bookingCode("TE-2026-9813").passengerName("Trần Thị Bích Ngọc").passengerPhone("0987654321").passengerEmail("tranthib@gmail.com").trip(trips.get(1)).totalAmount(BigDecimal.valueOf(390000)).seatNumbers("B05").status(BookingStatus.CONFIRMED).paymentMethod(PaymentMethod.MOMO).build();
+        Booking b3 = Booking.builder().bookingCode("TE-2026-9814").passengerName("Lê Hoàng Cường").passengerPhone("0978112233").passengerEmail("lehoangc@gmail.com").trip(trips.get(2)).totalAmount(BigDecimal.valueOf(450000)).seatNumbers("A09").status(BookingStatus.PENDING).paymentMethod(PaymentMethod.VIETQR).build();
 
-        // 7. Seed Sample Booking for Trip 1
-        Booking sampleBooking = Booking.builder()
-                .bookingCode("BKG-20261025-001")
-                .user(customer)
-                .trip(trip1)
-                .passengerName("Nguyễn Văn Du Khách")
-                .passengerPhone("0912345678")
-                .passengerEmail("customer@gmail.com")
-                .pickupPoint("Bến xe Miền Tây")
-                .dropoffPoint("Bến xe Liên tỉnh Đà Lạt")
-                .seatNumbers("A01, A02")
-                .totalAmount(BigDecimal.valueOf(580000))
-                .paymentMethod(PaymentMethod.COD)
-                .status(BookingStatus.CONFIRMED)
-                .build();
+        bookingRepository.saveAll(List.of(b1, b2, b3));
 
-        bookingRepository.save(sampleBooking);
+        Ticket tk1 = Ticket.builder().booking(b1).ticketCode("TK-A01-9812").seatNumber("A01").price(BigDecimal.valueOf(320000)).status(TicketStatus.ISSUED).build();
+        Ticket tk2 = Ticket.builder().booking(b1).ticketCode("TK-A02-9812").seatNumber("A02").price(BigDecimal.valueOf(320000)).status(TicketStatus.ISSUED).build();
+        Ticket tk3 = Ticket.builder().booking(b2).ticketCode("TK-B05-9813").seatNumber("B05").price(BigDecimal.valueOf(390000)).status(TicketStatus.ISSUED).build();
+        Ticket tk4 = Ticket.builder().booking(b3).ticketCode("TK-A09-9814").seatNumber("A09").price(BigDecimal.valueOf(450000)).status(TicketStatus.ISSUED).build();
 
-        Ticket ticket1 = Ticket.builder()
-                .booking(sampleBooking)
-                .ticketCode("TK-20261025-001-A01")
-                .seatNumber("A01")
-                .price(BigDecimal.valueOf(290000))
-                .qrCodeHash("c5e26b88-5c42-4f01-8b21-7e8c3a19e001")
-                .status(TicketStatus.ISSUED)
-                .build();
+        ticketRepository.saveAll(List.of(tk1, tk2, tk3, tk4));
 
-        Ticket ticket2 = Ticket.builder()
-                .booking(sampleBooking)
-                .ticketCode("TK-20261025-001-A02")
-                .seatNumber("A02")
-                .price(BigDecimal.valueOf(290000))
-                .qrCodeHash("f7a14c99-7b33-4d22-9e32-8f9d4b28f002")
-                .status(TicketStatus.ISSUED)
-                .build();
+        // 7. Seed Seat Types (Catalog)
+        List<SeatType> seatTypes = List.of(
+                SeatType.builder().code("SLEEPER_STANDARD").label("Giường nằm tiêu chuẩn").description("Giường bọc da cao cấp êm ái, ngả 180 độ").status("ACTIVE").build(),
+                SeatType.builder().code("LIMOUSINE_VIP").label("Limousine VIP 24 chỗ").description("Cabin riêng biệt, màn hình giải trí, sạc không dây").status("ACTIVE").build(),
+                SeatType.builder().code("SEATED_ECO").label("Ghế ngồi tiêu chuẩn").description("Ghế đệm êm, tựa lưng thoải mái, tiết kiệm chi phí").status("ACTIVE").build(),
+                SeatType.builder().code("CABIN_SUITE").label("Cabin đôi hoàng gia").description("Phòng đôi sang trọng dành cho gia đình hoặc cặp đôi").status("ACTIVE").build()
+        );
+        seatTypeRepository.saveAll(seatTypes);
 
-        ticketRepository.saveAll(List.of(ticket1, ticket2));
+        // 8. Seed Seat Layout Templates
+        List<SeatLayoutTemplate> templates = List.of(
+                SeatLayoutTemplate.builder().name("Giường nằm 2 tầng 34 chỗ").maxFloor(2).maxRows(6).maxColumns(3).totalSeats(34).status("PUBLISHED").build(),
+                SeatLayoutTemplate.builder().name("Limousine VIP 1 tầng 24 chỗ").maxFloor(1).maxRows(8).maxColumns(3).totalSeats(24).status("PUBLISHED").build(),
+                SeatLayoutTemplate.builder().name("Ghế ngồi 1 tầng 45 chỗ").maxFloor(1).maxRows(11).maxColumns(4).totalSeats(45).status("PUBLISHED").build()
+        );
+        seatLayoutTemplateRepository.saveAll(templates);
 
-        log.info("Successfully seeded TravelEasy initial data (Users, Companies, Routes, Trips, 136 Seats, Bookings & Tickets)!");
+        // 9. Seed Master Locations
+        List<Location> locations = List.of(
+                Location.builder().name("Bến xe Miền Đông").locationType("BUS_STATION").province("Hồ Chí Minh").address("292 Đinh Bộ Lĩnh, P.26, Q.Bình Thạnh").routesCount(12).status("ACTIVE").build(),
+                Location.builder().name("Bến xe Mỹ Đình").locationType("BUS_STATION").province("Hà Nội").address("Số 20 Phạm Hùng, Mỹ Đình 2, Nam Từ Liêm").routesCount(15).status("ACTIVE").build(),
+                Location.builder().name("Bến xe Liên tỉnh Đà Lạt").locationType("BUS_STATION").province("Đà Lạt").address("Số 01 Tô Hiến Thành, P.3, TP. Đà Lạt").routesCount(8).status("ACTIVE").build(),
+                Location.builder().name("Bến xe Phía Nam Nha Trang").locationType("BUS_STATION").province("Nha Trang").address("Km 6 Đường 23/10, Vĩnh Trung, TP. Nha Trang").routesCount(6).status("ACTIVE").build(),
+                Location.builder().name("Bến xe Trung tâm Đà Nẵng").locationType("BUS_STATION").province("Đà Nẵng").address("Tôn Đức Thắng, Hoà Minh, Liên Chiểu, TP. Đà Nẵng").routesCount(10).status("ACTIVE").build()
+        );
+        locationRepository.saveAll(locations);
+
+        // 10. Seed Banners
+        List<Banner> banners = List.of(
+                Banner.builder().title("Ưu đãi vé xe Đà Lạt - Ngắm hoa dã quỳ").imagePath("/img/banners/dalat-promo.jpg").position("Trang chu - Top").status("ACTIVE").duration("07:00 01/09/2026 — 06:59 01/10/2026").link("https://traveleasy.vn/dalat-sale").build(),
+                Banner.builder().title("Ưu đãi LIMOUSINE thương gia 2026").imagePath("/img/banners/limo-promo.jpg").position("Trang chu - Bottom").status("ACTIVE").duration("07:00 15/09/2026 — 06:59 15/10/2026").link(null).build(),
+                Banner.builder().title("Mở bán vé Tết 2027 sớm - Giữ chỗ ngay").imagePath("/img/banners/tet-early.jpg").position("Trang chu - Top").status("INACTIVE").duration("07:00 01/11/2026 — 06:59 01/01/2027").link("https://traveleasy.vn/tet-early").build()
+        );
+        bannerRepository.saveAll(banners);
+
+        // 11. Seed Gateway Configs
+        List<GatewayConfig> gateways = List.of(
+                GatewayConfig.builder().provider("VNPAY").displayName("Cổng thanh toán VNPay (ATM / QR / Visa)").category("PAYMENT").status("ACTIVE").isSandbox(true).build(),
+                GatewayConfig.builder().provider("MOMO").displayName("Ví điện tử MoMo").category("PAYMENT").status("ACTIVE").isSandbox(true).build(),
+                GatewayConfig.builder().provider("ZALOPAY").displayName("Ví điện tử ZaloPay").category("PAYMENT").status("ACTIVE").isSandbox(true).build(),
+                GatewayConfig.builder().provider("VIETQR").displayName("Chuyển khoản ngân hàng tự động VietQR").category("PAYMENT").status("ACTIVE").isSandbox(false).build(),
+                GatewayConfig.builder().provider("TELEGRAM").displayName("Bot thông báo tức thì Telegram").category("NOTIFICATION").status("ACTIVE").isSandbox(false).build(),
+                GatewayConfig.builder().provider("TWILIO").displayName("Cổng gửi SMS OTP Twilio").category("NOTIFICATION").status("ACTIVE").isSandbox(true).build(),
+                GatewayConfig.builder().provider("SENDGRID").displayName("Cổng gửi Email vé điện tử SendGrid").category("NOTIFICATION").status("ACTIVE").isSandbox(false).build()
+        );
+        gatewayConfigRepository.saveAll(gateways);
+
+        // 12. Seed Review Reports
+        List<ReviewReport> reports = List.of(
+                ReviewReport.builder().reporterEmail("tran.b@example.com").reviewAuthor("spammer@gmail.com").reason("Ngôn từ không phù hợp, xúc phạm tài xế").reviewSnippet("\"Tài xế lái ẩu, thái độ phục vụ quá tệ...\"").rating(1).status("PENDING").build(),
+                ReviewReport.builder().reporterEmail("nguyen.a@example.com").reviewAuthor("troll@gmail.com").reason("Nội dung quảng cáo sai sự thật").reviewSnippet("\"Đi xe bên nhà xe này dở lắm, qua bên nhà xe khác đi...\"").rating(1).status("PENDING").build(),
+                ReviewReport.builder().reporterEmail("customer@gmail.com").reviewAuthor("baduser@gmail.com").reason("Spam đánh giá tiêu cực không đi xe").reviewSnippet("\"Hủy chuyến vô lý, lừa đảo khách hàng...\"").rating(1).status("APPROVED").build()
+        );
+        reviewReportRepository.saveAll(reports);
+
+        // 13. Seed Cancellation Policies
+        List<CancellationPolicy> policies = List.of(
+                CancellationPolicy.builder().name("Chính sách hoàn huỷ mặc định sàn").isDefault(true).busCompanyName(null).description("Áp dụng cho mọi nhà xe đối tác chưa cấu hình chính sách riêng").rulesCount(3).build(),
+                CancellationPolicy.builder().name("Chính sách hoàn huỷ VIP TravelEasy Express").isDefault(false).busCompanyName("TravelEasy Express").description("Chính sách ưu tiên hoàn tiền 100% trước 24 giờ").rulesCount(3).build()
+        );
+        cancellationPolicyRepository.saveAll(policies);
+
+        // 14. Seed Audit Logs
+        List<AuditLog> auditLogs = List.of(
+                AuditLog.builder().userEmail("admin@traveleasy.vn").action("APPROVE_COMPANY").target("bus_companies #bc1").beforeState("{\"status\": \"PENDING_APPROVAL\"}").afterState("{\"status\": \"ACTIVE\"}").build(),
+                AuditLog.builder().userEmail("admin@traveleasy.vn").action("APPROVE_COMPANY").target("bus_companies #bc2").beforeState("{\"status\": \"PENDING_APPROVAL\"}").afterState("{\"status\": \"ACTIVE\"}").build(),
+                AuditLog.builder().userEmail("admin@traveleasy.vn").action("SUSPEND_COMPANY").target("bus_companies #bc4").beforeState("{\"status\": \"ACTIVE\"}").afterState("{\"status\": \"SUSPENDED\"}").build(),
+                AuditLog.builder().userEmail("partner@traveleasy.vn").action("CREATE_VEHICLE").target("vehicles #v1").beforeState("-").afterState("{\"license_plate\": \"51B-123.45\", \"vehicle_type\": \"SLEEPER\"}").build(),
+                AuditLog.builder().userEmail("admin@traveleasy.vn").action("APPROVE_REVIEW_REPORT").target("review_reports #rp1").beforeState("{\"status\": \"PENDING\"}").afterState("{\"status\": \"APPROVED\"}").build(),
+                AuditLog.builder().userEmail("partner@traveleasy.vn").action("CREATE_ROUTE").target("route_templates #rt1").beforeState("-").afterState("{\"name\": \"Sai Gon - Da Lat\"}").build(),
+                AuditLog.builder().userEmail("admin@traveleasy.vn").action("UPDATE_BANNER").target("banners #bn1").beforeState("{\"is_active\": false}").afterState("{\"is_active\": true}").build(),
+                AuditLog.builder().userEmail("partner@traveleasy.vn").action("CANCEL_TRIP").target("trips #t5").beforeState("{\"status\": \"SCHEDULED\"}").afterState("{\"status\": \"CANCELLED\"}").build()
+        );
+        auditLogRepository.saveAll(auditLogs);
+
+        log.info("TravelEasy Platform initial data seeded successfully!");
     }
 
-    private void seedSeatsForTrip(Trip trip, boolean bookA01A02) {
+    private void seedSeatsForTrip(Trip trip) {
         List<TripSeat> seats = new ArrayList<>();
 
         // Floor 1 (A01 - A17)
         for (int i = 1; i <= 17; i++) {
             String seatCode = String.format("A%02d", i);
-            SeatStatus status = (bookA01A02 && (i == 1 || i == 2)) ? SeatStatus.BOOKED : SeatStatus.AVAILABLE;
+            SeatStatus status = (i == 1 || i == 2) ? SeatStatus.BOOKED : SeatStatus.AVAILABLE;
             seats.add(TripSeat.builder()
                     .trip(trip)
                     .seatCode(seatCode)

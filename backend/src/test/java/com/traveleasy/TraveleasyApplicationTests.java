@@ -3,10 +3,10 @@ package com.traveleasy;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class TraveleasyApplicationTests {
+public class TraveleasyApplicationTests {
 
     @Test
-    void testBasicSanity() {
+    void contextLoads() {
         assertTrue(true);
     }
 

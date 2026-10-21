@@ -1496,21 +1496,40 @@ INSERT INTO bus_companies (id, name, hotline, status, email, address, logo_url, 
 ('bc-futa', 'Phương Trang (FUTA Bus Lines)', '1900 6067', 'ACTIVE', 'hotro@futa.vn', 'Bến xe Miền Tây, 395 Kinh Dương Vương, An Lạc, Bình Tân, TP.HCM', 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80', 4.9),
 ('bc-thanhbuoi', 'Thành Bưởi', '1900 6079', 'ACTIVE', 'info@thanhbuoi.com.vn', '266 Lê Hồng Phong, Phường 4, Quận 5, TP.HCM', 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=150&auto=format&fit=crop&q=80', 4.8),
 ('bc-saoviet', 'Sao Việt', '1900 6746', 'ACTIVE', 'contact@xesaoviet.com.vn', '779 Giải Phóng, Giáp Bát, Hoàng Mai, Hà Nội', 'https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=150&auto=format&fit=crop&q=80', 4.7),
-('bc-kumho', 'Kumho Samco Buslines', '1900 6065', 'ACTIVE', 'cskh@kumhosamco.com.vn', '292 Đinh Bộ Lĩnh, Phường 26, Bình Thạnh, TP.HCM', 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=150&auto=format&fit=crop&q=80', 4.8)
+('bc-kumho', 'Kumho Samco Buslines', '1900 6065', 'ACTIVE', 'cskh@kumhosamco.com.vn', '292 Đinh Bộ Lĩnh, Phường 26, Bình Thạnh, TP.HCM', 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=150&auto=format&fit=crop&q=80', 4.8),
+('bc-hoamai', 'Xe Khách Hoa Mai', '1900 599 997', 'ACTIVE', 'info@hoamaivungtau.com.vn', '47 Trưng Nhị, Phường 1, TP. Vũng Tàu', 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80', 4.9),
+('bc-hoanglong', 'Hoàng Long Asia', '0225 3920 920', 'ACTIVE', 'info@hoanglongasia.com', '05 Phạm Ngũ Lão, Ngô Quyền, Hải Phòng', 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=150&auto=format&fit=crop&q=80', 4.7),
+('bc-vanminh', 'Nhà Xe Văn Minh', '1900 6467', 'ACTIVE', 'vanminh@vanminh74.vn', '101 Lý Thường Kiệt, TP. Vinh, Nghệ An', 'https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=150&auto=format&fit=crop&q=80', 4.9),
+('bc-cuctung', 'Cúc Tùng Limousine', '1900 6606', 'ACTIVE', 'cuctunglimousine@gmail.com', 'Bến xe phía Nam Nha Trang, Khánh Hòa', 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=150&auto=format&fit=crop&q=80', 4.8),
+('bc-haivan', 'Hải Vân Express', '1900 6763', 'ACTIVE', 'cskh@haivan.com', 'Tòa nhà N2E Lê Văn Lương, Nhân Chính, Thanh Xuân, Hà Nội', 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80', 4.8),
+('bc-chinnghia', 'Chín Nghĩa', '1900 636 636', 'ACTIVE', 'chinnghiaquangngai@gmail.com', '06 Đinh Tiên Hoàng, Nghĩa Chánh, TP. Quảng Ngãi', 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=150&auto=format&fit=crop&q=80', 4.7)
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 -- 4. USERS (Tài khoản người dùng: Admin, Operator FUTA, Customer)
 INSERT INTO users (id, phone_number, email, role, bus_company_id, account_status, password, full_name) VALUES
 ('11111111-1111-1111-1111-111111111111', '0901234567', 'admin@traveleasy.vn', 'ADMIN', NULL, 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Phạm Công Thành (Quản Trị Viên)'),
 ('22222222-2222-2222-2222-222222222222', '0909888999', 'operator@futa.vn', 'BUS_COMPANY', 'bc-futa', 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Điều Hành Xe Phương Trang (FUTA)'),
-('33333333-3333-3333-3333-333333333333', '0912345678', 'customer@gmail.com', 'CUSTOMER', NULL, 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Nguyễn Văn Du Khách')
+('33333333-3333-3333-3333-333333333333', '0912345678', 'customer@gmail.com', 'CUSTOMER', NULL, 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Nguyễn Văn Du Khách'),
+('44444444-4444-4444-4444-444444444444', '0902223344', 'phanthanhphong.admin@traveleasy.vn', 'ADMIN', NULL, 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Phạm Thanh Phong'),
+('55555555-5555-5555-5555-555555555555', '0903334455', 'trungkien.admin@traveleasy.vn', 'ADMIN', NULL, 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Phan Trung Kiên'),
+('66666666-6666-6666-6666-666666666666', '0905556677', 'dieuhanh@hoamaivungtau.com.vn', 'BUS_COMPANY', 'bc-hoamai', 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Điều Hành Xe Hoa Mai'),
+('77777777-7777-7777-7777-777777777777', '0906667788', 'dieuhanh@hoanglongasia.com', 'BUS_COMPANY', 'bc-hoanglong', 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Điều Hành Hoàng Long'),
+('88888888-8888-8888-8888-888888888888', '0907778899', 'dieuhanh@vanminh74.vn', 'BUS_COMPANY', 'bc-vanminh', 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Điều Hành Văn Minh'),
+('99999999-9999-9999-9999-999999999999', '0987654321', 'tranthib@gmail.com', 'CUSTOMER', NULL, 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Trần Thị Bích Ngọc'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '0978112233', 'lehoangc@gmail.com', 'CUSTOMER', NULL, 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Lê Hoàng Cường'),
+('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '0933445566', 'phamquocd@gmail.com', 'CUSTOMER', NULL, 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Phạm Quốc Dũng'),
+('cccccccc-cccc-cccc-cccc-cccccccccccc', '0944556677', 'hoangmaie@gmail.com', 'CUSTOMER', NULL, 'ACTIVE', '$2a$12$Pmk4aET/6hYWnob519wJPuCTPdsmPBmolH4Bl85ABX/a6Tz3kFpti', 'Hoàng Thị Mai')
 ON DUPLICATE KEY UPDATE full_name=VALUES(full_name);
 
 -- 5. CANCELLATION POLICIES & RULES
 INSERT INTO cancellation_policies (id, owner_bus_company_id, locked_at) VALUES
 ('cp-futa', 'bc-futa', CURRENT_TIMESTAMP(3)),
 ('cp-thanhbuoi', 'bc-thanhbuoi', CURRENT_TIMESTAMP(3)),
-('cp-saoviet', 'bc-saoviet', CURRENT_TIMESTAMP(3))
+('cp-saoviet', 'bc-saoviet', CURRENT_TIMESTAMP(3)),
+('cp-hoamai', 'bc-hoamai', CURRENT_TIMESTAMP(3)),
+('cp-hoanglong', 'bc-hoanglong', CURRENT_TIMESTAMP(3)),
+('cp-vanminh', 'bc-vanminh', CURRENT_TIMESTAMP(3)),
+('cp-chinnghia', 'bc-chinnghia', CURRENT_TIMESTAMP(3))
 ON DUPLICATE KEY UPDATE owner_bus_company_id=VALUES(owner_bus_company_id);
 
 INSERT INTO cancellation_rules (id, policy_id, hours_before_departure, refund_percentage) VALUES
@@ -1526,13 +1545,33 @@ ON DUPLICATE KEY UPDATE refund_percentage=VALUES(refund_percentage);
 UPDATE bus_companies SET default_cancellation_policy_id = 'cp-futa' WHERE id = 'bc-futa';
 UPDATE bus_companies SET default_cancellation_policy_id = 'cp-thanhbuoi' WHERE id = 'bc-thanhbuoi';
 UPDATE bus_companies SET default_cancellation_policy_id = 'cp-saoviet' WHERE id = 'bc-saoviet';
+UPDATE bus_companies SET default_cancellation_policy_id = 'cp-hoamai' WHERE id = 'bc-hoamai';
+UPDATE bus_companies SET default_cancellation_policy_id = 'cp-hoanglong' WHERE id = 'bc-hoanglong';
+UPDATE bus_companies SET default_cancellation_policy_id = 'cp-vanminh' WHERE id = 'bc-vanminh';
+UPDATE bus_companies SET default_cancellation_policy_id = 'cp-chinnghia' WHERE id = 'bc-chinnghia';
 
 -- 6. VEHICLES (Đội xe vật lý)
 INSERT INTO vehicles (id, bus_company_id, plate_number, vehicle_type, status) VALUES
 ('veh-futa-1', 'bc-futa', '51B-123.45', 'SLEEPER', 'ACTIVE'),
 ('veh-futa-2', 'bc-futa', '51B-999.88', 'LIMOUSINE', 'ACTIVE'),
 ('veh-futa-3', 'bc-futa', '51B-456.78', 'SLEEPER', 'ACTIVE'),
-('veh-sao-1', 'bc-saoviet', '29B-888.66', 'LIMOUSINE', 'ACTIVE')
+('veh-sao-1', 'bc-saoviet', '29B-888.66', 'LIMOUSINE', 'ACTIVE'),
+('veh-hm-1', 'bc-hoamai', '72B-012.34', 'LIMOUSINE', 'ACTIVE'),
+('veh-hm-2', 'bc-hoamai', '72B-056.78', 'LIMOUSINE', 'ACTIVE'),
+('veh-hm-3', 'bc-hoamai', '72B-099.99', 'LIMOUSINE', 'ACTIVE'),
+('veh-futa-4', 'bc-futa', '51B-234.56', 'SLEEPER', 'ACTIVE'),
+('veh-tb-1', 'bc-thanhbuoi', '51B-777.88', 'SLEEPER', 'ACTIVE'),
+('veh-hl-1', 'bc-hoanglong', '15B-011.22', 'SEAT', 'ACTIVE'),
+('veh-hl-2', 'bc-hoanglong', '15B-033.44', 'LIMOUSINE', 'ACTIVE'),
+('veh-vm-1', 'bc-vanminh', '37B-088.99', 'SLEEPER', 'ACTIVE'),
+('veh-hv-1', 'bc-haivan', '23B-005.55', 'LIMOUSINE', 'ACTIVE'),
+('veh-futa-5', 'bc-futa', '43B-022.33', 'SEAT', 'ACTIVE'),
+('veh-cn-1', 'bc-chinnghia', '76B-066.77', 'SLEEPER', 'ACTIVE'),
+('veh-futa-6', 'bc-futa', '51B-111.22', 'SLEEPER', 'ACTIVE'),
+('veh-futa-7', 'bc-futa', '51B-333.44', 'LIMOUSINE', 'ACTIVE'),
+('veh-futa-8', 'bc-futa', '51B-555.66', 'SLEEPER', 'ACTIVE'),
+('veh-sao-2', 'bc-saoviet', '29B-777.99', 'LIMOUSINE', 'ACTIVE'),
+('veh-hm-4', 'bc-hoamai', '72B-088.11', 'LIMOUSINE', 'ACTIVE')
 ON DUPLICATE KEY UPDATE plate_number=VALUES(plate_number);
 
 -- Vehicle Images
@@ -1546,7 +1585,23 @@ INSERT INTO vehicle_seat_layouts (id, vehicle_id, source_template_id, status) VA
 ('vsl-futa-1', 'veh-futa-1', 'slt-34-standard', 'FINALIZED'),
 ('vsl-futa-2', 'veh-futa-2', 'slt-34-standard', 'FINALIZED'),
 ('vsl-futa-3', 'veh-futa-3', 'slt-34-standard', 'FINALIZED'),
-('vsl-sao-1', 'veh-sao-1', 'slt-34-standard', 'FINALIZED')
+('vsl-sao-1', 'veh-sao-1', 'slt-34-standard', 'FINALIZED'),
+('vsl-hm-1', 'veh-hm-1', 'slt-34-standard', 'FINALIZED'),
+('vsl-hm-2', 'veh-hm-2', 'slt-34-standard', 'FINALIZED'),
+('vsl-hm-3', 'veh-hm-3', 'slt-34-standard', 'FINALIZED'),
+('vsl-futa-4', 'veh-futa-4', 'slt-34-standard', 'FINALIZED'),
+('vsl-tb-1', 'veh-tb-1', 'slt-34-standard', 'FINALIZED'),
+('vsl-hl-1', 'veh-hl-1', 'slt-34-standard', 'FINALIZED'),
+('vsl-hl-2', 'veh-hl-2', 'slt-34-standard', 'FINALIZED'),
+('vsl-vm-1', 'veh-vm-1', 'slt-34-standard', 'FINALIZED'),
+('vsl-hv-1', 'veh-hv-1', 'slt-34-standard', 'FINALIZED'),
+('vsl-futa-5', 'veh-futa-5', 'slt-34-standard', 'FINALIZED'),
+('vsl-cn-1', 'veh-cn-1', 'slt-34-standard', 'FINALIZED'),
+('vsl-futa-6', 'veh-futa-6', 'slt-34-standard', 'FINALIZED'),
+('vsl-futa-7', 'veh-futa-7', 'slt-34-standard', 'FINALIZED'),
+('vsl-futa-8', 'veh-futa-8', 'slt-34-standard', 'FINALIZED'),
+('vsl-sao-2', 'veh-sao-2', 'slt-34-standard', 'FINALIZED'),
+('vsl-hm-4', 'veh-hm-4', 'slt-34-standard', 'FINALIZED')
 ON DUPLICATE KEY UPDATE status=VALUES(status);
 
 -- Seat Position Assignments cho xe veh-futa-1 (Tầng 1 STANDARD, Tầng 2 VIP)
@@ -1566,7 +1621,17 @@ INSERT INTO administrative_provinces (id, official_code, name, unit_type, status
 ('prov-56', '56', 'Tỉnh Khánh Hòa', 'PROVINCE', 'ACTIVE'),
 ('prov-92', '92', 'Thành phố Cần Thơ', 'CITY', 'ACTIVE'),
 ('prov-01', '01', 'Thành phố Hà Nội', 'CITY', 'ACTIVE'),
-('prov-10', '10', 'Tỉnh Lào Cai', 'PROVINCE', 'ACTIVE')
+('prov-10', '10', 'Tỉnh Lào Cai', 'PROVINCE', 'ACTIVE'),
+('prov-77', '77', 'Tỉnh Bà Rịa - Vũng Tàu', 'PROVINCE', 'ACTIVE'),
+('prov-60', '60', 'Tỉnh Bình Thuận', 'PROVINCE', 'ACTIVE'),
+('prov-66', '66', 'Tỉnh Đắk Lắk', 'PROVINCE', 'ACTIVE'),
+('prov-31', '31', 'Thành phố Hải Phòng', 'CITY', 'ACTIVE'),
+('prov-22', '22', 'Tỉnh Quảng Ninh', 'PROVINCE', 'ACTIVE'),
+('prov-40', '40', 'Tỉnh Nghệ An', 'PROVINCE', 'ACTIVE'),
+('prov-02', '02', 'Tỉnh Hà Giang', 'PROVINCE', 'ACTIVE'),
+('prov-48', '48', 'Thành phố Đà Nẵng', 'CITY', 'ACTIVE'),
+('prov-46', '46', 'Tỉnh Thừa Thiên Huế', 'PROVINCE', 'ACTIVE'),
+('prov-52', '52', 'Tỉnh Bình Định', 'PROVINCE', 'ACTIVE')
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 INSERT INTO administrative_communes (id, province_id, official_code, name, unit_type, status) VALUES
@@ -1587,7 +1652,20 @@ INSERT INTO locations (id, name, latitude, longitude, province_name, district_na
 ('loc-bx-nhatrang', 'Bến xe Phía Nam Nha Trang', 12.238800, 109.167200, 'Khánh Hòa', 'TP. Nha Trang', 'Xương Huân', 'ACTIVE'),
 ('loc-bx-cantho', 'Bến xe Trung tâm Cần Thơ', 10.012500, 105.772500, 'Cần Thơ', 'Cái Răng', 'Hưng Thành', 'ACTIVE'),
 ('loc-bx-mydinh', 'Bến xe Mỹ Đình', 21.028500, 105.778200, 'Hà Nội', 'Nam Từ Liêm', 'Mỹ Đình', 'ACTIVE'),
-('loc-bx-sapa', 'Bến xe Sa Pa', 22.336400, 103.843800, 'Lào Cai', 'Thị xã Sa Pa', 'Sa Pa', 'ACTIVE')
+('loc-bx-sapa', 'Bến xe Sa Pa', 22.336400, 103.843800, 'Lào Cai', 'Thị xã Sa Pa', 'Sa Pa', 'ACTIVE'),
+('loc-bx-vungtau', 'Bến xe Vũng Tàu', 10.354100, 107.084200, 'Bà Rịa - Vũng Tàu', 'TP. Vũng Tàu', 'Phường Thắng Tam', 'ACTIVE'),
+('loc-tram-hangxanh', 'Trạm Hàng Xanh', 10.801600, 106.711800, 'TP. Hồ Chí Minh', 'Bình Thạnh', 'Phường 21', 'ACTIVE'),
+('loc-vp-q1', 'Văn phòng Quận 1', 10.771200, 106.698500, 'TP. Hồ Chí Minh', 'Quận 1', 'Nguyễn Thái Bình', 'ACTIVE'),
+('loc-bx-phanthiet', 'Bến xe Bắc Phan Thiết', 10.932800, 108.098400, 'Bình Thuận', 'TP. Phan Thiết', 'Từ Văn Tư', 'ACTIVE'),
+('loc-bx-bmt', 'Bến xe Liên Tỉnh Đắk Lắk', 12.695300, 108.065800, 'Đắk Lắk', 'TP. Buôn Ma Thuột', 'Tân An', 'ACTIVE'),
+('loc-bx-nuocngam', 'Bến xe Nước Ngầm', 20.976500, 105.841200, 'Hà Nội', 'Hoàng Mai', 'Hoàng Liệt', 'ACTIVE'),
+('loc-bx-niemnghia', 'Bến xe Niệm Nghĩa', 20.852100, 106.671300, 'Hải Phòng', 'Lê Chân', 'Niệm Nghĩa', 'ACTIVE'),
+('loc-bx-baichay', 'Bến xe Bãi Cháy', 20.970200, 107.034500, 'Quảng Ninh', 'TP. Hạ Long', 'Bãi Cháy', 'ACTIVE'),
+('loc-bx-bacvinh', 'Bến xe Bắc Vinh', 18.710200, 105.674200, 'Nghệ An', 'TP. Vinh', 'Nghi Kim', 'ACTIVE'),
+('loc-bx-hagiang', 'Bến xe Trung tâm Hà Giang', 22.801200, 104.978200, 'Hà Giang', 'TP. Hà Giang', 'Phương Thiện', 'ACTIVE'),
+('loc-bx-danang', 'Bến xe Trung tâm Đà Nẵng', 16.059200, 108.172500, 'Đà Nẵng', 'Liên Chiểu', 'Hòa Minh', 'ACTIVE'),
+('loc-bx-hue', 'Bến xe Phía Nam Huế', 16.442500, 107.595400, 'Thừa Thiên Huế', 'TP. Huế', 'An Đông', 'ACTIVE'),
+('loc-bx-quynhon', 'Bến xe Trung tâm Quy Nhơn', 13.754200, 109.214500, 'Bình Định', 'TP. Quy Nhơn', 'Ghềnh Ráng', 'ACTIVE')
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 -- 9. BUS COMPANY LOCATION CONFIGS (Cấu hình đón trả riêng của từng nhà xe)
@@ -1605,7 +1683,17 @@ INSERT INTO route_templates (id, bus_company_id, name, origin_location_id, desti
 ('rt-futa-hcm-dl', 'bc-futa', 'TP. Hồ Chí Minh ➔ Đà Lạt (FUTA Limousine)', 'loc-bx-mientay', 'loc-bx-dalat', 'PUBLISHED'),
 ('rt-futa-hcm-nt', 'bc-futa', 'TP. Hồ Chí Minh ➔ Nha Trang (FUTA Express)', 'loc-bx-miendong', 'loc-bx-nhatrang', 'PUBLISHED'),
 ('rt-tb-hcm-ct', 'bc-thanhbuoi', 'TP. Hồ Chí Minh ➔ Cần Thơ (Thành Bưởi VIP)', 'loc-bx-mientay', 'loc-bx-cantho', 'PUBLISHED'),
-('rt-sao-hn-sp', 'bc-saoviet', 'Hà Nội ➔ Sa Pa (Sao Việt Cabin Cung Điện)', 'loc-bx-mydinh', 'loc-bx-sapa', 'PUBLISHED')
+('rt-sao-hn-sp', 'bc-saoviet', 'Hà Nội ➔ Sa Pa (Sao Việt Cabin Cung Điện)', 'loc-bx-mydinh', 'loc-bx-sapa', 'PUBLISHED'),
+('rt-hm-hcm-vt', 'bc-hoamai', 'TP. Hồ Chí Minh ➔ Vũng Tàu (Hoa Mai Limousine)', 'loc-vp-q1', 'loc-bx-vungtau', 'PUBLISHED'),
+('rt-hm-vt-hcm', 'bc-hoamai', 'Vũng Tàu ➔ TP. Hồ Chí Minh (Hoa Mai Limousine)', 'loc-bx-vungtau', 'loc-vp-q1', 'PUBLISHED'),
+('rt-futa-hcm-pt', 'bc-futa', 'TP. Hồ Chí Minh ➔ Phan Thiết (FUTA Giường Nằm)', 'loc-bx-miendong', 'loc-bx-phanthiet', 'PUBLISHED'),
+('rt-tb-hcm-bmt', 'bc-thanhbuoi', 'TP. Hồ Chí Minh ➔ Buôn Ma Thuột (Thành Bưởi)', 'loc-bx-mientay', 'loc-bx-bmt', 'PUBLISHED'),
+('rt-hl-hn-hp', 'bc-hoanglong', 'Hà Nội ➔ Hải Phòng (Hoàng Long Cao Tốc)', 'loc-bx-nuocngam', 'loc-bx-niemnghia', 'PUBLISHED'),
+('rt-hl-hn-hl', 'bc-hoanglong', 'Hà Nội ➔ Hạ Long (Hoàng Long Limousine)', 'loc-bx-mydinh', 'loc-bx-baichay', 'PUBLISHED'),
+('rt-vm-hn-vinh', 'bc-vanminh', 'Hà Nội ➔ Vinh (Văn Minh VIP)', 'loc-bx-nuocngam', 'loc-bx-bacvinh', 'PUBLISHED'),
+('rt-hv-hn-hg', 'bc-haivan', 'Hà Nội ➔ Hà Giang (Hải Vân Express)', 'loc-bx-mydinh', 'loc-bx-hagiang', 'PUBLISHED'),
+('rt-futa-dn-hue', 'bc-futa', 'Đà Nẵng ➔ Huế (FUTA Ghế Ngồi)', 'loc-bx-danang', 'loc-bx-hue', 'PUBLISHED'),
+('rt-cn-dn-qn', 'bc-chinnghia', 'Đà Nẵng ➔ Quy Nhơn (Chín Nghĩa Giường Nằm)', 'loc-bx-danang', 'loc-bx-quynhon', 'PUBLISHED')
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 -- Route Template Stops
@@ -1635,7 +1723,23 @@ INSERT INTO trips (id, route_template_id, vehicle_id, cancellation_policy_id, or
 ('trip-1', 'rt-futa-hcm-dl', 'veh-futa-1', 'cp-futa', 'loc-bx-mientay', 'loc-bx-dalat', DATE_ADD(CURRENT_DATE(), INTERVAL '1 08:00:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 08:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '1 14:30:00' DAY_SECOND), 'SLEEPER', '51B-123.45', 34, 32, 290000.00, 'Xe giường nằm 34 chỗ cao cấp FUTA, trang bị điều hòa kháng khuẩn, wifi 5G tốc độ cao, nước khoáng Lavie và khăn lạnh miễn phí suốt hành trình.'),
 ('trip-2', 'rt-futa-hcm-dl', 'veh-futa-2', 'cp-futa', 'loc-bx-mientay', 'loc-bx-dalat', DATE_ADD(CURRENT_DATE(), INTERVAL '1 22:30:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 22:30:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '2 05:00:00' DAY_SECOND), 'LIMOUSINE', '51B-999.88', 34, 34, 340000.00, 'Xe Limousine VIP 34 phòng đơn riêng tư, sạc điện thoại Type-C đa năng, rèm che kín đáo, tivi màn hình cảm ứng giải trí từng cabin.'),
 ('trip-3', 'rt-futa-hcm-nt', 'veh-futa-3', 'cp-futa', 'loc-bx-miendong', 'loc-bx-nhatrang', DATE_ADD(CURRENT_DATE(), INTERVAL '1 07:00:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 07:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '1 15:00:00' DAY_SECOND), 'SLEEPER', '51B-456.78', 34, 34, 320000.00, 'Tuyến Sài Gòn đi phố biển Nha Trang qua cao tốc Phan Thiết - Vĩnh Hảo êm ái, hỗ trợ đón khách chu đáo tận nơi.'),
-('trip-4', 'rt-sao-hn-sp', 'veh-sao-1', 'cp-saoviet', 'loc-bx-mydinh', 'loc-bx-sapa', DATE_ADD(CURRENT_DATE(), INTERVAL '1 06:30:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 06:30:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '1 12:00:00' DAY_SECOND), 'LIMOUSINE', '29B-888.66', 34, 34, 380000.00, 'Xe Cabin Cung Điện Bay Hà Nội - Sa Pa qua cao tốc Nội Bài - Lào Cai, trang bị đệm massage toàn thân thư giãn.')
+('trip-4', 'rt-sao-hn-sp', 'veh-sao-1', 'cp-saoviet', 'loc-bx-mydinh', 'loc-bx-sapa', DATE_ADD(CURRENT_DATE(), INTERVAL '1 06:30:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 06:30:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '1 12:00:00' DAY_SECOND), 'LIMOUSINE', '29B-888.66', 34, 34, 380000.00, 'Xe Cabin Cung Điện Bay Hà Nội - Sa Pa qua cao tốc Nội Bài - Lào Cai, trang bị đệm massage toàn thân thư giãn.'),
+('trip-5', 'rt-hm-hcm-vt', 'veh-hm-1', 'cp-hoamai', 'loc-vp-q1', 'loc-bx-vungtau', DATE_ADD(CURRENT_DATE(), INTERVAL '1 09:00:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 09:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '1 11:00:00' DAY_SECOND), 'LIMOUSINE', '72B-012.34', 34, 30, 180000.00, 'Xe Limousine VIP Hoa Mai 9-34 chỗ, đưa đón tận nơi khu vực Bãi Trước/Bãi Sau Vũng Tàu.'),
+('trip-6', 'rt-hm-hcm-vt', 'veh-hm-2', 'cp-hoamai', 'loc-vp-q1', 'loc-bx-vungtau', DATE_ADD(CURRENT_DATE(), INTERVAL '1 14:00:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 14:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '1 16:00:00' DAY_SECOND), 'LIMOUSINE', '72B-056.78', 34, 34, 180000.00, 'Xe Limousine cao cấp chuyến chiều, máy lạnh êm ái, wifi miễn phí.'),
+('trip-7', 'rt-hm-vt-hcm', 'veh-hm-3', 'cp-hoamai', 'loc-bx-vungtau', 'loc-vp-q1', DATE_ADD(CURRENT_DATE(), INTERVAL '1 16:30:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 16:30:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '1 18:30:00' DAY_SECOND), 'LIMOUSINE', '72B-099.99', 34, 28, 180000.00, 'Chuyến Vũng Tàu về Sài Gòn trả khách Hàng Xanh và Quận 1.'),
+('trip-8', 'rt-futa-hcm-pt', 'veh-futa-4', 'cp-futa', 'loc-bx-miendong', 'loc-bx-phanthiet', DATE_ADD(CURRENT_DATE(), INTERVAL '1 08:30:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 08:30:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '1 12:30:00' DAY_SECOND), 'SLEEPER', '51B-234.56', 34, 32, 220000.00, 'Xe giường nằm FUTA đi Phan Thiết - Mũi Né, trả tại các resort Hàm Tiến.'),
+('trip-9', 'rt-tb-hcm-bmt', 'veh-tb-1', 'cp-thanhbuoi', 'loc-bx-mientay', 'loc-bx-bmt', DATE_ADD(CURRENT_DATE(), INTERVAL '1 21:00:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 21:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '2 04:30:00' DAY_SECOND), 'SLEEPER', '51B-777.88', 34, 34, 350000.00, 'Tuyến Sài Gòn đi thủ phủ cà phê Buôn Ma Thuột, xe đời mới giường êm rộng rãi.'),
+('trip-10', 'rt-hl-hn-hp', 'veh-hl-1', 'cp-hoanglong', 'loc-bx-nuocngam', 'loc-bx-niemnghia', DATE_ADD(CURRENT_DATE(), INTERVAL '1 07:30:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 07:30:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '1 09:00:00' DAY_SECOND), 'SEAT', '15B-011.22', 34, 34, 150000.00, 'Xe ghế ngồi cao cấp Hoàng Long chạy cao tốc Hà Nội - Hải Phòng 5 sao.'),
+('trip-11', 'rt-hl-hn-hl', 'veh-hl-2', 'cp-hoanglong', 'loc-bx-mydinh', 'loc-bx-baichay', DATE_ADD(CURRENT_DATE(), INTERVAL '1 08:00:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 08:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '1 10:30:00' DAY_SECOND), 'LIMOUSINE', '15B-033.44', 34, 31, 250000.00, 'Hà Nội - Hạ Long ngắm vịnh di sản, xe Limousine sang trọng tiện nghi.'),
+('trip-12', 'rt-vm-hn-vinh', 'veh-vm-1', 'cp-vanminh', 'loc-bx-nuocngam', 'loc-bx-bacvinh', DATE_ADD(CURRENT_DATE(), INTERVAL '1 22:00:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 22:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '2 03:30:00' DAY_SECOND), 'SLEEPER', '37B-088.99', 34, 26, 310000.00, 'Nhà xe Văn Minh chuyên tuyến Nghệ An, phục vụ chu đáo, phát đồ ăn nhẹ và nước suối.'),
+('trip-13', 'rt-hv-hn-hg', 'veh-hv-1', 'cp-haivan', 'loc-bx-mydinh', 'loc-bx-hagiang', DATE_ADD(CURRENT_DATE(), INTERVAL '1 20:30:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 20:30:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '2 02:30:00' DAY_SECOND), 'LIMOUSINE', '23B-005.55', 34, 34, 390000.00, 'Hải Vân Express cabin đôi đi cao nguyên đá Đồng Văn - Hà Giang.'),
+('trip-14', 'rt-futa-dn-hue', 'veh-futa-5', 'cp-futa', 'loc-bx-danang', 'loc-bx-hue', DATE_ADD(CURRENT_DATE(), INTERVAL '1 10:00:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 10:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '1 12:30:00' DAY_SECOND), 'SEAT', '43B-022.33', 34, 34, 120000.00, 'Tuyến liên tỉnh miền Trung qua hầm Hải Vân, đón trả trung tâm Đà Nẵng - Huế.'),
+('trip-15', 'rt-cn-dn-qn', 'veh-cn-1', 'cp-chinnghia', 'loc-bx-danang', 'loc-bx-quynhon', DATE_ADD(CURRENT_DATE(), INTERVAL '1 13:00:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '1 13:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '1 18:30:00' DAY_SECOND), 'SLEEPER', '76B-066.77', 34, 33, 270000.00, 'Chuyến Đà Nẵng đi thành phố biển Quy Nhơn, xe chạy êm, giá vé ổn định.'),
+('trip-16', 'rt-futa-hcm-dl', 'veh-futa-6', 'cp-futa', 'loc-bx-mientay', 'loc-bx-dalat', DATE_ADD(CURRENT_DATE(), INTERVAL '2 07:30:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '2 07:30:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '2 14:00:00' DAY_SECOND), 'SLEEPER', '51B-111.22', 34, 34, 290000.00, 'FUTA Sài Gòn - Đà Lạt chuyến sáng ngắm đèo Bảo Lộc.'),
+('trip-17', 'rt-futa-hcm-dl', 'veh-futa-7', 'cp-futa', 'loc-bx-mientay', 'loc-bx-dalat', DATE_ADD(CURRENT_DATE(), INTERVAL '2 23:00:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '2 23:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '3 05:30:00' DAY_SECOND), 'LIMOUSINE', '51B-333.44', 34, 29, 350000.00, 'Limousine phòng vip FUTA Sài Gòn - Đà Lạt đi đêm ngủ một giấc tới nơi.'),
+('trip-18', 'rt-futa-hcm-nt', 'veh-futa-8', 'cp-futa', 'loc-bx-miendong', 'loc-bx-nhatrang', DATE_ADD(CURRENT_DATE(), INTERVAL '2 21:00:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '2 21:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '3 05:00:00' DAY_SECOND), 'SLEEPER', '51B-555.66', 34, 34, 320000.00, 'Xe giường nằm đi Nha Trang chuyến tối đón bình minh trên biển.'),
+('trip-19', 'rt-sao-hn-sp', 'veh-sao-2', 'cp-saoviet', 'loc-bx-mydinh', 'loc-bx-sapa', DATE_ADD(CURRENT_DATE(), INTERVAL '2 22:30:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '2 22:30:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '3 04:00:00' DAY_SECOND), 'LIMOUSINE', '29B-777.99', 34, 30, 400000.00, 'Sao Việt Royal Cabin VIP Hà Nội - Sa Pa đi săn mây Fansipan.'),
+('trip-20', 'rt-hm-hcm-vt', 'veh-hm-4', 'cp-hoamai', 'loc-vp-q1', 'loc-bx-vungtau', DATE_ADD(CURRENT_DATE(), INTERVAL '3 08:00:00' DAY_SECOND), 0, 'SCHEDULED', DATE_ADD(CURRENT_DATE(), INTERVAL '3 08:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '3 10:00:00' DAY_SECOND), 'LIMOUSINE', '72B-088.11', 34, 34, 190000.00, 'Hoa Mai Vũng Tàu chuyến sáng cuối tuần đi tắm biển.')
 ON DUPLICATE KEY UPDATE status=VALUES(status);
 
 -- 12. TRIP POINTS (Snapshot lịch trình + ETA bất biến)
@@ -1703,17 +1807,43 @@ ON DUPLICATE KEY UPDATE status=VALUES(status);
 INSERT INTO trip_seats (trip_id, seat_code, seat_type_code, status, version) VALUES
 ('trip-2', 'A01', 'STANDARD', 'AVAILABLE', 0), ('trip-2', 'A02', 'STANDARD', 'AVAILABLE', 0),
 ('trip-2', 'A03', 'STANDARD', 'AVAILABLE', 0), ('trip-2', 'A04', 'STANDARD', 'AVAILABLE', 0),
-('trip-2', 'B01', 'VIP', 'AVAILABLE', 0), ('trip-2', 'B02', 'VIP', 'AVAILABLE', 0)
+('trip-2', 'B01', 'VIP', 'AVAILABLE', 0), ('trip-2', 'B02', 'VIP', 'AVAILABLE', 0),
+('trip-3', 'A01', 'STANDARD', 'AVAILABLE', 0), ('trip-3', 'A02', 'STANDARD', 'AVAILABLE', 0), ('trip-3', 'B01', 'VIP', 'AVAILABLE', 0), ('trip-3', 'B02', 'VIP', 'AVAILABLE', 0),
+('trip-4', 'A01', 'CABIN', 'AVAILABLE', 0), ('trip-4', 'A02', 'CABIN', 'AVAILABLE', 0), ('trip-4', 'B01', 'CABIN', 'AVAILABLE', 0), ('trip-4', 'B02', 'CABIN', 'AVAILABLE', 0),
+('trip-5', 'A01', 'STANDARD', 'BOOKED', 1), ('trip-5', 'A02', 'STANDARD', 'BOOKED', 1), ('trip-5', 'A03', 'STANDARD', 'BOOKED', 1), ('trip-5', 'A04', 'STANDARD', 'BOOKED', 1), ('trip-5', 'A05', 'STANDARD', 'AVAILABLE', 0), ('trip-5', 'B01', 'VIP', 'AVAILABLE', 0),
+('trip-6', 'A01', 'STANDARD', 'AVAILABLE', 0), ('trip-6', 'A02', 'STANDARD', 'AVAILABLE', 0), ('trip-6', 'B01', 'VIP', 'AVAILABLE', 0),
+('trip-7', 'A01', 'STANDARD', 'BOOKED', 1), ('trip-7', 'A02', 'STANDARD', 'BOOKED', 1), ('trip-7', 'B01', 'VIP', 'BOOKED', 1), ('trip-7', 'B02', 'VIP', 'AVAILABLE', 0),
+('trip-8', 'A01', 'STANDARD', 'BOOKED', 1), ('trip-8', 'A02', 'STANDARD', 'BOOKED', 1), ('trip-8', 'B01', 'VIP', 'AVAILABLE', 0),
+('trip-11', 'A01', 'STANDARD', 'BOOKED', 1), ('trip-11', 'A02', 'STANDARD', 'BOOKED', 1), ('trip-11', 'A03', 'STANDARD', 'BOOKED', 1), ('trip-11', 'B01', 'VIP', 'AVAILABLE', 0),
+('trip-12', 'A01', 'STANDARD', 'BOOKED', 1), ('trip-12', 'A02', 'STANDARD', 'BOOKED', 1), ('trip-12', 'A03', 'STANDARD', 'BOOKED', 1), ('trip-12', 'A04', 'STANDARD', 'BOOKED', 1), ('trip-12', 'B01', 'VIP', 'AVAILABLE', 0),
+('trip-15', 'A01', 'STANDARD', 'BOOKED', 1), ('trip-15', 'A02', 'STANDARD', 'AVAILABLE', 0), ('trip-15', 'B01', 'VIP', 'AVAILABLE', 0)
 ON DUPLICATE KEY UPDATE status=VALUES(status);
 
 -- 16. BOOKINGS & TICKETS (Đơn vé mẫu và vé điện tử)
 INSERT INTO bookings (id, user_id, trip_id, status, total_amount, currency, booking_code, passenger_name, passenger_phone, passenger_email, pickup_point, dropoff_point, seat_numbers, payment_method) VALUES
-('bk-sample-001', '33333333-3333-3333-3333-333333333333', 'trip-1', 'CONFIRMED', 580000.00, 'VND', 'BKG-20261025-001', 'Nguyễn Văn Du Khách', '0912345678', 'customer@gmail.com', 'Bến xe Miền Tây', 'Bến xe Liên tỉnh Đà Lạt', 'A01, A02', 'COD')
+('bk-sample-001', '33333333-3333-3333-3333-333333333333', 'trip-1', 'CONFIRMED', 580000.00, 'VND', 'BKG-20261025-001', 'Nguyễn Văn Du Khách', '0912345678', 'customer@gmail.com', 'Bến xe Miền Tây', 'Bến xe Liên tỉnh Đà Lạt', 'A01, A02', 'COD'),
+('bk-sample-002', '99999999-9999-9999-9999-999999999999', 'trip-5', 'CONFIRMED', 360000.00, 'VND', 'BKG-20261021-002', 'Trần Thị Bích Ngọc', '0987654321', 'tranthib@gmail.com', 'Văn phòng Quận 1', 'Bãi Sau Vũng Tàu (Đón trả tận nơi)', 'A01, A02', 'COD'),
+('bk-sample-003', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'trip-8', 'CONFIRMED', 440000.00, 'VND', 'BKG-20261021-003', 'Lê Hoàng Cường', '0978112233', 'lehoangc@gmail.com', 'Bến xe Miền Đông Mới', 'Resort Hàm Tiến - Mũi Né', 'A01, A02', 'COD'),
+('bk-sample-004', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'trip-11', 'COMPLETED', 750000.00, 'VND', 'BKG-20261021-004', 'Phạm Quốc Dũng', '0933445566', 'phamquocd@gmail.com', 'Bến xe Mỹ Đình', 'Bến xe Bãi Cháy', 'A01, A02, A03', 'COD'),
+('bk-sample-005', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'trip-12', 'CONFIRMED', 1240000.00, 'VND', 'BKG-20261021-005', 'Hoàng Thị Mai', '0944556677', 'hoangmaie@gmail.com', 'Bến xe Nước Ngầm', 'Văn phòng Mai Hắc Đế', 'A01, A02, A03, A04', 'COD'),
+('bk-sample-006', '33333333-3333-3333-3333-333333333333', 'trip-15', 'PENDING', 270000.00, 'VND', 'BKG-20261021-006', 'Nguyễn Văn Du Khách', '0912345678', 'customer@gmail.com', 'Bến xe Trung tâm Đà Nẵng', 'Bến xe Trung tâm Quy Nhơn', 'A01', 'COD')
 ON DUPLICATE KEY UPDATE status=VALUES(status);
 
 INSERT INTO tickets (id, booking_id, trip_id, seat_code, seat_price_amount, seat_price_currency, passenger_full_name, passenger_phone_number, qr_content, status, ticket_code, seat_number, price, qr_code_hash) VALUES
 ('tkt-sample-001', 'bk-sample-001', 'trip-1', 'A01', 290000.00, 'VND', 'Nguyễn Văn Du Khách', '0912345678', 'TRAVELEASY:TKT-A01:TRIP1:PASSENGER_NVDK', 'ISSUED', 'TK-20261025-001-A01', 'A01', 290000.00, 'c5e26b88-5c42-4f01-8b21-7e8c3a19e001'),
-('tkt-sample-002', 'bk-sample-001', 'trip-1', 'A02', 290000.00, 'VND', 'Nguyễn Văn Du Khách', '0912345678', 'TRAVELEASY:TKT-A02:TRIP1:PASSENGER_NVDK', 'ISSUED', 'TK-20261025-001-A02', 'A02', 290000.00, 'f7a14c99-7b33-4d22-9e32-8f9d4b28f002')
+('tkt-sample-002', 'bk-sample-001', 'trip-1', 'A02', 290000.00, 'VND', 'Nguyễn Văn Du Khách', '0912345678', 'TRAVELEASY:TKT-A02:TRIP1:PASSENGER_NVDK', 'ISSUED', 'TK-20261025-001-A02', 'A02', 290000.00, 'f7a14c99-7b33-4d22-9e32-8f9d4b28f002'),
+('tkt-sample-003', 'bk-sample-002', 'trip-5', 'A01', 180000.00, 'VND', 'Trần Thị Bích Ngọc', '0987654321', 'TRAVELEASY:TKT-A01:TRIP5:PASSENGER_TTBN', 'ISSUED', 'TK-20261021-002-A01', 'A01', 180000.00, 'qr-hm-20261021-002-a01'),
+('tkt-sample-004', 'bk-sample-002', 'trip-5', 'A02', 180000.00, 'VND', 'Trần Thị Bích Ngọc', '0987654321', 'TRAVELEASY:TKT-A02:TRIP5:PASSENGER_TTBN', 'ISSUED', 'TK-20261021-002-A02', 'A02', 180000.00, 'qr-hm-20261021-002-a02'),
+('tkt-sample-005', 'bk-sample-003', 'trip-8', 'A01', 220000.00, 'VND', 'Lê Hoàng Cường', '0978112233', 'TRAVELEASY:TKT-A01:TRIP8:PASSENGER_LHC', 'ISSUED', 'TK-20261021-003-A01', 'A01', 220000.00, 'qr-ft-20261021-003-a01'),
+('tkt-sample-006', 'bk-sample-003', 'trip-8', 'A02', 220000.00, 'VND', 'Lê Hoàng Cường', '0978112233', 'TRAVELEASY:TKT-A02:TRIP8:PASSENGER_LHC', 'ISSUED', 'TK-20261021-003-A02', 'A02', 220000.00, 'qr-ft-20261021-003-a02'),
+('tkt-sample-007', 'bk-sample-004', 'trip-11', 'A01', 250000.00, 'VND', 'Phạm Quốc Dũng', '0933445566', 'TRAVELEASY:TKT-A01:TRIP11:PASSENGER_PQD', 'USED', 'TK-20261021-004-A01', 'A01', 250000.00, 'qr-hl-20261021-004-a01'),
+('tkt-sample-008', 'bk-sample-004', 'trip-11', 'A02', 250000.00, 'VND', 'Phạm Quốc Dũng', '0933445566', 'TRAVELEASY:TKT-A02:TRIP11:PASSENGER_PQD', 'USED', 'TK-20261021-004-A02', 'A02', 250000.00, 'qr-hl-20261021-004-a02'),
+('tkt-sample-009', 'bk-sample-004', 'trip-11', 'A03', 250000.00, 'VND', 'Phạm Quốc Dũng', '0933445566', 'TRAVELEASY:TKT-A03:TRIP11:PASSENGER_PQD', 'USED', 'TK-20261021-004-A03', 'A03', 250000.00, 'qr-hl-20261021-004-a03'),
+('tkt-sample-010', 'bk-sample-005', 'trip-12', 'A01', 310000.00, 'VND', 'Hoàng Thị Mai', '0944556677', 'TRAVELEASY:TKT-A01:TRIP12:PASSENGER_HTM', 'ISSUED', 'TK-20261021-005-A01', 'A01', 310000.00, 'qr-vm-20261021-005-a01'),
+('tkt-sample-011', 'bk-sample-005', 'trip-12', 'A02', 310000.00, 'VND', 'Hoàng Thị Mai', '0944556677', 'TRAVELEASY:TKT-A02:TRIP12:PASSENGER_HTM', 'ISSUED', 'TK-20261021-005-A02', 'A02', 310000.00, 'qr-vm-20261021-005-a02'),
+('tkt-sample-012', 'bk-sample-005', 'trip-12', 'A03', 310000.00, 'VND', 'Hoàng Thị Mai', '0944556677', 'TRAVELEASY:TKT-A03:TRIP12:PASSENGER_HTM', 'ISSUED', 'TK-20261021-005-A03', 'A03', 310000.00, 'qr-vm-20261021-005-a03'),
+('tkt-sample-013', 'bk-sample-005', 'trip-12', 'A04', 310000.00, 'VND', 'Hoàng Thị Mai', '0944556677', 'TRAVELEASY:TKT-A04:TRIP12:PASSENGER_HTM', 'ISSUED', 'TK-20261021-005-A04', 'A04', 310000.00, 'qr-vm-20261021-005-a04'),
+('tkt-sample-014', 'bk-sample-006', 'trip-15', 'A01', 270000.00, 'VND', 'Nguyễn Văn Du Khách', '0912345678', 'TRAVELEASY:TKT-A01:TRIP15:PASSENGER_NVDK', 'ISSUED', 'TK-20261021-006-A01', 'A01', 270000.00, 'qr-cn-20261021-006-a01')
 ON DUPLICATE KEY UPDATE status=VALUES(status);
 
 -- 17. PAYMENT TRANSACTIONS

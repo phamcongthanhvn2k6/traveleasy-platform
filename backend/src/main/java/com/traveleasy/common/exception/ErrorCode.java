@@ -8,6 +8,8 @@ public enum ErrorCode {
     RESOURCE_NOT_FOUND("SYS_404", "Tài nguyên không tồn tại", HttpStatus.NOT_FOUND),
     RESOURCE_ALREADY_EXISTS("SYS_409", "Tài nguyên đã tồn tại", HttpStatus.CONFLICT),
     UNAUTHORIZED("AUTH_401", "Chưa xác thực hoặc không có quyền", HttpStatus.UNAUTHORIZED),
+    FORBIDDEN("AUTH_403", "Không có quyền truy cập", HttpStatus.FORBIDDEN),
+    ACCOUNT_LOCKED("AUTH_423", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.", HttpStatus.FORBIDDEN),
     VALIDATION_ERROR("VAL_400", "Dữ liệu không hợp lệ", HttpStatus.BAD_REQUEST),
     USER_NOT_FOUND("USER_001", "Người dùng không tồn tại", HttpStatus.NOT_FOUND),
     EMAIL_ALREADY_EXISTS("USER_002", "Email này đã được đăng ký", HttpStatus.BAD_REQUEST),

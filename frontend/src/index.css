@@ -39,3 +39,14 @@ input, select {
   margin: 0 auto;
   padding: 0 16px;
 }
+
+@keyframes toastSlideIn {
+  from {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

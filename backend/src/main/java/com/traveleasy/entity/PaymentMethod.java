@@ -1,5 +1,9 @@
 package com.traveleasy.entity;
 
 public enum PaymentMethod {
-    COD
+    COD,
+    VNPAY,
+    MOMO,
+    ZALOPAY,
+    VIETQR
 }

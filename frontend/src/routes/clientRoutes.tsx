@@ -1,7 +1,8 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { HomePage } from '../pages/HomePage';
-import { TicketLookupPage } from '../pages/TicketLookupPage';
+import { HomePage } from '../pages/customer/home/HomePage';
+import { TicketLookupPage } from '../pages/customer/ticket-lookup/TicketLookupPage';
+import { CustomerAuthPage } from '../pages/customer/auth/CustomerAuthPage';
 
 /**
  * =========================================================================
@@ -17,11 +18,16 @@ export const ClientRoutes: React.FC = () => {
       <Route path="/" element={<HomePage />} />
       <Route path="/search" element={<HomePage />} />
 
+      {/* Xác thực người dùng (Đăng ký / Đăng nhập JWT) */}
+      <Route path="/auth" element={<CustomerAuthPage />} />
+      <Route path="/login" element={<CustomerAuthPage />} />
+      <Route path="/register" element={<CustomerAuthPage />} />
+
       {/* Chức năng 5 (Thành viên 6): Tra cứu vé điện tử & Lịch sử đặt chỗ */}
       <Route path="/lookup" element={<TicketLookupPage />} />
       <Route path="/tickets/:code" element={<TicketLookupPage />} />
 
-      {/* Các route mở rộng của phân hệ Users do 5 thành viên phát triển:
+      {/* Các route mở rộng của phân hệ Users:
           - /trips/:tripId/seats: Chọn sơ đồ ghế 2 tầng (Thành viên 3)
           - /checkout: Xác nhận điểm đón/trả & nhập thông tin (Thành viên 4)
           - /payment/callback: Trả về trạng thái thanh toán & QR Code (Thành viên 5)
@@ -31,4 +37,3 @@ export const ClientRoutes: React.FC = () => {
 };
 
 export default ClientRoutes;
-

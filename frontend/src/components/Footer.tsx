@@ -28,7 +28,7 @@ export const Footer: React.FC = () => {
         <div>
           <h4 style={{ color: '#fff', marginBottom: '16px', fontSize: '16px' }}>Đối Tác Nhà Xe</h4>
           <ul style={{ listStyle: 'none', fontSize: '14px', lineHeight: 2 }}>
-            <li>Phương Trang FUTA Bus Lines</li>
+            <li>TravelEasy Express Bus Lines</li>
             <li>Thành Bưởi Limousine</li>
             <li>Sao Việt Express</li>
             <li>Hải Vân Bus</li>

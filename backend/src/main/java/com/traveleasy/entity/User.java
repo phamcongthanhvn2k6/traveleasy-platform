@@ -33,6 +33,10 @@ public class User {
     @Builder.Default
     private Role role = Role.CUSTOMER;
 
+    @Column(name = "status", length = 20)
+    @Builder.Default
+    private String status = "ACTIVE";
+
     @Column(name = "created_at", updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
