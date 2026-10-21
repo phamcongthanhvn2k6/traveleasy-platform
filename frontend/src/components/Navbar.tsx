@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bus, Search, ShieldCheck, PhoneCall, User, Info, Building2, LayoutDashboard, Globe, LogOut } from 'lucide-react';
+import { Bus, Search, ShieldCheck, PhoneCall, User, Info, Building2, LayoutDashboard, Globe, LogOut, Ticket } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
 
@@ -48,8 +48,8 @@ export const Navbar: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', fontSize: '13px' }}>
-            <Link to="/lookup" style={{ color: '#ffffff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px', opacity: 0.9 }}>
-              Đơn hàng của tôi
+            <Link to="/my-tickets" style={{ color: '#ffffff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px', opacity: 0.9 }}>
+              Vé của tôi
             </Link>
             <Link to="/company" style={{ color: '#ffffff', textDecoration: 'none', opacity: 0.9 }}>
               Mở bán vé trên TravelEasy
@@ -78,9 +78,11 @@ export const Navbar: React.FC = () => {
             </a>
             {user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span
+                <Link
+                  to="/profile"
+                  title="Xem và chỉnh sửa hồ sơ cá nhân"
                   style={{
-                    backgroundColor: 'rgba(255,255,255,0.18)',
+                    backgroundColor: location.pathname === '/profile' ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.18)',
                     color: '#ffffff',
                     padding: '3px 10px',
                     borderRadius: '6px',
@@ -88,7 +90,9 @@ export const Navbar: React.FC = () => {
                     fontWeight: 600,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '6px',
+                    textDecoration: 'none',
+                    transition: 'all 0.15s ease'
                   }}
                 >
                   <User size={13} /> {user.fullName || user.email}
@@ -97,7 +101,7 @@ export const Navbar: React.FC = () => {
                       ADMIN
                     </span>
                   )}
-                </span>
+                </Link>
                 <button
                   onClick={handleLogout}
                   title="Đăng xuất"
@@ -163,20 +167,36 @@ export const Navbar: React.FC = () => {
 
           <nav style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             <Link 
-              to="/" 
+              to="/search" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/' ? '#2563eb' : '#334155', 
-                fontWeight: location.pathname === '/' ? 700 : 600, 
+                color: location.pathname === '/search' || location.pathname === '/' ? '#2563eb' : '#334155', 
+                fontWeight: location.pathname === '/search' || location.pathname === '/' ? 700 : 600, 
                 fontSize: '14.5px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '6px',
-                borderBottom: location.pathname === '/' ? '2px solid #2563eb' : '2px solid transparent',
+                borderBottom: location.pathname === '/search' || location.pathname === '/' ? '2px solid #2563eb' : '2px solid transparent',
                 padding: '8px 0'
               }}
             >
               <Search size={16} /> Vé Xe Khách
+            </Link>
+            <Link 
+              to="/my-tickets" 
+              style={{ 
+                textDecoration: 'none', 
+                color: location.pathname === '/my-tickets' ? '#2563eb' : '#334155', 
+                fontWeight: location.pathname === '/my-tickets' ? 700 : 600, 
+                fontSize: '14.5px',
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                borderBottom: location.pathname === '/my-tickets' ? '2px solid #2563eb' : '2px solid transparent',
+                padding: '8px 0'
+              }}
+            >
+              <Ticket size={16} /> Vé Của Tôi
             </Link>
             <Link 
               to="/lookup" 
@@ -197,10 +217,12 @@ export const Navbar: React.FC = () => {
           </nav>
         </div>
 
-        {/* Portal Switching Badges */}
+        {/* Right Action Badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Cổng Đối Tác Nhà Xe */}
           <Link 
-            to="/company/dashboard" 
+            to={user?.role === 'OPERATOR' || user?.role === 'ADMIN' ? '/company/dashboard' : '/company/login'} 
+            title="Cổng đối tác điều hành nhà xe"
             style={{ 
               textDecoration: 'none', 
               color: '#0f766e', 
@@ -216,28 +238,37 @@ export const Navbar: React.FC = () => {
               transition: 'all 0.2s'
             }}
           >
-            <Building2 size={16} color="#0d9488" /> Cổng Nhà Xe
+            <Building2 size={16} color="#0d9488" /> 
+            <span>{user?.role === 'OPERATOR' ? 'Cổng Điều Hành Xe' : 'Đối Tác Nhà Xe'}</span>
+            {user?.role === 'OPERATOR' && (
+              <span style={{ backgroundColor: '#ccfbf1', color: '#0f766e', fontSize: '9.5px', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
+                OPERATOR
+              </span>
+            )}
           </Link>
 
-          <Link 
-            to="/admin/dashboard" 
-            style={{ 
-              textDecoration: 'none', 
-              color: '#1e3a8a', 
-              backgroundColor: '#eff6ff',
-              border: '1px solid #dbeafe',
-              fontWeight: 700, 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              padding: '7px 14px',
-              borderRadius: '8px',
-              fontSize: '13px',
-              transition: 'all 0.2s'
-            }}
-          >
-            <LayoutDashboard size={16} color="#2563eb" /> Quản Trị Sàn
-          </Link>
+          {/* CHỈ hiển thị Quản Trị Sàn khi tài khoản hiện tại ĐÃ ĐĂNG NHẬP và có vai trò ADMIN */}
+          {user?.role === 'ADMIN' && (
+            <Link 
+              to="/admin/dashboard" 
+              style={{ 
+                textDecoration: 'none', 
+                color: '#1e3a8a', 
+                backgroundColor: '#eff6ff',
+                border: '1px solid #dbeafe',
+                fontWeight: 700, 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                transition: 'all 0.2s'
+              }}
+            >
+              <LayoutDashboard size={16} color="#2563eb" /> Quản Trị Sàn (ADMIN)
+            </Link>
+          )}
         </div>
       </div>
     </header>

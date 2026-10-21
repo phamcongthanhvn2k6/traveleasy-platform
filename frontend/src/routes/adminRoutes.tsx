@@ -14,6 +14,9 @@ import { AdminPaymentsPage } from '../pages/admin/payments/AdminPaymentsPage';
 import { AdminReviewsPage } from '../pages/admin/reviews/AdminReviewsPage';
 import { AdminCancellationPoliciesPage } from '../pages/admin/cancellation-policies/AdminCancellationPoliciesPage';
 import { AdminAuditLogsPage } from '../pages/admin/audit-logs/AdminAuditLogsPage';
+import { AdminTripsPage } from '../pages/admin/trips/AdminTripsPage';
+import { AdminBookingsPage } from '../pages/admin/bookings/AdminBookingsPage';
+import { AdminRoutesPage } from '../pages/admin/routes/AdminRoutesPage';
 
 /**
  * =========================================================================
@@ -27,38 +30,68 @@ import { AdminAuditLogsPage } from '../pages/admin/audit-logs/AdminAuditLogsPage
 export const AdminRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* 1. Cổng đăng nhập Quản Trị Viên (Không hiển thị Sidebar & Không cho đăng ký) */}
+      {/* 1. Cổng đăng nhập Quản Trị Viên (Công khai, không Sidebar, không Đăng ký) */}
+      <Route path="login" element={<AdminLoginPage />} />
       <Route path="/login" element={<AdminLoginPage />} />
+      <Route path="/admin/login" element={<AdminLoginPage />} />
 
-      {/* 2. Toàn bộ các trang nghiệp vụ Quản trị được bảo vệ bởi AdminAuthGuard */}
+      {/* 2. Toàn bộ các trang nghiệp vụ Quản trị được bảo vệ tuyệt đối bởi AdminAuthGuard */}
       <Route
-        path="/*"
+        path="*"
         element={
           <AdminAuthGuard>
             <AdminLayout>
               <Routes>
                 {/* Trang tổng quan hệ thống */}
+                <Route path="" element={<AdminDashboardPage />} />
                 <Route path="/" element={<AdminDashboardPage />} />
+                <Route path="dashboard" element={<AdminDashboardPage />} />
                 <Route path="/dashboard" element={<AdminDashboardPage />} />
 
+                {/* Nhóm Chuyến xe & Đơn đặt vé */}
+                <Route path="trips" element={<AdminTripsPage />} />
+                <Route path="/trips" element={<AdminTripsPage />} />
+                <Route path="routes" element={<AdminRoutesPage />} />
+                <Route path="/routes" element={<AdminRoutesPage />} />
+                <Route path="bookings" element={<AdminBookingsPage />} />
+                <Route path="/bookings" element={<AdminBookingsPage />} />
+
                 {/* Nhóm Tài khoản & Đối tác */}
+                <Route path="users" element={<AdminUsersPage />} />
                 <Route path="/users" element={<AdminUsersPage />} />
+                <Route path="bus-companies" element={<AdminBusCompaniesPage />} />
                 <Route path="/bus-companies" element={<AdminBusCompaniesPage />} />
 
                 {/* Nhóm Danh mục */}
+                <Route path="seat-catalog/types" element={<AdminSeatTypesPage />} />
                 <Route path="/seat-catalog/types" element={<AdminSeatTypesPage />} />
+                <Route path="seat-types" element={<AdminSeatTypesPage />} />
                 <Route path="/seat-types" element={<AdminSeatTypesPage />} />
+
+                <Route path="seat-catalog/templates" element={<AdminSeatTemplatesPage />} />
                 <Route path="/seat-catalog/templates" element={<AdminSeatTemplatesPage />} />
+                <Route path="seat-templates" element={<AdminSeatTemplatesPage />} />
                 <Route path="/seat-templates" element={<AdminSeatTemplatesPage />} />
+
+                <Route path="locations" element={<AdminLocationsPage />} />
                 <Route path="/locations" element={<AdminLocationsPage />} />
 
                 {/* Nhóm Hệ thống */}
+                <Route path="banners" element={<AdminBannersPage />} />
                 <Route path="/banners" element={<AdminBannersPage />} />
+                <Route path="gateways" element={<AdminPaymentsPage />} />
                 <Route path="/gateways" element={<AdminPaymentsPage />} />
+                <Route path="payments" element={<AdminPaymentsPage />} />
                 <Route path="/payments" element={<AdminPaymentsPage />} />
+
+                <Route path="review-reports" element={<AdminReviewsPage />} />
                 <Route path="/review-reports" element={<AdminReviewsPage />} />
+                <Route path="reviews" element={<AdminReviewsPage />} />
                 <Route path="/reviews" element={<AdminReviewsPage />} />
+
+                <Route path="cancellation-policies" element={<AdminCancellationPoliciesPage />} />
                 <Route path="/cancellation-policies" element={<AdminCancellationPoliciesPage />} />
+                <Route path="audit-logs" element={<AdminAuditLogsPage />} />
                 <Route path="/audit-logs" element={<AdminAuditLogsPage />} />
 
                 {/* Fallback */}

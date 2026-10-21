@@ -83,6 +83,13 @@ public class AdminTripService {
         return tripService.mapToTripResponse(savedTrip);
     }
 
+    @Transactional(readOnly = true)
+    public List<TripResponse> getAllTrips() {
+        return tripRepository.findAllByOrderByDepartureTimeDesc().stream()
+                .map(tripService::mapToTripResponse)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
     @Transactional
     public TripResponse updateTripStatus(Long tripId, TripStatus status) {
         Trip trip = tripRepository.findById(tripId)

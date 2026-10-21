@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SearchTripBar } from '../../../components/SearchTripBar';
 import { TripCard } from '../../../components/TripCard';
 import { CheckoutModal } from '../../../components/CheckoutModal';
@@ -25,10 +26,32 @@ import {
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchParams, setSearchParams] = useState({ origin: 'TP. Hồ Chí Minh', destination: 'Đà Lạt' });
+
+  // Dynamic Banners from Database
+  const [activeBanners, setActiveBanners] = useState<any[]>([]);
+
+  useEffect(() => {
+    api.get('/banners')
+      .then(res => {
+        if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          setActiveBanners(res.data.data.map((b: any, idx: number) => ({
+            id: b.id,
+            tag: b.position || 'ƯU ĐÃI SÀN',
+            title: b.title,
+            badge: 'HOT DEAL',
+            accent: idx % 2 === 0 ? '#d97706' : '#2563eb',
+            image: b.imagePath?.startsWith('http') ? b.imagePath : 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500',
+            link: b.link
+          })));
+        }
+      })
+      .catch(e => console.warn('Could not load banners from API:', e));
+  }, []);
 
   // Booking state
   const [bookingTrip, setBookingTrip] = useState<Trip | null>(null);
@@ -47,38 +70,21 @@ export const HomePage: React.FC = () => {
       });
       const data = res.data.data || [];
       setTrips(data);
-      if (data.length > 0) {
-        toast.success(`Tìm thấy ${data.length} chuyến xe phù hợp từ ${origin} đi ${destination}!`, 'Kết Quả Tìm Kiếm');
-      } else {
-        toast.info(`Không có chuyến xe trực tiếp từ ${origin} đi ${destination}. Đang hiển thị danh sách gợi ý.`, 'Thông Báo Chuyến Xe');
-      }
     } catch (err) {
       console.error('Error fetching trips:', err);
       setTrips([]);
-      toast.error('Lỗi khi tải danh sách chuyến xe. Vui lòng thử lại!', 'Lỗi Tìm Kiếm');
     } finally {
       setLoading(false);
     }
   };
 
   const handleSearch = (origin: string, destination: string, date: string) => {
-    setSearchParams({ origin, destination });
-    setHasSearched(true);
-    toast.info(`Đang tìm kiếm chuyến xe từ ${origin} đi ${destination} ngày ${date}...`, 'Tìm Chuyến Xe');
-    fetchTrips(origin, destination);
-    setTimeout(() => {
-      resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 150);
+    navigate(`/search?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&date=${encodeURIComponent(date)}`);
   };
 
   const handleQuickRouteClick = (origin: string, destination: string) => {
-    setSearchParams({ origin, destination });
-    setHasSearched(true);
-    toast.info(`Đang tải chuyến xe tuyến ${origin} đi ${destination}...`, 'Tuyến Phổ Biến');
-    fetchTrips(origin, destination);
-    setTimeout(() => {
-      resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 150);
+    const today = new Date().toISOString().split('T')[0];
+    navigate(`/search?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&date=${today}`);
   };
 
   const handleOpenBooking = (trip: Trip, seats: string[], points: any) => {
@@ -599,7 +605,7 @@ export const HomePage: React.FC = () => {
           gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
           gap: '20px'
         }}>
-          {featuredPromos.map(p => (
+          {(activeBanners.length > 0 ? activeBanners : featuredPromos).map(p => (
             <div
               key={p.id}
               style={{

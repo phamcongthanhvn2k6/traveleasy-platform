@@ -21,6 +21,11 @@ export const AdminAuthGuard: React.FC<AdminAuthGuardProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Tuyệt đối không bao giờ redirect lặp nếu đang ở trang /login hoặc /admin/login
+  if (location.pathname.includes('/login')) {
+    return <>{children}</>;
+  }
+
   const token = localStorage.getItem('traveleasy_token');
   const userJson = localStorage.getItem('traveleasy_user');
 

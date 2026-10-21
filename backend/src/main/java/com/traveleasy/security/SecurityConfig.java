@@ -50,7 +50,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/trips/**").permitAll()
                         .requestMatchers("/api/v1/bookings/code/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/bookings").permitAll() // Cho phép khách vãng lai đặt vé
+                        .requestMatchers("/api/v1/bookings", "/api/v1/bookings/*/cancel", "/api/v1/bookings/*/cancel-partial", "/api/v1/bookings/*/reschedule").permitAll()
+                        .requestMatchers("/api/v1/payments/**").permitAll() // Cổng thanh toán, callback VNPAY & VietQR
+                        .requestMatchers(HttpMethod.GET, "/api/v1/banners/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/reviews/**").permitAll()
                         .requestMatchers("/api/v1/ai/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Phân quyền nghiêm ngặt: Chỉ ROLE_ADMIN mới có quyền gọi API quản trị
@@ -65,9 +68,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

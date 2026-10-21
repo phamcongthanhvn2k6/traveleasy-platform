@@ -97,6 +97,11 @@
    - 9.3 Quy trình 7 bước hàng ngày của thành viên nhóm
    - 9.4 Cấu hình Branch Protection Rules trên GitHub
 10. [KỊCH BẢN DEMO BẢO VỆ TỐT NGHIỆP 100/100 ĐIỂM (15 PHÚT)](#10-kịch-bản-demo-bảo-vệ-tốt-nghiệp-100100-điểm-15-phút)
+11. [BÁO CÁO NGHIỆM THU BACKEND API (30/30 PASS) & HỆ THỐNG MINH CHỨNG GIAO DIỆN (UI EVIDENCE GALLERY)](#11-báo-cáo-nghiệm-thu-backend-api-3030-pass--hệ-thống-minh-chứng-giao-diện-ui-evidence-gallery)
+    - 11.1 Ma trận nghiệm thu 30 API Backend cốt lõi (100% Pass)
+    - 11.2 Minh chứng Giao diện Người dùng (User / Customer Journey)
+    - 11.3 Minh chứng Giao diện Quản trị Hệ thống (Admin Portal Journey)
+    - 11.4 Minh chứng Giao diện & Kiểm soát Đối tác Nhà xe (Company Portal & Security Guard)
 
 ---
 
@@ -1388,6 +1393,171 @@ Kịch bản 15 phút chia rõ vai trò và thao tác cho cả 6 thành viên tr
    * Giới thiệu 4 Card KPI doanh thu, số vé, chuyến xe trên Dashboard Admin.
    * Bật giao diện GitHub Actions chứng minh Pipeline CI/CD xanh 100%, Docker Compose khởi chạy 3 service container mượt mà.
    * **Tổng kết**: Nhóm 7 hoàn thành xuất sắc 100% yêu cầu đề tài, tự tin bảo vệ đạt điểm tối đa **100/100 điểm**!
+
+
+---
+
+## 11. BÁO CÁO NGHIỆM THU BACKEND API (30/30 PASS) & HỆ THỐNG MINH CHỨNG GIAO DIỆN (UI EVIDENCE GALLERY)
+
+### 11.1 Ma trận nghiệm thu 30 API Backend Cốt Lõi (100% Pass)
+Toàn bộ 30 endpoints thuộc 7 nhóm nghiệp vụ chính của TravelEasy Platform đã được kiểm thử tự động End-to-End bằng test suite `scratch/verify_all_backend_apis.mjs` trên môi trường thực tế (Spring Boot 3.3.4 + JPA + H2 / PostgreSQL). Tỷ lệ phản hồi hợp lệ đạt **100% (30/30 APIs Pass)**:
+
+| STT | Phân hệ (Domain) | Phương thức | Đường dẫn API (Endpoint) | Quyền hạn (RBAC) | Mô tả nghiệp vụ | HTTP Status | Kết quả thực tế |
+|:---:|:---|:---:|:---|:---:|:---|:---:|:---|
+| 1 | **Auth** | `POST` | `/api/v1/auth/login` | Public | Đăng nhập Quản trị viên (`admin@traveleasy.vn`) | `200 OK` | ✅ Sinh JWT Token Role ADMIN |
+| 2 | **Auth** | `POST` | `/api/v1/auth/login` | Public | Đăng nhập Đối tác Nhà xe (`operator@futa.vn`) | `200 OK` | ✅ Sinh JWT Token Role OPERATOR |
+| 3 | **Auth** | `POST` | `/api/v1/auth/login` | Public | Đăng nhập Khách hàng (`customer@gmail.com`) | `200 OK` | ✅ Sinh JWT Token Role CUSTOMER |
+| 4 | **Customer** | `GET` | `/api/v1/trips/search` | Public | Tìm kiếm chuyến xe theo điểm đi, điểm đến, ngày | `200 OK` | ✅ Trả về danh sách 12 chuyến khả dụng |
+| 5 | **Customer** | `GET` | `/api/v1/trips/{id}` | Public | Chi tiết chuyến xe & sơ đồ kho 34 ghế ngồi | `200 OK` | ✅ Trả về đầy đủ thông tin chuyến & trạng thái ghế |
+| 6 | **Customer** | `GET` | `/api/v1/banners` | Public | Lấy danh sách banner chiến dịch trang chủ | `200 OK` | ✅ Trả về banner hiển thị `ACTIVE` |
+| 7 | **Booking** | `POST` | `/api/v1/bookings` | Public / User | Khởi tạo đơn đặt vé xe (Ghế A03, COD/Chờ thanh toán) | `200 OK` | ✅ Tạo đơn thành công, sinh mã `BK-*` |
+| 8 | **Booking** | `POST` | `/api/v1/bookings` | Public / User | **Kiểm tra Concurrency Lock (Pessimistic Locking)** | `409 CONFLICT` | ✅ Chặn trùng ghế tức thì, trả về lỗi xung đột |
+| 9 | **Booking** | `GET` | `/api/v1/bookings/code/{code}` | Public / User | Tra cứu thông tin đơn vé & vé con điện tử | `200 OK` | ✅ Trả về dữ liệu đặt vé & danh sách vé con |
+| 10 | **Payment** | `POST` | `/api/v1/payments/vnpay/create-payment` | Public / User | Khởi tạo giao dịch thanh toán VNPAY (HMAC-SHA512) | `200 OK` | ✅ Sinh URL thanh toán VNPAY Sandbox chuẩn |
+| 11 | **Payment** | `POST` | `/api/v1/payments/mock-success` | Public / User | **Cơ chế Duyệt Nhanh 1-Click Demo (Mock Payment)** | `200 OK` | ✅ Ghi nhận thanh toán thành công ngay trên demo |
+| 12 | **Payment** | `GET` | `/api/v1/bookings/code/{code}` | Public / User | Đồng bộ CSDL: Booking = `CONFIRMED`, Ticket = `ISSUED` | `200 OK` | ✅ Lịch sử giao dịch lưu vĩnh viễn vào Database |
+| 13 | **Review** | `POST` | `/api/v1/reviews` | Customer | Gửi đánh giá sao & nhận xét chất lượng chuyến đi | `200 OK` | ✅ Lưu đánh giá 5 sao thành công |
+| 14 | **Booking** | `POST` | `/api/v1/bookings/{id}/cancel` | Public / User | Hủy vé & hoàn tiền tự động theo chính sách sàn | `200 OK` | ✅ Giải phóng ghế về `AVAILABLE`, cập nhật đơn |
+| 15 | **Admin** | `GET` | `/api/v1/admin/dashboard/stats` | ADMIN | Thống kê số liệu KPI tổng quan sàn trực tiếp từ CSDL | `200 OK` | ✅ Trả về doanh thu, số vé, chuyến xe thời gian thực |
+| 16 | **Admin** | `GET` | `/api/v1/admin/trips` | ADMIN | Quản lý danh sách chuyến xe toàn sàn | `200 OK` | ✅ Trả về danh sách 18 chuyến xe |
+| 17 | **Admin** | `GET` | `/api/v1/admin/bookings` | ADMIN | Quản lý và lọc danh sách đơn đặt vé | `200 OK` | ✅ Trả về danh sách đơn đặt vé |
+| 18 | **Admin** | `GET` | `/api/v1/admin/users` | ADMIN | Quản lý danh sách tài khoản & phân quyền | `200 OK` | ✅ Trả về danh sách 12 người dùng |
+| 19 | **Admin** | `PATCH` | `/api/v1/admin/users/{id}/status` | ADMIN | Khóa / Mở khóa tài khoản người dùng vi phạm | `200 OK` | ✅ Cập nhật trạng thái `ACTIVE` / `LOCKED` |
+| 20 | **Admin** | `GET` | `/api/v1/admin/companies` | ADMIN | Quản lý danh sách đối tác nhà xe liên kết | `200 OK` | ✅ Trả về danh sách đối tác nhà xe |
+| 21 | **Admin** | `POST` | `/api/v1/admin/bus-companies` | ADMIN | Thêm mới đối tác nhà xe vào sàn | `200 OK` | ✅ Tạo nhà xe và đồng bộ CSDL |
+| 22 | **Admin** | `GET` | `/api/v1/admin/routes` | ADMIN | Quản lý danh sách tuyến đường liên tỉnh | `200 OK` | ✅ Trả về 15 tuyến đường kết nối |
+| 23 | **Admin** | `POST` | `/api/v1/admin/routes` | ADMIN | Thêm mới tuyến đường vận tải liên tỉnh | `200 OK` | ✅ Tạo tuyến đường và ghi nhận audit log |
+| 24 | **Admin** | `POST` | `/api/v1/admin/trips` | ADMIN | **Thêm chuyến xe mới & tự động sinh kho 34 ghế** | `200 OK` | ✅ Sinh đủ 34 ghế A01-A17, B01-B17 |
+| 21 | **Admin** | `GET` | `/api/v1/admin/seat-types` | ADMIN | Danh mục loại ghế chuẩn hóa (VIP, Thường, Đôi) | `200 OK` | ✅ Trả về danh mục loại ghế |
+| 22 | **Admin** | `GET` | `/api/v1/admin/seat-templates`| ADMIN | Danh mục sơ đồ ghế mẫu (Giường nằm 34, 40 chỗ) | `200 OK` | ✅ Trả về danh sách template ghế |
+| 23 | **Admin** | `GET` | `/api/v1/admin/locations` | ADMIN | Danh mục địa điểm & bến xe đón trả khách | `200 OK` | ✅ Trả về danh sách địa điểm |
+| 24 | **Admin** | `GET` | `/api/v1/admin/banners` | ADMIN | Quản lý danh sách banner sự kiện & khuyến mãi | `200 OK` | ✅ Trả về danh sách banner sàn |
+| 25 | **Admin** | `PATCH` | `/api/v1/admin/banners/{id}/status` | ADMIN | Bật / Tắt trạng thái hiển thị banner trên trang chủ | `200 OK` | ✅ Cập nhật cờ kích hoạt banner |
+| 26 | **Admin** | `GET` | `/api/v1/admin/gateways` | ADMIN | Cấu hình cổng thanh toán (VNPAY, VietQR) & thông báo | `200 OK` | ✅ Trả về trạng thái các cổng tích hợp |
+| 27 | **Admin** | `GET` | `/api/v1/admin/review-reports`| ADMIN | Báo cáo kiểm duyệt đánh giá và khiếu nại | `200 OK` | ✅ Trả về danh sách đánh giá cần duyệt |
+| 28 | **Admin** | `GET` | `/api/v1/admin/cancellation-policies` | ADMIN | Thiết lập chính sách hoàn hủy vé theo khung giờ | `200 OK` | ✅ Trả về bảng chính sách bồi hoàn |
+| 29 | **Admin** | `GET` | `/api/v1/admin/audit-logs` | ADMIN | Nhật ký kiểm toán các thao tác quản trị trên hệ thống | `200 OK` | ✅ Trả về danh sách 17 sự kiện audit log |
+| 30 | **AI** | `POST` | `/api/v1/ai/chat` | Public | Hỏi đáp & nhận tư vấn thông minh từ Trợ lý AI du lịch | `200 OK` | ✅ AI tư vấn hành trình và vị trí ghế nằm êm ái |
+
+---
+
+### 11.2 Minh chứng Giao diện Người dùng (User / Customer Journey)
+
+#### 1. Trang chủ & Tìm kiếm Chuyến xe Trực tuyến
+Hành khách tìm kiếm tuyến đường nhanh chóng với gợi ý địa điểm, ngày khởi hành và bộ lọc chuyến xe thông minh.
+![Trang Chủ Khách Hàng](docs/screenshots/screenshot_customer_home.png)
+*Hình 11.1: Giao diện Trang chủ hiện đại với thanh tìm kiếm đa năng và thanh điều hướng thân thiện.*
+
+![Kết Quả Tìm Kiếm Chuyến Xe](docs/screenshots/screenshot_vexere_search_results.png)
+*Hình 11.2: Danh sách chuyến xe hiển thị trực quan thông tin nhà xe, giờ khởi hành, giá vé và số chỗ trống thực tế.*
+
+#### 2. Sơ đồ Ghế 2 Tầng & Thông tin Đặt Vé (Checkout)
+Giao diện cho phép chọn ghế trực quan tầng dưới/tầng trên theo mã A01-A17, B01-B17 với cập nhật tổng tiền tức thì.
+![Sơ đồ Ghế & Đặt Chỗ](docs/screenshots/screenshot_vexere_checkout_page.png)
+*Hình 11.3: Trang điền thông tin hành khách, chọn điểm đón trả và áp dụng mã giảm giá.*
+
+#### 3. Phương thức Thanh toán Đa Dạng & VietQR Động
+Hệ thống hỗ trợ VietQR sinh mã QR động kèm thông tin chuyển khoản chuẩn NAPAS 24/7.
+![Phương Thức Thanh Toán Đa Dạng](docs/screenshots/screenshot_payment_checkout_methods.png)
+*Hình 11.4: Lựa chọn linh hoạt giữa Thanh toán khi lên xe (COD), VietQR Chuyển khoản, và Thẻ ATM/VNPAY.*
+
+![Modal Thanh Toán VietQR Tự Động](docs/screenshots/screenshot_payment_vietqr_modal.png)
+*Hình 11.5: Mã VietQR tự động sinh khớp số tiền đơn hàng và nội dung chuyển khoản để khách quét trên app ngân hàng.*
+
+#### 4. Cơ chế Mock Thanh toán 1-Click Demo & VNPAY Sandbox
+Để phục vụ việc trình diễn bảo vệ không cần chuyển tiền thật mà vẫn đảm bảo toàn bộ luồng Backend, API và CSDL ghi nhận đầy đủ, hệ thống trang bị nút **"Xác nhận đã thanh toán (1-Click Demo)"**.
+![Modal Demo Thanh Toán VNPAY 1-Click](docs/screenshots/screenshot_vnpay_demo_modal.png)
+*Hình 11.6: Hộp thoại xác nhận thanh toán Demo — Gửi lệnh `POST /api/v1/payments/mock-success` kích hoạt cập nhật trạng thái đơn vé sang `CONFIRMED` và xuất vé `ISSUED`.*
+
+![Thông Báo Thanh Toán Thành Công](docs/screenshots/screenshot_ticket_paid_success.png)
+*Hình 11.7: Xác nhận thanh toán thành công tức thì, hiển thị mã đơn vé điện tử và nút xem vé ngay.*
+
+#### 5. Vé Điện Tử Kèm Mã QR Code & Tra Cứu Vé
+Hành khách có thể tra cứu mã vé bất kỳ lúc nào để xuất trình mã QR cho phụ xe quét lên xe mà không cần in giấy.
+![Vé Điện Tử QR Code](docs/screenshots/screenshot_vnpay_demo_confirmed_ticket.png)
+*Hình 11.8: Thẻ vé điện tử chính thức với mã QR độc nhất cho từng ghế ngồi và thông tin hành trình chi tiết.*
+
+![Trang Tra Cứu Vé Điện Tử](docs/screenshots/screenshot_vexere_ticket_lookup.png)
+*Hình 11.9: Giao diện tra cứu vé tức thời theo mã đặt chỗ (`BK-*` hoặc `BKG-*`).*
+
+#### 6. Hồ Sơ Cá Nhân & Danh Sách Hành Khách Đi Cùng
+![Hồ Sơ Khách Hàng](docs/screenshots/screenshot_vexere_profile_authenticated.png)
+*Hình 11.10: Quản lý thông tin cá nhân, cập nhật số điện thoại và email nhận vé.*
+
+![Danh Sách Hành Khách Đi Cùng](docs/screenshots/screenshot_vexere_profile_travelers.png)
+*Hình 11.11: Danh sách hành khách đi cùng được lưu sẵn để tự động điền nhanh khi đặt vé các chuyến tiếp theo.*
+
+---
+
+### 11.3 Minh chứng Giao diện Quản trị Hệ thống (Admin Portal Journey)
+
+#### 1. Dashboard Quản Trị Trực Tiếp Từ Cơ Sở Dữ Liệu
+Toàn bộ 4 thẻ KPI (Doanh thu, Vé đã bán, Chuyến xe hoạt động, Khách hàng) và bảng giao dịch gần nhất được đồng bộ 100% thời gian thực từ CSDL qua endpoint `GET /api/v1/admin/dashboard/stats`.
+![Admin Dashboard Đồng Bộ CSDL](docs/screenshots/screenshot_admin_dashboard_synced.png)
+*Hình 11.12: Dashboard quản trị hiển thị dữ liệu thực tế từ cơ sở dữ liệu.*
+
+#### 2. Quản Lý Tuyến Đường Vận Tải (Routes Management)
+Quản lý danh sách các tuyến đường liên tỉnh, thời gian di chuyển, cự ly km và thêm mới tuyến đường trực tiếp vào CSDL.
+![Quản Lý Tuyến Đường](docs/screenshots/screenshot_admin_routes.png)
+*Hình 11.13: Danh sách các tuyến đường vận tải toàn sàn kết nối các đầu mối giao thông.*
+
+![Modal Thêm Tuyến Đường Mới](docs/screenshots/screenshot_admin_routes_modal.png)
+*Hình 11.14: Hộp thoại tạo mới tuyến đường liên tỉnh (chọn nhà xe, điểm đi, điểm đến, thời gian chạy, cự ly).*
+
+#### 3. Quản Lý & Thêm Mới Chuyến Xe Tự Sinh 34 Ghế (Trips Management)
+Xem lịch trình, lọc trạng thái và mở modal thêm chuyến xe mới tự động liên kết với tuyến đường và nhà xe, sinh đủ 34 ghế ngồi tầng 1/tầng 2.
+![Quản Lý Chuyến Xe Admin](docs/screenshots/screenshot_admin_trips.png)
+*Hình 11.15: Danh sách chuyến xe với bộ lọc theo ngày, điểm đi, điểm đến và trạng thái vận hành.*
+
+![Modal Thêm Chuyến Xe Mới](docs/screenshots/screenshot_admin_trips_modal.png)
+*Hình 11.16: Hộp thoại Thêm Chuyến Xe Mới — Tự động sinh kho 34 ghế ngồi (A01-A17, B01-B17) trong cơ sở dữ liệu.*
+
+#### 4. Quản Lý & Thêm Mới Đối Tác Nhà Xe (Bus Companies)
+Quản lý thông tin các hãng xe đối tác, hotline, địa chỉ và mở modal thêm nhà xe mới vào sàn.
+![Modal Thêm Đối Tác Nhà Xe Mới](docs/screenshots/screenshot_admin_companies_modal.png)
+*Hình 11.17: Hộp thoại Thêm Đối Tác Nhà Xe Mới — Đồng bộ và kích hoạt mở bán trên sàn.*
+
+#### 3. Quản Lý Danh Mục Ghế & Sơ Đồ Mẫu (Seat Types & Templates)
+Chuẩn hóa loại ghế (VIP, Giường nằm tiêu chuẩn, Ghế ngả cao cấp) và sơ đồ 1 tầng / 2 tầng.
+![Quản Lý Loại Ghế](docs/screenshots/screenshot_admin_seat_types.png)
+*Hình 11.14: Quản lý danh mục loại ghế, hệ số giá và mô tả tiện ích.*
+
+#### 4. Quản Lý Địa Điểm & Bến Xe Đón Trả (Locations)
+Cấu hình danh mục các tỉnh thành phố, bến xe trung tâm, điểm đón trả trung chuyển trên toàn quốc.
+![Quản Lý Địa Điểm & Bến Xe](docs/screenshots/screenshot_admin_locations.png)
+*Hình 11.15: Quản trị các đầu mối giao thông và bến xe phục vụ tuyến đường.*
+
+#### 5. Cấu Hình Cổng Thanh Toán & Tích Hợp (Payment Gateways)
+Bật / tắt các cổng thanh toán (VNPAY, VietQR, MoMo, COD) và quản trị cấu hình gửi thông báo.
+![Cấu Hình Cổng Thanh Toán](docs/screenshots/screenshot_admin_gateways.png)
+*Hình 11.16: Quản lý trạng thái hoạt động của các cổng thanh toán và dịch vụ tích hợp.*
+
+#### 6. Quản Lý Người Dùng & Cơ Chế Khóa Tài Khoản (User Management & Security)
+Quản trị viên có quyền kiểm soát tài khoản, phân quyền Role và khóa/mở khóa (`ACTIVE` / `LOCKED`) tài khoản vi phạm.
+![Quản Lý Người Dùng & Phân Quyền](docs/screenshots/screenshot_admin_users.png)
+*Hình 11.17: Danh sách tài khoản người dùng, vai trò và trạng thái khóa/hoạt động.*
+
+---
+
+### 11.4 Minh chứng Giao diện & Kiểm soát Đối tác Nhà xe (Company Portal & Security Guard)
+
+#### 1. Đăng Nhập Đối Tác Nhà Xe Chuyên Biệt
+Phân hệ Đối tác Nhà xe sở hữu trang đăng nhập riêng biệt (`/company/login`) với giao diện màu xanh ngọc chuyên nghiệp (`#0F766E`).
+![Đăng Nhập Đối Tác Nhà Xe](docs/screenshots/screenshot_company_login.png)
+*Hình 11.18: Giao diện đăng nhập dành riêng cho nhân viên và điều hành viên nhà xe đối tác.*
+
+#### 2. Kiểm Soát Quyền Truy Cập (Company Auth Guard)
+Cơ chế bảo mật `CompanyAuthGuard` tự động ngăn chặn truy cập trái phép. Khách vãng lai hoặc tài khoản khách hàng thông thường khi cố truy cập `/company/*` sẽ bị chặn với mã 403 Forbidden và điều hướng về trang thông báo thân thiện.
+![Chặn Truy Cập Phân Hệ Đối Tác](docs/screenshots/screenshot_company_auth_guard.png)
+*Hình 11.19: Thông báo từ chối truy cập khi người dùng không sở hữu quyền Nhà Xe (`ROLE_OPERATOR`).*
+
+#### 3. Bảng Điều Khiển Nhà Xe & Kế Hoạch Tính Năng Mở Rộng
+Hệ thống đã chuẩn bị sẵn Dashboard điều hành cho nhà xe (`/company/dashboard`) và thông báo tính năng đối tác đang được hoàn thiện theo lộ trình phát triển.
+![Dashboard Đối Tác Nhà Xe](docs/screenshots/screenshot_company_dashboard.png)
+*Hình 11.20: Dashboard điều hành dành riêng cho nhà xe đối tác.*
+
+![Thông Báo Tính Năng Đối Tác Đang Phát Triển](docs/screenshots/screenshot_company_unsupported.png)
+*Hình 11.21: Trang thông báo đăng ký đối tác nhà xe mới đang trong giai đoạn tiếp nhận hồ sơ.*
 
 ---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  

@@ -69,6 +69,11 @@ export const CustomerAuthPage: React.FC = () => {
         toast.success(`Đăng nhập thành công! Chào mừng ${authData.fullName}.`, 'Xác Thực Thành Công');
         setSuccessMessage(`Đăng nhập thành công! Chào mừng ${authData.fullName}.`);
         setTimeout(() => {
+          const redirectParam = new URLSearchParams(location.search).get('redirect') || (location.state as any)?.from;
+          if (redirectParam) {
+            navigate(redirectParam);
+            return;
+          }
           // If customer, redirect home. If admin, redirect admin dashboard.
           if (authData.role === 'ADMIN') {
             navigate('/admin/dashboard');
@@ -631,6 +636,38 @@ export const CustomerAuthPage: React.FC = () => {
                   }}
                 >
                   {loading ? 'Đang xác thực...' : 'ĐĂNG NHẬP NGAY →'}
+                </button>
+
+                {/* DEMO 1-CLICK TEST CUSTOMER LOGIN */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginIdentifier('0912345678');
+                    setLoginPassword('Rikkei@123');
+                    setTimeout(() => {
+                      const form = document.querySelector('form');
+                      if (form) form.requestSubmit();
+                    }, 150);
+                  }}
+                  style={{
+                    marginTop: '12px',
+                    backgroundColor: '#eff6ff',
+                    color: '#2563eb',
+                    border: '1.5px dashed #3b82f6',
+                    borderRadius: '10px',
+                    padding: '11px',
+                    width: '100%',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  ⚡ [DEMO BẢO VỆ] Đăng Nhập Nhanh Khách Hàng (0912 345 678)
                 </button>
 
                 {/* SOCIAL DIVIDER */}

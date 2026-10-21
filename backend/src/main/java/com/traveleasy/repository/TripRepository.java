@@ -21,6 +21,7 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
           AND (CAST(:startTime AS java.time.LocalDateTime) IS NULL OR t.departureTime >= :startTime)
           AND (CAST(:endTime AS java.time.LocalDateTime) IS NULL OR t.departureTime <= :endTime)
           AND (:status IS NULL OR t.status = :status)
+          AND (c.status IS NULL OR UPPER(c.status) = 'ACTIVE')
         ORDER BY t.departureTime ASC
     """)
     List<Trip> searchTrips(
@@ -33,4 +34,5 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     List<Trip> findByRouteIdAndDepartureTimeBetween(Long routeId, LocalDateTime start, LocalDateTime end);
     long countByStatus(TripStatus status);
+    List<Trip> findAllByOrderByDepartureTimeDesc();
 }
