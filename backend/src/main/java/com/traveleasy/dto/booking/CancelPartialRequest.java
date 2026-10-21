@@ -7,3 +7,4 @@ import java.util.List;
 public class CancelPartialRequest {
     private List<Long> ticketIds;
 }
+

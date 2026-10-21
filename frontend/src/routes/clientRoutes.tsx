@@ -6,6 +6,7 @@ import { CheckoutPage } from '../pages/customer/checkout/CheckoutPage';
 import { TicketLookupPage } from '../pages/customer/ticket-lookup/TicketLookupPage';
 import { CustomerAuthPage } from '../pages/customer/auth/CustomerAuthPage';
 import { MyTicketsPage } from '../pages/customer/my-tickets/MyTicketsPage';
+import { UserProfilePage } from '../pages/customer/profile/UserProfilePage';
 
 /**
  * =========================================================================
@@ -33,6 +34,9 @@ export const ClientRoutes: React.FC = () => {
       <Route path="/lookup" element={<TicketLookupPage />} />
       <Route path="/tickets/:code" element={<TicketLookupPage />} />
       <Route path="/my-tickets" element={<MyTicketsPage />} />
+
+      {/* Chức năng 8: Hồ sơ cá nhân & Sổ tay hành khách thân quen */}
+      <Route path="/profile" element={<UserProfilePage />} />
 
       {/* Các route mở rộng của phân hệ Users:
           - /trips/:tripId/seats: Chọn sơ đồ ghế 2 tầng (Thành viên 3)

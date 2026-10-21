@@ -78,9 +78,11 @@ export const Navbar: React.FC = () => {
             </a>
             {user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span
+                <Link
+                  to="/profile"
+                  title="Xem và chỉnh sửa hồ sơ cá nhân"
                   style={{
-                    backgroundColor: 'rgba(255,255,255,0.18)',
+                    backgroundColor: location.pathname === '/profile' ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.18)',
                     color: '#ffffff',
                     padding: '3px 10px',
                     borderRadius: '6px',
@@ -88,7 +90,9 @@ export const Navbar: React.FC = () => {
                     fontWeight: 600,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '6px',
+                    textDecoration: 'none',
+                    transition: 'all 0.15s ease'
                   }}
                 >
                   <User size={13} /> {user.fullName || user.email}
@@ -97,7 +101,7 @@ export const Navbar: React.FC = () => {
                       ADMIN
                     </span>
                   )}
-                </span>
+                </Link>
                 <button
                   onClick={handleLogout}
                   title="Đăng xuất"

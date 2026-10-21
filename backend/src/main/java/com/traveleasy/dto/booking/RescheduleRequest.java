@@ -8,3 +8,4 @@ public class RescheduleRequest {
     private Long newTripId;
     private String newSeatNumber;
 }
+

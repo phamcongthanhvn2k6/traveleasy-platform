@@ -295,3 +295,4 @@ export const PartialCancelModal: React.FC<Props> = ({ booking, onClose, onSucces
     </div>
   );
 };
+

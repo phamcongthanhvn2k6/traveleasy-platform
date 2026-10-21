@@ -373,3 +373,4 @@ export const RescheduleModal: React.FC<Props> = ({ booking, onClose, onSuccess }
     </div>
   );
 };
+
