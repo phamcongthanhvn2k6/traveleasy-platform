@@ -1146,7 +1146,25 @@ Dự án đã được cấu hình **Zero-Setup** để các thành viên nhóm,
 
 ---
 
-### Cách 1: Khởi chạy Trực tiếp Siêu Tốc (Khuyên dùng - Zero Config / In-Memory DB)
+### ⚡ CÁCH 1 (KHUYÊN DÙNG NHẤT): CHỈ 1 LỆNH `npm run dev` CHẠY CẢ FRONTEND VÀ BACKEND
+
+Tại thư mục gốc của dự án (`Nhom7_QUANLYNHAXE`), bạn chỉ cần chạy đúng **1 câu lệnh duy nhất**:
+
+```bash
+npm run dev
+```
+
+Hệ thống sẽ tự động điều phối chạy song song cả 2 dịch vụ:
+* ⚙️ **Backend (Spring Boot API)**: Khởi chạy tại `http://localhost:8080` (kèm Swagger UI tại `http://localhost:8080/swagger-ui.html`)
+* 🌐 **Frontend (Vite + React)**: Khởi chạy tại `http://localhost:5173/`
+
+> **Mẹo hữu ích:** 
+> * Nhấn `Ctrl + C` trong terminal bất cứ lúc nào để tắt đồng thời cả Backend và Frontend, tự động giải phóng hoàn toàn cổng 8080 và 5173 mà không bị kẹt tiến trình ngầm.
+> * Nếu đang ở trong thư mục `frontend/`, bạn cũng có thể gõ `npm run dev:all` để khởi chạy tương tự.
+
+---
+
+### Cách 2: Khởi chạy Trực tiếp Từng Terminal (Thủ công / In-Memory DB)
 *Không yêu cầu cài đặt MySQL hay Docker. Hệ thống tích hợp sẵn H2 In-Memory Database và `DataInitializer` tự động nạp 100% dữ liệu mẫu (3 Users, 4 Nhà xe, 4 Tuyến đường, 4 Chuyến xe, 136 Ghế ngồi và Vé điện tử mẫu).*
 
 #### Bước 1: Khởi chạy Backend (Terminal 1)

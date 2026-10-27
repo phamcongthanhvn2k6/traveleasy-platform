@@ -1,0 +1,26 @@
+{
+  "name": "traveleasy-platform",
+  "version": "1.0.0",
+  "description": "TravelEasy Bus Booking & Fleet Management Platform - Monorepo Runner",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node run-dev.mjs",
+    "dev:all": "node run-dev.mjs",
+    "dev:backend": "node -e \"import('./run-dev.mjs')\"",
+    "dev:frontend": "npm run --prefix frontend dev",
+    "build": "npm run --prefix frontend build",
+    "build:frontend": "npm run --prefix frontend build",
+    "build:backend": "cd backend && gradlew.bat build -x test",
+    "install:frontend": "npm install --prefix frontend"
+  },
+  "keywords": [
+    "traveleasy",
+    "spring-boot",
+    "react",
+    "vite",
+    "fullstack"
+  ],
+  "author": "Nhom 7",
+  "license": "ISC"
+}
