@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Trip } from '../../../../types';
-import { MapPin, Clock, ShieldCheck, Tag, Bus, ArrowRight } from 'lucide-react';
+import { MapPin, Clock, ShieldCheck, Tag, Bus, ArrowRight, Gift } from 'lucide-react';
 import { toast } from '../../../../context/ToastContext';
+import { VoucherModal, AVAILABLE_VOUCHERS } from '../../../../components/VoucherModal';
 
 interface Props {
   trip: Trip;
@@ -27,19 +28,21 @@ export const OrderSummaryPanel: React.FC<Props> = ({
   const [voucherCode, setVoucherCode] = useState('');
   const [discount, setDiscount] = useState(0);
   const [appliedCode, setAppliedCode] = useState('');
+  const [showVoucherModal, setShowVoucherModal] = useState(false);
 
   const seatCount = selectedSeats.length;
   const baseTicketPrice = seatCount * trip.price;
   const insurancePrice = hasInsurance ? seatCount * 25000 : 0;
   const finalTotal = Math.max(0, baseTicketPrice + insurancePrice - discount);
 
-  const handleApplyVoucher = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanCode = voucherCode.trim().toUpperCase();
+  const applyVoucherByCode = (code: string) => {
+    const cleanCode = code.trim().toUpperCase();
     if (!cleanCode) {
       toast.warning('Vui lòng nhập mã giảm giá!', 'Voucher');
       return;
     }
+
+    setVoucherCode(cleanCode);
 
     if (cleanCode === 'TRAVELEASY' || cleanCode === 'VEXEREVIP' || cleanCode === 'GIAM50K') {
       const discountValue = 50000;
@@ -48,14 +51,31 @@ export const OrderSummaryPanel: React.FC<Props> = ({
       onApplyVoucher(discountValue, cleanCode);
       toast.success(`Áp dụng mã ${cleanCode} thành công! Giảm ngay 50.000 đ`, 'Mã Ưu Đãi');
     } else if (cleanCode === 'GIAM20') {
-      const discountValue = Math.round(baseTicketPrice * 0.2);
+      const discountValue = Math.min(100000, Math.round(baseTicketPrice * 0.2));
       setDiscount(discountValue);
       setAppliedCode(cleanCode);
       onApplyVoucher(discountValue, cleanCode);
       toast.success(`Áp dụng mã ${cleanCode} thành công! Giảm 20% (${discountValue.toLocaleString('vi-VN')} đ)`, 'Mã Ưu Đãi');
+    } else if (cleanCode === 'HE2026') {
+      const discountValue = 30000;
+      setDiscount(discountValue);
+      setAppliedCode(cleanCode);
+      onApplyVoucher(discountValue, cleanCode);
+      toast.success(`Áp dụng mã ${cleanCode} thành công! Giảm ngay 30.000 đ`, 'Mã Ưu Đãi Hè');
+    } else if (cleanCode === 'DATSOM20K') {
+      const discountValue = 20000;
+      setDiscount(discountValue);
+      setAppliedCode(cleanCode);
+      onApplyVoucher(discountValue, cleanCode);
+      toast.success(`Áp dụng mã ${cleanCode} thành công! Giảm 20.000 đ`, 'Mã Đặt Sớm');
     } else {
       toast.error('Mã giảm giá không tồn tại hoặc đã hết hạn!', 'Mã Không Hợp Lệ');
     }
+  };
+
+  const handleApplyVoucher = (e: React.FormEvent) => {
+    e.preventDefault();
+    applyVoucherByCode(voucherCode);
   };
 
   const formatCurrency = (val: number) => {
@@ -137,7 +157,7 @@ export const OrderSummaryPanel: React.FC<Props> = ({
       </div>
 
       {/* Voucher Input Form */}
-      <form onSubmit={handleApplyVoucher} style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+      <form onSubmit={handleApplyVoucher} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
         <div style={{ position: 'relative', flex: 1 }}>
           <input
             type="text"
@@ -173,6 +193,34 @@ export const OrderSummaryPanel: React.FC<Props> = ({
           Áp dụng
         </button>
       </form>
+
+      {/* Available Vouchers Quick Button */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <button
+          type="button"
+          onClick={() => setShowVoucherModal(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#2563eb',
+            fontSize: '12px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            padding: 0,
+          }}
+        >
+          <Gift size={13} color="#2563eb" />
+          <span>Chọn mã ưu đãi ({AVAILABLE_VOUCHERS.length} mã có sẵn)</span>
+        </button>
+        {appliedCode && (
+          <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: 700 }}>
+            Đã dùng: {appliedCode}
+          </span>
+        )}
+      </div>
 
       {/* Price breakdown */}
       <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px' }}>
@@ -235,6 +283,15 @@ export const OrderSummaryPanel: React.FC<Props> = ({
       <div style={{ textAlign: 'center', fontSize: '11px', color: '#94a3b8', marginTop: '10px' }}>
         Bằng việc thanh toán, bạn cam kết tuân thủ chính sách vận tải.
       </div>
+
+      {/* Voucher Modal */}
+      <VoucherModal
+        isOpen={showVoucherModal}
+        onClose={() => setShowVoucherModal(false)}
+        onSelectVoucher={(code) => applyVoucherByCode(code)}
+        orderTotal={baseTicketPrice}
+        appliedCode={appliedCode}
+      />
     </div>
   );
 };

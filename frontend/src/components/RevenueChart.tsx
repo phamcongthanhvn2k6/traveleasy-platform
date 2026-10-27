@@ -296,3 +296,4 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
 };
 
 export default RevenueChart;
+
