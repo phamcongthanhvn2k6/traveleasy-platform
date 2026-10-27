@@ -38,4 +38,7 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     List<Trip> findByBusCompanyIdOrderByDepartureTimeDesc(Long busCompanyId);
     long countByBusCompanyId(Long busCompanyId);
     long countByBusCompanyIdAndStatus(Long busCompanyId, TripStatus status);
+
+    boolean existsByRouteId(Long routeId);
+    boolean existsByBusCompanyId(Long busCompanyId);
 }

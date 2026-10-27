@@ -2253,5 +2253,52 @@ Hệ thống đã tích hợp chính thức cổng thanh toán **PayOS** — gi�
 ---
 
 ---
+
+### 11.14 Hệ Thống Kiểm Soát Dữ Liệu Đầu Vào (Backend Validation), Xử Lý Ngoại Lệ Tập Trung & Khắc Phục Luồng Nghiệp Vụ Gây Lỗi
+
+Hệ thống đã được củng cố toàn diện tầng Backend nhằm đảm bảo tính toàn vẹn dữ liệu, kiểm soát luồng nghiệp vụ chặt chẽ và ngăn chặn triệt để các lỗ hổng / ngoại lệ phát sinh trong quá trình vận hành:
+
+#### 1. Kiến Trúc Xử Lý Ngoại Lệ Tập Trung Toàn Diện (`GlobalExceptionHandler`)
+* Cấu trúc phản hồi lỗi chuẩn RESTful qua `ApiResponse<T>`:
+  * `success: false`
+  * `message: String` (thông điệp lỗi thân thiện bằng tiếng Việt)
+  * `errors: Map<String, String>` (danh sách chi tiết từng trường bị lỗi định dạng / ràng buộc, hỗ trợ Frontend highlight ô nhập liệu màu đỏ)
+  * `timestamp: LocalDateTime`
+* **Xử lý chuyên sâu 11 nhóm ngoại lệ tiêu chuẩn**:
+  1. `MethodArgumentNotValidException`: Bắt lỗi bean validation `@Valid` từ các Request DTO và trả về mã lỗi 400 kèm chi tiết từng field lỗi.
+  2. `ConstraintViolationException`: Bắt lỗi vi phạm ràng buộc trên query parameter và path variable (400 Bad Request).
+  3. `HttpMessageNotReadableException`: Bắt lỗi JSON sai cú pháp hoặc truyền giá trị enum không hợp lệ (400 Bad Request).
+  4. `MethodArgumentTypeMismatchException`: Bắt lỗi sai kiểu dữ liệu tham số trên URL (VD: truyền chuỗi chữ vào ID kiểu số) (400 Bad Request).
+  5. `MissingServletRequestParameterException`: Bắt lỗi thiếu tham số bắt buộc `@RequestParam` (400 Bad Request).
+  6. `HttpRequestMethodNotSupportedException`: Xử lý khi gọi sai method HTTP (trả về 405 Method Not Allowed).
+  7. `AccessDeniedException`: Chặn truy cập trái quyền và trả về 403 Forbidden thay vì lỗi hệ thống.
+  8. `DataIntegrityViolationException`: Bắt lỗi vi phạm ràng buộc toàn vẹn cơ sở dữ liệu MySQL (Unique key, Foreign key) và trả về 409 Conflict với thông điệp nghiệp vụ rõ ràng, không làm lộ tên bảng hoặc câu lệnh SQL nội bộ.
+  9. `IllegalArgumentException` & `IllegalStateException`: Bắt lỗi nghiệp vụ tham số không hợp lệ (400 Bad Request).
+  10. `NoResourceFoundException`: Bắt đường dẫn API hoặc tài nguyên tĩnh không tồn tại và trả về 404 Not Found.
+  11. `Exception (Fallback Handler)`: Bắt lỗi bất ngờ ở mức hệ thống, tự động ghi log lỗi bằng SLF4J và trả về mã 500 kèm thông điệp bảo mật, tuyệt đối không làm lộ stack trace ra môi trường sản xuất.
+
+#### 2. Chuẩn Hóa Ràng Buộc Dữ Liệu (Jakarta Bean Validation) Trên Toàn Bộ DTOs
+* **`CreateBookingRequest`**: Kiểm soát số điện thoại định dạng chuẩn Việt Nam (`^(0|\+84)[0-9]{9,10}$`), kiểm tra định dạng email `@Email`, bắt buộc danh sách ghế chọn không được rỗng (`@NotEmpty`).
+* **`CreateTripRequest` & `UpdateTripRequest`**: Ràng buộc giá vé tối thiểu từ 1.000 VNĐ (`@DecimalMin("1000")`), số ghế xe hợp lệ từ 1 đến 100 ghế (`@Min(1)`, `@Max(100)`).
+* **`CreateRouteRequest`**: Ràng buộc thời gian di chuyển dự kiến phải lớn hơn 0 giờ (`@DecimalMin("0.1")`) và quãng đường tối thiểu từ 1 km (`@DecimalMin("1.0")`).
+* **`CreateBusCompanyRequest`**: Ràng buộc số hotline nhà xe theo chuẩn tổng đài hoặc di động (`^(0|\+84|1900|1800)[0-9]{6,10}$`).
+* **`ChangePasswordRequest` & `UpdateProfileRequest`**: Bắt buộc mật khẩu mới tối thiểu 6 ký tự, số điện thoại đúng định dạng.
+* Kích hoạt đầy đủ chú thích `@Valid` trên tất cả các Controller (`BookingController`, `AdminTripController`, `CompanyManagementController`, `AdminManagementController`, `AuthController`).
+
+#### 3. Khắc Phục Triệt Để 7 Luồng Nghiệp Vụ Gây Lỗi (Error-prone Flows)
+1. **Chặn đặt vé cho chuyến xe trong quá khứ**: `BookingService.createBooking()` kiểm tra chặt chẽ `trip.getDepartureTime() >= LocalDateTime.now()` và trạng thái chuyến `TripStatus.SCHEDULED`.
+2. **Chặn hủy vé / đổi chuyến sau khi xe đã xuất bến**: Khi chuyến xe đã khởi hành hoặc đơn vé đã ở trạng thái `COMPLETED`, hệ thống từ chối hủy/đổi và hướng dẫn liên hệ trực tiếp nhà xe.
+3. **Chặn đổi vé (Reschedule) sang cùng chuyến và ghế hiện tại**: Phát hiện và báo lỗi ngay nếu hành khách chọn lại chính chuyến xe và ghế đang ngồi.
+4. **Ngăn chặn xóa cứng gây lỗi khóa ngoại (Foreign Key Integrity)**:
+   * Không cho phép xóa chuyến xe (`AdminTripService.deleteTrip()`) nếu đã có hành khách đặt vé trong CSDL (`bookingRepository.existsByTripId`). Thay vào đó yêu cầu chuyển trạng thái chuyến sang `CANCELLED`.
+   * Không cho phép xóa nhà xe hoặc tuyến đường nếu đang có các chuyến xe trực thuộc đang hoạt động.
+   * Không cho phép xóa người dùng nếu tài khoản đã có lịch sử đơn vé (chuyển sang khóa tài khoản `LOCKED`).
+5. **Chống trùng lặp số điện thoại khi cập nhật Profile**: `AuthService.updateProfile()` kiểm tra tính duy nhất của số điện thoại qua `existsByPhoneAndIdNot`, tránh xung đột định danh.
+6. **Chống đổi mật khẩu trùng mật khẩu cũ**: `AuthService.changePassword()` bắt buộc mật khẩu mới phải khác mật khẩu hiện tại.
+7. **Cơ chế Idempotency cho Webhook thanh toán**: `PaymentService.confirmVietQrTransfer()` tự động kiểm tra nếu đơn vé đã được thanh toán thành công từ trước thì trả kết quả thành công ngay, tránh ghi đè dữ liệu hoặc xuất vé trùng khi Webhook gửi nhiều lần.
+
+---
+
+---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  
 *Chúc toàn đội bảo vệ thành công rực rỡ!*

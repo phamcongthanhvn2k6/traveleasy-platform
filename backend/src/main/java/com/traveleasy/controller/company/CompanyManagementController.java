@@ -18,6 +18,7 @@ import com.traveleasy.service.admin.AdminTripService;
 import com.traveleasy.service.customer.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -94,7 +95,7 @@ public class CompanyManagementController {
 
     @PostMapping("/trips")
     @Operation(summary = "Tạo chuyến xe mới vào CSDL thực tế cho nhà xe (Tự động sinh kho ghế 34 chỗ)")
-    public ApiResponse<TripResponse> createCompanyTrip(@RequestBody CreateTripRequest request) {
+    public ApiResponse<TripResponse> createCompanyTrip(@Valid @RequestBody CreateTripRequest request) {
         if (request.getBusCompanyId() == null) {
             request.setBusCompanyId(1L);
         }
@@ -103,7 +104,7 @@ public class CompanyManagementController {
 
     @PutMapping("/trips/{id}")
     @Operation(summary = "Cập nhật thông tin chuyến xe trên CSDL thực tế")
-    public ApiResponse<TripResponse> updateCompanyTrip(@PathVariable Long id, @RequestBody UpdateTripRequest request) {
+    public ApiResponse<TripResponse> updateCompanyTrip(@PathVariable Long id, @Valid @RequestBody UpdateTripRequest request) {
         return ApiResponse.success("Cập nhật thông tin chuyến xe thành công", adminTripService.updateTrip(id, request));
     }
 
@@ -134,7 +135,7 @@ public class CompanyManagementController {
 
     @PostMapping("/routes")
     @Operation(summary = "Tạo mới tuyến đường vào CSDL thực tế cho nhà xe")
-    public ApiResponse<RouteAdminResponse> createCompanyRoute(@RequestBody CreateRouteRequest request) {
+    public ApiResponse<RouteAdminResponse> createCompanyRoute(@Valid @RequestBody CreateRouteRequest request) {
         if (request.getBusCompanyId() == null) {
             request.setBusCompanyId(1L);
         }
@@ -145,7 +146,7 @@ public class CompanyManagementController {
     @Operation(summary = "Cập nhật tuyến đường trong CSDL thực tế")
     public ApiResponse<RouteAdminResponse> updateCompanyRoute(
             @PathVariable Long id,
-            @RequestBody CreateRouteRequest request) {
+            @Valid @RequestBody CreateRouteRequest request) {
         return ApiResponse.success("Cập nhật tuyến đường thành công", adminManagementService.updateRoute(id, request));
     }
 

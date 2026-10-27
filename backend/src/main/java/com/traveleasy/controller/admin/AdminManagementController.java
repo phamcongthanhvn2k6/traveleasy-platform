@@ -40,7 +40,7 @@ public class AdminManagementController {
 
     @PutMapping("/users/{id}")
     @Operation(summary = "Cập nhật thông tin người dùng (Họ tên, SĐT, Vai trò)")
-    public ApiResponse<UserAdminResponse> updateUser(@PathVariable Long id, @RequestBody CreateUserRequest request) {
+    public ApiResponse<UserAdminResponse> updateUser(@PathVariable Long id, @Valid @RequestBody CreateUserRequest request) {
         return ApiResponse.success("Cập nhật người dùng thành công", adminManagementService.updateUser(id, request));
     }
 
@@ -78,7 +78,7 @@ public class AdminManagementController {
     @Operation(summary = "Cập nhật thông tin đối tác nhà xe")
     public ApiResponse<BusCompanyAdminResponse> updateBusCompany(
             @PathVariable Long id,
-            @RequestBody CreateBusCompanyRequest request) {
+            @Valid @RequestBody CreateBusCompanyRequest request) {
         return ApiResponse.success("Cập nhật nhà xe thành công", adminManagementService.updateBusCompany(id, request));
     }
 

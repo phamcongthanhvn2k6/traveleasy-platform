@@ -30,6 +30,13 @@ public class AdminTripService {
 
     @Transactional
     public TripResponse createTrip(CreateTripRequest request) {
+        if (request.getArrivalTime().isBefore(request.getDepartureTime())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Thời gian đến phải sau thời gian khởi hành");
+        }
+        if (request.getDepartureTime().isBefore(java.time.LocalDateTime.now())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Thời gian khởi hành không được ở trong quá khứ");
+        }
+
         BusCompany company = busCompanyRepository.findById(request.getBusCompanyId())
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
 
@@ -103,6 +110,12 @@ public class AdminTripService {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe"));
 
+        java.time.LocalDateTime dep = request.getDepartureTime() != null ? request.getDepartureTime() : trip.getDepartureTime();
+        java.time.LocalDateTime arr = request.getArrivalTime() != null ? request.getArrivalTime() : trip.getArrivalTime();
+        if (arr != null && dep != null && arr.isBefore(dep)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Thời gian đến phải sau thời gian khởi hành");
+        }
+
         if (request.getDepartureTime() != null) trip.setDepartureTime(request.getDepartureTime());
         if (request.getArrivalTime() != null) trip.setArrivalTime(request.getArrivalTime());
         if (request.getBusType() != null) trip.setBusType(request.getBusType());
@@ -115,6 +128,10 @@ public class AdminTripService {
     public void deleteTrip(Long tripId) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe"));
+
+        if (bookingRepository.existsByTripId(tripId)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Không thể xóa chuyến xe đã có hành khách đặt vé. Vui lòng chuyển trạng thái sang CANCELLED thay vì xóa.");
+        }
 
         tripSeatRepository.deleteAll(tripSeatRepository.findByTripIdOrderByFloorAscSeatCodeAsc(tripId));
         tripRepository.delete(trip);

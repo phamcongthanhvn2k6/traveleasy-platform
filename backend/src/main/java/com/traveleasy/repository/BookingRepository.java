@@ -18,6 +18,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByPassengerPhoneOrderByCreatedAtDesc(String passengerPhone);
     long countByStatus(BookingStatus status);
 
+    boolean existsByTripId(Long tripId);
+    boolean existsByUserId(Long userId);
+
     @Query("SELECT COALESCE(SUM(b.totalAmount), 0) FROM Booking b WHERE b.status = com.traveleasy.entity.BookingStatus.CONFIRMED")
     BigDecimal sumTotalRevenue();
 

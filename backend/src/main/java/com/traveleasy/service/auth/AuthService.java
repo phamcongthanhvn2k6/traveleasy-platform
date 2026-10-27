@@ -104,7 +104,11 @@ public class AuthService {
             user.setFullName(fullName.trim());
         }
         if (phone != null && !phone.trim().isEmpty()) {
-            user.setPhone(phone.trim());
+            String trimmedPhone = phone.trim();
+            if (userRepository.existsByPhoneAndIdNot(trimmedPhone, user.getId())) {
+                throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS, "Số điện thoại này đã được sử dụng bởi tài khoản khác");
+            }
+            user.setPhone(trimmedPhone);
         }
 
         userRepository.save(user);
@@ -125,6 +129,14 @@ public class AuthService {
 
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new AppException(ErrorCode.UNAUTHORIZED, "Mật khẩu hiện tại không chính xác");
+        }
+
+        if (oldPassword.equals(newPassword)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Mật khẩu mới không được trùng với mật khẩu hiện tại");
+        }
+
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Mật khẩu mới phải có tối thiểu 6 ký tự");
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));

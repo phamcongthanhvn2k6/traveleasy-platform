@@ -297,6 +297,22 @@ public class PaymentService {
                     return paymentTransactionRepository.save(newTxn);
                 });
 
+        if (transaction.getStatus() == PaymentStatus.SUCCESS && booking.getStatus() == BookingStatus.CONFIRMED) {
+            log.info("VietQR Confirm: Đơn {} đã được xác nhận thanh toán trước đó (Idempotent)", bookingCode);
+            return PaymentStatusResponse.builder()
+                    .bookingCode(bookingCode)
+                    .txnRef(transaction.getTxnRef())
+                    .paymentStatus(PaymentStatus.SUCCESS)
+                    .bookingStatus(BookingStatus.CONFIRMED)
+                    .paymentMethod(PaymentMethod.VIETQR)
+                    .amount(transaction.getAmount())
+                    .transactionNo(transaction.getTransactionNo())
+                    .payDate(transaction.getPayDate())
+                    .isPaid(true)
+                    .message("Đơn đặt vé đã được thanh toán thành công trước đó")
+                    .build();
+        }
+
         transaction.setStatus(PaymentStatus.SUCCESS);
         transaction.setTransactionNo(manualRef != null ? manualRef : "VQR-" + System.currentTimeMillis());
         transaction.setBankCode("MB");

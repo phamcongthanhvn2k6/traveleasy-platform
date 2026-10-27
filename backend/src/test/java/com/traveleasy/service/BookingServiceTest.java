@@ -123,5 +123,63 @@ class BookingServiceTest {
         assertEquals(ErrorCode.SEAT_ALREADY_BOOKED, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("vừa được người khác đặt"));
     }
+
+    @Test
+    @DisplayName("Ném ngoại lệ VALIDATION_ERROR khi đặt vé chuyến xe đã khởi hành trong quá khứ")
+    void testCreateBooking_TripDepartureInPast() {
+        sampleTrip.setDepartureTime(java.time.LocalDateTime.now().minusHours(2));
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(sampleTrip));
+
+        AppException ex = assertThrows(AppException.class, () ->
+                bookingService.createBooking(bookingRequest, null)
+        );
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("đã khởi hành"));
+    }
+
+    @Test
+    @DisplayName("Ném ngoại lệ VALIDATION_ERROR khi hủy đơn vé của chuyến xe đã khởi hành")
+    void testCancelBooking_TripAlreadyDeparted() {
+        Booking booking = new Booking();
+        booking.setId(10L);
+        booking.setStatus(BookingStatus.CONFIRMED);
+        sampleTrip.setDepartureTime(java.time.LocalDateTime.now().minusMinutes(30));
+        booking.setTrip(sampleTrip);
+
+        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+
+        AppException ex = assertThrows(AppException.class, () ->
+                bookingService.cancelBooking(10L, null)
+        );
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("đã khởi hành"));
+    }
+
+    @Test
+    @DisplayName("Ném ngoại lệ VALIDATION_ERROR khi đổi vé sang trùng chuyến và ghế hiện tại")
+    void testRescheduleTicket_SameTripAndSeat() {
+        Booking booking = new Booking();
+        booking.setId(10L);
+        booking.setStatus(BookingStatus.CONFIRMED);
+        sampleTrip.setDepartureTime(java.time.LocalDateTime.now().plusDays(2));
+        booking.setTrip(sampleTrip);
+
+        Ticket ticket = new Ticket();
+        ticket.setId(100L);
+        ticket.setSeatNumber("A01");
+        ticket.setStatus(TicketStatus.ISSUED);
+
+        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+        when(ticketRepository.findById(100L)).thenReturn(Optional.of(ticket));
+
+        AppException ex = assertThrows(AppException.class, () ->
+                bookingService.rescheduleTicket(10L, 100L, 1L, "A01", null)
+        );
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("trùng chuyến xe và ghế"));
+    }
 }
 

@@ -31,6 +31,8 @@ public class AdminManagementService {
     private final CancellationPolicyRepository cancellationPolicyRepository;
     private final AuditLogRepository auditLogRepository;
     private final RouteRepository routeRepository;
+    private final BookingRepository bookingRepository;
+    private final TripRepository tripRepository;
     private final PasswordEncoder passwordEncoder;
 
     // ==========================================
@@ -112,6 +114,9 @@ public class AdminManagementService {
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy người dùng"));
         if ("admin@traveleasy.vn".equalsIgnoreCase(user.getEmail())) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Không thể xoá tài khoản Quản trị viên tối cao!");
+        }
+        if (bookingRepository.existsByUserId(id)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Không thể xoá tài khoản này vì đã có lịch sử đơn đặt vé. Vui lòng sử dụng tính năng KHÓA TÀI KHOẢN (LOCKED).");
         }
         userRepository.delete(user);
         logAction("admin@traveleasy.vn", "DELETE_USER", "users #" + id, "{\"email\": \"" + user.getEmail() + "\"}", "-");
@@ -200,6 +205,9 @@ public class AdminManagementService {
     public void deleteBusCompany(Long id) {
         BusCompany company = busCompanyRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
+        if (tripRepository.existsByBusCompanyId(id)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Không thể xoá nhà xe này vì đang có các chuyến xe trên hệ thống. Vui lòng chuyển trạng thái sang TẠM NGƯNG (SUSPENDED).");
+        }
         busCompanyRepository.delete(company);
         logAction("admin@traveleasy.vn", "DELETE_COMPANY", "bus_companies #" + id, "{\"name\": \"" + company.getName() + "\"}", "-");
     }
@@ -471,6 +479,11 @@ public class AdminManagementService {
 
     @Transactional
     public RouteAdminResponse createRoute(CreateRouteRequest request) {
+        if (request.getDepartureLocation() != null && request.getArrivalLocation() != null &&
+                request.getDepartureLocation().trim().equalsIgnoreCase(request.getArrivalLocation().trim())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Điểm khởi hành và điểm đến không được trùng nhau");
+        }
+
         BusCompany company = busCompanyRepository.findById(request.getBusCompanyId())
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
 
@@ -505,6 +518,9 @@ public class AdminManagementService {
     public void deleteRoute(Long id) {
         Route route = routeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy tuyến đường"));
+        if (tripRepository.existsByRouteId(id)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Không thể xoá tuyến đường này vì đang có các chuyến xe trực thuộc. Vui lòng huỷ hoặc xoá các chuyến xe trước.");
+        }
         routeRepository.delete(route);
         logAction("admin@traveleasy.vn", "DELETE_ROUTE", "routes #" + id, "{\"from\": \"" + route.getDepartureLocation() + "\", \"to\": \"" + route.getArrivalLocation() + "\"}", "-");
     }

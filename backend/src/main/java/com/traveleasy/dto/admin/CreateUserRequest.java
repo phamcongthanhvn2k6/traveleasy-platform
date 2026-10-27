@@ -2,6 +2,7 @@ package com.traveleasy.dto.admin;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +23,8 @@ public class CreateUserRequest {
     @NotBlank(message = "Họ tên không được để trống")
     private String fullName;
 
+    @Pattern(regexp = "^(0|\\+84)[0-9]{9,10}$", message = "Số điện thoại không đúng định dạng (10 số)")
     private String phone;
+
     private String role; // ADMIN, OPERATOR, CUSTOMER
 }
-

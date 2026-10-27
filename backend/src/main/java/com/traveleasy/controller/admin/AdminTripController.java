@@ -56,7 +56,7 @@ public class AdminTripController {
     @Operation(summary = "Cập nhật thông tin chuyến xe (giờ chạy, loại xe, giá vé)")
     public ApiResponse<TripResponse> updateTrip(
             @PathVariable Long id,
-            @RequestBody com.traveleasy.dto.admin.UpdateTripRequest request) {
+            @Valid @RequestBody com.traveleasy.dto.admin.UpdateTripRequest request) {
         return ApiResponse.success("Cập nhật chuyến xe thành công", adminTripService.updateTrip(id, request));
     }
 
