@@ -1,6 +1,6 @@
 import api from './api';
 
-export type PaymentMethod = 'VNPAY' | 'VIETQR' | 'MOMO' | 'ZALOPAY' | 'COD';
+export type PaymentMethod = 'PAYOS' | 'VIETQR' | 'VNPAY' | 'MOMO' | 'ZALOPAY' | 'COD';
 
 export interface PaymentInitRequest {
   bookingCode: string;

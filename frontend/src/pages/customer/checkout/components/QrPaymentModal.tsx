@@ -7,6 +7,7 @@ interface Props {
   bookingCode: string;
   totalAmount: number;
   qrCodeUrl?: string;
+  paymentUrl?: string;
   bankDetails?: BankTransferDetails;
   onSuccess: () => void;
   onClose: () => void;
@@ -16,6 +17,7 @@ export const QrPaymentModal: React.FC<Props> = ({
   bookingCode,
   totalAmount,
   qrCodeUrl,
+  paymentUrl,
   bankDetails,
   onSuccess,
   onClose,
@@ -28,14 +30,14 @@ export const QrPaymentModal: React.FC<Props> = ({
   const [isSuccess, setIsSuccess] = useState(false);
 
   const bankName = bankDetails?.bankName || 'MB Bank (Ngân hàng Quân Đội)';
-  const accountNumber = bankDetails?.accountNumber || '0988123456789';
-  const accountHolder = bankDetails?.accountHolder || 'CONG TY CP CONG NGHE TRAVELEASY VIET NAM';
+  const accountNumber = bankDetails?.accountNumber || '0944 3543 98';
+  const accountHolder = bankDetails?.accountHolder || 'PHAM CONG THANH';
   const transferContent = bankDetails?.transferContent || `TRAVELEASY ${bookingCode}`;
 
-  // VietQR Napas 24/7 QuickPay Image URL
+  // VietQR Napas 24/7 QuickPay Image URL (MB Bank - PHAM CONG THANH)
   const qrImage =
     qrCodeUrl ||
-    `https://img.vietqr.io/image/MB-0988123456789-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(
+    `https://img.vietqr.io/image/970422-0944354398-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(
       transferContent
     )}&accountName=${encodeURIComponent(accountHolder)}`;
 
@@ -260,6 +262,33 @@ export const QrPaymentModal: React.FC<Props> = ({
                 Tự động nhận diện số tiền & nội dung
               </div>
             </div>
+
+            {paymentUrl && (
+              <div style={{ marginBottom: '16px' }}>
+                <a
+                  href={paymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    backgroundColor: '#059669',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '13.5px',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 6px rgba(5, 150, 105, 0.25)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  🔗 Mở Cổng Thanh Toán PayOS (Trang Chính Thức) ➔
+                </a>
+              </div>
+            )}
 
             {/* Bank details table */}
             <div

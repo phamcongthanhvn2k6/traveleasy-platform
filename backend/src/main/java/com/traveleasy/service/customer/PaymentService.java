@@ -2,6 +2,7 @@ package com.traveleasy.service.customer;
 
 import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.exception.ErrorCode;
+import com.traveleasy.config.PayOsConfig;
 import com.traveleasy.config.VnPayConfig;
 import com.traveleasy.dto.payment.PaymentInitRequest;
 import com.traveleasy.dto.payment.PaymentInitResponse;
@@ -32,6 +33,8 @@ public class PaymentService {
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final TicketRepository ticketRepository;
     private final VnPayConfig vnPayConfig;
+    private final PayOsConfig payOsConfig;
+    private final PayOsService payOsService;
 
     @Transactional
     public PaymentInitResponse initiatePayment(PaymentInitRequest request, String ipAddress) {
@@ -73,21 +76,30 @@ public class PaymentService {
                 responseBuilder.paymentUrl(vnpayUrl);
                 break;
 
+            case PAYOS:
+                PaymentInitResponse payOsRes = payOsService.createPayOsPayment(booking, txnRef);
+                responseBuilder.paymentUrl(payOsRes.getPaymentUrl());
+                responseBuilder.qrCodeUrl(payOsRes.getQrCodeUrl());
+                responseBuilder.bankDetails(payOsRes.getBankDetails());
+                break;
+
             case VIETQR:
                 String vietQrContent = "TRAVELEASY " + booking.getBookingCode();
                 String vietQrUrl = String.format(
-                        "https://img.vietqr.io/image/MB-0988123456789-compact2.png?amount=%d&addInfo=%s&accountName=%s",
+                        "https://img.vietqr.io/image/%s-%s-compact2.png?amount=%d&addInfo=%s&accountName=%s",
+                        payOsConfig.getBankBin(),
+                        payOsConfig.getAccountNumber(),
                         booking.getTotalAmount().longValue(),
                         URLEncoder.encode(vietQrContent, StandardCharsets.UTF_8),
-                        URLEncoder.encode("CONG TY CP CONG NGHE TRAVELEASY VIET NAM", StandardCharsets.UTF_8)
+                        URLEncoder.encode(payOsConfig.getAccountHolder(), StandardCharsets.UTF_8)
                 );
 
                 responseBuilder.qrCodeUrl(vietQrUrl);
                 responseBuilder.bankDetails(PaymentInitResponse.BankTransferDetails.builder()
-                        .bankName("MB Bank (Ngân hàng Quân Đội)")
-                        .bankCode("MB")
-                        .accountNumber("0988123456789")
-                        .accountHolder("CONG TY CP CONG NGHE TRAVELEASY VIET NAM")
+                        .bankName(payOsConfig.getBankName())
+                        .bankCode(payOsConfig.getBankCode())
+                        .accountNumber(payOsConfig.getAccountNumber())
+                        .accountHolder(payOsConfig.getAccountHolder())
                         .transferContent(vietQrContent)
                         .amount(booking.getTotalAmount())
                         .build());
@@ -314,6 +326,35 @@ public class PaymentService {
                 .isPaid(true)
                 .message("Xác nhận chuyển khoản VietQR thành công!")
                 .build();
+    }
+
+    @Transactional
+    public PaymentStatusResponse processPayOsWebhook(Map<String, Object> webhookData) {
+        log.info("PayOS Webhook received: {}", webhookData);
+        Map<String, Object> data = null;
+        if (webhookData.get("data") instanceof Map) {
+            data = (Map<String, Object>) webhookData.get("data");
+        } else {
+            data = webhookData;
+        }
+
+        String description = String.valueOf(data.getOrDefault("description", ""));
+        String bookingCode = null;
+        if (description.contains("BK-")) {
+            int idx = description.indexOf("BK-");
+            bookingCode = description.substring(idx).trim();
+            if (bookingCode.contains(" ")) {
+                bookingCode = bookingCode.split(" ")[0];
+            }
+        }
+
+        if (bookingCode == null) {
+            log.warn("PayOS Webhook: Không tìm thấy mã bookingCode trong description: {}", description);
+            return PaymentStatusResponse.builder().message("Không tìm thấy mã đơn đặt vé trong dữ liệu PayOS").build();
+        }
+
+        String reference = String.valueOf(data.getOrDefault("reference", "PAYOS-" + System.currentTimeMillis()));
+        return confirmVietQrTransfer(bookingCode, reference);
     }
 
     @Transactional

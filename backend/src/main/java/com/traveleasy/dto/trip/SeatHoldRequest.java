@@ -15,3 +15,4 @@ public class SeatHoldRequest {
     private List<String> seatCodes;
     private String sessionId;
 }
+

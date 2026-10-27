@@ -21,3 +21,4 @@ public class SeatUpdateEvent {
     @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
 }
+

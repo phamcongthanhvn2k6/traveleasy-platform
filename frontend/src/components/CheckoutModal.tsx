@@ -16,7 +16,7 @@ export const CheckoutModal: React.FC<Props> = ({ trip, selectedSeats, points, on
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'CASH_ON_BOARD' | 'VNPAY'>('CASH_ON_BOARD');
+  const [paymentMethod, setPaymentMethod] = useState<'CASH_ON_BOARD' | 'PAYOS' | 'VNPAY'>('PAYOS');
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -246,30 +246,30 @@ export const CheckoutModal: React.FC<Props> = ({ trip, selectedSeats, points, on
 
           <div>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Hình thức thanh toán</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
               <button
                 type="button"
-                onClick={() => setPaymentMethod('CASH_ON_BOARD')}
+                onClick={() => setPaymentMethod('PAYOS')}
                 style={{
-                  padding: '12px',
+                  padding: '10px 8px',
                   borderRadius: '8px',
-                  border: paymentMethod === 'CASH_ON_BOARD' ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                  backgroundColor: paymentMethod === 'CASH_ON_BOARD' ? '#eff6ff' : '#fff',
+                  border: paymentMethod === 'PAYOS' ? '2px solid #059669' : '1px solid #cbd5e1',
+                  backgroundColor: paymentMethod === 'PAYOS' ? '#ecfdf5' : '#fff',
                   cursor: 'pointer',
                   textAlign: 'left'
                 }}
               >
-                <div style={{ fontWeight: 700, fontSize: '13px', color: paymentMethod === 'CASH_ON_BOARD' ? '#1e40af' : '#1e293b' }}>
-                  💵 Tiền mặt khi lên xe
+                <div style={{ fontWeight: 700, fontSize: '12px', color: paymentMethod === 'PAYOS' ? '#065f46' : '#1e293b' }}>
+                  ⚡ PayOS (MB Bank)
                 </div>
-                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>Thanh toán cho tài xế/phụ xe</div>
+                <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '2px' }}>Quét VietQR Napas</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setPaymentMethod('VNPAY')}
                 style={{
-                  padding: '12px',
+                  padding: '10px 8px',
                   borderRadius: '8px',
                   border: paymentMethod === 'VNPAY' ? '2px solid #2563eb' : '1px solid #cbd5e1',
                   backgroundColor: paymentMethod === 'VNPAY' ? '#eff6ff' : '#fff',
@@ -277,10 +277,28 @@ export const CheckoutModal: React.FC<Props> = ({ trip, selectedSeats, points, on
                   textAlign: 'left'
                 }}
               >
-                <div style={{ fontWeight: 700, fontSize: '13px', color: paymentMethod === 'VNPAY' ? '#1e40af' : '#1e293b' }}>
-                  💳 VNPAY / VietQR
+                <div style={{ fontWeight: 700, fontSize: '12px', color: paymentMethod === 'VNPAY' ? '#1e40af' : '#1e293b' }}>
+                  💳 VNPAY Sandbox
                 </div>
-                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>Quét mã QR chuyển khoản ngay</div>
+                <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '2px' }}>Cổng ngân hàng</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('CASH_ON_BOARD')}
+                style={{
+                  padding: '10px 8px',
+                  borderRadius: '8px',
+                  border: paymentMethod === 'CASH_ON_BOARD' ? '2px solid #d97706' : '1px solid #cbd5e1',
+                  backgroundColor: paymentMethod === 'CASH_ON_BOARD' ? '#fffbeb' : '#fff',
+                  cursor: 'pointer',
+                  textAlign: 'left'
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: '12px', color: paymentMethod === 'CASH_ON_BOARD' ? '#92400e' : '#1e293b' }}>
+                  💵 Tiền mặt
+                </div>
+                <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '2px' }}>Trả khi lên xe</div>
               </button>
             </div>
           </div>

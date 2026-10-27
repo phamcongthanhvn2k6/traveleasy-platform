@@ -5,5 +5,6 @@ public enum PaymentMethod {
     VNPAY,
     MOMO,
     ZALOPAY,
-    VIETQR
+    VIETQR,
+    PAYOS
 }

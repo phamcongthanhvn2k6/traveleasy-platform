@@ -13,3 +13,4 @@ public class SeatSimulateRequest {
     private String seatNumber;
     private String action; // "HOLD", "BOOK", "RELEASE"
 }
+

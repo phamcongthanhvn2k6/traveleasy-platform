@@ -2166,8 +2166,9 @@ flowchart LR
 | 7 | Đối Soát Doanh Thu Sàn | Quản Trị Viên Sàn | `frontend/src/pages/admin/settlements/AdminSettlementsPage.tsx` | ✅ Đã duyệt |
 | 8 | Đối Soát Nhận Tiền Nhà Xe | Đối Tác Nhà Xe | `frontend/src/pages/company/settlements/CompanySettlementsPage.tsx` | ✅ Đã duyệt |
 | 9 | Gửi Vé & Hóa Đơn VAT Email | Khách Hàng | `frontend/src/components/EmailTicketModal.tsx` | ✅ Đã duyệt |
-| 10 | Suite Kiểm Thử Tự Động | Backend | `backend/src/test/java/com/traveleasy/service/` | ✅ 14/14 Pass |
+| 10 | Suite Kiểm Thử Tự Động | Backend | `backend/src/test/java/com/traveleasy/service/` | ✅ 16/16 Pass |
 | 11 | Real-time SSE Khóa Ghế | Toàn Sàn Real-time | `SeatRealtimeService.java` & `TripResultCard.tsx` | ✅ Đã triển khai |
+| 12 | Cổng Thanh Toán PayOS MB Bank | Khách Hàng & Thanh Toán | `PayOsService.java` & `QrPaymentModal.tsx` | ✅ Đã tích hợp |
 
 ---
 
@@ -2226,6 +2227,28 @@ sequenceDiagram
   * Nút `⚫ Đổi Xám (Đã Bán)`: Kích hoạt ghế sang `BOOKED` (Màu Xám).
   * Nút `⚪ Trả Về Trống`: Mở lại ghế thành `AVAILABLE` (Màu Trắng).
   * Giúp kiểm tra trọn vẹn cơ chế đổi màu mượt mà với hiệu ứng chuyển động CSS 0.3s ngay trên một màn hình hoặc mở 2 tab song song mà không tốn công tạo tài khoản phụ.
+
+---
+
+### 11.13 Tích Hợp Cổng Thanh Toán Trực Tuyến PayOS (Liên Kết Ngân Hàng Quân Đội MB Bank)
+
+Hệ thống đã tích hợp chính thức cổng thanh toán **PayOS** — giải pháp thanh toán tự động qua mã VietQR Napas 24/7 hàng đầu Việt Nam:
+
+* **Tài khoản thụ hưởng doanh nghiệp / Trưởng nhóm**:
+  * **Ngân hàng**: **MB Bank (Ngân hàng Quân Đội - BIN: 970422)**
+  * **Số tài khoản**: **`0944 3543 98`** (`0944354398`)
+  * **Chủ tài khoản**: **`PHAM CONG THANH`**
+* **Thông số API Kênh thanh toán**:
+  * `Client ID`: `a187b55f-6c8a-499b-886b-722fcc0c3039`
+  * `Api Key`: `b8a86931-3e77-4787-8acd-322dceb91f70`
+  * `Webhook URL`: `/api/v1/payments/payos/webhook`
+* **Quy trình thanh toán PayOS**:
+  1. Khách hàng chọn phương thức **"Cổng PayOS — Quét mã VietQR MB Bank"**.
+  2. Backend tự động khởi tạo đơn thanh toán qua PayOS API kèm chữ ký bảo mật HMAC-SHA256 chuẩn ngân hàng.
+  3. Mã VietQR động được tạo chính xác với số tiền vé và nội dung chuyển khoản `TRAVELEASY {Mã booking}`.
+  4. Nút bấm **"🔗 Mở Cổng Thanh Toán PayOS (Trang Chính Thức)"** cho phép khách hàng chuyển hướng trực tiếp sang trang thanh toán chính thức của PayOS nếu muốn.
+  5. Khi ngân hàng MB nhận được tiền, Webhook PayOS bắn tín hiệu về backend tự động kích hoạt vé điện tử (`ISSUED`) và cập nhật đơn đặt vé sang `CONFIRMED`.
+  6. Hệ thống duy trì song song nút **"⚡ Xác Nhận Chuyển Khoản Demo"** giúp thầy cô và giám khảo kiểm thử thành công 100% trong vòng 1 click mà không lo trừ tiền tài khoản thực tế.
 
 ---
 

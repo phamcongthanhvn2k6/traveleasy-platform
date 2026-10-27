@@ -89,7 +89,7 @@ export const CheckoutPage: React.FC = () => {
     }
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('VIETQR');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('PAYOS');
   const [loading, setLoading] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
 
@@ -173,8 +173,8 @@ export const CheckoutPage: React.FC = () => {
       if (paymentMethod === 'VNPAY') {
         // Mở Modal VNPAY với nút Demo duyệt ngay và nút chuyển hướng Sandbox
         setShowVnPayModal(true);
-      } else if (paymentMethod === 'VIETQR') {
-        // Mở Modal VietQR Napas 24/7 tự động nhận diện giao dịch
+      } else if (paymentMethod === 'PAYOS' || paymentMethod === 'VIETQR') {
+        // Mở Modal PayOS / VietQR Napas 24/7 (MB Bank - PHAM CONG THANH)
         setShowQrModal(true);
       } else if (paymentMethod === 'MOMO' || paymentMethod === 'ZALOPAY') {
         if (initRes.paymentUrl) {
@@ -335,6 +335,7 @@ export const CheckoutPage: React.FC = () => {
           bookingCode={createdBooking.bookingCode}
           totalAmount={createdBooking.totalAmount}
           qrCodeUrl={paymentInitData?.qrCodeUrl}
+          paymentUrl={paymentInitData?.paymentUrl}
           bankDetails={paymentInitData?.bankDetails}
           onSuccess={handleQrSuccess}
           onClose={() => setShowQrModal(false)}

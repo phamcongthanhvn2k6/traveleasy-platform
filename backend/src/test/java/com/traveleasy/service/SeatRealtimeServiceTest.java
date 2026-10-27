@@ -118,3 +118,4 @@ class SeatRealtimeServiceTest {
         assertEquals(SeatStatus.AVAILABLE, seatA01.getStatus());
     }
 }
+
