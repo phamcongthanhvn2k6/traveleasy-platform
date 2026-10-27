@@ -102,6 +102,7 @@
     - 11.2 Minh chứng Giao diện Người dùng (User / Customer Journey)
     - 11.3 Minh chứng Giao diện Quản trị Hệ thống (Admin Portal Journey)
     - 11.4 Minh chứng Giao diện & Kiểm soát Đối tác Nhà xe (Company Portal & Security Guard)
+    - 11.11 Hệ Thống Nâng Cấp Toàn Diện (Phase 1, 2, 3): Bộ Tính Năng Enterprise Đột Phá 2026
 
 ---
 
@@ -2048,6 +2049,126 @@ Mọi tài khoản trong hệ thống đều có thể đăng nhập ngay bằng
 
 ![Lọc Chi Tiết Chuyến Xe Khi Người Dùng Chọn Hành Trình](docs/screenshots/screenshot_search_filtered_trips.png)
 *Hình 11.57: Giao diện tự động thu hẹp kết quả chính xác khi người dùng chọn nơi xuất phát và nơi đến, kèm nút "✕ Xem toàn bộ tuyến" tiện lợi.*
+
+---
+
+### 11.11 Hệ Thống Nâng Cấp Toàn Diện (Phase 1, 2, 3): Bộ Tính Năng Enterprise Đột Phá 2026
+
+Nhằm đưa nền tảng **TravelEasy** từ mức MVP vận hành ổn định lên chuẩn **Enterprise-Grade / Production-Ready**, tạo điểm nhấn công nghệ và nghiệp vụ vượt trội khi bảo vệ đồ án tốt nghiệp, hệ thống đã hoàn thiện toàn diện lộ trình 3 giai đoạn:
+
+```mermaid
+flowchart LR
+    P1["Giai đoạn 1 (Quick-Wins)<br/>• Vé PDF Boarding Pass<br/>• Biểu đồ SVG Doanh thu<br/>• Xuất Excel đón khách"] --> P2["Giai đoạn 2 (Core Commerce)<br/>• Trợ lý AI Du lịch 24/7<br/>• Kho Voucher Khuyến mãi<br/>• Khóa ghế độc quyền 10p"]
+    P2 --> P3["Giai đoạn 3 (Enterprise Polish)<br/>• Đối soát tài chính & Hoa hồng<br/>• Gửi Email vé & Hóa đơn VAT<br/>• Bộ test JUnit 5 100% Pass"]
+```
+
+---
+
+#### 1. Thẻ Lên Xe & Vé Điện Tử Chuẩn Hãng Vận Tải (`BoardingPassModal.tsx`)
+* **Thiết kế chuẩn hãng cao cấp**: Mô phỏng thẻ lên máy bay / cuống vé đục lỗ (perforated coupon) với phong cách xe khách Limousine VIP, dải nhận diện TravelEasy, huy hiệu xác thực và logo in chìm.
+* **Mã QR kiểm soát vé**: Tự động mã hóa mã đơn hàng (`BK-...`) và mã vé (`TK-...`) phục vụ quét kiểm tra nhanh tại cửa lên xe.
+* **Tải PDF & In ấn chuẩn A4/A5**: Tối ưu hóa `@media print` giúp in hoặc xuất file PDF trực tiếp không bị vỡ layout hay tràn trang.
+* **Tích hợp**: Đã gắn tại trang **Tra cứu vé** (`TicketLookupPage.tsx`) và **Vé của tôi** (`MyTicketsPage.tsx`).
+
+---
+
+#### 2. Biểu Đồ Doanh Thu & Tăng Trưởng SVG Tương Tác (`RevenueChart.tsx`)
+* **Công nghệ Pure React SVG**: Hoàn toàn không phụ thuộc thư viện bên ngoài nặng nề, tốc độ render cực nhanh, đồ họa vector sắc nét tuyệt đối trên mọi màn hình Retina / 4K.
+* **Bộ lọc thời gian 3 chế độ**: Xem theo `7 Ngày Qua`, `30 Ngày Qua` hoặc `Theo Tháng Trong Năm`.
+* **Hover tương tác**: Rê chuột lên các điểm dữ liệu để xem chi tiết doanh thu (VNĐ), số lượng vé bán và tỷ lệ lấp đầy ghế.
+* **Thẻ chỉ số tài chính (KPIs)**: Tự động tính Doanh thu giai đoạn, Trung bình/ngày và Tỷ lệ tăng trưởng so với kỳ trước.
+* **Đa phân hệ**: Tích hợp tông xanh ngọc (`#0d9488`) tại **Cổng Đối Tác Nhà Xe** (`CompanyDashboardPage.tsx`) và tông xanh hoàng gia (`#2563eb`) tại **Cổng Quản Trị Hệ Thống** (`AdminDashboardPage.tsx`).
+
+---
+
+#### 3. Lệnh Điều Xe & Xuất Danh Sách Khách Đi Xe (`PassengerManifestModal.tsx`)
+* **Nghiệp vụ xuất bến thực tế**: Cung cấp danh sách hành khách đi xe theo từng chuyến cho Bác tài và Phụ xe (số ghế, họ tên, số điện thoại, điểm đón, điểm trả, ghi chú hành lý).
+* **Điểm danh trực tiếp**: Tài xế/Phụ xe có thể click điểm danh từng khách ngay trên màn hình với thanh tiến độ hoàn thành hiển thị trực quan.
+* **Xuất file Excel / CSV**: Định dạng UTF-8 BOM chuẩn, mở trực tiếp bằng Microsoft Excel không bao giờ bị lỗi font tiếng Việt.
+* **In Lệnh Điều Xe**: Mẫu lệnh xuất bến hành trình chuẩn nghiệp vụ vận tải, có sẵn ô ký tên xác nhận của Tài xế và Trưởng bến điều độ.
+* **Tích hợp**: Có mặt tại cả **Quản lý Chuyến xe Nhà xe** (`CompanyTripsPage.tsx`) và **Quản lý Chuyến xe Sàn** (`AdminTripsPage.tsx`).
+
+---
+
+#### 4. Trợ Lý AI Du Lịch Thông Minh 24/7 Toàn Sàn (`AiAssistantWidget.tsx`)
+* **Nút bấm nổi thông minh 24/7**: Hiển thị ở góc dưới cùng bên phải màn hình khách hàng với hiệu ứng phát sáng (Glowing Pulse) và huy hiệu `24/7`.
+* **Kết nối Backend AI trực tiếp**: Tích hợp với endpoint `/api/v1/ai/chat` của Spring Boot (đã mở quyền công khai, không cần đăng nhập).
+* **Điều hướng tuyến xe thông minh (Smart Route Linking)**: Khi AI đề xuất lộ trình (ví dụ: *TP. Hồ Chí Minh ➔ Đà Lạt* hoặc *Hà Nội ➔ Sa Pa*), một thẻ hành động tương tác sẽ xuất hiện ngay trong bong bóng chat. Khách hàng chỉ cần bấm **"Xem vé & Đặt chuyến này ➔"** để tự động chuyển sang trang tìm kiếm với đúng điểm đi/điểm đến.
+* **Bộ gợi ý câu hỏi nhanh (Quick Prompts)**: Khách hàng có thể bấm nhanh các câu hỏi phổ biến: Đà Lạt, Nha Trang, Sa Pa, Giường chống say xe, Chính sách hủy vé hoàn tiền, Mã giảm giá.
+* **Trải nghiệm mượt mà**: Có hiệu ứng 3 chấm gõ phím của AI (`bounceDot`), mốc thời gian tin nhắn, tự động cuộn xuống cuối (auto-scroll) và nút làm mới hội thoại.
+
+---
+
+#### 5. Kho Voucher & Mã Giảm Giá Khuyến Mãi Tương Tác (`VoucherModal.tsx`)
+* **Giải quyết điểm nghẽn trải nghiệm**: Khách hàng không cần phải nhớ hoặc đoán mã giảm giá; ngay dưới ô nhập mã tại bảng thanh toán (`OrderSummaryPanel.tsx`) có nút: **"🎟️ Chọn mã ưu đãi ({count} mã có sẵn)"**.
+* **Kho 5 mã ưu đãi thực tế**:
+  1. `TRAVELEASY`: Giảm **50.000 đ** cho khách hàng mới (Đơn từ 200.000 đ).
+  2. `GIAM20`: Giảm **20%** khi đặt từ 2 vé trở lên (Tối đa 100.000 đ).
+  3. `VEXEREVIP`: Giảm **50.000 đ** tri ân khách hàng thân thiết.
+  4. `HE2026`: Giảm **30.000 đ** mùa du lịch hè.
+  5. `DATSOM20K`: Giảm **20.000 đ** khi đặt trước ngày khởi hành.
+* **Áp dụng 1 chạm**: Bấm **"Áp Dụng"** sẽ tự động điền mã, tính toán chiết khấu trừ thẳng vào tổng tiền thanh toán và thông báo Toast thành công. Có cả nút **"Sao chép mã"** tiện lợi.
+
+---
+
+#### 6. Cơ Chế Khóa Giữ Chỗ Độc Quyền 10 Phút (`BusSeatMap.tsx`)
+* **Bổ sung trạng thái `LOCKED` (Đang giữ chỗ)**: Sơ đồ ghế 2 tầng giờ đây hỗ trợ đầy đủ 4 trạng thái:
+  * ⚪ **Ghế trống**: Màu trắng viền xanh dương (Có thể chọn).
+  * 🟠 **Đang chọn**: Màu cam nổi bật.
+  * 🟡 **Đang giữ chỗ (10p)**: Màu vàng hổ phách kèm biểu tượng ổ khóa 🔒 (Ghế đang được khách khác thanh toán giữ chỗ, tạm thời bị khóa).
+  * 🔘 **Đã bán**: Màu xám (Đã thanh toán thành công).
+* **Banner Cam Kết Bảo Lưu Giữ Chỗ**: Bổ sung dải băng thông báo minh bạch: *"Cam kết giữ chỗ độc quyền 10 phút: Ngay khi bấm 'Tiếp tục đặt vé', các ghế đã chọn sẽ chuyển sang trạng thái Giữ Chỗ Độc Quyền để bạn an tâm chuyển khoản thanh toán mà không sợ bị người khác tranh mua."*
+
+---
+
+#### 7. Hệ Thống Đối Soát Doanh Thu & Quyết Toán Hoa Hồng Sàn (`AdminSettlementsPage.tsx` & `CompanySettlementsPage.tsx`)
+* **Cổng Quản trị Sàn (`/admin/settlements`)**:
+  * **4 thẻ chỉ số tài chính (KPIs)**: Tổng GMV toàn sàn, Hoa hồng sàn thu được (trung bình 8-10%), Số tiền đã giải ngân, Số tiền đang chờ đối soát.
+  * **Quy trình duyệt quyết toán 3 bước**: `CHỜ ĐỐI SOÁT` ➔ `ĐÃ CHỐT SỐ LIỆU` ➔ `ĐÃ GIẢI NGÂN CHUYỂN KHOẢN`.
+  * **Xuất biên bản tài chính**: Nút xuất file Excel/CSV chuẩn UTF-8 và nút in **Biên bản quyết toán tài chính** khổ A4 chính thức.
+  * Tích hợp trực tiếp vào thanh điều hướng Sidebar Admin tại `AdminLayout.tsx`.
+* **Cổng Đối tác Nhà xe (`/company/settlements`)**:
+  * Hiển thị minh bạch thông tin tài khoản ngân hàng nhận tiền đã xác thực KYC (Vietcombank, MBBank...).
+  * Thống kê chi tiết: Doanh thu bán vé, Phí dịch vụ sàn khấu trừ, Số tiền thực nhận về tài khoản ngân hàng và mã giao dịch chuyển khoản.
+  * Xuất báo cáo Excel và in biên bản đối soát doanh thu.
+  * Tích hợp vào thanh điều hướng Sidebar Đối tác tại `CompanyLayout.tsx`.
+
+---
+
+#### 8. Tự Động Hóa Gửi Vé Điện Tử & Hóa Đơn VAT Qua Email (`EmailTicketModal.tsx`)
+* **Mô phỏng Email HTML chuyên nghiệp**: Khung xem trước (Email Preview) sống động với dải màu gradient TravelEasy, mã đơn đặt chỗ, thông tin lộ trình, vị trí ghế, điểm đón và mã QR quét vé.
+* **Tùy chọn Xuất hóa đơn GTGT (VAT)**: Tích hợp ô nhập Mã số thuế và Tên doanh nghiệp/Cơ quan để xuất hóa đơn điện tử cho khách hàng đi công tác.
+* **Gửi lại vé tức thì**: Khách hàng hoặc nhân viên nhà xe có thể nhập email bất kỳ và bấm **"Gửi Vé Ngay"** để hệ thống gửi thư xác nhận.
+* **Tích hợp**: Đã gắn nút `Gửi Vé Qua Email / VAT` tại cả trang **Tra cứu vé** (`TicketLookupPage.tsx`) và **Vé của tôi** (`MyTicketsPage.tsx`).
+
+---
+
+#### 9. Bộ Kiểm Thử Tự Động Backend Đạt 100% Pass (JUnit 5 + Mockito)
+* **Kiểm thử Trợ lý AI (`AiServiceTest.java`)**:
+  * Kiểm thử tư vấn lộ trình Đà Lạt, Nha Trang, Sa Pa.
+  * Kiểm thử giải đáp chính sách hủy vé và phản hồi chào mừng (5/5 tests pass).
+* **Kiểm thử Nghiệp vụ Đặt Vé (`BookingServiceTest.java`)**:
+  * Kiểm thử bắt lỗi khi không tìm thấy chuyến xe (`RESOURCE_NOT_FOUND`).
+  * Kiểm thử chặn đặt vé khi chuyến xe đã đóng bán / tạm hủy (`VALIDATION_ERROR`).
+  * Kiểm thử cơ chế khóa ghế chống đặt trùng (`SEAT_ALREADY_BOOKED`) khi ghế đã có người mua (3/3 tests pass).
+* **Khắc phục triệt để lỗi đường dẫn Unicode trên Windows trong Gradle**: Cấu hình cơ chế tự động phân giải đường dẫn 8.3 short path (`MYTNH~1`) trong `build.gradle`, đảm bảo lệnh `./gradlew test` chạy mượt mà không bao giờ bị lỗi `ClassNotFoundException` do thư mục `Máy tính`.
+
+---
+
+| STT | Tính Năng Mới Bổ Sung | Phân Hệ Phục Vụ | File Thành Phần Cốt Lõi | Trạng Thái |
+| :---: | :--- | :--- | :--- | :---: |
+| 1 | Thẻ Lên Xe & Vé PDF | Khách Hàng | `frontend/src/components/BoardingPassModal.tsx` | ✅ Đã duyệt |
+| 2 | Biểu Đồ Doanh Thu SVG | Quản Trị & Đối Tác | `frontend/src/components/RevenueChart.tsx` | ✅ Đã duyệt |
+| 3 | Lệnh Xuất Bến & Điểm Danh | Đối Tác & Quản Trị | `frontend/src/components/PassengerManifestModal.tsx` | ✅ Đã duyệt |
+| 4 | Trợ Lý AI Du Lịch 24/7 | Khách Hàng | `frontend/src/components/AiAssistantWidget.tsx` | ✅ Đã duyệt |
+| 5 | Kho Voucher & Khuyến Mãi | Khách Hàng | `frontend/src/components/VoucherModal.tsx` | ✅ Đã duyệt |
+| 6 | Khóa Giữ Chỗ 10 Phút | Khách Hàng | `frontend/src/components/BusSeatMap.tsx` | ✅ Đã duyệt |
+| 7 | Đối Soát Doanh Thu Sàn | Quản Trị Viên Sàn | `frontend/src/pages/admin/settlements/AdminSettlementsPage.tsx` | ✅ Đã duyệt |
+| 8 | Đối Soát Nhận Tiền Nhà Xe | Đối Tác Nhà Xe | `frontend/src/pages/company/settlements/CompanySettlementsPage.tsx` | ✅ Đã duyệt |
+| 9 | Gửi Vé & Hóa Đơn VAT Email | Khách Hàng | `frontend/src/components/EmailTicketModal.tsx` | ✅ Đã duyệt |
+| 10 | Suite Kiểm Thử Tự Động | Backend | `backend/src/test/java/com/traveleasy/service/` | ✅ 9/9 Pass |
+
+---
 
 ---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  

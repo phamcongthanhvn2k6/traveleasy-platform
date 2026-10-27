@@ -430,3 +430,4 @@ export const CompanySettlementsPage: React.FC = () => {
 };
 
 export default CompanySettlementsPage;
+

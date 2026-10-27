@@ -91,3 +91,4 @@ class AiServiceTest {
         assertNull(response.getSuggestedRoute());
     }
 }
+

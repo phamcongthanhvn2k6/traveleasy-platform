@@ -120,3 +120,4 @@ class BookingServiceTest {
         assertTrue(ex.getMessage().contains("vừa được người khác đặt"));
     }
 }
+
