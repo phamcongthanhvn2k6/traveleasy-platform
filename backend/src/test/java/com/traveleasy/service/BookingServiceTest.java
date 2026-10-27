@@ -7,6 +7,7 @@ import com.traveleasy.entity.*;
 import com.traveleasy.repository.*;
 import com.traveleasy.service.customer.BookingService;
 import com.traveleasy.service.customer.TripService;
+import com.traveleasy.service.realtime.SeatRealtimeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,9 @@ class BookingServiceTest {
 
     @Mock
     private TripService tripService;
+
+    @Mock
+    private SeatRealtimeService seatRealtimeService;
 
     @InjectMocks
     private BookingService bookingService;

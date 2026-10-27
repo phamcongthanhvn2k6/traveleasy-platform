@@ -68,7 +68,7 @@ export const BusSeatMap: React.FC<Props> = ({ seats, selectedSeatNumbers, onTogg
           fontWeight: 700,
           fontSize: '13px',
           cursor: cursor,
-          transition: 'all 0.15s ease',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           boxShadow: isSelected ? '0 4px 6px -1px rgba(249, 115, 22, 0.4)' : 'none',
           position: 'relative',
         }}

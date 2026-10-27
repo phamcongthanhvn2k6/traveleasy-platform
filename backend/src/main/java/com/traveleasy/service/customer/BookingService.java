@@ -7,6 +7,7 @@ import com.traveleasy.dto.booking.CreateBookingRequest;
 import com.traveleasy.dto.booking.TicketResponse;
 import com.traveleasy.entity.*;
 import com.traveleasy.repository.*;
+import com.traveleasy.service.realtime.SeatRealtimeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -31,6 +32,7 @@ public class BookingService {
     private final PickupDropoffPointRepository pointRepository;
     private final UserRepository userRepository;
     private final TripService tripService;
+    private final SeatRealtimeService seatRealtimeService;
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public BookingResponse createBooking(CreateBookingRequest request, String userEmail) {
@@ -54,7 +56,7 @@ public class BookingService {
         }
 
         for (TripSeat seat : requestedSeats) {
-            if (seat.getStatus() != SeatStatus.AVAILABLE) {
+            if (seat.getStatus() == SeatStatus.BOOKED) {
                 throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED, "Ghế " + seat.getSeatCode() + " vừa được người khác đặt. Vui lòng chọn ghế khác!");
             }
         }
@@ -128,6 +130,10 @@ public class BookingService {
         }
         ticketRepository.saveAll(tickets);
 
+        // Phát broadcast cập nhật thời gian thực các ghế đã được đặt mua thành công (Màu Xám - BOOKED)
+        List<String> bookedCodes = requestedSeats.stream().map(TripSeat::getSeatCode).collect(Collectors.toList());
+        seatRealtimeService.broadcastBooked(trip.getId(), bookedCodes);
+
         return mapToBookingResponse(savedBooking, tickets);
     }
 
@@ -183,6 +189,9 @@ public class BookingService {
         trip.setAvailableSeats(trip.getAvailableSeats() + tickets.size());
         tripRepository.save(trip);
 
+        // Broadcast thời gian thực ghế đã được giải phóng (Màu Trắng - AVAILABLE)
+        seatRealtimeService.broadcastReleased(trip.getId(), seatCodes);
+
         return mapToBookingResponse(booking, tickets);
     }
 
@@ -212,6 +221,9 @@ public class BookingService {
             Trip trip = booking.getTrip();
             trip.setAvailableSeats(trip.getAvailableSeats() + releasedSeats.size());
             tripRepository.save(trip);
+
+            // Broadcast thời gian thực ghế đã được giải phóng (Màu Trắng - AVAILABLE)
+            seatRealtimeService.broadcastReleased(trip.getId(), releasedSeats);
         }
 
         boolean allCancelled = allTickets.stream().allMatch(t -> t.getStatus() == TicketStatus.CANCELLED);

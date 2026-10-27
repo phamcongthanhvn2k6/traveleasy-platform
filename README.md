@@ -2166,7 +2166,66 @@ flowchart LR
 | 7 | Đối Soát Doanh Thu Sàn | Quản Trị Viên Sàn | `frontend/src/pages/admin/settlements/AdminSettlementsPage.tsx` | ✅ Đã duyệt |
 | 8 | Đối Soát Nhận Tiền Nhà Xe | Đối Tác Nhà Xe | `frontend/src/pages/company/settlements/CompanySettlementsPage.tsx` | ✅ Đã duyệt |
 | 9 | Gửi Vé & Hóa Đơn VAT Email | Khách Hàng | `frontend/src/components/EmailTicketModal.tsx` | ✅ Đã duyệt |
-| 10 | Suite Kiểm Thử Tự Động | Backend | `backend/src/test/java/com/traveleasy/service/` | ✅ 9/9 Pass |
+| 10 | Suite Kiểm Thử Tự Động | Backend | `backend/src/test/java/com/traveleasy/service/` | ✅ 14/14 Pass |
+| 11 | Real-time SSE Khóa Ghế | Toàn Sàn Real-time | `SeatRealtimeService.java` & `TripResultCard.tsx` | ✅ Đã triển khai |
+
+---
+
+### 11.12 Cơ Chế Real-time SSE: Khóa Giữ Chỗ & Đồng Bộ Trạng Thái Ghế Thời Gian Thực (Màu Vàng / Xám)
+
+Để giải quyết bài toán cốt lõi trong sàn thương mại vận tải hành khách (tương tự **Vexere**, **Vietnam Airlines**, **CGV Cinemas**), hệ thống đã kích hoạt thành công cơ chế **Server-Sent Events (SSE)** giúp sơ đồ ghế **tự động biến đổi màu theo thời gian thực (Zero-Reload UI)** khi có khách hàng khác đang thao tác:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor UserA as Khách Hàng A (Đang Mua)
+    participant ClientA as Trình Duyệt A
+    participant Backend as Spring Boot (SSE & DB)
+    participant ClientB as Trình Duyệt B
+    actor UserB as Khách Hàng B (Đang Xem)
+
+    ClientB->>Backend: GET /api/v1/trips/{id}/seats/stream (Kết nối SSE)
+    Backend-->>ClientB: Event "INIT" (SSE Live Connected)
+    
+    UserA->>ClientA: Chọn ghế A02 & Bấm "Tiếp Tục Đặt Vé"
+    ClientA->>Backend: POST /api/v1/trips/{id}/seats/hold (Ghế: A02)
+    Backend->>Backend: Khóa DB & Chuyển trạng thái sang LOCKED (Hạn 10p)
+    Backend-->>ClientB: Event "SEAT_UPDATE" (Ghế: A02, Status: LOCKED)
+    Note over ClientB: Ghế A02 tự động đổi sang MÀU VÀNG (LOCKED)<br/>(Hiển thị icon Khóa, vô hiệu hóa click)
+
+    alt Khách A Thanh Toán Thành Công
+        UserA->>ClientA: Xác nhận thanh toán đơn vé
+        ClientA->>Backend: POST /api/v1/bookings
+        Backend->>Backend: Cập nhật BOOKED & Sinh vé TK-...
+        Backend-->>ClientB: Event "SEAT_UPDATE" (Ghế: A02, Status: BOOKED)
+        Note over ClientB: Ghế A02 lập tức chuyển sang MÀU XÁM (BOOKED)<br/>(Đã bán - Bất khả dụng)
+    else Khách A Hủy Hoặc Hết Hạn 10 Phút
+        Backend->>Backend: Scheduler tự động nhả ghế sang AVAILABLE
+        Backend-->>ClientB: Event "SEAT_UPDATE" (Ghế: A02, Status: AVAILABLE)
+        Note over ClientB: Ghế A02 tự động chuyển về MÀU TRẮNG (AVAILABLE)<br/>(Mở lại cho người khác đặt)
+    end
+```
+
+#### 1. Các Quy Tắc Hiển Thị Màu & Trạng Thái Ghế Real-time
+* ⚪ **Trắng viền xanh (`AVAILABLE`)**: Ghế trống hoàn toàn, khách hàng được tự do bấm chọn.
+* 🟠 **Màu Cam (`SELECTED`)**: Ghế đang được chính người dùng hiện tại chọn mua (tối đa 6 vé/lần).
+* 🟡 **Màu Vàng Hổ Phách (`LOCKED`)**: Ghế đang có khách hàng khác tiến hành thanh toán giữ chỗ trong 10 phút. Tự động hiển thị biểu tượng ổ khóa `🔒`, kèm nhãn `Giữ chỗ` và vô hiệu hóa không cho bấm.
+* ⚫ **Màu Xám Tro (`BOOKED`)**: Ghế đã được thanh toán thành công và xuất vé điện tử chính thức (`Đã bán`).
+
+#### 2. Cơ Chế Chống Xung Đột Trực Tiếp (Conflict Auto-Deselect)
+* Khi **Khách hàng B** đang chọn ghế `A02` trên màn hình của mình, nếu **Khách hàng A** nhanh tay hơn bấm vào thanh toán trước:
+  * Sự kiện SSE lập tức truyền xuống máy Khách B.
+  * Ghế `A02` tự động bị gỡ khỏi danh sách ghế đã chọn của Khách B.
+  * Hệ thống phát cảnh báo Toast vàng: *"Ghế A02 vừa có khách khác giữ chỗ thanh toán (Màu Vàng)! Hệ thống đã tự động gỡ ghế khỏi đơn của bạn."*
+
+#### 3. Bảng Điều Khiển Giả Lập Real-time Cho Thầy Cô / Ban Giám Khảo Kiểm Thử 1 Chạm
+* Ngay trên sơ đồ ghế (`TripResultCard.tsx`), hệ thống trang bị thanh công cụ:  
+  **`[🧪 Thử Nghiệm Real-time (Đổi màu Vàng / Xám trực tiếp)]`**:
+  * Cho phép chọn ghế bất kỳ (Ví dụ: `A02`, `A03`, `B01`).
+  * Nút `🟡 Đổi Vàng (Đang TT)`: Kích hoạt ghế sang `LOCKED` (Màu Vàng).
+  * Nút `⚫ Đổi Xám (Đã Bán)`: Kích hoạt ghế sang `BOOKED` (Màu Xám).
+  * Nút `⚪ Trả Về Trống`: Mở lại ghế thành `AVAILABLE` (Màu Trắng).
+  * Giúp kiểm tra trọn vẹn cơ chế đổi màu mượt mà với hiệu ứng chuyển động CSS 0.3s ngay trên một màn hình hoặc mở 2 tab song song mà không tốn công tạo tài khoản phụ.
 
 ---
 

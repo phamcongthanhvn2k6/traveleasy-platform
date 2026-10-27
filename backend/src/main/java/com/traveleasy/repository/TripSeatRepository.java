@@ -10,10 +10,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TripSeatRepository extends JpaRepository<TripSeat, Long> {
     List<TripSeat> findByTripIdOrderByFloorAscSeatCodeAsc(Long tripId);
+
+    Optional<TripSeat> findByTripIdAndSeatCode(Long tripId, String seatCode);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM TripSeat s WHERE s.trip.id = :tripId AND s.seatCode IN :seatCodes")

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trip, TripDetail } from '../../../../types';
 import { BusSeatMap } from '../../../../components/BusSeatMap';
 import api from '../../../../services/api';
@@ -16,6 +16,8 @@ import {
   Bus,
   CheckCircle2,
   Info,
+  Zap,
+  Radio,
 } from 'lucide-react';
 
 interface Props {
@@ -35,6 +37,95 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [selectedPickup, setSelectedPickup] = useState<number | undefined>();
   const [selectedDropoff, setSelectedDropoff] = useState<number | undefined>();
+  const [sseConnected, setSseConnected] = useState(false);
+  const [simSeatNumber, setSimSeatNumber] = useState('A02');
+  const [simulating, setSimulating] = useState(false);
+  const [showSimPanel, setShowSimPanel] = useState(false);
+
+  // Lắng nghe luồng SSE cập nhật ghế theo thời gian thực
+  useEffect(() => {
+    if (!expanded || activeTab !== 'SEATS') {
+      setSseConnected(false);
+      return;
+    }
+
+    const sseUrl = `/api/v1/trips/${trip.id}/seats/stream`;
+    const eventSource = new EventSource(sseUrl);
+
+    eventSource.onopen = () => {
+      setSseConnected(true);
+    };
+
+    eventSource.addEventListener('INIT', () => {
+      setSseConnected(true);
+    });
+
+    eventSource.addEventListener('SEAT_UPDATE', (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        // Cập nhật trạng thái ghế trong tripDetail
+        setTripDetail((prev) => {
+          if (!prev) return prev;
+          const updatedSeats = prev.seats.map((s) =>
+            s.seatNumber === data.seatNumber ? { ...s, status: data.status } : s
+          );
+          return { ...prev, seats: updatedSeats };
+        });
+
+        // Nếu ghế này đang nằm trong selectedSeats của khách hiện tại và bị người khác giữ hoặc mua:
+        if (data.status !== 'AVAILABLE') {
+          setSelectedSeats((prevSelected) => {
+            if (prevSelected.includes(data.seatNumber)) {
+              const statusName =
+                data.status === 'LOCKED'
+                  ? 'giữ chỗ thanh toán (Màu Vàng)'
+                  : 'đặt mua thành công (Màu Xám)';
+              toast.warning(
+                `Ghế ${data.seatNumber} vừa có khách khác ${statusName}! Hệ thống đã gỡ ghế khỏi lựa chọn của bạn.`,
+                'Cập Nhật Ghế Real-Time'
+              );
+              return prevSelected.filter((s) => s !== data.seatNumber);
+            }
+            return prevSelected;
+          });
+        }
+      } catch (err) {
+        console.error('Lỗi phân tích cú pháp SEAT_UPDATE SSE:', err);
+      }
+    });
+
+    eventSource.onerror = () => {
+      setSseConnected(false);
+    };
+
+    return () => {
+      eventSource.close();
+      setSseConnected(false);
+    };
+  }, [expanded, activeTab, trip.id]);
+
+  const handleSimulateAction = async (action: 'HOLD' | 'BOOK' | 'RELEASE') => {
+    if (!simSeatNumber) return;
+    setSimulating(true);
+    try {
+      await api.post(`/trips/${trip.id}/seats/simulate`, {
+        seatNumber: simSeatNumber,
+        action: action,
+      });
+      const actionText =
+        action === 'HOLD'
+          ? 'Đang thanh toán (Vàng / LOCKED)'
+          : action === 'BOOK'
+          ? 'Đã mua xong (Xám / BOOKED)'
+          : 'Mở lại trống (Trắng / AVAILABLE)';
+      toast.success(`⚡ Đã kích hoạt giả lập: Ghế ${simSeatNumber} -> ${actionText}`, 'Giả Lập Realtime');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Có lỗi khi gửi lệnh giả lập', 'Lỗi Giả Lập');
+    } finally {
+      setSimulating(false);
+    }
+  };
 
   const toggleExpand = async () => {
     if (!expanded && !tripDetail) {
@@ -376,9 +467,189 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                   <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
                     {/* Left: Seat Map */}
                     <div>
-                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                        Chọn vị trí ghế (Tối đa 5 vé/lần đặt)
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: '10px',
+                          flexWrap: 'wrap',
+                          gap: '8px',
+                        }}
+                      >
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                          Chọn vị trí ghế (Tối đa 6 vé/lần đặt)
+                        </div>
+
+                        {/* Live SSE Status Badge */}
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            backgroundColor: sseConnected ? '#f0fdf4' : '#f8fafc',
+                            border: sseConnected ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
+                            padding: '4px 10px',
+                            borderRadius: '9999px',
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            color: sseConnected ? '#15803d' : '#64748b',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              backgroundColor: sseConnected ? '#22c55e' : '#94a3b8',
+                              boxShadow: sseConnected ? '0 0 0 2px rgba(34, 197, 94, 0.3)' : 'none',
+                            }}
+                          />
+                          {sseConnected ? 'SSE Live: Đang đồng bộ thời gian thực' : 'Đang kết nối luồng...'}
+                        </div>
                       </div>
+
+                      {/* Interactive Demo Simulation Toolbar */}
+                      <div
+                        style={{
+                          backgroundColor: '#f8fafc',
+                          border: '1px dashed #cbd5e1',
+                          borderRadius: '10px',
+                          padding: '10px 14px',
+                          marginBottom: '12px',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              color: '#1e293b',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                            }}
+                          >
+                            <Zap size={14} color="#f59e0b" />
+                            🧪 Thử Nghiệm Real-time (Đổi màu Vàng / Xám trực tiếp)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setShowSimPanel(!showSimPanel)}
+                            style={{
+                              border: 'none',
+                              background: 'transparent',
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              color: '#2563eb',
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                            }}
+                          >
+                            {showSimPanel ? '▲ Đóng bảng thử' : '▼ Bật giả lập kiểm thử'}
+                          </button>
+                        </div>
+
+                        {showSimPanel && (
+                          <div
+                            style={{
+                              marginTop: '10px',
+                              paddingTop: '8px',
+                              borderTop: '1px solid #e2e8f0',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              flexWrap: 'wrap',
+                            }}
+                          >
+                            <span style={{ fontSize: '12px', color: '#475569', fontWeight: 600 }}>
+                              Chọn ghế thử:
+                            </span>
+                            <select
+                              value={simSeatNumber}
+                              onChange={(e) => setSimSeatNumber(e.target.value)}
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #cbd5e1',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                backgroundColor: '#ffffff',
+                              }}
+                            >
+                              {tripDetail.seats.map((s) => (
+                                <option key={s.id} value={s.seatNumber}>
+                                  Ghế {s.seatNumber} ({s.status === 'AVAILABLE' ? 'Trống' : s.status === 'LOCKED' ? 'Vàng' : 'Xám'})
+                                </option>
+                              ))}
+                            </select>
+
+                            <button
+                              type="button"
+                              disabled={simulating}
+                              onClick={() => handleSimulateAction('HOLD')}
+                              title="Giả lập khách khác đang ở bước thanh toán giữ ghế"
+                              style={{
+                                padding: '5px 10px',
+                                borderRadius: '6px',
+                                border: '1px solid #f59e0b',
+                                backgroundColor: '#fef3c7',
+                                color: '#b45309',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: simulating ? 'not-allowed' : 'pointer',
+                              }}
+                            >
+                              🟡 Đổi Vàng (Đang TT)
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={simulating}
+                              onClick={() => handleSimulateAction('BOOK')}
+                              title="Giả lập khách khác đã thanh toán vé thành công"
+                              style={{
+                                padding: '5px 10px',
+                                borderRadius: '6px',
+                                border: '1px solid #94a3b8',
+                                backgroundColor: '#cbd5e1',
+                                color: '#334155',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: simulating ? 'not-allowed' : 'pointer',
+                              }}
+                            >
+                              ⚫ Đổi Xám (Đã Bán)
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={simulating}
+                              onClick={() => handleSimulateAction('RELEASE')}
+                              title="Mở lại ghế về trống"
+                              style={{
+                                padding: '5px 10px',
+                                borderRadius: '6px',
+                                border: '1px solid #3b82f6',
+                                backgroundColor: '#eff6ff',
+                                color: '#1d4ed8',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: simulating ? 'not-allowed' : 'pointer',
+                              }}
+                            >
+                              ⚪ Trả Về Trống
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
                       <BusSeatMap
                         seats={tripDetail.seats}
                         selectedSeatNumbers={selectedSeats}
