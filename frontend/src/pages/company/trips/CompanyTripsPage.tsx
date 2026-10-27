@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Eye, Clock, AlertTriangle, CheckCircle, Play, Ban, X, RefreshCw, Bus, DollarSign } from 'lucide-react';
+import { Plus, Eye, Clock, AlertTriangle, CheckCircle, Play, Ban, X, RefreshCw, Bus, DollarSign, Users, FileText } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
+import { PassengerManifestModal } from '../../../components/PassengerManifestModal';
 
 export interface CompanyTripItem {
   id: string;
@@ -170,6 +171,7 @@ export const CompanyTripsPage: React.FC = () => {
   // Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<CompanyTripItem | null>(null);
+  const [manifestTrip, setManifestTrip] = useState<any | null>(null);
 
   // Form Fields
   const [formRoute, setFormRoute] = useState('Sài Gòn - Đà Lạt');
@@ -515,6 +517,28 @@ export const CompanyTripsPage: React.FC = () => {
                       </span>
                     </td>
                     <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                      <button
+                        title="Xem và Xuất danh sách hành khách đi xe"
+                        onClick={() => setManifestTrip(item)}
+                        style={{
+                          background: '#ecfdf5',
+                          border: '1px solid #a7f3d0',
+                          cursor: 'pointer',
+                          padding: '6px 10px',
+                          color: '#059669',
+                          borderRadius: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          marginRight: '6px',
+                        }}
+                      >
+                        <Users size={14} />
+                        <span>Khách Đi Xe</span>
+                      </button>
+
                       <button
                         title="Xem chi tiết & Cập nhật chuyến"
                         onClick={() => setSelectedTrip(item)}
@@ -955,7 +979,29 @@ export const CompanyTripsPage: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setManifestTrip(selectedTrip);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid #a7f3d0',
+                  backgroundColor: '#ecfdf5',
+                  color: '#059669',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                <Users size={15} /> Xuất Danh Sách Khách & Điểm Danh
+              </button>
+
               <button
                 type="button"
                 onClick={() => setSelectedTrip(null)}
@@ -975,6 +1021,15 @@ export const CompanyTripsPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Passenger Manifest Modal */}
+      {manifestTrip && (
+        <PassengerManifestModal
+          trip={manifestTrip}
+          isOpen={Boolean(manifestTrip)}
+          onClose={() => setManifestTrip(null)}
+        />
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Bus, TrendingUp, Ticket, Calendar, ArrowUpRight, CheckCircle2, Clock } from 'lucide-react';
 import api from '../../../services/api';
+import { RevenueChart } from '../../../components/RevenueChart';
 
 export const AdminDashboardPage: React.FC = () => {
   const [stats, setStats] = useState({
@@ -119,15 +120,6 @@ export const AdminDashboardPage: React.FC = () => {
   ];
 
   // Dữ liệu biểu đồ cột
-  const chartBars = [
-    { month: 'T7', value: 42, heightPercent: 70 },
-    { month: 'T8', value: 52, heightPercent: 86 },
-    { month: 'T9', value: 60, heightPercent: 100 },
-    { month: 'T10', value: 38, heightPercent: 63 },
-    { month: 'T11', value: 48, heightPercent: 80 },
-    { month: 'T12', value: 55, heightPercent: 91 },
-  ];
-
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Breadcrumb & Header Title */}
@@ -203,44 +195,13 @@ export const AdminDashboardPage: React.FC = () => {
 
       {/* 2. MAIN CONTENT (2 Columns: Chart on Left, Real Upcoming Trips on Right) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
-        {/* Left Column: Revenue Growth Chart */}
-        <div
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '20px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <div>
-              <div style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>Doanh Thu 6 Tháng Gần Nhất</div>
-              <div style={{ fontSize: '12.5px', color: '#64748b' }}>Đơn vị tính: Triệu VNĐ</div>
-            </div>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#2563eb', backgroundColor: '#eff6ff', padding: '4px 10px', borderRadius: '6px' }}>
-              Tăng trưởng 18%
-            </span>
-          </div>
-
-          {/* Bar Chart Mock Representation */}
-          <div style={{ height: '220px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '10px 20px', borderBottom: '1px solid #f1f5f9' }}>
-            {chartBars.map((bar, i) => (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flex: 1 }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b' }}>{bar.value}M</span>
-                <div
-                  style={{
-                    width: '32px',
-                    height: `${bar.heightPercent * 1.5}px`,
-                    background: i === 2 ? 'linear-gradient(180deg, #2563eb, #1d4ed8)' : '#e2e8f0',
-                    borderRadius: '6px 6px 0 0',
-                    transition: 'all 0.3s ease',
-                  }}
-                />
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>{bar.month}</span>
-              </div>
-            ))}
-          </div>
+        {/* Left Column: Interactive Revenue Trend Chart */}
+        <div>
+          <RevenueChart
+            title="Biểu Đồ Doanh Thu Toàn Hệ Thống Sàn"
+            subtitle="Phân tích tăng trưởng giao dịch và tổng doanh số đối soát"
+            accentColor="#2563eb"
+          />
         </div>
 
         {/* Right Column: Real Upcoming Trips from Database */}

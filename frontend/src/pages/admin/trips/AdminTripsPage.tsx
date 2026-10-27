@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Search, Plus, Ban, CheckCircle, Clock, MapPin, Bus, RefreshCw, X, Edit2, Trash2 } from 'lucide-react';
+import { Calendar, Search, Plus, Ban, CheckCircle, Clock, MapPin, Bus, RefreshCw, X, Edit2, Trash2, Users } from 'lucide-react';
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
+import { PassengerManifestModal } from '../../../components/PassengerManifestModal';
 
 interface TripItem {
   id: number;
@@ -56,6 +57,9 @@ export const AdminTripsPage: React.FC = () => {
   const [editArrivalTime, setEditArrivalTime] = useState('');
   const [editBusType, setEditBusType] = useState('SLEEPER');
   const [editPrice, setEditPrice] = useState('');
+
+  // Modal Manifest / Dispatch
+  const [manifestTrip, setManifestTrip] = useState<TripItem | null>(null);
 
   const fetchTrips = async () => {
     setLoading(true);
@@ -447,6 +451,27 @@ export const AdminTripsPage: React.FC = () => {
                     </td>
                     <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        {/* Nút Xuất danh sách khách / Lệnh xuất bến */}
+                        <button
+                          onClick={() => setManifestTrip(t)}
+                          title="Lệnh điều xe & Danh sách hành khách"
+                          style={{
+                            backgroundColor: '#eff6ff',
+                            color: '#1d4ed8',
+                            border: '1px solid #bfdbfe',
+                            padding: '5px 9px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Users size={13} color="#2563eb" /> Khách ({t.totalSeats - t.availableSeats})
+                        </button>
+
                         {/* Nút Sửa */}
                         <button
                           onClick={() => openEditModal(t)}
@@ -790,6 +815,16 @@ export const AdminTripsPage: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Modal Xuất Danh Sách Khách & Lệnh Điều Xe */}
+      {manifestTrip && (
+        <PassengerManifestModal
+          trip={manifestTrip}
+          isOpen={Boolean(manifestTrip)}
+          onClose={() => setManifestTrip(null)}
+          isAdmin={true}
+        />
       )}
     </div>
   );

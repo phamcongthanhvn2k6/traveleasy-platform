@@ -170,3 +170,4 @@ function startFrontend() {
 // Chạy song song
 startBackend();
 startFrontend();
+

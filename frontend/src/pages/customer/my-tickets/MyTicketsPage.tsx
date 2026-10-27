@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { PartialCancelModal } from './components/PartialCancelModal';
 import { RescheduleModal } from './components/RescheduleModal';
+import { BoardingPassModal } from '../../../components/BoardingPassModal';
 
 export const MyTicketsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ export const MyTicketsPage: React.FC = () => {
   // Cancel & Reschedule Modals State
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
   const [reschedulingBooking, setReschedulingBooking] = useState<Booking | null>(null);
+  const [selectedBoardingPassBooking, setSelectedBoardingPassBooking] = useState<Booking | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
 
   // Review Modal State
@@ -434,6 +436,25 @@ export const MyTicketsPage: React.FC = () => {
                       <QrCode size={15} /> Xem vé QR lên xe
                     </button>
 
+                    <button
+                      onClick={() => setSelectedBoardingPassBooking(booking)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        backgroundColor: '#f0fdf4',
+                        color: '#166534',
+                        border: '1px solid #bbf7d0',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Ticket size={15} /> Thẻ Lên Xe / Tải PDF
+                    </button>
+
                     {isConfirmed && (
                       <button
                         onClick={() => setReschedulingBooking(booking)}
@@ -656,6 +677,14 @@ export const MyTicketsPage: React.FC = () => {
               </div>
             </div>
           </div>
+        )}
+        {/* Boarding Pass Modal */}
+        {selectedBoardingPassBooking && (
+          <BoardingPassModal
+            booking={selectedBoardingPassBooking}
+            isOpen={Boolean(selectedBoardingPassBooking)}
+            onClose={() => setSelectedBoardingPassBooking(null)}
+          />
         )}
       </div>
     </div>
