@@ -11,6 +11,7 @@ import { CompanyCancellationPoliciesPage } from '../pages/company/cancellation-p
 import { CompanyTripsPage } from '../pages/company/trips/CompanyTripsPage';
 import { CompanyBookingsPage } from '../pages/company/bookings/CompanyBookingsPage';
 import { CompanyReviewsPage } from '../pages/company/reviews/CompanyReviewsPage';
+import { CompanySettlementsPage } from '../pages/company/settlements/CompanySettlementsPage';
 import { PartnerComingSoonPage } from '../pages/company/unsupported/PartnerComingSoonPage';
 
 /**
@@ -62,6 +63,8 @@ export const CompanyRoutes: React.FC = () => {
                 <Route path="/bookings" element={<CompanyBookingsPage />} />
                 <Route path="reviews" element={<CompanyReviewsPage />} />
                 <Route path="/reviews" element={<CompanyReviewsPage />} />
+                <Route path="settlements" element={<CompanySettlementsPage />} />
+                <Route path="/settlements" element={<CompanySettlementsPage />} />
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/company/dashboard" replace />} />

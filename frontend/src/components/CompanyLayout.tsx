@@ -9,6 +9,7 @@ import {
   Calendar,
   Ticket,
   Star,
+  DollarSign,
   Search,
   Bell,
   ChevronDown,
@@ -51,6 +52,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
   const businessItems = [
     { label: 'Lịch chuyến xe xuất bến', path: '/company/trips', icon: Calendar },
     { label: 'Hành khách & Vé đã đặt', path: '/company/bookings', icon: Ticket },
+    { label: 'Doanh thu & Đối soát sàn', path: '/company/settlements', icon: DollarSign },
     { label: 'Đánh giá từ khách hàng', path: '/company/reviews', icon: Star },
   ];
 

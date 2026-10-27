@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../../services/api';
 import { Booking } from '../../../types';
-import { Search, ShieldCheck, QrCode, MapPin, Printer, ArrowLeft, Copy, Check, CheckCircle2, Ticket } from 'lucide-react';
+import { Search, ShieldCheck, QrCode, MapPin, Printer, ArrowLeft, Copy, Check, CheckCircle2, Ticket, Mail } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import { BoardingPassModal } from '../../../components/BoardingPassModal';
+import { EmailTicketModal } from '../../../components/EmailTicketModal';
 
 export const TicketLookupPage: React.FC = () => {
   const { code: routeCode } = useParams<{ code?: string }>();
@@ -19,6 +20,7 @@ export const TicketLookupPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showBoardingPass, setShowBoardingPass] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   const lookupByCode = async (searchCode: string) => {
     if (!searchCode.trim()) {
@@ -238,6 +240,26 @@ export const TicketLookupPage: React.FC = () => {
               </button>
 
               <button
+                onClick={() => setShowEmailModal(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: '#2563eb',
+                  border: 'none',
+                  color: '#ffffff',
+                  padding: '10px 18px',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+                }}
+              >
+                <Mail size={16} /> Gửi Vé Qua Email / VAT
+              </button>
+
+              <button
                 onClick={() => navigate('/my-tickets')}
                 style={{
                   display: 'flex',
@@ -285,6 +307,15 @@ export const TicketLookupPage: React.FC = () => {
           booking={booking}
           isOpen={showBoardingPass}
           onClose={() => setShowBoardingPass(false)}
+        />
+      )}
+
+      {/* Email & VAT Invoice Modal */}
+      {booking && (
+        <EmailTicketModal
+          booking={booking}
+          isOpen={showEmailModal}
+          onClose={() => setShowEmailModal(false)}
         />
       )}
     </div>

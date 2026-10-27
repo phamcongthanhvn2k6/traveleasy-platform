@@ -16,10 +16,12 @@ import {
   XCircle,
   Bus,
   Search,
+  Mail,
 } from 'lucide-react';
 import { PartialCancelModal } from './components/PartialCancelModal';
 import { RescheduleModal } from './components/RescheduleModal';
 import { BoardingPassModal } from '../../../components/BoardingPassModal';
+import { EmailTicketModal } from '../../../components/EmailTicketModal';
 
 export const MyTicketsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,6 +33,7 @@ export const MyTicketsPage: React.FC = () => {
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
   const [reschedulingBooking, setReschedulingBooking] = useState<Booking | null>(null);
   const [selectedBoardingPassBooking, setSelectedBoardingPassBooking] = useState<Booking | null>(null);
+  const [selectedEmailBooking, setSelectedEmailBooking] = useState<Booking | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
 
   // Review Modal State
@@ -455,6 +458,25 @@ export const MyTicketsPage: React.FC = () => {
                       <Ticket size={15} /> Thẻ Lên Xe / Tải PDF
                     </button>
 
+                    <button
+                      onClick={() => setSelectedEmailBooking(booking)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        backgroundColor: '#eff6ff',
+                        color: '#1d4ed8',
+                        border: '1px solid #bfdbfe',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Mail size={15} /> Gửi Email / VAT
+                    </button>
+
                     {isConfirmed && (
                       <button
                         onClick={() => setReschedulingBooking(booking)}
@@ -684,6 +706,15 @@ export const MyTicketsPage: React.FC = () => {
             booking={selectedBoardingPassBooking}
             isOpen={Boolean(selectedBoardingPassBooking)}
             onClose={() => setSelectedBoardingPassBooking(null)}
+          />
+        )}
+
+        {/* Email & VAT Invoice Modal */}
+        {selectedEmailBooking && (
+          <EmailTicketModal
+            booking={selectedEmailBooking}
+            isOpen={Boolean(selectedEmailBooking)}
+            onClose={() => setSelectedEmailBooking(null)}
           />
         )}
       </div>
