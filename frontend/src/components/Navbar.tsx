@@ -184,46 +184,25 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Link
-                  to="/auth"
-                  style={{
-                    backgroundColor: '#ffffff',
-                    color: '#1d4ed8',
-                    border: 'none',
-                    padding: '4px 14px',
-                    borderRadius: '6px',
-                    fontWeight: 700,
-                    fontSize: '12.5px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    textDecoration: 'none'
-                  }}
-                >
-                  <User size={13} /> Khách Hàng Đăng Nhập
-                </Link>
-                <Link
-                  to="/admin/login"
-                  title="Cổng quản trị dành riêng cho Quản trị viên sàn TravelEasy"
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    color: '#fef08a',
-                    border: '1px solid rgba(255, 255, 255, 0.25)',
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    fontWeight: 700,
-                    fontSize: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    textDecoration: 'none'
-                  }}
-                >
-                  <ShieldCheck size={12} /> Cổng Admin
-                </Link>
-              </div>
+              <Link
+                to="/auth"
+                style={{
+                  backgroundColor: '#ffffff',
+                  color: '#1d4ed8',
+                  border: 'none',
+                  padding: '4px 14px',
+                  borderRadius: '6px',
+                  fontWeight: 700,
+                  fontSize: '12.5px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  textDecoration: 'none'
+                }}
+              >
+                <User size={13} /> Đăng nhập / Đăng ký
+              </Link>
             )}
           </div>
         </div>

@@ -177,24 +177,6 @@ export const CompanyLoginPage: React.FC = () => {
             }}
           >
             <div>{errorMsg}</div>
-            {isAdminAttempt && (
-              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed rgba(239, 68, 68, 0.35)' }}>
-                <Link
-                  to="/admin/login"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    color: '#38bdf8',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    fontSize: '12.5px',
-                  }}
-                >
-                  🛡️ Đi đến Cổng Quản Trị Hệ Thống (Admin Portal) ngay →
-                </Link>
-              </div>
-            )}
           </div>
         )}
 
@@ -350,21 +332,6 @@ export const CompanyLoginPage: React.FC = () => {
           >
             <ArrowLeft size={14} /> Quay lại Trang Chủ Đặt Vé
           </Link>
-
-          <div style={{ paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <span style={{ color: '#94a3b8', fontSize: '12px' }}>Bạn là Quản trị viên Sàn tổng? </span>
-            <Link
-              to="/admin/login"
-              style={{
-                color: '#38bdf8',
-                fontSize: '12px',
-                fontWeight: 700,
-                textDecoration: 'none',
-              }}
-            >
-              Đăng nhập Quản Trị Hệ Thống (Admin) →
-            </Link>
-          </div>
         </div>
       </div>
     </div>

@@ -263,24 +263,6 @@ export const AdminLoginPage: React.FC = () => {
                 <AlertTriangle size={18} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
                 <div>{errorMsg}</div>
               </div>
-              {isOperatorAttempt && (
-                <div style={{ marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed rgba(239, 68, 68, 0.3)', paddingLeft: '28px' }}>
-                  <Link
-                    to="/company/login"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      color: '#2dd4bf',
-                      fontWeight: 700,
-                      textDecoration: 'none',
-                      fontSize: '12.5px',
-                    }}
-                  >
-                    👉 Đến Cổng Điều Hành Đối Tác Nhà Xe (Operator Portal) ngay →
-                  </Link>
-                </div>
-              )}
             </div>
           )}
 
@@ -537,22 +519,6 @@ export const AdminLoginPage: React.FC = () => {
         >
           <Lock size={13} color="#10b981" />
           <span>Hệ thống ghi nhận địa chỉ IP &amp; Nhật ký kiểm toán thời gian thực</span>
-        </div>
-
-        {/* Switch Portal Link */}
-        <div style={{ textAlign: 'center', marginTop: '16px' }}>
-          <span style={{ color: '#64748b', fontSize: '12px' }}>Bạn là Đối tác Nhà xe? </span>
-          <Link
-            to="/company/login"
-            style={{
-              color: '#38bdf8',
-              fontSize: '12px',
-              fontWeight: 700,
-              textDecoration: 'none',
-            }}
-          >
-            Đến Cổng Điều Hành Nhà Xe (Operator Portal) →
-          </Link>
         </div>
       </div>
     </div>

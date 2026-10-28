@@ -229,22 +229,6 @@ export const PartnerComingSoonPage: React.FC = () => {
             >
               <Search size={16} /> Tìm Chuyến Xe Khách
             </button>
-
-            <button
-              onClick={() => navigate('/admin/login')}
-              style={{
-                backgroundColor: '#f8fafc',
-                color: '#475569',
-                border: '1px solid #e2e8f0',
-                padding: '12px 18px',
-                borderRadius: '10px',
-                fontWeight: 600,
-                fontSize: '13px',
-                cursor: 'pointer',
-              }}
-            >
-              Quản Trị Sàn (ADMIN)
-            </button>
           </div>
         </div>
       </div>

@@ -392,42 +392,24 @@ export const CustomerAuthPage: React.FC = () => {
           justifyContent: 'space-between'
         }}>
           <div>
-            {/* Top link back & Portal switcher */}
+            {/* Top link back & Partner link */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <Link
-                  to="/company/login"
-                  style={{
-                    color: '#0f766e',
-                    textDecoration: 'none',
-                    fontWeight: 700,
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    backgroundColor: '#f0fdfa',
-                    border: '1px solid #99f6e4',
-                    fontSize: '11px'
-                  }}
-                  title="Cổng điều hành dành cho Đối tác Nhà Xe"
-                >
-                  🏢 Cổng Nhà Xe
-                </Link>
-                <Link
-                  to="/admin/login"
-                  style={{
-                    color: '#4338ca',
-                    textDecoration: 'none',
-                    fontWeight: 700,
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    backgroundColor: '#eef2ff',
-                    border: '1px solid #c7d2fe',
-                    fontSize: '11px'
-                  }}
-                  title="Cổng quản trị tối cao dành cho Admin"
-                >
-                  🛡️ Cổng Admin
-                </Link>
-              </div>
+              <Link
+                to="/company/login"
+                style={{
+                  color: '#0f766e',
+                  textDecoration: 'none',
+                  fontWeight: 700,
+                  padding: '3px 10px',
+                  borderRadius: '6px',
+                  backgroundColor: '#f0fdfa',
+                  border: '1px solid #99f6e4',
+                  fontSize: '11.5px'
+                }}
+                title="Cổng điều hành dành riêng cho Đối tác Nhà Xe"
+              >
+                🏢 Dành cho Đối Tác Nhà Xe →
+              </Link>
 
               <Link 
                 to="/" 

@@ -143,7 +143,6 @@ export const Footer: React.FC = () => {
           <Link to="/lookup" style={linkStyle}>Tra cứu vé điện tử</Link>
           <Link to="/my-tickets" style={linkStyle}>Vé của tôi</Link>
           <Link to="/profile" style={linkStyle}>Hồ sơ cá nhân</Link>
-          <Link to="/admin/login" style={{ ...linkStyle, color: '#f59e0b' }}>Cổng Quản trị viên</Link>
         </div>
       </div>
     </footer>
