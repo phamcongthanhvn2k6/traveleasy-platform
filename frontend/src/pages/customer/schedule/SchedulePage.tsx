@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../../services/api';
 import { RouteScheduleResponse, ScheduleTripItem, Point } from '../../../types';
+import { Pagination } from '../../../components/Pagination';
 import { 
   Bus, 
   MapPin, 
@@ -785,6 +786,20 @@ export const SchedulePage: React.FC = () => {
       return true;
     });
   }, [timetableData, directionTab, timeSlot]);
+
+  // Timetable Pagination Logic (20 chuyến / trang, chia theo tổng số)
+  const [timetablePage, setTimetablePage] = useState(1);
+  const TIMETABLE_PAGE_SIZE = 20;
+
+  useEffect(() => {
+    setTimetablePage(1);
+  }, [directionTab, timeSlot, timetableData]);
+
+  const totalTimetablePages = Math.ceil(filteredTimetableTrips.length / TIMETABLE_PAGE_SIZE) || 1;
+  const paginatedTimetableTrips = useMemo(() => {
+    const start = (timetablePage - 1) * TIMETABLE_PAGE_SIZE;
+    return filteredTimetableTrips.slice(start, start + TIMETABLE_PAGE_SIZE);
+  }, [filteredTimetableTrips, timetablePage]);
 
   // Active Day Stops
   const currentDayStops = customDays[activeDayIndex]?.stops || [];
@@ -1735,68 +1750,80 @@ export const SchedulePage: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {filteredTimetableTrips.map(trip => (
-                  <div
-                    key={trip.id}
-                    style={{
-                      backgroundColor: '#fff',
-                      borderRadius: '12px',
-                      border: '1px solid #e2e8f0',
-                      padding: '18px 22px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      flexWrap: 'wrap',
-                      gap: '14px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>
-                        {trip.departureTimeFormatted}
+              <div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {paginatedTimetableTrips.map(trip => (
+                    <div
+                      key={trip.id}
+                      style={{
+                        backgroundColor: '#fff',
+                        borderRadius: '12px',
+                        border: '1px solid #e2e8f0',
+                        padding: '18px 22px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '14px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>
+                          {trip.departureTimeFormatted}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700 }}>{trip.durationFormatted}</span>
+                          <ArrowRight size={14} style={{ color: '#2563eb' }} />
+                        </div>
+                        <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>
+                          {trip.arrivalTimeFormatted}
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700 }}>{trip.durationFormatted}</span>
-                        <ArrowRight size={14} style={{ color: '#2563eb' }} />
-                      </div>
-                      <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>
-                        {trip.arrivalTimeFormatted}
-                      </div>
-                    </div>
 
-                    <div>
-                      <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{trip.busCompanyName}</div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>{trip.busTypeName} • Còn {trip.availableSeats} chỗ</div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <div style={{ fontSize: '18px', fontWeight: 800, color: '#2563eb' }}>
-                        {trip.price.toLocaleString('vi-VN')} đ
+                      <div>
+                        <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{trip.busCompanyName}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b' }}>{trip.busTypeName} • Còn {trip.availableSeats} chỗ</div>
                       </div>
-                      <button
-                        onClick={() => {
-                          const tripDate = trip.departureTime ? trip.departureTime.split('T')[0] : '';
-                          const dStr = (tripDate && tripDate >= new Date().toISOString().split('T')[0])
-                            ? tripDate
-                            : new Date().toISOString().split('T')[0];
-                          navigate(`/search?origin=${encodeURIComponent(trip.originCity)}&destination=${encodeURIComponent(trip.destinationCity)}&date=${dStr}`);
-                        }}
-                        style={{
-                          backgroundColor: '#2563eb',
-                          color: '#fff',
-                          border: 'none',
-                          padding: '10px 18px',
-                          borderRadius: '8px',
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Đặt Chuyến ➔
-                      </button>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#2563eb' }}>
+                          {trip.price.toLocaleString('vi-VN')} đ
+                        </div>
+                        <button
+                          onClick={() => {
+                            const tripDate = trip.departureTime ? trip.departureTime.split('T')[0] : '';
+                            const dStr = (tripDate && tripDate >= new Date().toISOString().split('T')[0])
+                              ? tripDate
+                              : new Date().toISOString().split('T')[0];
+                            navigate(`/search?origin=${encodeURIComponent(trip.originCity)}&destination=${encodeURIComponent(trip.destinationCity)}&date=${dStr}`);
+                          }}
+                          style={{
+                            backgroundColor: '#2563eb',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '10px 18px',
+                            borderRadius: '8px',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Đặt Chuyến ➔
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                {/* Timetable Pagination (20 chuyến / trang, chia theo tổng số) */}
+                <Pagination
+                  currentPage={timetablePage}
+                  totalPages={totalTimetablePages}
+                  totalItems={filteredTimetableTrips.length}
+                  pageSize={TIMETABLE_PAGE_SIZE}
+                  onPageChange={(page) => setTimetablePage(page)}
+                  itemLabel="chuyến xe"
+                />
               </div>
             )}
           </div>

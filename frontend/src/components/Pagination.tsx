@@ -92,6 +92,9 @@ export const Pagination: React.FC<PaginationProps> = ({
           </strong>{' '}
           trong tổng số{' '}
           <strong style={{ color: '#2563eb', fontWeight: 800 }}>{totalItems}</strong> {itemLabel}
+          {' '}• Trang{' '}
+          <strong style={{ color: '#0f172a', fontWeight: 700 }}>{currentPage}</strong> /{' '}
+          <strong style={{ color: '#0f172a', fontWeight: 700 }}>{totalPages}</strong>
         </span>
 
         {onPageSizeChange && pageSizeOptions.length > 0 && (
@@ -321,3 +324,4 @@ export const Pagination: React.FC<PaginationProps> = ({
     </div>
   );
 };
+

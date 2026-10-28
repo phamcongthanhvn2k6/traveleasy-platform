@@ -405,9 +405,9 @@ export const TripSearchPage: React.FC = () => {
       });
   }, [trips, filters, sortOption]);
 
-  // Pagination State
+  // Pagination State (mặc định 20 chuyến / trang, chia theo tổng số chuyến)
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
 
   // Reset to page 1 whenever search criteria or filters change
   useEffect(() => {
@@ -505,6 +505,9 @@ export const TripSearchPage: React.FC = () => {
             currentSort={sortOption}
             onChangeSort={setSortOption}
             resultCount={filteredAndSortedTrips.length}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalPages={totalPages}
           />
 
           {loading ? (
@@ -531,7 +534,7 @@ export const TripSearchPage: React.FC = () => {
                 <TripResultCard key={trip.id} trip={trip} onBook={handleOpenBooking} />
               ))}
 
-              {/* Phân trang (Pagination) */}
+              {/* Phân trang (Pagination: 20 chuyến / trang, chia theo tổng số) */}
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -539,7 +542,7 @@ export const TripSearchPage: React.FC = () => {
                 pageSize={pageSize}
                 onPageChange={handlePageChange}
                 onPageSizeChange={setPageSize}
-                pageSizeOptions={[10, 20, 30, 50]}
+                pageSizeOptions={[20, 40, 60]}
                 itemLabel="chuyến xe"
               />
             </div>

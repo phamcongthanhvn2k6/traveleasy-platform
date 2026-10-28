@@ -13,9 +13,19 @@ interface Props {
   currentSort: SortOption;
   onChangeSort: (sort: SortOption) => void;
   resultCount: number;
+  currentPage?: number;
+  pageSize?: number;
+  totalPages?: number;
 }
 
-export const SortTabBar: React.FC<Props> = ({ currentSort, onChangeSort, resultCount }) => {
+export const SortTabBar: React.FC<Props> = ({
+  currentSort,
+  onChangeSort,
+  resultCount,
+  currentPage,
+  pageSize,
+  totalPages,
+}) => {
   const tabs = [
     { id: 'DEFAULT' as SortOption, label: 'Mặc định', icon: ArrowDownUp },
     { id: 'EARLIEST' as SortOption, label: 'Giờ đi sớm nhất', icon: Clock },
@@ -74,7 +84,33 @@ export const SortTabBar: React.FC<Props> = ({ currentSort, onChangeSort, resultC
       </div>
 
       <div style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>
-        Hiển thị <span style={{ color: '#0f172a', fontWeight: 800 }}>{resultCount}</span> chuyến
+        {currentPage && pageSize && totalPages && resultCount > 0 ? (
+          <>
+            Hiển thị{' '}
+            <span style={{ color: '#0f172a', fontWeight: 800 }}>
+              {Math.min((currentPage - 1) * pageSize + 1, resultCount)} –{' '}
+              {Math.min(currentPage * pageSize, resultCount)}
+            </span>{' '}
+            / <span style={{ color: '#2563eb', fontWeight: 800 }}>{resultCount}</span> chuyến{' '}
+            <span
+              style={{
+                marginLeft: '6px',
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
+                padding: '2px 8px',
+                borderRadius: '6px',
+                fontSize: '11.5px',
+                fontWeight: 700,
+              }}
+            >
+              Trang {currentPage}/{totalPages}
+            </span>
+          </>
+        ) : (
+          <>
+            Hiển thị <span style={{ color: '#0f172a', fontWeight: 800 }}>{resultCount}</span> chuyến
+          </>
+        )}
       </div>
     </div>
   );
