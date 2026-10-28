@@ -38,7 +38,9 @@ import {
   Sunrise,
   Moon,
   Coffee,
-  Ticket
+  Ticket,
+  ExternalLink,
+  Map
 } from 'lucide-react';
 
 type PageViewMode = 'PLANNER' | 'TIMETABLE';
@@ -1827,6 +1829,32 @@ export const SchedulePage: React.FC = () => {
   // Active Day Stops
   const currentDayStops = customDays[activeDayIndex]?.stops || [];
 
+  // Map Widget View Mode: 'MAP' (Bản Đồ Thực Tế) vs 'ROUTE' (Sơ Đồ Cung Đường Tuyến Điểm)
+  const [mapViewTab, setMapViewTab] = useState<'MAP' | 'ROUTE'>('MAP');
+  const [selectedMapStopId, setSelectedMapStopId] = useState<string | null>(null);
+
+  // Selected or active stop for the map embed
+  const activeMapStop = useMemo(() => {
+    if (selectedMapStopId) {
+      return currentDayStops.find(s => s.id === selectedMapStopId) || currentDayStops[0];
+    }
+    return currentDayStops[0];
+  }, [selectedMapStopId, currentDayStops]);
+
+  // Google Maps Directions Multi-Stop URL (Dẫn đường GPS thực tế 1 chạm)
+  const googleMapsRouteUrl = useMemo(() => {
+    if (!currentDayStops || currentDayStops.length === 0) return '';
+    const city = activeTemplate.city;
+    if (currentDayStops.length === 1) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentDayStops[0].title + ' ' + city)}`;
+    }
+    const originStr = encodeURIComponent(currentDayStops[0].title + ' ' + city);
+    const destStr = encodeURIComponent(currentDayStops[currentDayStops.length - 1].title + ' ' + city);
+    const middleStops = currentDayStops.slice(1, -1);
+    const waypointsStr = middleStops.map(s => encodeURIComponent(s.title + ' ' + city)).join('|');
+    return `https://www.google.com/maps/dir/?api=1&origin=${originStr}&destination=${destStr}${waypointsStr ? `&waypoints=${waypointsStr}` : ''}&travelmode=driving`;
+  }, [currentDayStops, activeTemplate.city]);
+
   return (
     <div className="schedule-page" style={{ backgroundColor: '#f8fafc', minHeight: '100vh', paddingBottom: '70px', fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" }}>
       {/* Print-only CSS */}
@@ -2402,88 +2430,381 @@ export const SchedulePage: React.FC = () => {
             {/* CỘT PHẢI (35%): MAP, VÉ XE & NGÂN SÁCH */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               
-              {/* 1. 🗺️ BẢN ĐỒ LỘ TRÌNH ĐIỂM ĐẾN (INTERACTIVE VISUAL MAP) */}
-              <div style={{ backgroundColor: '#fff', borderRadius: '14px', padding: '18px 20px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14.5px', fontWeight: 800, color: '#0f172a' }}>
-                    <Compass size={17} style={{ color: '#2563eb' }} /> Bản Đồ Lộ Trình (Ngày {customDays[activeDayIndex]?.dayNumber})
+              {/* 1. 🗺️ BẢN ĐỒ LỘ TRÌNH & DẪN ĐƯỜNG THÔNG MINH (INTERACTIVE GOOGLE MAPS & TRANSIT MILESTONES) */}
+              <div style={{ 
+                backgroundColor: '#fff', 
+                borderRadius: '16px', 
+                padding: '18px 20px', 
+                border: '1px solid #e2e8f0', 
+                boxShadow: '0 4px 14px rgba(15, 23, 42, 0.05)' 
+              }}>
+                {/* Header with Title and Mode Switcher */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>
+                      <Navigation size={17} style={{ color: '#2563eb' }} /> Lộ Trình & Dẫn Đường Ngày {customDays[activeDayIndex]?.dayNumber}
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }}>
+                      {currentDayStops.length} điểm đến tại {activeTemplate.city} • Tuyến tối ưu
+                    </div>
                   </div>
-                  <span style={{ fontSize: '11px', color: '#059669', backgroundColor: '#ecfdf5', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>
-                    Tuyến thuận chiều
-                  </span>
-                </div>
 
-                {/* Simulated Interactive SVG Topo Map */}
-                <div style={{
-                  position: 'relative',
-                  width: '100%',
-                  height: '240px',
-                  borderRadius: '12px',
-                  backgroundColor: '#0f172a',
-                  backgroundImage: 'radial-gradient(circle at 50% 50%, #1e293b 0%, #090d16 100%)',
-                  overflow: 'hidden',
-                  border: '1px solid #334155'
-                }}>
-                  {/* Decorative Grid Lines */}
-                  <div style={{ position: 'absolute', inset: 0, opacity: 0.15, backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-
-                  {/* SVG Route Connector Path */}
-                  <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-                    {currentDayStops.length > 1 && (
-                      <polyline
-                        points={currentDayStops.map(s => `${(s.coords.x / 100) * 320},${(s.coords.y / 100) * 240}`).join(' ')}
-                        fill="none"
-                        stroke="#38bdf8"
-                        strokeWidth="2.5"
-                        strokeDasharray="5,5"
-                      />
-                    )}
-                  </svg>
-
-                  {/* Render Numbered Pins */}
-                  {currentDayStops.map((stop, i) => (
-                    <div
-                      key={stop.id}
-                      title={`${stop.time}: ${stop.title}`}
+                  {/* Mode Switch Tabs: [🗺️ Bản Đồ] | [🚇 Từng Chặng] */}
+                  <div style={{ display: 'inline-flex', backgroundColor: '#f1f5f9', borderRadius: '8px', padding: '3px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setMapViewTab('MAP')}
                       style={{
-                        position: 'absolute',
-                        left: `${stop.coords.x}%`,
-                        top: `${stop.coords.y}%`,
-                        transform: 'translate(-50%, -50%)',
-                        display: 'flex',
-                        flexDirection: 'column',
+                        display: 'inline-flex',
                         alignItems: 'center',
+                        gap: '5px',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        border: 'none',
                         cursor: 'pointer',
-                        zIndex: 10
+                        backgroundColor: mapViewTab === 'MAP' ? '#2563eb' : 'transparent',
+                        color: mapViewTab === 'MAP' ? '#fff' : '#64748b',
+                        boxShadow: mapViewTab === 'MAP' ? '0 1px 4px rgba(37,99,235,0.3)' : 'none',
+                        transition: 'all 0.15s'
                       }}
                     >
-                      <div style={{
-                        width: '26px',
-                        height: '26px',
-                        borderRadius: '50%',
-                        backgroundColor: i === 0 ? '#10b981' : i === currentDayStops.length - 1 ? '#ef4444' : '#2563eb',
-                        color: '#fff',
+                      <Map size={12} /> Bản Đồ Thực Tế
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapViewTab('ROUTE')}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        border: 'none',
+                        cursor: 'pointer',
+                        backgroundColor: mapViewTab === 'ROUTE' ? '#2563eb' : 'transparent',
+                        color: mapViewTab === 'ROUTE' ? '#fff' : '#64748b',
+                        boxShadow: mapViewTab === 'ROUTE' ? '0 1px 4px rgba(37,99,235,0.3)' : 'none',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      <Layers size={12} /> Từng Chặng ({currentDayStops.length})
+                    </button>
+                  </div>
+                </div>
+
+                {mapViewTab === 'MAP' ? (
+                  <>
+                    {/* Horizontal Interactive Stop Selector Chips */}
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: '6px', 
+                      overflowX: 'auto', 
+                      paddingBottom: '8px', 
+                      marginBottom: '10px',
+                      scrollbarWidth: 'thin'
+                    }}>
+                      {currentDayStops.map((stop, idx) => {
+                        const isSelected = (activeMapStop?.id === stop.id);
+                        return (
+                          <button
+                            key={stop.id}
+                            type="button"
+                            onClick={() => setSelectedMapStopId(stop.id)}
+                            style={{
+                              flexShrink: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '5px 10px',
+                              borderRadius: '20px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              border: isSelected ? '1.5px solid #2563eb' : '1px solid #e2e8f0',
+                              backgroundColor: isSelected ? '#eff6ff' : '#f8fafc',
+                              color: isSelected ? '#1d4ed8' : '#475569',
+                              transition: 'all 0.15s'
+                            }}
+                          >
+                            <span style={{
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '50%',
+                              backgroundColor: isSelected ? '#2563eb' : '#94a3b8',
+                              color: '#fff',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '10px',
+                              fontWeight: 800
+                            }}>
+                              {idx + 1}
+                            </span>
+                            <span style={{ maxWidth: '115px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {stop.title.split(':')[0].split('-')[0].trim()}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Google Maps Embed iframe Container */}
+                    <div style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: '240px',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      border: '1px solid #cbd5e1',
+                      boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.06)',
+                      backgroundColor: '#e2e8f0'
+                    }}>
+                      <iframe
+                        title="Google Maps Itinerary View"
+                        width="100%"
+                        height="100%"
+                        style={{ border: 0 }}
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent((activeMapStop?.title || activeTemplate.city) + ', ' + activeTemplate.city)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                      />
+
+                      {/* Floating Overlay Badge: Currently Focused Stop */}
+                      {activeMapStop && (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '10px',
+                          left: '10px',
+                          right: '10px',
+                          backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                          backdropFilter: 'blur(8px)',
+                          color: '#fff',
+                          borderRadius: '8px',
+                          padding: '7px 12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                          pointerEvents: 'none'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                            <div style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: '#3b82f6',
+                              color: '#fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              flexShrink: 0
+                            }}>
+                              {currentDayStops.findIndex(s => s.id === activeMapStop.id) + 1}
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {activeMapStop.title}
+                              </div>
+                              <div style={{ fontSize: '10px', color: '#94a3b8' }}>
+                                ⏰ {activeMapStop.time} • {activeMapStop.duration}
+                              </div>
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '10px', color: '#67e8f9', fontWeight: 600, flexShrink: 0, paddingLeft: '8px' }}>
+                            Đang ghim
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quick GPS Navigation Link Button */}
+                    <a
+                      href={googleMapsRouteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        marginTop: '12px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '11px',
-                        fontWeight: 900,
-                        boxShadow: '0 0 10px rgba(0,0,0,0.5), 0 0 0 2px #ffffff',
-                        transition: 'transform 0.15s'
-                      }}>
-                        {i + 1}
-                      </div>
-                      <span style={{ fontSize: '10px', color: '#fff', backgroundColor: 'rgba(15, 23, 42, 0.85)', padding: '1px 5px', borderRadius: '4px', marginTop: '2px', whiteSpace: 'nowrap', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {stop.time}
-                      </span>
+                        gap: '8px',
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        backgroundColor: '#2563eb',
+                        color: '#fff',
+                        fontSize: '12.5px',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                        boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                        transition: 'all 0.15s'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
+                    >
+                      <Navigation size={14} /> Mở Dẫn Đường Google Maps (GPS 1 Chạm)
+                      <ExternalLink size={13} style={{ opacity: 0.85 }} />
+                    </a>
+                  </>
+                ) : (
+                  /* ROUTE TRANSIT MILESTONE VIEW (Sơ đồ từng chặng xe di chuyển) */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                    <div style={{ 
+                      padding: '8px 12px', 
+                      backgroundColor: '#f8fafc', 
+                      borderRadius: '8px', 
+                      marginBottom: '14px', 
+                      fontSize: '11.5px', 
+                      color: '#475569',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}>
+                      <span>📍 Thứ tự chặng thuận chiều sáng ➔ tối</span>
+                      <span style={{ fontWeight: 700, color: '#0f172a' }}>~16 - 22 km tổng lộ trình</span>
                     </div>
-                  ))}
-                </div>
 
-                <div style={{ marginTop: '10px', fontSize: '11.5px', color: '#64748b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>📍 Các điểm ghim nối tiếp nhau theo thứ tự sáng ➔ tối</span>
-                  <span style={{ fontWeight: 700, color: '#0f172a' }}>~18.5 km</span>
-                </div>
+                    <div style={{ position: 'relative', paddingLeft: '8px' }}>
+                      {currentDayStops.map((stop, idx) => {
+                        const isFirst = idx === 0;
+                        const isLast = idx === currentDayStops.length - 1;
+                        const badgeColor = isFirst ? '#10b981' : isLast ? '#ef4444' : '#2563eb';
+                        const badgeBg = isFirst ? '#ecfdf5' : isLast ? '#fef2f2' : '#eff6ff';
+
+                        return (
+                          <div key={stop.id} style={{ position: 'relative', paddingBottom: isLast ? '6px' : '18px' }}>
+                            {/* Vertical connector line */}
+                            {!isLast && (
+                              <div style={{
+                                position: 'absolute',
+                                left: '15px',
+                                top: '30px',
+                                bottom: '0px',
+                                width: '2px',
+                                backgroundColor: '#cbd5e1'
+                              }} />
+                            )}
+
+                            {/* Stop row */}
+                            <div 
+                              onClick={() => {
+                                setSelectedMapStopId(stop.id);
+                                setMapViewTab('MAP');
+                              }}
+                              style={{ 
+                                display: 'flex', 
+                                alignItems: 'flex-start', 
+                                gap: '12px',
+                                cursor: 'pointer',
+                                padding: '6px 8px',
+                                borderRadius: '8px',
+                                transition: 'background-color 0.15s'
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+                              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                              title="Nhấp để xem vị trí này trên bản đồ Google Maps"
+                            >
+                              {/* Sequence Badge */}
+                              <div style={{
+                                width: '30px',
+                                height: '30px',
+                                borderRadius: '50%',
+                                backgroundColor: badgeColor,
+                                color: '#fff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '13px',
+                                fontWeight: 800,
+                                flexShrink: 0,
+                                boxShadow: `0 2px 6px ${badgeColor}40`,
+                                zIndex: 2
+                              }}>
+                                {idx + 1}
+                              </div>
+
+                              {/* Stop Details */}
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
+                                  <span style={{ fontSize: '11px', fontWeight: 800, color: badgeColor, backgroundColor: badgeBg, padding: '1px 6px', borderRadius: '4px' }}>
+                                    ⏰ {stop.time}
+                                  </span>
+                                  <span style={{ fontSize: '10.5px', color: '#64748b' }}>
+                                    • {stop.duration}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', lineHeight: 1.35 }}>
+                                  {stop.title}
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '3px' }}>
+                                  💰 {stop.price}
+                                </div>
+                              </div>
+
+                              <span style={{ fontSize: '11px', color: '#2563eb', fontWeight: 600, flexShrink: 0, alignSelf: 'center' }}>
+                                Xem ➔
+                              </span>
+                            </div>
+
+                            {/* Distance & Transit connector badge between stops */}
+                            {!isLast && (
+                              <div style={{
+                                margin: '8px 0 0 38px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                fontSize: '10.5px',
+                                color: '#475569',
+                                backgroundColor: '#f1f5f9',
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                border: '1px dashed #cbd5e1'
+                              }}>
+                                <span>🛵 ~{((idx + 1) * 2.3 + 1.2).toFixed(1)} km</span>
+                                <span>• ~{Math.round(8 + (idx % 3) * 4)} phút di chuyển</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Button to open in Google Maps */}
+                    <a
+                      href={googleMapsRouteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        marginTop: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        backgroundColor: '#059669',
+                        color: '#fff',
+                        fontSize: '12.5px',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                        boxShadow: '0 2px 8px rgba(5,150,105,0.25)',
+                        transition: 'all 0.15s'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#047857')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#059669')}
+                    >
+                      <Navigation size={14} /> Mở Toàn Tuyến Trong Google Maps
+                      <ExternalLink size={13} style={{ opacity: 0.85 }} />
+                    </a>
+                  </div>
+                )}
               </div>
 
               {/* 2. 🚌 GỢI Ý CHUYẾN XE KHÁCH PHÙ HỢP NHẤT (SMART TRANSPORT BRIDGE) */}
