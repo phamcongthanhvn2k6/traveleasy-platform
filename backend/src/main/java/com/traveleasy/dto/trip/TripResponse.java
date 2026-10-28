@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -31,4 +32,6 @@ public class TripResponse {
     private Integer totalSeats;
     private Integer availableSeats;
     private TripStatus status;
+    private List<PointResponse> pickupPoints;
+    private List<PointResponse> dropoffPoints;
 }

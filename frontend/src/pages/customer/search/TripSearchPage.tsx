@@ -113,43 +113,69 @@ export const TripSearchPage: React.FC = () => {
   }, [trips]);
 
   const availablePickupPoints = useMemo(() => {
-    const originCity = origin || (trips.length > 0 ? trips[0].originCity : '');
-    const points: Record<string, number> = {};
-    if (originCity.includes('Hồ Chí Minh') || originCity.includes('Sài Gòn')) {
-      points['Bến xe Miền Tây'] = Math.ceil(trips.length * 0.6);
-      points['Bến xe An Sương'] = Math.ceil(trips.length * 0.4);
-      points['Văn phòng Quận 1 (Phạm Ngũ Lão)'] = Math.ceil(trips.length * 0.35);
-      points['Ngã 4 Hàng Xanh'] = Math.ceil(trips.length * 0.5);
-    } else if (originCity.includes('Hà Nội')) {
-      points['Bến xe Mỹ Đình'] = Math.ceil(trips.length * 0.6);
-      points['Bến xe Giáp Bát'] = Math.ceil(trips.length * 0.4);
-      points['Văn phòng Phố Cổ'] = Math.ceil(trips.length * 0.3);
-      points['Sân bay Nội Bài'] = Math.ceil(trips.length * 0.45);
-    } else {
-      points[`Bến xe Trung Tâm ${originCity || 'Điểm Đi'}`] = trips.length;
-      points[`Văn phòng đại diện ${originCity || 'Điểm Đi'}`] = Math.ceil(trips.length * 0.5);
+    const map = new Map<string, { name: string; address?: string; count: number }>();
+    trips.forEach((t) => {
+      if (t.pickupPoints && t.pickupPoints.length > 0) {
+        t.pickupPoints.forEach((p) => {
+          const existing = map.get(p.name);
+          if (existing) {
+            existing.count += 1;
+            if (!existing.address && p.address) existing.address = p.address;
+          } else {
+            map.set(p.name, { name: p.name, address: p.address, count: 1 });
+          }
+        });
+      }
+    });
+
+    if (map.size === 0 && trips.length > 0) {
+      const originCity = origin || trips[0].originCity || 'Điểm Đi';
+      map.set(`Bến xe Trung Tâm ${originCity}`, {
+        name: `Bến xe Trung Tâm ${originCity}`,
+        address: `Khu vực bến xe trung tâm ${originCity}`,
+        count: trips.length,
+      });
+      map.set(`Văn phòng đại diện ${originCity}`, {
+        name: `Văn phòng đại diện ${originCity}`,
+        address: `Trục đường chính nội đô ${originCity}`,
+        count: Math.ceil(trips.length * 0.5),
+      });
     }
-    return Object.entries(points).map(([name, count]) => ({ name, count }));
+
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
   }, [trips, origin]);
 
   const availableDropoffPoints = useMemo(() => {
-    const destCity = destination || (trips.length > 0 ? trips[0].destinationCity : '');
-    const points: Record<string, number> = {};
-    if (destCity.includes('Đà Lạt')) {
-      points['Bến xe Liên tỉnh Đà Lạt'] = Math.ceil(trips.length * 0.8);
-      points['Văn phòng Hồ Xuân Hương'] = Math.ceil(trips.length * 0.45);
-      points['Chợ Đêm Đà Lạt (Trung chuyển)'] = Math.ceil(trips.length * 0.3);
-    } else if (destCity.includes('Sa Pa')) {
-      points['Bến xe Sa Pa mới'] = Math.ceil(trips.length * 0.75);
-      points['Nhà thờ Đá Sa Pa'] = Math.ceil(trips.length * 0.5);
-    } else if (destCity.includes('Nha Trang')) {
-      points['Bến xe phía Nam Nha Trang'] = Math.ceil(trips.length * 0.7);
-      points['Văn phòng đường Trần Phú'] = Math.ceil(trips.length * 0.5);
-    } else {
-      points[`Bến xe Liên Tỉnh ${destCity || 'Điểm Đến'}`] = trips.length;
-      points[`Nội thành ${destCity || 'Điểm Đến'}`] = Math.ceil(trips.length * 0.6);
+    const map = new Map<string, { name: string; address?: string; count: number }>();
+    trips.forEach((t) => {
+      if (t.dropoffPoints && t.dropoffPoints.length > 0) {
+        t.dropoffPoints.forEach((p) => {
+          const existing = map.get(p.name);
+          if (existing) {
+            existing.count += 1;
+            if (!existing.address && p.address) existing.address = p.address;
+          } else {
+            map.set(p.name, { name: p.name, address: p.address, count: 1 });
+          }
+        });
+      }
+    });
+
+    if (map.size === 0 && trips.length > 0) {
+      const destCity = destination || trips[0].destinationCity || 'Điểm Đến';
+      map.set(`Bến xe Liên Tỉnh ${destCity}`, {
+        name: `Bến xe Liên Tỉnh ${destCity}`,
+        address: `Cửa ngõ đón trả khách liên tỉnh ${destCity}`,
+        count: trips.length,
+      });
+      map.set(`Nội thành ${destCity}`, {
+        name: `Nội thành ${destCity}`,
+        address: `Các điểm đón trả nội thành ${destCity}`,
+        count: Math.ceil(trips.length * 0.6),
+      });
     }
-    return Object.entries(points).map(([name, count]) => ({ name, count }));
+
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
   }, [trips, destination]);
 
   const availableBusTypes = useMemo(() => {
@@ -284,6 +310,30 @@ export const TripSearchPage: React.FC = () => {
           );
           if (!matched) {
             return false;
+          }
+        }
+
+        // 5b. Pickup point filter
+        if (filters.pickupPoints.length > 0) {
+          if (t.pickupPoints && t.pickupPoints.length > 0) {
+            const hasPickup = t.pickupPoints.some((p) => filters.pickupPoints.includes(p.name));
+            if (!hasPickup) return false;
+          } else {
+            const originCity = origin || t.originCity || '';
+            const matchesOrigin = filters.pickupPoints.some((pt) => pt.toLowerCase().includes(originCity.toLowerCase()));
+            if (!matchesOrigin) return false;
+          }
+        }
+
+        // 5c. Dropoff point filter
+        if (filters.dropoffPoints.length > 0) {
+          if (t.dropoffPoints && t.dropoffPoints.length > 0) {
+            const hasDropoff = t.dropoffPoints.some((p) => filters.dropoffPoints.includes(p.name));
+            if (!hasDropoff) return false;
+          } else {
+            const destCity = destination || t.destinationCity || '';
+            const matchesDest = filters.dropoffPoints.some((pt) => pt.toLowerCase().includes(destCity.toLowerCase()));
+            if (!matchesDest) return false;
           }
         }
 

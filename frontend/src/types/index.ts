@@ -15,6 +15,8 @@ export interface Trip {
   totalSeats: number;
   availableSeats: number;
   status: string;
+  pickupPoints?: Point[];
+  dropoffPoints?: Point[];
 }
 
 export interface TripSeat {

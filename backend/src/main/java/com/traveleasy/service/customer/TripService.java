@@ -62,7 +62,20 @@ public class TripService {
         }
 
         List<Trip> trips = tripRepository.searchTrips(origin, destination, startTime, endTime, TripStatus.SCHEDULED);
-        return trips.stream().map(this::mapToTripResponse).collect(Collectors.toList());
+
+        // Preload route points in batch to avoid N+1 queries
+        Set<Long> routeIds = trips.stream()
+                .map(t -> t.getRoute() != null ? t.getRoute().getId() : null)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, List<PickupDropoffPoint>> routePointsMap = new HashMap<>();
+        for (Long rId : routeIds) {
+            routePointsMap.put(rId, pointRepository.findByRouteIdOrderByDisplayOrderAsc(rId));
+        }
+
+        return trips.stream()
+                .map(t -> mapToTripResponse(t, routePointsMap.getOrDefault(t.getRoute() != null ? t.getRoute().getId() : null, Collections.emptyList())))
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -237,6 +250,24 @@ public class TripService {
     }
 
     public TripResponse mapToTripResponse(Trip trip) {
+        List<PickupDropoffPoint> points = Collections.emptyList();
+        if (trip.getRoute() != null && trip.getRoute().getId() != null) {
+            points = pointRepository.findByRouteIdOrderByDisplayOrderAsc(trip.getRoute().getId());
+        }
+        return mapToTripResponse(trip, points);
+    }
+
+    public TripResponse mapToTripResponse(Trip trip, List<PickupDropoffPoint> routePoints) {
+        List<PointResponse> pickups = routePoints != null ? routePoints.stream()
+                .filter(p -> p.getPointType() == PointType.PICKUP)
+                .map(this::mapToPointResponse)
+                .collect(Collectors.toList()) : Collections.emptyList();
+
+        List<PointResponse> dropoffs = routePoints != null ? routePoints.stream()
+                .filter(p -> p.getPointType() == PointType.DROPOFF)
+                .map(this::mapToPointResponse)
+                .collect(Collectors.toList()) : Collections.emptyList();
+
         return TripResponse.builder()
                 .id(trip.getId())
                 .busCompanyId(trip.getBusCompany().getId())
@@ -254,6 +285,8 @@ public class TripService {
                 .totalSeats(trip.getTotalSeats())
                 .availableSeats(trip.getAvailableSeats())
                 .status(trip.getStatus())
+                .pickupPoints(pickups)
+                .dropoffPoints(dropoffs)
                 .build();
     }
 

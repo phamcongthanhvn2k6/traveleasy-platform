@@ -144,6 +144,7 @@ public class DataInitializer implements CommandLineRunner {
                 PickupDropoffPoint.builder().route(r4).name("Bến xe Sa Pa").address("Điện Biên Phủ, TT. Sa Pa, Lào Cai").pointType(PointType.DROPOFF).displayOrder(1).build()
         );
         pointRepository.saveAll(points);
+        supplementRoutePickupDropoffPoints();
 
         // 5. Seed Trips & Seats
         LocalDateTime now = LocalDateTime.now();
@@ -645,5 +646,175 @@ public class DataInitializer implements CommandLineRunner {
             }
             log.info("Bổ sung thành công {} chuyến xe khung giờ sáng sớm (00:00 - 06:00) kèm sơ đồ ghế!", newTrips.size());
         }
+
+        // 5. Đảm bảo tất cả các tuyến đường đều có điểm đón / trả thực tế và chi tiết
+        supplementRoutePickupDropoffPoints();
+    }
+
+    private void supplementRoutePickupDropoffPoints() {
+        List<Route> allRoutes = routeRepository.findAll();
+        List<PickupDropoffPoint> pointsToSave = new ArrayList<>();
+
+        for (Route route : allRoutes) {
+            List<PickupDropoffPoint> existingPoints = pointRepository.findByRouteIdOrderByDisplayOrderAsc(route.getId());
+            if (existingPoints != null && !existingPoints.isEmpty()) {
+                continue;
+            }
+
+            String orig = route.getDepartureLocation();
+            String dest = route.getArrivalLocation();
+
+            // Điểm đón theo thành phố khởi hành
+            List<PointTemplate> pickupTemplates = getPointTemplatesForCity(orig, PointType.PICKUP);
+            int order = 1;
+            for (PointTemplate pt : pickupTemplates) {
+                pointsToSave.add(PickupDropoffPoint.builder()
+                        .route(route)
+                        .name(pt.name)
+                        .address(pt.address)
+                        .pointType(PointType.PICKUP)
+                        .displayOrder(order++)
+                        .build());
+            }
+
+            // Điểm trả theo thành phố đến
+            List<PointTemplate> dropoffTemplates = getPointTemplatesForCity(dest, PointType.DROPOFF);
+            order = 1;
+            for (PointTemplate dt : dropoffTemplates) {
+                pointsToSave.add(PickupDropoffPoint.builder()
+                        .route(route)
+                        .name(dt.name)
+                        .address(dt.address)
+                        .pointType(PointType.DROPOFF)
+                        .displayOrder(order++)
+                        .build());
+            }
+        }
+
+        if (!pointsToSave.isEmpty()) {
+            pointRepository.saveAll(pointsToSave);
+            log.info("Bổ sung thành công {} điểm đón / trả chi tiết cho các tuyến đường chưa có điểm dừng!", pointsToSave.size());
+        }
+    }
+
+    private static class PointTemplate {
+        String name;
+        String address;
+        PointTemplate(String name, String address) {
+            this.name = name;
+            this.address = address;
+        }
+    }
+
+    private List<PointTemplate> getPointTemplatesForCity(String city, PointType type) {
+        if (city == null) city = "";
+        String c = city.toLowerCase();
+
+        if (c.contains("hồ chí minh") || c.contains("sài gòn") || c.contains("tp.hcm")) {
+            if (type == PointType.PICKUP) {
+                return List.of(
+                        new PointTemplate("Bến xe Miền Tây", "395 Kinh Dương Vương, P. An Lạc, Q. Bình Tân, TP.HCM"),
+                        new PointTemplate("Bến xe Miền Đông mới", "501 Hoàng Hữu Nam, P. Long Bình, TP. Thủ Đức, TP.HCM"),
+                        new PointTemplate("Văn phòng Quận 1 (Phạm Ngũ Lão)", "272 Đề Thám, P. Phạm Ngũ Lão, Quận 1, TP.HCM"),
+                        new PointTemplate("Trạm đón Ngã 4 Hàng Xanh", "486 Điện Biên Phủ, P. 21, Q. Bình Thạnh, TP.HCM"),
+                        new PointTemplate("Trạm dừng chân An Sương", "QL22, Xã Bà Điểm, Huyện Hóc Môn, TP.HCM")
+                );
+            } else {
+                return List.of(
+                        new PointTemplate("Bến xe Miền Tây", "395 Kinh Dương Vương, P. An Lạc, Q. Bình Tân, TP.HCM"),
+                        new PointTemplate("Bến xe Miền Đông mới", "501 Hoàng Hữu Nam, P. Long Bình, TP. Thủ Đức, TP.HCM"),
+                        new PointTemplate("Văn phòng Quận 1", "272 Đề Thám, P. Phạm Ngũ Lão, Quận 1, TP.HCM"),
+                        new PointTemplate("Sân bay Tân Sơn Nhất", "Ga Quốc nội, Phường 2, Q. Tân Bình, TP.HCM")
+                );
+            }
+        }
+
+        if (c.contains("đà nẵng")) {
+            return List.of(
+                    new PointTemplate("Bến xe Trung tâm Đà Nẵng", "185 Tôn Đức Thắng, P. Hòa Minh, Q. Liên Chiểu, Đà Nẵng"),
+                    new PointTemplate("Văn phòng Cầu Rồng - Hải Châu", "45 Nguyễn Văn Linh, P. Nam Dương, Q. Hải Châu, Đà Nẵng"),
+                    new PointTemplate("Trạm đón Ngũ Hành Sơn", "322 Lê Văn Hiến, P. Khuê Mỹ, Q. Ngũ Hành Sơn, Đà Nẵng"),
+                    new PointTemplate("Sân bay Quốc tế Đà Nẵng", "Cột số 5, Ga Quốc nội, Q. Hải Châu, Đà Nẵng")
+            );
+        }
+
+        if (c.contains("quy nhơn")) {
+            return List.of(
+                    new PointTemplate("Bến xe Trung tâm Quy Nhơn", "71 Tây Sơn, P. Ghềnh Ráng, TP. Quy Nhơn, Bình Định"),
+                    new PointTemplate("Văn phòng Quy Nhơn (Nguyễn Tất Thành)", "126 Nguyễn Tất Thành, P. Lê Hồng Phong, TP. Quy Nhơn"),
+                    new PointTemplate("Đại học Quy Nhơn", "170 An Dương Vương, P. Nguyễn Văn Cừ, TP. Quy Nhơn"),
+                    new PointTemplate("Khu đô thị An Phú Thịnh", "Đường Võ Nguyên Giáp, P. Nhơn Bình, TP. Quy Nhơn")
+            );
+        }
+
+        if (c.contains("hà nội")) {
+            return List.of(
+                    new PointTemplate("Bến xe Mỹ Đình", "Số 20 Phạm Hùng, P. Mỹ Đình 2, Q. Nam Từ Liêm, Hà Nội"),
+                    new PointTemplate("Bến xe Giáp Bát", "Giải Phóng, P. Giáp Bát, Q. Hoàng Mai, Hà Nội"),
+                    new PointTemplate("Bến xe Nước Ngầm", "Km8 Đường Giải Phóng, P. Hoàng Liệt, Q. Hoàng Mai, Hà Nội"),
+                    new PointTemplate("Văn phòng Phố Cổ", "24 Bát Đàn, P. Hàng Gai, Q. Hoàn Kiếm, Hà Nội"),
+                    new PointTemplate("Sân bay Nội Bài", "Tầng 1 Sảnh E, Sân bay Nội Bài, Sóc Sơn, Hà Nội")
+            );
+        }
+
+        if (c.contains("sa pa")) {
+            return List.of(
+                    new PointTemplate("Bến xe Sa Pa mới", "Điện Biên Phủ, TT. Sa Pa, Lào Cai"),
+                    new PointTemplate("Văn phòng Sa Pa (Nhà Thờ Đá)", "Đường Thạch Sơn, TT. Sa Pa, Lào Cai"),
+                    new PointTemplate("Trạm cáp treo Fansipan Legend", "Đường Nguyễn Chí Thanh, TT. Sa Pa, Lào Cai")
+            );
+        }
+
+        if (c.contains("đà lạt")) {
+            return List.of(
+                    new PointTemplate("Bến xe Liên tỉnh Đà Lạt", "01 Tô Hiến Thành, P.3, TP. Đà Lạt"),
+                    new PointTemplate("Văn phòng Hồ Xuân Hương", "Đường Trần Phú, P.3, TP. Đà Lạt"),
+                    new PointTemplate("Chợ Đêm Đà Lạt (Trung chuyển)", "Đường Nguyễn Thị Minh Khai, P.1, TP. Đà Lạt")
+            );
+        }
+
+        if (c.contains("nha trang")) {
+            return List.of(
+                    new PointTemplate("Bến xe Phía Nam Nha Trang", "Đường 23/10, Xã Vĩnh Trung, TP. Nha Trang, Khánh Hòa"),
+                    new PointTemplate("Văn phòng Nha Trang (Trần Phú)", "54 Trần Phú, P. Lộc Thọ, TP. Nha Trang"),
+                    new PointTemplate("Trạm đón Chợ Đầm Nha Trang", "09 Bến Chợ, P. Vạn Thạnh, TP. Nha Trang")
+            );
+        }
+
+        if (c.contains("vũng tàu")) {
+            return List.of(
+                    new PointTemplate("Bến xe Vũng Tàu", "192 Nam Kỳ Khởi Nghĩa, Phường 3, TP. Vũng Tàu"),
+                    new PointTemplate("Văn phòng Bãi Sau Vũng Tàu", "Đường Thùy Vân, Phường Thắng Tam, TP. Vũng Tàu"),
+                    new PointTemplate("Trạm đón Bãi Trước", "Đường Trần Phú, Phường 1, TP. Vũng Tàu")
+            );
+        }
+
+        if (c.contains("cần thơ")) {
+            return List.of(
+                    new PointTemplate("Bến xe Trung tâm Cần Thơ", "QL1A, P. Hưng Thạnh, Q. Cái Răng, TP. Cần Thơ"),
+                    new PointTemplate("Văn phòng Bến Ninh Kiều", "107 Nguyễn Thái Học, P. Tân An, Q. Ninh Kiều, Cần Thơ"),
+                    new PointTemplate("Trạm đón Đại học Cần Thơ", "Khu II, Đường 3/2, Q. Ninh Kiều, TP. Cần Thơ")
+            );
+        }
+
+        if (c.contains("hải phòng")) {
+            return List.of(
+                    new PointTemplate("Bến xe Cầu Rào", "Đường Lạch Tray, P. Đằng Giang, Q. Ngô Quyền, Hải Phòng"),
+                    new PointTemplate("Bến xe Vĩnh Niệm", "Đường Bùi Viện, P. Vĩnh Niệm, Q. Lê Chân, Hải Phòng")
+            );
+        }
+
+        if (c.contains("huế")) {
+            return List.of(
+                    new PointTemplate("Bến xe Phía Nam Huế", "97 An Dương Vương, P. An Đông, TP. Huế"),
+                    new PointTemplate("Văn phòng Trung tâm Huế", "14 Hà Nội, P. Vĩnh Ninh, TP. Huế")
+            );
+        }
+
+        // Fallback chung cho các địa phương khác
+        return List.of(
+                new PointTemplate("Bến xe Trung tâm " + city, "Trung tâm hành chính " + city),
+                new PointTemplate("Văn phòng đại diện " + city, "Trục đường chính nội đô " + city)
+        );
     }
 }

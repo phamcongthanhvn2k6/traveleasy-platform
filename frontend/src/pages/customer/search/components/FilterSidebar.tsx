@@ -14,6 +14,8 @@ import {
   RotateCcw,
   Check,
   SlidersHorizontal,
+  Search,
+  X,
 } from 'lucide-react';
 import { SortOption } from './SortTabBar';
 
@@ -44,13 +46,19 @@ export interface FacetCounts {
   rating40Count: number;
 }
 
+export interface PointFacet {
+  name: string;
+  address?: string;
+  count: number;
+}
+
 interface Props {
   filters: FilterState;
   sortOption: SortOption;
   onSortChange: (sort: SortOption) => void;
   availableCompanies: { name: string; count: number }[];
-  availablePickupPoints: { name: string; count: number }[];
-  availableDropoffPoints: { name: string; count: number }[];
+  availablePickupPoints: PointFacet[];
+  availableDropoffPoints: PointFacet[];
   availableBusTypes: { type: string; name: string; count: number }[];
   facetCounts: FacetCounts;
   onChange: (filters: FilterState) => void;
@@ -69,6 +77,10 @@ export const FilterSidebar: React.FC<Props> = ({
   onChange,
   onReset,
 }) => {
+  // Local Search State for Pickup & Dropoff
+  const [pickupSearchQuery, setPickupSearchQuery] = useState('');
+  const [dropoffSearchQuery, setDropoffSearchQuery] = useState('');
+
   // Accordion Expand/Collapse State
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     sort: true,
@@ -84,6 +96,30 @@ export const FilterSidebar: React.FC<Props> = ({
 
   const toggleSection = (key: string) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const filteredPickupPoints = availablePickupPoints.filter((p) => {
+    if (!pickupSearchQuery.trim()) return true;
+    const q = pickupSearchQuery.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(q) ||
+      (p.address && p.address.toLowerCase().includes(q))
+    );
+  });
+
+  const filteredDropoffPoints = availableDropoffPoints.filter((p) => {
+    if (!dropoffSearchQuery.trim()) return true;
+    const q = dropoffSearchQuery.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(q) ||
+      (p.address && p.address.toLowerCase().includes(q))
+    );
+  });
+
+  const handleReset = () => {
+    setPickupSearchQuery('');
+    setDropoffSearchQuery('');
+    onReset();
   };
 
   const formatHourString = (hours: number): string => {
@@ -270,7 +306,7 @@ export const FilterSidebar: React.FC<Props> = ({
         {hasActiveFilters && (
           <button
             type="button"
-            onClick={onReset}
+            onClick={handleReset}
             style={{
               background: 'none',
               border: 'none',
@@ -656,46 +692,261 @@ export const FilterSidebar: React.FC<Props> = ({
             marginBottom: '12px',
           }}
         >
-          <span style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>Điểm đón</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>Điểm đón</span>
+            {filters.pickupPoints.length > 0 && (
+              <span
+                style={{
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                }}
+              >
+                {filters.pickupPoints.length}
+              </span>
+            )}
+          </div>
           {openSections.pickup ? <ChevronUp size={16} color="#64748b" /> : <ChevronDown size={16} color="#64748b" />}
         </div>
 
         {openSections.pickup && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {availablePickupPoints.map((p) => {
-              const isChecked = filters.pickupPoints.includes(p.name);
-              return (
-                <label
-                  key={p.name}
+          <div>
+            {/* Thanh tìm kiếm điểm đón */}
+            <div style={{ position: 'relative', marginBottom: '10px' }}>
+              <Search
+                size={14}
+                style={{
+                  position: 'absolute',
+                  left: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#94a3b8',
+                  pointerEvents: 'none',
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Gõ tìm bến xe, quận, đường đón..."
+                value={pickupSearchQuery}
+                onChange={(e) => setPickupSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '7px 28px 7px 30px',
+                  fontSize: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#f8fafc',
+                  outline: 'none',
+                  color: '#0f172a',
+                  boxSizing: 'border-box',
+                }}
+              />
+              {pickupSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setPickupSearchQuery('')}
                   style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    padding: '2px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
-                    userSelect: 'none',
                   }}
+                  title="Xóa tìm kiếm"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => togglePickupPoint(p.name)}
-                      style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: '#2563eb' }}
-                    />
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            {/* Danh sách các điểm đón đã chọn (Chips / Badges) */}
+            {filters.pickupPoints.length > 0 && (
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
+                    Đã chọn ({filters.pickupPoints.length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onChange({ ...filters, pickupPoints: [] })}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '11px',
+                      color: '#ef4444',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    Bỏ chọn tất cả
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                  {filters.pickupPoints.map((name) => (
                     <span
+                      key={name}
                       style={{
-                        fontSize: '13px',
-                        color: isChecked ? '#1d4ed8' : '#334155',
-                        fontWeight: isChecked ? 700 : 500,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        backgroundColor: '#eff6ff',
+                        color: '#1d4ed8',
+                        border: '1px solid #bfdbfe',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: 600,
                       }}
                     >
-                      {p.name}
+                      <span style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {name}
+                      </span>
+                      <X
+                        size={12}
+                        style={{ cursor: 'pointer', flexShrink: 0 }}
+                        onClick={() => togglePickupPoint(name)}
+                      />
                     </span>
-                  </div>
-                  <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>({p.count})</span>
-                </label>
-              );
-            })}
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Danh sách các điểm đón kết quả lọc */}
+            <div
+              style={{
+                maxHeight: '220px',
+                overflowY: 'auto',
+                paddingRight: '4px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              {filteredPickupPoints.length === 0 ? (
+                <div
+                  style={{
+                    padding: '12px 8px',
+                    textAlign: 'center',
+                    fontSize: '12px',
+                    color: '#64748b',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '6px',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {pickupSearchQuery ? (
+                    <>
+                      Không có điểm đón nào khớp với "<strong>{pickupSearchQuery}</strong>"
+                      <br />
+                      <button
+                        type="button"
+                        onClick={() => setPickupSearchQuery('')}
+                        style={{
+                          marginTop: '6px',
+                          fontSize: '11px',
+                          color: '#2563eb',
+                          textDecoration: 'underline',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Xem tất cả điểm đón
+                      </button>
+                    </>
+                  ) : (
+                    'Chưa có điểm đón nào'
+                  )}
+                </div>
+              ) : (
+                filteredPickupPoints.map((p) => {
+                  const isChecked = filters.pickupPoints.includes(p.name);
+                  return (
+                    <label
+                      key={p.name}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        padding: '4px 6px',
+                        borderRadius: '6px',
+                        backgroundColor: isChecked ? '#eff6ff' : 'transparent',
+                        transition: 'background 0.15s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', flex: 1, minWidth: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => togglePickupPoint(p.name)}
+                          style={{
+                            width: '15px',
+                            height: '15px',
+                            cursor: 'pointer',
+                            accentColor: '#2563eb',
+                            marginTop: '2px',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                          <span
+                            style={{
+                              fontSize: '12.5px',
+                              color: isChecked ? '#1d4ed8' : '#334155',
+                              fontWeight: isChecked ? 700 : 500,
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {p.name}
+                          </span>
+                          {p.address && (
+                            <span
+                              style={{
+                                fontSize: '11px',
+                                color: '#64748b',
+                                lineHeight: 1.3,
+                                marginTop: '1px',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                              title={p.address}
+                            >
+                              {p.address}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '11.5px',
+                          color: isChecked ? '#1d4ed8' : '#94a3b8',
+                          fontWeight: isChecked ? 700 : 500,
+                          flexShrink: 0,
+                          marginTop: '2px',
+                        }}
+                      >
+                        ({p.count})
+                      </span>
+                    </label>
+                  );
+                })
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -716,46 +967,261 @@ export const FilterSidebar: React.FC<Props> = ({
             marginBottom: '12px',
           }}
         >
-          <span style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>Điểm trả</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>Điểm trả</span>
+            {filters.dropoffPoints.length > 0 && (
+              <span
+                style={{
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                }}
+              >
+                {filters.dropoffPoints.length}
+              </span>
+            )}
+          </div>
           {openSections.dropoff ? <ChevronUp size={16} color="#64748b" /> : <ChevronDown size={16} color="#64748b" />}
         </div>
 
         {openSections.dropoff && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {availableDropoffPoints.map((p) => {
-              const isChecked = filters.dropoffPoints.includes(p.name);
-              return (
-                <label
-                  key={p.name}
+          <div>
+            {/* Thanh tìm kiếm điểm trả */}
+            <div style={{ position: 'relative', marginBottom: '10px' }}>
+              <Search
+                size={14}
+                style={{
+                  position: 'absolute',
+                  left: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#94a3b8',
+                  pointerEvents: 'none',
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Gõ tìm bến xe, quận, đường trả..."
+                value={dropoffSearchQuery}
+                onChange={(e) => setDropoffSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '7px 28px 7px 30px',
+                  fontSize: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#f8fafc',
+                  outline: 'none',
+                  color: '#0f172a',
+                  boxSizing: 'border-box',
+                }}
+              />
+              {dropoffSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setDropoffSearchQuery('')}
                   style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    padding: '2px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
-                    userSelect: 'none',
                   }}
+                  title="Xóa tìm kiếm"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => toggleDropoffPoint(p.name)}
-                      style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: '#2563eb' }}
-                    />
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            {/* Danh sách các điểm trả đã chọn (Chips / Badges) */}
+            {filters.dropoffPoints.length > 0 && (
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
+                    Đã chọn ({filters.dropoffPoints.length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onChange({ ...filters, dropoffPoints: [] })}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '11px',
+                      color: '#ef4444',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    Bỏ chọn tất cả
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                  {filters.dropoffPoints.map((name) => (
                     <span
+                      key={name}
                       style={{
-                        fontSize: '13px',
-                        color: isChecked ? '#1d4ed8' : '#334155',
-                        fontWeight: isChecked ? 700 : 500,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        backgroundColor: '#eff6ff',
+                        color: '#1d4ed8',
+                        border: '1px solid #bfdbfe',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: 600,
                       }}
                     >
-                      {p.name}
+                      <span style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {name}
+                      </span>
+                      <X
+                        size={12}
+                        style={{ cursor: 'pointer', flexShrink: 0 }}
+                        onClick={() => toggleDropoffPoint(name)}
+                      />
                     </span>
-                  </div>
-                  <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>({p.count})</span>
-                </label>
-              );
-            })}
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Danh sách các điểm trả kết quả lọc */}
+            <div
+              style={{
+                maxHeight: '220px',
+                overflowY: 'auto',
+                paddingRight: '4px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              {filteredDropoffPoints.length === 0 ? (
+                <div
+                  style={{
+                    padding: '12px 8px',
+                    textAlign: 'center',
+                    fontSize: '12px',
+                    color: '#64748b',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '6px',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {dropoffSearchQuery ? (
+                    <>
+                      Không có điểm trả nào khớp với "<strong>{dropoffSearchQuery}</strong>"
+                      <br />
+                      <button
+                        type="button"
+                        onClick={() => setDropoffSearchQuery('')}
+                        style={{
+                          marginTop: '6px',
+                          fontSize: '11px',
+                          color: '#2563eb',
+                          textDecoration: 'underline',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Xem tất cả điểm trả
+                      </button>
+                    </>
+                  ) : (
+                    'Chưa có điểm trả nào'
+                  )}
+                </div>
+              ) : (
+                filteredDropoffPoints.map((p) => {
+                  const isChecked = filters.dropoffPoints.includes(p.name);
+                  return (
+                    <label
+                      key={p.name}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        padding: '4px 6px',
+                        borderRadius: '6px',
+                        backgroundColor: isChecked ? '#eff6ff' : 'transparent',
+                        transition: 'background 0.15s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', flex: 1, minWidth: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleDropoffPoint(p.name)}
+                          style={{
+                            width: '15px',
+                            height: '15px',
+                            cursor: 'pointer',
+                            accentColor: '#2563eb',
+                            marginTop: '2px',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                          <span
+                            style={{
+                              fontSize: '12.5px',
+                              color: isChecked ? '#1d4ed8' : '#334155',
+                              fontWeight: isChecked ? 700 : 500,
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {p.name}
+                          </span>
+                          {p.address && (
+                            <span
+                              style={{
+                                fontSize: '11px',
+                                color: '#64748b',
+                                lineHeight: 1.3,
+                                marginTop: '1px',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                              title={p.address}
+                            >
+                              {p.address}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '11.5px',
+                          color: isChecked ? '#1d4ed8' : '#94a3b8',
+                          fontWeight: isChecked ? 700 : 500,
+                          flexShrink: 0,
+                          marginTop: '2px',
+                        }}
+                      >
+                        ({p.count})
+                      </span>
+                    </label>
+                  );
+                })
+              )}
+            </div>
           </div>
         )}
       </div>
