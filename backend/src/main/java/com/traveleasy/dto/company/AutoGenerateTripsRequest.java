@@ -22,3 +22,4 @@ public class AutoGenerateTripsRequest {
     private BusType busType;
     private BigDecimal price;
 }
+
