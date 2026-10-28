@@ -1692,12 +1692,12 @@ Kênh tương tác và chăm sóc khách hàng trực tiếp của nhà xe:
     1. 🚌 **Đặt Vé Xe** (`/search` hoặc `/` — Hoạt động cốt lõi): Tìm chuyến, chọn lộ trình, xem giá vé và đặt chỗ.
     2. 🛡️ **Tra Cứu Vé** (`/lookup` — Hoạt động): Tra cứu nhanh thông tin vé và mã QR soát vé.
     3. 🎟️ **Vé Của Tôi** (`/my-tickets` — Hoạt động): Quản lý lịch sử vé của tài khoản cá nhân, đổi/hủy vé trực tuyến.
-    4. ⏰ **Lịch Trình** (`/schedule` — Roadmap Coming Soon): Tra cứu bảng giờ xe xuất bến và danh mục tuyến đường liên tỉnh.
+    4. ⏰ **Lịch Trình** (`/schedule` & `/routes` — Hoạt động hoàn chỉnh): Tra cứu bảng giờ xe xuất bến định kỳ, thông số cự ly, thời gian chạy, tần suất, khoảng giá vé, xem lộ trình điểm đón/trả và chuyển nhanh sang luồng đặt vé.
     5. 🏷️ **Khuyến Mãi** (`/promotions` [HOT] — Roadmap Coming Soon): Voucher giảm giá đến 50% và chương trình hoàn tiền.
     6. ⭐ **Đánh Giá** (`/reviews` — Roadmap Coming Soon): Nhận xét và chấm điểm chất lượng dịch vụ các nhà xe.
     7. 📄 **Chính Sách & FAQ** (`/policy` — Hoạt động): Quy định hành lý, chính sách hoàn hủy và cẩm nang đi xe.
 * **Xử lý mượt mà các tính năng đang phát triển & Bắt lỗi 404**:
-  * Các tính năng chức năng dự kiến (`/schedule`, `/promotions`, `/reviews`...) tự động mở trang `NotFoundPage.tsx` ở chế độ **Lộ trình phát triển (Roadmap Mode)** với thanh tiến độ 3 bước và thời gian ra mắt dự kiến rõ ràng.
+  * Các tính năng chức năng dự kiến (`/promotions`, `/reviews`...) tự động mở trang `NotFoundPage.tsx` ở chế độ **Lộ trình phát triển (Roadmap Mode)** với thanh tiến độ 3 bước và thời gian ra mắt dự kiến rõ ràng.
   * Mọi đường link sai hoặc không tồn tại (Catch-all route `path="*"`) sẽ hiển thị trang báo lỗi 404 thân thiện, chuyên nghiệp kèm các nút quay về Trang chủ, Đặt vé xe ngay và hotline hỗ trợ 24/7 (`1900 6868`).
 
 ![Giao Diện Header Mới Phân Chia Theo Cụm Chức Năng Nghiệp Vụ](docs/screenshots/screenshot_new_header_layout.png)
@@ -1717,6 +1717,19 @@ Kênh tương tác và chăm sóc khách hàng trực tiếp của nhà xe:
 
 ![Trang Báo Lỗi 404 Not Found Khi Nhập Sai URL](docs/screenshots/screenshot_404_wrong_url.png)
 *Hình 11.43: Trang 404 Not Found thân thiện khi truy cập vào đường link sai hoặc không tồn tại.*
+
+---
+
+### 11.4.1 Chức Năng Lịch Trình & Bảng Giờ Chạy Xe Khách Liên Tỉnh (`/schedule` & `/routes`)
+Nhằm phục vụ nhu cầu khảo sát mạng lưới tuyến đường và giờ xe chạy định kỳ mà không cần phải chọn ngày đi cố định, TravelEasy Platform đã hoàn thiện toàn diện phân hệ **Lịch Trình Xe Khách**:
+1. **Bộ chọn tuyến & Đảo chiều 1-chạm (`⇄`)**: Cho phép chọn nhanh điểm đi và điểm đến với danh sách gợi ý tự động (Datalist auto-suggestions) từ CSDL. Hỗ trợ các nút chọn nhanh các tuyến trọng điểm (Sài Gòn ⇄ Đà Lạt, Hà Nội ⇄ Sa Pa, Sài Gòn ⇄ Vũng Tàu, Sài Gòn ⇄ Nha Trang...).
+2. **Thẻ tóm tắt thông số tuyến chắt lọc (Route Metrics)**: Hiển thị ngay cự ly (km), thời gian di chuyển dự kiến (~giờ), tần suất chạy xe (phút/chuyến) và khoảng giá vé dao động (min - max).
+3. **Tab đối chiếu 2 chiều Đi & Về (Round-Trip Timetable Switcher)**: Dễ dàng chuyển đổi giữa `Chiều Đi: [Điểm Đi] ➔ [Điểm Đến]` và `Chiều Về: [Điểm Đến] ➔ [Điểm Đi]` để hành khách chủ động sắp xếp thời gian công tác và du lịch.
+4. **Bộ lọc 4 khung giờ tinh giản**: Lọc nhanh các chuyến chạy trong ngày theo các buổi: Tất cả, Sáng sớm (00-06h), Buổi sáng (06-12h), Buổi chiều (12-18h), Buổi tối (18-24h).
+5. **Timeline giờ chạy xe & Lộ trình đón/trả chi tiết**: Mỗi chuyến xe hiển thị trực quan giờ xuất bến, giờ đến dự kiến, tên nhà xe, đánh giá sao, loại xe, số ghế trống và giá vé. Nút Accordion `[📍 Xem danh sách điểm đón & trả dọc đường]` mở rộng lộ trình thứ tự từng trạm đón và trạm trả.
+6. **Chuyển tiếp tức thì sang luồng Đặt Vé**: Nút `[Đặt Chuyến Này ➔]` liên kết mượt mà sang trang chọn ghế `/search` với mã chuyến và thông tin lộ trình đã chọn.
+7. **Tiện ích In & Tải bảng giờ offline**: Nút `[🖨️ In / Lưu Bảng Giờ]` tối ưu hóa theo định dạng CSS `@media print`, giúp hành khách dễ dàng in ra giấy hoặc lưu file PDF để tra cứu khi di chuyển.
+8. **Đồng bộ API Backend**: Cung cấp 2 endpoint công khai `GET /api/v1/trips/schedule` và `GET /api/v1/trips/schedule/routes` tối ưu hóa câu truy vấn, tự động tính toán tần suất và fallback giờ chạy định kỳ cho mọi tuyến đường.
 
 ---
 

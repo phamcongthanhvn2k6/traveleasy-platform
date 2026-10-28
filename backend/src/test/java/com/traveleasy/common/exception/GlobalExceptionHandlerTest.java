@@ -131,3 +131,4 @@ class GlobalExceptionHandlerTest {
         assertTrue(response.getBody().getMessage().contains("liên kết"));
     }
 }
+

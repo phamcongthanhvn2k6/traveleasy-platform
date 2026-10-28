@@ -85,3 +85,55 @@ export interface AuthUser {
   role: 'ADMIN' | 'OPERATOR' | 'CUSTOMER';
   token: string;
 }
+
+export interface ScheduleTripItem {
+  id: number;
+  busCompanyId: number;
+  busCompanyName: string;
+  busCompanyLogo?: string;
+  busCompanyRating?: number;
+  departureTime: string;
+  arrivalTime: string;
+  departureTimeFormatted: string;
+  arrivalTimeFormatted: string;
+  durationFormatted: string;
+  busType: string;
+  busTypeName: string;
+  price: number;
+  totalSeats: number;
+  availableSeats: number;
+  status: string;
+  originCity: string;
+  destinationCity: string;
+  mainPickupPoint: string;
+  mainDropoffPoint: string;
+  pickupPoints: Point[];
+  dropoffPoints: Point[];
+}
+
+export interface RouteScheduleResponse {
+  routeId: number | null;
+  originCity: string;
+  destinationCity: string;
+  distanceKm: number;
+  durationHours: number;
+  minPrice: number;
+  maxPrice: number;
+  totalTrips: number;
+  frequency: string;
+  outboundTrips: ScheduleTripItem[];
+  returnRouteId: number | null;
+  inboundTrips: ScheduleTripItem[];
+  pickupPoints: Point[];
+  dropoffPoints: Point[];
+  availableOrigins: string[];
+  availableDestinations: string[];
+}
+
+export interface RouteOption {
+  id: number;
+  departureLocation: string;
+  arrivalLocation: string;
+  distanceKm: number;
+  durationHours: number;
+}
