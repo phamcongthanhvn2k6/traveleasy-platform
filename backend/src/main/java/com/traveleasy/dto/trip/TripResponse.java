@@ -20,6 +20,7 @@ public class TripResponse {
     private Long busCompanyId;
     private String busCompanyName;
     private String busCompanyLogo;
+    private BigDecimal busCompanyRating;
     private Long routeId;
     private String originCity;
     private String destinationCity;

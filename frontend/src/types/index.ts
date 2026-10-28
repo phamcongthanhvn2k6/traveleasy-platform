@@ -3,6 +3,7 @@ export interface Trip {
   busCompanyId: number;
   busCompanyName: string;
   busCompanyLogo: string;
+  busCompanyRating?: number;
   routeId: number;
   originCity: string;
   destinationCity: string;

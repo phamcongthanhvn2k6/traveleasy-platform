@@ -250,7 +250,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                   gap: '2px',
                 }}
               >
-                <Star size={13} fill="#f59e0b" color="#f59e0b" /> 4.8
+                <Star size={13} fill="#f59e0b" color="#f59e0b" /> {(trip.busCompanyRating ?? 4.8).toFixed(1)}
                 <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>(128)</span>
               </span>
             </div>

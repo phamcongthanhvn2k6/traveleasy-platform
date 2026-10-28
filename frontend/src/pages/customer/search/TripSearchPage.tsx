@@ -218,11 +218,15 @@ export const TripSearchPage: React.FC = () => {
         else evening++;
       } catch {}
 
+      const tripRating = t.busCompanyRating ?? (t.busType === 'LIMOUSINE' ? 4.9 : 4.6);
+      if (tripRating >= 4.5) {
+        rating45++;
+      }
+      if (tripRating >= 4.0) {
+        rating40++;
+      }
       if (t.busType === 'LIMOUSINE') {
         xeXin++;
-        rating45++;
-      } else if (t.price >= 350000) {
-        rating45++;
       }
     });
 
@@ -246,36 +250,32 @@ export const TripSearchPage: React.FC = () => {
   const filteredAndSortedTrips = useMemo(() => {
     return trips
       .filter((t) => {
-        // 1. Time range slider filter (from hours to hours)
+        // 1. Time filter (Preset Slots OR Time Range Slider)
         try {
           const d = new Date(t.departureTime);
           const h = d.getHours() + d.getMinutes() / 60;
-          if (h < filters.timeRange[0] || h > filters.timeRange[1]) {
-            return false;
+
+          if (filters.timeSlots.length > 0) {
+            const isEarly = h >= 0 && h < 6;
+            const isMorning = h >= 6 && h < 12;
+            const isAfternoon = h >= 12 && h < 18;
+            const isEvening = h >= 18 && h <= 24;
+
+            const matchesSlot =
+              (filters.timeSlots.includes('EARLY') && isEarly) ||
+              (filters.timeSlots.includes('MORNING') && isMorning) ||
+              (filters.timeSlots.includes('AFTERNOON') && isAfternoon) ||
+              (filters.timeSlots.includes('EVENING') && isEvening);
+
+            if (!matchesSlot) return false;
+          } else {
+            if (h < filters.timeRange[0] || h > filters.timeRange[1]) {
+              return false;
+            }
           }
         } catch {}
 
-        // 2. Preset time slot filter
-        if (filters.timeSlots.length > 0) {
-          try {
-            const hour = new Date(t.departureTime).getHours();
-            const isEarly = hour >= 0 && hour < 6;
-            const isMorning = hour >= 6 && hour < 12;
-            const isAfternoon = hour >= 12 && hour < 18;
-            const isEvening = hour >= 18 && hour < 24;
-
-            const matchesEarly = filters.timeSlots.includes('EARLY') && isEarly;
-            const matchesMorning = filters.timeSlots.includes('MORNING') && isMorning;
-            const matchesAfternoon = filters.timeSlots.includes('AFTERNOON') && isAfternoon;
-            const matchesEvening = filters.timeSlots.includes('EVENING') && isEvening;
-
-            if (!matchesEarly && !matchesMorning && !matchesAfternoon && !matchesEvening) {
-              return false;
-            }
-          } catch {}
-        }
-
-        // 3. Price range filter
+        // 2. Price range filter
         if (filters.priceRanges.length > 0) {
           const isUnder300 = t.price < 300000;
           const is300to400 = t.price >= 300000 && t.price <= 400000;
@@ -290,7 +290,7 @@ export const TripSearchPage: React.FC = () => {
           }
         }
 
-        // 4. Bus type filter
+        // 3. Bus type filter
         if (filters.busTypes.length > 0) {
           const matchBusType = filters.busTypes.some(
             (bt) =>
@@ -303,7 +303,7 @@ export const TripSearchPage: React.FC = () => {
           }
         }
 
-        // 5. Company filter
+        // 4. Company filter
         if (filters.companies.length > 0) {
           const matched = filters.companies.some(
             (c) => t.busCompanyName && (t.busCompanyName === c || t.busCompanyName.toLowerCase().includes(c.toLowerCase()))
@@ -339,7 +339,7 @@ export const TripSearchPage: React.FC = () => {
 
         // 6. Rating filter
         if (filters.minRating !== null) {
-          const tripRating = t.busType === 'LIMOUSINE' ? 4.9 : 4.6;
+          const tripRating = t.busCompanyRating ?? (t.busType === 'LIMOUSINE' ? 4.9 : 4.6);
           if (tripRating < filters.minRating) {
             return false;
           }
@@ -355,24 +355,52 @@ export const TripSearchPage: React.FC = () => {
         return true;
       })
       .sort((a, b) => {
+        const timeA = new Date(a.departureTime).getTime();
+        const timeB = new Date(b.departureTime).getTime();
+        const hourMinA = new Date(a.departureTime).getHours() * 60 + new Date(a.departureTime).getMinutes();
+        const hourMinB = new Date(b.departureTime).getHours() * 60 + new Date(b.departureTime).getMinutes();
+        const ratingA = a.busCompanyRating ?? (a.busType === 'LIMOUSINE' ? 4.9 : 4.6);
+        const ratingB = b.busCompanyRating ?? (b.busType === 'LIMOUSINE' ? 4.9 : 4.6);
+
+        // 1. Giờ đi sớm nhất
         if (sortOption === 'EARLIEST') {
-          return new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime();
-        }
-        if (sortOption === 'LATEST') {
-          return new Date(b.departureTime).getTime() - new Date(a.departureTime).getTime();
-        }
-        if (sortOption === 'PRICE_ASC') {
+          if (timeA !== timeB) return timeA - timeB;
           return a.price - b.price;
         }
+
+        // 2. Giờ đi muộn nhất (Trong cùng ngày: giờ muộn hơn lên trước; Khác ngày: ngày gần lên trước)
+        if (sortOption === 'LATEST') {
+          const dateA = a.departureTime.split('T')[0];
+          const dateB = b.departureTime.split('T')[0];
+          if (dateA === dateB) {
+            if (hourMinB !== hourMinA) return hourMinB - hourMinA;
+            return a.price - b.price;
+          }
+          return dateA.localeCompare(dateB) || (hourMinB - hourMinA);
+        }
+
+        // 3. Giá tăng dần (Ưu tiên rẻ nhất, bằng giá thì giờ sớm lên trước)
+        if (sortOption === 'PRICE_ASC') {
+          if (a.price !== b.price) return a.price - b.price;
+          return timeA - timeB;
+        }
+
+        // 4. Giá giảm dần (Ưu tiên giá cao nhất, bằng giá thì giờ sớm lên trước)
         if (sortOption === 'PRICE_DESC') {
-          return b.price - a.price;
+          if (b.price !== a.price) return b.price - a.price;
+          return timeA - timeB;
         }
+
+        // 5. Đánh giá cao nhất (Đánh giá cao lên trước, bằng sao thì giờ sớm lên trước)
         if (sortOption === 'RATING_DESC') {
-          const ratingA = a.busType === 'LIMOUSINE' ? 4.9 : 4.6;
-          const ratingB = b.busType === 'LIMOUSINE' ? 4.9 : 4.6;
-          return ratingB - ratingA;
+          if (ratingB !== ratingA) return ratingB - ratingA;
+          return timeA - timeB;
         }
-        return 0; // DEFAULT
+
+        // 6. Mặc định (Khởi hành sớm lên trước, ưu tiên nhà xe đánh giá cao và giá tốt)
+        if (timeA !== timeB) return timeA - timeB;
+        if (ratingB !== ratingA) return ratingB - ratingA;
+        return a.price - b.price;
       });
   }, [trips, filters, sortOption]);
 

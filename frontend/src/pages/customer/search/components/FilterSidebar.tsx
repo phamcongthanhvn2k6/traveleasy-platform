@@ -129,6 +129,14 @@ export const FilterSidebar: React.FC<Props> = ({
     return `${pad(h)}:${pad(m)}`;
   };
 
+  const timeOptions = React.useMemo(() => {
+    const list = [];
+    for (let h = 0; h <= 24; h += 0.5) {
+      list.push({ val: h, label: formatHourString(h) });
+    }
+    return list;
+  }, []);
+
   const handleTimeRangeChange = (index: 0 | 1, value: number) => {
     const next: [number, number] = [...filters.timeRange];
     if (index === 0) {
@@ -136,14 +144,36 @@ export const FilterSidebar: React.FC<Props> = ({
     } else {
       next[1] = Math.max(value, next[0]);
     }
-    onChange({ ...filters, timeRange: next });
+    onChange({ ...filters, timeRange: next, timeSlots: [] });
   };
 
   const toggleTimeSlot = (slot: string) => {
-    const next = filters.timeSlots.includes(slot)
-      ? filters.timeSlots.filter((s) => s !== slot)
-      : [...filters.timeSlots, slot];
-    onChange({ ...filters, timeSlots: next });
+    const isCurrentlyActive = filters.timeSlots.includes(slot);
+    let nextSlots: string[];
+    let nextRange: [number, number] = [0, 24];
+
+    if (isCurrentlyActive) {
+      nextSlots = filters.timeSlots.filter((s) => s !== slot);
+    } else {
+      nextSlots = [...filters.timeSlots, slot];
+    }
+
+    if (nextSlots.length === 1) {
+      if (nextSlots[0] === 'EARLY') nextRange = [0, 6];
+      else if (nextSlots[0] === 'MORNING') nextRange = [6, 12];
+      else if (nextSlots[0] === 'AFTERNOON') nextRange = [12, 18];
+      else if (nextSlots[0] === 'EVENING') nextRange = [18, 24];
+    } else if (nextSlots.length > 1) {
+      let minH = 24;
+      let maxH = 0;
+      if (nextSlots.includes('EARLY')) { minH = Math.min(minH, 0); maxH = Math.max(maxH, 6); }
+      if (nextSlots.includes('MORNING')) { minH = Math.min(minH, 6); maxH = Math.max(maxH, 12); }
+      if (nextSlots.includes('AFTERNOON')) { minH = Math.min(minH, 12); maxH = Math.max(maxH, 18); }
+      if (nextSlots.includes('EVENING')) { minH = Math.min(minH, 18); maxH = Math.max(maxH, 24); }
+      nextRange = [minH, maxH];
+    }
+
+    onChange({ ...filters, timeSlots: nextSlots, timeRange: nextRange });
   };
 
   const toggleCompany = (company: string) => {
@@ -246,9 +276,8 @@ export const FilterSidebar: React.FC<Props> = ({
             {sortItems.map((item) => {
               const isSelected = sortOption === item.id;
               return (
-                <div
+                <label
                   key={item.id}
-                  onClick={() => onSortChange(item.id)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -258,15 +287,18 @@ export const FilterSidebar: React.FC<Props> = ({
                     padding: '2px 0',
                   }}
                 >
-                  <div
+                  <input
+                    type="radio"
+                    name="sidebarSort"
+                    value={item.id}
+                    checked={isSelected}
+                    onChange={() => onSortChange(item.id)}
                     style={{
-                      width: '18px',
-                      height: '18px',
-                      borderRadius: '50%',
-                      border: isSelected ? '5px solid #2563eb' : '2px solid #94a3b8',
-                      backgroundColor: '#ffffff',
-                      transition: 'all 0.15s ease',
-                      flexShrink: 0,
+                      width: '16px',
+                      height: '16px',
+                      cursor: 'pointer',
+                      accentColor: '#2563eb',
+                      margin: 0,
                     }}
                   />
                   <span
@@ -278,7 +310,7 @@ export const FilterSidebar: React.FC<Props> = ({
                   >
                     {item.label}
                   </span>
-                </div>
+                </label>
               );
             })}
           </div>
@@ -356,9 +388,9 @@ export const FilterSidebar: React.FC<Props> = ({
                   style={{
                     position: 'absolute',
                     width: '100%',
-                    pointerEvents: 'auto',
                     accentColor: '#2563eb',
                     cursor: 'pointer',
+                    zIndex: filters.timeRange[0] > 18 ? 5 : 3,
                   }}
                 />
                 <input
@@ -371,29 +403,47 @@ export const FilterSidebar: React.FC<Props> = ({
                   style={{
                     position: 'absolute',
                     width: '100%',
-                    pointerEvents: 'auto',
                     accentColor: '#2563eb',
                     cursor: 'pointer',
+                    zIndex: 4,
                   }}
                 />
               </div>
             </div>
 
-            {/* 2 Time Boxes: Từ [00:00] - Đến [24:00] */}
+            {/* 2 Interactive Time Select Boxes: Từ [00:00] - Đến [24:00] */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <div
                 style={{
                   flex: 1,
                   border: '1px solid #cbd5e1',
                   borderRadius: '8px',
-                  padding: '6px 10px',
+                  padding: '4px 8px',
                   backgroundColor: '#ffffff',
                 }}
               >
                 <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600 }}>Từ</div>
-                <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>
-                  {formatHourString(filters.timeRange[0])}
-                </div>
+                <select
+                  value={filters.timeRange[0]}
+                  onChange={(e) => handleTimeRangeChange(0, parseFloat(e.target.value))}
+                  style={{
+                    width: '100%',
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    padding: '2px 0',
+                  }}
+                >
+                  {timeOptions.map((opt) => (
+                    <option key={opt.val} value={opt.val}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <span style={{ color: '#94a3b8', fontWeight: 700 }}>-</span>
@@ -403,14 +453,32 @@ export const FilterSidebar: React.FC<Props> = ({
                   flex: 1,
                   border: '1px solid #cbd5e1',
                   borderRadius: '8px',
-                  padding: '6px 10px',
+                  padding: '4px 8px',
                   backgroundColor: '#ffffff',
                 }}
               >
                 <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600 }}>Đến</div>
-                <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>
-                  {formatHourString(filters.timeRange[1])}
-                </div>
+                <select
+                  value={filters.timeRange[1]}
+                  onChange={(e) => handleTimeRangeChange(1, parseFloat(e.target.value))}
+                  style={{
+                    width: '100%',
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    padding: '2px 0',
+                  }}
+                >
+                  {timeOptions.map((opt) => (
+                    <option key={opt.val} value={opt.val}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -474,15 +542,12 @@ export const FilterSidebar: React.FC<Props> = ({
         {openSections.popular && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {/* Tag 1: Xe Xịn (Giống hệt ảnh đính kèm) */}
-            <div
-              onClick={() => togglePopularTag('XE_XIN')}
-              style={{ cursor: 'pointer', userSelect: 'none' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
                 <input
                   type="checkbox"
                   checked={filters.popularTags.includes('XE_XIN')}
-                  onChange={() => {}}
+                  onChange={() => togglePopularTag('XE_XIN')}
                   style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#2563eb' }}
                 />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -507,7 +572,7 @@ export const FilterSidebar: React.FC<Props> = ({
                     ({facetCounts.xeXinCount})
                   </span>
                 </div>
-              </div>
+              </label>
               <div
                 style={{
                   fontSize: '11.5px',
@@ -522,15 +587,12 @@ export const FilterSidebar: React.FC<Props> = ({
             </div>
 
             {/* Tag 2: Xác nhận tức thì */}
-            <div
-              onClick={() => togglePopularTag('INSTANT_CONFIRM')}
-              style={{ cursor: 'pointer', userSelect: 'none' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
                 <input
                   type="checkbox"
                   checked={filters.popularTags.includes('INSTANT_CONFIRM')}
-                  onChange={() => {}}
+                  onChange={() => togglePopularTag('INSTANT_CONFIRM')}
                   style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#2563eb' }}
                 />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -551,7 +613,7 @@ export const FilterSidebar: React.FC<Props> = ({
                     ({facetCounts.instantCount})
                   </span>
                 </div>
-              </div>
+              </label>
               <div
                 style={{
                   fontSize: '11.5px',
@@ -566,15 +628,12 @@ export const FilterSidebar: React.FC<Props> = ({
             </div>
 
             {/* Tag 3: Cam kết hoàn 150% */}
-            <div
-              onClick={() => togglePopularTag('MONEY_BACK_150')}
-              style={{ cursor: 'pointer', userSelect: 'none' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
                 <input
                   type="checkbox"
                   checked={filters.popularTags.includes('MONEY_BACK_150')}
-                  onChange={() => {}}
+                  onChange={() => togglePopularTag('MONEY_BACK_150')}
                   style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#2563eb' }}
                 />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -595,7 +654,7 @@ export const FilterSidebar: React.FC<Props> = ({
                     ({facetCounts.moneyBackCount})
                   </span>
                 </div>
-              </div>
+              </label>
               <div
                 style={{
                   fontSize: '11.5px',
@@ -1320,9 +1379,6 @@ export const FilterSidebar: React.FC<Props> = ({
               return (
                 <label
                   key={r.rating}
-                  onClick={() =>
-                    onChange({ ...filters, minRating: filters.minRating === r.rating ? null : r.rating })
-                  }
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1334,8 +1390,14 @@ export const FilterSidebar: React.FC<Props> = ({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <input
                       type="radio"
+                      name="minRating"
                       checked={isChecked}
-                      onChange={() => {}}
+                      onChange={() => onChange({ ...filters, minRating: r.rating })}
+                      onClick={() => {
+                        if (isChecked) {
+                          onChange({ ...filters, minRating: null });
+                        }
+                      }}
                       style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: '#2563eb' }}
                     />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
