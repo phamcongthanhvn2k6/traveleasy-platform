@@ -41,4 +41,5 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     boolean existsByRouteId(Long routeId);
     boolean existsByBusCompanyId(Long busCompanyId);
+    boolean existsByRouteIdAndDepartureTime(Long routeId, LocalDateTime departureTime);
 }

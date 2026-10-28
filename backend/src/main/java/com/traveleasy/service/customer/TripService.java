@@ -282,20 +282,22 @@ public class TripService {
         List<ScheduleTripItem> list = new ArrayList<>();
         LocalDate today = LocalDate.now();
 
-        // 4 mốc thời gian xuất bến chuẩn
+        // 5 mốc thời gian xuất bến chuẩn bao quát đầy đủ cả 4 khung giờ trong ngày
         int[][] departureSlots = {
-                {7, 0, 320000, 34, 28},
-                {10, 30, 280000, 40, 22},
-                {15, 0, 340000, 34, 18},
-                {22, 30, 390000, 34, 30}
+                {4, 30, 350000, 34, 26}, // 00h - 06h (Sáng sớm)
+                {7, 30, 320000, 34, 28}, // 06h - 12h (Buổi sáng)
+                {10, 30, 280000, 40, 22}, // 06h - 12h (Buổi sáng)
+                {15, 0, 340000, 34, 18},  // 12h - 18h (Buổi chiều)
+                {22, 30, 390000, 34, 30}  // 18h - 24h (Buổi tối)
         };
 
         if (isReturn) {
             departureSlots = new int[][]{
-                    {6, 30, 320000, 34, 25},
-                    {11, 0, 280000, 40, 19},
-                    {16, 30, 340000, 34, 15},
-                    {23, 0, 390000, 34, 29}
+                    {5, 0, 350000, 34, 24},  // 00h - 06h (Sáng sớm)
+                    {8, 0, 320000, 34, 25},  // 06h - 12h (Buổi sáng)
+                    {11, 0, 280000, 40, 19}, // 06h - 12h (Buổi sáng)
+                    {16, 30, 340000, 34, 15},// 12h - 18h (Buổi chiều)
+                    {23, 0, 390000, 34, 29}  // 18h - 24h (Buổi tối)
             };
         }
 

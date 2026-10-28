@@ -198,6 +198,47 @@ export const CompanyLoginPage: React.FC = () => {
           </div>
         )}
 
+        {/* Quick Demo Accounts Selection */}
+        <div style={{ marginBottom: '20px', padding: '12px 14px', backgroundColor: 'rgba(13, 148, 136, 0.1)', border: '1px solid rgba(13, 148, 136, 0.25)', borderRadius: '10px' }}>
+          <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#2dd4bf', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <KeyRound size={13} /> Tài khoản đối tác nhà xe mẫu (Mật khẩu: Rikkei@123)
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {[
+              { label: 'Sao Việt Express', email: 'dieuhanh@xesaoviet.com.vn' },
+              { label: 'TravelEasy Express', email: 'partner@traveleasy.vn' },
+              { label: 'Thành Bưởi', email: 'dieuhanh@thanhbuoi.com.vn' },
+              { label: 'Phương Trang FUTA', email: 'dieuhanh@futabus.vn' },
+              { label: 'Hải Vân Express', email: 'dieuhanh@haivan.com' },
+              { label: 'Hoa Mai Vũng Tàu', email: 'dieuhanh@hoamaivungtau.com.vn' },
+              { label: 'Hà Lan Limousine', email: 'dieuhanh@halan.com.vn' },
+              { label: 'Liên Hưng Nha Trang', email: 'dieuhanh@xekhachlienhung.com' },
+            ].map((acc, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setIdentifier(acc.email);
+                  setPassword('Rikkei@123');
+                }}
+                style={{
+                  background: identifier === acc.email ? 'rgba(45, 212, 191, 0.3)' : 'rgba(255, 255, 255, 0.08)',
+                  color: identifier === acc.email ? '#2dd4bf' : '#e2e8f0',
+                  border: identifier === acc.email ? '1px solid #2dd4bf' : '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s'
+                }}
+              >
+                {acc.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
             <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>

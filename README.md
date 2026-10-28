@@ -1999,16 +1999,22 @@ Mọi tài khoản trong hệ thống đều có thể đăng nhập ngay bằng
    * `admin@traveleasy.vn` — Quản Trị Viên Hệ Thống
    * `phanthanhphong.admin@traveleasy.vn` — Phạm Thanh Phong
    * `trungkien.admin@traveleasy.vn` — Phan Trung Kiên
-2. **Điều Hành Đối Tác Nhà Xe (Bus Operators)**:
+2. **Điều Hành Đối Tác Nhà Xe (Bus Operators)** (Đăng nhập tại `/company/login`):
    * `partner@traveleasy.vn` — Điều Hành TravelEasy Express (Nhà xe 1)
    * `dieuhanh@thanhbuoi.com.vn` — Điều Hành Thành Bưởi Limousine (Nhà xe 2)
    * `dieuhanh@xesaoviet.com.vn` — Điều Hành Sao Việt Express (Nhà xe 3)
    * `dieuhanh@kumhosamco.com.vn` — Điều Hành Kumho Samco (Nhà xe 4)
    * `dieuhanh@hoamaivungtau.com.vn` — Điều Hành Xe Hoa Mai Vũng Tàu (Nhà xe 5)
    * `dieuhanh@hoanglongasia.com` — Điều Hành Hoàng Long Asia (Nhà xe 6)
+   * `staff@traveleasy.vn` — Nhân Viên Vận Hành Nhà Xe Văn Minh (Nhà xe 7)
    * `dieuhanh@cuctunglimousine.com` — Điều Hành Cúc Tùng Limousine (Nhà xe 8)
    * `dieuhanh@haivan.com` — Điều Hành Xe Hải Vân (Nhà xe 9)
    * `dieuhanh@chinnghia.com.vn` — Điều Hành Xe Chín Nghĩa (Nhà xe 10)
+   * `dieuhanh@futabus.vn` — Điều Hành Phương Trang FUTA Bus Lines (Nhà xe 11)
+   * `dieuhanh@xekhachlienhung.com` — Điều Hành Xe Khách Liên Hưng (Nhà xe 12)
+   * `dieuhanh@halan.com.vn` — Điều Hành Hà Lan Limousine (Nhà xe 13)
+   * `dieuhanh@dcarlimousine.vn` — Điều Hành DCar Limousine VIP (Nhà xe 14)
+   * `dieuhanh@anphuquy.vn` — Điều Hành An Phú Quý Limousine (Nhà xe 15)
 3. **Khách Hàng Trải Nghiệm (Customers)**:
    * `customer@gmail.com` — Nguyễn Văn Du Khách
    * `dangvanlam@gmail.com` — Đặng Văn Lâm

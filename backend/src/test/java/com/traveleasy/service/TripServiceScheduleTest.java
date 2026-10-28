@@ -157,3 +157,4 @@ class TripServiceScheduleTest {
         assertEquals("Đà Lạt", options.get(0).getArrivalLocation());
     }
 }
+
