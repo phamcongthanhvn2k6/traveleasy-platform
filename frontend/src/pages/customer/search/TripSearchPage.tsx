@@ -6,6 +6,7 @@ import { TripSearchHeader } from './components/TripSearchHeader';
 import { FilterSidebar, FilterState } from './components/FilterSidebar';
 import { SortTabBar, SortOption } from './components/SortTabBar';
 import { TripResultCard } from './components/TripResultCard';
+import { Pagination } from '../../../components/Pagination';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { toast } from '../../../context/ToastContext';
 import { Bus, AlertCircle } from 'lucide-react';
@@ -404,6 +405,28 @@ export const TripSearchPage: React.FC = () => {
       });
   }, [trips, filters, sortOption]);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Reset to page 1 whenever search criteria or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, sortOption, origin, destination, date]);
+
+  const totalItems = filteredAndSortedTrips.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+  const paginatedTrips = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredAndSortedTrips.slice(start, start + pageSize);
+  }, [filteredAndSortedTrips, currentPage, pageSize]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 380, behavior: 'smooth' });
+  };
+
   const handleResetFilters = () => {
     setFilters({
       timeRange: [0, 24],
@@ -417,6 +440,7 @@ export const TripSearchPage: React.FC = () => {
       popularTags: [],
     });
     setSortOption('DEFAULT');
+    setCurrentPage(1);
     toast.info('Đã hoàn tác toàn bộ bộ lọc và sắp xếp!', 'Đặt Lại');
   };
 
@@ -501,11 +525,23 @@ export const TripSearchPage: React.FC = () => {
                 Vui lòng đợi trong giây lát để hệ thống kết nối với các đối tác nhà xe.
               </div>
             </div>
-          ) : filteredAndSortedTrips.length > 0 ? (
+          ) : paginatedTrips.length > 0 ? (
             <div>
-              {filteredAndSortedTrips.map((trip) => (
+              {paginatedTrips.map((trip) => (
                 <TripResultCard key={trip.id} trip={trip} onBook={handleOpenBooking} />
               ))}
+
+              {/* Phân trang (Pagination) */}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+                onPageSizeChange={setPageSize}
+                pageSizeOptions={[10, 20, 30, 50]}
+                itemLabel="chuyến xe"
+              />
             </div>
           ) : (
             <div
