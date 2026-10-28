@@ -445,12 +445,20 @@ export const TripSearchPage: React.FC = () => {
   };
 
   const handleOpenBooking = (trip: Trip, seats: string[], points: any) => {
+    const token = localStorage.getItem('traveleasy_token');
     const checkoutPayload = { trip, selectedSeats: seats, points };
     try {
       sessionStorage.setItem('traveleasy_checkout_data', JSON.stringify(checkoutPayload));
     } catch (e) {
       console.warn(e);
     }
+
+    if (!token) {
+      toast.warning('Quý khách vui lòng đăng nhập để tiến hành đặt vé và thanh toán! Khách chưa đăng nhập chỉ có thể tra cứu thông tin.', 'Yêu Cầu Đăng Nhập');
+      navigate('/login?redirect=/checkout', { state: checkoutPayload });
+      return;
+    }
+
     navigate('/checkout', { state: checkoutPayload });
   };
 

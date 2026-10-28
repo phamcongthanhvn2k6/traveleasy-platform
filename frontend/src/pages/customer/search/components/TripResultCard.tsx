@@ -764,7 +764,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                       <button
                         onClick={handleProceedBooking}
                         style={{
-                          backgroundColor: '#f97316',
+                          backgroundColor: localStorage.getItem('traveleasy_token') ? '#f97316' : '#2563eb',
                           color: '#ffffff',
                           border: 'none',
                           padding: '12px 28px',
@@ -772,11 +772,11 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                           fontWeight: 800,
                           fontSize: '15px',
                           cursor: 'pointer',
-                          boxShadow: '0 4px 6px -1px rgba(249, 115, 22, 0.4)',
+                          boxShadow: localStorage.getItem('traveleasy_token') ? '0 4px 6px -1px rgba(249, 115, 22, 0.4)' : '0 4px 6px -1px rgba(37, 99, 235, 0.4)',
                           transition: 'all 0.15s ease',
                         }}
                       >
-                        Tiếp Tục Đặt Vé →
+                        {localStorage.getItem('traveleasy_token') ? 'Tiếp Tục Đặt Vé →' : 'Đăng Nhập Để Đặt Vé →'}
                       </button>
                     </div>
                   )}

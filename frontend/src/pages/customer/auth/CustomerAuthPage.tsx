@@ -205,6 +205,11 @@ export const CustomerAuthPage: React.FC = () => {
         toast.success(`Đăng ký tài khoản thành công! Xin chào ${authData.fullName}.`, 'Đăng Ký Thành Công');
         setSuccessMessage('Đăng ký tài khoản thành công! Tự động đăng nhập...');
         setTimeout(() => {
+          const redirectParam = new URLSearchParams(location.search).get('redirect') || (location.state as any)?.from;
+          if (redirectParam) {
+            navigate(redirectParam);
+            return;
+          }
           navigate('/');
         }, 800);
       } else {

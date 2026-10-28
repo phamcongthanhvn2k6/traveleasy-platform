@@ -29,7 +29,10 @@ public class BookingController {
     public ApiResponse<BookingResponse> createBooking(
             @Valid @RequestBody CreateBookingRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails != null ? userDetails.getUsername() : null;
+        if (userDetails == null) {
+            return ApiResponse.error("Vui lòng đăng nhập tài khoản để tiến hành đặt vé và thanh toán");
+        }
+        String email = userDetails.getUsername();
         return ApiResponse.success("Đặt vé thành công", bookingService.createBooking(request, email));
     }
 
