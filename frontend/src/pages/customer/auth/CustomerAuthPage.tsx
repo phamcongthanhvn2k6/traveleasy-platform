@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Bus, 
@@ -44,6 +44,62 @@ export const CustomerAuthPage: React.FC = () => {
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [receiveNews, setReceiveNews] = useState(true);
   const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
+
+  // Dynamic Password Strength & Criteria Checker
+  const passwordCriteria = useMemo(() => {
+    const pwd = regPassword || '';
+    const hasMinLength = pwd.length >= 8;
+    const hasLower = /[a-z]/.test(pwd);
+    const hasUpper = /[A-Z]/.test(pwd);
+    const hasCase = hasLower && hasUpper;
+    const hasNumber = /\d/.test(pwd);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pwd);
+
+    const checks = [
+      { id: 'length', label: 'Tối thiểu 8 ký tự', met: hasMinLength, detail: `${pwd.length}/8 ký tự` },
+      { id: 'case', label: 'Chữ hoa (A-Z) & chữ thường (a-z)', met: hasCase, detail: !hasUpper ? 'thiếu chữ hoa' : !hasLower ? 'thiếu chữ thường' : 'đã đạt' },
+      { id: 'number', label: 'Ít nhất 1 chữ số (0-9)', met: hasNumber, detail: !hasNumber ? 'thiếu số' : 'đã đạt' },
+      { id: 'special', label: 'Ký tự đặc biệt (@, #, $, !...)', met: hasSpecial, detail: !hasSpecial ? 'thiếu ký tự đặc biệt' : 'đã đạt' },
+    ];
+
+    const score = checks.filter(c => c.met).length;
+
+    let strengthLabel = 'Chưa nhập (0/4)';
+    let strengthColor = '#94a3b8';
+    let strengthBg = '#f1f5f9';
+
+    if (pwd.length === 0) {
+      strengthLabel = 'Chưa nhập (0/4)';
+      strengthColor = '#94a3b8';
+      strengthBg = '#f1f5f9';
+    } else if (score <= 1) {
+      strengthLabel = 'Rất yếu (1/4)';
+      strengthColor = '#ef4444';
+      strengthBg = '#fef2f2';
+    } else if (score === 2) {
+      strengthLabel = 'Trung bình (2/4)';
+      strengthColor = '#f59e0b';
+      strengthBg = '#fffbeb';
+    } else if (score === 3) {
+      strengthLabel = 'Khá mạnh (3/4)';
+      strengthColor = '#3b82f6';
+      strengthBg = '#eff6ff';
+    } else {
+      strengthLabel = 'Rất mạnh (4/4)';
+      strengthColor = '#10b981';
+      strengthBg = '#ecfdf5';
+    }
+
+    return {
+      checks,
+      score: pwd.length === 0 ? 0 : score,
+      strengthLabel,
+      strengthColor,
+      strengthBg,
+      isStrong: score >= 3
+    };
+  }, [regPassword]);
 
   // Status & loading
   const [loading, setLoading] = useState(false);
@@ -101,6 +157,21 @@ export const CustomerAuthPage: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    if (regPassword.length < 6) {
+      const msg = 'Mật khẩu phải có tối thiểu 6 ký tự';
+      toast.warning(msg, 'Mật Khẩu Quá Ngắn');
+      setErrorMessage(msg);
+      return;
+    }
+
+    if (passwordCriteria.score < 2) {
+      const missingList = passwordCriteria.checks.filter(c => !c.met).map(c => c.label).join(', ');
+      const msg = `Mật khẩu còn yếu! Vui lòng bổ sung thêm: ${missingList}`;
+      toast.warning(msg, 'Mật Khẩu Chưa Đủ Mạnh');
+      setErrorMessage(msg);
+      return;
+    }
 
     if (regPassword !== regConfirmPassword) {
       const msg = 'Mật khẩu xác nhận không khớp với mật khẩu đã nhập';
@@ -840,56 +911,192 @@ export const CustomerAuthPage: React.FC = () => {
                     <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#334155', marginBottom: '5px' }}>
                       MẬT KHẨU *
                     </label>
-                    <input
-                      type={showRegPassword ? 'text' : 'password'}
-                      required
-                      placeholder="Tối thiểu 6 ký tự"
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '11px 12px',
-                        borderRadius: '10px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '14px',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showRegPassword ? 'text' : 'password'}
+                        required
+                        placeholder="Tối thiểu 6 ký tự"
+                        value={regPassword}
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '11px 36px 11px 12px',
+                          borderRadius: '10px',
+                          border: `1px solid ${regPassword.length > 0 ? (passwordCriteria.score >= 2 ? '#86efac' : '#fca5a5') : '#cbd5e1'}`,
+                          fontSize: '14px',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegPassword(!showRegPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          border: 'none',
+                          background: 'none',
+                          color: '#64748b',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {showRegPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
 
                   <div>
                     <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#334155', marginBottom: '5px' }}>
                       XÁC NHẬN MẬT KHẨU *
                     </label>
-                    <input
-                      type={showRegPassword ? 'text' : 'password'}
-                      required
-                      placeholder="Nhập lại mật khẩu"
-                      value={regConfirmPassword}
-                      onChange={(e) => setRegConfirmPassword(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '11px 12px',
-                        borderRadius: '10px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '14px',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showRegConfirmPassword ? 'text' : 'password'}
+                        required
+                        placeholder="Nhập lại mật khẩu"
+                        value={regConfirmPassword}
+                        onChange={(e) => setRegConfirmPassword(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '11px 36px 11px 12px',
+                          borderRadius: '10px',
+                          border: `1px solid ${regConfirmPassword.length > 0 ? (regPassword === regConfirmPassword ? '#86efac' : '#fca5a5') : '#cbd5e1'}`,
+                          fontSize: '14px',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          border: 'none',
+                          background: 'none',
+                          color: '#64748b',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {showRegConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+
+                    {/* Inline password match notification */}
+                    {regConfirmPassword.length > 0 && (
+                      <div style={{
+                        marginTop: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: regPassword === regConfirmPassword ? '#16a34a' : '#dc2626'
+                      }}>
+                        {regPassword === regConfirmPassword ? (
+                          <>
+                            <CheckCircle size={12} /> Mật khẩu khớp hoàn toàn
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle size={12} /> Mật khẩu chưa khớp
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* PASSWORD STRENGTH INDICATOR */}
-                <div style={{ marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#059669', fontWeight: 700 }}>
-                  <div style={{ display: 'flex', gap: '3px', flex: 1 }}>
-                    <div style={{ flex: 1, height: '4px', backgroundColor: '#22c55e', borderRadius: '2px' }} />
-                    <div style={{ flex: 1, height: '4px', backgroundColor: '#22c55e', borderRadius: '2px' }} />
-                    <div style={{ flex: 1, height: '4px', backgroundColor: '#22c55e', borderRadius: '2px' }} />
-                    <div style={{ flex: 1, height: '4px', backgroundColor: '#22c55e', borderRadius: '2px' }} />
+                {/* DYNAMIC PASSWORD STRENGTH INDICATOR & REQUIREMENT CHECKLIST */}
+                <div style={{ marginBottom: '16px' }}>
+                  {/* Strength Bar & Status Label */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
+                      {[1, 2, 3, 4].map((step) => {
+                        const isFilled = passwordCriteria.score >= step;
+                        return (
+                          <div
+                            key={step}
+                            style={{
+                              flex: 1,
+                              height: '5px',
+                              backgroundColor: isFilled ? passwordCriteria.strengthColor : '#e2e8f0',
+                              borderRadius: '3px',
+                              transition: 'all 0.25s ease'
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                    <span style={{ 
+                      fontSize: '11.5px', 
+                      fontWeight: 800, 
+                      color: passwordCriteria.strengthColor,
+                      minWidth: '95px',
+                      textAlign: 'right'
+                    }}>
+                      {passwordCriteria.strengthLabel}
+                    </span>
                   </div>
-                  <span>Rất mạnh (4/4)</span>
+
+                  {/* Guidance Box: Shows what is satisfied and what is still missing */}
+                  <div style={{
+                    backgroundColor: regPassword.length === 0 ? '#f8fafc' : (passwordCriteria.score === 4 ? '#f0fdf4' : '#fffbeb'),
+                    border: `1px solid ${regPassword.length === 0 ? '#e2e8f0' : (passwordCriteria.score === 4 ? '#bbf7d0' : '#fef08a')}`,
+                    borderRadius: '10px',
+                    padding: '10px 12px',
+                    transition: 'all 0.2s ease'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '6px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#334155'
+                    }}>
+                      <span>Yêu cầu mật khẩu an toàn:</span>
+                      {regPassword.length > 0 && passwordCriteria.score < 4 && (
+                        <span style={{ color: '#d97706', fontSize: '10.5px' }}>
+                          ⚠️ Còn thiếu {4 - passwordCriteria.score} tiêu chí bên dưới
+                        </span>
+                      )}
+                      {passwordCriteria.score === 4 && (
+                        <span style={{ color: '#16a34a', fontSize: '10.5px' }}>
+                          ✓ Đã đáp ứng mọi tiêu chí bảo mật
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                      {passwordCriteria.checks.map((chk) => (
+                        <div
+                          key={chk.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            fontSize: '11px',
+                            color: chk.met ? '#16a34a' : (regPassword.length > 0 ? '#dc2626' : '#64748b'),
+                            fontWeight: chk.met ? 700 : 500,
+                            transition: 'color 0.2s ease'
+                          }}
+                        >
+                          {chk.met ? (
+                            <CheckCircle size={13} style={{ color: '#16a34a', flexShrink: 0 }} />
+                          ) : (
+                            <AlertCircle size={13} style={{ color: regPassword.length > 0 ? '#ef4444' : '#94a3b8', flexShrink: 0 }} />
+                          )}
+                          <span>{chk.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 {/* CHECKBOXES */}
