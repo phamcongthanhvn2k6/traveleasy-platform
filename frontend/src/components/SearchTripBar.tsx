@@ -341,6 +341,7 @@ export const SearchTripBar: React.FC<Props> = ({
             <input
               type="date"
               value={departureDate}
+              min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setDepartureDate(e.target.value)}
               style={{
                 width: '100%',
@@ -377,6 +378,7 @@ export const SearchTripBar: React.FC<Props> = ({
               <input
                 type="date"
                 value={returnDate}
+                min={departureDate || new Date().toISOString().split('T')[0]}
                 onChange={(e) => setReturnDate(e.target.value)}
                 style={{
                   width: '100%',

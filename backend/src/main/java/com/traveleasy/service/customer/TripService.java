@@ -29,17 +29,36 @@ public class TripService {
     private final TripSeatRepository tripSeatRepository;
     private final PickupDropoffPointRepository pointRepository;
     private final RouteRepository routeRepository;
+    private final com.traveleasy.service.automation.TripAutomationService tripAutomationService;
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<TripResponse> searchTrips(String origin, String destination, LocalDate departureDate) {
+        LocalDateTime now = LocalDateTime.now();
         LocalDateTime startTime = null;
         LocalDateTime endTime = null;
 
         if (departureDate != null) {
-            startTime = departureDate.atStartOfDay();
+            // Nếu ngày tìm kiếm trong quá khứ -> Không mở bán vé
+            if (departureDate.isBefore(now.toLocalDate())) {
+                return Collections.emptyList();
+            }
+            if (departureDate.isEqual(now.toLocalDate())) {
+                // Ngày hôm nay: Chỉ tìm chuyến từ thời điểm hiện tại trở đi
+                startTime = now;
+            } else {
+                startTime = departureDate.atStartOfDay();
+            }
             endTime = departureDate.atTime(LocalTime.MAX);
+
+            // On-demand: Tự động đảm bảo sinh chuyến nếu ngày tìm kiếm chưa có chuyến nào
+            if (tripAutomationService != null) {
+                tripAutomationService.ensureTripsForRouteAndDate(origin, destination, departureDate);
+            }
+        } else {
+            // Không truyền ngày: Tìm các chuyến sắp tới từ thời điểm hiện tại trở đi
+            startTime = now;
         }
 
         List<Trip> trips = tripRepository.searchTrips(origin, destination, startTime, endTime, TripStatus.SCHEDULED);

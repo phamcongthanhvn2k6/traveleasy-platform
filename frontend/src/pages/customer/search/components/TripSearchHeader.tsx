@@ -61,9 +61,16 @@ export const TripSearchHeader: React.FC<Props> = ({
     onSearchChange('', '', '');
   };
 
+  const todayStr = new Date().toISOString().split('T')[0];
+
   const changeDateByDays = (days: number) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const current = departureDate ? new Date(departureDate) : new Date();
     current.setDate(current.getDate() + days);
+    if (current < today) {
+      return;
+    }
     const newDateStr = current.toISOString().split('T')[0];
     onSearchChange(origin, destination, newDateStr);
   };
@@ -285,6 +292,7 @@ export const TripSearchHeader: React.FC<Props> = ({
               <input
                 type="date"
                 value={tempDate}
+                min={todayStr}
                 onChange={(e) => setTempDate(e.target.value)}
                 style={{
                   width: '100%',
@@ -337,20 +345,23 @@ export const TripSearchHeader: React.FC<Props> = ({
           {departureDate ? (
             <>
               <button
+                disabled={Boolean(departureDate && departureDate <= todayStr)}
                 onClick={() => changeDateByDays(-1)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: Boolean(departureDate && departureDate <= todayStr) ? '#f1f5f9' : '#f8fafc',
                   border: '1px solid #e2e8f0',
                   padding: '6px 14px',
                   borderRadius: '6px',
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#475569',
-                  cursor: 'pointer',
+                  color: Boolean(departureDate && departureDate <= todayStr) ? '#94a3b8' : '#475569',
+                  cursor: Boolean(departureDate && departureDate <= todayStr) ? 'not-allowed' : 'pointer',
+                  opacity: Boolean(departureDate && departureDate <= todayStr) ? 0.6 : 1,
                 }}
+                title={Boolean(departureDate && departureDate <= todayStr) ? 'Không thể tìm chuyến cho ngày trong quá khứ' : 'Xem ngày hôm trước'}
               >
                 <ChevronLeft size={16} /> Hôm trước
               </button>

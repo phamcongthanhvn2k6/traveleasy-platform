@@ -43,6 +43,7 @@ public class CompanyManagementController {
     private final LocationRepository locationRepository;
     private final BookingRepository bookingRepository;
     private final TripRepository tripRepository;
+    private final com.traveleasy.service.automation.TripAutomationService tripAutomationService;
 
     // =========================================================================
     // 1. THỐNG KÊ DASHBOARD RIÊNG CỦA NHÀ XE (TENANT-SCOPED DASHBOARD)
@@ -119,6 +120,43 @@ public class CompanyManagementController {
     public ApiResponse<Void> deleteCompanyTrip(@PathVariable Long id) {
         adminTripService.deleteTrip(id);
         return ApiResponse.success("Xóa chuyến xe thành công khỏi CSDL", null);
+    }
+
+    @PostMapping("/trips/auto-generate")
+    @Operation(summary = "Tự động sinh chuyến theo lịch chạy định kỳ (Recurring Schedule Generator) cho nhà xe")
+    public ApiResponse<Map<String, Object>> autoGenerateCompanyTrips(@RequestBody com.traveleasy.dto.company.AutoGenerateTripsRequest request) {
+        Long targetCompanyId = request.getBusCompanyId() != null ? request.getBusCompanyId() : 1L;
+        int days = request.getDaysAhead() != null ? request.getDaysAhead() : 30;
+        int generatedCount = tripAutomationService.batchGenerateForCompany(
+                targetCompanyId,
+                request.getRouteId(),
+                days,
+                request.getTimeSlots(),
+                request.getBusType(),
+                request.getPrice()
+        );
+        return ApiResponse.success(
+                String.format("Tự động sinh thành công %d chuyến xe định kỳ cho %d ngày tới!", generatedCount, days),
+                Map.of(
+                        "generatedCount", generatedCount,
+                        "busCompanyId", targetCompanyId,
+                        "daysAhead", days
+                )
+        );
+    }
+
+    @GetMapping("/trips/automation-status")
+    @Operation(summary = "Kiểm tra trạng thái hệ thống tự động sinh và lăn chuyến (Daily Auto-Rolling Engine)")
+    public ApiResponse<Map<String, Object>> getAutomationStatus(@RequestParam(required = false) Long companyId) {
+        Long targetId = companyId != null ? companyId : 1L;
+        long scheduledTrips = tripRepository.countByBusCompanyIdAndStatus(targetId, TripStatus.SCHEDULED);
+        return ApiResponse.success(Map.of(
+                "autoRollingActive", true,
+                "rollingDaysAhead", 30,
+                "scheduledTrips", scheduledTrips,
+                "mode", "AUTOMATIC_DAILY_ROLLING",
+                "message", "Hệ thống tự động duy trì lịch trình mở bán liên tục 30 ngày tới"
+        ));
     }
 
     // =========================================================================

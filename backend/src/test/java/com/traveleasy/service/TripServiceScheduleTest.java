@@ -39,6 +39,9 @@ class TripServiceScheduleTest {
     @Mock
     private RouteRepository routeRepository;
 
+    @Mock
+    private com.traveleasy.service.automation.TripAutomationService tripAutomationService;
+
     @InjectMocks
     private TripService tripService;
 

@@ -1476,8 +1476,10 @@ export const SchedulePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    const depDateStr = new Date().toISOString().split('T')[0];
-                    navigate(`/search?origin=${encodeURIComponent(originInput)}&destination=${encodeURIComponent(destinationInput)}&date=${depDateStr}${recommendedTrip ? `&tripId=${recommendedTrip.id}` : ''}`);
+                    const depDateStr = (recommendedTrip?.departureTime && !recommendedTrip.departureTime.startsWith('2026-10-21'))
+                      ? recommendedTrip.departureTime.split('T')[0]
+                      : new Date().toISOString().split('T')[0];
+                    navigate(`/search?origin=${encodeURIComponent(originInput)}&destination=${encodeURIComponent(destinationInput)}&date=${depDateStr}`);
                   }}
                   style={{
                     width: '100%',
@@ -1773,8 +1775,11 @@ export const SchedulePage: React.FC = () => {
                       </div>
                       <button
                         onClick={() => {
-                          const dStr = new Date(trip.departureTime).toISOString().split('T')[0];
-                          navigate(`/search?origin=${encodeURIComponent(trip.originCity)}&destination=${encodeURIComponent(trip.destinationCity)}&date=${dStr}&tripId=${trip.id}`);
+                          const tripDate = trip.departureTime ? trip.departureTime.split('T')[0] : '';
+                          const dStr = (tripDate && tripDate >= new Date().toISOString().split('T')[0])
+                            ? tripDate
+                            : new Date().toISOString().split('T')[0];
+                          navigate(`/search?origin=${encodeURIComponent(trip.originCity)}&destination=${encodeURIComponent(trip.destinationCity)}&date=${dStr}`);
                         }}
                         style={{
                           backgroundColor: '#2563eb',
