@@ -201,7 +201,7 @@ export const CompanyLoginPage: React.FC = () => {
         {/* Quick Demo Accounts Selection */}
         <div style={{ marginBottom: '20px', padding: '12px 14px', backgroundColor: 'rgba(13, 148, 136, 0.1)', border: '1px solid rgba(13, 148, 136, 0.25)', borderRadius: '10px' }}>
           <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#2dd4bf', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <KeyRound size={13} /> Tài khoản đối tác nhà xe mẫu (Mật khẩu: Rikkei@123)
+            <KeyRound size={13} /> Tài khoản đối tác nhà xe mẫu (Mật khẩu demo: 123456789@)
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
             {[
@@ -219,7 +219,7 @@ export const CompanyLoginPage: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setIdentifier(acc.email);
-                  setPassword('Rikkei@123');
+                  setPassword('123456789@');
                 }}
                 style={{
                   background: identifier === acc.email ? 'rgba(45, 212, 191, 0.3)' : 'rgba(255, 255, 255, 0.08)',

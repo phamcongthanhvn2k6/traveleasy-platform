@@ -44,6 +44,9 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        // Đồng bộ mật khẩu toàn bộ tài khoản thành "123456789@" phục vụ demo tiện lợi
+        syncDemoPasswordForAllUsers();
+
         if (userRepository.count() > 0) {
             if (vehicleRepository.count() == 0) {
                 BusCompany futa = busCompanyRepository.findAll().stream().findFirst().orElse(null);
@@ -59,7 +62,7 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Seeding rich initial data for TravelEasy Platform...");
 
         // 1. Seed Users (Admins, Operators, Customers)
-        String encodedPass = passwordEncoder.encode("Rikkei@123");
+        String encodedPass = passwordEncoder.encode("123456789@");
 
         User admin1 = User.builder().email("admin@traveleasy.vn").password(encodedPass).fullName("Quản Trị Viên Hệ Thống").phone("0901234567").role(Role.ADMIN).status("ACTIVE").build();
         User admin2 = User.builder().email("phanthanhphong.admin@traveleasy.vn").password(encodedPass).fullName("Phạm Thanh Phong").phone("0902223344").role(Role.ADMIN).status("ACTIVE").build();
@@ -335,9 +338,25 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Default vehicles seeded successfully!");
     }
 
+    private void syncDemoPasswordForAllUsers() {
+        try {
+            String demoPass = passwordEncoder.encode("123456789@");
+            List<User> allUsers = userRepository.findAll();
+            if (!allUsers.isEmpty()) {
+                for (User u : allUsers) {
+                    u.setPassword(demoPass);
+                }
+                userRepository.saveAll(allUsers);
+                log.info("🔐 [DEMO AUTH] Đã đồng bộ mật khẩu của toàn bộ {} tài khoản người dùng thành: 123456789@", allUsers.size());
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi đồng bộ mật khẩu demo: {}", e.getMessage());
+        }
+    }
+
     private void supplementEarlyMorningTripsAndBusCompanies() {
         log.info("Checking and supplementing Bus Companies, Operator Accounts and Early Morning Trips (00:00 - 06:00)...");
-        String encodedPass = passwordEncoder.encode("Rikkei@123");
+        String encodedPass = passwordEncoder.encode("123456789@");
 
         // 1. Bổ sung các Nhà xe lớn còn thiếu
         if (!busCompanyRepository.existsByName("Phương Trang FUTA Bus Lines")) {

@@ -392,13 +392,48 @@ export const CustomerAuthPage: React.FC = () => {
           justifyContent: 'space-between'
         }}>
           <div>
-            {/* Top link back */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+            {/* Top link back & Portal switcher */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <Link
+                  to="/company/login"
+                  style={{
+                    color: '#0f766e',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    backgroundColor: '#f0fdfa',
+                    border: '1px solid #99f6e4',
+                    fontSize: '11px'
+                  }}
+                  title="Cổng điều hành dành cho Đối tác Nhà Xe"
+                >
+                  🏢 Cổng Nhà Xe
+                </Link>
+                <Link
+                  to="/admin/login"
+                  style={{
+                    color: '#4338ca',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    backgroundColor: '#eef2ff',
+                    border: '1px solid #c7d2fe',
+                    fontSize: '11px'
+                  }}
+                  title="Cổng quản trị tối cao dành cho Admin"
+                >
+                  🛡️ Cổng Admin
+                </Link>
+              </div>
+
               <Link 
                 to="/" 
                 style={{ 
                   textDecoration: 'none', 
-                  fontSize: '12.5px', 
+                  fontSize: '12px', 
                   fontWeight: 600, 
                   color: '#64748b', 
                   display: 'flex', 
@@ -407,7 +442,7 @@ export const CustomerAuthPage: React.FC = () => {
                   transition: 'color 0.2s'
                 }}
               >
-                <ArrowLeft size={14} /> Quay lại trang chủ
+                <ArrowLeft size={13} /> Về trang chủ
               </Link>
             </div>
 
@@ -519,6 +554,40 @@ export const CustomerAuthPage: React.FC = () => {
                   <p style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
                     Đăng nhập hoặc đăng ký để quản lý vé xe và nhận ưu đãi độc quyền.
                   </p>
+                </div>
+
+                {/* Quick Demo Customer Accounts */}
+                <div style={{ marginBottom: '18px', padding: '10px 12px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#1d4ed8', marginBottom: '6px' }}>
+                    🔑 Tài khoản khách hàng mẫu (Mật khẩu demo: 123456789@):
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {[
+                      { label: 'Nguyễn Văn Du Khách', email: 'customer@gmail.com' },
+                      { label: 'Nguyễn Thùy Linh', email: 'thuylinh.travel@gmail.com' },
+                    ].map((acc, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setLoginIdentifier(acc.email);
+                          setLoginPassword('123456789@');
+                        }}
+                        style={{
+                          background: loginIdentifier === acc.email ? '#2563eb' : '#ffffff',
+                          color: loginIdentifier === acc.email ? '#ffffff' : '#1e40af',
+                          border: '1px solid #93c5fd',
+                          borderRadius: '6px',
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {acc.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* SỐ ĐIỆN THOẠI HOẶC EMAIL */}

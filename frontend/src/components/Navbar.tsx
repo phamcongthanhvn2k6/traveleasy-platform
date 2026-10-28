@@ -70,7 +70,28 @@ export const Navbar: React.FC = () => {
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', fontSize: '13px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '13px' }}>
+            <Link
+              to="/company/login"
+              style={{
+                color: '#93c5fd',
+                textDecoration: 'none',
+                fontWeight: 700,
+                fontSize: '12.5px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                backgroundColor: 'rgba(255,255,255,0.12)',
+                padding: '3px 10px',
+                borderRadius: '6px',
+                transition: 'all 0.15s ease'
+              }}
+              title="Cổng điều hành và quản lý dành riêng cho các nhà xe đối tác"
+            >
+              <Building2 size={13} />
+              <span>Cổng Đối Tác Nhà Xe</span>
+            </Link>
+
             <button
               type="button"
               onClick={() => {
@@ -163,25 +184,46 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <Link
-                to="/auth"
-                style={{
-                  backgroundColor: '#ffffff',
-                  color: '#1d4ed8',
-                  border: 'none',
-                  padding: '4px 14px',
-                  borderRadius: '6px',
-                  fontWeight: 700,
-                  fontSize: '12.5px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  textDecoration: 'none'
-                }}
-              >
-                <User size={13} /> Đăng nhập / Đăng ký
-              </Link>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Link
+                  to="/auth"
+                  style={{
+                    backgroundColor: '#ffffff',
+                    color: '#1d4ed8',
+                    border: 'none',
+                    padding: '4px 14px',
+                    borderRadius: '6px',
+                    fontWeight: 700,
+                    fontSize: '12.5px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    textDecoration: 'none'
+                  }}
+                >
+                  <User size={13} /> Khách Hàng Đăng Nhập
+                </Link>
+                <Link
+                  to="/admin/login"
+                  title="Cổng quản trị dành riêng cho Quản trị viên sàn TravelEasy"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    color: '#fef08a',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    textDecoration: 'none'
+                  }}
+                >
+                  <ShieldCheck size={12} /> Cổng Admin
+                </Link>
+              </div>
             )}
           </div>
         </div>

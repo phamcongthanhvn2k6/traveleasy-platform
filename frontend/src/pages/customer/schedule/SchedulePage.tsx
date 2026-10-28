@@ -566,7 +566,1030 @@ const DESTINATION_TEMPLATES: Record<string, DestinationData> = {
         ]
       }
     ]
+  },
+  'Đà Nẵng': {
+    city: 'Đà Nẵng',
+    tagline: 'Thành phố đáng sống bên bờ sông Hàn, những cây cầu huyền thoại và bãi biển Mỹ Khê tuyệt đẹp',
+    weather: '26°C - Nắng ấm chan hòa, gió biển thổi nhẹ sảng khoái',
+    season: 'Mùa hè rực rỡ & Lễ hội pháo hoa quốc tế DIFF bên sông Hàn',
+    transportInfo: 'Thuê xe máy 100k - 130k/ngày hoặc Taxi công nghệ',
+    distanceFromMajor: '850 km từ Sài Gòn / 760 km từ Hà Nội • ~14h xe Limousine giường nằm',
+    recommendedDepartureTime: '18:00 chiều hôm trước',
+    recommendedDepartureReason: 'Chọn xe limousine giường phòng xuất bến 18:00, ngủ êm ái trên xe, 07:00 sáng tới Đà Nẵng sẵn sàng ăn tô mì Quảng ếch nóng hổi!',
+    checklist: [
+      'Kem chống nắng & kính râm chống chói',
+      'Đồ bơi & khăn tắm biển Mỹ Khê',
+      'CCCD / Giấy tờ thuê xe máy',
+      'Giày thể thao êm chân đi Bà Nà Hills'
+    ],
+    budget: {
+      standard: { bus: 800000, stay: 700000, bike: 250000, food: 800000, total: 2550000 },
+      budget: { bus: 650000, stay: 400000, bike: 200000, food: 500000, total: 1750000 },
+      vip: { bus: 1200000, stay: 1800000, bike: 500000, food: 1500000, total: 5000000 }
+    },
+    days: [
+      {
+        dayNumber: 1,
+        title: 'Mì Quảng Ếch, Bán Đảo Sơn Trà & Cầu Rồng Phun Lửa',
+        stops: [
+          {
+            id: 'dn-1-1',
+            time: '07:30',
+            period: 'MORNING',
+            title: 'Mì Quảng Ếch Bếp Trang (Ăn sáng)',
+            category: 'FOOD',
+            duration: '45 phút',
+            price: '55.000đ - 75.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Thịt ếch om thố đất nghi ngút khói, ăn kèm rau sống bắp chuối và bánh tráng mè nướng.',
+            coords: { x: 45, y: 40 }
+          },
+          {
+            id: 'dn-1-2',
+            time: '09:30',
+            period: 'MORNING',
+            title: 'Bán Đảo Sơn Trà & Chùa Linh Ứng ngắm tượng Phật Bà 67m',
+            category: 'CULTURE',
+            duration: '90 phút',
+            price: 'Miễn phí',
+            imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Góc nhìn ôm trọn đường bờ biển hình cánh cung của vịnh Đà Nẵng tuyệt đẹp.',
+            coords: { x: 75, y: 25 }
+          },
+          {
+            id: 'dn-1-3',
+            time: '12:00',
+            period: 'NOON',
+            title: 'Bánh tráng cuốn thịt heo hai đầu da Quán Mậu',
+            category: 'FOOD',
+            duration: '60 phút',
+            price: '90.000đ / phần',
+            imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Mắm nêm pha tỏi ớt thơm nồng chua cay đúng điệu miền Trung.',
+            coords: { x: 50, y: 55 }
+          },
+          {
+            id: 'dn-1-4',
+            time: '16:00',
+            period: 'AFTERNOON',
+            title: 'Tắm biển Mỹ Khê - Top bãi biển quyến rũ nhất hành tinh',
+            category: 'EXPERIENCE',
+            duration: '90 phút',
+            price: 'Miễn phí',
+            imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Bãi cát thoai thoải, nước biển trong vắt và các trò chơi lướt ván, mô tô nước sôi động.',
+            coords: { x: 65, y: 60 }
+          },
+          {
+            id: 'dn-1-5',
+            time: '20:30',
+            period: 'EVENING',
+            title: 'Chiêm ngưỡng Cầu Rồng Phun Lửa, Phun Nước & Cầu Tình Yêu',
+            category: 'CHECKIN',
+            duration: '90 phút',
+            price: 'Miễn phí',
+            imageUrl: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Cầu Rồng phun lửa vào 21:00 tối thứ Bảy và Chủ Nhật. Nên đứng đầu gió để tránh bị ướt.',
+            coords: { x: 55, y: 48 }
+          }
+        ]
+      },
+      {
+        dayNumber: 2,
+        title: 'Sun World Bà Nà Hills & Check-in Cầu Vàng Kỳ Vĩ',
+        stops: [
+          {
+            id: 'dn-2-1',
+            time: '08:00',
+            period: 'MORNING',
+            title: 'Cáp treo Bà Nà & Đón mây trên Cầu Vàng Bàn Tay Khổng Lồ',
+            category: 'CHECKIN',
+            duration: '180 phút',
+            price: '900.000đ (Đã gồm cáp treo)',
+            imageUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Có mặt tại Cầu Vàng trước 08:30 sáng lúc chưa đông khách để có những bức ảnh triệu view.',
+            coords: { x: 25, y: 45 }
+          },
+          {
+            id: 'dn-2-2',
+            time: '12:30',
+            period: 'NOON',
+            title: 'Buffet ẩm thực quốc tế 4 mùa Làng Pháp Bà Nà',
+            category: 'FOOD',
+            duration: '90 phút',
+            price: '350.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Hơn 100 món Á - Âu phong phú giữa không gian kiến trúc Gothic cổ điển lãng mạn.',
+            coords: { x: 22, y: 42 }
+          },
+          {
+            id: 'dn-2-3',
+            time: '18:30',
+            period: 'EVENING',
+            title: 'Chợ Đêm Helio & Thưởng thức Hải Sản Đà Nẵng nướng bơ tỏi',
+            category: 'FOOD',
+            duration: '120 phút',
+            price: '150.000đ - 250.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Thiên đường ăn vặt lớn nhất Đà thành với âm nhạc acoustic sống động ngoài trời.',
+            coords: { x: 52, y: 58 }
+          }
+        ]
+      },
+      {
+        dayNumber: 3,
+        title: 'Bún Chả Cá Bà Lữ & Mua Sắm Đặc Sản Chợ Hàn',
+        stops: [
+          {
+            id: 'dn-3-1',
+            time: '08:00',
+            period: 'MORNING',
+            title: 'Bún chả cá Bà Lữ gia truyền hơn 30 năm',
+            category: 'FOOD',
+            duration: '45 phút',
+            price: '40.000đ - 50.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Nước lèo nấu từ bí đỏ, bắp cải và xương cá thu ngọt thanh dịu mát.',
+            coords: { x: 48, y: 46 }
+          },
+          {
+            id: 'dn-3-2',
+            time: '09:30',
+            period: 'MORNING',
+            title: 'Chợ Hàn Đà Nẵng mua chả bò, tré Bà Đệ & mực rim me',
+            category: 'CULTURE',
+            duration: '90 phút',
+            price: 'Tùy chọn',
+            imageUrl: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Nên mua chả bò loại 1 gói lá chuối thơm nức về làm quà biếu gia đình.',
+            coords: { x: 50, y: 50 }
+          }
+        ]
+      }
+    ]
+  },
+  'Huế': {
+    city: 'Huế',
+    tagline: 'Cố đô trầm mặc, di sản cung đình vàng son và nét ẩm thực xứ thần kinh thanh tao',
+    weather: '24°C - Dịu mát, thỉnh thoảng có mưa bụi thơ mộng đặc trưng xứ Huế',
+    season: 'Mùa lễ hội Festival Huế & Sen hồ Tịnh Tâm nở ngát hương thơm',
+    transportInfo: 'Thuê xe máy 100k/ngày hoặc Xích lô dạo quanh bờ sông Hương',
+    distanceFromMajor: '100 km từ Đà Nẵng • ~2h xe limousine qua đèo Hải Vân',
+    recommendedDepartureTime: '07:00 sáng từ Đà Nẵng',
+    recommendedDepartureReason: 'Đi xe limousine qua hầm hoặc đèo Hải Vân ngắm vịnh Lăng Cô tuyệt đẹp, 09:00 có mặt tại Cố Đô ghé thăm Đại Nội!',
+    checklist: [
+      'Áo dài hoặc trang phục lịch sự chụp ảnh Đại Nội',
+      'Nón lá bài thơ xứ Huế',
+      'Ô dù che nắng mưa cổ kính',
+      'Giày bệt êm chân đi bộ tham quan lăng tẩm'
+    ],
+    budget: {
+      standard: { bus: 400000, stay: 550000, bike: 200000, food: 650000, total: 1800000 },
+      budget: { bus: 300000, stay: 350000, bike: 150000, food: 450000, total: 1250000 },
+      vip: { bus: 700000, stay: 1600000, bike: 400000, food: 1400000, total: 4100000 }
+    },
+    days: [
+      {
+        dayNumber: 1,
+        title: 'Bún Bò Mụ Rơi, Đại Nội Hoàng Cung & Nghe Ca Huế Sông Hương',
+        stops: [
+          {
+            id: 'h-1-1',
+            time: '07:30',
+            period: 'MORNING',
+            title: 'Bún bò Huế Mụ Rơi nguyên bản nước dùng thơm mùi sả ruốc',
+            category: 'FOOD',
+            duration: '45 phút',
+            price: '45.000đ - 60.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Tô bún đầy đặn giò gân, chả cua, huyết mềm và ớt chưng cay xé lưỡi.',
+            coords: { x: 48, y: 52 }
+          },
+          {
+            id: 'h-1-2',
+            time: '09:00',
+            period: 'MORNING',
+            title: 'Đại Nội Huế: Ngọ Môn, Điện Thái Hòa & Tử Cấm Thành',
+            category: 'CULTURE',
+            duration: '150 phút',
+            price: '200.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Nên thuê áo Nhật Bình hoặc Cổ phục ngay cửa Ngọ Môn chụp ảnh cung đình cực kỳ uy nghiêm.',
+            coords: { x: 50, y: 40 }
+          },
+          {
+            id: 'h-1-3',
+            time: '12:30',
+            period: 'NOON',
+            title: 'Bánh bèo - nậm - lọc bà Đỏ & Bánh khoái giòn rụm',
+            category: 'FOOD',
+            duration: '60 phút',
+            price: '70.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Nước mắm ngọt chấm bánh nậm bùi béo tôm thịt gói lá dong xanh.',
+            coords: { x: 42, y: 60 }
+          },
+          {
+            id: 'h-1-4',
+            time: '19:30',
+            period: 'EVENING',
+            title: 'Thuyền rồng nghe Ca Huế trên sông Hương & Thả hoa đăng',
+            category: 'EXPERIENCE',
+            duration: '90 phút',
+            price: '100.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Ngắm cầu Tràng Tiền đổi màu huyền ảo giữa làn điệu Nam ai, Nam bình da diết.',
+            coords: { x: 55, y: 55 }
+          }
+        ]
+      },
+      {
+        dayNumber: 2,
+        title: 'Lăng Khải Định, Làng Hương Thủy Xuân & Cà Phê Muối',
+        stops: [
+          {
+            id: 'h-2-1',
+            time: '08:30',
+            period: 'MORNING',
+            title: 'Làng Hương Thủy Xuân rực rỡ sắc màu ngũ hành',
+            category: 'CHECKIN',
+            duration: '60 phút',
+            price: 'Miễn phí (Ủng hộ mua quà)',
+            imageUrl: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Những bó chông hương xòe hoa ngũ sắc là background sống ảo nổi tiếng bậc nhất cố đô.',
+            coords: { x: 35, y: 65 }
+          },
+          {
+            id: 'h-2-2',
+            time: '10:00',
+            period: 'MORNING',
+            title: 'Lăng Khải Định - Đỉnh cao nghệ thuật ghép gốm sứ tinh xảo',
+            category: 'CULTURE',
+            duration: '90 phút',
+            price: '150.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Kiến trúc giao thoa Đông - Tây độc nhất vô nhị với bức bích họa Cửu Long Ẩn Vân trên trần.',
+            coords: { x: 30, y: 75 }
+          },
+          {
+            id: 'h-2-3',
+            time: '15:30',
+            period: 'AFTERNOON',
+            title: 'Thưởng thức Cà phê Muối chính gốc đường Nguyễn Lương Bằng',
+            category: 'FOOD',
+            duration: '60 phút',
+            price: '25.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Lớp kem muối béo ngậy mặn mòi hòa cùng vị đắng cà phê phin đậm đặc khó quên.',
+            coords: { x: 52, y: 58 }
+          }
+        ]
+      }
+    ]
+  },
+  'Quy Nhơn': {
+    city: 'Quy Nhơn',
+    tagline: 'Thành phố thi ca, biển xanh màu ngọc bích, Eo Gió hùng vĩ và hải sản tươi rói',
+    weather: '27°C - Nắng vàng rực rỡ, biển lặng và nước trong vắt',
+    season: 'Mùa biển đẹp nhất tháng 3 đến tháng 9, nước trong vắt tận đáy',
+    transportInfo: 'Thuê xe máy 120k/ngày chạy cung đường biển Nhơn Lý',
+    distanceFromMajor: '650 km từ Sài Gòn / 320 km từ Đà Nẵng • ~10h xe Limousine',
+    recommendedDepartureTime: '19:30 tối hôm trước',
+    recommendedDepartureReason: 'Khuyên đi chuyến xe đêm xuất bến 19:30, 06:30 sáng tới Quy Nhơn vừa kịp ăn bún rạm Phù Mỹ và đón bình minh Eo Gió!',
+    checklist: [
+      'Kem chống nắng SPF 50+ & mũ rộng vành',
+      'Váy maxi màu nổi bật chụp ảnh biển',
+      'Kính lặn ống thở cá nhân',
+      'Túi chống nước cho điện thoại'
+    ],
+    budget: {
+      standard: { bus: 650000, stay: 600000, bike: 240000, food: 750000, total: 2240000 },
+      budget: { bus: 550000, stay: 350000, bike: 180000, food: 450000, total: 1530000 },
+      vip: { bus: 950000, stay: 1600000, bike: 450000, food: 1400000, total: 4400000 }
+    },
+    days: [
+      {
+        dayNumber: 1,
+        title: 'Bún Rạm Phù Mỹ, Đón Bình Minh Eo Gió & Cano Ra Kỳ Co',
+        stops: [
+          {
+            id: 'qn-1-1',
+            time: '07:00',
+            period: 'MORNING',
+            title: 'Bún Rạm & Bún Tôm Phù Mỹ (Ăn sáng)',
+            category: 'FOOD',
+            duration: '45 phút',
+            price: '35.000đ - 45.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Thịt rạm đồng xào béo ngậy trộn cùng bún gạo tươi và bánh tráng nướng giòn rụm.',
+            coords: { x: 50, y: 55 }
+          },
+          {
+            id: 'qn-1-2',
+            time: '08:30',
+            period: 'MORNING',
+            title: 'Eo Gió Nhơn Lý - Nơi ngắm hoàng hôn & bình minh đẹp nhất Việt Nam',
+            category: 'CHECKIN',
+            duration: '90 phút',
+            price: '25.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Cung đường đi bộ ven vách núi đá với hàng rào đỏ trắng hướng thẳng ra biển bao la.',
+            coords: { x: 75, y: 30 }
+          },
+          {
+            id: 'qn-1-3',
+            time: '10:30',
+            period: 'MORNING',
+            title: 'Kỳ Co: Lặn ngắm rạn san hô Bãi Dứa & Cầu Tàu gỗ',
+            category: 'EXPERIENCE',
+            duration: '150 phút',
+            price: '150.000đ (Đã gồm cano)',
+            imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Nước biển 2 màu ngọc bích rõ rệt, bãi cát trắng mịn ôm lấy những hang đá tự nhiên.',
+            coords: { x: 80, y: 25 }
+          },
+          {
+            id: 'qn-1-4',
+            time: '18:30',
+            period: 'EVENING',
+            title: 'Bánh xèo tôm nhảy rau mầm Gia Vỹ & Ốc đường Ngọc Hân',
+            category: 'FOOD',
+            duration: '90 phút',
+            price: '120.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Tôm đất nhảy tanh tách đúc trên khuôn gang giòn rụm, cuốn bánh tráng rau sống.',
+            coords: { x: 48, y: 60 }
+          }
+        ]
+      },
+      {
+        dayNumber: 2,
+        title: 'Tháp Đôi Chăm Pa, Ghềnh Ráng Tiên Sa & Mộ Hàn Mặc Tử',
+        stops: [
+          {
+            id: 'qn-2-1',
+            time: '08:30',
+            period: 'MORNING',
+            title: 'Ghềnh Ráng Tiên Sa & Bãi Trứng chim đá cuội Hoàng Hậu',
+            category: 'CULTURE',
+            duration: '90 phút',
+            price: '10.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Hàng ngàn viên đá cuội tròn nhẵn như quả trứng khổng lồ dưới chân vách đá thi sĩ.',
+            coords: { x: 45, y: 70 }
+          },
+          {
+            id: 'qn-2-2',
+            time: '15:00',
+            period: 'AFTERNOON',
+            title: 'Khu dã ngoại Trung Lương - Jeju phiên bản Việt Nam',
+            category: 'CHECKIN',
+            duration: '90 phút',
+            price: '40.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Thung lũng lộng gió lọt thỏm giữa núi đá nhìn xuống bãi biển cát trắng tinh khôi.',
+            coords: { x: 68, y: 35 }
+          }
+        ]
+      }
+    ]
+  },
+  'Ninh Bình': {
+    city: 'Ninh Bình',
+    tagline: 'Vịnh Hạ Long trên cạn, non nước hữu tình giữa núi đá vôi kỳ vĩ và di sản Tràng An',
+    weather: '22°C - Khí hậu mát mẻ trong lành, sương sớm bao phủ sông nước',
+    season: 'Mùa lúa chín vàng Tam Cốc rực rỡ & mùa sen nở rộ đầm Tràng An',
+    transportInfo: 'Thuê xe máy 100k - 120k/ngày hoặc xe đạp ngắm đồng quê',
+    distanceFromMajor: '95 km từ Hà Nội • ~1.5h xe Limousine cao tốc',
+    recommendedDepartureTime: '06:30 sáng từ Hà Nội',
+    recommendedDepartureReason: 'Chỉ mất 1.5 tiếng đi cao tốc Pháp Vân, xuất bến 06:30 là 08:00 tới Tràng An chèo đò sớm khi trời còn mát mẻ, tránh chen chúc!',
+    checklist: [
+      'Giày thể thao êm chân leo gần 500 bậc Hang Múa',
+      'Nón lá che nắng khi ngồi thuyền đò',
+      'Trang phục vintage / cổ trang chụp ảnh',
+      'Tiền mặt mua vé thắng cảnh'
+    ],
+    budget: {
+      standard: { bus: 350000, stay: 500000, bike: 180000, food: 600000, total: 1630000 },
+      budget: { bus: 280000, stay: 300000, bike: 120000, food: 400000, total: 1100000 },
+      vip: { bus: 550000, stay: 1500000, bike: 350000, food: 1200000, total: 3600000 }
+    },
+    days: [
+      {
+        dayNumber: 1,
+        title: 'Chèo Đò Tràng An Di Sản, Đỉnh Hang Múa & Dê Núi Nướng',
+        stops: [
+          {
+            id: 'nb-1-1',
+            time: '08:00',
+            period: 'MORNING',
+            title: 'Chèo đò khám phá Quần thể danh thắng Tràng An',
+            category: 'EXPERIENCE',
+            duration: '180 phút',
+            price: '250.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Nên chọn tuyến 2 hoặc 3 để đi qua các hang động nhũ đá lung linh và phim trường Kong Skull Island.',
+            coords: { x: 50, y: 45 }
+          },
+          {
+            id: 'nb-1-2',
+            time: '12:30',
+            period: 'NOON',
+            title: 'Cơm cháy sốt tim cật & Dê núi nướng tảng Chính Thư',
+            category: 'FOOD',
+            duration: '60 phút',
+            price: '180.000đ / người',
+            imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Thịt dê núi thả rông săn chắc chấm tương gừng đậm đà và cơm cháy vàng ruộm.',
+            coords: { x: 45, y: 55 }
+          },
+          {
+            id: 'nb-1-3',
+            time: '16:00',
+            period: 'AFTERNOON',
+            title: 'Chinh phục Đỉnh Hang Múa ngắm trọn thung lũng Tam Cốc',
+            category: 'CHECKIN',
+            duration: '90 phút',
+            price: '100.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Leo gần 500 bậc thang đá đón ánh hoàng hôn vàng rực buông xuống dòng sông Ngô Đồng uốn lượn.',
+            coords: { x: 55, y: 65 }
+          }
+        ]
+      },
+      {
+        dayNumber: 2,
+        title: 'Chùa Bái Đính Nguy Nga & Cố Đô Hoa Lư',
+        stops: [
+          {
+            id: 'nb-2-1',
+            time: '08:30',
+            period: 'MORNING',
+            title: 'Quần thể Chùa Bái Đính giữ nhiều kỷ lục châu Á',
+            category: 'CULTURE',
+            duration: '150 phút',
+            price: '60.000đ (Xe điện)',
+            imageUrl: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Chiêm bái hành lang 500 vị La Hán bằng đá xanh và Bảo tháp cao nhất Đông Nam Á.',
+            coords: { x: 30, y: 35 }
+          },
+          {
+            id: 'nb-2-2',
+            time: '14:00',
+            period: 'AFTERNOON',
+            title: 'Cố đô Hoa Lư đền vua Đinh Tiên Hoàng & vua Lê Đại Hành',
+            category: 'CULTURE',
+            duration: '90 phút',
+            price: '20.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Lắng nghe những điển tích lịch sử hào hùng dựng nước Đại Cồ Việt thời lập đô.',
+            coords: { x: 40, y: 38 }
+          }
+        ]
+      }
+    ]
+  },
+  'Hà Giang': {
+    city: 'Hà Giang',
+    tagline: 'Miền đá nở hoa, đỉnh đèo Mã Pí Lèng huyền thoại và dòng sông Nho Quế ngọc bích',
+    weather: '16°C - Se lạnh vùng cao, đêm lạnh cần áo khoác ấm dày dặn',
+    season: 'Mùa hoa tam giác mạch hồng tím & mùa lúa bậc thang Hoàng Su Phì',
+    transportInfo: 'Thuê xe máy cào cào / xe số bán tự động 150k - 180k/ngày',
+    distanceFromMajor: '300 km từ Hà Nội • ~6h xe Limousine giường nằm',
+    recommendedDepartureTime: '21:00 tối hôm trước từ Hà Nội',
+    recommendedDepartureReason: 'Lên xe lúc 21:00 tại Mỹ Đình, ngủ một giấc sâu trên xe giường nằm cao cấp, 04:30 sáng tới TP Hà Giang nhận xe máy chinh phục đèo dốc!',
+    checklist: [
+      'Áo khoác gió dày chống rét & găng tay ấm',
+      'Giáp bảo hộ tay chân khi lái xe máy đèo',
+      'Bằng lái xe máy & CCCD hợp lệ',
+      'Sạc dự phòng dung lượng lớn & thuốc chống say'
+    ],
+    budget: {
+      standard: { bus: 600000, stay: 600000, bike: 350000, food: 750000, total: 2300000 },
+      budget: { bus: 500000, stay: 400000, bike: 300000, food: 500000, total: 1700000 },
+      vip: { bus: 900000, stay: 1600000, bike: 600000, food: 1400000, total: 4500000 }
+    },
+    days: [
+      {
+        dayNumber: 1,
+        title: 'Cổng Trời Quản Bạ, Dốc Thẩm Mã & Phố Cổ Đồng Văn',
+        stops: [
+          {
+            id: 'hg-1-1',
+            time: '07:30',
+            period: 'MORNING',
+            title: 'Bánh cuốn chan nước xương nóng hổi tại TP. Hà Giang',
+            category: 'FOOD',
+            duration: '45 phút',
+            price: '35.000đ - 45.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Bánh cuốn tráng mỏng trứng lòng đào ăn kèm bát nước súp hầm xương đậm đà rau mùi.',
+            coords: { x: 30, y: 70 }
+          },
+          {
+            id: 'hg-1-2',
+            time: '10:00',
+            period: 'MORNING',
+            title: 'Cổng Trời Quản Bạ & Núi Đôi Cô Tiên tuyệt tác thiên nhiên',
+            category: 'CHECKIN',
+            duration: '60 phút',
+            price: 'Miễn phí',
+            imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Điểm chạm đầu tiên của cao nguyên đá Đồng Văn mây mù bao phủ quanh năm.',
+            coords: { x: 40, y: 60 }
+          },
+          {
+            id: 'hg-1-3',
+            time: '14:30',
+            period: 'AFTERNOON',
+            title: 'Check-in Dốc Thẩm Mã huyền thoại uốn lượn 9 khúc',
+            category: 'CHECKIN',
+            duration: '45 phút',
+            price: 'Miễn phí',
+            imageUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Các em bé H’Mông gùi hoa tam giác mạch đứng bên vệ dốc chụp ảnh rất dễ thương.',
+            coords: { x: 55, y: 45 }
+          },
+          {
+            id: 'hg-1-4',
+            time: '19:00',
+            period: 'EVENING',
+            title: 'Phố Cổ Đồng Văn: Lẩu gà đen H’Mông & Thắng dền ngọt bùi',
+            category: 'FOOD',
+            duration: '90 phút',
+            price: '150.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Ngồi trong ngôi nhà trình tường cổ kính thưởng thức lẩu gà đen nghi ngút khói giữa đêm rét.',
+            coords: { x: 70, y: 35 }
+          }
+        ]
+      },
+      {
+        dayNumber: 2,
+        title: 'Cột Cờ Lũng Cú, Đèo Mã Pí Lèng & Thuyền Sông Nho Quế',
+        stops: [
+          {
+            id: 'hg-2-1',
+            time: '08:00',
+            period: 'MORNING',
+            title: 'Cột Cờ Lũng Cú - Điểm cực Bắc thiêng liêng của Tổ quốc',
+            category: 'CULTURE',
+            duration: '90 phút',
+            price: '25.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Lá cờ Tổ quốc 54m² tượng trưng cho 54 dân tộc anh em bay phấp phới trong gió đại ngàn.',
+            coords: { x: 75, y: 15 }
+          },
+          {
+            id: 'hg-2-2',
+            time: '11:00',
+            period: 'MORNING',
+            title: 'Chinh phục Đèo Mã Pí Lèng - Vua của tứ đại đỉnh đèo',
+            category: 'EXPERIENCE',
+            duration: '60 phút',
+            price: 'Miễn phí',
+            imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Cung đèo hiểm trở bậc nhất nhìn xuống hẻm vực sâu thăm thẳm và dòng sông Nho Quế như sợi chỉ xanh.',
+            coords: { x: 82, y: 38 }
+          },
+          {
+            id: 'hg-2-3',
+            time: '14:00',
+            period: 'AFTERNOON',
+            title: 'Du thuyền Hẻm Tu Sản ngắm sông Nho Quế màu xanh ngọc bích',
+            category: 'EXPERIENCE',
+            duration: '120 phút',
+            price: '120.000đ (Vé thuyền)',
+            imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Hẻm vực sâu nhất Đông Nam Á với vách đá dựng đứng cao gần 1.000m kỳ vĩ đến nghẹt thở.',
+            coords: { x: 85, y: 45 }
+          }
+        ]
+      }
+    ]
+  },
+  'Măng Đen': {
+    city: 'Măng Đen',
+    tagline: 'Thiên đường sinh thái đại ngàn Kon Tum, không khí mát lạnh quanh năm và rừng thông hoang sơ',
+    weather: '18°C - Mát mẻ quanh năm, sương giăng lối mộng mơ ví như Đà Lạt thứ hai',
+    season: 'Mùa hoa mai anh đào nở rộ tháng 12 - tháng 2 & mùa sim tím ngút ngàn',
+    transportInfo: 'Thuê xe máy 120k/ngày chạy xuyên rừng thông',
+    distanceFromMajor: '50 km từ TP. Kon Tum • ~10h xe Limousine từ Sài Gòn',
+    recommendedDepartureTime: '19:00 tối hôm trước từ Sài Gòn',
+    recommendedDepartureReason: 'Chọn xe limousine phòng riêng xuất bến 19:00 từ Bến xe Miền Đông, sáng sớm 06:00 đến Măng Đen thức dậy giữa rừng thông bạt ngàn mát lạnh!',
+    checklist: [
+      'Áo ấm & khăn choàng nhẹ chống sương lạnh',
+      'Giày đi bộ suối thác chống trơn trượt',
+      'Xịt chống côn trùng rừng tự nhiên',
+      'Máy ảnh bắt khoảnh khắc sương sớm đại ngàn'
+    ],
+    budget: {
+      standard: { bus: 700000, stay: 550000, bike: 240000, food: 650000, total: 2140000 },
+      budget: { bus: 550000, stay: 350000, bike: 180000, food: 450000, total: 1530000 },
+      vip: { bus: 1000000, stay: 1500000, bike: 400000, food: 1300000, total: 4200000 }
+    },
+    days: [
+      {
+        dayNumber: 1,
+        title: 'Bánh Canh A Kay, Thác Pa Sỹ & Gà Nướng Cơm Lam',
+        stops: [
+          {
+            id: 'md-1-1',
+            time: '07:30',
+            period: 'MORNING',
+            title: 'Bánh canh cá lóc A Kay sôi sùng sục trong thố đất',
+            category: 'FOOD',
+            duration: '45 phút',
+            price: '35.000đ - 45.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Nước dùng ngọt lịm từ xương cá, sợi bánh canh dai dẻo ăn cùng đĩa rau đắng tươi mát.',
+            coords: { x: 45, y: 50 }
+          },
+          {
+            id: 'md-1-2',
+            time: '09:30',
+            period: 'MORNING',
+            title: 'Khu du lịch sinh thái Thác Pa Sỹ bọt tung trắng xóa',
+            category: 'EXPERIENCE',
+            duration: '90 phút',
+            price: '20.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Dòng thác đổ từ độ cao 45m giữa rừng nguyên sinh đại ngàn hùng vĩ.',
+            coords: { x: 35, y: 40 }
+          },
+          {
+            id: 'md-1-3',
+            time: '12:30',
+            period: 'NOON',
+            title: 'Gà nướng than hoa cơm lam cô Sinh trứ danh',
+            category: 'FOOD',
+            duration: '60 phút',
+            price: '240.000đ / con',
+            imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Gà đồi ướp lá tiêu rừng nướng than hồng da giòn rụm chấm muối ớt é cay nồng.',
+            coords: { x: 50, y: 55 }
+          },
+          {
+            id: 'md-1-4',
+            time: '15:30',
+            period: 'AFTERNOON',
+            title: 'Hồ Đăk Ke chèo thuyền đạp vịt ngắm hoa mai anh đào',
+            category: 'CHECKIN',
+            duration: '90 phút',
+            price: '30.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Hồ nước phẳng lặng trong xanh như gương soi bóng rặng thông cổ thụ yên bình.',
+            coords: { x: 60, y: 60 }
+          }
+        ]
+      }
+    ]
+  },
+  'Phan Thiết': {
+    city: 'Phan Thiết',
+    tagline: 'Thủ phủ resort biển xanh cát trắng, đồi cát bay kỳ vĩ và hải sản làng chài tươi rói',
+    weather: '28°C - Nắng ấm biển xanh, gió lộng quanh năm',
+    season: 'Mùa nắng đẹp từ tháng 11 đến tháng 5, biển trong xanh êm ả',
+    transportInfo: 'Thuê xe Jeep vượt đồi cát hoặc xe máy 120k/ngày',
+    distanceFromMajor: '200 km từ Sài Gòn • ~2.5h xe Limousine cao tốc',
+    recommendedDepartureTime: '06:00 sáng từ Sài Gòn',
+    recommendedDepartureReason: 'Nhờ cao tốc Dầu Giây - Phan Thiết chỉ mất 2.5 tiếng, đi xe 06:00 sáng là 08:30 có mặt thưởng thức bánh căn xíu mại!',
+    checklist: [
+      'Kính mát & kem chống nắng',
+      'Khăn trùm chống cát khi đi đồi cát bay',
+      'Đồ bơi & dép lào đi biển',
+      'Trang phục màu nổi chụp đồi cát'
+    ],
+    budget: {
+      standard: { bus: 400000, stay: 650000, bike: 240000, food: 750000, total: 2040000 },
+      budget: { bus: 320000, stay: 350000, bike: 180000, food: 450000, total: 1300000 },
+      vip: { bus: 650000, stay: 1800000, bike: 450000, food: 1500000, total: 4400000 }
+    },
+    days: [
+      {
+        dayNumber: 1,
+        title: 'Bánh Căn Xíu Mại, Suối Tiên & Chạy Xe Jeep Đồi Cát Bay',
+        stops: [
+          {
+            id: 'pt-1-1',
+            time: '08:30',
+            period: 'MORNING',
+            title: 'Bánh căn xíu mại trứng cút nóng giòn (Ăn sáng)',
+            category: 'FOOD',
+            duration: '45 phút',
+            price: '40.000đ / đĩa',
+            imageUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Bánh đúc khuôn đất giòn xốp ngập trong chén xíu mại da heo và mỡ hành thơm nức.',
+            coords: { x: 45, y: 55 }
+          },
+          {
+            id: 'pt-1-2',
+            time: '10:00',
+            period: 'MORNING',
+            title: 'Lội dòng Suối Tiên ngắm tháp nhũ cát đỏ cam kỳ vĩ',
+            category: 'CHECKIN',
+            duration: '75 phút',
+            price: '15.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Đi chân trần cảm nhận làn nước mát lành và vách đất sét tự nhiên như chốn bồng lai.',
+            coords: { x: 60, y: 50 }
+          },
+          {
+            id: 'pt-1-3',
+            time: '15:30',
+            period: 'AFTERNOON',
+            title: 'Đồi Cát Bay Mũi Né: Chạy xe Jeep vượt đồi cát & Trượt ván',
+            category: 'EXPERIENCE',
+            duration: '90 phút',
+            price: '150.000đ (Xe Jeep)',
+            imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Khung giờ chiều gió dịu và đồi cát chuyển màu vàng cam rực rỡ dưới ánh hoàng hôn.',
+            coords: { x: 75, y: 40 }
+          },
+          {
+            id: 'pt-1-4',
+            time: '18:30',
+            period: 'EVENING',
+            title: 'Lẩu Thả Phan Thiết & Bữa tiệc hải sản Bờ Kè Mũi Né',
+            category: 'FOOD',
+            duration: '90 phút',
+            price: '200.000đ / người',
+            imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Cá mai tươi rói xếp cánh hoa hoa chuối ăn cùng nước lẩu nước dùng chua cay đặc sản.',
+            coords: { x: 65, y: 60 }
+          }
+        ]
+      }
+    ]
+  },
+  'Phú Quốc': {
+    city: 'Phú Quốc',
+    tagline: 'Đảo Ngọc thiên đường nhiệt đới, bãi cát mịn như kem, hoàng hôn rực lửa và hải sản đảo trù phú',
+    weather: '28°C - Nắng vàng biển ngọc, gió đại dương trong lành',
+    season: 'Mùa khô tháng 11 đến tháng 4, biển êm như gương và hoàng hôn đẹp mê hồn',
+    transportInfo: 'Thuê xe máy 120k - 150k/ngày hoặc Taxi đảo',
+    distanceFromMajor: 'Xe khách giường nằm kết nối bến tàu Rạch Giá / Hà Tiên đi Đảo Ngọc',
+    recommendedDepartureTime: '22:00 đêm hôm trước',
+    recommendedDepartureReason: 'Đi xe giường nằm đêm từ Sài Gòn tới bến Rạch Giá/Hà Tiên lúc 05:30 sáng, ăn sáng bún cá rồi lên tàu cao tốc 07:00 lướt sóng ra đảo ngọc.',
+    checklist: [
+      'Kem chống nắng sinh học an toàn rạn san hô',
+      'Đồ bơi & kính bơi lặn ngắm san hô',
+      'Váy maxi & áo hoa lá sặc sỡ chụp ảnh',
+      'Túi chống nước điện thoại khi đi cano'
+    ],
+    budget: {
+      standard: { bus: 900000, stay: 900000, bike: 300000, food: 1100000, total: 3200000 },
+      budget: { bus: 750000, stay: 500000, bike: 240000, food: 700000, total: 2190000 },
+      vip: { bus: 1500000, stay: 2800000, bike: 600000, food: 2200000, total: 7100000 }
+    },
+    days: [
+      {
+        dayNumber: 1,
+        title: 'Bún Quậy Kiến Xây, Bãi Sao Cát Trắng & Hoàng Hôn Sunset Sanato',
+        stops: [
+          {
+            id: 'pq-1-1',
+            time: '08:00',
+            period: 'MORNING',
+            title: 'Bún Quậy Kiến Xây tự pha chén nước chấm gia truyền',
+            category: 'FOOD',
+            duration: '45 phút',
+            price: '55.000đ - 70.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Chả tôm, chả cá xay tươi quết thẳng vào đáy tô, chan nước luộc bún sôi sùng sục thơm nức.',
+            coords: { x: 45, y: 45 }
+          },
+          {
+            id: 'pq-1-2',
+            time: '10:00',
+            period: 'MORNING',
+            title: 'Tắm biển Bãi Sao - Bãi cát trắng mịn như kem và hàng dừa nghiêng',
+            category: 'EXPERIENCE',
+            duration: '120 phút',
+            price: 'Miễn phí',
+            imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Bãi biển đẹp nhất Phú Quốc với làn nước xanh ngọc bích phẳng lặng không một gợn sóng.',
+            coords: { x: 70, y: 75 }
+          },
+          {
+            id: 'pq-1-3',
+            time: '16:30',
+            period: 'AFTERNOON',
+            title: 'Sunset Sanato: Ngắm hoàng hôn rực lửa & Voi chân dài trên biển',
+            category: 'CHECKIN',
+            duration: '90 phút',
+            price: '100.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Điểm ngắm hoàng hôn buông xuống biển Tây đẹp mê hồn với các tác phẩm điêu khắc nghệ thuật.',
+            coords: { x: 40, y: 60 }
+          },
+          {
+            id: 'pq-1-4',
+            time: '19:30',
+            period: 'EVENING',
+            title: 'Chợ Đêm Phú Quốc: Thưởng thức Nhum nướng mỡ hành & Gỏi cá trích',
+            category: 'FOOD',
+            duration: '120 phút',
+            price: '180.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Nhum biển nướng thơm lừng béo ngậy, rắc thêm đậu phộng rang giòn ăn kèm muối tiêu chanh.',
+            coords: { x: 48, y: 48 }
+          }
+        ]
+      }
+    ]
   }
+};
+
+/**
+ * Động cơ tự động sinh lịch trình linh hoạt (Dynamic Fallback Engine)
+ * Đảm bảo 100% các địa phương trên toàn quốc khi người dùng nhập đều có lịch trình chân thực,
+ * không bao giờ bị rơi về Đà Lạt khi người dùng tra cứu địa danh khác.
+ */
+const generateDynamicDestinationTemplate = (city: string): DestinationData => {
+  return {
+    city,
+    tagline: `Khám phá vẻ đẹp kỳ thú, đặc sản trứ danh và những trải nghiệm bản địa đặc sắc tại ${city}`,
+    weather: '25°C - Thời tiết thuận lợi, nắng ấm ban ngày và mát mẻ ban đêm',
+    season: 'Thời điểm lý tưởng nhất trong năm để du lịch và trải nghiệm',
+    transportInfo: 'Thuê xe máy 120k - 150k/ngày hoặc Taxi công nghệ nội thành',
+    distanceFromMajor: `Tuyến xe khách kết nối liên tỉnh trực tiếp tới ${city}`,
+    recommendedDepartureTime: 'Chuyến xe đêm hoặc sáng sớm',
+    recommendedDepartureReason: `Bạn nên chọn chuyến xe đêm hoặc xuất bến lúc 06:30 sáng để kịp có mặt tại ${city} vào đầu ngày, tiết kiệm tối đa thời gian di chuyển.`,
+    checklist: [
+      'CCCD / Giấy tờ tùy thân để nhận phòng và thuê xe',
+      'Trang phục phù hợp thời tiết & đồ bơi / áo khoác ấm',
+      'Giày thể thao êm chân & dép sandal',
+      'Sạc dự phòng, máy ảnh & thuốc cá nhân cơ bản'
+    ],
+    budget: {
+      standard: { bus: 600000, stay: 600000, bike: 250000, food: 750000, total: 2200000 },
+      budget: { bus: 500000, stay: 350000, bike: 200000, food: 450000, total: 1500000 },
+      vip: { bus: 850000, stay: 1400000, bike: 500000, food: 1400000, total: 4150000 }
+    },
+    days: [
+      {
+        dayNumber: 1,
+        title: `Chào Đón ${city} - Điểm Đến Check-in & Đặc Sản Bản Địa`,
+        stops: [
+          {
+            id: 'dyn-1-1',
+            time: '07:30',
+            period: 'MORNING',
+            title: `Thưởng thức bữa sáng đặc sản nổi tiếng tại ${city}`,
+            category: 'FOOD',
+            duration: '45 phút',
+            price: '35.000đ - 55.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Quán bản địa lâu năm được người dân địa phương ưa chuộng.',
+            coords: { x: 45, y: 40 }
+          },
+          {
+            id: 'dyn-1-2',
+            time: '09:30',
+            period: 'MORNING',
+            title: `Khu thắng cảnh & Danh lam tiêu biểu trung tâm ${city}`,
+            category: 'CHECKIN',
+            duration: '90 phút',
+            price: 'Miễn phí / 30.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Thời điểm ánh sáng trong trẻo nhất để chụp toàn cảnh.',
+            coords: { x: 55, y: 35 }
+          },
+          {
+            id: 'dyn-1-3',
+            time: '12:00',
+            period: 'NOON',
+            title: `Bữa trưa ẩm thực truyền thống địa phương`,
+            category: 'FOOD',
+            duration: '60 phút',
+            price: '120.000đ - 180.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Thưởng thức các món đặc sản vùng miền nấu theo công thức bản xứ.',
+            coords: { x: 50, y: 55 }
+          },
+          {
+            id: 'dyn-1-4',
+            time: '15:30',
+            period: 'AFTERNOON',
+            title: `Trải nghiệm văn hóa & Điểm ngắm hoàng hôn đẹp nhất`,
+            category: 'EXPERIENCE',
+            duration: '90 phút',
+            price: '50.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Nên có mặt trước 17:00 để bắt trọn khoảnh khắc hoàng hôn lãng mạn.',
+            coords: { x: 65, y: 65 }
+          },
+          {
+            id: 'dyn-1-5',
+            time: '19:00',
+            period: 'EVENING',
+            title: `Chợ đêm & Khám phá ẩm thực đường phố ${city}`,
+            category: 'CULTURE',
+            duration: '120 phút',
+            price: '50.000đ - 100.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Dạo bộ thảnh thơi, thử các món ăn vặt đường phố và mua quà lưu niệm.',
+            coords: { x: 40, y: 50 }
+          }
+        ]
+      },
+      {
+        dayNumber: 2,
+        title: `Hành Trình Khám Phá Ngoại Thành & Trải Nghiệm Chuyên Sâu`,
+        stops: [
+          {
+            id: 'dyn-2-1',
+            time: '08:00',
+            period: 'MORNING',
+            title: `Cung đường thiên nhiên ngoạn mục & Làng nghề truyền thống`,
+            category: 'CULTURE',
+            duration: '120 phút',
+            price: '40.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Tìm hiểu nghề truyền thống và đời sống sinh hoạt của bà con địa phương.',
+            coords: { x: 30, y: 30 }
+          },
+          {
+            id: 'dyn-2-2',
+            time: '12:00',
+            period: 'NOON',
+            title: `Cơm quê / Hải sản / Đặc sản núi rừng bản địa`,
+            category: 'FOOD',
+            duration: '60 phút',
+            price: '150.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Nguyên liệu tươi mới trong ngày mang đậm hương vị địa phương.',
+            coords: { x: 35, y: 60 }
+          },
+          {
+            id: 'dyn-2-3',
+            time: '15:30',
+            period: 'AFTERNOON',
+            title: `Quán Cafe phong cảnh đẹp / Điểm nghỉ ngơi thư giãn`,
+            category: 'CHECKIN',
+            duration: '90 phút',
+            price: '45.000đ - 65.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Không gian mở thoáng đãng, ngắm nhìn phong cảnh thiên nhiên êm đềm.',
+            coords: { x: 60, y: 70 }
+          },
+          {
+            id: 'dyn-2-4',
+            time: '19:00',
+            period: 'EVENING',
+            title: `Tiệc nướng BBQ hoặc Lẩu ấm cúng buổi tối`,
+            category: 'FOOD',
+            duration: '90 phút',
+            price: '200.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Bữa tối sum vầy bên bạn bè, trò chuyện và tận hưởng không khí trong lành.',
+            coords: { x: 50, y: 45 }
+          }
+        ]
+      },
+      {
+        dayNumber: 3,
+        title: `Mua Sắm Đặc Sản Làm Quà & Tạm Biệt ${city}`,
+        stops: [
+          {
+            id: 'dyn-3-1',
+            time: '08:00',
+            period: 'MORNING',
+            title: `Bữa sáng nhẹ nhàng & Cà phê sáng ngắm phố phường`,
+            category: 'FOOD',
+            duration: '60 phút',
+            price: '40.000đ',
+            imageUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Tận hưởng nhịp sống chậm rãi trước khi trở về.',
+            coords: { x: 45, y: 45 }
+          },
+          {
+            id: 'dyn-3-2',
+            time: '09:30',
+            period: 'MORNING',
+            title: `Chợ trung tâm hoặc Cửa hàng đặc sản uy tín`,
+            category: 'CULTURE',
+            duration: '90 phút',
+            price: 'Tùy chọn',
+            imageUrl: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=500&auto=format&fit=crop&q=80',
+            localTip: 'Hỏi giá trước và chọn các sản phẩm có nhãn mác xuất xứ rõ ràng.',
+            coords: { x: 50, y: 50 }
+          }
+        ]
+      }
+    ]
+  };
+};
+
+/**
+ * Gợi ý điểm xuất phát tối ưu theo điểm đến để khớp nối tuyến xe trong Database
+ */
+const getSmartOriginForDestination = (dest: string): string => {
+  const northDestinations = ['Sa Pa', 'Ninh Bình', 'Hà Giang', 'Hạ Long', 'Hải Phòng', 'Cao Bằng', 'Mộc Châu'];
+  if (northDestinations.includes(dest)) return 'Hà Nội';
+  if (dest === 'Huế' || dest === 'Quy Nhơn') return 'Đà Nẵng';
+  return 'TP. Hồ Chí Minh';
 };
 
 export const SchedulePage: React.FC = () => {
@@ -578,7 +1601,7 @@ export const SchedulePage: React.FC = () => {
 
   // Query Parameters
   const paramDestination = searchParams.get('destination') || 'Đà Lạt';
-  const paramOrigin = searchParams.get('origin') || (paramDestination === 'Sa Pa' ? 'Hà Nội' : 'TP. Hồ Chí Minh');
+  const paramOrigin = searchParams.get('origin') || getSmartOriginForDestination(paramDestination);
 
   const [destinationInput, setDestinationInput] = useState(paramDestination);
   const [originInput, setOriginInput] = useState(paramOrigin);
@@ -586,9 +1609,9 @@ export const SchedulePage: React.FC = () => {
   const [travelVibe, setTravelVibe] = useState<TravelVibe>('CHILL');
   const [budgetTier, setBudgetTier] = useState<BudgetTier>('STANDARD');
 
-  // Active Destination Template
+  // Active Destination Template (Tìm trong 12 template chuyên sâu hoặc tự động sinh theo địa phương bất kỳ)
   const activeTemplate: DestinationData = useMemo(() => {
-    return DESTINATION_TEMPLATES[destinationInput] || DESTINATION_TEMPLATES['Đà Lạt'];
+    return DESTINATION_TEMPLATES[destinationInput] || generateDynamicDestinationTemplate(destinationInput);
   }, [destinationInput]);
 
   // Active Day in Planner
@@ -659,7 +1682,7 @@ export const SchedulePage: React.FC = () => {
   const handleSearchExplore = (e: React.FormEvent) => {
     e.preventDefault();
     if (!destinationInput) return;
-    const resolvedOrigin = destinationInput === 'Sa Pa' ? 'Hà Nội' : 'TP. Hồ Chí Minh';
+    const resolvedOrigin = getSmartOriginForDestination(destinationInput);
     setOriginInput(resolvedOrigin);
     setSearchParams({ origin: resolvedOrigin, destination: destinationInput });
   };
@@ -953,13 +1976,19 @@ export const SchedulePage: React.FC = () => {
                   <datalist id="destinations-explore">
                     <option value="Đà Lạt" />
                     <option value="Sa Pa" />
+                    <option value="Đà Nẵng" />
                     <option value="Nha Trang" />
-                    <option value="Vũng Tàu" />
+                    <option value="Quy Nhơn" />
+                    <option value="Ninh Bình" />
                     <option value="Hà Giang" />
+                    <option value="Vũng Tàu" />
+                    <option value="Măng Đen" />
+                    <option value="Huế" />
+                    <option value="Phan Thiết" />
+                    <option value="Phú Quốc" />
+                    <option value="Hạ Long" />
                     <option value="Cần Thơ" />
                     <option value="Hải Phòng" />
-                    <option value="Huế" />
-                    <option value="Quy Nhơn" />
                   </datalist>
                   <MapPin size={17} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#ef4444' }} />
                 </div>
@@ -1050,14 +2079,27 @@ export const SchedulePage: React.FC = () => {
 
             {/* Quick destination chips */}
             <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Gợi ý điểm hot:</span>
-              {['Đà Lạt', 'Sa Pa', 'Nha Trang', 'Vũng Tàu'].map((city) => (
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>Gợi ý điểm đến toàn quốc:</span>
+              {[
+                'Đà Lạt',
+                'Sa Pa',
+                'Đà Nẵng',
+                'Nha Trang',
+                'Quy Nhơn',
+                'Ninh Bình',
+                'Hà Giang',
+                'Vũng Tàu',
+                'Măng Đen',
+                'Huế',
+                'Phan Thiết',
+                'Phú Quốc',
+              ].map((city) => (
                 <button
                   key={city}
                   type="button"
                   onClick={() => {
                     setDestinationInput(city);
-                    const from = city === 'Sa Pa' ? 'Hà Nội' : 'TP. Hồ Chí Minh';
+                    const from = getSmartOriginForDestination(city);
                     setOriginInput(from);
                     setSearchParams({ origin: from, destination: city });
                   }}

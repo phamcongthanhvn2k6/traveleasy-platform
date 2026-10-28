@@ -305,6 +305,42 @@ export const AdminLoginPage: React.FC = () => {
             </div>
           )}
 
+          {/* Quick Demo Admin Accounts */}
+          <div style={{ marginBottom: '20px', padding: '12px 14px', backgroundColor: 'rgba(79, 70, 229, 0.12)', border: '1px solid rgba(79, 70, 229, 0.3)', borderRadius: '10px' }}>
+            <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <KeyRound size={13} /> Tài khoản Quản trị viên mẫu (Mật khẩu demo: 123456789@)
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {[
+                { label: 'Admin Hệ Thống', email: 'admin@traveleasy.vn' },
+                { label: 'Admin Thanh Phong', email: 'phanthanhphong.admin@traveleasy.vn' },
+                { label: 'Admin Trung Kiên', email: 'trungkien.admin@traveleasy.vn' },
+              ].map((acc, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setIdentifier(acc.email);
+                    setPassword('123456789@');
+                  }}
+                  style={{
+                    background: identifier === acc.email ? 'rgba(79, 70, 229, 0.35)' : 'rgba(255, 255, 255, 0.08)',
+                    color: identifier === acc.email ? '#a5b4fc' : '#e2e8f0',
+                    border: identifier === acc.email ? '1px solid #6366f1' : '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '5px 10px',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  {acc.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit}>
             {/* Input Email / Identifier */}
             <div style={{ marginBottom: '18px' }}>
