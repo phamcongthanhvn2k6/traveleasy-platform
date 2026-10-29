@@ -87,6 +87,22 @@ export const UserProfilePage: React.FC = () => {
   const [newTravelerRel, setNewTravelerRel] = useState('Gia đình');
   const [showAddTraveler, setShowAddTraveler] = useState(false);
 
+  // Fetch Real Profile from Supabase on mount
+  useEffect(() => {
+    api.get('/auth/profile')
+      .then(res => {
+        if (res.data?.data) {
+          const u = res.data.data;
+          setFullName(u.fullName || '');
+          setPhone(u.phone || '');
+          setEmail(u.email || '');
+          setUser(u);
+          localStorage.setItem('traveleasy_user', JSON.stringify(u));
+        }
+      })
+      .catch(e => console.warn('Could not fetch user profile:', e));
+  }, []);
+
   // Save travelers to localStorage on change
   useEffect(() => {
     try {
@@ -105,7 +121,7 @@ export const UserProfilePage: React.FC = () => {
         phone: phone.trim(),
       });
 
-      const updatedUser: AuthUser = {
+      const updatedUser: AuthUser = res.data?.data || {
         ...user!,
         fullName: fullName.trim(),
         phone: phone.trim(),
@@ -114,15 +130,7 @@ export const UserProfilePage: React.FC = () => {
       localStorage.setItem('traveleasy_user', JSON.stringify(updatedUser));
       toast.success('Cập nhật thông tin cá nhân thành công!', 'Thành Công');
     } catch (err: any) {
-      // Mock update fallback if running client-side
-      const updatedUser: AuthUser = {
-        ...user!,
-        fullName: fullName.trim(),
-        phone: phone.trim(),
-      };
-      setUser(updatedUser);
-      localStorage.setItem('traveleasy_user', JSON.stringify(updatedUser));
-      toast.success('Cập nhật thông tin cá nhân thành công!', 'Thành Công');
+      toast.error(err.response?.data?.message || 'Không thể cập nhật hồ sơ cá nhân', 'Lỗi Cập Nhật');
     } finally {
       setSavingProfile(false);
     }
@@ -150,11 +158,8 @@ export const UserProfilePage: React.FC = () => {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Đổi mật khẩu thành công!';
-      toast.success(msg, 'Thành Công');
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      const msg = err.response?.data?.message || 'Mật khẩu hiện tại không đúng hoặc không hợp lệ';
+      toast.error(msg, 'Đổi Mật Khẩu Thất Bại');
     } finally {
       setSavingPassword(false);
     }

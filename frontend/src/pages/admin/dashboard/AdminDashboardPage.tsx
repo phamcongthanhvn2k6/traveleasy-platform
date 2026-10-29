@@ -5,12 +5,12 @@ import { RevenueChart } from '../../../components/RevenueChart';
 
 export const AdminDashboardPage: React.FC = () => {
   const [stats, setStats] = useState({
-    userCount: 12,
-    busCompanyCount: 4,
-    pendingCompanies: 1,
-    revenue: '1.030.000 đ',
-    confirmedBookings: 2,
-    totalTrips: 18,
+    userCount: 0,
+    busCompanyCount: 0,
+    pendingCompanies: 0,
+    revenue: '0 đ',
+    confirmedBookings: 0,
+    totalTrips: 0,
   });
 
   const [upcomingTrips, setUpcomingTrips] = useState<any[]>([]);
@@ -26,23 +26,23 @@ export const AdminDashboardPage: React.FC = () => {
           api.get('/admin/trips'),
         ]);
 
-        let revenueFormatted = '1.030.000 đ';
-        let confirmedCount = 2;
-        let uCount = 12;
-        let tCount = 18;
+        let revenueFormatted = '0 đ';
+        let confirmedCount = 0;
+        let uCount = 0;
+        let tCount = 0;
 
         if (statsRes.status === 'fulfilled' && statsRes.value.data?.data) {
           const d = statsRes.value.data.data;
-          uCount = d.totalUsers ?? 12;
-          confirmedCount = d.confirmedBookings ?? 2;
-          tCount = d.totalTrips ?? 18;
+          uCount = d.totalUsers ?? 0;
+          confirmedCount = d.confirmedBookings ?? 0;
+          tCount = d.totalTrips ?? 0;
           if (d.totalRevenue !== undefined) {
             revenueFormatted = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(d.totalRevenue);
           }
         }
 
-        let cCount = 4;
-        let pending = 1;
+        let cCount = 0;
+        let pending = 0;
         if (companiesRes.status === 'fulfilled' && Array.isArray(companiesRes.value.data?.data)) {
           cCount = companiesRes.value.data.data.length;
           pending = companiesRes.value.data.data.filter((c: any) => c.status === 'PENDING' || c.status === 'PENDING_APPROVAL').length;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   DollarSign,
   TrendingUp,
@@ -9,9 +9,11 @@ import {
   Building,
   FileSpreadsheet,
   Printer,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
+import api from '../../../services/api';
 
 interface PartnerSettlementRecord {
   id: string;
@@ -30,41 +32,29 @@ interface PartnerSettlementRecord {
   payoutTxHash?: string;
 }
 
-const SAMPLE_PARTNER_SETTLEMENTS: PartnerSettlementRecord[] = [
-  {
-    id: 'ps-1',
-    code: 'DS-202610-P1',
-    periodName: 'Kỳ 1 - Tháng 10/2026',
-    startDate: '01/10/2026',
-    endDate: '15/10/2026',
-    ticketCount: 1420,
-    grossAmount: 497000000,
-    platformFeeRate: 10,
-    platformFeeAmount: 49700000,
-    netReceived: 447300000,
-    status: 'PAID',
-    reconciledAt: '16/10/2026 10:30',
-    paidAt: '17/10/2026 14:15',
-    payoutTxHash: 'VCB-FT-889920192',
-  },
-  {
-    id: 'ps-2',
-    code: 'DS-202610-P2',
-    periodName: 'Kỳ 2 - Tháng 10/2026',
-    startDate: '16/10/2026',
-    endDate: '31/10/2026',
-    ticketCount: 1650,
-    grossAmount: 577500000,
-    platformFeeRate: 10,
-    platformFeeAmount: 57750000,
-    netReceived: 519750000,
-    status: 'PENDING',
-  },
-];
-
 export const CompanySettlementsPage: React.FC = () => {
-  const [settlements] = useState<PartnerSettlementRecord[]>(SAMPLE_PARTNER_SETTLEMENTS);
+  const [settlements, setSettlements] = useState<PartnerSettlementRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState<PartnerSettlementRecord | null>(null);
+
+  const fetchSettlements = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/company/settlements');
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        setSettlements(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load settlements from Supabase:', err);
+      toast.error('Không thể tải dữ liệu quyết toán từ CSDL', 'Lỗi CSDL');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSettlements();
+  }, []);
 
   const totalGross = settlements.reduce((a, b) => a + b.grossAmount, 0);
   const totalPaid = settlements.filter(s => s.status === 'PAID').reduce((a, b) => a + b.netReceived, 0);

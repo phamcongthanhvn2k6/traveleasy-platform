@@ -54,14 +54,8 @@ export const AdminLocationsPage: React.FC = () => {
         );
       }
     } catch (err) {
-      console.warn('Could not fetch locations from API, fallback:', err);
-      setLocations([
-        { id: 1, name: 'Bến xe Miền Đông', type: 'BUS_STATION', typeLabel: 'Bến xe khách', province: 'TP. Hồ Chí Minh', address: '292 Đinh Bộ Lĩnh, P.26, Q.Bình Thạnh', routesCount: 12 },
-        { id: 2, name: 'Bến xe Liên Tỉnh Đà Lạt', type: 'BUS_STATION', typeLabel: 'Bến xe khách', province: 'Lâm Đồng', address: 'Số 1 Tô Hiến Thành, Phường 3, TP. Đà Lạt', routesCount: 14 },
-        { id: 3, name: 'Bến xe Mỹ Đình', type: 'BUS_STATION', typeLabel: 'Bến xe khách', province: 'Hà Nội', address: 'Số 20 Phạm Hùng, Mỹ Đình 2, Nam Từ Liêm', routesCount: 18 },
-        { id: 4, name: 'Bến xe Miền Tây', type: 'BUS_STATION', typeLabel: 'Bến xe khách', province: 'TP. Hồ Chí Minh', address: '395 Kinh Dương Vương, An Lạc, Bình Tân', routesCount: 16 },
-        { id: 5, name: 'Trạm dừng chân Dầu Giây', type: 'TRANSIT_POINT', typeLabel: 'Trạm trung chuyển', province: 'Đồng Nai', address: 'QL1A, TT. Dầu Giây, Thống Nhất', routesCount: 8 },
-      ]);
+      console.error('Could not fetch locations from API:', err);
+      setLocations([]);
     } finally {
       setLoading(false);
     }

@@ -23,39 +23,6 @@ interface MasterLocation {
   typeLabel?: string;
 }
 
-const DEFAULT_COMPANY_LOCATIONS: CompanyLocationItem[] = [
-  {
-    id: 'cl1',
-    code: 'bl1',
-    displayName: 'TE - Bến Xe Miền Đông',
-    masterLocationId: 1,
-    masterLocation: 'Bến xe Miền Đông',
-    masterSub: 'TP. HCM · BUS_STATION',
-    address: '292 Đinh Bộ Lĩnh, P.26, Q.Bình Thạnh',
-    pickupGuide: 'Đến quầy vé 12-14 trước giờ xuất phát 30 phút để in vé lên xe.',
-  },
-  {
-    id: 'cl2',
-    code: 'bl2',
-    displayName: 'TE - Bến Xe Đà Lạt',
-    masterLocationId: 2,
-    masterLocation: 'Bến xe Liên Tỉnh Đà Lạt',
-    masterSub: 'Lâm Đồng · BUS_STATION',
-    address: 'Số 1 Tô Hiến Thành, Phường 3, TP. Đà Lạt',
-    pickupGuide: 'Đến quầy vé số 5, phòng chờ khách VIP TravelEasy Express.',
-  },
-  {
-    id: 'cl3',
-    code: 'bl3',
-    displayName: 'TE - Bến Xe Mỹ Đình',
-    masterLocationId: 3,
-    masterLocation: 'Bến xe Mỹ Đình',
-    masterSub: 'Hà Nội · BUS_STATION',
-    address: 'Số 20 Phạm Hùng, Mỹ Đình 2, Nam Từ Liêm',
-    pickupGuide: 'Vào cổng 2, quầy tiếp nhận hành khách TravelEasy.',
-  },
-];
-
 export const CompanyLocationsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [locations, setLocations] = useState<CompanyLocationItem[]>([]);
@@ -94,21 +61,15 @@ export const CompanyLocationsPage: React.FC = () => {
         );
       }
     } catch (err) {
-      console.warn('Could not fetch master locations from API, fallback default list:', err);
-      setMasterLocations([
-        { id: 1, name: 'Bến xe Miền Đông', province: 'TP. Hồ Chí Minh', address: '292 Đinh Bộ Lĩnh, P.26, Q.Bình Thạnh' },
-        { id: 2, name: 'Bến xe Liên Tỉnh Đà Lạt', province: 'Lâm Đồng', address: 'Số 1 Tô Hiến Thành, Phường 3, TP. Đà Lạt' },
-        { id: 3, name: 'Bến xe Mỹ Đình', province: 'Hà Nội', address: 'Số 20 Phạm Hùng, Mỹ Đình 2, Nam Từ Liêm' },
-        { id: 4, name: 'Bến xe Miền Tây', province: 'TP. Hồ Chí Minh', address: '395 Kinh Dương Vương, An Lạc, Bình Tân' },
-        { id: 5, name: 'Trạm dừng chân Dầu Giây', province: 'Đồng Nai', address: 'QL1A, TT. Dầu Giây, Thống Nhất' },
-      ]);
+      console.error('Could not fetch master locations from API:', err);
+      setMasterLocations([]);
     }
   };
 
   const loadLocations = async () => {
     try {
       const res = await api.get('/company/locations');
-      if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+      if (res.data?.data && Array.isArray(res.data.data)) {
         const mapped: CompanyLocationItem[] = res.data.data.map((l: any, idx: number) => ({
           id: l.id,
           code: `bl${idx + 1}`,
@@ -120,19 +81,10 @@ export const CompanyLocationsPage: React.FC = () => {
           pickupGuide: 'Đến quầy vé TravelEasy trước giờ xuất bến 30 phút.',
         }));
         setLocations(mapped);
-        return;
       }
-    } catch {}
-
-    try {
-      const saved = localStorage.getItem('traveleasy_company_locations');
-      if (saved) {
-        setLocations(JSON.parse(saved));
-      } else {
-        setLocations(DEFAULT_COMPANY_LOCATIONS);
-      }
-    } catch {
-      setLocations(DEFAULT_COMPANY_LOCATIONS);
+    } catch (err) {
+      console.error('Could not load company locations:', err);
+      setLocations([]);
     }
   };
 

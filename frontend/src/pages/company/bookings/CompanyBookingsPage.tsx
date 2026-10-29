@@ -24,135 +24,14 @@ export interface CompanyBookingItem {
 
 const STORAGE_KEY = 'traveleasy_company_bookings';
 
-const DEFAULT_BOOKINGS: CompanyBookingItem[] = [
-  {
-    id: 'b1',
-    code: 'BK-8901',
-    customerName: 'Nguyễn Văn An',
-    customerEmail: 'nguyen.a@example.com',
-    customerPhone: '0912345678',
-    tripCode: 't1',
-    routeName: 'Sài Gòn - Đà Lạt',
-    seats: ['A01', 'A02'],
-    pickupPoint: 'Bến xe Miền Đông mới, TP.HCM',
-    dropoffPoint: 'Bến xe liên tỉnh Đà Lạt',
-    totalAmount: 700000,
-    paymentMethod: 'VNPAY',
-    paymentStatus: 'PAID',
-    status: 'CONFIRMED',
-    statusLabel: 'Đã xác nhận',
-    bookingTime: '17:00 18/10/2026',
-  },
-  {
-    id: 'b2',
-    code: 'BK-8902',
-    customerName: 'Trần Thị Bình',
-    customerEmail: 'tran.b@example.com',
-    customerPhone: '0987654321',
-    tripCode: 't1',
-    routeName: 'Sài Gòn - Đà Lạt',
-    seats: ['B05'],
-    pickupPoint: 'Ngã tư Hàng Xanh, TP.HCM',
-    dropoffPoint: 'Chợ Đà Lạt',
-    totalAmount: 350000,
-    paymentMethod: 'Chuyển khoản VNPAY',
-    paymentStatus: 'PAID',
-    status: 'CONFIRMED',
-    statusLabel: 'Đã xác nhận',
-    bookingTime: '18:00 19/10/2026',
-  },
-  {
-    id: 'b3',
-    code: 'BK-8903',
-    customerName: 'Lê Hoàng Cường',
-    customerEmail: 'cuong.le@example.com',
-    customerPhone: '0903112233',
-    tripCode: 't2',
-    routeName: 'Sài Gòn - Nha Trang',
-    seats: ['A03'],
-    pickupPoint: 'Bến xe Miền Đông, TP.HCM',
-    dropoffPoint: 'Bến xe phía Nam Nha Trang',
-    totalAmount: 280000,
-    paymentMethod: 'Tiền mặt tại quầy',
-    paymentStatus: 'UNPAID',
-    status: 'PENDING',
-    statusLabel: 'Chờ thanh toán',
-    bookingTime: '21:00 18/10/2026',
-  },
-  {
-    id: 'b4',
-    code: 'BK-8904',
-    customerName: 'Phạm Minh Đức',
-    customerEmail: 'duc.pham@example.com',
-    customerPhone: '0934567890',
-    tripCode: 't3',
-    routeName: 'Hà Nội - Sapa',
-    seats: ['C01', 'C02'],
-    pickupPoint: 'Bến xe Mỹ Đình, Hà Nội',
-    dropoffPoint: 'Thị trấn Sapa, Lào Cai',
-    totalAmount: 900000,
-    paymentMethod: 'VNPAY QR',
-    paymentStatus: 'PAID',
-    status: 'CONFIRMED',
-    statusLabel: 'Đã xác nhận',
-    bookingTime: '16:00 17/10/2026',
-  },
-  {
-    id: 'b5',
-    code: 'BK-8905',
-    customerName: 'Vũ Thị Hoa',
-    customerEmail: 'hoa.vu@example.com',
-    customerPhone: '0978999888',
-    tripCode: 't5',
-    routeName: 'Sài Gòn - Nha Trang',
-    seats: ['B02'],
-    pickupPoint: 'Bến xe An Sương, TP.HCM',
-    dropoffPoint: 'Bến xe phía Nam Nha Trang',
-    totalAmount: 280000,
-    paymentMethod: 'Thẻ ATM nội địa',
-    paymentStatus: 'PAID',
-    status: 'CANCELLED',
-    statusLabel: 'Đã hủy',
-    bookingTime: '17:00 17/10/2026',
-  },
-  {
-    id: 'b6',
-    code: 'BK-8906',
-    customerName: 'Đặng Thanh Tùng',
-    customerEmail: 'tung.dt@example.com',
-    customerPhone: '0945671234',
-    tripCode: 't6',
-    routeName: 'Sài Gòn - Đà Lạt',
-    seats: ['A07'],
-    pickupPoint: 'Bến xe Miền Đông mới, TP.HCM',
-    dropoffPoint: 'Bến xe liên tỉnh Đà Lạt',
-    totalAmount: 350000,
-    paymentMethod: 'VNPAY',
-    paymentStatus: 'PAID',
-    status: 'CONFIRMED',
-    statusLabel: 'Đã xác nhận',
-    bookingTime: '15:00 18/10/2026',
-  },
-];
-
 export const CompanyBookingsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<string>('ALL');
-
-  const [bookings, setBookings] = useState<CompanyBookingItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // ignore
-    }
-    return DEFAULT_BOOKINGS;
-  });
+  const [bookings, setBookings] = useState<CompanyBookingItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchBookingsFromDb = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/company/bookings');
       if (res.data?.data && Array.isArray(res.data.data)) {
@@ -174,11 +53,14 @@ export const CompanyBookingsPage: React.FC = () => {
           statusLabel: b.status === 'CANCELLED' ? 'Đã hủy' : b.status === 'PENDING' ? 'Chờ thanh toán' : 'Đã xác nhận',
           bookingTime: b.createdAt ? new Date(b.createdAt).toLocaleDateString('vi-VN') : 'Hôm nay'
         }));
-        if (mapped.length > 0) {
-          setBookings(mapped);
-        }
+        setBookings(mapped);
       }
-    } catch {}
+    } catch (err) {
+      console.error('Failed to load bookings from Supabase:', err);
+      toast.error('Không thể tải danh sách đơn vé từ CSDL', 'Lỗi CSDL');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

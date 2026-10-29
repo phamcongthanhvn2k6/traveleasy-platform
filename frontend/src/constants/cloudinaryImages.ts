@@ -38,3 +38,4 @@ export const CLOUDINARY_IMAGES = {
 };
 
 export default CLOUDINARY_IMAGES;
+

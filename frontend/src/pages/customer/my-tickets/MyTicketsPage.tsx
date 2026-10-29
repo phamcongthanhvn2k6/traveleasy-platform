@@ -93,12 +93,7 @@ export const MyTicketsPage: React.FC = () => {
       );
       setCancellingBooking(null);
     } catch (err: any) {
-      // Mock fallback
-      toast.success(`Đã hủy vé ${cancellingBooking.bookingCode} thành công!`, 'Hủy Vé Thành Công');
-      setBookings((prev) =>
-        prev.map((b) => (b.id === cancellingBooking.id ? { ...b, status: 'CANCELLED' } : b))
-      );
-      setCancellingBooking(null);
+      toast.error(err.response?.data?.message || 'Không thể hủy vé vào lúc này. Vui lòng liên hệ tổng đài hỗ trợ!', 'Hủy Vé Thất Bại');
     } finally {
       setCancelLoading(false);
     }

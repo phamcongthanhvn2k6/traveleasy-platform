@@ -29,6 +29,8 @@ public class PublicContentController {
     private final ReviewRepository reviewRepository;
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
+    private final RouteRepository routeRepository;
+    private final TripRepository tripRepository;
 
     // ==========================================
     // 1. BANNERS
@@ -410,6 +412,66 @@ public class PublicContentController {
     @Operation(summary = "Lấy chính sách hủy đổi vé từ Supabase")
     public ApiResponse<List<CancellationPolicy>> getCancellationPolicies() {
         return ApiResponse.success(cancellationPolicyRepository.findAll());
+    }
+
+    @GetMapping("/routes")
+    @Operation(summary = "Lấy toàn bộ tuyến đường vận hành từ CSDL Supabase")
+    public ApiResponse<List<Route>> getAllRoutes() {
+        return ApiResponse.success(routeRepository.findAllByOrderByDepartureLocationAscArrivalLocationAsc());
+    }
+
+    @GetMapping("/routes/popular")
+    @Operation(summary = "Lấy danh sách các tuyến đường phổ biến từ Supabase kèm giá vé thấp nhất thực tế")
+    public ApiResponse<List<Map<String, Object>>> getPopularRoutes() {
+        List<Route> routes = routeRepository.findAll();
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (Route r : routes) {
+            List<Trip> trips = tripRepository.searchTrips(r.getDepartureLocation(), r.getArrivalLocation(), null, null, TripStatus.SCHEDULED);
+            BigDecimal minPrice = trips.stream()
+                    .map(Trip::getPrice)
+                    .filter(Objects::nonNull)
+                    .min(BigDecimal::compareTo)
+                    .orElse(BigDecimal.valueOf(199000));
+
+            String dest = r.getArrivalLocation() != null ? r.getArrivalLocation().toLowerCase() : "";
+            String imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289365/traveleasy/banners/banner_hero_dalat_mongmo.jpg";
+            String bgColor = "linear-gradient(180deg, transparent 40%, rgba(30, 58, 138, 0.85) 100%)";
+
+            if (dest.contains("sa pa") || dest.contains("sapa")) {
+                imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289364/traveleasy/banners/banner_hero_sapa_fansipan.jpg";
+                bgColor = "linear-gradient(180deg, transparent 40%, rgba(30, 58, 138, 0.85) 100%)";
+            } else if (dest.contains("đà lạt") || dest.contains("da lat")) {
+                imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289365/traveleasy/banners/banner_hero_dalat_mongmo.jpg";
+                bgColor = "linear-gradient(180deg, transparent 40%, rgba(194, 65, 12, 0.85) 100%)";
+            } else if (dest.contains("nha trang")) {
+                imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289366/traveleasy/banners/banner_hero_nhatrang_bienxanh.jpg";
+                bgColor = "linear-gradient(180deg, transparent 40%, rgba(120, 53, 15, 0.85) 100%)";
+            } else if (dest.contains("vũng tàu") || dest.contains("vung tau")) {
+                imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289368/traveleasy/banners/banner_hero_vungtau_hoamai.jpg";
+                bgColor = "linear-gradient(180deg, transparent 40%, rgba(13, 148, 136, 0.85) 100%)";
+            } else if (dest.contains("đà nẵng") || dest.contains("da nang") || dest.contains("huế") || dest.contains("hội an")) {
+                imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289367/traveleasy/banners/banner_hero_mientrung_disan.jpg";
+                bgColor = "linear-gradient(180deg, transparent 40%, rgba(2, 132, 199, 0.85) 100%)";
+            } else if (dest.contains("hải phòng") || dest.contains("hà nội")) {
+                imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289370/traveleasy/banners/banner_promo_welcome_newuser.jpg";
+                bgColor = "linear-gradient(180deg, transparent 40%, rgba(55, 48, 163, 0.85) 100%)";
+            }
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", r.getId());
+            map.put("title", r.getDepartureLocation() + " - " + r.getArrivalLocation());
+            map.put("origin", r.getDepartureLocation());
+            map.put("destination", r.getArrivalLocation());
+            map.put("price", String.format("%,dđ", minPrice.longValue()));
+            map.put("oldPrice", String.format("%,dđ", minPrice.multiply(BigDecimal.valueOf(1.15)).longValue()));
+            map.put("distanceKm", r.getDistanceKm());
+            map.put("durationHours", r.getDurationHours());
+            map.put("image", imgUrl);
+            map.put("bgColor", bgColor);
+            result.add(map);
+        }
+        return ApiResponse.success(result);
     }
 
     // ==========================================

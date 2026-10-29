@@ -25,16 +25,8 @@ export const AdminPaymentsPage: React.FC = () => {
         setGateways(res.data.data);
       }
     } catch (err) {
-      console.warn('Could not fetch gateways from API, using fallback:', err);
-      setGateways([
-        { id: 1, provider: 'VNPAY', displayName: 'Cổng thanh toán VNPay (ATM / QR / Visa)', category: 'PAYMENT', status: 'ACTIVE', isSandbox: true },
-        { id: 2, provider: 'MOMO', displayName: 'Ví điện tử MoMo', category: 'PAYMENT', status: 'ACTIVE', isSandbox: true },
-        { id: 3, provider: 'ZALOPAY', displayName: 'Ví điện tử ZaloPay', category: 'PAYMENT', status: 'ACTIVE', isSandbox: true },
-        { id: 4, provider: 'VIETQR', displayName: 'Chuyển khoản VietQR Napas 24/7', category: 'PAYMENT', status: 'ACTIVE', isSandbox: false },
-        { id: 5, provider: 'SPEEDSMS', displayName: 'Cổng SMS OTP SpeedSMS Brandname', category: 'NOTIFICATION', status: 'ACTIVE', isSandbox: false },
-        { id: 6, provider: 'SENDGRID', displayName: 'Hạ tầng Email SendGrid API', category: 'NOTIFICATION', status: 'ACTIVE', isSandbox: false },
-        { id: 7, provider: 'TELEGRAM', displayName: 'Telegram Bot cảnh báo lỗi hệ thống', category: 'NOTIFICATION', status: 'ACTIVE', isSandbox: false },
-      ]);
+      console.error('Could not fetch gateways from API:', err);
+      setGateways([]);
     } finally {
       setLoading(false);
     }

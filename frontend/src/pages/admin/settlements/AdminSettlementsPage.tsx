@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   DollarSign,
   Search,
@@ -16,6 +16,7 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
+import api from '../../../services/api';
 
 export interface SettlementPeriod {
   id: string;
@@ -41,7 +42,7 @@ export interface SettlementPeriod {
   paidAt?: string;
 }
 
-const SAMPLE_SETTLEMENTS: SettlementPeriod[] = [
+const SAMPLE_SETTLEMENTS_UNUSED: SettlementPeriod[] = [
   {
     id: 's1',
     code: 'DS-202610-FUTA',
@@ -155,10 +156,30 @@ const SAMPLE_SETTLEMENTS: SettlementPeriod[] = [
 ];
 
 export const AdminSettlementsPage: React.FC = () => {
-  const [settlements, setSettlements] = useState<SettlementPeriod[]>(SAMPLE_SETTLEMENTS);
+  const [settlements, setSettlements] = useState<SettlementPeriod[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'RECONCILED' | 'PAID'>('ALL');
   const [selectedSettlement, setSelectedSettlement] = useState<SettlementPeriod | null>(null);
+
+  const fetchSettlements = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/admin/settlements');
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        setSettlements(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load settlements:', err);
+      toast.error('Không thể tải dữ liệu quyết toán từ CSDL', 'Lỗi CSDL');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSettlements();
+  }, []);
 
   const filtered = settlements.filter((s) => {
     if (statusFilter !== 'ALL' && s.status !== statusFilter) return false;

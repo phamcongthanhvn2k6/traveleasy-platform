@@ -19,73 +19,15 @@ export interface CompanyReviewItem {
 
 const STORAGE_KEY = 'traveleasy_company_reviews';
 
-const DEFAULT_REVIEWS: CompanyReviewItem[] = [
-  {
-    id: 'rev1',
-    rating: 5,
-    comment: 'Vé ổn lắm, xe sạch sẽ, bác tài lái rất cẩn thận và đúng giờ!',
-    reviewer: 'tran.b@example.com',
-    reviewerName: 'Trần Thị Bình',
-    tripCode: 't4',
-    reply: 'Dạ nhà xe xin chân thành cảm ơn quý khách đã tin tưởng và đồng hành cùng chúng tôi!',
-    repliedAt: '08:00 21/10/2026',
-    isReported: false,
-    reviewedAt: '23:00 20/10/2026',
-  },
-  {
-    id: 'rev2',
-    rating: 4,
-    comment: 'Xe giường nằm êm ái, wifi mạnh, nhưng điểm đón xuất bến bị trễ 10 phút.',
-    reviewer: 'nguyen.a@example.com',
-    reviewerName: 'Nguyễn Văn An',
-    tripCode: 't4',
-    reply: null,
-    isReported: false,
-    reviewedAt: '00:00 21/10/2026',
-  },
-  {
-    id: 'rev3',
-    rating: 1,
-    comment: 'Chuyến xe hủy bất ngờ mà không báo sớm, quá thất vọng với dịch vụ!',
-    reviewer: 'locked@example.com',
-    reviewerName: 'Hành Khách Ẩn Danh',
-    tripCode: 't5',
-    reply: null,
-    isReported: false,
-    reviewedAt: '02:00 20/10/2026',
-  },
-  {
-    id: 'rev4',
-    rating: 5,
-    comment: 'Xe Limousine rất đẹp, có nước uống và cổng sạc USB tiện lợi. Sẽ tiếp tục ủng hộ!',
-    reviewer: 'duc.pham@example.com',
-    reviewerName: 'Phạm Minh Đức',
-    tripCode: 't3',
-    reply: 'Cảm ơn quý khách! Chúc quý khách vạn dặm bình an.',
-    repliedAt: '10:00 18/10/2026',
-    isReported: false,
-    reviewedAt: '09:00 18/10/2026',
-  },
-];
-
 export const CompanyReviewsPage: React.FC = () => {
-  const [reviews, setReviews] = useState<CompanyReviewItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // ignore
-    }
-    return DEFAULT_REVIEWS;
-  });
+  const [reviews, setReviews] = useState<CompanyReviewItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchReviewsFromDb = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/company/reviews');
-      if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+      if (res.data?.data && Array.isArray(res.data.data)) {
         const mapped: CompanyReviewItem[] = res.data.data.map((r: any) => ({
           id: String(r.id),
           rating: r.rating || 5,
@@ -101,7 +43,12 @@ export const CompanyReviewsPage: React.FC = () => {
         }));
         setReviews(mapped);
       }
-    } catch {}
+    } catch (err) {
+      console.error('Failed to load reviews from Supabase:', err);
+      toast.error('Không thể tải đánh giá từ CSDL', 'Lỗi CSDL');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

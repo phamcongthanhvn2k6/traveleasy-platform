@@ -33,10 +33,13 @@ export const HomePage: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [searchParams, setSearchParams] = useState({ origin: 'TP. Hồ Chí Minh', destination: 'Đà Lạt' });
 
-  // Dynamic Banners from Database
+  // Dynamic Banners, Popular Routes & Promos from Database
   const [activeBanners, setActiveBanners] = useState<any[]>([]);
+  const [popularRoutes, setPopularRoutes] = useState<any[]>([]);
+  const [featuredPromos, setFeaturedPromos] = useState<any[]>([]);
 
   useEffect(() => {
+    // 1. Tải danh sách Banner quảng cáo từ Supabase
     api.get('/banners')
       .then(res => {
         if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
@@ -52,6 +55,37 @@ export const HomePage: React.FC = () => {
         }
       })
       .catch(e => console.warn('Could not load banners from API:', e));
+
+    // 2. Tải tuyến đường phổ biến thực tế từ Supabase
+    api.get('/routes/popular')
+      .then(res => {
+        if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          setPopularRoutes(res.data.data);
+        }
+      })
+      .catch(e => console.warn('Could not load popular routes from API:', e));
+
+    // 3. Tải khuyến mại thực tế từ Supabase
+    api.get('/promotions')
+      .then(res => {
+        if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          setFeaturedPromos(res.data.data.map((p: any, idx: number) => ({
+            id: p.id,
+            tag: p.badgeText || (p.category === 'NEW_CUSTOMER' ? 'KHÁCH MỚI' : 'HOT DEAL'),
+            title: p.title,
+            badge: p.discountType === 'PERCENT' ? `GIẢM ${p.discountValue}%` : `GIẢM ${(Number(p.discountValue) / 1000).toFixed(0)}K`,
+            gradient: idx % 3 === 0 
+              ? 'linear-gradient(135deg, #fef3c7, #fde68a)' 
+              : idx % 3 === 1 
+              ? 'linear-gradient(135deg, #e0f2fe, #bae6fd)' 
+              : 'linear-gradient(135deg, #f0fdf4, #bbf7d0)',
+            accent: idx % 3 === 0 ? '#d97706' : idx % 3 === 1 ? '#0284c7' : '#16a34a',
+            image: CLOUDINARY_IMAGES.banners.flashSale,
+            code: p.code
+          })));
+        }
+      })
+      .catch(e => console.warn('Could not load promotions from API:', e));
   }, []);
 
   // Booking state
@@ -107,90 +141,6 @@ export const HomePage: React.FC = () => {
     setBookingSeats(seats);
     setBookingPoints(points);
   };
-
-  // 1. Tuyến đường phổ biến (Screenshot 2)
-  const popularRoutes = [
-    {
-      id: 1,
-      title: 'Hà Nội - Sa Pa',
-      origin: 'Hà Nội',
-      destination: 'Sa Pa',
-      price: '219.000đ',
-      oldPrice: '250.000đ',
-      image: CLOUDINARY_IMAGES.destinations.sapa,
-      bgColor: 'linear-gradient(180deg, transparent 40%, rgba(30, 58, 138, 0.85) 100%)'
-    },
-    {
-      id: 2,
-      title: 'Hà Nội - Hải Phòng',
-      origin: 'Hà Nội',
-      destination: 'Hải Phòng',
-      price: '130.000đ',
-      oldPrice: null,
-      image: CLOUDINARY_IMAGES.destinations.haNoi,
-      bgColor: 'linear-gradient(180deg, transparent 40%, rgba(55, 48, 163, 0.85) 100%)'
-    },
-    {
-      id: 3,
-      title: 'Sài Gòn - Đà Lạt',
-      origin: 'TP. Hồ Chí Minh',
-      destination: 'Đà Lạt',
-      price: '199.000đ',
-      oldPrice: '249.000đ',
-      image: CLOUDINARY_IMAGES.destinations.dalat,
-      bgColor: 'linear-gradient(180deg, transparent 40%, rgba(194, 65, 12, 0.85) 100%)'
-    },
-    {
-      id: 4,
-      title: 'Sài Gòn - Nha Trang',
-      origin: 'TP. Hồ Chí Minh',
-      destination: 'Nha Trang',
-      price: '200.000đ',
-      oldPrice: null,
-      image: CLOUDINARY_IMAGES.destinations.nhaTrang,
-      bgColor: 'linear-gradient(180deg, transparent 40%, rgba(120, 53, 15, 0.85) 100%)'
-    }
-  ];
-
-  // 2. Ưu đãi nổi bật (Screenshot 2)
-  const featuredPromos = [
-    {
-      id: 1,
-      tag: 'HOT DEAL 25/10',
-      title: 'Lương về chốt deal - Giảm đến 50% vào ngày 25 hàng tháng',
-      badge: 'GIẢM 50%',
-      gradient: 'linear-gradient(135deg, #fef3c7, #fde68a)',
-      accent: '#d97706',
-      image: CLOUDINARY_IMAGES.banners.heroTetPayOS
-    },
-    {
-      id: 2,
-      tag: 'FLASH SALE',
-      title: '12h - 14h Thứ 3 - Flash Sale vé rẻ đến 50%',
-      badge: 'THỨ 3 HÀNG TUẦN',
-      gradient: 'linear-gradient(135deg, #e0f2fe, #bae6fd)',
-      accent: '#0284c7',
-      image: CLOUDINARY_IMAGES.banners.flashSale
-    },
-    {
-      id: 3,
-      tag: 'NHÀ XE MỚI',
-      title: 'Giảm đến 20% khi đặt vé các nhà xe mới mở bán tại TravelEasy',
-      badge: 'TIẾT KIỆM 20%',
-      gradient: 'linear-gradient(135deg, #f0fdf4, #bbf7d0)',
-      accent: '#16a34a',
-      image: CLOUDINARY_IMAGES.banners.welcomeNewUser
-    },
-    {
-      id: 4,
-      tag: 'BẠN BÈ',
-      title: 'Giới thiệu bạn mới - Nhận quà khủng từ TravelEasy',
-      badge: 'THƯỞNG 80K',
-      gradient: 'linear-gradient(135deg, #fdf2f8, #fbcfe8)',
-      accent: '#db2777',
-      image: CLOUDINARY_IMAGES.banners.studentSupport
-    }
-  ];
 
   // 3. Du lịch Sapa (Screenshot 3)
   const sapaGuides = [

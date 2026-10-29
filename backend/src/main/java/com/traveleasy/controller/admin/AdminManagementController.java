@@ -284,5 +284,14 @@ public class AdminManagementController {
         adminManagementService.deleteRoute(id);
         return ApiResponse.success("Xoá tuyến đường thành công", null);
     }
+
+    // ==========================================
+    // 12. ĐỐI SOÁT & QUYẾT TOÁN (/admin/settlements)
+    // ==========================================
+    @GetMapping("/settlements")
+    @Operation(summary = "Lấy dữ liệu đối soát toàn sàn từ CSDL đơn đặt vé Supabase")
+    public ApiResponse<List<java.util.Map<String, Object>>> getSettlements() {
+        return ApiResponse.success(adminManagementService.getAdminSettlements());
+    }
 }
 

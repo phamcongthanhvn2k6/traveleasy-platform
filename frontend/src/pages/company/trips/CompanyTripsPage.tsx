@@ -21,123 +21,13 @@ export interface CompanyTripItem {
 
 const STORAGE_KEY = 'traveleasy_company_trips';
 
-const DEFAULT_TRIPS: CompanyTripItem[] = [
-  {
-    id: 't1',
-    code: 't1',
-    routeName: 'Sài Gòn - Đà Lạt',
-    vehiclePlate: '51B-123.45',
-    busType: 'Limousine 34 Phòng VIP',
-    departureTime: '02:00 22/10/2026',
-    arrivalTime: '08:30 22/10/2026',
-    price: 350000,
-    totalSeats: 34,
-    delayText: '-',
-    status: 'SCHEDULED',
-    statusLabel: 'Đã lên lịch',
-  },
-  {
-    id: 't2',
-    code: 't2',
-    routeName: 'Sài Gòn - Nha Trang',
-    vehiclePlate: '51B-987.65',
-    busType: 'Giường Nằm 40 Chỗ Luxury',
-    departureTime: '04:00 22/10/2026',
-    arrivalTime: '12:00 22/10/2026',
-    price: 280000,
-    totalSeats: 40,
-    delayText: '-',
-    status: 'SCHEDULED',
-    statusLabel: 'Đã lên lịch',
-  },
-  {
-    id: 't3',
-    code: 't3',
-    routeName: 'Hà Nội - Sapa',
-    vehiclePlate: '29B-888.88',
-    busType: 'Limousine Cabin Đôi',
-    departureTime: '07:00 22/10/2026',
-    arrivalTime: '13:00 22/10/2026',
-    price: 450000,
-    totalSeats: 22,
-    delayText: '-',
-    status: 'RUNNING',
-    statusLabel: 'Đang chạy',
-  },
-  {
-    id: 't4',
-    code: 't4',
-    routeName: 'Sài Gòn - Đà Lạt',
-    vehiclePlate: '51B-123.45',
-    busType: 'Limousine 34 Phòng VIP',
-    departureTime: '15:00 20/10/2026',
-    arrivalTime: '21:30 20/10/2026',
-    price: 350000,
-    totalSeats: 34,
-    delayText: '-',
-    status: 'COMPLETED',
-    statusLabel: 'Hoàn thành',
-  },
-  {
-    id: 't5',
-    code: 't5',
-    routeName: 'Sài Gòn - Nha Trang',
-    vehiclePlate: '51B-987.65',
-    busType: 'Giường Nằm 40 Chỗ Luxury',
-    departureTime: '02:00 20/10/2026',
-    arrivalTime: '10:00 20/10/2026',
-    price: 280000,
-    totalSeats: 40,
-    delayText: '-',
-    status: 'CANCELLED',
-    statusLabel: 'Đã hủy',
-  },
-  {
-    id: 't6',
-    code: 't6',
-    routeName: 'Sài Gòn - Đà Lạt',
-    vehiclePlate: '51B-123.45',
-    busType: 'Limousine 34 Phòng VIP',
-    departureTime: '02:00 23/10/2026',
-    arrivalTime: '08:30 23/10/2026',
-    price: 350000,
-    totalSeats: 34,
-    delayText: '+30 phút',
-    status: 'DELAYED',
-    statusLabel: 'Trễ giờ',
-  },
-  {
-    id: 't7',
-    code: 't7',
-    routeName: 'Sài Gòn - Đà Lạt',
-    vehiclePlate: '51B-123.45',
-    busType: 'Limousine 34 Phòng VIP',
-    departureTime: '02:00 24/10/2026',
-    arrivalTime: '08:30 24/10/2026',
-    price: 350000,
-    totalSeats: 34,
-    delayText: '-',
-    status: 'SCHEDULED',
-    statusLabel: 'Đã lên lịch',
-  },
-];
-
 export const CompanyTripsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('ALL');
-  const [trips, setTrips] = useState<CompanyTripItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // ignore
-    }
-    return DEFAULT_TRIPS;
-  });
+  const [trips, setTrips] = useState<CompanyTripItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchTripsFromDb = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/company/trips');
       if (res.data?.data && Array.isArray(res.data.data)) {
@@ -147,20 +37,21 @@ export const CompanyTripsPage: React.FC = () => {
           routeName: item.routeName || (item.originCity && item.destinationCity ? `${item.originCity} - ${item.destinationCity}` : 'Sài Gòn - Đà Lạt'),
           vehiclePlate: item.licensePlate || item.vehiclePlate || '51B-123.45',
           busType: item.busType || 'Limousine 34 Phòng VIP',
-          departureTime: item.departureTime ? formatDisplayTime(item.departureTime) : '08:00 24/10/2026',
-          arrivalTime: item.arrivalTime ? formatDisplayTime(item.arrivalTime) : '14:30 24/10/2026',
+          departureTime: item.departureTime ? formatDisplayTime(item.departureTime) : '-',
+          arrivalTime: item.arrivalTime ? formatDisplayTime(item.arrivalTime) : '-',
           price: item.price || 300000,
           totalSeats: item.totalSeats || 34,
           delayText: item.delayText || '-',
           status: item.status || 'SCHEDULED',
           statusLabel: item.status === 'RUNNING' ? 'Đang chạy' : item.status === 'COMPLETED' ? 'Hoàn thành' : item.status === 'CANCELLED' ? 'Đã hủy' : 'Đã lên lịch',
         }));
-        if (mapped.length > 0) {
-          setTrips(mapped);
-        }
+        setTrips(mapped);
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('Failed to load trips from Supabase:', err);
+      toast.error('Không thể tải danh sách chuyến xe từ CSDL', 'Lỗi CSDL');
+    } finally {
+      setLoading(false);
     }
   };
 

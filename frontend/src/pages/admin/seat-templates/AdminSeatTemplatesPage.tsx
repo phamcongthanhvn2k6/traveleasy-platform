@@ -48,12 +48,8 @@ export const AdminSeatTemplatesPage: React.FC = () => {
         );
       }
     } catch (err) {
-      console.warn('Could not fetch seat templates from API, fallback:', err);
-      setTemplates([
-        { id: 1, name: 'Giường nằm 2 tầng 34 chỗ', floors: 2, rows: 6, columns: 3, totalSeats: 34, status: 'PUBLISHED', statusLabel: 'Đã xuất bản' },
-        { id: 2, name: 'Limousine VIP 1 tầng 24 chỗ', floors: 1, rows: 8, columns: 3, totalSeats: 24, status: 'PUBLISHED', statusLabel: 'Đã xuất bản' },
-        { id: 3, name: 'Ghế ngồi tiêu chuẩn 45 chỗ', floors: 1, rows: 11, columns: 4, totalSeats: 45, status: 'PUBLISHED', statusLabel: 'Đã xuất bản' },
-      ]);
+      console.error('Could not fetch seat templates from API:', err);
+      setTemplates([]);
     } finally {
       setLoading(false);
     }
