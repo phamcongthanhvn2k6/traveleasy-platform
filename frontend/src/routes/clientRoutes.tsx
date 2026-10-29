@@ -9,6 +9,8 @@ import { MyTicketsPage } from '../pages/customer/my-tickets/MyTicketsPage';
 import { UserProfilePage } from '../pages/customer/profile/UserProfilePage';
 import { PolicyPage } from '../pages/customer/policy/PolicyPage';
 import { SchedulePage } from '../pages/customer/schedule/SchedulePage';
+import { PromotionsPage } from '../pages/customer/promotions/PromotionsPage';
+import { ReviewsPage } from '../pages/customer/reviews/ReviewsPage';
 import { NotFoundPage } from '../pages/common/NotFoundPage';
 
 /**
@@ -51,8 +53,8 @@ export const ClientRoutes: React.FC = () => {
       {/* Chức năng Lịch Trình & Bảng Giờ Chạy Xe Khách Liên Tỉnh */}
       <Route path="/schedule" element={<SchedulePage />} />
       <Route path="/routes" element={<SchedulePage />} />
-      <Route path="/promotions" element={<NotFoundPage feature="Chương Trình Khuyến Mãi & Voucher Giảm Giá" />} />
-      <Route path="/reviews" element={<NotFoundPage feature="Đánh Giá & Xếp Hạng Chất Lượng Nhà Xe" />} />
+      <Route path="/promotions" element={<PromotionsPage />} />
+      <Route path="/reviews" element={<ReviewsPage />} />
 
       {/* Dịch vụ mở rộng khác */}
       <Route path="/flights" element={<NotFoundPage feature="Vé Máy Bay Trực Tuyến" />} />
