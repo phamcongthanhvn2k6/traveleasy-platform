@@ -38,6 +38,11 @@ app:
   ai:
     openai-api-key: ${SPRING_AI_OPENAI_API_KEY:mock_key}
 
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:dkzrqnahy}
+  api-key: ${CLOUDINARY_API_KEY:366548239469314}
+  api-secret: ${CLOUDINARY_API_SECRET:uyF3hFZGDfoRx_X2ps10rXNpADg}
+
 payos:
   client-id: ${PAYOS_CLIENT_ID:a187b55f-6c8a-499b-886b-722fcc0c3039}
   api-key: ${PAYOS_API_KEY:b8a86931-3e77-4787-8acd-322dceb91f70}

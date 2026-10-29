@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Star, Upload, CheckCircle2, Building2, MapPin, Sparkles, Clock, UserCheck, AlertCircle, Ticket } from 'lucide-react';
+import { X, Star, Upload, CheckCircle2, Building2, MapPin, Sparkles, Clock, UserCheck, AlertCircle, Ticket, UploadCloud, Loader2, Image as ImageIcon } from 'lucide-react';
 import { IReview } from '../types';
 import { toast } from '../../../../context/ToastContext';
 import api from '../../../../services/api';
+import uploadService from '../../../../services/uploadService';
 
 interface EligibleBooking {
   bookingId: number;
@@ -49,8 +50,35 @@ export const ReviewWriteModal: React.FC<ReviewWriteModalProps> = ({
   const [comment, setComment] = useState('');
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (images.length + files.length > 5) {
+      toast.warning('Bạn chỉ có thể đính kèm tối đa 5 ảnh thực tế!', 'Giới Hạn Ảnh');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const uploadPromises = Array.from(files).map((file) =>
+        uploadService.uploadImage(file, 'reviews')
+      );
+      const results = await Promise.all(uploadPromises);
+      const newUrls = results.map((r) => r.url);
+      setImages((prev) => [...prev, ...newUrls]);
+      toast.success(`Đã tải lên ${newUrls.length} ảnh lên Cloudinary thành công!`, 'Cloudinary Storage');
+    } catch (err: any) {
+      toast.error(err.message || 'Không thể tải ảnh lên Cloudinary. Vui lòng thử lại!', 'Lỗi Tải Ảnh');
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
 
   // Fetch eligible completed bookings from Supabase
   useEffect(() => {
@@ -391,58 +419,86 @@ export const ReviewWriteModal: React.FC<ReviewWriteModalProps> = ({
             />
           </div>
 
-          {/* 6. Photos */}
+          {/* 6. Photos (Cloudinary Upload) */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Đính kèm hình ảnh thực tế (Tùy chọn)
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <ImageIcon size={14} className="text-emerald-600" />
+                Đính kèm hình ảnh thực tế (Cloudinary)
+              </span>
+              <span className="text-[11px] text-slate-400 font-normal">
+                {images.length}/5 ảnh
+              </span>
             </label>
+
+            {/* Cloudinary Drag-Drop / File Upload Button */}
+            <label className="flex flex-col items-center justify-center p-3.5 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl cursor-pointer bg-slate-50 hover:bg-emerald-50/40 transition-all text-center mb-2.5">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileUpload}
+                disabled={isUploading || images.length >= 5}
+                className="hidden"
+              />
+              {isUploading ? (
+                <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs py-2">
+                  <Loader2 size={18} className="animate-spin text-emerald-600" />
+                  <span>Đang tải ảnh lên Cloudinary (traveleasy/reviews)...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5 py-1">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-sm shrink-0">
+                    <UploadCloud size={17} />
+                  </div>
+                  <div className="text-left">
+                    <span className="font-bold text-slate-800 text-xs block">
+                      Chọn ảnh chụp từ máy / điện thoại
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      Tự động tải lên Cloudinary an toàn (JPG, PNG, WEBP tối đa 10MB)
+                    </span>
+                  </div>
+                </div>
+              )}
+            </label>
+
+            {/* Optional URL input fallback */}
             <div className="flex gap-2 mb-2">
               <input
                 type="url"
                 value={imageUrlInput}
                 onChange={(e) => setImageUrlInput(e.target.value)}
-                placeholder="Dán URL ảnh chụp trên xe (https://...)"
+                placeholder="Hoặc dán URL ảnh có sẵn (https://...)"
                 className="flex-1 py-1.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none"
               />
               <button
                 type="button"
                 onClick={handleAddImage}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold shrink-0 transition-colors"
+                disabled={images.length >= 5}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 rounded-xl text-xs font-bold shrink-0 transition-colors"
               >
-                + Thêm Ảnh
+                + Thêm
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-1 mb-2">
-              <span className="text-[10px] text-slate-400 font-medium mr-1">Gợi ý ảnh chụp:</span>
-              <button
-                type="button"
-                onClick={() => setImages([...images, 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600'])}
-                className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200 hover:bg-orange-100"
-              >
-                + Giường nằm xe
-              </button>
-              <button
-                type="button"
-                onClick={() => setImages([...images, 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600'])}
-                className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 hover:bg-blue-100"
-              >
-                + Điểm đến du lịch
-              </button>
-            </div>
-
+            {/* Thumbnails of uploaded images */}
             {images.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {images.map((img, i) => (
-                  <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200">
+                  <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-emerald-500/40 shadow-sm group">
                     <img src={img} alt="Uploaded" className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => setImages(images.filter((_, idx) => idx !== i))}
-                      className="absolute top-1 right-1 w-4 h-4 bg-rose-600 text-white rounded-full flex items-center justify-center text-[10px]"
+                      className="absolute top-1 right-1 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-xs font-bold shadow transition-colors"
+                      title="Xóa ảnh này"
                     >
                       ✕
                     </button>
+                    <span className="absolute bottom-0 inset-x-0 bg-slate-950/70 text-white text-[9px] text-center font-bold py-0.5 truncate px-1">
+                      Cloudinary
+                    </span>
                   </div>
                 ))}
               </div>
