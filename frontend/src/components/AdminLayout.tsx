@@ -18,7 +18,8 @@ import {
   ChevronDown,
   LogOut,
   Calendar,
-  Ticket
+  Ticket,
+  DollarSign
 } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
@@ -52,6 +53,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { label: 'Chuyến xe toàn sàn', path: '/admin/trips', icon: Calendar },
     { label: 'Tuyến đường toàn quốc', path: '/admin/routes', icon: MapPin },
     { label: 'Đơn đặt vé toàn sàn', path: '/admin/bookings', icon: Ticket },
+    { label: 'Đối soát & Hoa hồng sàn', path: '/admin/settlements', icon: DollarSign },
     { label: 'Quản lý người dùng', path: '/admin/users', icon: Users },
     { label: 'Duyệt & Quản lý nhà xe', path: '/admin/bus-companies', icon: Bus },
   ];

@@ -6,6 +6,7 @@ import { CheckoutModal } from '../../../components/CheckoutModal';
 import { Trip, Booking } from '../../../types';
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
+import { CLOUDINARY_IMAGES } from '../../../constants/cloudinaryImages';
 import { 
   ShieldCheck, 
   Headphones, 
@@ -32,10 +33,13 @@ export const HomePage: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [searchParams, setSearchParams] = useState({ origin: 'TP. Hồ Chí Minh', destination: 'Đà Lạt' });
 
-  // Dynamic Banners from Database
+  // Dynamic Banners, Popular Routes & Promos from Database
   const [activeBanners, setActiveBanners] = useState<any[]>([]);
+  const [popularRoutes, setPopularRoutes] = useState<any[]>([]);
+  const [featuredPromos, setFeaturedPromos] = useState<any[]>([]);
 
   useEffect(() => {
+    // 1. Tải danh sách Banner quảng cáo từ Supabase
     api.get('/banners')
       .then(res => {
         if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
@@ -45,12 +49,43 @@ export const HomePage: React.FC = () => {
             title: b.title,
             badge: 'HOT DEAL',
             accent: idx % 2 === 0 ? '#d97706' : '#2563eb',
-            image: b.imagePath?.startsWith('http') ? b.imagePath : 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500',
+            image: b.imagePath?.startsWith('http') ? b.imagePath : CLOUDINARY_IMAGES.banners.heroSapa,
             link: b.link
           })));
         }
       })
       .catch(e => console.warn('Could not load banners from API:', e));
+
+    // 2. Tải tuyến đường phổ biến thực tế từ Supabase
+    api.get('/routes/popular')
+      .then(res => {
+        if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          setPopularRoutes(res.data.data);
+        }
+      })
+      .catch(e => console.warn('Could not load popular routes from API:', e));
+
+    // 3. Tải khuyến mại thực tế từ Supabase
+    api.get('/promotions')
+      .then(res => {
+        if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          setFeaturedPromos(res.data.data.map((p: any, idx: number) => ({
+            id: p.id,
+            tag: p.badgeText || (p.category === 'NEW_CUSTOMER' ? 'KHÁCH MỚI' : 'HOT DEAL'),
+            title: p.title,
+            badge: p.discountType === 'PERCENT' ? `GIẢM ${p.discountValue}%` : `GIẢM ${(Number(p.discountValue) / 1000).toFixed(0)}K`,
+            gradient: idx % 3 === 0 
+              ? 'linear-gradient(135deg, #fef3c7, #fde68a)' 
+              : idx % 3 === 1 
+              ? 'linear-gradient(135deg, #e0f2fe, #bae6fd)' 
+              : 'linear-gradient(135deg, #f0fdf4, #bbf7d0)',
+            accent: idx % 3 === 0 ? '#d97706' : idx % 3 === 1 ? '#0284c7' : '#16a34a',
+            image: CLOUDINARY_IMAGES.banners.flashSale,
+            code: p.code
+          })));
+        }
+      })
+      .catch(e => console.warn('Could not load promotions from API:', e));
   }, []);
 
   // Booking state
@@ -88,94 +123,24 @@ export const HomePage: React.FC = () => {
   };
 
   const handleOpenBooking = (trip: Trip, seats: string[], points: any) => {
+    const token = localStorage.getItem('traveleasy_token');
+    const checkoutPayload = { trip, selectedSeats: seats, points };
+    try {
+      sessionStorage.setItem('traveleasy_checkout_data', JSON.stringify(checkoutPayload));
+    } catch (e) {
+      console.warn(e);
+    }
+
+    if (!token) {
+      toast.warning('Quý khách vui lòng đăng nhập để tiến hành đặt vé và thanh toán! Khách chưa đăng nhập chỉ có thể xem thông tin chuyến xe.', 'Yêu Cầu Đăng Nhập');
+      navigate('/login?redirect=/checkout', { state: checkoutPayload });
+      return;
+    }
+
     setBookingTrip(trip);
     setBookingSeats(seats);
     setBookingPoints(points);
   };
-
-  // 1. Tuyến đường phổ biến (Screenshot 2)
-  const popularRoutes = [
-    {
-      id: 1,
-      title: 'Hà Nội - Sa Pa',
-      origin: 'Hà Nội',
-      destination: 'Sa Pa',
-      price: '219.000đ',
-      oldPrice: '250.000đ',
-      image: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=600&auto=format&fit=crop&q=80',
-      bgColor: 'linear-gradient(180deg, transparent 40%, rgba(30, 58, 138, 0.85) 100%)'
-    },
-    {
-      id: 2,
-      title: 'Hà Nội - Hải Phòng',
-      origin: 'Hà Nội',
-      destination: 'Hải Phòng',
-      price: '130.000đ',
-      oldPrice: null,
-      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80',
-      bgColor: 'linear-gradient(180deg, transparent 40%, rgba(55, 48, 163, 0.85) 100%)'
-    },
-    {
-      id: 3,
-      title: 'Sài Gòn - Đà Lạt',
-      origin: 'TP. Hồ Chí Minh',
-      destination: 'Đà Lạt',
-      price: '199.000đ',
-      oldPrice: '249.000đ',
-      image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=600&auto=format&fit=crop&q=80',
-      bgColor: 'linear-gradient(180deg, transparent 40%, rgba(194, 65, 12, 0.85) 100%)'
-    },
-    {
-      id: 4,
-      title: 'Sài Gòn - Nha Trang',
-      origin: 'TP. Hồ Chí Minh',
-      destination: 'Nha Trang',
-      price: '200.000đ',
-      oldPrice: null,
-      image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&auto=format&fit=crop&q=80',
-      bgColor: 'linear-gradient(180deg, transparent 40%, rgba(120, 53, 15, 0.85) 100%)'
-    }
-  ];
-
-  // 2. Ưu đãi nổi bật (Screenshot 2)
-  const featuredPromos = [
-    {
-      id: 1,
-      tag: 'HOT DEAL 25/10',
-      title: 'Lương về chốt deal - Giảm đến 50% vào ngày 25 hàng tháng',
-      badge: 'GIẢM 50%',
-      gradient: 'linear-gradient(135deg, #fef3c7, #fde68a)',
-      accent: '#d97706',
-      image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=500&auto=format&fit=crop&q=80'
-    },
-    {
-      id: 2,
-      tag: 'FLASH SALE',
-      title: '12h - 14h Thứ 3 - Flash Sale vé rẻ đến 50%',
-      badge: 'THỨ 3 HÀNG TUẦN',
-      gradient: 'linear-gradient(135deg, #e0f2fe, #bae6fd)',
-      accent: '#0284c7',
-      image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80'
-    },
-    {
-      id: 3,
-      tag: 'NHÀ XE MỚI',
-      title: 'Giảm đến 20% khi đặt vé các nhà xe mới mở bán tại TravelEasy',
-      badge: 'TIẾT KIỆM 20%',
-      gradient: 'linear-gradient(135deg, #f0fdf4, #bbf7d0)',
-      accent: '#16a34a',
-      image: 'https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=500&auto=format&fit=crop&q=80'
-    },
-    {
-      id: 4,
-      tag: 'BẠN BÈ',
-      title: 'Giới thiệu bạn mới - Nhận quà khủng từ TravelEasy',
-      badge: 'THƯỞNG 80K',
-      gradient: 'linear-gradient(135deg, #fdf2f8, #fbcfe8)',
-      accent: '#db2777',
-      image: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=500&auto=format&fit=crop&q=80'
-    }
-  ];
 
   // 3. Du lịch Sapa (Screenshot 3)
   const sapaGuides = [
@@ -184,14 +149,14 @@ export const HomePage: React.FC = () => {
       category: 'Ưu đãi',
       badgeText: '3 ưu đãi',
       title: 'Mệt mỏi tới Sa Pa... Giảm đến 100K khi đặt vé xe phòng VIP cabin đôi',
-      image: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=600&auto=format&fit=crop&q=80'
+      image: CLOUDINARY_IMAGES.destinations.sapa
     },
     {
       id: 2,
       category: 'Phương tiện',
       badgeText: '4 bài viết',
       title: 'Hành trình đưa bạn đến Phố Sương Sa Pa: Top 5 xe Limousine cabin phòng riêng',
-      image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80'
+      image: CLOUDINARY_IMAGES.destinations.daNang
     },
     {
       id: 3,

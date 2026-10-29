@@ -263,24 +263,6 @@ export const AdminLoginPage: React.FC = () => {
                 <AlertTriangle size={18} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
                 <div>{errorMsg}</div>
               </div>
-              {isOperatorAttempt && (
-                <div style={{ marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed rgba(239, 68, 68, 0.3)', paddingLeft: '28px' }}>
-                  <Link
-                    to="/company/login"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      color: '#2dd4bf',
-                      fontWeight: 700,
-                      textDecoration: 'none',
-                      fontSize: '12.5px',
-                    }}
-                  >
-                    👉 Đến Cổng Điều Hành Đối Tác Nhà Xe (Operator Portal) ngay →
-                  </Link>
-                </div>
-              )}
             </div>
           )}
 
@@ -304,6 +286,42 @@ export const AdminLoginPage: React.FC = () => {
               <div>{successMsg}</div>
             </div>
           )}
+
+          {/* Quick Demo Admin Accounts */}
+          <div style={{ marginBottom: '20px', padding: '12px 14px', backgroundColor: 'rgba(79, 70, 229, 0.12)', border: '1px solid rgba(79, 70, 229, 0.3)', borderRadius: '10px' }}>
+            <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <KeyRound size={13} /> Tài khoản Quản trị viên mẫu (Mật khẩu demo: 123456789@)
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {[
+                { label: 'Admin Hệ Thống', email: 'admin@traveleasy.vn' },
+                { label: 'Admin Thanh Phong', email: 'phanthanhphong.admin@traveleasy.vn' },
+                { label: 'Admin Trung Kiên', email: 'trungkien.admin@traveleasy.vn' },
+              ].map((acc, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setIdentifier(acc.email);
+                    setPassword('123456789@');
+                  }}
+                  style={{
+                    background: identifier === acc.email ? 'rgba(79, 70, 229, 0.35)' : 'rgba(255, 255, 255, 0.08)',
+                    color: identifier === acc.email ? '#a5b4fc' : '#e2e8f0',
+                    border: identifier === acc.email ? '1px solid #6366f1' : '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    padding: '5px 10px',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  {acc.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit}>
             {/* Input Email / Identifier */}
@@ -501,22 +519,6 @@ export const AdminLoginPage: React.FC = () => {
         >
           <Lock size={13} color="#10b981" />
           <span>Hệ thống ghi nhận địa chỉ IP &amp; Nhật ký kiểm toán thời gian thực</span>
-        </div>
-
-        {/* Switch Portal Link */}
-        <div style={{ textAlign: 'center', marginTop: '16px' }}>
-          <span style={{ color: '#64748b', fontSize: '12px' }}>Bạn là Đối tác Nhà xe? </span>
-          <Link
-            to="/company/login"
-            style={{
-              color: '#38bdf8',
-              fontSize: '12px',
-              fontWeight: 700,
-              textDecoration: 'none',
-            }}
-          >
-            Đến Cổng Điều Hành Nhà Xe (Operator Portal) →
-          </Link>
         </div>
       </div>
     </div>

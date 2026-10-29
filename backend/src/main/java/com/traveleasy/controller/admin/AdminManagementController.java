@@ -40,7 +40,7 @@ public class AdminManagementController {
 
     @PutMapping("/users/{id}")
     @Operation(summary = "Cập nhật thông tin người dùng (Họ tên, SĐT, Vai trò)")
-    public ApiResponse<UserAdminResponse> updateUser(@PathVariable Long id, @RequestBody CreateUserRequest request) {
+    public ApiResponse<UserAdminResponse> updateUser(@PathVariable Long id, @Valid @RequestBody CreateUserRequest request) {
         return ApiResponse.success("Cập nhật người dùng thành công", adminManagementService.updateUser(id, request));
     }
 
@@ -78,7 +78,7 @@ public class AdminManagementController {
     @Operation(summary = "Cập nhật thông tin đối tác nhà xe")
     public ApiResponse<BusCompanyAdminResponse> updateBusCompany(
             @PathVariable Long id,
-            @RequestBody CreateBusCompanyRequest request) {
+            @Valid @RequestBody CreateBusCompanyRequest request) {
         return ApiResponse.success("Cập nhật nhà xe thành công", adminManagementService.updateBusCompany(id, request));
     }
 
@@ -283,6 +283,15 @@ public class AdminManagementController {
     public ApiResponse<Void> deleteRoute(@PathVariable Long id) {
         adminManagementService.deleteRoute(id);
         return ApiResponse.success("Xoá tuyến đường thành công", null);
+    }
+
+    // ==========================================
+    // 12. ĐỐI SOÁT & QUYẾT TOÁN (/admin/settlements)
+    // ==========================================
+    @GetMapping("/settlements")
+    @Operation(summary = "Lấy dữ liệu đối soát toàn sàn từ CSDL đơn đặt vé Supabase")
+    public ApiResponse<List<java.util.Map<String, Object>>> getSettlements() {
+        return ApiResponse.success(adminManagementService.getAdminSettlements());
     }
 }
 

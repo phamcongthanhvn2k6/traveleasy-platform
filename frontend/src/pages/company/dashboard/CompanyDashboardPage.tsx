@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, Calendar, Ticket, Star, RefreshCw, Bus, Clock, MapPin, CheckCircle } from 'lucide-react';
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
+import { RevenueChart } from '../../../components/RevenueChart';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -193,6 +194,13 @@ export const CompanyDashboardPage: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Visual Revenue Trend Chart */}
+      <RevenueChart
+        title="Biểu Đồ Doanh Thu Nhà Xe Thực Tế"
+        subtitle="Thống kê doanh số bán vé và biến động dòng tiền đồng bộ từ CSDL"
+        accentColor="#0d9488"
+      />
 
       {/* Upcoming Trips Card */}
       <div

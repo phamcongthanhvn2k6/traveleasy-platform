@@ -1,5 +1,6 @@
 package com.traveleasy.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,18 +49,34 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/trips/**").permitAll()
+                        .requestMatchers("/api/v1/trips/**").permitAll()
+                        .requestMatchers("/api/v1/routes/**").permitAll()
                         .requestMatchers("/api/v1/bookings/code/**").permitAll()
                         .requestMatchers("/api/v1/bookings", "/api/v1/bookings/*/cancel", "/api/v1/bookings/*/cancel-partial", "/api/v1/bookings/*/reschedule").permitAll()
                         .requestMatchers("/api/v1/payments/**").permitAll() // Cổng thanh toán, callback VNPAY & VietQR
-                        .requestMatchers(HttpMethod.GET, "/api/v1/banners/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/reviews/**").permitAll()
+                        .requestMatchers("/api/v1/banners/**").permitAll()
+                        .requestMatchers("/api/v1/reviews/**").permitAll()
+                        .requestMatchers("/api/v1/bus-companies/**").permitAll()
+                        .requestMatchers("/api/v1/promotions/**").permitAll()
+                        .requestMatchers("/api/v1/upload/**").permitAll()
                         .requestMatchers("/api/v1/ai/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/v1/company/**").permitAll()
                         // Phân quyền nghiêm ngặt: Chỉ ROLE_ADMIN mới có quyền gọi API quản trị
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.getWriter().write("{\"success\":false,\"message\":\"Chưa đăng nhập hoặc phiên đăng nhập đã hết hạn\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.getWriter().write("{\"success\":false,\"message\":\"Bạn không có quyền truy cập chức năng này\"}");
+                        })
                 );
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

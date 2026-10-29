@@ -1,5 +1,6 @@
 package com.traveleasy.dto.admin;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -24,8 +25,9 @@ public class CreateRouteRequest {
     private String arrivalLocation;
 
     @NotNull(message = "Thời gian di chuyển dự kiến (giờ) không được để trống")
+    @DecimalMin(value = "0.1", message = "Thời gian di chuyển dự kiến phải lớn hơn 0 giờ")
     private BigDecimal durationHours;
 
+    @DecimalMin(value = "1.0", message = "Khoảng cách phải lớn hơn 0 km")
     private BigDecimal distanceKm;
 }
-

@@ -10,7 +10,7 @@ import { OrderSummaryPanel } from './components/OrderSummaryPanel';
 import { QrPaymentModal } from './components/QrPaymentModal';
 import { VnPayModal } from './components/VnPayModal';
 import { toast } from '../../../context/ToastContext';
-import { Check, ChevronRight, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Check, ChevronRight, ShieldCheck, ArrowLeft, Lock } from 'lucide-react';
 
 export const CheckoutPage: React.FC = () => {
   const location = useLocation();
@@ -89,7 +89,7 @@ export const CheckoutPage: React.FC = () => {
     }
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('VIETQR');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('PAYOS');
   const [loading, setLoading] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
 
@@ -142,6 +142,13 @@ export const CheckoutPage: React.FC = () => {
   };
 
   const handleCheckoutSubmit = async () => {
+    const currentToken = localStorage.getItem('traveleasy_token');
+    if (!currentToken) {
+      toast.warning('Vui lòng đăng nhập tài khoản để tiến hành đặt vé và thanh toán!', 'Yêu Cầu Đăng Nhập');
+      navigate('/login?redirect=/checkout');
+      return;
+    }
+
     if (!validateForm()) return;
 
     setLoading(true);
@@ -173,8 +180,8 @@ export const CheckoutPage: React.FC = () => {
       if (paymentMethod === 'VNPAY') {
         // Mở Modal VNPAY với nút Demo duyệt ngay và nút chuyển hướng Sandbox
         setShowVnPayModal(true);
-      } else if (paymentMethod === 'VIETQR') {
-        // Mở Modal VietQR Napas 24/7 tự động nhận diện giao dịch
+      } else if (paymentMethod === 'PAYOS' || paymentMethod === 'VIETQR') {
+        // Mở Modal PayOS / VietQR Napas 24/7 (MB Bank - PHAM CONG THANH)
         setShowQrModal(true);
       } else if (paymentMethod === 'MOMO' || paymentMethod === 'ZALOPAY') {
         if (initRes.paymentUrl) {
@@ -216,6 +223,108 @@ export const CheckoutPage: React.FC = () => {
       navigate('/lookup');
     }
   };
+
+  // Guard against unauthenticated users attempting to view checkout / book
+  const token = localStorage.getItem('traveleasy_token');
+  if (!token) {
+    return (
+      <div style={{ backgroundColor: '#f8fafc', minHeight: '85vh', padding: '60px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '24px',
+          padding: '44px 36px',
+          maxWidth: '520px',
+          width: '100%',
+          boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.1)',
+          border: '1px solid #e2e8f0',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            width: '68px',
+            height: '68px',
+            borderRadius: '50%',
+            backgroundColor: '#fef2f2',
+            color: '#dc2626',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 20px',
+            boxShadow: '0 8px 16px -4px rgba(220, 38, 38, 0.2)'
+          }}>
+            <Lock size={32} />
+          </div>
+
+          <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', marginBottom: '10px', letterSpacing: '-0.3px' }}>
+            Yêu Cầu Đăng Nhập Tài Khoản
+          </h2>
+
+          <p style={{ fontSize: '14.5px', color: '#64748b', lineHeight: 1.6, marginBottom: '22px' }}>
+            Theo quy định an toàn và quản lý vé điện tử, <strong>chỉ khách hàng đã đăng nhập mới được đặt vé và thanh toán</strong>. Khi chưa đăng nhập, quý khách chỉ được tra cứu thông tin chuyến xe.
+          </p>
+
+          {/* Trip summary badge if available */}
+          {trip && (
+            <div style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '14px',
+              padding: '14px 16px',
+              marginBottom: '24px',
+              textAlign: 'left'
+            }}>
+              <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '14px', marginBottom: '4px' }}>
+                🚌 {trip.busCompanyName}
+              </div>
+              <div style={{ color: '#475569', fontSize: '13px' }}>
+                Tuyến: <strong>{trip.originCity} ➔ {trip.destinationCity}</strong>
+              </div>
+              <div style={{ color: '#64748b', fontSize: '12.5px', marginTop: '4px' }}>
+                Ghế chọn: <strong style={{ color: '#2563eb' }}>{selectedSeats.join(', ')}</strong> • Ngày đi: {new Date(trip.departureTime).toLocaleDateString('vi-VN')}
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <button
+              onClick={() => navigate('/login?redirect=/checkout')}
+              style={{
+                backgroundColor: '#059669',
+                color: '#ffffff',
+                border: 'none',
+                padding: '14px 20px',
+                borderRadius: '12px',
+                fontSize: '15px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)',
+                transition: 'all 0.15s'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#047857')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#059669')}
+            >
+              ĐĂNG NHẬP ĐỂ TIẾP TỤC ĐẶT VÉ →
+            </button>
+
+            <button
+              onClick={() => navigate('/search')}
+              style={{
+                backgroundColor: '#f1f5f9',
+                color: '#475569',
+                border: '1px solid #cbd5e1',
+                padding: '12px 20px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              ← Quay lại tìm chuyến xe (Chế độ xem)
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ backgroundColor: '#f8fafc', minHeight: '90vh', padding: '30px 20px 80px 20px' }}>
@@ -335,6 +444,7 @@ export const CheckoutPage: React.FC = () => {
           bookingCode={createdBooking.bookingCode}
           totalAmount={createdBooking.totalAmount}
           qrCodeUrl={paymentInitData?.qrCodeUrl}
+          paymentUrl={paymentInitData?.paymentUrl}
           bankDetails={paymentInitData?.bankDetails}
           onSuccess={handleQrSuccess}
           onClose={() => setShowQrModal(false)}

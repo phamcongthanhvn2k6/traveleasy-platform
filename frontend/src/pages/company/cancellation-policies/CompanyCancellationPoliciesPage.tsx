@@ -21,77 +21,15 @@ export interface CancellationPolicy {
 
 const STORAGE_KEY = 'traveleasy_company_cancellation_policies';
 
-const DEFAULT_POLICIES: CancellationPolicy[] = [
-  {
-    id: 'policy-sys-01',
-    name: 'Mặc định hệ thống',
-    description: 'Chính sách hoàn tiền chuẩn của sàn TravelEasy áp dụng cho tất cả chuyến xe cơ bản',
-    isSystem: true,
-    isDefault: true,
-    createdAt: '01/01/2026',
-    rules: [
-      {
-        condition: 'Trước khởi hành trên 24 giờ',
-        refundRate: '100% hoàn tiền',
-        type: 'FULL',
-      },
-      {
-        condition: 'Trước khởi hành 12 - 24 giờ',
-        refundRate: '50% hoàn tiền',
-        type: 'PARTIAL',
-      },
-      {
-        condition: 'Trước khởi hành dưới 12 giờ',
-        refundRate: '0% hoàn tiền (Không hoàn)',
-        type: 'NONE',
-      },
-    ],
-  },
-  {
-    id: 'policy-comp-01',
-    name: 'Chính sách Limousine VIP & Cao điểm',
-    description: 'Áp dụng cho dòng xe Limousine cao cấp và các dịp Lễ, Tết nhằm đảm bảo quyền lợi vận hành',
-    isSystem: false,
-    isDefault: false,
-    createdAt: '15/09/2026',
-    rules: [
-      {
-        condition: 'Trước khởi hành trên 48 giờ',
-        refundRate: '100% hoàn tiền',
-        type: 'FULL',
-      },
-      {
-        condition: 'Trước khởi hành 24 - 48 giờ',
-        refundRate: '70% hoàn tiền',
-        type: 'PARTIAL',
-      },
-      {
-        condition: 'Trước khởi hành dưới 24 giờ',
-        refundRate: '0% hoàn tiền (Không hoàn)',
-        type: 'NONE',
-      },
-    ],
-  },
-];
-
 export const CompanyCancellationPoliciesPage: React.FC = () => {
-  const [policies, setPolicies] = useState<CancellationPolicy[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // ignore
-    }
-    return DEFAULT_POLICIES;
-  });
+  const [policies, setPolicies] = useState<CancellationPolicy[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchPoliciesFromDb = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/company/cancellation-policies');
-      if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+      if (res.data?.data && Array.isArray(res.data.data)) {
         const mapped: CancellationPolicy[] = res.data.data.map((p: any) => ({
           id: String(p.id),
           name: p.name,
@@ -107,7 +45,12 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
         }));
         setPolicies(mapped);
       }
-    } catch {}
+    } catch (err) {
+      console.error('Failed to load cancellation policies from Supabase:', err);
+      toast.error('Không thể tải chính sách hủy vé từ CSDL', 'Lỗi CSDL');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

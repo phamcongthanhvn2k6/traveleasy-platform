@@ -6,11 +6,14 @@ server:
 spring:
   application:
     name: traveleasy-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:supabase}
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/traveleasy_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&characterEncoding=UTF-8}
-    username: ${SPRING_DATASOURCE_USERNAME:traveleasy_user}
-    password: ${SPRING_DATASOURCE_PASSWORD:traveleasy_password}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    # Supabase Transaction Pooler (Port 6543, prepareThreshold=0 for PgBouncer compatibility):
+    url: ${SUPABASE_DB_URL:jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0}
+    username: ${SUPABASE_DB_USERNAME:postgres.ctvcwhdepzyvqsncbslf}
+    password: ${SUPABASE_DB_PASSWORD:thanhtyou123@}
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -18,7 +21,13 @@ spring:
     properties:
       hibernate:
         format_sql: false
-        dialect: org.hibernate.dialect.MySQLDialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 50
+          order_inserts: true
+          order_updates: true
+          lob:
+            non_contextual_creation: true
 
 app:
   jwt:
@@ -28,3 +37,20 @@ app:
     allowed-origins: "http://localhost:3000,http://localhost:5173,http://localhost:5174"
   ai:
     openai-api-key: ${SPRING_AI_OPENAI_API_KEY:mock_key}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:dkzrqnahy}
+  api-key: ${CLOUDINARY_API_KEY:366548239469314}
+  api-secret: ${CLOUDINARY_API_SECRET:uyF3hFZGDfoRx_X2ps10rXNpADg}
+
+payos:
+  client-id: ${PAYOS_CLIENT_ID:a187b55f-6c8a-499b-886b-722fcc0c3039}
+  api-key: ${PAYOS_API_KEY:b8a86931-3e77-4787-8acd-322dceb91f70}
+  checksum-key: ${PAYOS_CHECKSUM_KEY:173bbbcb0a50af57bf7fa7b550a2cb643cc37baa601137}
+  account-number: "0944354398"
+  account-holder: "PHAM CONG THANH"
+  bank-code: "MB"
+  bank-name: "MB Bank (Ngân hàng Quân Đội)"
+  bank-bin: "970422"
+  return-url: ${PAYOS_RETURN_URL:http://localhost:5173/lookup}
+  cancel-url: ${PAYOS_CANCEL_URL:http://localhost:5173/checkout}

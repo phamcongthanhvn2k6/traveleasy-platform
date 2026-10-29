@@ -111,5 +111,17 @@ public class PaymentController {
             return ResponseEntity.ok(response);
         }
     }
+
+    @PostMapping("/payos/webhook")
+    @Operation(summary = "Webhook nhận tín hiệu thanh toán tự động từ PayOS khi khách chuyển khoản thành công")
+    public ResponseEntity<Map<String, Object>> payosWebhook(@RequestBody Map<String, Object> webhookData) {
+        log.info("Nhận Webhook từ PayOS: {}", webhookData);
+        PaymentStatusResponse result = paymentService.processPayOsWebhook(webhookData);
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Webhook processed successfully",
+                "data", result
+        ));
+    }
 }
 

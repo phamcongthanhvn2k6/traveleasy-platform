@@ -1,7 +1,7 @@
 import React from 'react';
 import { QrCode, CreditCard, Wallet, Banknote, ShieldCheck } from 'lucide-react';
 
-export type PaymentMethodType = 'VIETQR' | 'VNPAY' | 'MOMO' | 'ZALOPAY' | 'COD';
+export type PaymentMethodType = 'PAYOS' | 'VIETQR' | 'VNPAY' | 'MOMO' | 'ZALOPAY' | 'COD';
 
 interface Props {
   selectedMethod: PaymentMethodType;
@@ -11,10 +11,19 @@ interface Props {
 export const PaymentMethodSelector: React.FC<Props> = ({ selectedMethod, onChange }) => {
   const methods = [
     {
+      id: 'PAYOS' as PaymentMethodType,
+      name: 'Cổng PayOS — Quét mã VietQR MB Bank (Khuyên dùng)',
+      desc: 'Tự động tạo mã QR VietQR Napas 24/7 liên kết tài khoản MB Bank 0944 3543 98 (PHAM CONG THANH). Tự động duyệt đơn và phát hành vé sau 3 giây.',
+      badge: 'Chính Thức - MB Bank',
+      icon: QrCode,
+      iconColor: '#059669',
+      iconBg: '#ecfdf5',
+    },
+    {
       id: 'VIETQR' as PaymentMethodType,
-      name: 'Chuyển khoản VietQR QuickPay (Khuyên dùng)',
+      name: 'Chuyển khoản VietQR QuickPay (Napas 24/7)',
       desc: 'Quét mã QR Napas 24/7 tức thì từ 40+ App Ngân hàng (Vietcombank, MB, Techcombank, BIDV...). Hệ thống tự động xác nhận trong 3 giây.',
-      badge: 'Khuyên dùng - Nhanh nhất',
+      badge: 'Nhanh nhất',
       icon: QrCode,
       iconColor: '#2563eb',
       iconBg: '#eff6ff',

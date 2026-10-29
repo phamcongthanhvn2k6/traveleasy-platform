@@ -102,6 +102,7 @@
     - 11.2 Minh chứng Giao diện Người dùng (User / Customer Journey)
     - 11.3 Minh chứng Giao diện Quản trị Hệ thống (Admin Portal Journey)
     - 11.4 Minh chứng Giao diện & Kiểm soát Đối tác Nhà xe (Company Portal & Security Guard)
+    - 11.11 Hệ Thống Nâng Cấp Toàn Diện (Phase 1, 2, 3): Bộ Tính Năng Enterprise Đột Phá 2026
 
 ---
 
@@ -1146,7 +1147,25 @@ Dự án đã được cấu hình **Zero-Setup** để các thành viên nhóm,
 
 ---
 
-### Cách 1: Khởi chạy Trực tiếp Siêu Tốc (Khuyên dùng - Zero Config / In-Memory DB)
+### ⚡ CÁCH 1 (KHUYÊN DÙNG NHẤT): CHỈ 1 LỆNH `npm run dev` CHẠY CẢ FRONTEND VÀ BACKEND
+
+Tại thư mục gốc của dự án (`Nhom7_QUANLYNHAXE`), bạn chỉ cần chạy đúng **1 câu lệnh duy nhất**:
+
+```bash
+npm run dev
+```
+
+Hệ thống sẽ tự động điều phối chạy song song cả 2 dịch vụ:
+* ⚙️ **Backend (Spring Boot API)**: Khởi chạy tại `http://localhost:8080` (kèm Swagger UI tại `http://localhost:8080/swagger-ui.html`)
+* 🌐 **Frontend (Vite + React)**: Khởi chạy tại `http://localhost:5173/`
+
+> **Mẹo hữu ích:** 
+> * Nhấn `Ctrl + C` trong terminal bất cứ lúc nào để tắt đồng thời cả Backend và Frontend, tự động giải phóng hoàn toàn cổng 8080 và 5173 mà không bị kẹt tiến trình ngầm.
+> * Nếu đang ở trong thư mục `frontend/`, bạn cũng có thể gõ `npm run dev:all` để khởi chạy tương tự.
+
+---
+
+### Cách 2: Khởi chạy Trực tiếp Từng Terminal (Thủ công / In-Memory DB)
 *Không yêu cầu cài đặt MySQL hay Docker. Hệ thống tích hợp sẵn H2 In-Memory Database và `DataInitializer` tự động nạp 100% dữ liệu mẫu (3 Users, 4 Nhà xe, 4 Tuyến đường, 4 Chuyến xe, 136 Ghế ngồi và Vé điện tử mẫu).*
 
 #### Bước 1: Khởi chạy Backend (Terminal 1)
@@ -1673,12 +1692,12 @@ Kênh tương tác và chăm sóc khách hàng trực tiếp của nhà xe:
     1. 🚌 **Đặt Vé Xe** (`/search` hoặc `/` — Hoạt động cốt lõi): Tìm chuyến, chọn lộ trình, xem giá vé và đặt chỗ.
     2. 🛡️ **Tra Cứu Vé** (`/lookup` — Hoạt động): Tra cứu nhanh thông tin vé và mã QR soát vé.
     3. 🎟️ **Vé Của Tôi** (`/my-tickets` — Hoạt động): Quản lý lịch sử vé của tài khoản cá nhân, đổi/hủy vé trực tuyến.
-    4. ⏰ **Lịch Trình** (`/schedule` — Roadmap Coming Soon): Tra cứu bảng giờ xe xuất bến và danh mục tuyến đường liên tỉnh.
+    4. ⏰ **Lịch Trình** (`/schedule` & `/routes` — Hoạt động hoàn chỉnh): Tra cứu bảng giờ xe xuất bến định kỳ, thông số cự ly, thời gian chạy, tần suất, khoảng giá vé, xem lộ trình điểm đón/trả và chuyển nhanh sang luồng đặt vé.
     5. 🏷️ **Khuyến Mãi** (`/promotions` [HOT] — Roadmap Coming Soon): Voucher giảm giá đến 50% và chương trình hoàn tiền.
     6. ⭐ **Đánh Giá** (`/reviews` — Roadmap Coming Soon): Nhận xét và chấm điểm chất lượng dịch vụ các nhà xe.
     7. 📄 **Chính Sách & FAQ** (`/policy` — Hoạt động): Quy định hành lý, chính sách hoàn hủy và cẩm nang đi xe.
 * **Xử lý mượt mà các tính năng đang phát triển & Bắt lỗi 404**:
-  * Các tính năng chức năng dự kiến (`/schedule`, `/promotions`, `/reviews`...) tự động mở trang `NotFoundPage.tsx` ở chế độ **Lộ trình phát triển (Roadmap Mode)** với thanh tiến độ 3 bước và thời gian ra mắt dự kiến rõ ràng.
+  * Các tính năng chức năng dự kiến (`/promotions`, `/reviews`...) tự động mở trang `NotFoundPage.tsx` ở chế độ **Lộ trình phát triển (Roadmap Mode)** với thanh tiến độ 3 bước và thời gian ra mắt dự kiến rõ ràng.
   * Mọi đường link sai hoặc không tồn tại (Catch-all route `path="*"`) sẽ hiển thị trang báo lỗi 404 thân thiện, chuyên nghiệp kèm các nút quay về Trang chủ, Đặt vé xe ngay và hotline hỗ trợ 24/7 (`1900 6868`).
 
 ![Giao Diện Header Mới Phân Chia Theo Cụm Chức Năng Nghiệp Vụ](docs/screenshots/screenshot_new_header_layout.png)
@@ -1698,6 +1717,19 @@ Kênh tương tác và chăm sóc khách hàng trực tiếp của nhà xe:
 
 ![Trang Báo Lỗi 404 Not Found Khi Nhập Sai URL](docs/screenshots/screenshot_404_wrong_url.png)
 *Hình 11.43: Trang 404 Not Found thân thiện khi truy cập vào đường link sai hoặc không tồn tại.*
+
+---
+
+### 11.4.1 Chức Năng Lịch Trình & Bảng Giờ Chạy Xe Khách Liên Tỉnh (`/schedule` & `/routes`)
+Nhằm phục vụ nhu cầu khảo sát mạng lưới tuyến đường và giờ xe chạy định kỳ mà không cần phải chọn ngày đi cố định, TravelEasy Platform đã hoàn thiện toàn diện phân hệ **Lịch Trình Xe Khách**:
+1. **Bộ chọn tuyến & Đảo chiều 1-chạm (`⇄`)**: Cho phép chọn nhanh điểm đi và điểm đến với danh sách gợi ý tự động (Datalist auto-suggestions) từ CSDL. Hỗ trợ các nút chọn nhanh các tuyến trọng điểm (Sài Gòn ⇄ Đà Lạt, Hà Nội ⇄ Sa Pa, Sài Gòn ⇄ Vũng Tàu, Sài Gòn ⇄ Nha Trang...).
+2. **Thẻ tóm tắt thông số tuyến chắt lọc (Route Metrics)**: Hiển thị ngay cự ly (km), thời gian di chuyển dự kiến (~giờ), tần suất chạy xe (phút/chuyến) và khoảng giá vé dao động (min - max).
+3. **Tab đối chiếu 2 chiều Đi & Về (Round-Trip Timetable Switcher)**: Dễ dàng chuyển đổi giữa `Chiều Đi: [Điểm Đi] ➔ [Điểm Đến]` và `Chiều Về: [Điểm Đến] ➔ [Điểm Đi]` để hành khách chủ động sắp xếp thời gian công tác và du lịch.
+4. **Bộ lọc 4 khung giờ tinh giản**: Lọc nhanh các chuyến chạy trong ngày theo các buổi: Tất cả, Sáng sớm (00-06h), Buổi sáng (06-12h), Buổi chiều (12-18h), Buổi tối (18-24h).
+5. **Timeline giờ chạy xe & Lộ trình đón/trả chi tiết**: Mỗi chuyến xe hiển thị trực quan giờ xuất bến, giờ đến dự kiến, tên nhà xe, đánh giá sao, loại xe, số ghế trống và giá vé. Nút Accordion `[📍 Xem danh sách điểm đón & trả dọc đường]` mở rộng lộ trình thứ tự từng trạm đón và trạm trả.
+6. **Chuyển tiếp tức thì sang luồng Đặt Vé**: Nút `[Đặt Chuyến Này ➔]` liên kết mượt mà sang trang chọn ghế `/search` với mã chuyến và thông tin lộ trình đã chọn.
+7. **Tiện ích In & Tải bảng giờ offline**: Nút `[🖨️ In / Lưu Bảng Giờ]` tối ưu hóa theo định dạng CSS `@media print`, giúp hành khách dễ dàng in ra giấy hoặc lưu file PDF để tra cứu khi di chuyển.
+8. **Đồng bộ API Backend**: Cung cấp 2 endpoint công khai `GET /api/v1/trips/schedule` và `GET /api/v1/trips/schedule/routes` tối ưu hóa câu truy vấn, tự động tính toán tần suất và fallback giờ chạy định kỳ cho mọi tuyến đường.
 
 ---
 
@@ -1967,16 +1999,22 @@ Mọi tài khoản trong hệ thống đều có thể đăng nhập ngay bằng
    * `admin@traveleasy.vn` — Quản Trị Viên Hệ Thống
    * `phanthanhphong.admin@traveleasy.vn` — Phạm Thanh Phong
    * `trungkien.admin@traveleasy.vn` — Phan Trung Kiên
-2. **Điều Hành Đối Tác Nhà Xe (Bus Operators)**:
+2. **Điều Hành Đối Tác Nhà Xe (Bus Operators)** (Đăng nhập tại `/company/login`):
    * `partner@traveleasy.vn` — Điều Hành TravelEasy Express (Nhà xe 1)
    * `dieuhanh@thanhbuoi.com.vn` — Điều Hành Thành Bưởi Limousine (Nhà xe 2)
    * `dieuhanh@xesaoviet.com.vn` — Điều Hành Sao Việt Express (Nhà xe 3)
    * `dieuhanh@kumhosamco.com.vn` — Điều Hành Kumho Samco (Nhà xe 4)
    * `dieuhanh@hoamaivungtau.com.vn` — Điều Hành Xe Hoa Mai Vũng Tàu (Nhà xe 5)
    * `dieuhanh@hoanglongasia.com` — Điều Hành Hoàng Long Asia (Nhà xe 6)
+   * `staff@traveleasy.vn` — Nhân Viên Vận Hành Nhà Xe Văn Minh (Nhà xe 7)
    * `dieuhanh@cuctunglimousine.com` — Điều Hành Cúc Tùng Limousine (Nhà xe 8)
    * `dieuhanh@haivan.com` — Điều Hành Xe Hải Vân (Nhà xe 9)
    * `dieuhanh@chinnghia.com.vn` — Điều Hành Xe Chín Nghĩa (Nhà xe 10)
+   * `dieuhanh@futabus.vn` — Điều Hành Phương Trang FUTA Bus Lines (Nhà xe 11)
+   * `dieuhanh@xekhachlienhung.com` — Điều Hành Xe Khách Liên Hưng (Nhà xe 12)
+   * `dieuhanh@halan.com.vn` — Điều Hành Hà Lan Limousine (Nhà xe 13)
+   * `dieuhanh@dcarlimousine.vn` — Điều Hành DCar Limousine VIP (Nhà xe 14)
+   * `dieuhanh@anphuquy.vn` — Điều Hành An Phú Quý Limousine (Nhà xe 15)
 3. **Khách Hàng Trải Nghiệm (Customers)**:
    * `customer@gmail.com` — Nguyễn Văn Du Khách
    * `dangvanlam@gmail.com` — Đặng Văn Lâm
@@ -2030,6 +2068,255 @@ Mọi tài khoản trong hệ thống đều có thể đăng nhập ngay bằng
 
 ![Lọc Chi Tiết Chuyến Xe Khi Người Dùng Chọn Hành Trình](docs/screenshots/screenshot_search_filtered_trips.png)
 *Hình 11.57: Giao diện tự động thu hẹp kết quả chính xác khi người dùng chọn nơi xuất phát và nơi đến, kèm nút "✕ Xem toàn bộ tuyến" tiện lợi.*
+
+---
+
+### 11.11 Hệ Thống Nâng Cấp Toàn Diện (Phase 1, 2, 3): Bộ Tính Năng Enterprise Đột Phá 2026
+
+Nhằm đưa nền tảng **TravelEasy** từ mức MVP vận hành ổn định lên chuẩn **Enterprise-Grade / Production-Ready**, tạo điểm nhấn công nghệ và nghiệp vụ vượt trội khi bảo vệ đồ án tốt nghiệp, hệ thống đã hoàn thiện toàn diện lộ trình 3 giai đoạn:
+
+```mermaid
+flowchart LR
+    P1["Giai đoạn 1 (Quick-Wins)<br/>• Vé PDF Boarding Pass<br/>• Biểu đồ SVG Doanh thu<br/>• Xuất Excel đón khách"] --> P2["Giai đoạn 2 (Core Commerce)<br/>• Trợ lý AI Du lịch 24/7<br/>• Kho Voucher Khuyến mãi<br/>• Khóa ghế độc quyền 10p"]
+    P2 --> P3["Giai đoạn 3 (Enterprise Polish)<br/>• Đối soát tài chính & Hoa hồng<br/>• Gửi Email vé & Hóa đơn VAT<br/>• Bộ test JUnit 5 100% Pass"]
+```
+
+---
+
+#### 1. Thẻ Lên Xe & Vé Điện Tử Chuẩn Hãng Vận Tải (`BoardingPassModal.tsx`)
+* **Thiết kế chuẩn hãng cao cấp**: Mô phỏng thẻ lên máy bay / cuống vé đục lỗ (perforated coupon) với phong cách xe khách Limousine VIP, dải nhận diện TravelEasy, huy hiệu xác thực và logo in chìm.
+* **Mã QR kiểm soát vé**: Tự động mã hóa mã đơn hàng (`BK-...`) và mã vé (`TK-...`) phục vụ quét kiểm tra nhanh tại cửa lên xe.
+* **Tải PDF & In ấn chuẩn A4/A5**: Tối ưu hóa `@media print` giúp in hoặc xuất file PDF trực tiếp không bị vỡ layout hay tràn trang.
+* **Tích hợp**: Đã gắn tại trang **Tra cứu vé** (`TicketLookupPage.tsx`) và **Vé của tôi** (`MyTicketsPage.tsx`).
+
+---
+
+#### 2. Biểu Đồ Doanh Thu & Tăng Trưởng SVG Tương Tác (`RevenueChart.tsx`)
+* **Công nghệ Pure React SVG**: Hoàn toàn không phụ thuộc thư viện bên ngoài nặng nề, tốc độ render cực nhanh, đồ họa vector sắc nét tuyệt đối trên mọi màn hình Retina / 4K.
+* **Bộ lọc thời gian 3 chế độ**: Xem theo `7 Ngày Qua`, `30 Ngày Qua` hoặc `Theo Tháng Trong Năm`.
+* **Hover tương tác**: Rê chuột lên các điểm dữ liệu để xem chi tiết doanh thu (VNĐ), số lượng vé bán và tỷ lệ lấp đầy ghế.
+* **Thẻ chỉ số tài chính (KPIs)**: Tự động tính Doanh thu giai đoạn, Trung bình/ngày và Tỷ lệ tăng trưởng so với kỳ trước.
+* **Đa phân hệ**: Tích hợp tông xanh ngọc (`#0d9488`) tại **Cổng Đối Tác Nhà Xe** (`CompanyDashboardPage.tsx`) và tông xanh hoàng gia (`#2563eb`) tại **Cổng Quản Trị Hệ Thống** (`AdminDashboardPage.tsx`).
+
+---
+
+#### 3. Lệnh Điều Xe & Xuất Danh Sách Khách Đi Xe (`PassengerManifestModal.tsx`)
+* **Nghiệp vụ xuất bến thực tế**: Cung cấp danh sách hành khách đi xe theo từng chuyến cho Bác tài và Phụ xe (số ghế, họ tên, số điện thoại, điểm đón, điểm trả, ghi chú hành lý).
+* **Điểm danh trực tiếp**: Tài xế/Phụ xe có thể click điểm danh từng khách ngay trên màn hình với thanh tiến độ hoàn thành hiển thị trực quan.
+* **Xuất file Excel / CSV**: Định dạng UTF-8 BOM chuẩn, mở trực tiếp bằng Microsoft Excel không bao giờ bị lỗi font tiếng Việt.
+* **In Lệnh Điều Xe**: Mẫu lệnh xuất bến hành trình chuẩn nghiệp vụ vận tải, có sẵn ô ký tên xác nhận của Tài xế và Trưởng bến điều độ.
+* **Tích hợp**: Có mặt tại cả **Quản lý Chuyến xe Nhà xe** (`CompanyTripsPage.tsx`) và **Quản lý Chuyến xe Sàn** (`AdminTripsPage.tsx`).
+
+---
+
+#### 4. Trợ Lý AI Du Lịch Thông Minh 24/7 Toàn Sàn (`AiAssistantWidget.tsx`)
+* **Nút bấm nổi thông minh 24/7**: Hiển thị ở góc dưới cùng bên phải màn hình khách hàng với hiệu ứng phát sáng (Glowing Pulse) và huy hiệu `24/7`.
+* **Kết nối Backend AI trực tiếp**: Tích hợp với endpoint `/api/v1/ai/chat` của Spring Boot (đã mở quyền công khai, không cần đăng nhập).
+* **Điều hướng tuyến xe thông minh (Smart Route Linking)**: Khi AI đề xuất lộ trình (ví dụ: *TP. Hồ Chí Minh ➔ Đà Lạt* hoặc *Hà Nội ➔ Sa Pa*), một thẻ hành động tương tác sẽ xuất hiện ngay trong bong bóng chat. Khách hàng chỉ cần bấm **"Xem vé & Đặt chuyến này ➔"** để tự động chuyển sang trang tìm kiếm với đúng điểm đi/điểm đến.
+* **Bộ gợi ý câu hỏi nhanh (Quick Prompts)**: Khách hàng có thể bấm nhanh các câu hỏi phổ biến: Đà Lạt, Nha Trang, Sa Pa, Giường chống say xe, Chính sách hủy vé hoàn tiền, Mã giảm giá.
+* **Trải nghiệm mượt mà**: Có hiệu ứng 3 chấm gõ phím của AI (`bounceDot`), mốc thời gian tin nhắn, tự động cuộn xuống cuối (auto-scroll) và nút làm mới hội thoại.
+
+---
+
+#### 5. Kho Voucher & Mã Giảm Giá Khuyến Mãi Tương Tác (`VoucherModal.tsx`)
+* **Giải quyết điểm nghẽn trải nghiệm**: Khách hàng không cần phải nhớ hoặc đoán mã giảm giá; ngay dưới ô nhập mã tại bảng thanh toán (`OrderSummaryPanel.tsx`) có nút: **"🎟️ Chọn mã ưu đãi ({count} mã có sẵn)"**.
+* **Kho 5 mã ưu đãi thực tế**:
+  1. `TRAVELEASY`: Giảm **50.000 đ** cho khách hàng mới (Đơn từ 200.000 đ).
+  2. `GIAM20`: Giảm **20%** khi đặt từ 2 vé trở lên (Tối đa 100.000 đ).
+  3. `VEXEREVIP`: Giảm **50.000 đ** tri ân khách hàng thân thiết.
+  4. `HE2026`: Giảm **30.000 đ** mùa du lịch hè.
+  5. `DATSOM20K`: Giảm **20.000 đ** khi đặt trước ngày khởi hành.
+* **Áp dụng 1 chạm**: Bấm **"Áp Dụng"** sẽ tự động điền mã, tính toán chiết khấu trừ thẳng vào tổng tiền thanh toán và thông báo Toast thành công. Có cả nút **"Sao chép mã"** tiện lợi.
+
+---
+
+#### 6. Cơ Chế Khóa Giữ Chỗ Độc Quyền 10 Phút (`BusSeatMap.tsx`)
+* **Bổ sung trạng thái `LOCKED` (Đang giữ chỗ)**: Sơ đồ ghế 2 tầng giờ đây hỗ trợ đầy đủ 4 trạng thái:
+  * ⚪ **Ghế trống**: Màu trắng viền xanh dương (Có thể chọn).
+  * 🟠 **Đang chọn**: Màu cam nổi bật.
+  * 🟡 **Đang giữ chỗ (10p)**: Màu vàng hổ phách kèm biểu tượng ổ khóa 🔒 (Ghế đang được khách khác thanh toán giữ chỗ, tạm thời bị khóa).
+  * 🔘 **Đã bán**: Màu xám (Đã thanh toán thành công).
+* **Banner Cam Kết Bảo Lưu Giữ Chỗ**: Bổ sung dải băng thông báo minh bạch: *"Cam kết giữ chỗ độc quyền 10 phút: Ngay khi bấm 'Tiếp tục đặt vé', các ghế đã chọn sẽ chuyển sang trạng thái Giữ Chỗ Độc Quyền để bạn an tâm chuyển khoản thanh toán mà không sợ bị người khác tranh mua."*
+
+---
+
+#### 7. Hệ Thống Đối Soát Doanh Thu & Quyết Toán Hoa Hồng Sàn (`AdminSettlementsPage.tsx` & `CompanySettlementsPage.tsx`)
+* **Cổng Quản trị Sàn (`/admin/settlements`)**:
+  * **4 thẻ chỉ số tài chính (KPIs)**: Tổng GMV toàn sàn, Hoa hồng sàn thu được (trung bình 8-10%), Số tiền đã giải ngân, Số tiền đang chờ đối soát.
+  * **Quy trình duyệt quyết toán 3 bước**: `CHỜ ĐỐI SOÁT` ➔ `ĐÃ CHỐT SỐ LIỆU` ➔ `ĐÃ GIẢI NGÂN CHUYỂN KHOẢN`.
+  * **Xuất biên bản tài chính**: Nút xuất file Excel/CSV chuẩn UTF-8 và nút in **Biên bản quyết toán tài chính** khổ A4 chính thức.
+  * Tích hợp trực tiếp vào thanh điều hướng Sidebar Admin tại `AdminLayout.tsx`.
+* **Cổng Đối tác Nhà xe (`/company/settlements`)**:
+  * Hiển thị minh bạch thông tin tài khoản ngân hàng nhận tiền đã xác thực KYC (Vietcombank, MBBank...).
+  * Thống kê chi tiết: Doanh thu bán vé, Phí dịch vụ sàn khấu trừ, Số tiền thực nhận về tài khoản ngân hàng và mã giao dịch chuyển khoản.
+  * Xuất báo cáo Excel và in biên bản đối soát doanh thu.
+  * Tích hợp vào thanh điều hướng Sidebar Đối tác tại `CompanyLayout.tsx`.
+
+---
+
+#### 8. Tự Động Hóa Gửi Vé Điện Tử & Hóa Đơn VAT Qua Email (`EmailTicketModal.tsx`)
+* **Mô phỏng Email HTML chuyên nghiệp**: Khung xem trước (Email Preview) sống động với dải màu gradient TravelEasy, mã đơn đặt chỗ, thông tin lộ trình, vị trí ghế, điểm đón và mã QR quét vé.
+* **Tùy chọn Xuất hóa đơn GTGT (VAT)**: Tích hợp ô nhập Mã số thuế và Tên doanh nghiệp/Cơ quan để xuất hóa đơn điện tử cho khách hàng đi công tác.
+* **Gửi lại vé tức thì**: Khách hàng hoặc nhân viên nhà xe có thể nhập email bất kỳ và bấm **"Gửi Vé Ngay"** để hệ thống gửi thư xác nhận.
+* **Tích hợp**: Đã gắn nút `Gửi Vé Qua Email / VAT` tại cả trang **Tra cứu vé** (`TicketLookupPage.tsx`) và **Vé của tôi** (`MyTicketsPage.tsx`).
+
+---
+
+#### 9. Bộ Kiểm Thử Tự Động Backend Đạt 100% Pass (JUnit 5 + Mockito)
+* **Kiểm thử Trợ lý AI (`AiServiceTest.java`)**:
+  * Kiểm thử tư vấn lộ trình Đà Lạt, Nha Trang, Sa Pa.
+  * Kiểm thử giải đáp chính sách hủy vé và phản hồi chào mừng (5/5 tests pass).
+* **Kiểm thử Nghiệp vụ Đặt Vé (`BookingServiceTest.java`)**:
+  * Kiểm thử bắt lỗi khi không tìm thấy chuyến xe (`RESOURCE_NOT_FOUND`).
+  * Kiểm thử chặn đặt vé khi chuyến xe đã đóng bán / tạm hủy (`VALIDATION_ERROR`).
+  * Kiểm thử cơ chế khóa ghế chống đặt trùng (`SEAT_ALREADY_BOOKED`) khi ghế đã có người mua (3/3 tests pass).
+* **Khắc phục triệt để lỗi đường dẫn Unicode trên Windows trong Gradle**: Cấu hình cơ chế tự động phân giải đường dẫn 8.3 short path (`MYTNH~1`) trong `build.gradle`, đảm bảo lệnh `./gradlew test` chạy mượt mà không bao giờ bị lỗi `ClassNotFoundException` do thư mục `Máy tính`.
+
+---
+
+| STT | Tính Năng Mới Bổ Sung | Phân Hệ Phục Vụ | File Thành Phần Cốt Lõi | Trạng Thái |
+| :---: | :--- | :--- | :--- | :---: |
+| 1 | Thẻ Lên Xe & Vé PDF | Khách Hàng | `frontend/src/components/BoardingPassModal.tsx` | ✅ Đã duyệt |
+| 2 | Biểu Đồ Doanh Thu SVG | Quản Trị & Đối Tác | `frontend/src/components/RevenueChart.tsx` | ✅ Đã duyệt |
+| 3 | Lệnh Xuất Bến & Điểm Danh | Đối Tác & Quản Trị | `frontend/src/components/PassengerManifestModal.tsx` | ✅ Đã duyệt |
+| 4 | Trợ Lý AI Du Lịch 24/7 | Khách Hàng | `frontend/src/components/AiAssistantWidget.tsx` | ✅ Đã duyệt |
+| 5 | Kho Voucher & Khuyến Mãi | Khách Hàng | `frontend/src/components/VoucherModal.tsx` | ✅ Đã duyệt |
+| 6 | Khóa Giữ Chỗ 10 Phút | Khách Hàng | `frontend/src/components/BusSeatMap.tsx` | ✅ Đã duyệt |
+| 7 | Đối Soát Doanh Thu Sàn | Quản Trị Viên Sàn | `frontend/src/pages/admin/settlements/AdminSettlementsPage.tsx` | ✅ Đã duyệt |
+| 8 | Đối Soát Nhận Tiền Nhà Xe | Đối Tác Nhà Xe | `frontend/src/pages/company/settlements/CompanySettlementsPage.tsx` | ✅ Đã duyệt |
+| 9 | Gửi Vé & Hóa Đơn VAT Email | Khách Hàng | `frontend/src/components/EmailTicketModal.tsx` | ✅ Đã duyệt |
+| 10 | Suite Kiểm Thử Tự Động | Backend | `backend/src/test/java/com/traveleasy/service/` | ✅ 16/16 Pass |
+| 11 | Real-time SSE Khóa Ghế | Toàn Sàn Real-time | `SeatRealtimeService.java` & `TripResultCard.tsx` | ✅ Đã triển khai |
+| 12 | Cổng Thanh Toán PayOS MB Bank | Khách Hàng & Thanh Toán | `PayOsService.java` & `QrPaymentModal.tsx` | ✅ Đã tích hợp |
+
+---
+
+### 11.12 Cơ Chế Real-time SSE: Khóa Giữ Chỗ & Đồng Bộ Trạng Thái Ghế Thời Gian Thực (Màu Vàng / Xám)
+
+Để giải quyết bài toán cốt lõi trong sàn thương mại vận tải hành khách (tương tự **Vexere**, **Vietnam Airlines**, **CGV Cinemas**), hệ thống đã kích hoạt thành công cơ chế **Server-Sent Events (SSE)** giúp sơ đồ ghế **tự động biến đổi màu theo thời gian thực (Zero-Reload UI)** khi có khách hàng khác đang thao tác:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor UserA as Khách Hàng A (Đang Mua)
+    participant ClientA as Trình Duyệt A
+    participant Backend as Spring Boot (SSE & DB)
+    participant ClientB as Trình Duyệt B
+    actor UserB as Khách Hàng B (Đang Xem)
+
+    ClientB->>Backend: GET /api/v1/trips/{id}/seats/stream (Kết nối SSE)
+    Backend-->>ClientB: Event "INIT" (SSE Live Connected)
+    
+    UserA->>ClientA: Chọn ghế A02 & Bấm "Tiếp Tục Đặt Vé"
+    ClientA->>Backend: POST /api/v1/trips/{id}/seats/hold (Ghế: A02)
+    Backend->>Backend: Khóa DB & Chuyển trạng thái sang LOCKED (Hạn 10p)
+    Backend-->>ClientB: Event "SEAT_UPDATE" (Ghế: A02, Status: LOCKED)
+    Note over ClientB: Ghế A02 tự động đổi sang MÀU VÀNG (LOCKED)<br/>(Hiển thị icon Khóa, vô hiệu hóa click)
+
+    alt Khách A Thanh Toán Thành Công
+        UserA->>ClientA: Xác nhận thanh toán đơn vé
+        ClientA->>Backend: POST /api/v1/bookings
+        Backend->>Backend: Cập nhật BOOKED & Sinh vé TK-...
+        Backend-->>ClientB: Event "SEAT_UPDATE" (Ghế: A02, Status: BOOKED)
+        Note over ClientB: Ghế A02 lập tức chuyển sang MÀU XÁM (BOOKED)<br/>(Đã bán - Bất khả dụng)
+    else Khách A Hủy Hoặc Hết Hạn 10 Phút
+        Backend->>Backend: Scheduler tự động nhả ghế sang AVAILABLE
+        Backend-->>ClientB: Event "SEAT_UPDATE" (Ghế: A02, Status: AVAILABLE)
+        Note over ClientB: Ghế A02 tự động chuyển về MÀU TRẮNG (AVAILABLE)<br/>(Mở lại cho người khác đặt)
+    end
+```
+
+#### 1. Các Quy Tắc Hiển Thị Màu & Trạng Thái Ghế Real-time
+* ⚪ **Trắng viền xanh (`AVAILABLE`)**: Ghế trống hoàn toàn, khách hàng được tự do bấm chọn.
+* 🟠 **Màu Cam (`SELECTED`)**: Ghế đang được chính người dùng hiện tại chọn mua (tối đa 6 vé/lần).
+* 🟡 **Màu Vàng Hổ Phách (`LOCKED`)**: Ghế đang có khách hàng khác tiến hành thanh toán giữ chỗ trong 10 phút. Tự động hiển thị biểu tượng ổ khóa `🔒`, kèm nhãn `Giữ chỗ` và vô hiệu hóa không cho bấm.
+* ⚫ **Màu Xám Tro (`BOOKED`)**: Ghế đã được thanh toán thành công và xuất vé điện tử chính thức (`Đã bán`).
+
+#### 2. Cơ Chế Chống Xung Đột Trực Tiếp (Conflict Auto-Deselect)
+* Khi **Khách hàng B** đang chọn ghế `A02` trên màn hình của mình, nếu **Khách hàng A** nhanh tay hơn bấm vào thanh toán trước:
+  * Sự kiện SSE lập tức truyền xuống máy Khách B.
+  * Ghế `A02` tự động bị gỡ khỏi danh sách ghế đã chọn của Khách B.
+  * Hệ thống phát cảnh báo Toast vàng: *"Ghế A02 vừa có khách khác giữ chỗ thanh toán (Màu Vàng)! Hệ thống đã tự động gỡ ghế khỏi đơn của bạn."*
+
+#### 3. Bảng Điều Khiển Giả Lập Real-time Cho Thầy Cô / Ban Giám Khảo Kiểm Thử 1 Chạm
+* Ngay trên sơ đồ ghế (`TripResultCard.tsx`), hệ thống trang bị thanh công cụ:  
+  **`[🧪 Thử Nghiệm Real-time (Đổi màu Vàng / Xám trực tiếp)]`**:
+  * Cho phép chọn ghế bất kỳ (Ví dụ: `A02`, `A03`, `B01`).
+  * Nút `🟡 Đổi Vàng (Đang TT)`: Kích hoạt ghế sang `LOCKED` (Màu Vàng).
+  * Nút `⚫ Đổi Xám (Đã Bán)`: Kích hoạt ghế sang `BOOKED` (Màu Xám).
+  * Nút `⚪ Trả Về Trống`: Mở lại ghế thành `AVAILABLE` (Màu Trắng).
+  * Giúp kiểm tra trọn vẹn cơ chế đổi màu mượt mà với hiệu ứng chuyển động CSS 0.3s ngay trên một màn hình hoặc mở 2 tab song song mà không tốn công tạo tài khoản phụ.
+
+---
+
+### 11.13 Tích Hợp Cổng Thanh Toán Trực Tuyến PayOS (Liên Kết Ngân Hàng Quân Đội MB Bank)
+
+Hệ thống đã tích hợp chính thức cổng thanh toán **PayOS** — giải pháp thanh toán tự động qua mã VietQR Napas 24/7 hàng đầu Việt Nam:
+
+* **Tài khoản thụ hưởng doanh nghiệp / Trưởng nhóm**:
+  * **Ngân hàng**: **MB Bank (Ngân hàng Quân Đội - BIN: 970422)**
+  * **Số tài khoản**: **`0944 3543 98`** (`0944354398`)
+  * **Chủ tài khoản**: **`PHAM CONG THANH`**
+* **Thông số API Kênh thanh toán**:
+  * `Client ID`: `a187b55f-6c8a-499b-886b-722fcc0c3039`
+  * `Api Key`: `b8a86931-3e77-4787-8acd-322dceb91f70`
+  * `Webhook URL`: `/api/v1/payments/payos/webhook`
+* **Quy trình thanh toán PayOS**:
+  1. Khách hàng chọn phương thức **"Cổng PayOS — Quét mã VietQR MB Bank"**.
+  2. Backend tự động khởi tạo đơn thanh toán qua PayOS API kèm chữ ký bảo mật HMAC-SHA256 chuẩn ngân hàng.
+  3. Mã VietQR động được tạo chính xác với số tiền vé và nội dung chuyển khoản `TRAVELEASY {Mã booking}`.
+  4. Nút bấm **"🔗 Mở Cổng Thanh Toán PayOS (Trang Chính Thức)"** cho phép khách hàng chuyển hướng trực tiếp sang trang thanh toán chính thức của PayOS nếu muốn.
+  5. Khi ngân hàng MB nhận được tiền, Webhook PayOS bắn tín hiệu về backend tự động kích hoạt vé điện tử (`ISSUED`) và cập nhật đơn đặt vé sang `CONFIRMED`.
+  6. Hệ thống duy trì song song nút **"⚡ Xác Nhận Chuyển Khoản Demo"** giúp thầy cô và giám khảo kiểm thử thành công 100% trong vòng 1 click mà không lo trừ tiền tài khoản thực tế.
+
+---
+
+---
+
+### 11.14 Hệ Thống Kiểm Soát Dữ Liệu Đầu Vào (Backend Validation), Xử Lý Ngoại Lệ Tập Trung & Khắc Phục Luồng Nghiệp Vụ Gây Lỗi
+
+Hệ thống đã được củng cố toàn diện tầng Backend nhằm đảm bảo tính toàn vẹn dữ liệu, kiểm soát luồng nghiệp vụ chặt chẽ và ngăn chặn triệt để các lỗ hổng / ngoại lệ phát sinh trong quá trình vận hành:
+
+#### 1. Kiến Trúc Xử Lý Ngoại Lệ Tập Trung Toàn Diện (`GlobalExceptionHandler`)
+* Cấu trúc phản hồi lỗi chuẩn RESTful qua `ApiResponse<T>`:
+  * `success: false`
+  * `message: String` (thông điệp lỗi thân thiện bằng tiếng Việt)
+  * `errors: Map<String, String>` (danh sách chi tiết từng trường bị lỗi định dạng / ràng buộc, hỗ trợ Frontend highlight ô nhập liệu màu đỏ)
+  * `timestamp: LocalDateTime`
+* **Xử lý chuyên sâu 11 nhóm ngoại lệ tiêu chuẩn**:
+  1. `MethodArgumentNotValidException`: Bắt lỗi bean validation `@Valid` từ các Request DTO và trả về mã lỗi 400 kèm chi tiết từng field lỗi.
+  2. `ConstraintViolationException`: Bắt lỗi vi phạm ràng buộc trên query parameter và path variable (400 Bad Request).
+  3. `HttpMessageNotReadableException`: Bắt lỗi JSON sai cú pháp hoặc truyền giá trị enum không hợp lệ (400 Bad Request).
+  4. `MethodArgumentTypeMismatchException`: Bắt lỗi sai kiểu dữ liệu tham số trên URL (VD: truyền chuỗi chữ vào ID kiểu số) (400 Bad Request).
+  5. `MissingServletRequestParameterException`: Bắt lỗi thiếu tham số bắt buộc `@RequestParam` (400 Bad Request).
+  6. `HttpRequestMethodNotSupportedException`: Xử lý khi gọi sai method HTTP (trả về 405 Method Not Allowed).
+  7. `AccessDeniedException`: Chặn truy cập trái quyền và trả về 403 Forbidden thay vì lỗi hệ thống.
+  8. `DataIntegrityViolationException`: Bắt lỗi vi phạm ràng buộc toàn vẹn cơ sở dữ liệu MySQL (Unique key, Foreign key) và trả về 409 Conflict với thông điệp nghiệp vụ rõ ràng, không làm lộ tên bảng hoặc câu lệnh SQL nội bộ.
+  9. `IllegalArgumentException` & `IllegalStateException`: Bắt lỗi nghiệp vụ tham số không hợp lệ (400 Bad Request).
+  10. `NoResourceFoundException`: Bắt đường dẫn API hoặc tài nguyên tĩnh không tồn tại và trả về 404 Not Found.
+  11. `Exception (Fallback Handler)`: Bắt lỗi bất ngờ ở mức hệ thống, tự động ghi log lỗi bằng SLF4J và trả về mã 500 kèm thông điệp bảo mật, tuyệt đối không làm lộ stack trace ra môi trường sản xuất.
+
+#### 2. Chuẩn Hóa Ràng Buộc Dữ Liệu (Jakarta Bean Validation) Trên Toàn Bộ DTOs
+* **`CreateBookingRequest`**: Kiểm soát số điện thoại định dạng chuẩn Việt Nam (`^(0|\+84)[0-9]{9,10}$`), kiểm tra định dạng email `@Email`, bắt buộc danh sách ghế chọn không được rỗng (`@NotEmpty`).
+* **`CreateTripRequest` & `UpdateTripRequest`**: Ràng buộc giá vé tối thiểu từ 1.000 VNĐ (`@DecimalMin("1000")`), số ghế xe hợp lệ từ 1 đến 100 ghế (`@Min(1)`, `@Max(100)`).
+* **`CreateRouteRequest`**: Ràng buộc thời gian di chuyển dự kiến phải lớn hơn 0 giờ (`@DecimalMin("0.1")`) và quãng đường tối thiểu từ 1 km (`@DecimalMin("1.0")`).
+* **`CreateBusCompanyRequest`**: Ràng buộc số hotline nhà xe theo chuẩn tổng đài hoặc di động (`^(0|\+84|1900|1800)[0-9]{6,10}$`).
+* **`ChangePasswordRequest` & `UpdateProfileRequest`**: Bắt buộc mật khẩu mới tối thiểu 6 ký tự, số điện thoại đúng định dạng.
+* Kích hoạt đầy đủ chú thích `@Valid` trên tất cả các Controller (`BookingController`, `AdminTripController`, `CompanyManagementController`, `AdminManagementController`, `AuthController`).
+
+#### 3. Khắc Phục Triệt Để 7 Luồng Nghiệp Vụ Gây Lỗi (Error-prone Flows)
+1. **Chặn đặt vé cho chuyến xe trong quá khứ**: `BookingService.createBooking()` kiểm tra chặt chẽ `trip.getDepartureTime() >= LocalDateTime.now()` và trạng thái chuyến `TripStatus.SCHEDULED`.
+2. **Chặn hủy vé / đổi chuyến sau khi xe đã xuất bến**: Khi chuyến xe đã khởi hành hoặc đơn vé đã ở trạng thái `COMPLETED`, hệ thống từ chối hủy/đổi và hướng dẫn liên hệ trực tiếp nhà xe.
+3. **Chặn đổi vé (Reschedule) sang cùng chuyến và ghế hiện tại**: Phát hiện và báo lỗi ngay nếu hành khách chọn lại chính chuyến xe và ghế đang ngồi.
+4. **Ngăn chặn xóa cứng gây lỗi khóa ngoại (Foreign Key Integrity)**:
+   * Không cho phép xóa chuyến xe (`AdminTripService.deleteTrip()`) nếu đã có hành khách đặt vé trong CSDL (`bookingRepository.existsByTripId`). Thay vào đó yêu cầu chuyển trạng thái chuyến sang `CANCELLED`.
+   * Không cho phép xóa nhà xe hoặc tuyến đường nếu đang có các chuyến xe trực thuộc đang hoạt động.
+   * Không cho phép xóa người dùng nếu tài khoản đã có lịch sử đơn vé (chuyển sang khóa tài khoản `LOCKED`).
+5. **Chống trùng lặp số điện thoại khi cập nhật Profile**: `AuthService.updateProfile()` kiểm tra tính duy nhất của số điện thoại qua `existsByPhoneAndIdNot`, tránh xung đột định danh.
+6. **Chống đổi mật khẩu trùng mật khẩu cũ**: `AuthService.changePassword()` bắt buộc mật khẩu mới phải khác mật khẩu hiện tại.
+7. **Cơ chế Idempotency cho Webhook thanh toán**: `PaymentService.confirmVietQrTransfer()` tự động kiểm tra nếu đơn vé đã được thanh toán thành công từ trước thì trả kết quả thành công ngay, tránh ghi đè dữ liệu hoặc xuất vé trùng khi Webhook gửi nhiều lần.
+
+---
 
 ---
 *Tài liệu Master Specification được ban hành chính thức bởi Nhóm trưởng Phạm Công Thành — Nhóm 7.*  

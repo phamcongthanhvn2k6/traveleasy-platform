@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -19,6 +20,7 @@ public class TripResponse {
     private Long busCompanyId;
     private String busCompanyName;
     private String busCompanyLogo;
+    private BigDecimal busCompanyRating;
     private Long routeId;
     private String originCity;
     private String destinationCity;
@@ -31,4 +33,6 @@ public class TripResponse {
     private Integer totalSeats;
     private Integer availableSeats;
     private TripStatus status;
+    private List<PointResponse> pickupPoints;
+    private List<PointResponse> dropoffPoints;
 }

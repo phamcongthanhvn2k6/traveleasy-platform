@@ -53,7 +53,7 @@ public class AuthController {
     @PutMapping("/profile")
     @Operation(summary = "Cập nhật hồ sơ cá nhân")
     public ApiResponse<AuthResponse> updateProfile(
-            @RequestBody UpdateProfileRequest request,
+            @Valid @RequestBody UpdateProfileRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
             return ApiResponse.error("Chưa đăng nhập");
@@ -65,7 +65,7 @@ public class AuthController {
     @PutMapping("/change-password")
     @Operation(summary = "Đổi mật khẩu tài khoản")
     public ApiResponse<Void> changePassword(
-            @RequestBody ChangePasswordRequest request,
+            @Valid @RequestBody ChangePasswordRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
             return ApiResponse.error("Chưa đăng nhập");

@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --primary: #2563eb;
   --primary-hover: #1d4ed8;
@@ -28,6 +32,8 @@ body {
 button {
   cursor: pointer;
   font-family: inherit;
+  border: none;
+  background: transparent;
 }
 
 input, select {

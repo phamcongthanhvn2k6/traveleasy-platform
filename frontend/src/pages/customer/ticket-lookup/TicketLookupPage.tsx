@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../../services/api';
 import { Booking } from '../../../types';
-import { Search, ShieldCheck, QrCode, MapPin, Printer, ArrowLeft, Copy, Check, CheckCircle2 } from 'lucide-react';
+import { Search, ShieldCheck, QrCode, MapPin, Printer, ArrowLeft, Copy, Check, CheckCircle2, Ticket, Mail, Star } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
+import { BoardingPassModal } from '../../../components/BoardingPassModal';
+import { EmailTicketModal } from '../../../components/EmailTicketModal';
 
 export const TicketLookupPage: React.FC = () => {
   const { code: routeCode } = useParams<{ code?: string }>();
@@ -17,6 +19,8 @@ export const TicketLookupPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showBoardingPass, setShowBoardingPass] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   const lookupByCode = async (searchCode: string) => {
     if (!searchCode.trim()) {
@@ -67,7 +71,7 @@ export const TicketLookupPage: React.FC = () => {
   };
 
   const handlePrint = () => {
-    window.print();
+    setShowBoardingPass(true);
   };
 
   return (
@@ -221,18 +225,60 @@ export const TicketLookupPage: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  color: '#1e293b',
+                  backgroundColor: '#0d9488',
+                  border: 'none',
+                  color: '#ffffff',
                   padding: '10px 18px',
                   borderRadius: '8px',
                   fontWeight: 700,
                   fontSize: '13px',
                   cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(13, 148, 136, 0.25)',
                 }}
               >
-                <Printer size={16} /> In Vé / Tải PDF
+                <Printer size={16} /> Thẻ Lên Xe / Tải PDF
               </button>
+
+              <button
+                onClick={() => setShowEmailModal(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: '#2563eb',
+                  border: 'none',
+                  color: '#ffffff',
+                  padding: '10px 18px',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+                }}
+              >
+                <Mail size={16} /> Gửi Vé Qua Email / VAT
+              </button>
+
+              {Boolean(booking.status === 'COMPLETED' || (booking.trip?.departureTime && new Date(booking.trip.departureTime) < new Date())) && (
+                <button
+                  onClick={() => navigate(`/reviews?bookingCode=${booking.bookingCode}`)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: '#fffbeb',
+                    border: '1px solid #fcd34d',
+                    color: '#d97706',
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Star size={16} fill="#d97706" /> Đánh Giá Chuyến Xe
+                </button>
+              )}
 
               <button
                 onClick={() => navigate('/my-tickets')}
@@ -275,6 +321,24 @@ export const TicketLookupPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Boarding Pass Modal */}
+      {booking && (
+        <BoardingPassModal
+          booking={booking}
+          isOpen={showBoardingPass}
+          onClose={() => setShowBoardingPass(false)}
+        />
+      )}
+
+      {/* Email & VAT Invoice Modal */}
+      {booking && (
+        <EmailTicketModal
+          booking={booking}
+          isOpen={showEmailModal}
+          onClose={() => setShowEmailModal(false)}
+        />
+      )}
     </div>
   );
 };

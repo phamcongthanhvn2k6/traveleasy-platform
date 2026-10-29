@@ -41,13 +41,8 @@ export const AdminSeatTypesPage: React.FC = () => {
         );
       }
     } catch (err) {
-      console.warn('Could not fetch seat types from API, using fallback:', err);
-      setSeatTypes([
-        { code: 'SLEEPER_STANDARD', name: 'Giường nằm tiêu chuẩn', description: 'Giường bọc da cao cấp êm ái, ngả 180 độ', priceMultiplier: 'x1.0', status: 'ACTIVE' },
-        { code: 'LIMOUSINE_VIP', name: 'Limousine VIP 24 chỗ', description: 'Cabin riêng biệt, màn hình giải trí, sạc không dây', priceMultiplier: 'x1.4', status: 'ACTIVE' },
-        { code: 'SEATER_STANDARD', name: 'Ghế ngồi tiêu chuẩn', description: 'Ghế đệm ngả 45 độ thông gió', priceMultiplier: 'x0.9', status: 'ACTIVE' },
-        { code: 'ROYAL_SUITE', name: 'Phòng Hoàng Gia đôi', description: 'Giường đôi cho 2 người lớn kèm rèm riêng tư', priceMultiplier: 'x1.8', status: 'ACTIVE' },
-      ]);
+      console.error('Could not fetch seat types from API:', err);
+      setSeatTypes([]);
     } finally {
       setLoading(false);
     }

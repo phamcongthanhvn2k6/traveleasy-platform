@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Eye, Clock, AlertTriangle, CheckCircle, Play, Ban, X, RefreshCw, Bus, DollarSign } from 'lucide-react';
+import { Plus, Eye, Clock, AlertTriangle, CheckCircle, Play, Ban, X, RefreshCw, Bus, DollarSign, Users, FileText, Zap, Sparkles, Calendar } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
+import { PassengerManifestModal } from '../../../components/PassengerManifestModal';
 
 export interface CompanyTripItem {
   id: string;
@@ -20,123 +21,13 @@ export interface CompanyTripItem {
 
 const STORAGE_KEY = 'traveleasy_company_trips';
 
-const DEFAULT_TRIPS: CompanyTripItem[] = [
-  {
-    id: 't1',
-    code: 't1',
-    routeName: 'Sài Gòn - Đà Lạt',
-    vehiclePlate: '51B-123.45',
-    busType: 'Limousine 34 Phòng VIP',
-    departureTime: '02:00 22/10/2026',
-    arrivalTime: '08:30 22/10/2026',
-    price: 350000,
-    totalSeats: 34,
-    delayText: '-',
-    status: 'SCHEDULED',
-    statusLabel: 'Đã lên lịch',
-  },
-  {
-    id: 't2',
-    code: 't2',
-    routeName: 'Sài Gòn - Nha Trang',
-    vehiclePlate: '51B-987.65',
-    busType: 'Giường Nằm 40 Chỗ Luxury',
-    departureTime: '04:00 22/10/2026',
-    arrivalTime: '12:00 22/10/2026',
-    price: 280000,
-    totalSeats: 40,
-    delayText: '-',
-    status: 'SCHEDULED',
-    statusLabel: 'Đã lên lịch',
-  },
-  {
-    id: 't3',
-    code: 't3',
-    routeName: 'Hà Nội - Sapa',
-    vehiclePlate: '29B-888.88',
-    busType: 'Limousine Cabin Đôi',
-    departureTime: '07:00 22/10/2026',
-    arrivalTime: '13:00 22/10/2026',
-    price: 450000,
-    totalSeats: 22,
-    delayText: '-',
-    status: 'RUNNING',
-    statusLabel: 'Đang chạy',
-  },
-  {
-    id: 't4',
-    code: 't4',
-    routeName: 'Sài Gòn - Đà Lạt',
-    vehiclePlate: '51B-123.45',
-    busType: 'Limousine 34 Phòng VIP',
-    departureTime: '15:00 20/10/2026',
-    arrivalTime: '21:30 20/10/2026',
-    price: 350000,
-    totalSeats: 34,
-    delayText: '-',
-    status: 'COMPLETED',
-    statusLabel: 'Hoàn thành',
-  },
-  {
-    id: 't5',
-    code: 't5',
-    routeName: 'Sài Gòn - Nha Trang',
-    vehiclePlate: '51B-987.65',
-    busType: 'Giường Nằm 40 Chỗ Luxury',
-    departureTime: '02:00 20/10/2026',
-    arrivalTime: '10:00 20/10/2026',
-    price: 280000,
-    totalSeats: 40,
-    delayText: '-',
-    status: 'CANCELLED',
-    statusLabel: 'Đã hủy',
-  },
-  {
-    id: 't6',
-    code: 't6',
-    routeName: 'Sài Gòn - Đà Lạt',
-    vehiclePlate: '51B-123.45',
-    busType: 'Limousine 34 Phòng VIP',
-    departureTime: '02:00 23/10/2026',
-    arrivalTime: '08:30 23/10/2026',
-    price: 350000,
-    totalSeats: 34,
-    delayText: '+30 phút',
-    status: 'DELAYED',
-    statusLabel: 'Trễ giờ',
-  },
-  {
-    id: 't7',
-    code: 't7',
-    routeName: 'Sài Gòn - Đà Lạt',
-    vehiclePlate: '51B-123.45',
-    busType: 'Limousine 34 Phòng VIP',
-    departureTime: '02:00 24/10/2026',
-    arrivalTime: '08:30 24/10/2026',
-    price: 350000,
-    totalSeats: 34,
-    delayText: '-',
-    status: 'SCHEDULED',
-    statusLabel: 'Đã lên lịch',
-  },
-];
-
 export const CompanyTripsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('ALL');
-  const [trips, setTrips] = useState<CompanyTripItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // ignore
-    }
-    return DEFAULT_TRIPS;
-  });
+  const [trips, setTrips] = useState<CompanyTripItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchTripsFromDb = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/company/trips');
       if (res.data?.data && Array.isArray(res.data.data)) {
@@ -146,20 +37,21 @@ export const CompanyTripsPage: React.FC = () => {
           routeName: item.routeName || (item.originCity && item.destinationCity ? `${item.originCity} - ${item.destinationCity}` : 'Sài Gòn - Đà Lạt'),
           vehiclePlate: item.licensePlate || item.vehiclePlate || '51B-123.45',
           busType: item.busType || 'Limousine 34 Phòng VIP',
-          departureTime: item.departureTime ? formatDisplayTime(item.departureTime) : '08:00 24/10/2026',
-          arrivalTime: item.arrivalTime ? formatDisplayTime(item.arrivalTime) : '14:30 24/10/2026',
+          departureTime: item.departureTime ? formatDisplayTime(item.departureTime) : '-',
+          arrivalTime: item.arrivalTime ? formatDisplayTime(item.arrivalTime) : '-',
           price: item.price || 300000,
           totalSeats: item.totalSeats || 34,
           delayText: item.delayText || '-',
           status: item.status || 'SCHEDULED',
           statusLabel: item.status === 'RUNNING' ? 'Đang chạy' : item.status === 'COMPLETED' ? 'Hoàn thành' : item.status === 'CANCELLED' ? 'Đã hủy' : 'Đã lên lịch',
         }));
-        if (mapped.length > 0) {
-          setTrips(mapped);
-        }
+        setTrips(mapped);
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('Failed to load trips from Supabase:', err);
+      toast.error('Không thể tải danh sách chuyến xe từ CSDL', 'Lỗi CSDL');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -169,7 +61,53 @@ export const CompanyTripsPage: React.FC = () => {
 
   // Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAutoModalOpen, setIsAutoModalOpen] = useState(false);
+  const [isAutoGenerating, setIsAutoGenerating] = useState(false);
+  const [autoRouteId, setAutoRouteId] = useState<number>(1);
+  const [autoDays, setAutoDays] = useState<number>(30);
+  const [autoBusType, setAutoBusType] = useState<string>('LIMOUSINE');
+  const [autoPrice, setAutoPrice] = useState<number>(390000);
+  const [autoSelectedSlots, setAutoSelectedSlots] = useState<string[]>([
+    '00:30', '04:30', '07:00', '09:30', '13:30', '17:00', '22:30', '23:00'
+  ]);
   const [selectedTrip, setSelectedTrip] = useState<CompanyTripItem | null>(null);
+  const [manifestTrip, setManifestTrip] = useState<any | null>(null);
+
+  const toggleAutoSlot = (slot: string) => {
+    setAutoSelectedSlots((prev) =>
+      prev.includes(slot) ? prev.filter((s) => s !== slot) : [...prev, slot].sort()
+    );
+  };
+
+  const handleRunAutoGeneration = async () => {
+    if (autoSelectedSlots.length === 0) {
+      toast.warning('Vui lòng chọn ít nhất 1 khung giờ chạy định kỳ!', 'Thiếu Thông Tin');
+      return;
+    }
+    setIsAutoGenerating(true);
+    try {
+      const res = await api.post('/company/trips/auto-generate', {
+        busCompanyId: 1,
+        routeId: autoRouteId,
+        daysAhead: autoDays,
+        timeSlots: autoSelectedSlots,
+        busType: autoBusType,
+        price: autoPrice,
+      });
+      const count = res.data?.data?.generatedCount || 0;
+      toast.success(
+        `Đã tự động sinh ${count} chuyến xe và toàn bộ sơ đồ ghế cho ${autoDays} ngày tới!`,
+        'Tự Động Hóa Thành Công'
+      );
+      await fetchTripsFromDb();
+      setIsAutoModalOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Lỗi khi kích hoạt tự động sinh chuyến: ' + (err?.response?.data?.message || err.message), 'Thất Bại');
+    } finally {
+      setIsAutoGenerating(false);
+    }
+  };
 
   // Form Fields
   const [formRoute, setFormRoute] = useState('Sài Gòn - Đà Lạt');
@@ -354,28 +292,113 @@ export const CompanyTripsPage: React.FC = () => {
           </div>
         </div>
 
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button
+            onClick={() => setIsAutoModalOpen(true)}
+            style={{
+              backgroundColor: '#059669',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '9px 16px',
+              fontSize: '13px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(5, 150, 105, 0.2)',
+              transition: 'background-color 0.15s ease'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#047857')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#059669')}
+          >
+            <Zap size={16} />
+            <span>⚡ Lịch Định Kỳ & Sinh Chuyến Tự Động</span>
+          </button>
+
+          <button
+            onClick={openCreateModal}
+            style={{
+              backgroundColor: '#4f46e5',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '9px 16px',
+              fontSize: '13px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(79, 70, 229, 0.2)',
+              transition: 'background-color 0.15s ease'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#4338ca')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#4f46e5')}
+          >
+            <Plus size={16} />
+            <span>Tạo chuyến mới</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Automation Notice Strip */}
+      <div
+        style={{
+          backgroundColor: '#f0fdf4',
+          border: '1px solid #bbf7d0',
+          borderRadius: '10px',
+          padding: '12px 18px',
+          marginBottom: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div
+            style={{
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: '#16a34a',
+              boxShadow: '0 0 0 3px rgba(34, 197, 94, 0.25)',
+              flexShrink: 0,
+            }}
+          />
+          <div>
+            <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>Động Cơ Tự Động Hóa Lịch Chạy Xe (Daily Auto-Rolling Engine): ĐANG HOẠT ĐỘNG</span>
+              <span style={{ fontSize: '11px', backgroundColor: '#dcfce7', color: '#15803d', padding: '1px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                30 Ngày Mở Bán
+              </span>
+            </div>
+            <div style={{ fontSize: '12px', color: '#15803d', marginTop: '2px' }}>
+              Hệ thống tự động lăn chuyến hàng ngày và sinh sơ đồ ghế theo khung giờ định kỳ. Chuyến xe cũ đã qua giờ khởi hành được tự động cập nhật sang <strong>COMPLETED</strong> để bảo vệ hành khách đặt vé.
+            </div>
+          </div>
+        </div>
+
         <button
-          onClick={openCreateModal}
+          onClick={() => setIsAutoModalOpen(true)}
           style={{
-            backgroundColor: '#4f46e5',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '9px 16px',
-            fontSize: '13px',
-            fontWeight: 600,
+            backgroundColor: '#ffffff',
+            border: '1px solid #86efac',
+            color: '#15803d',
+            padding: '6px 14px',
+            borderRadius: '6px',
+            fontSize: '12.5px',
+            fontWeight: 700,
+            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            cursor: 'pointer',
-            boxShadow: '0 1px 2px rgba(79, 70, 229, 0.2)',
-            transition: 'background-color 0.15s ease'
+            gap: '6px',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#4338ca')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#4f46e5')}
         >
-          <Plus size={16} />
-          <span>Tạo chuyến mới</span>
+          <Sparkles size={14} color="#16a34a" /> Cấu hình & Sinh thêm chuyến
         </button>
       </div>
 
@@ -515,6 +538,28 @@ export const CompanyTripsPage: React.FC = () => {
                       </span>
                     </td>
                     <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                      <button
+                        title="Xem và Xuất danh sách hành khách đi xe"
+                        onClick={() => setManifestTrip(item)}
+                        style={{
+                          background: '#ecfdf5',
+                          border: '1px solid #a7f3d0',
+                          cursor: 'pointer',
+                          padding: '6px 10px',
+                          color: '#059669',
+                          borderRadius: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          marginRight: '6px',
+                        }}
+                      >
+                        <Users size={14} />
+                        <span>Khách Đi Xe</span>
+                      </button>
+
                       <button
                         title="Xem chi tiết & Cập nhật chuyến"
                         onClick={() => setSelectedTrip(item)}
@@ -783,6 +828,234 @@ export const CompanyTripsPage: React.FC = () => {
         </div>
       )}
 
+      {/* MODAL: Auto-Rolling & Recurring Schedule Generator */}
+      {isAutoModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.55)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '16px'
+          }}
+          onClick={() => setIsAutoModalOpen(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '620px',
+              width: '100%',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              overflow: 'hidden'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ padding: '18px 24px', backgroundColor: '#f0fdf4', borderBottom: '1px solid #bbf7d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ backgroundColor: '#16a34a', color: '#fff', padding: '8px', borderRadius: '10px' }}>
+                  <Zap size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#166534' }}>
+                    Tự Động Sinh Chuyến Theo Lịch Trình Định Kỳ
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#15803d' }}>
+                    Thiết lập khung giờ cố định và để hệ thống tự động sinh hàng loạt chuyến xe cho các ngày tới
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAutoModalOpen(false)}
+                style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '24px', maxHeight: '75vh', overflowY: 'auto' }}>
+              {/* 1. Chọn Tuyến Đường */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  1. Tuyến Đường Áp Dụng:
+                </label>
+                <select
+                  value={autoRouteId}
+                  onChange={(e) => setAutoRouteId(Number(e.target.value))}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}
+                >
+                  <option value={1}>TP. Hồ Chí Minh ⇄ Đà Lạt (305 km - 6.5 giờ)</option>
+                  <option value={4}>Hà Nội ⇄ Sa Pa (315 km - 5.5 giờ)</option>
+                  <option value={2}>TP. Hồ Chí Minh ⇄ Nha Trang (430 km - 8 giờ)</option>
+                  <option value={5}>TP. Hồ Chí Minh ⇄ Vũng Tàu (95 km - 2 giờ)</option>
+                  <option value={9}>Hà Nội ⇄ Hải Phòng (120 km - 1.5 giờ)</option>
+                  <option value={14}>Đà Nẵng ⇄ Quy Nhơn (310 km - 5.5 giờ)</option>
+                  <option value={3}>TP. Hồ Chí Minh ⇄ Cần Thơ (165 km - 3.5 giờ)</option>
+                </select>
+              </div>
+
+              {/* 2. Khoảng thời gian tự động sinh */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  2. Số Ngày Tự Động Sinh Liên Tục (Rolling Window):
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                  {[
+                    { days: 7, label: '7 Ngày Tới', desc: '1 tuần' },
+                    { days: 14, label: '14 Ngày Tới', desc: '2 tuần' },
+                    { days: 30, label: '30 Ngày Tới (Khuyên dùng)', desc: '1 tháng trọn vẹn' },
+                  ].map((item) => (
+                    <button
+                      type="button"
+                      key={item.days}
+                      onClick={() => setAutoDays(item.days)}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        border: autoDays === item.days ? '2px solid #16a34a' : '1px solid #cbd5e1',
+                        backgroundColor: autoDays === item.days ? '#f0fdf4' : '#ffffff',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <div style={{ fontSize: '13px', fontWeight: 800, color: autoDays === item.days ? '#166534' : '#1e293b' }}>
+                        {item.label}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#64748b' }}>{item.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. Khung giờ chạy định kỳ */}
+              <div style={{ marginBottom: '18px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>
+                    3. Khung Giờ Xuất Bến Định Kỳ Mỗi Ngày:
+                  </label>
+                  <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: 700 }}>
+                    Đã chọn {autoSelectedSlots.length} mốc giờ / ngày
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                  {[
+                    { slot: '00:30', period: 'Sáng sớm' },
+                    { slot: '04:30', period: 'Sáng sớm' },
+                    { slot: '07:00', period: 'Buổi sáng' },
+                    { slot: '09:30', period: 'Buổi sáng' },
+                    { slot: '11:00', period: 'Trưa' },
+                    { slot: '13:30', period: 'Buổi chiều' },
+                    { slot: '15:30', period: 'Buổi chiều' },
+                    { slot: '17:00', period: 'Chiều muộn' },
+                    { slot: '18:00', period: 'Buổi tối' },
+                    { slot: '21:00', period: 'Buổi tối' },
+                    { slot: '22:30', period: 'Đêm muộn' },
+                    { slot: '23:00', period: 'Đêm muộn' },
+                  ].map((s) => {
+                    const isSelected = autoSelectedSlots.includes(s.slot);
+                    return (
+                      <button
+                        type="button"
+                        key={s.slot}
+                        onClick={() => toggleAutoSlot(s.slot)}
+                        style={{
+                          padding: '8px',
+                          borderRadius: '8px',
+                          border: isSelected ? '1.5px solid #16a34a' : '1px solid #e2e8f0',
+                          backgroundColor: isSelected ? '#dcfce7' : '#f8fafc',
+                          color: isSelected ? '#15803d' : '#475569',
+                          fontWeight: 700,
+                          fontSize: '12.5px',
+                          cursor: 'pointer',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <div>{s.slot}</div>
+                        <div style={{ fontSize: '10px', opacity: 0.75, fontWeight: 500 }}>{s.period}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 4. Loại xe & Giá vé */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    4. Loại Xe Chạy:
+                  </label>
+                  <select
+                    value={autoBusType}
+                    onChange={(e) => setAutoBusType(e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', fontWeight: 600 }}
+                  >
+                    <option value="LIMOUSINE">Limousine 34 Phòng VIP</option>
+                    <option value="SLEEPER">Giường Nằm Tiêu Chuẩn 40 Chỗ</option>
+                    <option value="SEAT">Ghế Ngồi Cao Cấp 29 Chỗ</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    5. Giá Vé Niêm Yết (VNĐ):
+                  </label>
+                  <input
+                    type="number"
+                    step="10000"
+                    value={autoPrice}
+                    onChange={(e) => setAutoPrice(Number(e.target.value))}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', fontWeight: 700 }}
+                  />
+                </div>
+              </div>
+
+              {/* Dự kiến kết quả */}
+              <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px 14px', fontSize: '12px', color: '#1e40af' }}>
+                ⚡ Ước tính: Hệ thống sẽ tự động sinh khoảng <strong>{autoDays * autoSelectedSlots.length} chuyến xe mới</strong> và <strong>{(autoDays * autoSelectedSlots.length * 34).toLocaleString('vi-VN')} ghế ngồi</strong> ở trạng thái mở bán, sẵn sàng cho khách đặt vé ngay lập tức!
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '16px 24px', backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setIsAutoModalOpen(false)}
+                style={{ padding: '9px 18px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                disabled={isAutoGenerating}
+                onClick={handleRunAutoGeneration}
+                style={{
+                  padding: '9px 22px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#059669',
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  cursor: isAutoGenerating ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 2px 4px rgba(5, 150, 105, 0.25)',
+                }}
+              >
+                <Zap size={16} />
+                <span>{isAutoGenerating ? 'Đang tự động sinh...' : '🚀 Kích Hoạt Sinh Chuyến Ngay'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL 2: View Trip Detail & Fast Status Controls */}
       {selectedTrip && (
         <div
@@ -955,7 +1228,29 @@ export const CompanyTripsPage: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setManifestTrip(selectedTrip);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid #a7f3d0',
+                  backgroundColor: '#ecfdf5',
+                  color: '#059669',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                <Users size={15} /> Xuất Danh Sách Khách & Điểm Danh
+              </button>
+
               <button
                 type="button"
                 onClick={() => setSelectedTrip(null)}
@@ -975,6 +1270,15 @@ export const CompanyTripsPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Passenger Manifest Modal */}
+      {manifestTrip && (
+        <PassengerManifestModal
+          trip={manifestTrip}
+          isOpen={Boolean(manifestTrip)}
+          onClose={() => setManifestTrip(null)}
+        />
       )}
     </div>
   );

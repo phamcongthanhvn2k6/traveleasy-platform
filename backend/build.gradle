@@ -39,6 +39,7 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+    implementation 'com.cloudinary:cloudinary-http44:1.39.0'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
@@ -53,4 +54,14 @@ tasks.named('test') {
     useJUnitPlatform()
     systemProperty "file.encoding", "UTF-8"
     jvmArgs "-Dfile.encoding=UTF-8"
+    doFirst {
+        classpath = files(classpath.files.collect { f ->
+            def p = f.absolutePath
+            if (p.contains("Máy tính")) {
+                file(p.replace("Máy tính", "MYTNH~1"))
+            } else {
+                f
+            }
+        })
+    }
 }

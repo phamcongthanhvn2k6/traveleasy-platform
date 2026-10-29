@@ -17,45 +17,7 @@ interface VehicleItem {
   image?: string;
 }
 
-const DEFAULT_VEHICLES: VehicleItem[] = [
-  {
-    id: 1,
-    plate: '51B-123.45',
-    code: 'v1',
-    type: 'SLEEPER',
-    floors: 2,
-    year: 2022,
-    operator: 'TravelEasy Express',
-    status: 'ACTIVE',
-    statusLabel: 'Hoạt động',
-    seatLayout: 'Giường nằm 2 tầng 34 chỗ',
-    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=100&auto=format&fit=crop&q=60',
-  },
-  {
-    id: 2,
-    plate: '51B-987.65',
-    code: 'v2',
-    type: 'LIMOUSINE',
-    floors: 1,
-    year: 2023,
-    operator: 'TravelEasy Express',
-    status: 'ACTIVE',
-    statusLabel: 'Hoạt động',
-    seatLayout: 'Ghế ngồi 1 tầng 24 chỗ (Limousine)',
-  },
-  {
-    id: 3,
-    plate: '51B-111.22',
-    code: 'v4',
-    type: 'SEATED',
-    floors: 1,
-    year: 2018,
-    operator: 'TravelEasy Express',
-    status: 'INACTIVE',
-    statusLabel: 'Ngừng hoạt động',
-    seatLayout: 'Ghế ngồi 1 tầng 45 chỗ',
-  },
-];
+const DEFAULT_VEHICLES: VehicleItem[] = [];
 
 export const CompanyVehiclesPage: React.FC = () => {
   const [search, setSearch] = useState('');
@@ -89,7 +51,7 @@ export const CompanyVehiclesPage: React.FC = () => {
     setLoading(true);
     try {
       const res = await api.get('/company/vehicles');
-      if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+      if (res.data?.data && Array.isArray(res.data.data)) {
         const list = res.data.data.map((v: any) => ({
           id: v.id,
           plate: v.plate || v.plateNumber,
@@ -104,29 +66,12 @@ export const CompanyVehiclesPage: React.FC = () => {
           image: v.image || v.imageUrl,
         }));
         setVehicles(list);
-        localStorage.setItem('traveleasy_company_vehicles', JSON.stringify(list));
-      } else {
-        loadFromCacheOrDefault();
       }
     } catch (err) {
-      console.warn('API /company/vehicles error, loading fallback:', err);
-      loadFromCacheOrDefault();
+      console.error('API /company/vehicles error:', err);
+      toast.error('Không thể tải danh sách phương tiện từ CSDL', 'Lỗi CSDL');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadFromCacheOrDefault = () => {
-    try {
-      const cached = localStorage.getItem('traveleasy_company_vehicles');
-      if (cached) {
-        setVehicles(JSON.parse(cached));
-      } else {
-        setVehicles(DEFAULT_VEHICLES);
-        localStorage.setItem('traveleasy_company_vehicles', JSON.stringify(DEFAULT_VEHICLES));
-      }
-    } catch {
-      setVehicles(DEFAULT_VEHICLES);
     }
   };
 

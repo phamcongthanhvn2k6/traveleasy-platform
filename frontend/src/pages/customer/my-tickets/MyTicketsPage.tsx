@@ -16,9 +16,12 @@ import {
   XCircle,
   Bus,
   Search,
+  Mail,
 } from 'lucide-react';
 import { PartialCancelModal } from './components/PartialCancelModal';
 import { RescheduleModal } from './components/RescheduleModal';
+import { BoardingPassModal } from '../../../components/BoardingPassModal';
+import { EmailTicketModal } from '../../../components/EmailTicketModal';
 
 export const MyTicketsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,6 +32,8 @@ export const MyTicketsPage: React.FC = () => {
   // Cancel & Reschedule Modals State
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
   const [reschedulingBooking, setReschedulingBooking] = useState<Booking | null>(null);
+  const [selectedBoardingPassBooking, setSelectedBoardingPassBooking] = useState<Booking | null>(null);
+  const [selectedEmailBooking, setSelectedEmailBooking] = useState<Booking | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
 
   // Review Modal State
@@ -36,76 +41,42 @@ export const MyTicketsPage: React.FC = () => {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
 
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('traveleasy_token'));
+
   const fetchMyBookings = async () => {
+    const currentToken = localStorage.getItem('traveleasy_token');
+    setToken(currentToken);
+    if (!currentToken) {
+      setBookings([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await api.get('/bookings/my-bookings');
       if (res.data?.data && Array.isArray(res.data.data)) {
         setBookings(res.data.data);
+      } else {
+        setBookings([]);
       }
     } catch (err: any) {
-      console.warn('Could not fetch user bookings, checking public / fallback:', err);
-      // Fallback sample bookings if newly created
-      setBookings([
-        {
-          id: 101,
-          bookingCode: 'BK-20261021-998',
-          customerName: 'Nguyễn Văn A',
-          customerPhone: '0988 123 456',
-          customerEmail: 'customer@gmail.com',
-          status: 'CONFIRMED',
-          createdAt: new Date().toISOString(),
-          totalAmount: 640000,
-          paymentMethod: 'VNPAY',
-          pickupPointName: 'Bến xe Miền Tây, TP.HCM',
-          dropoffPointName: 'Bến xe Liên tỉnh Đà Lạt',
-          trip: {
-            id: 1,
-            busCompanyId: 1,
-            busCompanyName: 'TravelEasy Express',
-            busCompanyLogo: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150',
-            routeId: 1,
-            originCity: 'TP. Hồ Chí Minh',
-            destinationCity: 'Đà Lạt',
-            distanceKm: 305,
-            durationHours: 6,
-            departureTime: '2026-10-22T07:00:00',
-            arrivalTime: '2026-10-22T13:30:00',
-            busType: 'SLEEPER',
-            price: 320000,
-            totalSeats: 34,
-            availableSeats: 28,
-            status: 'SCHEDULED',
-          },
-          tickets: [
-            {
-              id: 1,
-              ticketCode: 'TK-20261021-01',
-              seatNumber: 'A03',
-              price: 320000,
-              qrCodeHash: 'qr_hash_01',
-              status: 'ISSUED',
-              createdAt: new Date().toISOString(),
-            },
-            {
-              id: 2,
-              ticketCode: 'TK-20261021-02',
-              seatNumber: 'A04',
-              price: 320000,
-              qrCodeHash: 'qr_hash_02',
-              status: 'ISSUED',
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        },
-      ]);
+      console.warn('Could not fetch user bookings:', err);
+      setBookings([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchMyBookings();
+    const currentToken = localStorage.getItem('traveleasy_token');
+    setToken(currentToken);
+    if (currentToken) {
+      fetchMyBookings();
+    } else {
+      setBookings([]);
+      setLoading(false);
+    }
   }, []);
 
   const handleCancelBooking = async () => {
@@ -122,12 +93,7 @@ export const MyTicketsPage: React.FC = () => {
       );
       setCancellingBooking(null);
     } catch (err: any) {
-      // Mock fallback
-      toast.success(`Đã hủy vé ${cancellingBooking.bookingCode} thành công!`, 'Hủy Vé Thành Công');
-      setBookings((prev) =>
-        prev.map((b) => (b.id === cancellingBooking.id ? { ...b, status: 'CANCELLED' } : b))
-      );
-      setCancellingBooking(null);
+      toast.error(err.response?.data?.message || 'Không thể hủy vé vào lúc này. Vui lòng liên hệ tổng đài hỗ trợ!', 'Hủy Vé Thất Bại');
     } finally {
       setCancelLoading(false);
     }
@@ -191,71 +157,87 @@ export const MyTicketsPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Guest mode warning if unauthenticated */}
-        {!localStorage.getItem('traveleasy_token') && (
+        {!token ? (
           <div
             style={{
-              backgroundColor: '#eff6ff',
-              border: '1px solid #bfdbfe',
-              borderRadius: '12px',
-              padding: '14px 18px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '12px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '16px',
+              padding: '50px 24px',
+              textAlign: 'center',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.03)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <AlertTriangle size={20} color="#2563eb" style={{ flexShrink: 0 }} />
-              <div>
-                <div style={{ fontWeight: 800, fontSize: '14px', color: '#1e3a8a' }}>
-                  Bạn đang xem ở chế độ Khách vãng lai
-                </div>
-                <div style={{ fontSize: '12.5px', color: '#475569', marginTop: '2px' }}>
-                  Đăng nhập để hệ thống tự động đồng bộ tất cả vé đã đặt của bạn, hoặc dùng mã đơn để tra cứu vé.
-                </div>
-              </div>
+            <div
+              style={{
+                width: '68px',
+                height: '68px',
+                borderRadius: '50%',
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 18px auto',
+              }}
+            >
+              <Ticket size={34} />
             </div>
-
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '0 0 10px 0' }}>
+              Vui Lòng Đăng Nhập Để Xem Vé Của Bạn
+            </h3>
+            <p
+              style={{
+                fontSize: '14.5px',
+                color: '#64748b',
+                maxWidth: '520px',
+                margin: '0 auto 26px auto',
+                lineHeight: 1.6,
+              }}
+            >
+              Bạn đang ở chế độ <strong>Khách vãng lai</strong> nên chưa thể xem vé cá nhân. Vui lòng đăng nhập để hệ thống tự động đồng bộ tất cả vé đã đặt của bạn, lấy mã QR lên xe hoặc sử dụng tính năng tra cứu vé bằng mã đơn.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={() => navigate('/auth?redirect=/my-tickets')}
                 style={{
                   backgroundColor: '#2563eb',
                   color: '#ffffff',
                   border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
+                  padding: '12px 26px',
+                  borderRadius: '10px',
                   fontWeight: 700,
-                  fontSize: '13px',
+                  fontSize: '14px',
                   cursor: 'pointer',
+                  boxShadow: '0 4px 10px rgba(37, 99, 235, 0.25)',
                 }}
               >
-                Đăng Nhập Ngay
+                Đăng Nhập / Đăng Ký Ngay
               </button>
               <button
                 onClick={() => navigate('/lookup')}
                 style={{
-                  backgroundColor: '#ffffff',
-                  color: '#2563eb',
-                  border: '1px solid #bfdbfe',
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  fontSize: '13px',
+                  backgroundColor: '#f8fafc',
+                  color: '#334155',
+                  border: '1px solid #cbd5e1',
+                  padding: '12px 24px',
+                  borderRadius: '10px',
+                  fontWeight: 700,
+                  fontSize: '14px',
                   cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}
               >
-                Tra Cứu Mã Vé
+                <Search size={16} /> Tra Cứu Bằng Mã Đặt Chỗ
               </button>
             </div>
           </div>
-        )}
-
-        {/* Status Tabs */}
-        <div
+        ) : (
+          <>
+            {/* Status Tabs */}
+            <div
           style={{
             display: 'flex',
             gap: '10px',
@@ -307,6 +289,8 @@ export const MyTicketsPage: React.FC = () => {
               const isCancelled = booking.status === 'CANCELLED';
               const isConfirmed = booking.status === 'CONFIRMED';
               const isCompleted = booking.status === 'COMPLETED';
+              const isPastDeparture = Boolean(booking.trip?.departureTime && new Date(booking.trip.departureTime) < new Date());
+              const isTripFinished = isCompleted || isPastDeparture;
 
               return (
                 <div
@@ -434,6 +418,44 @@ export const MyTicketsPage: React.FC = () => {
                       <QrCode size={15} /> Xem vé QR lên xe
                     </button>
 
+                    <button
+                      onClick={() => setSelectedBoardingPassBooking(booking)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        backgroundColor: '#f0fdf4',
+                        color: '#166534',
+                        border: '1px solid #bbf7d0',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Ticket size={15} /> Thẻ Lên Xe / Tải PDF
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedEmailBooking(booking)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        backgroundColor: '#eff6ff',
+                        color: '#1d4ed8',
+                        border: '1px solid #bfdbfe',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Mail size={15} /> Gửi Email / VAT
+                    </button>
+
                     {isConfirmed && (
                       <button
                         onClick={() => setReschedulingBooking(booking)}
@@ -476,25 +498,45 @@ export const MyTicketsPage: React.FC = () => {
                       </button>
                     )}
 
-                    {(isCompleted || isConfirmed) && (
-                      <button
-                        onClick={() => setReviewBooking(booking)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          backgroundColor: '#fff',
-                          color: '#d97706',
-                          border: '1px solid #fcd34d',
-                          padding: '8px 16px',
-                          borderRadius: '8px',
-                          fontWeight: 700,
-                          fontSize: '13px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <Star size={15} /> Đánh giá chuyến xe
-                      </button>
+                    {!isCancelled && (
+                      isTripFinished ? (
+                        <button
+                          onClick={() => navigate(`/reviews?bookingCode=${booking.bookingCode}`)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            backgroundColor: '#fffbeb',
+                            color: '#d97706',
+                            border: '1px solid #fcd34d',
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            fontWeight: 700,
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <Star size={15} fill="#d97706" /> Đánh giá chuyến xe
+                        </button>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: '12px',
+                            color: '#64748b',
+                            padding: '8px 14px',
+                            backgroundColor: '#f1f5f9',
+                            borderRadius: '8px',
+                            border: '1px dashed #cbd5e1',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontWeight: 600,
+                          }}
+                          title="Đánh giá sẽ mở sau khi chuyến xe hoàn tất hành trình"
+                        >
+                          <Clock size={13} /> Đánh giá mở sau chuyến đi
+                        </span>
+                      )
                     )}
                   </div>
                 </div>
@@ -537,6 +579,8 @@ export const MyTicketsPage: React.FC = () => {
               <Search size={16} /> Tìm Chuyến Xe Ngay
             </button>
           </div>
+        )}
+          </>
         )}
 
         {/* Modal: Partial Cancel Booking (UC-1.11) */}
@@ -656,6 +700,23 @@ export const MyTicketsPage: React.FC = () => {
               </div>
             </div>
           </div>
+        )}
+        {/* Boarding Pass Modal */}
+        {selectedBoardingPassBooking && (
+          <BoardingPassModal
+            booking={selectedBoardingPassBooking}
+            isOpen={Boolean(selectedBoardingPassBooking)}
+            onClose={() => setSelectedBoardingPassBooking(null)}
+          />
+        )}
+
+        {/* Email & VAT Invoice Modal */}
+        {selectedEmailBooking && (
+          <EmailTicketModal
+            booking={selectedEmailBooking}
+            isOpen={Boolean(selectedEmailBooking)}
+            onClose={() => setSelectedEmailBooking(null)}
+          />
         )}
       </div>
     </div>

@@ -1,145 +1,587 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Bot, X, Send, Sparkles } from 'lucide-react';
+import { Bot, X, Send, Sparkles, MapPin, ArrowRight, RotateCcw, MessageSquare, ChevronDown } from 'lucide-react';
+
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'ai';
+  text: string;
+  suggestedRoute?: string | null;
+  time: string;
+}
+
+const DEFAULT_MESSAGES: ChatMessage[] = [
+  {
+    id: 'welcome-1',
+    sender: 'ai',
+    text: 'Xin chào! Tôi là Trợ lý AI Thông Minh của TravelEasy 🚌✨\n\nTôi có thể giúp bạn:\n• Tìm tuyến xe khách chất lượng & giá tốt nhất\n• Tư vấn vị trí giường nằm êm ái, chống say xe\n• Giải đáp chính sách hủy/đổi vé & thanh toán VietQR/VNPAY\n\nBạn muốn khởi hành đi đâu hôm nay?',
+    suggestedRoute: null,
+    time: 'Vừa xong',
+  },
+];
+
+const QUICK_PROMPTS = [
+  { label: '🏔️ Đi Đà Lạt xe nào tốt?', query: 'Tư vấn chuyến đi Đà Lạt giúp tôi, xe nào chất lượng và êm ái nhất?' },
+  { label: '🏖️ Vé xe Sài Gòn - Nha Trang?', query: 'Xe đi Nha Trang từ TP. Hồ Chí Minh giá bao nhiêu, chạy cao tốc mất mấy tiếng?' },
+  { label: '🌲 Xe cabin Hà Nội - Sa Pa?', query: 'Có chuyến xe giường nằm hoặc cabin đôi nào từ Hà Nội đi Sa Pa không?' },
+  { label: '💺 Chọn giường nào đỡ say xe?', query: 'Đi xe giường nằm thì nên chọn vị trí ghế nào để không bị say xe?' },
+  { label: '🛡️ Chính sách hủy vé hoàn tiền?', query: 'Chính sách hủy vé và hoàn tiền của TravelEasy như thế nào?' },
+  { label: '🎟️ Có mã giảm giá nào không?', query: 'Hiện tại sàn TravelEasy đang có những mã voucher ưu đãi nào?' },
+];
 
 export const AiAssistantWidget: React.FC = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<{ sender: 'user' | 'ai'; text: string }[]>([
-    { sender: 'ai', text: 'Xin chào! Tôi là Trợ lý AI TravelEasy. Bạn cần tư vấn kinh nghiệm du lịch, chọn vị trí giường nằm chống say hay tra cứu tuyến xe nào?' }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>(DEFAULT_MESSAGES);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [unreadPulse, setUnreadPulse] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      scrollToBottom();
+      setUnreadPulse(false);
+    }
+  }, [messages, isOpen]);
+
+  const getCurrentTime = () => {
+    const d = new Date();
+    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  };
 
   const handleSend = async (customText?: string) => {
-    const textToSend = customText || input;
-    if (!textToSend.trim()) return;
+    const textToSend = (customText || input).trim();
+    if (!textToSend || loading) return;
 
-    setMessages(prev => [...prev, { sender: 'user', text: textToSend }]);
+    const userMsg: ChatMessage = {
+      id: `u-${Date.now()}`,
+      sender: 'user',
+      text: textToSend,
+      time: getCurrentTime(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
     if (!customText) setInput('');
     setLoading(true);
 
     try {
       const res = await api.post('/ai/chat', { message: textToSend });
-      setMessages(prev => [...prev, { sender: 'ai', text: res.data.data.reply }]);
+      const data = res.data?.data || {};
+
+      let reply = data.reply || 'Cảm ơn bạn đã hỏi! TravelEasy luôn sẵn sàng đồng hành cùng bạn.';
+      let route = data.suggestedRoute || null;
+
+      // Extra client intelligence if general keyword matched
+      const lower = textToSend.toLowerCase();
+      if (!route) {
+        if (lower.includes('đà lạt') || lower.includes('da lat')) {
+          route = 'TP. Hồ Chí Minh -> Đà Lạt';
+        } else if (lower.includes('nha trang')) {
+          route = 'TP. Hồ Chí Minh -> Nha Trang';
+        } else if (lower.includes('sa pa') || lower.includes('sapa') || lower.includes('lào cai')) {
+          route = 'Hà Nội -> Sa Pa';
+        } else if (lower.includes('vũng tàu')) {
+          route = 'TP. Hồ Chí Minh -> Vũng Tàu';
+        } else if (lower.includes('phan thiết') || lower.includes('mũi né')) {
+          route = 'TP. Hồ Chí Minh -> Phan Thiết';
+        }
+      }
+
+      if (lower.includes('mã giảm') || lower.includes('voucher') || lower.includes('khuyến mãi') || lower.includes('ưu đãi')) {
+        reply = '🎉 TravelEasy đang có các mã ưu đãi độc quyền hôm nay:\n• TRAVELEASY: Giảm ngay 50.000 đ cho khách hàng mới\n• GIAM20: Giảm 20% khi đặt từ 2 vé\n• VEXEREVIP: Giảm 50.000 đ tri ân khách hàng thân thiết\n• HE2026: Giảm 30.000 đ mùa du lịch\n\nBạn có thể nhập trực tiếp các mã này tại bước Thanh toán đơn vé nhé!';
+      }
+
+      const aiMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        sender: 'ai',
+        text: reply,
+        suggestedRoute: route,
+        time: getCurrentTime(),
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
     } catch (err) {
-      setMessages(prev => [...prev, { sender: 'ai', text: 'Xin lỗi, trợ lý AI hiện đang bận. Vui lòng thử lại sau!' }]);
+      console.error('AI chat failed:', err);
+      const fallbackMsg: ChatMessage = {
+        id: `ai-err-${Date.now()}`,
+        sender: 'ai',
+        text: 'Xin chào bạn! Hệ thống trợ lý AI đang tiếp nhận rất nhiều lượt tư vấn. Đội ngũ TravelEasy luôn sẵn sàng hỗ trợ trực tiếp qua tổng đài 1900 8888 hoặc bạn có thể tìm kiếm chuyến xe ngay trên thanh tìm kiếm nhé!',
+        time: getCurrentTime(),
+      };
+      setMessages((prev) => [...prev, fallbackMsg]);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleRouteNavigate = (routeStr: string) => {
+    // Route format: "TP. Hồ Chí Minh -> Đà Lạt"
+    const parts = routeStr.split('->').map((p) => p.trim());
+    const origin = parts[0] || 'TP. Hồ Chí Minh';
+    const destination = parts[1] || 'Đà Lạt';
+
+    setIsOpen(false);
+    navigate(`/search?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`);
+  };
+
+  const handleResetChat = () => {
+    setMessages(DEFAULT_MESSAGES);
+  };
+
   return (
     <>
-      {/* Floating button */}
+      <style>{`
+        @keyframes pulseGlow {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6), 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+          }
+          50% {
+            box-shadow: 0 0 0 12px rgba(37, 99, 235, 0), 0 12px 30px -5px rgba(37, 99, 235, 0.5);
+          }
+        }
+        @keyframes bounceDot {
+          0%, 80%, 100% { transform: scale(0); }
+          40% { transform: scale(1.0); }
+        }
+        .ai-chat-bubble pre {
+          white-space: pre-wrap;
+          font-family: inherit;
+        }
+      `}</style>
+
+      {/* Floating launcher button */}
       {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
+        <div
           style={{
             position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            backgroundColor: '#2563eb',
-            color: '#fff',
-            borderRadius: '50px',
-            padding: '14px 20px',
-            border: 'none',
-            boxShadow: '0 10px 25px -5px rgba(37, 99, 235, 0.4)',
+            bottom: '26px',
+            right: '26px',
+            zIndex: 9990,
             display: 'flex',
-            alignItems: 'center',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
             gap: '8px',
-            fontWeight: 700,
-            fontSize: '14px',
-            zIndex: 90,
-            cursor: 'pointer'
           }}
         >
-          <Bot size={20} />
-          <span>Hỏi Trợ Lý AI</span>
-        </button>
+          {unreadPulse && (
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                border: '1px solid #bfdbfe',
+                borderRadius: '12px',
+                padding: '8px 12px',
+                boxShadow: '0 10px 20px -3px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#1e3a8a',
+                cursor: 'pointer',
+                animation: 'pulseGlow 2.5s infinite',
+              }}
+              onClick={() => setIsOpen(true)}
+            >
+              <Sparkles size={14} color="#f59e0b" />
+              <span>Cần trợ lý AI tư vấn chuyến đi?</span>
+              <span
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#10b981',
+                }}
+              />
+            </div>
+          )}
+
+          <button
+            onClick={() => setIsOpen(true)}
+            style={{
+              backgroundColor: '#2563eb',
+              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+              color: '#ffffff',
+              borderRadius: '50px',
+              padding: '14px 22px',
+              border: 'none',
+              boxShadow: '0 10px 25px -5px rgba(37, 99, 235, 0.45)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              fontWeight: 800,
+              fontSize: '14px',
+              cursor: 'pointer',
+              transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0) scale(1)')}
+          >
+            <div
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Bot size={18} color="#ffffff" />
+            </div>
+            <span>Hỏi Trợ Lý AI</span>
+            <span
+              style={{
+                backgroundColor: '#10b981',
+                color: '#ffffff',
+                fontSize: '10px',
+                fontWeight: 800,
+                padding: '2px 6px',
+                borderRadius: '10px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.4px',
+              }}
+            >
+              24/7
+            </span>
+          </button>
+        </div>
       )}
 
-      {/* Chat Window */}
+      {/* Modern AI Chat Window */}
       {isOpen && (
-        <div style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          width: '360px',
-          height: '500px',
-          backgroundColor: '#fff',
-          borderRadius: '16px',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
-          display: 'flex',
-          flexDirection: 'column',
-          zIndex: 90,
-          border: '1px solid #e2e8f0',
-          overflow: 'hidden'
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '26px',
+            right: '26px',
+            width: '390px',
+            maxWidth: 'calc(100vw - 32px)',
+            height: '600px',
+            maxHeight: 'calc(100vh - 50px)',
+            backgroundColor: '#ffffff',
+            borderRadius: '20px',
+            boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.35)',
+            display: 'flex',
+            flexDirection: 'column',
+            zIndex: 9999,
+            border: '1px solid #e2e8f0',
+            overflow: 'hidden',
+          }}
+        >
           {/* Header */}
-          <div style={{ backgroundColor: '#2563eb', color: '#fff', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Sparkles size={18} />
-              <span style={{ fontWeight: 700, fontSize: '15px' }}>Trợ Lý Du Lịch AI</span>
-            </div>
-            <button onClick={() => setIsOpen(false)} style={{ background: 'none', border: 'none', color: '#fff' }}>
-              <X size={18} />
-            </button>
-          </div>
-
-          {/* Quick Prompts */}
-          <div style={{ padding: '8px 12px', backgroundColor: '#eff6ff', display: 'flex', gap: '6px', overflowX: 'auto', whiteSpace: 'nowrap' }}>
-            <button 
-              onClick={() => handleSend('Xe Sài Gòn đi Đà Lạt?')}
-              style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '12px', border: '1px solid #bfdbfe', background: '#fff', color: '#1e40af' }}>
-              Sài Gòn - Đà Lạt
-            </button>
-            <button 
-              onClick={() => handleSend('Ghế nào đỡ say xe?')}
-              style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '12px', border: '1px solid #bfdbfe', background: '#fff', color: '#1e40af' }}>
-              Ghế chống say xe
-            </button>
-            <button 
-              onClick={() => handleSend('Chính sách huỷ vé?')}
-              style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '12px', border: '1px solid #bfdbfe', background: '#fff', color: '#1e40af' }}>
-              Chính sách hủy vé
-            </button>
-          </div>
-
-          {/* Messages */}
-          <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {messages.map((m, idx) => (
-              <div 
-                key={idx} 
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
+              color: '#ffffff',
+              padding: '16px 20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
                 style={{
-                  alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start',
-                  backgroundColor: m.sender === 'user' ? '#2563eb' : '#f1f5f9',
-                  color: m.sender === 'user' ? '#fff' : '#1e293b',
-                  padding: '10px 14px',
+                  width: '38px',
+                  height: '38px',
                   borderRadius: '12px',
-                  maxWidth: '80%',
-                  fontSize: '13px',
-                  lineHeight: 1.4
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(5px)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
                 }}
               >
-                {m.text}
+                <Bot size={22} color="#ffffff" />
               </div>
-            ))}
-            {loading && <div style={{ fontSize: '12px', color: '#64748b' }}>AI đang soạn câu trả lời...</div>}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontWeight: 800, fontSize: '15px' }}>Trợ Lý Du Lịch AI</span>
+                  <span
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: '#22c55e',
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: '11px', color: '#bfdbfe', marginTop: '1px' }}>
+                  TravelEasy Smart Travel Assistant
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button
+                onClick={handleResetChat}
+                title="Làm mới đoạn hội thoại"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: 'none',
+                  color: '#ffffff',
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <RotateCcw size={14} />
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                title="Thu nhỏ cửa sổ"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: 'none',
+                  color: '#ffffff',
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
 
-          {/* Input */}
-          <div style={{ padding: '12px', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '8px' }}>
-            <input 
-              type="text" 
-              placeholder="Đặt câu hỏi cho AI..."
+          {/* Quick Prompts Carousel Bar */}
+          <div
+            style={{
+              padding: '10px 14px',
+              backgroundColor: '#f8fafc',
+              borderBottom: '1px solid #e2e8f0',
+              display: 'flex',
+              gap: '8px',
+              overflowX: 'auto',
+              whiteSpace: 'nowrap',
+              scrollbarWidth: 'none',
+            }}
+          >
+            {QUICK_PROMPTS.map((p, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSend(p.query)}
+                style={{
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  padding: '5px 11px',
+                  borderRadius: '16px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#1e293b',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#eff6ff';
+                  e.currentTarget.style.borderColor = '#93c5fd';
+                  e.currentTarget.style.color = '#1d4ed8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#ffffff';
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                  e.currentTarget.style.color = '#1e293b';
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Chat Messages Body */}
+          <div
+            style={{
+              flex: 1,
+              padding: '16px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              backgroundColor: '#f8fafc',
+            }}
+          >
+            {messages.map((m) => {
+              const isUser = m.sender === 'user';
+              return (
+                <div
+                  key={m.id}
+                  style={{
+                    alignSelf: isUser ? 'flex-end' : 'flex-start',
+                    maxWidth: '85%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: isUser ? 'flex-end' : 'flex-start',
+                  }}
+                >
+                  <div
+                    style={{
+                      backgroundColor: isUser ? '#2563eb' : '#ffffff',
+                      color: isUser ? '#ffffff' : '#0f172a',
+                      padding: '12px 16px',
+                      borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                      fontSize: '13px',
+                      lineHeight: 1.5,
+                      boxShadow: isUser
+                        ? '0 4px 12px rgba(37, 99, 235, 0.25)'
+                        : '0 2px 6px rgba(0, 0, 0, 0.05)',
+                      border: isUser ? 'none' : '1px solid #e2e8f0',
+                      whiteSpace: 'pre-line',
+                    }}
+                  >
+                    {m.text}
+
+                    {/* Interactive Route Navigation Card */}
+                    {m.suggestedRoute && (
+                      <div
+                        style={{
+                          marginTop: '12px',
+                          padding: '10px 12px',
+                          backgroundColor: '#eff6ff',
+                          borderRadius: '10px',
+                          border: '1px solid #bfdbfe',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: '#1e40af' }}>
+                          <MapPin size={13} color="#2563eb" />
+                          <span>GỢI Ý TUYẾN ĐƯỜNG PHÙ HỢP:</span>
+                        </div>
+                        <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>
+                          {m.suggestedRoute}
+                        </div>
+                        <button
+                          onClick={() => handleRouteNavigate(m.suggestedRoute!)}
+                          style={{
+                            marginTop: '4px',
+                            backgroundColor: '#2563eb',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '7px 12px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            boxShadow: '0 2px 4px rgba(37,99,235,0.2)',
+                          }}
+                        >
+                          <span>Xem vé & Đặt chuyến này</span>
+                          <ArrowRight size={13} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <span
+                    style={{
+                      fontSize: '10.5px',
+                      color: '#94a3b8',
+                      marginTop: '4px',
+                      padding: '0 4px',
+                    }}
+                  >
+                    {m.time}
+                  </span>
+                </div>
+              );
+            })}
+
+            {/* Typing Indicator */}
+            {loading && (
+              <div
+                style={{
+                  alignSelf: 'flex-start',
+                  backgroundColor: '#ffffff',
+                  padding: '12px 18px',
+                  borderRadius: '18px 18px 18px 4px',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#2563eb', animation: 'bounceDot 1.4s infinite ease-in-out both', animationDelay: '0s' }} />
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#2563eb', animation: 'bounceDot 1.4s infinite ease-in-out both', animationDelay: '0.2s' }} />
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#2563eb', animation: 'bounceDot 1.4s infinite ease-in-out both', animationDelay: '0.4s' }} />
+                <span style={{ fontSize: '12px', color: '#64748b', marginLeft: '4px', fontWeight: 600 }}>
+                  AI đang tư vấn...
+                </span>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input Footer */}
+          <div
+            style={{
+              padding: '14px 16px',
+              backgroundColor: '#ffffff',
+              borderTop: '1px solid #e2e8f0',
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'center',
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Nhập câu hỏi (Ví dụ: Chuyến xe đi Đà Lạt...)"
               value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSend()}
-              style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              style={{
+                flex: 1,
+                padding: '10px 14px',
+                borderRadius: '12px',
+                border: '1px solid #cbd5e1',
+                fontSize: '13px',
+                outline: 'none',
+                backgroundColor: '#f8fafc',
+                transition: 'border-color 0.2s ease',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
+              onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
             />
-            <button 
+            <button
               onClick={() => handleSend()}
-              style={{ backgroundColor: '#2563eb', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '8px' }}
+              disabled={loading || !input.trim()}
+              style={{
+                backgroundColor: input.trim() && !loading ? '#2563eb' : '#cbd5e1',
+                color: '#ffffff',
+                border: 'none',
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
+                transition: 'all 0.15s ease',
+                flexShrink: 0,
+              }}
             >
               <Send size={16} />
             </button>
@@ -149,3 +591,5 @@ export const AiAssistantWidget: React.FC = () => {
     </>
   );
 };
+
+export default AiAssistantWidget;

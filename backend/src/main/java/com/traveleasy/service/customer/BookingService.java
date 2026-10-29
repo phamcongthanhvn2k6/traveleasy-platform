@@ -7,6 +7,7 @@ import com.traveleasy.dto.booking.CreateBookingRequest;
 import com.traveleasy.dto.booking.TicketResponse;
 import com.traveleasy.entity.*;
 import com.traveleasy.repository.*;
+import com.traveleasy.service.realtime.SeatRealtimeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -31,6 +32,7 @@ public class BookingService {
     private final PickupDropoffPointRepository pointRepository;
     private final UserRepository userRepository;
     private final TripService tripService;
+    private final SeatRealtimeService seatRealtimeService;
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public BookingResponse createBooking(CreateBookingRequest request, String userEmail) {
@@ -38,7 +40,11 @@ public class BookingService {
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe"));
 
         if (trip.getStatus() != TripStatus.SCHEDULED) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe không còn mở bán vé");
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe không còn mở bán vé (Trạng thái: " + trip.getStatus() + ")");
+        }
+
+        if (trip.getDepartureTime() != null && trip.getDepartureTime().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe đã khởi hành vào " + trip.getDepartureTime() + ", không thể đặt vé");
         }
 
         if (trip.getBusCompany() != null && "SUSPENDED".equalsIgnoreCase(trip.getBusCompany().getStatus())) {
@@ -54,7 +60,7 @@ public class BookingService {
         }
 
         for (TripSeat seat : requestedSeats) {
-            if (seat.getStatus() != SeatStatus.AVAILABLE) {
+            if (seat.getStatus() == SeatStatus.BOOKED) {
                 throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED, "Ghế " + seat.getSeatCode() + " vừa được người khác đặt. Vui lòng chọn ghế khác!");
             }
         }
@@ -128,6 +134,10 @@ public class BookingService {
         }
         ticketRepository.saveAll(tickets);
 
+        // Phát broadcast cập nhật thời gian thực các ghế đã được đặt mua thành công (Màu Xám - BOOKED)
+        List<String> bookedCodes = requestedSeats.stream().map(TripSeat::getSeatCode).collect(Collectors.toList());
+        seatRealtimeService.broadcastBooked(trip.getId(), bookedCodes);
+
         return mapToBookingResponse(savedBooking, tickets);
     }
 
@@ -159,6 +169,13 @@ public class BookingService {
         if (booking.getStatus() == BookingStatus.CANCELLED) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé này đã bị hủy trước đó");
         }
+        if (booking.getStatus() == BookingStatus.COMPLETED) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé đã hoàn thành chuyến đi, không thể hủy");
+        }
+        if (booking.getTrip() != null && booking.getTrip().getDepartureTime() != null &&
+                booking.getTrip().getDepartureTime().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe đã khởi hành, không thể hủy vé trực tuyến");
+        }
 
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
@@ -183,6 +200,9 @@ public class BookingService {
         trip.setAvailableSeats(trip.getAvailableSeats() + tickets.size());
         tripRepository.save(trip);
 
+        // Broadcast thời gian thực ghế đã được giải phóng (Màu Trắng - AVAILABLE)
+        seatRealtimeService.broadcastReleased(trip.getId(), seatCodes);
+
         return mapToBookingResponse(booking, tickets);
     }
 
@@ -190,6 +210,17 @@ public class BookingService {
     public BookingResponse cancelPartialTickets(Long bookingId, List<Long> ticketIds, String userEmail) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé"));
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé này đã bị hủy trước đó");
+        }
+        if (booking.getStatus() == BookingStatus.COMPLETED) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé đã hoàn thành chuyến đi, không thể hủy vé");
+        }
+        if (booking.getTrip() != null && booking.getTrip().getDepartureTime() != null &&
+                booking.getTrip().getDepartureTime().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe đã khởi hành, không thể hủy vé trực tuyến");
+        }
 
         List<Ticket> allTickets = ticketRepository.findByBookingId(booking.getId());
         List<String> releasedSeats = new ArrayList<>();
@@ -212,6 +243,9 @@ public class BookingService {
             Trip trip = booking.getTrip();
             trip.setAvailableSeats(trip.getAvailableSeats() + releasedSeats.size());
             tripRepository.save(trip);
+
+            // Broadcast thời gian thực ghế đã được giải phóng (Màu Trắng - AVAILABLE)
+            seatRealtimeService.broadcastReleased(trip.getId(), releasedSeats);
         }
 
         boolean allCancelled = allTickets.stream().allMatch(t -> t.getStatus() == TicketStatus.CANCELLED);
@@ -228,6 +262,17 @@ public class BookingService {
         Booking oldBooking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé"));
 
+        if (oldBooking.getStatus() == BookingStatus.CANCELLED) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé đã bị hủy, không thể đổi chuyến");
+        }
+        if (oldBooking.getStatus() == BookingStatus.COMPLETED) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé đã hoàn thành chuyến đi, không thể đổi chuyến");
+        }
+        if (oldBooking.getTrip() != null && oldBooking.getTrip().getDepartureTime() != null &&
+                oldBooking.getTrip().getDepartureTime().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe hiện tại đã khởi hành, không thể đổi vé trực tuyến");
+        }
+
         Ticket oldTicket = ticketRepository.findById(oldTicketId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy vé cần đổi"));
 
@@ -235,8 +280,19 @@ public class BookingService {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Vé này đã bị hủy, không thể đổi chuyến");
         }
 
+        if (newTripId.equals(oldBooking.getTrip().getId()) && newSeatNumber.equalsIgnoreCase(oldTicket.getSeatNumber())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Bạn đang chọn trùng chuyến xe và ghế ngồi hiện tại");
+        }
+
         Trip newTrip = tripRepository.findById(newTripId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe mới"));
+
+        if (newTrip.getStatus() != TripStatus.SCHEDULED) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe mới không còn mở bán vé (Trạng thái: " + newTrip.getStatus() + ")");
+        }
+        if (newTrip.getDepartureTime() != null && newTrip.getDepartureTime().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe mới đã khởi hành trong quá khứ");
+        }
 
         // Release old seat
         List<TripSeat> oldSeats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(oldBooking.getTrip().getId(), List.of(oldTicket.getSeatNumber()));

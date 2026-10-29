@@ -29,7 +29,10 @@ public class BookingController {
     public ApiResponse<BookingResponse> createBooking(
             @Valid @RequestBody CreateBookingRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails != null ? userDetails.getUsername() : null;
+        if (userDetails == null) {
+            return ApiResponse.error("Vui lòng đăng nhập tài khoản để tiến hành đặt vé và thanh toán");
+        }
+        String email = userDetails.getUsername();
         return ApiResponse.success("Đặt vé thành công", bookingService.createBooking(request, email));
     }
 
@@ -42,6 +45,9 @@ public class BookingController {
     @GetMapping("/my-bookings")
     @Operation(summary = "Lấy danh sách vé đã đặt của người dùng hiện tại")
     public ApiResponse<List<BookingResponse>> getMyBookings(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ApiResponse.error("Vui lòng đăng nhập để xem danh sách vé của bạn");
+        }
         return ApiResponse.success(bookingService.getUserBookings(userDetails.getUsername()));
     }
 
@@ -58,7 +64,7 @@ public class BookingController {
     @Operation(summary = "Hủy từng vé cụ thể trong đơn (Partial Cancellation - UC-1.11)")
     public ApiResponse<BookingResponse> cancelPartial(
             @PathVariable Long id,
-            @RequestBody CancelPartialRequest request,
+            @Valid @RequestBody CancelPartialRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails != null ? userDetails.getUsername() : null;
         return ApiResponse.success("Hủy vé từng phần thành công", bookingService.cancelPartialTickets(id, request.getTicketIds(), email));
@@ -68,7 +74,7 @@ public class BookingController {
     @Operation(summary = "Yêu cầu đổi ngày / đổi chuyến sang chuyến mới (Reschedule - UC-1.16)")
     public ApiResponse<BookingResponse> reschedule(
             @PathVariable Long id,
-            @RequestBody RescheduleRequest request,
+            @Valid @RequestBody RescheduleRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails != null ? userDetails.getUsername() : null;
         return ApiResponse.success("Đổi chuyến thành công", bookingService.rescheduleTicket(

@@ -44,11 +44,8 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
         );
       }
     } catch (err) {
-      console.warn('Could not fetch cancellation policies from API, fallback:', err);
-      setPolicies([
-        { id: 1, name: 'Chính sách hoàn hủy mặc định sàn', companyName: 'Hệ thống toàn sàn', isSystem: true, isDefault: true, description: 'Trước 24h: hoàn 90%, từ 12h-24h: hoàn 50%, dưới 12h: không hoàn tiền', rulesCount: 3 },
-        { id: 2, name: 'Chính sách VIP TravelEasy Express', companyName: 'TravelEasy Express', isSystem: false, isDefault: false, description: 'Trước 24h: hoàn 100%, từ 6h-24h: hoàn 70%, dưới 6h: không hoàn', rulesCount: 3 },
-      ]);
+      console.error('Could not fetch cancellation policies from API:', err);
+      setPolicies([]);
     } finally {
       setLoading(false);
     }

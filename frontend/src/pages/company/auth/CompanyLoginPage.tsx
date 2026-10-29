@@ -177,26 +177,49 @@ export const CompanyLoginPage: React.FC = () => {
             }}
           >
             <div>{errorMsg}</div>
-            {isAdminAttempt && (
-              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed rgba(239, 68, 68, 0.35)' }}>
-                <Link
-                  to="/admin/login"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    color: '#38bdf8',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    fontSize: '12.5px',
-                  }}
-                >
-                  🛡️ Đi đến Cổng Quản Trị Hệ Thống (Admin Portal) ngay →
-                </Link>
-              </div>
-            )}
           </div>
         )}
+
+        {/* Quick Demo Accounts Selection */}
+        <div style={{ marginBottom: '20px', padding: '12px 14px', backgroundColor: 'rgba(13, 148, 136, 0.1)', border: '1px solid rgba(13, 148, 136, 0.25)', borderRadius: '10px' }}>
+          <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#2dd4bf', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <KeyRound size={13} /> Tài khoản đối tác nhà xe mẫu (Mật khẩu demo: 123456789@)
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {[
+              { label: 'Sao Việt Express', email: 'dieuhanh@xesaoviet.com.vn' },
+              { label: 'TravelEasy Express', email: 'partner@traveleasy.vn' },
+              { label: 'Thành Bưởi', email: 'dieuhanh@thanhbuoi.com.vn' },
+              { label: 'Phương Trang FUTA', email: 'dieuhanh@futabus.vn' },
+              { label: 'Hải Vân Express', email: 'dieuhanh@haivan.com' },
+              { label: 'Hoa Mai Vũng Tàu', email: 'dieuhanh@hoamaivungtau.com.vn' },
+              { label: 'Hà Lan Limousine', email: 'dieuhanh@halan.com.vn' },
+              { label: 'Liên Hưng Nha Trang', email: 'dieuhanh@xekhachlienhung.com' },
+            ].map((acc, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setIdentifier(acc.email);
+                  setPassword('123456789@');
+                }}
+                style={{
+                  background: identifier === acc.email ? 'rgba(45, 212, 191, 0.3)' : 'rgba(255, 255, 255, 0.08)',
+                  color: identifier === acc.email ? '#2dd4bf' : '#e2e8f0',
+                  border: identifier === acc.email ? '1px solid #2dd4bf' : '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s'
+                }}
+              >
+                {acc.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
@@ -309,21 +332,6 @@ export const CompanyLoginPage: React.FC = () => {
           >
             <ArrowLeft size={14} /> Quay lại Trang Chủ Đặt Vé
           </Link>
-
-          <div style={{ paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <span style={{ color: '#94a3b8', fontSize: '12px' }}>Bạn là Quản trị viên Sàn tổng? </span>
-            <Link
-              to="/admin/login"
-              style={{
-                color: '#38bdf8',
-                fontSize: '12px',
-                fontWeight: 700,
-                textDecoration: 'none',
-              }}
-            >
-              Đăng nhập Quản Trị Hệ Thống (Admin) →
-            </Link>
-          </div>
         </div>
       </div>
     </div>

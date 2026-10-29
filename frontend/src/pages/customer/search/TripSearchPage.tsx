@@ -6,6 +6,7 @@ import { TripSearchHeader } from './components/TripSearchHeader';
 import { FilterSidebar, FilterState } from './components/FilterSidebar';
 import { SortTabBar, SortOption } from './components/SortTabBar';
 import { TripResultCard } from './components/TripResultCard';
+import { Pagination } from '../../../components/Pagination';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { toast } from '../../../context/ToastContext';
 import { Bus, AlertCircle } from 'lucide-react';
@@ -25,10 +26,15 @@ export const TripSearchPage: React.FC = () => {
   // Sorting and Filtering State
   const [sortOption, setSortOption] = useState<SortOption>('DEFAULT');
   const [filters, setFilters] = useState<FilterState>({
+    timeRange: [0, 24],
     timeSlots: [],
     priceRanges: [],
     busTypes: [],
     companies: companyParam ? [companyParam] : [],
+    pickupPoints: [],
+    dropoffPoints: [],
+    minRating: null,
+    popularTags: [],
   });
 
   useEffect(() => {
@@ -96,40 +102,179 @@ export const TripSearchPage: React.FC = () => {
     setSearchParams(nextParams);
   };
 
-  // Get list of unique available companies for sidebar
+  // Dynamic Facets & Counts
   const availableCompanies = useMemo(() => {
-    const set = new Set<string>();
+    const counts: Record<string, number> = {};
     trips.forEach((t) => {
-      if (t.busCompanyName) set.add(t.busCompanyName);
+      if (t.busCompanyName) {
+        counts[t.busCompanyName] = (counts[t.busCompanyName] || 0) + 1;
+      }
     });
-    return Array.from(set);
+    return Object.entries(counts).map(([name, count]) => ({ name, count }));
+  }, [trips]);
+
+  const availablePickupPoints = useMemo(() => {
+    const map = new Map<string, { name: string; address?: string; count: number }>();
+    trips.forEach((t) => {
+      if (t.pickupPoints && t.pickupPoints.length > 0) {
+        t.pickupPoints.forEach((p) => {
+          const existing = map.get(p.name);
+          if (existing) {
+            existing.count += 1;
+            if (!existing.address && p.address) existing.address = p.address;
+          } else {
+            map.set(p.name, { name: p.name, address: p.address, count: 1 });
+          }
+        });
+      }
+    });
+
+    if (map.size === 0 && trips.length > 0) {
+      const originCity = origin || trips[0].originCity || 'Điểm Đi';
+      map.set(`Bến xe Trung Tâm ${originCity}`, {
+        name: `Bến xe Trung Tâm ${originCity}`,
+        address: `Khu vực bến xe trung tâm ${originCity}`,
+        count: trips.length,
+      });
+      map.set(`Văn phòng đại diện ${originCity}`, {
+        name: `Văn phòng đại diện ${originCity}`,
+        address: `Trục đường chính nội đô ${originCity}`,
+        count: Math.ceil(trips.length * 0.5),
+      });
+    }
+
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+  }, [trips, origin]);
+
+  const availableDropoffPoints = useMemo(() => {
+    const map = new Map<string, { name: string; address?: string; count: number }>();
+    trips.forEach((t) => {
+      if (t.dropoffPoints && t.dropoffPoints.length > 0) {
+        t.dropoffPoints.forEach((p) => {
+          const existing = map.get(p.name);
+          if (existing) {
+            existing.count += 1;
+            if (!existing.address && p.address) existing.address = p.address;
+          } else {
+            map.set(p.name, { name: p.name, address: p.address, count: 1 });
+          }
+        });
+      }
+    });
+
+    if (map.size === 0 && trips.length > 0) {
+      const destCity = destination || trips[0].destinationCity || 'Điểm Đến';
+      map.set(`Bến xe Liên Tỉnh ${destCity}`, {
+        name: `Bến xe Liên Tỉnh ${destCity}`,
+        address: `Cửa ngõ đón trả khách liên tỉnh ${destCity}`,
+        count: trips.length,
+      });
+      map.set(`Nội thành ${destCity}`, {
+        name: `Nội thành ${destCity}`,
+        address: `Các điểm đón trả nội thành ${destCity}`,
+        count: Math.ceil(trips.length * 0.6),
+      });
+    }
+
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+  }, [trips, destination]);
+
+  const availableBusTypes = useMemo(() => {
+    const limousineCount = trips.filter((t) => t.busType === 'LIMOUSINE').length;
+    const sleeperCount = trips.filter((t) => t.busType === 'SLEEPER').length;
+    const seatCount = trips.filter((t) => t.busType === 'SEAT' || t.busType === 'SEATER').length;
+
+    return [
+      { type: 'LIMOUSINE', name: 'Limousine 34 Phòng VIP', count: limousineCount },
+      { type: 'SLEEPER', name: 'Giường Nằm Tiêu Chuẩn 40 Chỗ', count: sleeperCount },
+      { type: 'SEAT', name: 'Ghế Ngồi Cao Cấp 29 Chỗ', count: seatCount },
+    ].filter((bt) => bt.count > 0 || trips.length === 0);
+  }, [trips]);
+
+  const facetCounts = useMemo(() => {
+    let under300 = 0;
+    let from300to400 = 0;
+    let over400 = 0;
+    let early = 0;
+    let morning = 0;
+    let afternoon = 0;
+    let evening = 0;
+    let xeXin = 0;
+    let instant = trips.length;
+    let moneyBack = trips.length;
+    let rating45 = 0;
+    let rating40 = trips.length;
+
+    trips.forEach((t) => {
+      if (t.price < 300000) under300++;
+      else if (t.price <= 400000) from300to400++;
+      else over400++;
+
+      try {
+        const d = new Date(t.departureTime);
+        const h = d.getHours();
+        if (h >= 0 && h < 6) early++;
+        else if (h >= 6 && h < 12) morning++;
+        else if (h >= 12 && h < 18) afternoon++;
+        else evening++;
+      } catch {}
+
+      const tripRating = t.busCompanyRating ?? (t.busType === 'LIMOUSINE' ? 4.9 : 4.6);
+      if (tripRating >= 4.5) {
+        rating45++;
+      }
+      if (tripRating >= 4.0) {
+        rating40++;
+      }
+      if (t.busType === 'LIMOUSINE') {
+        xeXin++;
+      }
+    });
+
+    return {
+      under300Count: under300,
+      from300to400Count: from300to400,
+      over400Count: over400,
+      earlyCount: early,
+      morningCount: morning,
+      afternoonCount: afternoon,
+      eveningCount: evening,
+      xeXinCount: xeXin,
+      instantCount: instant,
+      moneyBackCount: moneyBack,
+      rating45Count: rating45,
+      rating40Count: rating40,
+    };
   }, [trips]);
 
   // Filter and Sort Trips
   const filteredAndSortedTrips = useMemo(() => {
     return trips
       .filter((t) => {
-        // 1. Time slot filter
-        if (filters.timeSlots.length > 0) {
-          try {
-            const hour = new Date(t.departureTime).getHours();
-            const isEarly = hour >= 0 && hour < 6;
-            const isMorning = hour >= 6 && hour < 12;
-            const isAfternoon = hour >= 12 && hour < 18;
-            const isEvening = hour >= 18 && hour < 24;
+        // 1. Time filter (Preset Slots OR Time Range Slider)
+        try {
+          const d = new Date(t.departureTime);
+          const h = d.getHours() + d.getMinutes() / 60;
 
-            const matchesEarly = filters.timeSlots.includes('EARLY') && isEarly;
-            const matchesMorning = filters.timeSlots.includes('MORNING') && isMorning;
-            const matchesAfternoon = filters.timeSlots.includes('AFTERNOON') && isAfternoon;
-            const matchesEvening = filters.timeSlots.includes('EVENING') && isEvening;
+          if (filters.timeSlots.length > 0) {
+            const isEarly = h >= 0 && h < 6;
+            const isMorning = h >= 6 && h < 12;
+            const isAfternoon = h >= 12 && h < 18;
+            const isEvening = h >= 18 && h <= 24;
 
-            if (!matchesEarly && !matchesMorning && !matchesAfternoon && !matchesEvening) {
+            const matchesSlot =
+              (filters.timeSlots.includes('EARLY') && isEarly) ||
+              (filters.timeSlots.includes('MORNING') && isMorning) ||
+              (filters.timeSlots.includes('AFTERNOON') && isAfternoon) ||
+              (filters.timeSlots.includes('EVENING') && isEvening);
+
+            if (!matchesSlot) return false;
+          } else {
+            if (h < filters.timeRange[0] || h > filters.timeRange[1]) {
               return false;
             }
-          } catch {
-            // Keep if parse fails
           }
-        }
+        } catch {}
 
         // 2. Price range filter
         if (filters.priceRanges.length > 0) {
@@ -169,42 +314,151 @@ export const TripSearchPage: React.FC = () => {
           }
         }
 
+        // 5b. Pickup point filter
+        if (filters.pickupPoints.length > 0) {
+          if (t.pickupPoints && t.pickupPoints.length > 0) {
+            const hasPickup = t.pickupPoints.some((p) => filters.pickupPoints.includes(p.name));
+            if (!hasPickup) return false;
+          } else {
+            const originCity = origin || t.originCity || '';
+            const matchesOrigin = filters.pickupPoints.some((pt) => pt.toLowerCase().includes(originCity.toLowerCase()));
+            if (!matchesOrigin) return false;
+          }
+        }
+
+        // 5c. Dropoff point filter
+        if (filters.dropoffPoints.length > 0) {
+          if (t.dropoffPoints && t.dropoffPoints.length > 0) {
+            const hasDropoff = t.dropoffPoints.some((p) => filters.dropoffPoints.includes(p.name));
+            if (!hasDropoff) return false;
+          } else {
+            const destCity = destination || t.destinationCity || '';
+            const matchesDest = filters.dropoffPoints.some((pt) => pt.toLowerCase().includes(destCity.toLowerCase()));
+            if (!matchesDest) return false;
+          }
+        }
+
+        // 6. Rating filter
+        if (filters.minRating !== null) {
+          const tripRating = t.busCompanyRating ?? (t.busType === 'LIMOUSINE' ? 4.9 : 4.6);
+          if (tripRating < filters.minRating) {
+            return false;
+          }
+        }
+
+        // 7. Popular tags
+        if (filters.popularTags.length > 0) {
+          if (filters.popularTags.includes('XE_XIN') && t.busType !== 'LIMOUSINE') {
+            return false;
+          }
+        }
+
         return true;
       })
       .sort((a, b) => {
+        const timeA = new Date(a.departureTime).getTime();
+        const timeB = new Date(b.departureTime).getTime();
+        const hourMinA = new Date(a.departureTime).getHours() * 60 + new Date(a.departureTime).getMinutes();
+        const hourMinB = new Date(b.departureTime).getHours() * 60 + new Date(b.departureTime).getMinutes();
+        const ratingA = a.busCompanyRating ?? (a.busType === 'LIMOUSINE' ? 4.9 : 4.6);
+        const ratingB = b.busCompanyRating ?? (b.busType === 'LIMOUSINE' ? 4.9 : 4.6);
+
+        // 1. Giờ đi sớm nhất
         if (sortOption === 'EARLIEST') {
-          return new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime();
-        }
-        if (sortOption === 'LATEST') {
-          return new Date(b.departureTime).getTime() - new Date(a.departureTime).getTime();
-        }
-        if (sortOption === 'PRICE_ASC') {
+          if (timeA !== timeB) return timeA - timeB;
           return a.price - b.price;
         }
-        if (sortOption === 'PRICE_DESC') {
-          return b.price - a.price;
+
+        // 2. Giờ đi muộn nhất (Trong cùng ngày: giờ muộn hơn lên trước; Khác ngày: ngày gần lên trước)
+        if (sortOption === 'LATEST') {
+          const dateA = a.departureTime.split('T')[0];
+          const dateB = b.departureTime.split('T')[0];
+          if (dateA === dateB) {
+            if (hourMinB !== hourMinA) return hourMinB - hourMinA;
+            return a.price - b.price;
+          }
+          return dateA.localeCompare(dateB) || (hourMinB - hourMinA);
         }
-        return 0; // DEFAULT
+
+        // 3. Giá tăng dần (Ưu tiên rẻ nhất, bằng giá thì giờ sớm lên trước)
+        if (sortOption === 'PRICE_ASC') {
+          if (a.price !== b.price) return a.price - b.price;
+          return timeA - timeB;
+        }
+
+        // 4. Giá giảm dần (Ưu tiên giá cao nhất, bằng giá thì giờ sớm lên trước)
+        if (sortOption === 'PRICE_DESC') {
+          if (b.price !== a.price) return b.price - a.price;
+          return timeA - timeB;
+        }
+
+        // 5. Đánh giá cao nhất (Đánh giá cao lên trước, bằng sao thì giờ sớm lên trước)
+        if (sortOption === 'RATING_DESC') {
+          if (ratingB !== ratingA) return ratingB - ratingA;
+          return timeA - timeB;
+        }
+
+        // 6. Mặc định (Khởi hành sớm lên trước, ưu tiên nhà xe đánh giá cao và giá tốt)
+        if (timeA !== timeB) return timeA - timeB;
+        if (ratingB !== ratingA) return ratingB - ratingA;
+        return a.price - b.price;
       });
   }, [trips, filters, sortOption]);
 
+  // Pagination State (mặc định 20 chuyến / trang, chia theo tổng số chuyến)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // Reset to page 1 whenever search criteria or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, sortOption, origin, destination, date]);
+
+  const totalItems = filteredAndSortedTrips.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+  const paginatedTrips = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredAndSortedTrips.slice(start, start + pageSize);
+  }, [filteredAndSortedTrips, currentPage, pageSize]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 380, behavior: 'smooth' });
+  };
+
   const handleResetFilters = () => {
     setFilters({
+      timeRange: [0, 24],
       timeSlots: [],
       priceRanges: [],
       busTypes: [],
       companies: [],
+      pickupPoints: [],
+      dropoffPoints: [],
+      minRating: null,
+      popularTags: [],
     });
-    toast.info('Đã hoàn tác toàn bộ bộ lọc!', 'Đặt Lại');
+    setSortOption('DEFAULT');
+    setCurrentPage(1);
+    toast.info('Đã hoàn tác toàn bộ bộ lọc và sắp xếp!', 'Đặt Lại');
   };
 
   const handleOpenBooking = (trip: Trip, seats: string[], points: any) => {
+    const token = localStorage.getItem('traveleasy_token');
     const checkoutPayload = { trip, selectedSeats: seats, points };
     try {
       sessionStorage.setItem('traveleasy_checkout_data', JSON.stringify(checkoutPayload));
     } catch (e) {
       console.warn(e);
     }
+
+    if (!token) {
+      toast.warning('Quý khách vui lòng đăng nhập để tiến hành đặt vé và thanh toán! Khách chưa đăng nhập chỉ có thể tra cứu thông tin.', 'Yêu Cầu Đăng Nhập');
+      navigate('/login?redirect=/checkout', { state: checkoutPayload });
+      return;
+    }
+
     navigate('/checkout', { state: checkoutPayload });
   };
 
@@ -241,7 +495,13 @@ export const TripSearchPage: React.FC = () => {
         <div>
           <FilterSidebar
             filters={filters}
+            sortOption={sortOption}
+            onSortChange={setSortOption}
             availableCompanies={availableCompanies}
+            availablePickupPoints={availablePickupPoints}
+            availableDropoffPoints={availableDropoffPoints}
+            availableBusTypes={availableBusTypes}
+            facetCounts={facetCounts}
             onChange={setFilters}
             onReset={handleResetFilters}
           />
@@ -249,10 +509,54 @@ export const TripSearchPage: React.FC = () => {
 
         {/* Right: Sort Tab Bar & Trips List */}
         <div>
+          {searchParams.get('voucher') && (
+            <div
+              style={{
+                backgroundColor: '#fff7ed',
+                border: '1px solid #fed7aa',
+                borderRadius: '12px',
+                padding: '12px 18px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '20px' }}>🎁</span>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#c2410c' }}>
+                    Bạn đang săn ưu đãi [ mã: {searchParams.get('voucher')} ]
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#9a3412' }}>
+                    Chọn chuyến xe bạn yêu thích và tiến hành đặt chỗ. Mã ưu đãi sẽ được áp dụng tự động tại bước thanh toán!
+                  </div>
+                </div>
+              </div>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  backgroundColor: '#ea580c',
+                  color: '#fff',
+                  padding: '4px 10px',
+                  borderRadius: '20px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ĐÃ ÁP DỤNG MÃ
+              </span>
+            </div>
+          )}
+
           <SortTabBar
             currentSort={sortOption}
             onChangeSort={setSortOption}
             resultCount={filteredAndSortedTrips.length}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalPages={totalPages}
           />
 
           {loading ? (
@@ -273,11 +577,23 @@ export const TripSearchPage: React.FC = () => {
                 Vui lòng đợi trong giây lát để hệ thống kết nối với các đối tác nhà xe.
               </div>
             </div>
-          ) : filteredAndSortedTrips.length > 0 ? (
+          ) : paginatedTrips.length > 0 ? (
             <div>
-              {filteredAndSortedTrips.map((trip) => (
+              {paginatedTrips.map((trip) => (
                 <TripResultCard key={trip.id} trip={trip} onBook={handleOpenBooking} />
               ))}
+
+              {/* Phân trang (Pagination: 20 chuyến / trang, chia theo tổng số) */}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+                onPageSizeChange={setPageSize}
+                pageSizeOptions={[20, 40, 60]}
+                itemLabel="chuyến xe"
+              />
             </div>
           ) : (
             <div

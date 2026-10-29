@@ -70,7 +70,28 @@ export const Navbar: React.FC = () => {
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', fontSize: '13px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '13px' }}>
+            <Link
+              to="/company/login"
+              style={{
+                color: '#93c5fd',
+                textDecoration: 'none',
+                fontWeight: 700,
+                fontSize: '12.5px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                backgroundColor: 'rgba(255,255,255,0.12)',
+                padding: '3px 10px',
+                borderRadius: '6px',
+                transition: 'all 0.15s ease'
+              }}
+              title="Cổng điều hành và quản lý dành riêng cho các nhà xe đối tác"
+            >
+              <Building2 size={13} />
+              <span>Cổng Đối Tác Nhà Xe</span>
+            </Link>
+
             <button
               type="button"
               onClick={() => {

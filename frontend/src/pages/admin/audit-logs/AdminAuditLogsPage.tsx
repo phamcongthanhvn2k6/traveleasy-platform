@@ -35,12 +35,8 @@ export const AdminAuditLogsPage: React.FC = () => {
         );
       }
     } catch (err) {
-      console.warn('Could not fetch audit logs from API, fallback:', err);
-      setLogs([
-        { id: 8, timestamp: '12:41 21/10/2026', user: 'partner@traveleasy.vn', action: 'CANCEL_TRIP', target: 'trips #t5', before: '{"status": "SCHEDULED"}', after: '{"status": "CANCELLED"}' },
-        { id: 1, timestamp: '12:41 21/10/2026', user: 'admin@traveleasy.vn', action: 'APPROVE_COMPANY', target: 'bus_companies #bc1', before: '{"status": "PENDING_APPROVAL"}', after: '{"status": "ACTIVE"}' },
-        { id: 2, timestamp: '12:41 21/10/2026', user: 'admin@traveleasy.vn', action: 'UPDATE_GATEWAY', target: 'gateways #VNPAY', before: '{"status": "INACTIVE"}', after: '{"status": "ACTIVE"}' },
-      ]);
+      console.error('Could not fetch audit logs from API:', err);
+      setLogs([]);
     } finally {
       setLoading(false);
     }

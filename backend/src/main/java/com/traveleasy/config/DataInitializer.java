@@ -10,9 +10,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -42,20 +45,14 @@ public class DataInitializer implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         if (userRepository.count() > 0) {
-            if (vehicleRepository.count() == 0) {
-                BusCompany futa = busCompanyRepository.findAll().stream().findFirst().orElse(null);
-                if (futa != null) {
-                    seedDefaultVehicles(futa);
-                }
-            }
-            log.info("Database already seeded. Skipping DataInitializer.");
+            log.info("🚀 [TRAVELEASY] Database already fully seeded on Supabase with 18 tables. Ready!");
             return;
         }
 
         log.info("Seeding rich initial data for TravelEasy Platform...");
 
         // 1. Seed Users (Admins, Operators, Customers)
-        String encodedPass = passwordEncoder.encode("Rikkei@123");
+        String encodedPass = passwordEncoder.encode("123456789@");
 
         User admin1 = User.builder().email("admin@traveleasy.vn").password(encodedPass).fullName("Quản Trị Viên Hệ Thống").phone("0901234567").role(Role.ADMIN).status("ACTIVE").build();
         User admin2 = User.builder().email("phanthanhphong.admin@traveleasy.vn").password(encodedPass).fullName("Phạm Thanh Phong").phone("0902223344").role(Role.ADMIN).status("ACTIVE").build();
@@ -98,17 +95,17 @@ public class DataInitializer implements CommandLineRunner {
                 cust6, cust7, cust8, cust9, cust10, cust11, cust12, cust13, cust14, cust15
         ));
 
-        // 2. Seed 10 Bus Companies
-        BusCompany futa = BusCompany.builder().name("TravelEasy Express").code("SK-2024-001").hotline("1900 6067").email("contact@traveleasy.vn").address("Bến xe Miền Tây, TP. Hồ Chí Minh").logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.9)).build();
-        BusCompany thanhBuoi = BusCompany.builder().name("Thành Bưởi Limousine").code("SK-2024-002").hotline("1900 6079").email("info@thanhbuoi.com.vn").address("266 Lê Hồng Phong, Quận 5, TP. Hồ Chí Minh").logoUrl("https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.8)).build();
-        BusCompany saoViet = BusCompany.builder().name("Sao Việt Express").code("SK-2024-003").hotline("1900 6746").email("contact@xesaoviet.com.vn").address("779 Giải Phóng, Hoàng Mai, Hà Nội").logoUrl("https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.7)).build();
-        BusCompany kumho = BusCompany.builder().name("Kumho Samco Buslines").code("SK-2024-004").hotline("1900 6065").email("cskh@kumhosamco.com.vn").address("292 Đinh Bộ Lĩnh, Bình Thạnh, TP. Hồ Chí Minh").logoUrl("https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=150&auto=format&fit=crop&q=80").status("PENDING_APPROVAL").averageRating(BigDecimal.valueOf(4.8)).build();
-        BusCompany hoaMai = BusCompany.builder().name("Xe Khách Hoa Mai").code("SK-2024-005").hotline("1900 599 997").email("info@hoamaivungtau.com.vn").address("47 Trưng Nhị, Phường 1, TP. Vũng Tàu").logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.9)).build();
-        BusCompany hoangLong = BusCompany.builder().name("Hoàng Long Asia").code("SK-2024-006").hotline("0225 3920 920").email("info@hoanglongasia.com").address("05 Phạm Ngũ Lão, Ngô Quyền, Hải Phòng").logoUrl("https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=150&auto=format&fit=crop&q=80").status("SUSPENDED").averageRating(BigDecimal.valueOf(4.7)).build();
-        BusCompany vanMinh = BusCompany.builder().name("Nhà Xe Văn Minh").code("SK-2024-007").hotline("1900 6467").email("vanminh@vanminh74.vn").address("101 Lý Thường Kiệt, TP. Vinh, Nghệ An").logoUrl("https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.9)).build();
-        BusCompany cucTung = BusCompany.builder().name("Cúc Tùng Limousine").code("SK-2024-008").hotline("1900 6606").email("cuctunglimousine@gmail.com").address("Bến xe phía Nam Nha Trang, Khánh Hòa").logoUrl("https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.8)).build();
-        BusCompany haiVan = BusCompany.builder().name("Hải Vân Express").code("SK-2024-009").hotline("1900 6763").email("cskh@haivan.com").address("Tòa nhà N2E Lê Văn Lương, Nhân Chính, Thanh Xuân, Hà Nội").logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.8)).build();
-        BusCompany chinNghia = BusCompany.builder().name("Chín Nghĩa").code("SK-2024-010").hotline("1900 636 636").email("chinnghiaquangngai@gmail.com").address("06 Đinh Tiên Hoàng, Nghĩa Chánh, TP. Quảng Ngãi").logoUrl("https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=150&auto=format&fit=crop&q=80").status("ACTIVE").averageRating(BigDecimal.valueOf(4.7)).build();
+        // 2. Seed 10 Bus Companies (Cloudinary Logos)
+        BusCompany futa = BusCompany.builder().name("TravelEasy Express").code("SK-2024-001").hotline("1900 6067").email("contact@traveleasy.vn").address("Bến xe Miền Tây, TP. Hồ Chí Minh").logoUrl("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289372/traveleasy/bus-companies/logo_futa_buslines.jpg").status("ACTIVE").averageRating(BigDecimal.valueOf(4.9)).build();
+        BusCompany thanhBuoi = BusCompany.builder().name("Thành Bưởi Limousine").code("SK-2024-002").hotline("1900 6079").email("info@thanhbuoi.com.vn").address("266 Lê Hồng Phong, Quận 5, TP. Hồ Chí Minh").logoUrl("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289373/traveleasy/bus-companies/logo_thanh_buoi.jpg").status("ACTIVE").averageRating(BigDecimal.valueOf(4.8)).build();
+        BusCompany saoViet = BusCompany.builder().name("Sao Việt Express").code("SK-2024-003").hotline("1900 6746").email("contact@xesaoviet.com.vn").address("779 Giải Phóng, Hoàng Mai, Hà Nội").logoUrl("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289374/traveleasy/bus-companies/logo_sao_viet.jpg").status("ACTIVE").averageRating(BigDecimal.valueOf(4.7)).build();
+        BusCompany kumho = BusCompany.builder().name("Kumho Samco Buslines").code("SK-2024-004").hotline("1900 6065").email("cskh@kumhosamco.com.vn").address("292 Đinh Bộ Lĩnh, Bình Thạnh, TP. Hồ Chí Minh").logoUrl("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289408/traveleasy/bus-companies/logo_kumho_samco.jpg").status("PENDING_APPROVAL").averageRating(BigDecimal.valueOf(4.8)).build();
+        BusCompany hoaMai = BusCompany.builder().name("Xe Khách Hoa Mai").code("SK-2024-005").hotline("1900 599 997").email("info@hoamaivungtau.com.vn").address("47 Trưng Nhị, Phường 1, TP. Vũng Tàu").logoUrl("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289376/traveleasy/bus-companies/logo_hoa_mai.jpg").status("ACTIVE").averageRating(BigDecimal.valueOf(4.9)).build();
+        BusCompany hoangLong = BusCompany.builder().name("Hoàng Long Asia").code("SK-2024-006").hotline("0225 3920 920").email("info@hoanglongasia.com").address("05 Phạm Ngũ Lão, Ngô Quyền, Hải Phòng").logoUrl("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289377/traveleasy/bus-companies/logo_hoang_long.jpg").status("SUSPENDED").averageRating(BigDecimal.valueOf(4.7)).build();
+        BusCompany vanMinh = BusCompany.builder().name("Nhà Xe Văn Minh").code("SK-2024-007").hotline("1900 6467").email("vanminh@vanminh74.vn").address("101 Lý Thường Kiệt, TP. Vinh, Nghệ An").logoUrl("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289377/traveleasy/bus-companies/logo_van_minh.jpg").status("ACTIVE").averageRating(BigDecimal.valueOf(4.9)).build();
+        BusCompany cucTung = BusCompany.builder().name("Cúc Tùng Limousine").code("SK-2024-008").hotline("1900 6606").email("cuctunglimousine@gmail.com").address("Bến xe phía Nam Nha Trang, Khánh Hòa").logoUrl("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289409/traveleasy/bus-companies/logo_cuc_tung.jpg").status("ACTIVE").averageRating(BigDecimal.valueOf(4.8)).build();
+        BusCompany haiVan = BusCompany.builder().name("Hải Vân Express").code("SK-2024-009").hotline("1900 6763").email("cskh@haivan.com").address("Tòa nhà N2E Lê Văn Lương, Nhân Chính, Thanh Xuân, Hà Nội").logoUrl("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289379/traveleasy/bus-companies/logo_hai_van.jpg").status("ACTIVE").averageRating(BigDecimal.valueOf(4.8)).build();
+        BusCompany chinNghia = BusCompany.builder().name("Chín Nghĩa").code("SK-2024-010").hotline("1900 636 636").email("chinnghiaquangngai@gmail.com").address("06 Đinh Tiên Hoàng, Nghĩa Chánh, TP. Quảng Ngãi").logoUrl("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289379/traveleasy/bus-companies/logo_chin_nghia.jpg").status("ACTIVE").averageRating(BigDecimal.valueOf(4.7)).build();
 
         busCompanyRepository.saveAll(List.of(futa, thanhBuoi, saoViet, kumho, hoaMai, hoangLong, vanMinh, cucTung, haiVan, chinNghia));
 
@@ -140,6 +137,7 @@ public class DataInitializer implements CommandLineRunner {
                 PickupDropoffPoint.builder().route(r4).name("Bến xe Sa Pa").address("Điện Biên Phủ, TT. Sa Pa, Lào Cai").pointType(PointType.DROPOFF).displayOrder(1).build()
         );
         pointRepository.saveAll(points);
+        supplementRoutePickupDropoffPoints();
 
         // 5. Seed Trips & Seats
         LocalDateTime now = LocalDateTime.now();
@@ -204,11 +202,12 @@ public class DataInitializer implements CommandLineRunner {
         );
         locationRepository.saveAll(locations);
 
-        // 10. Seed Banners
+        // 10. Seed Banners (Cloudinary Official URLs)
         List<Banner> banners = List.of(
-                Banner.builder().title("Ưu đãi vé xe Đà Lạt - Ngắm hoa dã quỳ").imagePath("/img/banners/dalat-promo.jpg").position("Trang chu - Top").status("ACTIVE").duration("07:00 01/09/2026 — 06:59 01/10/2026").link("https://traveleasy.vn/dalat-sale").build(),
-                Banner.builder().title("Ưu đãi LIMOUSINE thương gia 2026").imagePath("/img/banners/limo-promo.jpg").position("Trang chu - Bottom").status("ACTIVE").duration("07:00 15/09/2026 — 06:59 15/10/2026").link(null).build(),
-                Banner.builder().title("Mở bán vé Tết 2027 sớm - Giữ chỗ ngay").imagePath("/img/banners/tet-early.jpg").position("Trang chu - Top").status("INACTIVE").duration("07:00 01/11/2026 — 06:59 01/01/2027").link("https://traveleasy.vn/tet-early").build()
+                Banner.builder().title("Mùa Thu Vàng Săn Mây Sa Pa - Giảm ngay 20% vé Limousine").imagePath("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289364/traveleasy/banners/banner_hero_sapa_fansipan.jpg").position("Trang chu - Top").status("ACTIVE").duration("07:00 01/09/2026 — 23:59 31/12/2026").link("/promotions").build(),
+                Banner.builder().title("Du Lịch Đà Lạt Mộng Mơ - Săn Vé Giường Nằm VIP Giảm 50K").imagePath("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289365/traveleasy/banners/banner_hero_dalat_mongmo.jpg").position("Trang chu - Khuyen mai").status("ACTIVE").duration("07:00 01/09/2026 — 23:59 31/12/2026").link("/promotions").build(),
+                Banner.builder().title("Khám Phá Biển Xanh Nha Trang - FUTA Bus Lines đồng hành cùng bạn").imagePath("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289366/traveleasy/banners/banner_hero_nhatrang_bienxanh.jpg").position("Trang chu - Tuyen hot").status("ACTIVE").duration("07:00 01/09/2026 — 23:59 31/12/2026").link("/search?destination=Nha+Trang").build(),
+                Banner.builder().title("Liên kết Thẻ Ngân Hàng MB Bank - Quét PayOS VietQR giảm ngay 30K").imagePath("https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289407/traveleasy/banners/banner_promo_payos_mbbank.jpg").position("Trang chu - Top").status("ACTIVE").duration("07:00 01/10/2026 — 23:59 31/12/2026").link("/promotions").build()
         );
         bannerRepository.saveAll(banners);
 
@@ -328,5 +327,504 @@ public class DataInitializer implements CommandLineRunner {
         );
         vehicleRepository.saveAll(vehicles);
         log.info("Default vehicles seeded successfully!");
+    }
+
+    private void syncDemoPasswordForAllUsers() {
+        try {
+            String demoPass = passwordEncoder.encode("123456789@");
+            List<User> allUsers = userRepository.findAll();
+            if (!allUsers.isEmpty()) {
+                for (User u : allUsers) {
+                    u.setPassword(demoPass);
+                }
+                userRepository.saveAll(allUsers);
+                log.info("🔐 [DEMO AUTH] Đã đồng bộ mật khẩu của toàn bộ {} tài khoản người dùng thành: 123456789@", allUsers.size());
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi đồng bộ mật khẩu demo: {}", e.getMessage());
+        }
+    }
+
+    private void supplementEarlyMorningTripsAndBusCompanies() {
+        log.info("Checking and supplementing Bus Companies, Operator Accounts and Early Morning Trips (00:00 - 06:00)...");
+        String encodedPass = passwordEncoder.encode("123456789@");
+
+        // 1. Bổ sung các Nhà xe lớn còn thiếu
+        if (!busCompanyRepository.existsByName("Phương Trang FUTA Bus Lines")) {
+            BusCompany phuongTrang = BusCompany.builder()
+                    .name("Phương Trang FUTA Bus Lines")
+                    .code("SK-2024-011")
+                    .hotline("1900 6067")
+                    .email("hotro@futabus.vn")
+                    .address("Bến xe Miền Tây, 395 Kinh Dương Vương, TP. Hồ Chí Minh")
+                    .logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80")
+                    .status("ACTIVE")
+                    .averageRating(BigDecimal.valueOf(4.9))
+                    .build();
+            busCompanyRepository.save(phuongTrang);
+        }
+
+        if (!busCompanyRepository.existsByName("Xe Khách Liên Hưng")) {
+            BusCompany lienHung = BusCompany.builder()
+                    .name("Xe Khách Liên Hưng")
+                    .code("SK-2024-012")
+                    .hotline("1900 2679")
+                    .email("cskh@xekhachlienhung.com")
+                    .address("77 Thái Nguyên, Phước Tân, TP. Nha Trang, Khánh Hòa")
+                    .logoUrl("https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=150&auto=format&fit=crop&q=80")
+                    .status("ACTIVE")
+                    .averageRating(BigDecimal.valueOf(4.8))
+                    .build();
+            busCompanyRepository.save(lienHung);
+        }
+
+        if (!busCompanyRepository.existsByName("Hà Lan Limousine")) {
+            BusCompany haLan = BusCompany.builder()
+                    .name("Hà Lan Limousine")
+                    .code("SK-2024-013")
+                    .hotline("1900 1198")
+                    .email("dieuhanh@halan.com.vn")
+                    .address("Bến xe Mỹ Đình, Phạm Hùng, Nam Từ Liêm, Hà Nội")
+                    .logoUrl("https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=150&auto=format&fit=crop&q=80")
+                    .status("ACTIVE")
+                    .averageRating(BigDecimal.valueOf(4.9))
+                    .build();
+            busCompanyRepository.save(haLan);
+        }
+
+        if (!busCompanyRepository.existsByName("DCar Limousine VIP")) {
+            BusCompany dCar = BusCompany.builder()
+                    .name("DCar Limousine VIP")
+                    .code("SK-2024-014")
+                    .hotline("1900 6868")
+                    .email("dieuhanh@dcarlimousine.vn")
+                    .address("Sân bay Tân Sơn Nhất, Quận Tân Bình, TP. Hồ Chí Minh")
+                    .logoUrl("https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=150&auto=format&fit=crop&q=80")
+                    .status("ACTIVE")
+                    .averageRating(BigDecimal.valueOf(5.0))
+                    .build();
+            busCompanyRepository.save(dCar);
+        }
+
+        if (!busCompanyRepository.existsByName("An Phú Quý Limousine")) {
+            BusCompany anPhuQuy = BusCompany.builder()
+                    .name("An Phú Quý Limousine")
+                    .code("SK-2024-015")
+                    .hotline("1900 545 555")
+                    .email("dieuhanh@anphuquy.vn")
+                    .address("Bến xe Nước Ngầm, Hoàng Mai, Hà Nội")
+                    .logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150&auto=format&fit=crop&q=80")
+                    .status("ACTIVE")
+                    .averageRating(BigDecimal.valueOf(4.8))
+                    .build();
+            busCompanyRepository.save(anPhuQuy);
+        }
+
+        // 2. Bổ sung Tài khoản điều hành (OPERATOR) cho từng Nhà xe
+        List<User> newOperators = new ArrayList<>();
+        if (!userRepository.existsByEmail("dieuhanh@futabus.vn")) {
+            newOperators.add(User.builder().email("dieuhanh@futabus.vn").password(encodedPass).fullName("Điều Hành Phương Trang FUTA").phone("0901889900").role(Role.OPERATOR).status("ACTIVE").build());
+        }
+        if (!userRepository.existsByEmail("dieuhanh@xekhachlienhung.com")) {
+            newOperators.add(User.builder().email("dieuhanh@xekhachlienhung.com").password(encodedPass).fullName("Điều Hành Xe Liên Hưng").phone("0902889911").role(Role.OPERATOR).status("ACTIVE").build());
+        }
+        if (!userRepository.existsByEmail("dieuhanh@halan.com.vn")) {
+            newOperators.add(User.builder().email("dieuhanh@halan.com.vn").password(encodedPass).fullName("Điều Hành Hà Lan Limousine").phone("0903889922").role(Role.OPERATOR).status("ACTIVE").build());
+        }
+        if (!userRepository.existsByEmail("dieuhanh@dcarlimousine.vn")) {
+            newOperators.add(User.builder().email("dieuhanh@dcarlimousine.vn").password(encodedPass).fullName("Điều Hành DCar VIP").phone("0904889933").role(Role.OPERATOR).status("ACTIVE").build());
+        }
+        if (!userRepository.existsByEmail("dieuhanh@anphuquy.vn")) {
+            newOperators.add(User.builder().email("dieuhanh@anphuquy.vn").password(encodedPass).fullName("Điều Hành An Phú Quý").phone("0905889944").role(Role.OPERATOR).status("ACTIVE").build());
+        }
+        if (!newOperators.isEmpty()) {
+            userRepository.saveAll(newOperators);
+        }
+
+        // 3. Đảm bảo tuyến đường Chiều về tồn tại kèm điểm đón/trả
+        BusCompany defaultCompany = busCompanyRepository.findAll().stream().findFirst().orElse(null);
+        if (defaultCompany == null) return;
+
+        Route rHanoiSapa = routeRepository.findByDepartureLocationAndArrivalLocation("Hà Nội", "Sa Pa").orElse(null);
+        Route rSapaHanoi = routeRepository.findByDepartureLocationAndArrivalLocation("Sa Pa", "Hà Nội").orElse(null);
+        if (rSapaHanoi == null) {
+            rSapaHanoi = Route.builder()
+                    .busCompany(defaultCompany)
+                    .departureLocation("Sa Pa")
+                    .arrivalLocation("Hà Nội")
+                    .durationHours(BigDecimal.valueOf(5.5))
+                    .distanceKm(BigDecimal.valueOf(315.0))
+                    .build();
+            routeRepository.save(rSapaHanoi);
+
+            pointRepository.saveAll(List.of(
+                    PickupDropoffPoint.builder().route(rSapaHanoi).name("Bến xe Sa Pa").address("Điện Biên Phủ, TT. Sa Pa, Lào Cai").pointType(PointType.PICKUP).displayOrder(1).build(),
+                    PickupDropoffPoint.builder().route(rSapaHanoi).name("Văn phòng Sa Pa (Nhà Thờ Đá)").address("Thạch Sơn, Sa Pa").pointType(PointType.PICKUP).displayOrder(2).build(),
+                    PickupDropoffPoint.builder().route(rSapaHanoi).name("Bến xe Mỹ Đình").address("Số 20 Phạm Hùng, Nam Từ Liêm, Hà Nội").pointType(PointType.DROPOFF).displayOrder(1).build(),
+                    PickupDropoffPoint.builder().route(rSapaHanoi).name("Bến xe Giáp Bát").address("Giải Phóng, Hoàng Mai, Hà Nội").pointType(PointType.DROPOFF).displayOrder(2).build()
+            ));
+        }
+
+        Route rHcmDalat = routeRepository.findByDepartureLocationAndArrivalLocation("TP. Hồ Chí Minh", "Đà Lạt").orElse(null);
+        Route rDalatHcm = routeRepository.findByDepartureLocationAndArrivalLocation("Đà Lạt", "TP. Hồ Chí Minh").orElse(null);
+        if (rDalatHcm == null) {
+            rDalatHcm = Route.builder()
+                    .busCompany(defaultCompany)
+                    .departureLocation("Đà Lạt")
+                    .arrivalLocation("TP. Hồ Chí Minh")
+                    .durationHours(BigDecimal.valueOf(6.5))
+                    .distanceKm(BigDecimal.valueOf(305.0))
+                    .build();
+            routeRepository.save(rDalatHcm);
+
+            pointRepository.saveAll(List.of(
+                    PickupDropoffPoint.builder().route(rDalatHcm).name("Bến xe Liên tỉnh Đà Lạt").address("01 Tô Hiến Thành, P.3, TP. Đà Lạt").pointType(PointType.PICKUP).displayOrder(1).build(),
+                    PickupDropoffPoint.builder().route(rDalatHcm).name("Văn phòng Đà Lạt (Hồ Xuân Hương)").address("Trần Phú, TP. Đà Lạt").pointType(PointType.PICKUP).displayOrder(2).build(),
+                    PickupDropoffPoint.builder().route(rDalatHcm).name("Bến xe Miền Đông mới").address("501 Hoàng Hữu Nam, TP. Thủ Đức, TP.HCM").pointType(PointType.DROPOFF).displayOrder(1).build(),
+                    PickupDropoffPoint.builder().route(rDalatHcm).name("Bến xe Miền Tây").address("395 Kinh Dương Vương, Bình Tân, TP.HCM").pointType(PointType.DROPOFF).displayOrder(2).build()
+            ));
+        }
+
+        // 4. Bổ sung các Chuyến xe khung giờ Sáng sớm (00:00 - 06:00) cho 7 ngày tới
+        BusCompany saoViet = busCompanyRepository.findByName("Sao Việt Express").orElse(defaultCompany);
+        BusCompany futa = busCompanyRepository.findByName("TravelEasy Express").orElse(defaultCompany);
+        BusCompany thanhBuoi = busCompanyRepository.findByName("Thành Bưởi Limousine").orElse(defaultCompany);
+        BusCompany haiVan = busCompanyRepository.findByName("Hải Vân Express").orElse(defaultCompany);
+        BusCompany hoaMai = busCompanyRepository.findByName("Xe Khách Hoa Mai").orElse(defaultCompany);
+
+        List<Trip> newTrips = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+
+        for (int day = 0; day <= 6; day++) {
+            LocalDate date = today.plusDays(day);
+
+            // === Hà Nội -> Sa Pa (r4): Khung giờ 00h - 06h sáng ===
+            if (rHanoiSapa != null) {
+                // Chuyến 00:30 (Đêm muộn / Rạng sáng)
+                LocalDateTime t0030 = date.atTime(0, 30);
+                if (!tripRepository.existsByRouteIdAndDepartureTime(rHanoiSapa.getId(), t0030)) {
+                    newTrips.add(Trip.builder()
+                            .busCompany(saoViet)
+                            .route(rHanoiSapa)
+                            .departureTime(t0030)
+                            .arrivalTime(t0030.plusHours(5).plusMinutes(30))
+                            .busType(BusType.LIMOUSINE)
+                            .price(BigDecimal.valueOf(450000))
+                            .totalSeats(34)
+                            .availableSeats(28)
+                            .status(TripStatus.SCHEDULED)
+                            .build());
+                }
+
+                // Chuyến 04:30 (Sáng sớm)
+                LocalDateTime t0430 = date.atTime(4, 30);
+                if (!tripRepository.existsByRouteIdAndDepartureTime(rHanoiSapa.getId(), t0430)) {
+                    newTrips.add(Trip.builder()
+                            .busCompany(haiVan)
+                            .route(rHanoiSapa)
+                            .departureTime(t0430)
+                            .arrivalTime(t0430.plusHours(5).plusMinutes(30))
+                            .busType(BusType.SLEEPER)
+                            .price(BigDecimal.valueOf(420000))
+                            .totalSeats(34)
+                            .availableSeats(22)
+                            .status(TripStatus.SCHEDULED)
+                            .build());
+                }
+
+                // Chuyến 05:30 (Sáng sớm đón sương mù Sa Pa)
+                LocalDateTime t0530 = date.atTime(5, 30);
+                if (!tripRepository.existsByRouteIdAndDepartureTime(rHanoiSapa.getId(), t0530)) {
+                    newTrips.add(Trip.builder()
+                            .busCompany(saoViet)
+                            .route(rHanoiSapa)
+                            .departureTime(t0530)
+                            .arrivalTime(t0530.plusHours(5).plusMinutes(30))
+                            .busType(BusType.LIMOUSINE)
+                            .price(BigDecimal.valueOf(480000))
+                            .totalSeats(34)
+                            .availableSeats(25)
+                            .status(TripStatus.SCHEDULED)
+                            .build());
+                }
+            }
+
+            // === Sa Pa -> Hà Nội: Khung giờ 00h - 06h sáng ===
+            if (rSapaHanoi != null) {
+                LocalDateTime t0030Ret = date.atTime(0, 30);
+                if (!tripRepository.existsByRouteIdAndDepartureTime(rSapaHanoi.getId(), t0030Ret)) {
+                    newTrips.add(Trip.builder()
+                            .busCompany(saoViet)
+                            .route(rSapaHanoi)
+                            .departureTime(t0030Ret)
+                            .arrivalTime(t0030Ret.plusHours(5).plusMinutes(30))
+                            .busType(BusType.LIMOUSINE)
+                            .price(BigDecimal.valueOf(450000))
+                            .totalSeats(34)
+                            .availableSeats(26)
+                            .status(TripStatus.SCHEDULED)
+                            .build());
+                }
+
+                LocalDateTime t0500Ret = date.atTime(5, 0);
+                if (!tripRepository.existsByRouteIdAndDepartureTime(rSapaHanoi.getId(), t0500Ret)) {
+                    newTrips.add(Trip.builder()
+                            .busCompany(haiVan)
+                            .route(rSapaHanoi)
+                            .departureTime(t0500Ret)
+                            .arrivalTime(t0500Ret.plusHours(5).plusMinutes(30))
+                            .busType(BusType.SLEEPER)
+                            .price(BigDecimal.valueOf(420000))
+                            .totalSeats(34)
+                            .availableSeats(20)
+                            .status(TripStatus.SCHEDULED)
+                            .build());
+                }
+            }
+
+            // === TP. Hồ Chí Minh -> Đà Lạt: Khung giờ 00h - 06h sáng ===
+            if (rHcmDalat != null) {
+                LocalDateTime t0030 = date.atTime(0, 30);
+                if (!tripRepository.existsByRouteIdAndDepartureTime(rHcmDalat.getId(), t0030)) {
+                    newTrips.add(Trip.builder()
+                            .busCompany(futa)
+                            .route(rHcmDalat)
+                            .departureTime(t0030)
+                            .arrivalTime(t0030.plusHours(6).plusMinutes(30))
+                            .busType(BusType.LIMOUSINE)
+                            .price(BigDecimal.valueOf(390000))
+                            .totalSeats(34)
+                            .availableSeats(30)
+                            .status(TripStatus.SCHEDULED)
+                            .build());
+                }
+
+                LocalDateTime t0500 = date.atTime(5, 0);
+                if (!tripRepository.existsByRouteIdAndDepartureTime(rHcmDalat.getId(), t0500)) {
+                    newTrips.add(Trip.builder()
+                            .busCompany(thanhBuoi)
+                            .route(rHcmDalat)
+                            .departureTime(t0500)
+                            .arrivalTime(t0500.plusHours(6).plusMinutes(30))
+                            .busType(BusType.SLEEPER)
+                            .price(BigDecimal.valueOf(320000))
+                            .totalSeats(34)
+                            .availableSeats(24)
+                            .status(TripStatus.SCHEDULED)
+                            .build());
+                }
+            }
+
+            // === Đà Lạt -> TP. Hồ Chí Minh: Khung giờ 00h - 06h sáng ===
+            if (rDalatHcm != null) {
+                LocalDateTime t0030 = date.atTime(0, 30);
+                if (!tripRepository.existsByRouteIdAndDepartureTime(rDalatHcm.getId(), t0030)) {
+                    newTrips.add(Trip.builder()
+                            .busCompany(thanhBuoi)
+                            .route(rDalatHcm)
+                            .departureTime(t0030)
+                            .arrivalTime(t0030.plusHours(6).plusMinutes(30))
+                            .busType(BusType.LIMOUSINE)
+                            .price(BigDecimal.valueOf(390000))
+                            .totalSeats(34)
+                            .availableSeats(27)
+                            .status(TripStatus.SCHEDULED)
+                            .build());
+                }
+
+                LocalDateTime t0430 = date.atTime(4, 30);
+                if (!tripRepository.existsByRouteIdAndDepartureTime(rDalatHcm.getId(), t0430)) {
+                    newTrips.add(Trip.builder()
+                            .busCompany(futa)
+                            .route(rDalatHcm)
+                            .departureTime(t0430)
+                            .arrivalTime(t0430.plusHours(6).plusMinutes(30))
+                            .busType(BusType.SLEEPER)
+                            .price(BigDecimal.valueOf(320000))
+                            .totalSeats(34)
+                            .availableSeats(21)
+                            .status(TripStatus.SCHEDULED)
+                            .build());
+                }
+            }
+        }
+
+        if (!newTrips.isEmpty()) {
+            tripRepository.saveAll(newTrips);
+            for (Trip trip : newTrips) {
+                seedSeatsForTrip(trip);
+            }
+            log.info("Bổ sung thành công {} chuyến xe khung giờ sáng sớm (00:00 - 06:00) kèm sơ đồ ghế!", newTrips.size());
+        }
+
+        // 5. Đảm bảo tất cả các tuyến đường đều có điểm đón / trả thực tế và chi tiết
+        supplementRoutePickupDropoffPoints();
+    }
+
+    private void supplementRoutePickupDropoffPoints() {
+        List<Route> allRoutes = routeRepository.findAll();
+        List<PickupDropoffPoint> pointsToSave = new ArrayList<>();
+
+        for (Route route : allRoutes) {
+            List<PickupDropoffPoint> existingPoints = pointRepository.findByRouteIdOrderByDisplayOrderAsc(route.getId());
+            if (existingPoints != null && !existingPoints.isEmpty()) {
+                continue;
+            }
+
+            String orig = route.getDepartureLocation();
+            String dest = route.getArrivalLocation();
+
+            // Điểm đón theo thành phố khởi hành
+            List<PointTemplate> pickupTemplates = getPointTemplatesForCity(orig, PointType.PICKUP);
+            int order = 1;
+            for (PointTemplate pt : pickupTemplates) {
+                pointsToSave.add(PickupDropoffPoint.builder()
+                        .route(route)
+                        .name(pt.name)
+                        .address(pt.address)
+                        .pointType(PointType.PICKUP)
+                        .displayOrder(order++)
+                        .build());
+            }
+
+            // Điểm trả theo thành phố đến
+            List<PointTemplate> dropoffTemplates = getPointTemplatesForCity(dest, PointType.DROPOFF);
+            order = 1;
+            for (PointTemplate dt : dropoffTemplates) {
+                pointsToSave.add(PickupDropoffPoint.builder()
+                        .route(route)
+                        .name(dt.name)
+                        .address(dt.address)
+                        .pointType(PointType.DROPOFF)
+                        .displayOrder(order++)
+                        .build());
+            }
+        }
+
+        if (!pointsToSave.isEmpty()) {
+            pointRepository.saveAll(pointsToSave);
+            log.info("Bổ sung thành công {} điểm đón / trả chi tiết cho các tuyến đường chưa có điểm dừng!", pointsToSave.size());
+        }
+    }
+
+    private static class PointTemplate {
+        String name;
+        String address;
+        PointTemplate(String name, String address) {
+            this.name = name;
+            this.address = address;
+        }
+    }
+
+    private List<PointTemplate> getPointTemplatesForCity(String city, PointType type) {
+        if (city == null) city = "";
+        String c = city.toLowerCase();
+
+        if (c.contains("hồ chí minh") || c.contains("sài gòn") || c.contains("tp.hcm")) {
+            if (type == PointType.PICKUP) {
+                return List.of(
+                        new PointTemplate("Bến xe Miền Tây", "395 Kinh Dương Vương, P. An Lạc, Q. Bình Tân, TP.HCM"),
+                        new PointTemplate("Bến xe Miền Đông mới", "501 Hoàng Hữu Nam, P. Long Bình, TP. Thủ Đức, TP.HCM"),
+                        new PointTemplate("Văn phòng Quận 1 (Phạm Ngũ Lão)", "272 Đề Thám, P. Phạm Ngũ Lão, Quận 1, TP.HCM"),
+                        new PointTemplate("Trạm đón Ngã 4 Hàng Xanh", "486 Điện Biên Phủ, P. 21, Q. Bình Thạnh, TP.HCM"),
+                        new PointTemplate("Trạm dừng chân An Sương", "QL22, Xã Bà Điểm, Huyện Hóc Môn, TP.HCM")
+                );
+            } else {
+                return List.of(
+                        new PointTemplate("Bến xe Miền Tây", "395 Kinh Dương Vương, P. An Lạc, Q. Bình Tân, TP.HCM"),
+                        new PointTemplate("Bến xe Miền Đông mới", "501 Hoàng Hữu Nam, P. Long Bình, TP. Thủ Đức, TP.HCM"),
+                        new PointTemplate("Văn phòng Quận 1", "272 Đề Thám, P. Phạm Ngũ Lão, Quận 1, TP.HCM"),
+                        new PointTemplate("Sân bay Tân Sơn Nhất", "Ga Quốc nội, Phường 2, Q. Tân Bình, TP.HCM")
+                );
+            }
+        }
+
+        if (c.contains("đà nẵng")) {
+            return List.of(
+                    new PointTemplate("Bến xe Trung tâm Đà Nẵng", "185 Tôn Đức Thắng, P. Hòa Minh, Q. Liên Chiểu, Đà Nẵng"),
+                    new PointTemplate("Văn phòng Cầu Rồng - Hải Châu", "45 Nguyễn Văn Linh, P. Nam Dương, Q. Hải Châu, Đà Nẵng"),
+                    new PointTemplate("Trạm đón Ngũ Hành Sơn", "322 Lê Văn Hiến, P. Khuê Mỹ, Q. Ngũ Hành Sơn, Đà Nẵng"),
+                    new PointTemplate("Sân bay Quốc tế Đà Nẵng", "Cột số 5, Ga Quốc nội, Q. Hải Châu, Đà Nẵng")
+            );
+        }
+
+        if (c.contains("quy nhơn")) {
+            return List.of(
+                    new PointTemplate("Bến xe Trung tâm Quy Nhơn", "71 Tây Sơn, P. Ghềnh Ráng, TP. Quy Nhơn, Bình Định"),
+                    new PointTemplate("Văn phòng Quy Nhơn (Nguyễn Tất Thành)", "126 Nguyễn Tất Thành, P. Lê Hồng Phong, TP. Quy Nhơn"),
+                    new PointTemplate("Đại học Quy Nhơn", "170 An Dương Vương, P. Nguyễn Văn Cừ, TP. Quy Nhơn"),
+                    new PointTemplate("Khu đô thị An Phú Thịnh", "Đường Võ Nguyên Giáp, P. Nhơn Bình, TP. Quy Nhơn")
+            );
+        }
+
+        if (c.contains("hà nội")) {
+            return List.of(
+                    new PointTemplate("Bến xe Mỹ Đình", "Số 20 Phạm Hùng, P. Mỹ Đình 2, Q. Nam Từ Liêm, Hà Nội"),
+                    new PointTemplate("Bến xe Giáp Bát", "Giải Phóng, P. Giáp Bát, Q. Hoàng Mai, Hà Nội"),
+                    new PointTemplate("Bến xe Nước Ngầm", "Km8 Đường Giải Phóng, P. Hoàng Liệt, Q. Hoàng Mai, Hà Nội"),
+                    new PointTemplate("Văn phòng Phố Cổ", "24 Bát Đàn, P. Hàng Gai, Q. Hoàn Kiếm, Hà Nội"),
+                    new PointTemplate("Sân bay Nội Bài", "Tầng 1 Sảnh E, Sân bay Nội Bài, Sóc Sơn, Hà Nội")
+            );
+        }
+
+        if (c.contains("sa pa")) {
+            return List.of(
+                    new PointTemplate("Bến xe Sa Pa mới", "Điện Biên Phủ, TT. Sa Pa, Lào Cai"),
+                    new PointTemplate("Văn phòng Sa Pa (Nhà Thờ Đá)", "Đường Thạch Sơn, TT. Sa Pa, Lào Cai"),
+                    new PointTemplate("Trạm cáp treo Fansipan Legend", "Đường Nguyễn Chí Thanh, TT. Sa Pa, Lào Cai")
+            );
+        }
+
+        if (c.contains("đà lạt")) {
+            return List.of(
+                    new PointTemplate("Bến xe Liên tỉnh Đà Lạt", "01 Tô Hiến Thành, P.3, TP. Đà Lạt"),
+                    new PointTemplate("Văn phòng Hồ Xuân Hương", "Đường Trần Phú, P.3, TP. Đà Lạt"),
+                    new PointTemplate("Chợ Đêm Đà Lạt (Trung chuyển)", "Đường Nguyễn Thị Minh Khai, P.1, TP. Đà Lạt")
+            );
+        }
+
+        if (c.contains("nha trang")) {
+            return List.of(
+                    new PointTemplate("Bến xe Phía Nam Nha Trang", "Đường 23/10, Xã Vĩnh Trung, TP. Nha Trang, Khánh Hòa"),
+                    new PointTemplate("Văn phòng Nha Trang (Trần Phú)", "54 Trần Phú, P. Lộc Thọ, TP. Nha Trang"),
+                    new PointTemplate("Trạm đón Chợ Đầm Nha Trang", "09 Bến Chợ, P. Vạn Thạnh, TP. Nha Trang")
+            );
+        }
+
+        if (c.contains("vũng tàu")) {
+            return List.of(
+                    new PointTemplate("Bến xe Vũng Tàu", "192 Nam Kỳ Khởi Nghĩa, Phường 3, TP. Vũng Tàu"),
+                    new PointTemplate("Văn phòng Bãi Sau Vũng Tàu", "Đường Thùy Vân, Phường Thắng Tam, TP. Vũng Tàu"),
+                    new PointTemplate("Trạm đón Bãi Trước", "Đường Trần Phú, Phường 1, TP. Vũng Tàu")
+            );
+        }
+
+        if (c.contains("cần thơ")) {
+            return List.of(
+                    new PointTemplate("Bến xe Trung tâm Cần Thơ", "QL1A, P. Hưng Thạnh, Q. Cái Răng, TP. Cần Thơ"),
+                    new PointTemplate("Văn phòng Bến Ninh Kiều", "107 Nguyễn Thái Học, P. Tân An, Q. Ninh Kiều, Cần Thơ"),
+                    new PointTemplate("Trạm đón Đại học Cần Thơ", "Khu II, Đường 3/2, Q. Ninh Kiều, TP. Cần Thơ")
+            );
+        }
+
+        if (c.contains("hải phòng")) {
+            return List.of(
+                    new PointTemplate("Bến xe Cầu Rào", "Đường Lạch Tray, P. Đằng Giang, Q. Ngô Quyền, Hải Phòng"),
+                    new PointTemplate("Bến xe Vĩnh Niệm", "Đường Bùi Viện, P. Vĩnh Niệm, Q. Lê Chân, Hải Phòng")
+            );
+        }
+
+        if (c.contains("huế")) {
+            return List.of(
+                    new PointTemplate("Bến xe Phía Nam Huế", "97 An Dương Vương, P. An Đông, TP. Huế"),
+                    new PointTemplate("Văn phòng Trung tâm Huế", "14 Hà Nội, P. Vĩnh Ninh, TP. Huế")
+            );
+        }
+
+        // Fallback chung cho các địa phương khác
+        return List.of(
+                new PointTemplate("Bến xe Trung tâm " + city, "Trung tâm hành chính " + city),
+                new PointTemplate("Văn phòng đại diện " + city, "Trục đường chính nội đô " + city)
+        );
     }
 }

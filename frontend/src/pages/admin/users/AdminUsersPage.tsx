@@ -25,7 +25,7 @@ export const AdminUsersPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [formFullName, setFormFullName] = useState('');
   const [formEmail, setFormEmail] = useState('');
-  const [formPassword, setFormPassword] = useState('Rikkei@123');
+  const [formPassword, setFormPassword] = useState('123456789@');
   const [formPhone, setFormPhone] = useState('');
   const [formRole, setFormRole] = useState<'CUSTOMER' | 'OPERATOR' | 'ADMIN'>('CUSTOMER');
   const [submitting, setSubmitting] = useState(false);
