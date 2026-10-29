@@ -32,6 +32,8 @@ body {
 button {
   cursor: pointer;
   font-family: inherit;
+  border: none;
+  background: transparent;
 }
 
 input, select {

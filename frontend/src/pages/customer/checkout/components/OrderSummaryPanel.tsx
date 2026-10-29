@@ -165,7 +165,7 @@ export const OrderSummaryPanel: React.FC<Props> = ({
       <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '14px', marginBottom: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
           <img
-            src={trip.busCompanyLogo || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150'}
+            src={trip.busCompanyLogo || 'https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289372/traveleasy/bus-companies/logo_futa_buslines.jpg'}
             alt={trip.busCompanyName}
             style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }}
           />

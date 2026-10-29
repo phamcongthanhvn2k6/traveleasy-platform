@@ -59,4 +59,25 @@ public class CloudinaryService {
         log.info("Tải ảnh lên Cloudinary thành công! URL: {}", uploadResult.get("secure_url"));
         return uploadResult;
     }
+
+    /**
+     * Tải ảnh từ URL từ xa lên Cloudinary và lưu vĩnh viễn
+     */
+    public Map<String, Object> uploadFromUrl(String remoteUrl, String folder, String publicId) throws IOException {
+        String targetFolder = (folder != null && !folder.trim().isEmpty()) ? "traveleasy/" + folder.trim().toLowerCase() : "traveleasy/general";
+        Map<String, Object> uploadParams = ObjectUtils.asMap(
+                "folder", targetFolder,
+                "resource_type", "image",
+                "overwrite", true
+        );
+        if (publicId != null && !publicId.isBlank()) {
+            uploadParams.put("public_id", publicId);
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(remoteUrl, uploadParams);
+        log.info("Đã đồng bộ ảnh từ URL '{}' lên Cloudinary: {}", remoteUrl, uploadResult.get("secure_url"));
+        return uploadResult;
+    }
 }
+

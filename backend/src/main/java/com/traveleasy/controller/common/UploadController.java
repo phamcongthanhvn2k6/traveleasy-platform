@@ -108,4 +108,28 @@ public class UploadController {
 
         return ApiResponse.success("Đã tải lên thành công " + results.size() + " ảnh lên Cloudinary", results);
     }
+
+    @PostMapping("/url")
+    @Operation(summary = "Đồng bộ một ảnh từ URL từ xa lên Cloudinary")
+    public ApiResponse<Map<String, Object>> uploadFromUrl(
+            @RequestParam("url") String url,
+            @RequestParam(value = "folder", defaultValue = "general") String folder,
+            @RequestParam(value = "publicId", required = false) String publicId) {
+        if (url == null || url.isBlank()) {
+            return ApiResponse.error("Đường dẫn ảnh URL không được để trống!");
+        }
+
+        try {
+            Map<String, Object> result = cloudinaryService.uploadFromUrl(url, folder, publicId);
+            return ApiResponse.success("Đồng bộ ảnh lên Cloudinary thành công", Map.of(
+                    "url", result.get("secure_url"),
+                    "publicId", result.get("public_id"),
+                    "format", result.get("format")
+            ));
+        } catch (Exception e) {
+            log.error("Lỗi khi đồng bộ ảnh từ URL lên Cloudinary: ", e);
+            return ApiResponse.error("Không thể tải ảnh từ URL: " + e.getMessage());
+        }
+    }
 }
+

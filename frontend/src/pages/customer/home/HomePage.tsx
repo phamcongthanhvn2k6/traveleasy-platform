@@ -6,6 +6,7 @@ import { CheckoutModal } from '../../../components/CheckoutModal';
 import { Trip, Booking } from '../../../types';
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
+import { CLOUDINARY_IMAGES } from '../../../constants/cloudinaryImages';
 import { 
   ShieldCheck, 
   Headphones, 
@@ -45,7 +46,7 @@ export const HomePage: React.FC = () => {
             title: b.title,
             badge: 'HOT DEAL',
             accent: idx % 2 === 0 ? '#d97706' : '#2563eb',
-            image: b.imagePath?.startsWith('http') ? b.imagePath : 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500',
+            image: b.imagePath?.startsWith('http') ? b.imagePath : CLOUDINARY_IMAGES.banners.heroSapa,
             link: b.link
           })));
         }
@@ -116,7 +117,7 @@ export const HomePage: React.FC = () => {
       destination: 'Sa Pa',
       price: '219.000đ',
       oldPrice: '250.000đ',
-      image: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=600&auto=format&fit=crop&q=80',
+      image: CLOUDINARY_IMAGES.destinations.sapa,
       bgColor: 'linear-gradient(180deg, transparent 40%, rgba(30, 58, 138, 0.85) 100%)'
     },
     {
@@ -126,7 +127,7 @@ export const HomePage: React.FC = () => {
       destination: 'Hải Phòng',
       price: '130.000đ',
       oldPrice: null,
-      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80',
+      image: CLOUDINARY_IMAGES.destinations.haNoi,
       bgColor: 'linear-gradient(180deg, transparent 40%, rgba(55, 48, 163, 0.85) 100%)'
     },
     {
@@ -136,7 +137,7 @@ export const HomePage: React.FC = () => {
       destination: 'Đà Lạt',
       price: '199.000đ',
       oldPrice: '249.000đ',
-      image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=600&auto=format&fit=crop&q=80',
+      image: CLOUDINARY_IMAGES.destinations.dalat,
       bgColor: 'linear-gradient(180deg, transparent 40%, rgba(194, 65, 12, 0.85) 100%)'
     },
     {
@@ -146,7 +147,7 @@ export const HomePage: React.FC = () => {
       destination: 'Nha Trang',
       price: '200.000đ',
       oldPrice: null,
-      image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&auto=format&fit=crop&q=80',
+      image: CLOUDINARY_IMAGES.destinations.nhaTrang,
       bgColor: 'linear-gradient(180deg, transparent 40%, rgba(120, 53, 15, 0.85) 100%)'
     }
   ];
@@ -160,7 +161,7 @@ export const HomePage: React.FC = () => {
       badge: 'GIẢM 50%',
       gradient: 'linear-gradient(135deg, #fef3c7, #fde68a)',
       accent: '#d97706',
-      image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=500&auto=format&fit=crop&q=80'
+      image: CLOUDINARY_IMAGES.banners.heroTetPayOS
     },
     {
       id: 2,
@@ -169,7 +170,7 @@ export const HomePage: React.FC = () => {
       badge: 'THỨ 3 HÀNG TUẦN',
       gradient: 'linear-gradient(135deg, #e0f2fe, #bae6fd)',
       accent: '#0284c7',
-      image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80'
+      image: CLOUDINARY_IMAGES.banners.flashSale
     },
     {
       id: 3,
@@ -178,7 +179,7 @@ export const HomePage: React.FC = () => {
       badge: 'TIẾT KIỆM 20%',
       gradient: 'linear-gradient(135deg, #f0fdf4, #bbf7d0)',
       accent: '#16a34a',
-      image: 'https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=500&auto=format&fit=crop&q=80'
+      image: CLOUDINARY_IMAGES.banners.welcomeNewUser
     },
     {
       id: 4,
@@ -187,7 +188,7 @@ export const HomePage: React.FC = () => {
       badge: 'THƯỞNG 80K',
       gradient: 'linear-gradient(135deg, #fdf2f8, #fbcfe8)',
       accent: '#db2777',
-      image: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=500&auto=format&fit=crop&q=80'
+      image: CLOUDINARY_IMAGES.banners.studentSupport
     }
   ];
 
@@ -198,14 +199,14 @@ export const HomePage: React.FC = () => {
       category: 'Ưu đãi',
       badgeText: '3 ưu đãi',
       title: 'Mệt mỏi tới Sa Pa... Giảm đến 100K khi đặt vé xe phòng VIP cabin đôi',
-      image: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=600&auto=format&fit=crop&q=80'
+      image: CLOUDINARY_IMAGES.destinations.sapa
     },
     {
       id: 2,
       category: 'Phương tiện',
       badgeText: '4 bài viết',
       title: 'Hành trình đưa bạn đến Phố Sương Sa Pa: Top 5 xe Limousine cabin phòng riêng',
-      image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80'
+      image: CLOUDINARY_IMAGES.destinations.daNang
     },
     {
       id: 3,

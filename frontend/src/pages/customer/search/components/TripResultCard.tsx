@@ -214,7 +214,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
               <img
-                src={trip.busCompanyLogo || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=150'}
+                src={trip.busCompanyLogo || 'https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289372/traveleasy/bus-companies/logo_futa_buslines.jpg'}
                 alt={trip.busCompanyName}
                 style={{ width: '32px', height: '32px', borderRadius: '6px', objectFit: 'cover' }}
               />
@@ -789,17 +789,17 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
           {activeTab === 'IMAGES' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
               <img
-                src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80"
+                src="https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289365/traveleasy/banners/banner_hero_dalat_mongmo.jpg"
                 alt="Nội thất xe"
                 style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '8px' }}
               />
               <img
-                src="https://images.unsplash.com/photo-1494515843206-f3117d3f51b7?w=500&auto=format&fit=crop&q=80"
+                src="https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289364/traveleasy/banners/banner_hero_sapa_fansipan.jpg"
                 alt="Ghế nằm VIP"
                 style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '8px' }}
               />
               <img
-                src="https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=500&auto=format&fit=crop&q=80"
+                src="https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289367/traveleasy/banners/banner_hero_tet_payos.jpg"
                 alt="Cabin tiện nghi"
                 style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '8px' }}
               />

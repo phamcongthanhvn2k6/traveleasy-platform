@@ -19,8 +19,9 @@ import {
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
+import { CLOUDINARY_IMAGES } from '../../../constants/cloudinaryImages';
 
-// Banners fallback nếu mạng chưa load kịp
+// Banners mặc định lấy từ Cloudinary chính thức
 const DEFAULT_SLIDES: IBannerSlide[] = [
   {
     id: 1,
@@ -30,7 +31,7 @@ const DEFAULT_SLIDES: IBannerSlide[] = [
     badge: 'HOT DEAL THÁNG NÀY',
     voucherCode: 'SAPA20',
     discountHighlight: 'GIẢM 20%',
-    image: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=1400&auto=format&fit=crop&q=80',
+    image: CLOUDINARY_IMAGES.banners.heroSapa,
     gradient: 'linear-gradient(135deg, rgba(234, 88, 12, 0.75) 0%, rgba(15, 23, 42, 0.9) 100%)',
     actionText: 'Đặt Vé Sa Pa Ngay',
   },
@@ -42,7 +43,7 @@ const DEFAULT_SLIDES: IBannerSlide[] = [
     badge: 'TIẾT KIỆM 50K',
     voucherCode: 'DALATVIP',
     discountHighlight: 'GIẢM 50.000Đ',
-    image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=1400&auto=format&fit=crop&q=80',
+    image: CLOUDINARY_IMAGES.banners.heroDalat,
     gradient: 'linear-gradient(135deg, rgba(37, 99, 235, 0.75) 0%, rgba(15, 23, 42, 0.9) 100%)',
     actionText: 'Săn Vé Đi Đà Lạt',
   },
@@ -54,7 +55,7 @@ const DEFAULT_SLIDES: IBannerSlide[] = [
     badge: 'PAYOS VIETQR',
     voucherCode: 'PAYOS50',
     discountHighlight: 'GIẢM 30K',
-    image: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=1400&auto=format&fit=crop&q=80',
+    image: CLOUDINARY_IMAGES.banners.payosMbBank,
     gradient: 'linear-gradient(135deg, rgba(5, 150, 105, 0.75) 0%, rgba(15, 23, 42, 0.9) 100%)',
     actionText: 'Thanh Toán PayOS Ngay',
   },

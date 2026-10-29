@@ -20,6 +20,7 @@ import {
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import uploadService from '../../../services/uploadService';
+import { CLOUDINARY_IMAGES } from '../../../constants/cloudinaryImages';
 
 interface BannerItem {
   id: string;
@@ -65,7 +66,7 @@ export const AdminBannersPage: React.FC = () => {
         setBanners(res.data.data.map((b: any) => ({
           id: String(b.id),
           title: b.title,
-          imagePath: b.imagePath || 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500',
+          imagePath: b.imagePath || CLOUDINARY_IMAGES.banners.heroSapa,
           position: b.position || 'Trang chu - Top',
           status: b.status,
           statusLabel: b.status === 'ACTIVE' ? 'Đang hiện' : 'Đang ẩn',
@@ -342,7 +343,7 @@ export const AdminBannersPage: React.FC = () => {
                           alt={b.title}
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           onError={(e) => {
-                            (e.target as any).src = 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500';
+                            (e.target as any).src = CLOUDINARY_IMAGES.banners.heroSapa;
                           }}
                         />
                       </div>
