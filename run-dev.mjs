@@ -90,7 +90,7 @@ process.on('exit', () => shutdown(0));
 function startBackend() {
   const backendDir = path.join(__dirname, 'backend');
   const cmd = isWindows ? 'gradlew.bat' : './gradlew';
-  const args = ['bootRun'];
+  const args = ['bootRun', '--args=--spring.profiles.active=supabase'];
 
   console.log(`${CYAN}[BACKEND]  Đang khởi động Spring Boot qua Gradle...${RESET}`);
 

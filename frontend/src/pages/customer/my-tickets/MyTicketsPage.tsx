@@ -294,6 +294,8 @@ export const MyTicketsPage: React.FC = () => {
               const isCancelled = booking.status === 'CANCELLED';
               const isConfirmed = booking.status === 'CONFIRMED';
               const isCompleted = booking.status === 'COMPLETED';
+              const isPastDeparture = Boolean(booking.trip?.departureTime && new Date(booking.trip.departureTime) < new Date());
+              const isTripFinished = isCompleted || isPastDeparture;
 
               return (
                 <div
@@ -501,25 +503,45 @@ export const MyTicketsPage: React.FC = () => {
                       </button>
                     )}
 
-                    {(isCompleted || isConfirmed) && (
-                      <button
-                        onClick={() => setReviewBooking(booking)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          backgroundColor: '#fff',
-                          color: '#d97706',
-                          border: '1px solid #fcd34d',
-                          padding: '8px 16px',
-                          borderRadius: '8px',
-                          fontWeight: 700,
-                          fontSize: '13px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <Star size={15} /> Đánh giá chuyến xe
-                      </button>
+                    {!isCancelled && (
+                      isTripFinished ? (
+                        <button
+                          onClick={() => navigate(`/reviews?bookingCode=${booking.bookingCode}`)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            backgroundColor: '#fffbeb',
+                            color: '#d97706',
+                            border: '1px solid #fcd34d',
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            fontWeight: 700,
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <Star size={15} fill="#d97706" /> Đánh giá chuyến xe
+                        </button>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: '12px',
+                            color: '#64748b',
+                            padding: '8px 14px',
+                            backgroundColor: '#f1f5f9',
+                            borderRadius: '8px',
+                            border: '1px dashed #cbd5e1',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontWeight: 600,
+                          }}
+                          title="Đánh giá sẽ mở sau khi chuyến xe hoàn tất hành trình"
+                        >
+                          <Clock size={13} /> Đánh giá mở sau chuyến đi
+                        </span>
+                      )
                     )}
                   </div>
                 </div>

@@ -1,9 +1,10 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/traveleasy_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: traveleasy_user
-    password: traveleasy_password
+    # Supabase Transaction Pooler (Port 6543, prepareThreshold=0 for PgBouncer compatibility):
+    url: ${SUPABASE_DB_URL:jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0}
+    driver-class-name: org.postgresql.Driver
+    username: ${SUPABASE_DB_USERNAME:postgres.ctvcwhdepzyvqsncbslf}
+    password: ${SUPABASE_DB_PASSWORD:thanhtyou123@}
   jpa:
     hibernate:
       ddl-auto: update
@@ -11,7 +12,13 @@ spring:
     properties:
       hibernate:
         format_sql: false
-        dialect: org.hibernate.dialect.MySQLDialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 50
+          order_inserts: true
+          order_updates: true
+          lob:
+            non_contextual_creation: true
 
 payos:
   client-id: ${PAYOS_CLIENT_ID:a187b55f-6c8a-499b-886b-722fcc0c3039}

@@ -99,17 +99,20 @@ public class TripAutomationService {
      */
     @PostConstruct
     public void initializeAutomation() {
-        log.info("🚀 [TripAutomationService] Khởi động động cơ tự động hóa lịch chạy xe...");
-        expirePastTrips();
-        // 1. Sinh ngay 7 ngày tới đồng bộ để sẵn sàng phục vụ tức thì
-        ensureTripsForDateRange(LocalDate.now(), LocalDate.now().plusDays(7));
-        // 2. Chạy bất đồng bộ mở rộng đến 30 ngày ở chế độ ngầm mà không chặn khởi động server
+        log.info("🚀 [TripAutomationService] Khởi động động cơ tự động hóa lịch chạy xe ngầm...");
+        // Chạy bất đồng bộ hoàn toàn để KHÔNG chặn tiến trình khởi động server
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
-                Thread.sleep(3000);
-                ensureTripsForDateRange(LocalDate.now().plusDays(8), LocalDate.now().plusDays(30));
+                expirePastTrips();
+                long scheduledCount = tripRepository.countByStatus(TripStatus.SCHEDULED);
+                if (scheduledCount < 20) {
+                    log.info("Số chuyến hiện tại ({}) ít hơn 20, tiến hành sinh bổ sung lịch chạy...", scheduledCount);
+                    ensureTripsForDateRange(LocalDate.now(), LocalDate.now().plusDays(7));
+                } else {
+                    log.info("Hệ thống đã có {} chuyến xe mở bán trên Supabase. Sẵn sàng!", scheduledCount);
+                }
             } catch (Exception e) {
-                log.warn("Lỗi sinh mở rộng 30 ngày: {}", e.getMessage());
+                log.warn("Lỗi tự động hóa chạy ngầm: {}", e.getMessage());
             }
         });
     }

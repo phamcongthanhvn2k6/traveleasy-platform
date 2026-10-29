@@ -44,18 +44,8 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        // Đồng bộ mật khẩu toàn bộ tài khoản thành "123456789@" phục vụ demo tiện lợi
-        syncDemoPasswordForAllUsers();
-
         if (userRepository.count() > 0) {
-            if (vehicleRepository.count() == 0) {
-                BusCompany futa = busCompanyRepository.findAll().stream().findFirst().orElse(null);
-                if (futa != null) {
-                    seedDefaultVehicles(futa);
-                }
-            }
-            supplementEarlyMorningTripsAndBusCompanies();
-            log.info("Database already seeded. Skipping initial full DataInitializer.");
+            log.info("🚀 [TRAVELEASY] Database already fully seeded on Supabase with 18 tables. Ready!");
             return;
         }
 

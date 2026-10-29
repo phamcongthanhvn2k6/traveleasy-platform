@@ -13,6 +13,15 @@ import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
+    @Query("SELECT b FROM Booking b JOIN FETCH b.trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE b.status IN (com.traveleasy.entity.BookingStatus.CONFIRMED, com.traveleasy.entity.BookingStatus.COMPLETED) ORDER BY b.createdAt DESC")
+    List<Booking> findRecentCompletedEligibleBookings();
+
+    @Query("SELECT b FROM Booking b JOIN FETCH b.trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE b.user.id = :userId ORDER BY b.createdAt DESC")
+    List<Booking> findByUserIdWithTripDetails(@Param("userId") Long userId);
+
+    @Query("SELECT b FROM Booking b JOIN FETCH b.trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE b.bookingCode = :bookingCode")
+    Optional<Booking> findByBookingCodeWithTripDetails(@Param("bookingCode") String bookingCode);
+
     Optional<Booking> findByBookingCode(String bookingCode);
     List<Booking> findByUserIdOrderByCreatedAtDesc(Long userId);
     List<Booking> findByPassengerPhoneOrderByCreatedAtDesc(String passengerPhone);

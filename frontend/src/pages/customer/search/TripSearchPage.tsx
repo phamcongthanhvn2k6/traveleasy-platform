@@ -509,6 +509,47 @@ export const TripSearchPage: React.FC = () => {
 
         {/* Right: Sort Tab Bar & Trips List */}
         <div>
+          {searchParams.get('voucher') && (
+            <div
+              style={{
+                backgroundColor: '#fff7ed',
+                border: '1px solid #fed7aa',
+                borderRadius: '12px',
+                padding: '12px 18px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '20px' }}>🎁</span>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#c2410c' }}>
+                    Bạn đang săn ưu đãi [ mã: {searchParams.get('voucher')} ]
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#9a3412' }}>
+                    Chọn chuyến xe bạn yêu thích và tiến hành đặt chỗ. Mã ưu đãi sẽ được áp dụng tự động tại bước thanh toán!
+                  </div>
+                </div>
+              </div>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  backgroundColor: '#ea580c',
+                  color: '#fff',
+                  padding: '4px 10px',
+                  borderRadius: '20px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ĐÃ ÁP DỤNG MÃ
+              </span>
+            </div>
+          )}
+
           <SortTabBar
             currentSort={sortOption}
             onChangeSort={setSortOption}

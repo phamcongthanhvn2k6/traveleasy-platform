@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../../services/api';
 import { Booking } from '../../../types';
-import { Search, ShieldCheck, QrCode, MapPin, Printer, ArrowLeft, Copy, Check, CheckCircle2, Ticket, Mail } from 'lucide-react';
+import { Search, ShieldCheck, QrCode, MapPin, Printer, ArrowLeft, Copy, Check, CheckCircle2, Ticket, Mail, Star } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import { BoardingPassModal } from '../../../components/BoardingPassModal';
 import { EmailTicketModal } from '../../../components/EmailTicketModal';
@@ -258,6 +258,27 @@ export const TicketLookupPage: React.FC = () => {
               >
                 <Mail size={16} /> Gửi Vé Qua Email / VAT
               </button>
+
+              {Boolean(booking.status === 'COMPLETED' || (booking.trip?.departureTime && new Date(booking.trip.departureTime) < new Date())) && (
+                <button
+                  onClick={() => navigate(`/reviews?bookingCode=${booking.bookingCode}`)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: '#fffbeb',
+                    border: '1px solid #fcd34d',
+                    color: '#d97706',
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Star size={16} fill="#d97706" /> Đánh Giá Chuyến Xe
+                </button>
+              )}
 
               <button
                 onClick={() => navigate('/my-tickets')}

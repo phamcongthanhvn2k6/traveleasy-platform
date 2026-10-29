@@ -53,8 +53,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/bookings/code/**").permitAll()
                         .requestMatchers("/api/v1/bookings", "/api/v1/bookings/*/cancel", "/api/v1/bookings/*/cancel-partial", "/api/v1/bookings/*/reschedule").permitAll()
                         .requestMatchers("/api/v1/payments/**").permitAll() // Cổng thanh toán, callback VNPAY & VietQR
-                        .requestMatchers(HttpMethod.GET, "/api/v1/banners/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/reviews/**").permitAll()
+                        .requestMatchers("/api/v1/banners/**").permitAll()
+                        .requestMatchers("/api/v1/reviews/**").permitAll()
+                        .requestMatchers("/api/v1/bus-companies/**").permitAll()
+                        .requestMatchers("/api/v1/promotions/**").permitAll()
                         .requestMatchers("/api/v1/ai/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/v1/company/**").permitAll()
