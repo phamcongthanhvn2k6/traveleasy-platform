@@ -202,3 +202,4 @@ Dự án áp dụng kiến trúc **Two-Portal Architecture** (Phân hệ Admin &
 
 > **LỜI CHÚC TỪ HỆ THỐNG:**  
 > Chúc bạn **Phạm Công Thành** và toàn thể anh em **Nhóm 7** tự tin, phối hợp nhịp nhàng và giành trọn **100/100 ĐIỂM XUẤT SẮC** trong buổi bảo vệ tốt nghiệp Rikkei Pre-OJT! 🚀
+

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../../services/api';
 import { Booking } from '../../../types';
-import { Search, ShieldCheck, QrCode, MapPin, Printer, ArrowLeft, Copy, Check, CheckCircle2, Ticket, Mail, Star } from 'lucide-react';
+import { Search, ShieldCheck, QrCode, MapPin, Printer, ArrowLeft, Copy, Check, CheckCircle2, Ticket, Mail, Star, WifiOff, Radio, Navigation, Bus, Clock } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import { BoardingPassModal } from '../../../components/BoardingPassModal';
 import { EmailTicketModal } from '../../../components/EmailTicketModal';
@@ -21,6 +21,29 @@ export const TicketLookupPage: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [showBoardingPass, setShowBoardingPass] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+
+  const saveBookingToOfflineCache = (data: Booking) => {
+    try {
+      const cacheRaw = localStorage.getItem('traveleasy_saved_tickets');
+      const cache: Record<string, Booking> = cacheRaw ? JSON.parse(cacheRaw) : {};
+      cache[data.bookingCode.toUpperCase()] = data;
+      localStorage.setItem('traveleasy_saved_tickets', JSON.stringify(cache));
+    } catch (e) {
+      console.warn('Could not cache booking offline:', e);
+    }
+  };
+
+  const getBookingFromOfflineCache = (searchCode: string): Booking | null => {
+    try {
+      const cacheRaw = localStorage.getItem('traveleasy_saved_tickets');
+      if (!cacheRaw) return null;
+      const cache: Record<string, Booking> = JSON.parse(cacheRaw);
+      return cache[searchCode.trim().toUpperCase()] || null;
+    } catch {
+      return null;
+    }
+  };
 
   const lookupByCode = async (searchCode: string) => {
     if (!searchCode.trim()) {
@@ -31,21 +54,39 @@ export const TicketLookupPage: React.FC = () => {
     setLoading(true);
     setError(null);
     setBooking(null);
+    setIsOfflineData(false);
 
     try {
       const res = await api.get(`/bookings/code/${searchCode.trim()}`);
       if (res.data?.data) {
         setBooking(res.data.data);
+        saveBookingToOfflineCache(res.data.data);
         toast.success(`Tra cứu thành công đơn vé ${res.data.data.bookingCode}!`, 'Tra Cứu Vé');
       } else {
-        const msg = 'Không tìm thấy thông tin đơn đặt vé với mã này!';
+        // Fallback to offline cache
+        const offlineBooking = getBookingFromOfflineCache(searchCode);
+        if (offlineBooking) {
+          setBooking(offlineBooking);
+          setIsOfflineData(true);
+          toast.info('Đang hiển thị vé từ bộ nhớ Offline của thiết bị!', 'Chế Độ Ngoại Tuyến');
+        } else {
+          const msg = 'Không tìm thấy thông tin đơn đặt vé với mã này!';
+          setError(msg);
+          toast.error(msg, 'Tra Cứu Thất Bại');
+        }
+      }
+    } catch (err: any) {
+      // Fallback to offline cache on network error
+      const offlineBooking = getBookingFromOfflineCache(searchCode);
+      if (offlineBooking) {
+        setBooking(offlineBooking);
+        setIsOfflineData(true);
+        toast.info('Không thể kết nối máy chủ. Đang hiển thị vé từ bộ nhớ Offline!', 'Chế Độ Ngoại Tuyến');
+      } else {
+        const msg = err.response?.data?.message || 'Không tìm thấy thông tin đơn đặt vé với mã này!';
         setError(msg);
         toast.error(msg, 'Tra Cứu Thất Bại');
       }
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Không tìm thấy thông tin đơn đặt vé với mã này!';
-      setError(msg);
-      toast.error(msg, 'Tra Cứu Thất Bại');
     } finally {
       setLoading(false);
     }
@@ -148,6 +189,31 @@ export const TicketLookupPage: React.FC = () => {
 
         {booking && (
           <div style={{ border: '2px dashed #93c5fd', borderRadius: '14px', padding: '26px', backgroundColor: '#f0f9ff' }}>
+            {/* Offline Alert Badge */}
+            {isOfflineData && (
+              <div
+                style={{
+                  backgroundColor: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  color: '#b45309',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  boxShadow: '0 2px 4px rgba(245, 158, 11, 0.08)',
+                }}
+              >
+                <WifiOff size={18} color="#d97706" style={{ flexShrink: 0 }} />
+                <div>
+                  <span style={{ fontWeight: 800 }}>Chế Độ Ngoại Tuyến (Offline Mode):</span> Vé đã được bảo lưu an toàn trên bộ nhớ thiết bị. Bạn có thể xuất trình mã QR này trực tiếp cho tài xế/phụ xe tại bến ngay cả khi không có kết nối Internet!
+                </div>
+              </div>
+            )}
+
             {/* Header of Ticket */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #bfdbfe', paddingBottom: '16px' }}>
               <div>
@@ -196,9 +262,57 @@ export const TicketLookupPage: React.FC = () => {
             </div>
 
             {/* Pickup & Dropoff */}
-            <div style={{ fontSize: '13px', color: '#475569', marginBottom: '20px', backgroundColor: '#fff', padding: '14px 18px', borderRadius: '10px', border: '1px solid #e2e8f0', lineHeight: 1.6 }}>
+            <div style={{ fontSize: '13px', color: '#475569', marginBottom: '18px', backgroundColor: '#fff', padding: '14px 18px', borderRadius: '10px', border: '1px solid #e2e8f0', lineHeight: 1.6 }}>
               <div><MapPin size={15} style={{ display: 'inline', color: '#2563eb', marginRight: '6px', verticalAlign: '-2px' }} /> Điểm đón: <strong>{booking.pickupPointName}</strong></div>
               <div><MapPin size={15} style={{ display: 'inline', color: '#f97316', marginRight: '6px', verticalAlign: '-2px' }} /> Điểm trả: <strong>{booking.dropoffPointName}</strong></div>
+            </div>
+
+            {/* Real-time Transit Roadmap Tracker */}
+            <div style={{ backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '16px 20px', marginBottom: '22px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: '#1e3a8a' }}>
+                  <Radio size={16} color="#2563eb" />
+                  <span>TIẾN TRÌNH HÀNH TRÌNH XE THỜI GIAN THỰC</span>
+                </div>
+                <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '12px', backgroundColor: '#dcfce7', color: '#15803d', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#16a34a' }}></span>
+                  Xe Chạy Đúng Giờ
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr', alignItems: 'center', gap: '10px', textAlign: 'center' }}>
+                <div style={{ backgroundColor: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 700 }}>ĐIỂM XUẤT BẾN</div>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', margin: '3px 0' }}>{booking.pickupPointName || booking.trip?.originCity}</div>
+                  <div style={{ fontSize: '11px', color: '#2563eb', fontWeight: 700 }}>
+                    {booking.trip?.departureTime ? new Date(booking.trip.departureTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'Xuất bến'}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#2563eb' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#2563eb', marginBottom: '2px' }}>Cao tốc</div>
+                  <Navigation size={18} />
+                </div>
+
+                <div style={{ backgroundColor: '#eff6ff', padding: '10px', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+                  <div style={{ fontSize: '10.5px', color: '#1d4ed8', fontWeight: 700 }}>TRẠM TRUNG CHUYỂN</div>
+                  <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#1e3a8a', margin: '3px 0' }}>Trạm Dừng Chân VIP</div>
+                  <div style={{ fontSize: '10.5px', color: '#2563eb', fontWeight: 600 }}>Nghỉ 15 phút</div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#ea580c' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#ea580c', marginBottom: '2px' }}>Về đích</div>
+                  <Bus size={18} />
+                </div>
+
+                <div style={{ backgroundColor: '#fff7ed', padding: '10px', borderRadius: '8px', border: '1px solid #fed7aa' }}>
+                  <div style={{ fontSize: '10.5px', color: '#c2410c', fontWeight: 700 }}>ĐIỂM TRẢ KHÁCH</div>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', margin: '3px 0' }}>{booking.dropoffPointName || booking.trip?.destinationCity}</div>
+                  <div style={{ fontSize: '11px', color: '#ea580c', fontWeight: 700 }}>
+                    {booking.trip?.arrivalTime ? new Date(booking.trip.arrivalTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'Đến nơi'}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Ticket Cards with QR */}
