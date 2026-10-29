@@ -38,3 +38,4 @@ export const ReviewLightbox: React.FC<ReviewLightboxProps> = ({ imageUrl, onClos
     </div>
   );
 };
+

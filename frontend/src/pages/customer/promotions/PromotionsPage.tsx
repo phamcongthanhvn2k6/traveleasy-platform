@@ -509,3 +509,4 @@ export const PromotionsPage: React.FC = () => {
     </div>
   );
 };
+

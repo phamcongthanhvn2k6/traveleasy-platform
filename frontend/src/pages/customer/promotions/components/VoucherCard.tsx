@@ -151,3 +151,4 @@ export const VoucherCard: React.FC<VoucherCardProps> = ({
     </div>
   );
 };
+

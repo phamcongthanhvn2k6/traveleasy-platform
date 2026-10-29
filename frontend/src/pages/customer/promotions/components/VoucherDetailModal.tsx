@@ -173,3 +173,4 @@ export const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
     </div>
   );
 };
+

@@ -38,3 +38,4 @@ export interface IBannerSlide {
   gradient: string;
   actionText: string;
 }
+

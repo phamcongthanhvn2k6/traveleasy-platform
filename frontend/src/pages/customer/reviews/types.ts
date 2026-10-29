@@ -48,3 +48,4 @@ export interface IReviewSummary {
 }
 
 export type ReviewStarFilter = 'ALL' | '5' | '4' | 'HAS_IMAGES';
+
