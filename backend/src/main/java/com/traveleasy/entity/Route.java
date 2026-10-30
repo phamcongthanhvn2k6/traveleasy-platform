@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "routes")
+@Table(name = "routes", indexes = {
+    @Index(name = "idx_routes_origin_dest", columnList = "departure_location, arrival_location")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -39,6 +41,7 @@ public class Route {
     private BigDecimal distanceKm;
 
     @OneToMany(mappedBy = "route", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC")
     @Builder.Default
     @JsonIgnoreProperties({"route", "hibernateLazyInitializer", "handler"})
     private List<PickupDropoffPoint> points = new ArrayList<>();

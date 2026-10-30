@@ -11,6 +11,9 @@ import { CheckoutModal } from '../../../components/CheckoutModal';
 import { toast } from '../../../context/ToastContext';
 import { Bus, AlertCircle } from 'lucide-react';
 
+// Bộ nhớ đệm Client-side SWR: Giữ kết quả tìm kiếm trong RAM để hiển thị tức thì (0ms)
+const tripSearchClientCache = new Map<string, { data: Trip[]; timestamp: number }>();
+
 export const TripSearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -55,7 +58,24 @@ export const TripSearchPage: React.FC = () => {
   const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
 
   const fetchTrips = async (orig: string, dest: string, depDate: string) => {
-    setLoading(true);
+    const cacheKey = `${orig}_${dest}_${depDate}`;
+    const cached = tripSearchClientCache.get(cacheKey);
+    const now = Date.now();
+
+    // 1. Instant Cache Hit: Hiển thị ngay lập tức (0ms) nếu đã tải trong vòng 60 giây
+    if (cached && (now - cached.timestamp < 60_000)) {
+      setTrips(cached.data);
+      setLoading(false);
+      return;
+    }
+
+    // 2. Optimistic Rendering: Nếu có dữ liệu trong cache, hiển thị trước để người dùng không phải chờ
+    if (cached) {
+      setTrips(cached.data);
+    } else {
+      setLoading(true);
+    }
+
     try {
       const params: Record<string, string> = {};
       if (orig && orig.trim() !== '') params.origin = orig.trim();
@@ -66,6 +86,7 @@ export const TripSearchPage: React.FC = () => {
 
       const data = res.data?.data || [];
       setTrips(data);
+      tripSearchClientCache.set(cacheKey, { data, timestamp: Date.now() });
 
       if (data.length > 0) {
         if (!orig && !dest) {
@@ -83,7 +104,7 @@ export const TripSearchPage: React.FC = () => {
     } catch (err) {
       console.error('Failed to search trips:', err);
       toast.error('Lỗi khi tải danh sách chuyến xe. Vui lòng thử lại!', 'Lỗi');
-      setTrips([]);
+      if (!cached) setTrips([]);
     } finally {
       setLoading(false);
     }
