@@ -23,8 +23,12 @@ export const TripSearchPage: React.FC = () => {
   const date = searchParams.get('date') || '';
   const companyParam = searchParams.get('company') || '';
 
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Khởi tạo ngay lập tức từ bộ nhớ đệm nếu có sẵn để chuyển trang 0ms không chớp màn hình
+  const initialCacheKey = `${origin}_${destination}_${date}`;
+  const initialCached = tripSearchClientCache.get(initialCacheKey);
+
+  const [trips, setTrips] = useState<Trip[]>(() => (initialCached ? initialCached.data : []));
+  const [loading, setLoading] = useState<boolean>(() => !initialCached);
 
   // Sorting and Filtering State
   const [sortOption, setSortOption] = useState<SortOption>('DEFAULT');
@@ -62,16 +66,17 @@ export const TripSearchPage: React.FC = () => {
     const cached = tripSearchClientCache.get(cacheKey);
     const now = Date.now();
 
-    // 1. Instant Cache Hit: Hiển thị ngay lập tức (0ms) nếu đã tải trong vòng 60 giây
-    if (cached && (now - cached.timestamp < 60_000)) {
+    // 1. Instant Cache Hit: Hiển thị ngay lập tức (0ms) nếu đã tải trong vòng 5 phút
+    if (cached && (now - cached.timestamp < 300_000)) {
       setTrips(cached.data);
       setLoading(false);
       return;
     }
 
-    // 2. Optimistic Rendering: Nếu có dữ liệu trong cache, hiển thị trước để người dùng không phải chờ
+    // 2. Optimistic Rendering: Nếu có dữ liệu trong cache, hiển thị trước và không bật loading spinner
     if (cached) {
       setTrips(cached.data);
+      setLoading(false);
     } else {
       setLoading(true);
     }

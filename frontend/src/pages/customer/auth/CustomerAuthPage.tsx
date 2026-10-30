@@ -114,7 +114,7 @@ export const CustomerAuthPage: React.FC = () => {
     try {
       const res = await api.post('/auth/login', {
         identifier: loginIdentifier.trim(),
-        password: loginPassword
+        password: loginPassword.trim()
       });
 
       if (res.data?.success && res.data?.data) {
