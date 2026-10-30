@@ -131,22 +131,16 @@ public class TripAutomationService {
 
     /**
      * Cập nhật trạng thái các chuyến có giờ khởi hành trong quá khứ thành COMPLETED
+     * Tối ưu hóa: Dùng câu lệnh JPQL UPDATE trực tiếp thay vì load toàn bộ Entity về RAM
      */
     @Transactional
     public int expirePastTrips() {
         LocalDateTime now = LocalDateTime.now();
-        List<Trip> pastScheduledTrips = tripRepository.findAll().stream()
-                .filter(t -> t.getStatus() == TripStatus.SCHEDULED && t.getDepartureTime() != null && t.getDepartureTime().isBefore(now))
-                .toList();
-
-        if (!pastScheduledTrips.isEmpty()) {
-            for (Trip t : pastScheduledTrips) {
-                t.setStatus(TripStatus.COMPLETED);
-            }
-            tripRepository.saveAll(pastScheduledTrips);
-            log.info("✅ [TripAutomationService] Đã tự động cập nhật {} chuyến xe quá hạn thành COMPLETED", pastScheduledTrips.size());
+        int updated = tripRepository.markPastTripsAsCompleted(now);
+        if (updated > 0) {
+            log.info("✅ [TripAutomationService] Đã tự động cập nhật {} chuyến xe quá hạn thành COMPLETED (JPQL Batch)", updated);
         }
-        return pastScheduledTrips.size();
+        return updated;
     }
 
     /**
@@ -173,6 +167,7 @@ public class TripAutomationService {
     /**
      * On-Demand: Tự động sinh chuyến ngay khi khách hàng tìm kiếm một ngày trong tương lai chưa có chuyến
      */
+    @org.springframework.scheduling.annotation.Async
     @Transactional
     public void ensureTripsForRouteAndDate(String origin, String destination, LocalDate date) {
         if (date.isBefore(LocalDate.now())) {

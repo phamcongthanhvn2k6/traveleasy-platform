@@ -138,6 +138,7 @@ public class AdminTripService {
     }
 
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable("system_stats")
     public DashboardStatsResponse getDashboardStats() {
         long totalTrips = tripRepository.count();
         long scheduledTrips = tripRepository.countByStatus(TripStatus.SCHEDULED);

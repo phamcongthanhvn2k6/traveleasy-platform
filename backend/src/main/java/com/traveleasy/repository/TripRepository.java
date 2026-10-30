@@ -32,6 +32,10 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
         @Param("status") TripStatus status
     );
 
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE Trip t SET t.status = com.traveleasy.entity.TripStatus.COMPLETED WHERE t.status = com.traveleasy.entity.TripStatus.SCHEDULED AND t.departureTime < :now")
+    int markPastTripsAsCompleted(@Param("now") LocalDateTime now);
+
     List<Trip> findByRouteIdAndDepartureTimeBetween(Long routeId, LocalDateTime start, LocalDateTime end);
     long countByStatus(TripStatus status);
     List<Trip> findAllByOrderByDepartureTimeDesc();
