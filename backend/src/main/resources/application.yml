@@ -13,7 +13,7 @@ spring:
     url: ${SUPABASE_DB_URL:jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0}
     username: ${SUPABASE_DB_USERNAME:postgres.ctvcwhdepzyvqsncbslf}
     password: ${SUPABASE_DB_PASSWORD:thanhtyou123@}
-    driver-class-name: org.postgresql.Driver
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
     hikari:
       pool-name: TravelEasyHikariPool
       maximum-pool-size: 20
@@ -31,7 +31,7 @@ spring:
     properties:
       hibernate:
         format_sql: false
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}
         default_batch_fetch_size: 50
         jdbc:
           batch_size: 50
