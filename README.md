@@ -76,7 +76,7 @@
 2. [CƠ CẤU NHÂN SỰ, PHÂN CHIA PHÂN HỆ & KIẾN TRÚC ĐIỀU HƯỚNG THEO NĂNG LỰC](#2-cơ-cấu-nhân-sự-phân-chia-phân-hệ--kiến-trúc-điều-hướng-theo-năng-lực)
    - 2.1 Kiến trúc Phân định 2 Phân hệ Lớn (Two-Portal Architecture)
    - 2.2 Đánh giá Thiết kế: "Quản lý các đường dẫn bằng 1 Router Controller có phù hợp không?"
-   - 2.3 Ma Trận 17 Trang Giao Diện & Điều Hướng Chi Tiết (Page & Component Sitemap V3)
+   - 2.3 Bản Đồ Tổng Thể Các Trang Của Dự Án TravelEasy (Full Sitemap V4 - 3 Phân Hệ Doanh Nghiệp)
    - 2.4 Bảng Phân Công Nhiệm Vụ 6 Thành Viên (RACI V3)
    - 2.5 Ma trận Trách nhiệm RACI Cập Nhật V3
    - 2.6 Kế Hoạch Sprint Backlog & 17 User Stories Chuẩn Agile Scrum (Trello Board)
@@ -205,7 +205,96 @@ Hệ thống giải quyết triệt để các vấn đề trên thông qua:
 
 ---
 
-### 2.3 Ma Trận 17 Trang Giao Diện & Điều Hướng Chi Tiết (Page & Component Sitemap V3)
+### 2.3 🗺️ BẢN ĐỒ TỔNG THỂ CÁC TRANG CỦA DỰ ÁN TRAVELEASY (FULL SITEMAP V4 — 3 PHÂN HỆ DOANH NGHIỆP)
+
+```mermaid
+flowchart TD
+    App["🚀 TRAVELEASY PLATFORM"]
+    
+    App --> PublicPortal["🌐 PHÂN HỆ 1: KHÁCH HÀNG & CÔNG CỘNG (11 Trang)"]
+    App --> CompanyPortal["🚍 PHÂN HỆ 2: CỔNG ĐỐI TÁC NHÀ XE (9 Trang)"]
+    App --> AdminPortal["👑 PHÂN HỆ 3: CỔNG QUẢN TRỊ SÀN TỔNG (14 Trang)"]
+    
+    PublicPortal --> P1["Trang Chủ (/)"]
+    PublicPortal --> P2["Tìm Kiếm & Ghế (/search)"]
+    PublicPortal --> P3["Thanh Toán Đặt Vé (/checkout)"]
+    PublicPortal --> P4["Tra Cứu Vé & Lộ Trình (/lookup)"]
+    PublicPortal --> P5["Vé Của Tôi (/my-tickets)"]
+    PublicPortal --> P6["Quét Mã QR Vé (/scanner)"]
+    
+    CompanyPortal --> C1["Dashboard Nhà Xe (/company/dashboard)"]
+    CompanyPortal --> C2["Quản Lý Chuyến Xe (/company/trips)"]
+    CompanyPortal --> C3["Danh Sách Hành Khách (/company/bookings)"]
+    CompanyPortal --> C4["Quyết Toán Doanh Thu (/company/settlements)"]
+    
+    AdminPortal --> A1["Dashboard Toàn Sàn (/admin/dashboard)"]
+    AdminPortal --> A2["Quản Lý 480 Chuyến (/admin/trips)"]
+    AdminPortal --> A3["Quản Trị Người Dùng (/admin/users)"]
+    AdminPortal --> A4["Duyệt Nhà Xe (/admin/bus-companies)"]
+    AdminPortal --> A5["Vết Kiểm Toán (/admin/audit-logs)"]
+```
+
+#### 🌐 PHÂN HỆ 1: DÀNH CHO KHÁCH HÀNG & CÔNG CỘNG (11 TRANG)
+*(Truy cập công khai hoặc chỉ cần đăng nhập tài khoản Khách hàng `CUSTOMER`)*
+
+| STT | Tên Màn Hình | Đường Dẫn (URL) | Quyền Truy Cập | Chức Năng Cốt Lõi |
+| :---: | :--- | :--- | :---: | :--- |
+| **1** | **Trang Chủ** | [`/`](http://localhost:5173/) | Công khai | Tìm kiếm chuyến xe nhanh (Nơi đi, Nơi đến, Ngày đi), Banner khuyến mại Cloudinary, Top tuyến đường phổ biến, Cẩm nang xe khách. |
+| **2** | **Tìm Kiếm Chuyến & Sơ Đồ Ghế** | [`/search`](http://localhost:5173/search) | Công khai | Bộ lọc đa chiều (Giá vé, Giờ đi, Nhà xe, Điểm đón, Đánh giá ⭐), **Hiển thị sơ đồ ghế 2 tầng 34 chỗ thời gian thực**, chọn điểm đón/trả và đặt vé nhanh. *(Tích hợp Cache SWR tải trong 0ms)* |
+| **3** | **Thanh Toán & Đặt Vé** | [`/checkout`](http://localhost:5173/checkout) | Khách hàng | Điền thông tin hành khách, áp mã Voucher giảm giá, chọn phương thức thanh toán (**VNPay, MoMo, VietQR, Tiền mặt COD**), đếm ngược giữ ghế 10 phút. |
+| **4** | **Tra Cứu Vé & In Vé Điện Tử** | [`/lookup`](http://localhost:5173/lookup) | Công khai | Tra cứu theo Mã đặt vé (`BK-*`) hoặc SĐT. Hiển thị vé điện tử, **Mã QR Code lên xe**, **Bản đồ lộ trình di chuyển thời gian thực**, hỗ trợ lưu vé Offline không cần mạng. |
+| **5** | **Quản Lý Vé Của Tôi** | [`/my-tickets`](http://localhost:5173/my-tickets) | `CUSTOMER` | Xem toàn bộ lịch sử vé đã mua của tài khoản cá nhân, xem trạng thái vé (`ISSUED`, `USED`, `CANCELLED`), yêu cầu hủy vé & hoàn tiền online. |
+| **6** | **📷 Quét Mã QR Vé Đa Năng** | [`/scanner`](http://localhost:5173/scanner) | Công khai | **Quét camera/webcam điện thoại & laptop**, tải ảnh chụp mã QR hoặc nhập mã vé. Xác thực tính hợp lệ của vé và bấm nút **"Xác nhận Check-in lên xe"** theo thời gian thực. |
+| **7** | **Đăng Nhập / Đăng Ký** | [`/login`](http://localhost:5173/login) | Công khai | Xác thực JWT Token, đăng ký tài khoản khách hàng mới, nút bấm điền nhanh tài khoản mẫu (`customer@gmail.com`). |
+| **8** | **Hồ Sơ Cá Nhân** | [`/profile`](http://localhost:5173/profile) | `CUSTOMER` | Cập nhật họ tên, số điện thoại, đổi mật khẩu bảo mật, xem số dư và thông tin tài khoản. |
+| **9** | **Lịch Trình Toàn Quốc** | [`/schedule`](http://localhost:5173/schedule) | Công khai | Bảng giờ xuất bến định kỳ, thông tin chi tiết các tuyến đường 3 miền (cự ly km, thời gian di chuyển dự kiến, danh sách trạm đón/trả). |
+| **10** | **Khuyến Mãi & Voucher** | [`/promotions`](http://localhost:5173/promotions) | Công khai | Kho mã giảm giá (Voucher 20k, 50k, 100k, giảm 15%), nút sao chép mã ưu đãi nhanh, điều khoản áp dụng theo từng chặng. |
+| **11** | **Đánh Giá & Nhận Xét** | [`/reviews`](http://localhost:5173/reviews) | Công khai | Tổng hợp đánh giá sao, nhận xét trải nghiệm thực tế từ hành khách, hình ảnh xe, phản hồi từ các đối tác nhà xe. |
+
+---
+
+#### 🚍 PHÂN HỆ 2: CỔNG ĐỐI TÁC NHÀ XE (COMPANY PORTAL - 9 TRANG)
+*(Dành riêng cho các Hãng xe vận tải như Phương Trang, Thành Bưởi, Hoa Mai... — Role `OPERATOR`)*
+
+| STT | Tên Màn Hình | Đường Dẫn (URL) | Chức Năng Cốt Lõi |
+| :---: | :--- | :--- | :--- |
+| **12** | **Đăng Nhập Nhà Xe** | [`/company/login`](http://localhost:5173/company/login) | Đăng nhập tài khoản điều hành nhà xe (`operator@futa.vn`, `dieuhanh@thanhbuoi.com.vn`...). |
+| **13** | **Dashboard Đối Tác** | [`/company/dashboard`](http://localhost:5173/company/dashboard) | Thống kê doanh thu bán vé riêng của hãng, số lượt khách đã phục vụ, số chuyến đang chạy hôm nay, tỷ lệ lấp đầy ghế. |
+| **14** | **Lịch Chạy & Mở Bán Chuyến** | [`/company/trips`](http://localhost:5173/company/trips) | Quản lý toàn bộ chuyến xe của hãng, thêm chuyến mới, gán biển số xe, mở bán vé, điều chỉnh giá vé dịp Lễ/Tết. |
+| **15** | **Danh Sách Khách Đi Xe** | [`/company/bookings`](http://localhost:5173/company/bookings) | Xem danh sách hành khách theo từng chuyến xe, số ghế, điểm đón, điểm trả, số điện thoại, trạng thái thanh toán & check-in. |
+| **16** | **Quản Lý Đội Xe Vận Tải** | [`/company/vehicles`](http://localhost:5173/company/vehicles) | Quản lý danh mục phương tiện (Xe Limousine 34 phòng, Xe Giường Nằm, Xe Ghế VIP), biển số xe, trạng thái hoạt động/bảo dưỡng. |
+| **17** | **Điểm Đón / Trả Riêng** | [`/company/locations`](http://localhost:5173/company/locations) | Cấu hình các văn phòng, trạm trung chuyển, trạm dừng chân riêng của nhà xe trên từng tuyến đường. |
+| **18** | **Tuyến Đường Khai Thác** | [`/company/routes`](http://localhost:5173/company/routes) | Danh sách các tuyến đường nhà xe đã đăng ký và được Sàn TravelEasy phê duyệt hoạt động. |
+| **19** | **Quyết Toán Doanh Thu** | [`/company/settlements`](http://localhost:5173/company/settlements) | Bảng kê đối soát doanh thu bán vé, số tiền hoa hồng sàn giữ lại (phí sàn 10%), số tiền thực nhận về tài khoản ngân hàng nhà xe. |
+| **20** | **Chăm Sóc & Phản Hồi Đánh Giá** | [`/company/reviews`](http://localhost:5173/company/reviews) | Đọc các đánh giá của khách hàng đi xe của mình và gửi phản hồi giải đáp thắc mắc. |
+
+---
+
+#### 👑 PHÂN HỆ 3: CỔNG QUẢN TRỊ SÀN TỔNG (ADMIN PORTAL - 13 TRANG)
+*(Dành riêng cho Ban Giám Đốc và Quản Trị Viên Sàn — Role `ADMIN`)*
+
+| STT | Tên Màn Hình | Đường Dẫn (URL) | Chức Năng Cốt Lõi |
+| :---: | :--- | :--- | :--- |
+| **21** | **Đăng Nhập Quản Trị Viên** | [`/admin/login`](http://localhost:5173/admin/login) | Cổng đăng nhập bảo mật của Quản trị viên (`admin@traveleasy.vn`, mật khẩu: `123456789@`). |
+| **22** | **Dashboard Tổng Quan Sàn** | [`/admin/dashboard`](http://localhost:5173/admin/dashboard) | Trung tâm điều hành toàn sàn: Tổng doanh thu (GMV), Tổng số vé bán ra, Biểu đồ doanh thu 12 tháng, Top 5 nhà xe xuất sắc nhất. |
+| **23** | **Quản Lý Chuyến Xe Toàn Sàn** | [`/admin/trips`](http://localhost:5173/admin/trips) | Quản lý và giám sát toàn bộ 480 chuyến xe trên cả nước, can thiệp khẩn cấp (hủy chuyến do thời tiết, đổi lịch xe, đổi tài xế). |
+| **24** | **Quản Trị Người Dùng & RBAC** | [`/admin/users`](http://localhost:5173/admin/users) | Quản lý danh sách tài khoản toàn hệ thống, phân quyền vai trò (**ADMIN, OPERATOR, CUSTOMER**), khóa / mở khóa tài khoản (`ACTIVE` / `LOCKED`). *(Có cơ chế chống xóa Admin tối cao)* |
+| **25** | **Quản Lý Đối Tác Nhà Xe** | [`/admin/bus-companies`](http://localhost:5173/admin/bus-companies) | Phê duyệt hồ sơ nhà xe mới đăng ký lên sàn, quản lý hợp đồng, hotline, logo Cloudinary, tạm ngừng hợp tác nhà xe vi phạm. |
+| **26** | **Quản Lý Tuyến Đường Liên Tỉnh** | [`/admin/routes`](http://localhost:5173/admin/routes) | Quản lý danh mục 25+ tuyến đường trọng điểm, khoảng cách km, thời gian chạy, gán nhà xe vận hành. |
+| **27** | **Quản Lý Tất Cả Đơn Vé** | [`/admin/bookings`](http://localhost:5173/admin/bookings) | Tra cứu toàn bộ giao dịch đặt vé trên sàn, kiểm tra mã đơn, lịch sử thanh toán, phê duyệt hoàn tiền vé hủy. |
+| **28** | **Quyết Toán Tài Chính Sàn** | [`/admin/settlements`](http://localhost:5173/admin/settlements) | Kiểm soát dòng tiền, tạo kỳ quyết toán chi trả cho các nhà xe đối tác, quản lý thông tin tài khoản ngân hàng thụ hưởng. |
+| **29** | **Quản Lý Danh Mục Bến Xe** | [`/admin/locations`](http://localhost:5173/admin/locations) | Dữ liệu gốc (Master Data) các bến xe lớn toàn quốc: Bến xe Miền Đông, Bến xe Miền Tây, Bến xe Mỹ Đình, Giáp Bát, Nước Ngầm... |
+| **30** | **Quản Lý Loại Ghế & Giá Phụ Thu**| [`/admin/seat-types`](http://localhost:5173/admin/seat-types) | Cấu hình các hạng ghế trên sàn: `STANDARD`, `VIP`, `LIMOUSINE`, `SLEEPER` kèm đơn giá phụ thu và tiện ích đi kèm. |
+| **31** | **Quản Lý Mẫu Sơ Đồ Xe** | [`/admin/seat-templates`](http://localhost:5173/admin/seat-templates) | Thiết kế bố cục sơ đồ xe 2 tầng 34 chỗ, xe Limousine 22 phòng, xe ghế ngồi 45 chỗ để các nhà xe áp dụng. |
+| **32** | **Cấu Hình Cổng Thanh Toán** | [`/admin/gateways`](http://localhost:5173/admin/gateways) | Bật / tắt và quản lý API Key của các cổng thanh toán điện tử: VNPay, PayOS, MoMo, VietQR và phương thức Tiền mặt COD. |
+| **33** | **Quản Lý Banner Quảng Cáo** | [`/admin/banners`](http://localhost:5173/admin/banners) | Quản lý hình ảnh banner trang chủ tải lên Cloudinary, gắn link khuyến mại, kích hoạt / ẩn banner theo mùa vụ. |
+| **34** | **Kiểm Duyệt Đánh Giá Khách Hàng**| [`/admin/reviews`](http://localhost:5173/admin/reviews) | Xử lý các báo cáo vi phạm đánh giá, ẩn bình luận độc hại, giữ môi trường đánh giá minh bạch, khách quan. |
+| **35** | **Chính Sách Hoàn Hủy Sàn** | [`/admin/cancellation-policies`](http://localhost:5173/admin/cancellation-policies) | Quy định chính sách hoàn tiền chuẩn của sàn: Hoàn 100% trước 24h, hoàn 50% trước 12h, không hoàn sau giờ xe chạy. |
+| **36** | **Vết Kiểm Toán Bất Biến (Audit Log)**| [`/admin/audit-logs`](http://localhost:5173/admin/audit-logs) | Bản ghi lịch sử hoạt động bảo mật bất biến (Append-only): Ghi nhận chi tiết mọi hành vi tạo/sửa/xóa của Admin và Nhà xe (ai thực hiện, thời gian, IP, dữ liệu trước và sau khi thay đổi). |
+
+---
+
+### 2.4 Ma Trận Chi Tiết Theo Component & Use Cases (Sprint V3 Archive)
 
 #### 👑 A. PHÂN HỆ QUẢN TRỊ (ADMIN PORTAL) — PHẠM CÔNG THÀNH ĐỘC QUYỀN (7 TRANG)
 * **Thanh điều hướng**: `frontend/src/components/AdminNav.tsx` (Tabs chuyển trang nhanh).
