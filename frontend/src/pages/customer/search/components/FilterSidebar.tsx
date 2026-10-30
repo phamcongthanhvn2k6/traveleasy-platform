@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '../../../../context/ThemeContext';
 import {
   ChevronDown,
   ChevronUp,
@@ -77,6 +78,7 @@ export const FilterSidebar: React.FC<Props> = ({
   onChange,
   onReset,
 }) => {
+  const { isDark } = useTheme();
   // Local Search State for Pickup & Dropoff
   const [pickupSearchQuery, setPickupSearchQuery] = useState('');
   const [dropoffSearchQuery, setDropoffSearchQuery] = useState('');
@@ -242,13 +244,14 @@ export const FilterSidebar: React.FC<Props> = ({
   return (
     <div
       style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
+        backgroundColor: isDark ? '#111827' : '#ffffff',
+        border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
         borderRadius: '12px',
         padding: '20px 18px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
-        color: '#1e293b',
+        boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 2px 4px rgba(0,0,0,0.03)',
+        color: isDark ? '#f8fafc' : '#1e293b',
         fontSize: '13.5px',
+        transition: 'all 0.25s ease',
       }}
     >
       {/* =========================================================================

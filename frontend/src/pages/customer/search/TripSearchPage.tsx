@@ -9,12 +9,28 @@ import { TripResultCard } from './components/TripResultCard';
 import { Pagination } from '../../../components/Pagination';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { toast } from '../../../context/ToastContext';
+import { useTheme } from '../../../context/ThemeContext';
 import { Bus, AlertCircle } from 'lucide-react';
 
-// Bộ nhớ đệm Client-side SWR: Giữ kết quả tìm kiếm trong RAM để hiển thị tức thì (0ms)
+// Bộ nhớ đệm Client-side SWR: Giữ kết quả tìm kiếm trong RAM và SessionStorage để hiển thị tức thì (0ms)
 const tripSearchClientCache = new Map<string, { data: Trip[]; timestamp: number }>();
 
+const getSessionSearchCache = (key: string): { data: Trip[]; timestamp: number } | null => {
+  try {
+    const raw = sessionStorage.getItem(`trip_search_${key}`);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+};
+
+const setSessionSearchCache = (key: string, item: { data: Trip[]; timestamp: number }) => {
+  try {
+    sessionStorage.setItem(`trip_search_${key}`, JSON.stringify(item));
+  } catch (e) {}
+};
+
 export const TripSearchPage: React.FC = () => {
+  const { isDark } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -23,8 +39,12 @@ export const TripSearchPage: React.FC = () => {
   const date = searchParams.get('date') || '';
   const companyParam = searchParams.get('company') || '';
 
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Khởi tạo ngay lập tức từ RAM hoặc SessionStorage để tải trang 0ms không bao giờ chớp màn hình
+  const initialCacheKey = `${origin}_${destination}_${date}`;
+  const initialCached = tripSearchClientCache.get(initialCacheKey) || getSessionSearchCache(initialCacheKey);
+
+  const [trips, setTrips] = useState<Trip[]>(() => (initialCached ? initialCached.data : []));
+  const [loading, setLoading] = useState<boolean>(() => !initialCached);
 
   // Sorting and Filtering State
   const [sortOption, setSortOption] = useState<SortOption>('DEFAULT');
@@ -59,19 +79,23 @@ export const TripSearchPage: React.FC = () => {
 
   const fetchTrips = async (orig: string, dest: string, depDate: string) => {
     const cacheKey = `${orig}_${dest}_${depDate}`;
-    const cached = tripSearchClientCache.get(cacheKey);
+    const cached = tripSearchClientCache.get(cacheKey) || getSessionSearchCache(cacheKey);
     const now = Date.now();
 
-    // 1. Instant Cache Hit: Hiển thị ngay lập tức (0ms) nếu đã tải trong vòng 60 giây
-    if (cached && (now - cached.timestamp < 60_000)) {
+    // 1. Instant Cache Hit: Hiển thị ngay lập tức (0ms) nếu đã tải trong vòng 10 phút
+    if (cached && (now - cached.timestamp < 600_000)) {
       setTrips(cached.data);
+      if (!tripSearchClientCache.has(cacheKey)) {
+        tripSearchClientCache.set(cacheKey, cached);
+      }
       setLoading(false);
       return;
     }
 
-    // 2. Optimistic Rendering: Nếu có dữ liệu trong cache, hiển thị trước để người dùng không phải chờ
+    // 2. Optimistic Rendering: Nếu có dữ liệu trong cache cũ, hiển thị trước và không bật loading spinner
     if (cached) {
       setTrips(cached.data);
+      setLoading(false);
     } else {
       setLoading(true);
     }
@@ -86,9 +110,12 @@ export const TripSearchPage: React.FC = () => {
 
       const data = res.data?.data || [];
       setTrips(data);
-      tripSearchClientCache.set(cacheKey, { data, timestamp: Date.now() });
+      const cacheItem = { data, timestamp: Date.now() };
+      tripSearchClientCache.set(cacheKey, cacheItem);
+      setSessionSearchCache(cacheKey, cacheItem);
 
-      if (data.length > 0) {
+      // Chỉ hiển thị toast nếu chưa có cache hiển thị trước đó để tránh trùng lặp
+      if (!cached && data.length > 0) {
         if (!orig && !dest) {
           toast.success(`Đang hiển thị toàn bộ ${data.length} chuyến xe toàn quốc!`, 'Tất Cả Chuyến Xe');
         } else if (orig && dest) {
@@ -98,7 +125,7 @@ export const TripSearchPage: React.FC = () => {
         } else {
           toast.success(`Tìm thấy ${data.length} chuyến xe đến ${dest}!`, 'Kết Quả');
         }
-      } else {
+      } else if (!cached && data.length === 0) {
         toast.info('Không tìm thấy chuyến xe nào phù hợp. Vui lòng thử nới lỏng bộ lọc!', 'Thông Báo');
       }
     } catch (err) {
@@ -490,7 +517,13 @@ export const TripSearchPage: React.FC = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#f8fafc', minHeight: '80vh', paddingBottom: '60px' }}>
+    <div style={{
+      backgroundColor: isDark ? '#0b0f19' : '#f8fafc',
+      color: isDark ? '#f8fafc' : '#0f172a',
+      minHeight: '80vh',
+      paddingBottom: '60px',
+      transition: 'background-color 0.25s ease, color 0.25s ease'
+    }}>
       {/* 1. Header with Title & Date Switcher */}
       <TripSearchHeader
         origin={origin}

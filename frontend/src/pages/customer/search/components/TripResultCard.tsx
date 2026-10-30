@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../../../../context/ThemeContext';
 import { Trip, TripDetail } from '../../../../types';
 import { BusSeatMap } from '../../../../components/BusSeatMap';
 import api from '../../../../services/api';
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
+  const { isDark } = useTheme();
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'SEATS' | 'IMAGES' | 'POLICY' | 'REVIEWS'>('SEATS');
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -191,13 +193,13 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
   return (
     <div
       style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: isDark ? '#111827' : '#ffffff',
         borderRadius: '14px',
-        border: '1px solid #e2e8f0',
+        border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
         marginBottom: '16px',
         overflow: 'hidden',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
-        transition: 'all 0.2s ease',
+        boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 2px 4px rgba(0,0,0,0.03)',
+        transition: 'all 0.25s ease',
       }}
     >
       {/* Main Trip Card Header */}
@@ -218,7 +220,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                 alt={trip.busCompanyName}
                 style={{ width: '32px', height: '32px', borderRadius: '6px', objectFit: 'cover' }}
               />
-              <span style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
+              <span style={{ fontSize: '16px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>
                 {trip.busCompanyName}
               </span>
             </div>
@@ -228,8 +230,9 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                 style={{
                   fontSize: '11px',
                   fontWeight: 700,
-                  backgroundColor: '#dcfce7',
-                  color: '#166534',
+                  backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7',
+                  color: isDark ? '#4ade80' : '#166534',
+                  border: isDark ? '1px solid rgba(34, 197, 94, 0.3)' : 'none',
                   padding: '2px 8px',
                   borderRadius: '4px',
                   display: 'flex',
@@ -251,11 +254,11 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                 }}
               >
                 <Star size={13} fill="#f59e0b" color="#f59e0b" /> {(trip.busCompanyRating ?? 4.8).toFixed(1)}
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>(128)</span>
+                <span style={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b', fontWeight: 500 }}>(128)</span>
               </span>
             </div>
 
-            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>
+            <div style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b', marginTop: '6px' }}>
               {trip.busType === 'LIMOUSINE' ? 'Limousine VIP 34 phòng' : 'Giường nằm cao cấp 40 chỗ'}
             </div>
           </div>
@@ -264,34 +267,34 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
               <div>
-                <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>
                   {formatTime(trip.departureTime)}
                 </div>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: isDark ? '#cbd5e1' : '#334155' }}>
                   {trip.originCity}
                 </div>
               </div>
 
               {/* Arrow Journey Indicator */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, padding: '0 16px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '2px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: isDark ? '#94a3b8' : '#64748b', marginBottom: '2px' }}>
                   {trip.durationHours || 6} giờ di chuyển
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2563eb' }} />
-                  <div style={{ flex: 1, height: '2px', backgroundColor: '#cbd5e1' }} />
+                  <div style={{ flex: 1, height: '2px', backgroundColor: isDark ? '#334155' : '#cbd5e1' }} />
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f97316' }} />
                 </div>
-                <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                <span style={{ fontSize: '10px', color: isDark ? '#94a3b8' : '#94a3b8', marginTop: '2px' }}>
                   {trip.distanceKm ? `${trip.distanceKm} km` : 'Tuyến cố định'}
                 </span>
               </div>
 
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>
                   {formatTime(trip.arrivalTime)}
                 </div>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: isDark ? '#cbd5e1' : '#334155' }}>
                   {trip.destinationCity}
                 </div>
               </div>
@@ -300,7 +303,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
           {/* Column 3: Price & Action */}
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '22px', fontWeight: 800, color: '#2563eb' }}>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: isDark ? '#38bdf8' : '#2563eb' }}>
               {formatCurrency(trip.price)}
             </div>
 
@@ -311,9 +314,13 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
             <button
               onClick={toggleExpand}
               style={{
-                backgroundColor: expanded ? '#f1f5f9' : '#2563eb',
-                color: expanded ? '#1e293b' : '#ffffff',
-                border: expanded ? '1px solid #cbd5e1' : 'none',
+                backgroundColor: expanded
+                  ? (isDark ? '#1e293b' : '#f1f5f9')
+                  : '#2563eb',
+                color: expanded
+                  ? (isDark ? '#f8fafc' : '#1e293b')
+                  : '#ffffff',
+                border: expanded ? `1px solid ${isDark ? '#334155' : '#cbd5e1'}` : 'none',
                 padding: '9px 20px',
                 borderRadius: '8px',
                 fontWeight: 700,
@@ -339,10 +346,10 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
             gap: '18px',
             marginTop: '16px',
             paddingTop: '12px',
-            borderTop: '1px solid #f1f5f9',
+            borderTop: `1px solid ${isDark ? '#1e293b' : '#f1f5f9'}`,
             fontSize: '12px',
             fontWeight: 600,
-            color: '#64748b',
+            color: isDark ? '#94a3b8' : '#64748b',
           }}
         >
           <span
@@ -350,7 +357,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
               if (!expanded) toggleExpand();
               setActiveTab('SEATS');
             }}
-            style={{ cursor: 'pointer', color: activeTab === 'SEATS' && expanded ? '#2563eb' : '#64748b' }}
+            style={{ cursor: 'pointer', color: activeTab === 'SEATS' && expanded ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b') }}
           >
             Chỗ trống ({trip.availableSeats})
           </span>
@@ -360,7 +367,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
               if (!expanded) toggleExpand();
               setActiveTab('IMAGES');
             }}
-            style={{ cursor: 'pointer', color: activeTab === 'IMAGES' && expanded ? '#2563eb' : '#64748b' }}
+            style={{ cursor: 'pointer', color: activeTab === 'IMAGES' && expanded ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b') }}
           >
             Hình ảnh xe
           </span>
@@ -370,7 +377,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
               if (!expanded) toggleExpand();
               setActiveTab('POLICY');
             }}
-            style={{ cursor: 'pointer', color: activeTab === 'POLICY' && expanded ? '#2563eb' : '#64748b' }}
+            style={{ cursor: 'pointer', color: activeTab === 'POLICY' && expanded ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b') }}
           >
             Chính sách hủy đổi
           </span>
@@ -380,7 +387,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
               if (!expanded) toggleExpand();
               setActiveTab('REVIEWS');
             }}
-            style={{ cursor: 'pointer', color: activeTab === 'REVIEWS' && expanded ? '#2563eb' : '#64748b' }}
+            style={{ cursor: 'pointer', color: activeTab === 'REVIEWS' && expanded ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b') }}
           >
             Đánh giá (128)
           </span>
@@ -389,15 +396,21 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
       {/* Expanded Accordion Area */}
       {expanded && (
-        <div style={{ backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0', padding: '20px 24px' }}>
+        <div style={{
+          backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+          borderTop: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
+          padding: '20px 24px',
+          color: isDark ? '#f8fafc' : '#0f172a',
+          transition: 'all 0.25s ease'
+        }}>
           {/* Sub Navigation Tabs */}
-          <div style={{ display: 'flex', gap: '10px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', marginBottom: '18px' }}>
+          <div style={{ display: 'flex', gap: '10px', borderBottom: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, paddingBottom: '12px', marginBottom: '18px' }}>
             <button
               onClick={() => setActiveTab('SEATS')}
               style={{
-                backgroundColor: activeTab === 'SEATS' ? '#ffffff' : 'transparent',
-                border: activeTab === 'SEATS' ? '1px solid #bfdbfe' : 'none',
-                color: activeTab === 'SEATS' ? '#2563eb' : '#64748b',
+                backgroundColor: activeTab === 'SEATS' ? (isDark ? '#1e293b' : '#ffffff') : 'transparent',
+                border: activeTab === 'SEATS' ? `1px solid ${isDark ? '#38bdf8' : '#bfdbfe'}` : 'none',
+                color: activeTab === 'SEATS' ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b'),
                 fontWeight: 700,
                 fontSize: '13px',
                 padding: '7px 16px',
@@ -410,9 +423,9 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
             <button
               onClick={() => setActiveTab('IMAGES')}
               style={{
-                backgroundColor: activeTab === 'IMAGES' ? '#ffffff' : 'transparent',
-                border: activeTab === 'IMAGES' ? '1px solid #bfdbfe' : 'none',
-                color: activeTab === 'IMAGES' ? '#2563eb' : '#64748b',
+                backgroundColor: activeTab === 'IMAGES' ? (isDark ? '#1e293b' : '#ffffff') : 'transparent',
+                border: activeTab === 'IMAGES' ? `1px solid ${isDark ? '#38bdf8' : '#bfdbfe'}` : 'none',
+                color: activeTab === 'IMAGES' ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b'),
                 fontWeight: 700,
                 fontSize: '13px',
                 padding: '7px 16px',
@@ -425,9 +438,9 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
             <button
               onClick={() => setActiveTab('POLICY')}
               style={{
-                backgroundColor: activeTab === 'POLICY' ? '#ffffff' : 'transparent',
-                border: activeTab === 'POLICY' ? '1px solid #bfdbfe' : 'none',
-                color: activeTab === 'POLICY' ? '#2563eb' : '#64748b',
+                backgroundColor: activeTab === 'POLICY' ? (isDark ? '#1e293b' : '#ffffff') : 'transparent',
+                border: activeTab === 'POLICY' ? `1px solid ${isDark ? '#38bdf8' : '#bfdbfe'}` : 'none',
+                color: activeTab === 'POLICY' ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b'),
                 fontWeight: 700,
                 fontSize: '13px',
                 padding: '7px 16px',
@@ -440,9 +453,9 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
             <button
               onClick={() => setActiveTab('REVIEWS')}
               style={{
-                backgroundColor: activeTab === 'REVIEWS' ? '#ffffff' : 'transparent',
-                border: activeTab === 'REVIEWS' ? '1px solid #bfdbfe' : 'none',
-                color: activeTab === 'REVIEWS' ? '#2563eb' : '#64748b',
+                backgroundColor: activeTab === 'REVIEWS' ? (isDark ? '#1e293b' : '#ffffff') : 'transparent',
+                border: activeTab === 'REVIEWS' ? `1px solid ${isDark ? '#38bdf8' : '#bfdbfe'}` : 'none',
+                color: activeTab === 'REVIEWS' ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b'),
                 fontWeight: 700,
                 fontSize: '13px',
                 padding: '7px 16px',
@@ -477,7 +490,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                           gap: '8px',
                         }}
                       >
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
                           Chọn vị trí ghế (Tối đa 6 vé/lần đặt)
                         </div>
 
@@ -487,13 +500,13 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '6px',
-                            backgroundColor: sseConnected ? '#f0fdf4' : '#f8fafc',
-                            border: sseConnected ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
+                            backgroundColor: sseConnected ? (isDark ? 'rgba(34, 197, 94, 0.15)' : '#f0fdf4') : (isDark ? '#1e293b' : '#f8fafc'),
+                            border: sseConnected ? (isDark ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid #bbf7d0') : (isDark ? '1px solid #334155' : '1px solid #e2e8f0'),
                             padding: '4px 10px',
                             borderRadius: '9999px',
                             fontSize: '11.5px',
                             fontWeight: 700,
-                            color: sseConnected ? '#15803d' : '#64748b',
+                            color: sseConnected ? (isDark ? '#4ade80' : '#15803d') : (isDark ? '#94a3b8' : '#64748b'),
                           }}
                         >
                           <span
@@ -512,8 +525,8 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                       {/* Interactive Demo Simulation Toolbar */}
                       <div
                         style={{
-                          backgroundColor: '#f8fafc',
-                          border: '1px dashed #cbd5e1',
+                          backgroundColor: isDark ? '#111827' : '#f8fafc',
+                          border: isDark ? '1px dashed #334155' : '1px dashed #cbd5e1',
                           borderRadius: '10px',
                           padding: '10px 14px',
                           marginBottom: '12px',
@@ -530,7 +543,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                             style={{
                               fontSize: '12px',
                               fontWeight: 700,
-                              color: '#1e293b',
+                              color: isDark ? '#f8fafc' : '#1e293b',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '5px',
@@ -547,7 +560,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                               background: 'transparent',
                               fontSize: '11.5px',
                               fontWeight: 700,
-                              color: '#2563eb',
+                              color: isDark ? '#38bdf8' : '#2563eb',
                               cursor: 'pointer',
                               textDecoration: 'underline',
                             }}
@@ -561,14 +574,14 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                             style={{
                               marginTop: '10px',
                               paddingTop: '8px',
-                              borderTop: '1px solid #e2e8f0',
+                              borderTop: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '8px',
                               flexWrap: 'wrap',
                             }}
                           >
-                            <span style={{ fontSize: '12px', color: '#475569', fontWeight: 600 }}>
+                            <span style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#475569', fontWeight: 600 }}>
                               Chọn ghế thử:
                             </span>
                             <select
@@ -577,10 +590,11 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                               style={{
                                 padding: '4px 8px',
                                 borderRadius: '6px',
-                                border: '1px solid #cbd5e1',
+                                border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
                                 fontSize: '12px',
                                 fontWeight: 700,
-                                backgroundColor: '#ffffff',
+                                backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                                color: isDark ? '#f8fafc' : '#0f172a',
                               }}
                             >
                               {tripDetail.seats.map((s) => (
@@ -599,8 +613,8 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                                 padding: '5px 10px',
                                 borderRadius: '6px',
                                 border: '1px solid #f59e0b',
-                                backgroundColor: '#fef3c7',
-                                color: '#b45309',
+                                backgroundColor: isDark ? '#451a03' : '#fef3c7',
+                                color: isDark ? '#fbbf24' : '#b45309',
                                 fontSize: '11px',
                                 fontWeight: 700,
                                 cursor: simulating ? 'not-allowed' : 'pointer',
@@ -617,9 +631,9 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                               style={{
                                 padding: '5px 10px',
                                 borderRadius: '6px',
-                                border: '1px solid #94a3b8',
-                                backgroundColor: '#cbd5e1',
-                                color: '#334155',
+                                border: isDark ? '1px solid #475569' : '1px solid #94a3b8',
+                                backgroundColor: isDark ? '#334155' : '#cbd5e1',
+                                color: isDark ? '#cbd5e1' : '#334155',
                                 fontSize: '11px',
                                 fontWeight: 700,
                                 cursor: simulating ? 'not-allowed' : 'pointer',
@@ -636,9 +650,9 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                               style={{
                                 padding: '5px 10px',
                                 borderRadius: '6px',
-                                border: '1px solid #3b82f6',
-                                backgroundColor: '#eff6ff',
-                                color: '#1d4ed8',
+                                border: isDark ? '1px solid #1d4ed8' : '1px solid #3b82f6',
+                                backgroundColor: isDark ? 'rgba(30,58,138,0.3)' : '#eff6ff',
+                                color: isDark ? '#93c5fd' : '#1d4ed8',
                                 fontSize: '11px',
                                 fontWeight: 700,
                                 cursor: simulating ? 'not-allowed' : 'pointer',
@@ -661,7 +675,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                     <div>
                       {/* Pickup Selection */}
                       <div style={{ marginBottom: '20px' }}>
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a', marginBottom: '8px' }}>
                           Điểm đón tại {trip.originCity}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -673,10 +687,11 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                                 alignItems: 'flex-start',
                                 gap: '10px',
                                 padding: '10px 12px',
-                                backgroundColor: selectedPickup === pt.id ? '#eff6ff' : '#ffffff',
-                                border: selectedPickup === pt.id ? '1px solid #2563eb' : '1px solid #e2e8f0',
+                                backgroundColor: selectedPickup === pt.id ? (isDark ? 'rgba(37,99,235,0.2)' : '#eff6ff') : (isDark ? '#1e293b' : '#ffffff'),
+                                border: selectedPickup === pt.id ? `1px solid ${isDark ? '#38bdf8' : '#2563eb'}` : `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
                                 borderRadius: '8px',
                                 cursor: 'pointer',
+                                transition: 'all 0.15s ease',
                               }}
                             >
                               <input
@@ -687,10 +702,10 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                                 style={{ marginTop: '3px', accentColor: '#2563eb' }}
                               />
                               <div>
-                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                                <div style={{ fontSize: '13px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
                                   {pt.name}
                                 </div>
-                                <div style={{ fontSize: '11px', color: '#64748b' }}>{pt.address}</div>
+                                <div style={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }}>{pt.address}</div>
                               </div>
                             </label>
                           ))}
@@ -699,7 +714,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
                       {/* Dropoff Selection */}
                       <div>
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a', marginBottom: '8px' }}>
                           Điểm trả tại {trip.destinationCity}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -711,10 +726,11 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                                 alignItems: 'flex-start',
                                 gap: '10px',
                                 padding: '10px 12px',
-                                backgroundColor: selectedDropoff === pt.id ? '#eff6ff' : '#ffffff',
-                                border: selectedDropoff === pt.id ? '1px solid #2563eb' : '1px solid #e2e8f0',
+                                backgroundColor: selectedDropoff === pt.id ? (isDark ? 'rgba(37,99,235,0.2)' : '#eff6ff') : (isDark ? '#1e293b' : '#ffffff'),
+                                border: selectedDropoff === pt.id ? `1px solid ${isDark ? '#38bdf8' : '#2563eb'}` : `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
                                 borderRadius: '8px',
                                 cursor: 'pointer',
+                                transition: 'all 0.15s ease',
                               }}
                             >
                               <input
@@ -725,10 +741,10 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                                 style={{ marginTop: '3px', accentColor: '#2563eb' }}
                               />
                               <div>
-                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                                <div style={{ fontSize: '13px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
                                   {pt.name}
                                 </div>
-                                <div style={{ fontSize: '11px', color: '#64748b' }}>{pt.address}</div>
+                                <div style={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }}>{pt.address}</div>
                               </div>
                             </label>
                           ))}
@@ -741,22 +757,22 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                   {selectedSeats.length > 0 && (
                     <div
                       style={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #bfdbfe',
+                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                        border: `1px solid ${isDark ? '#334155' : '#bfdbfe'}`,
                         borderRadius: '12px',
                         padding: '16px 20px',
                         marginTop: '20px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        boxShadow: '0 4px 6px -1px rgba(37,99,235,0.1)',
+                        boxShadow: isDark ? '0 4px 14px rgba(0,0,0,0.4)' : '0 4px 6px -1px rgba(37,99,235,0.1)',
                       }}
                     >
                       <div>
-                        <div style={{ fontSize: '12px', color: '#64748b' }}>
-                          Ghế đã chọn: <strong style={{ color: '#2563eb' }}>{selectedSeats.join(', ')}</strong> ({selectedSeats.length} vé)
+                        <div style={{ fontSize: '12px', color: isDark ? '#cbd5e1' : '#64748b' }}>
+                          Ghế đã chọn: <strong style={{ color: isDark ? '#38bdf8' : '#2563eb' }}>{selectedSeats.join(', ')}</strong> ({selectedSeats.length} vé)
                         </div>
-                        <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
+                        <div style={{ fontSize: '20px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>
                           Tổng tạm tính: {formatCurrency(totalPrice)}
                         </div>
                       </div>
@@ -808,11 +824,11 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
           {/* TAB 3: POLICY */}
           {activeTab === 'POLICY' && (
-            <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px', lineHeight: 1.6 }}>
-              <h4 style={{ fontWeight: 700, margin: '0 0 8px 0', color: '#0f172a' }}>
+            <div style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', padding: '16px', borderRadius: '8px', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, fontSize: '13px', lineHeight: 1.6 }}>
+              <h4 style={{ fontWeight: 700, margin: '0 0 8px 0', color: isDark ? '#f8fafc' : '#0f172a' }}>
                 Chính sách hủy đổi vé chuẩn Vexere & TravelEasy
               </h4>
-              <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569' }}>
+              <ul style={{ margin: 0, paddingLeft: '20px', color: isDark ? '#cbd5e1' : '#475569' }}>
                 <li>Hủy trước 24 giờ so với giờ khởi hành: Hoàn tiền 90% (phí hủy 10%).</li>
                 <li>Hủy từ 12 đến 24 giờ trước khởi hành: Hoàn tiền 70% (phí hủy 30%).</li>
                 <li>Hủy dưới 12 giờ trước giờ khởi hành: Không hỗ trợ hoàn tiền.</li>
@@ -823,7 +839,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
           {/* TAB 4: REVIEWS */}
           {activeTab === 'REVIEWS' && (
-            <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <div style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff', padding: '16px', borderRadius: '8px', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
                 <span style={{ fontSize: '24px', fontWeight: 800, color: '#f59e0b' }}>4.8</span>
                 <div>
@@ -832,26 +848,26 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                       <Star key={i} size={14} fill="#f59e0b" color="#f59e0b" />
                     ))}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#64748b' }}>Dựa trên 128 đánh giá thực tế</div>
+                  <div style={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }}>Dựa trên 128 đánh giá thực tế</div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-                <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#0f172a' }}>
+                <div style={{ borderBottom: `1px solid ${isDark ? '#334155' : '#f1f5f9'}`, paddingBottom: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
                     <span>Nguyễn Văn An</span>
                     <span style={{ fontSize: '11px', color: '#94a3b8' }}>19/10/2026</span>
                   </div>
-                  <p style={{ margin: '4px 0 0 0', color: '#475569' }}>
+                  <p style={{ margin: '4px 0 0 0', color: isDark ? '#cbd5e1' : '#475569' }}>
                     Xe chạy êm, bác tài lái rất cẩn thận, đón đúng giờ tại bến xe Miền Tây. Sẽ tiếp tục ủng hộ!
                   </p>
                 </div>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#0f172a' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
                     <span>Trần Thị Hương</span>
                     <span style={{ fontSize: '11px', color: '#94a3b8' }}>17/10/2026</span>
                   </div>
-                  <p style={{ margin: '4px 0 0 0', color: '#475569' }}>
+                  <p style={{ margin: '4px 0 0 0', color: isDark ? '#cbd5e1' : '#475569' }}>
                     Khoang nằm VIP sạch sẽ, có nước uống và sạc điện thoại. Đặt vé trực tuyến rất tiện lợi.
                   </p>
                 </div>

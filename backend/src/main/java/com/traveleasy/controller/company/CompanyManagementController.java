@@ -20,6 +20,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -46,6 +48,7 @@ public class CompanyManagementController {
     // =========================================================================
     // 1. THỐNG KÊ DASHBOARD RIÊNG CỦA NHÀ XE (TENANT-SCOPED DASHBOARD)
     // =========================================================================
+    @org.springframework.cache.annotation.Cacheable(value = "company_dashboard_stats", key = "#companyId != null ? #companyId : 1L")
     @GetMapping("/dashboard/stats")
     @Operation(summary = "Lấy thống kê KPI và danh sách chuyến xe sắp tới của riêng nhà xe đối tác từ CSDL")
     public ApiResponse<Map<String, Object>> getCompanyDashboardStats(@RequestParam(required = false) Long companyId) {
@@ -57,14 +60,10 @@ public class CompanyManagementController {
         double avgRating = 4.8;
         long totalReviews = reviewReportRepository.count();
 
-        List<TripResponse> upcomingTrips = tripRepository.findByBusCompanyIdOrderByDepartureTimeDesc(targetId).stream()
-                .limit(5)
-                .map(t -> adminTripService.getAllTrips().stream()
-                        .filter(tr -> tr.getId().equals(t.getId()))
-                        .findFirst()
-                        .orElse(null))
-                .filter(java.util.Objects::nonNull)
-                .collect(Collectors.toList());
+        // TỐI ƯU HÓA: Chỉ map trực tiếp 5 chuyến sắp tới thay vì duyệt toàn bộ 480 chuyến xe toàn sàn!
+        List<Trip> companyTripsRaw = tripRepository.findByBusCompanyIdOrderByDepartureTimeDesc(targetId);
+        List<Trip> top5 = companyTripsRaw.stream().limit(5).collect(Collectors.toList());
+        List<TripResponse> upcomingTrips = adminTripService.mapTripsWithPointsBatch(top5);
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("busCompanyId", targetId);
@@ -82,16 +81,18 @@ public class CompanyManagementController {
     // =========================================================================
     // 2. CHUYẾN XE CỦA RIÊNG NHÀ XE (TRIPS MANAGEMENT)
     // =========================================================================
+    @Cacheable(value = "company_trips", key = "#companyId != null ? #companyId : 1L")
     @GetMapping("/trips")
     @Operation(summary = "Lấy danh sách chuyến xe của riêng nhà xe đối tác từ CSDL thực tế")
     public ApiResponse<List<TripResponse>> getCompanyTrips(@RequestParam(required = false) Long companyId) {
         Long targetId = companyId != null ? companyId : 1L;
-        List<TripResponse> companyTrips = adminTripService.getAllTrips().stream()
-                .filter(t -> t.getBusCompanyId() != null && t.getBusCompanyId().equals(targetId))
-                .collect(Collectors.toList());
+        // TỐI ƯU HÓA: Chỉ truy vấn các chuyến xe của riêng hãng từ CSDL và batch map điểm đón/trả
+        List<Trip> companyTripsRaw = tripRepository.findByBusCompanyIdOrderByDepartureTimeDesc(targetId);
+        List<TripResponse> companyTrips = adminTripService.mapTripsWithPointsBatch(companyTripsRaw);
         return ApiResponse.success(companyTrips);
     }
 
+    @CacheEvict(value = {"company_trips", "company_dashboard_stats", "admin_all_trips", "trips_search"}, allEntries = true)
     @PostMapping("/trips")
     @Operation(summary = "Tạo chuyến xe mới vào CSDL thực tế cho nhà xe (Tự động sinh kho ghế 34 chỗ)")
     public ApiResponse<TripResponse> createCompanyTrip(@Valid @RequestBody CreateTripRequest request) {
@@ -101,18 +102,21 @@ public class CompanyManagementController {
         return ApiResponse.success("Tạo chuyến xe thành công và lưu vào CSDL", adminTripService.createTrip(request));
     }
 
+    @CacheEvict(value = {"company_trips", "company_dashboard_stats", "admin_all_trips", "trips_search"}, allEntries = true)
     @PutMapping("/trips/{id}")
     @Operation(summary = "Cập nhật thông tin chuyến xe trên CSDL thực tế")
     public ApiResponse<TripResponse> updateCompanyTrip(@PathVariable Long id, @Valid @RequestBody UpdateTripRequest request) {
         return ApiResponse.success("Cập nhật thông tin chuyến xe thành công", adminTripService.updateTrip(id, request));
     }
 
+    @CacheEvict(value = {"company_trips", "company_dashboard_stats", "admin_all_trips", "trips_search"}, allEntries = true)
     @PatchMapping("/trips/{id}/status")
     @Operation(summary = "Cập nhật trạng thái chuyến xe (SCHEDULED, RUNNING, COMPLETED, CANCELLED)")
     public ApiResponse<TripResponse> updateTripStatus(@PathVariable Long id, @RequestParam TripStatus status) {
         return ApiResponse.success("Cập nhật trạng thái chuyến thành công", adminTripService.updateTripStatus(id, status));
     }
 
+    @CacheEvict(value = {"company_trips", "company_dashboard_stats", "admin_all_trips", "trips_search"}, allEntries = true)
     @DeleteMapping("/trips/{id}")
     @Operation(summary = "Xóa chuyến xe khỏi CSDL thực tế")
     public ApiResponse<Void> deleteCompanyTrip(@PathVariable Long id) {
@@ -120,6 +124,7 @@ public class CompanyManagementController {
         return ApiResponse.success("Xóa chuyến xe thành công khỏi CSDL", null);
     }
 
+    @CacheEvict(value = {"company_trips", "company_dashboard_stats", "admin_all_trips", "trips_search"}, allEntries = true)
     @PostMapping("/trips/auto-generate")
     @Operation(summary = "Tự động sinh chuyến theo lịch chạy định kỳ (Recurring Schedule Generator) cho nhà xe")
     public ApiResponse<Map<String, Object>> autoGenerateCompanyTrips(@RequestBody com.traveleasy.dto.company.AutoGenerateTripsRequest request) {
@@ -160,6 +165,7 @@ public class CompanyManagementController {
     // =========================================================================
     // 3. TUYẾN ĐƯỜNG RIÊNG CỦA NHÀ XE (COMPANY ROUTES)
     // =========================================================================
+    @Cacheable(value = "company_routes", key = "(#search != null ? #search : '') + '_' + (#companyId != null ? #companyId : 1L)")
     @GetMapping("/routes")
     @Operation(summary = "Lấy danh sách tuyến đường đã đăng ký của nhà xe từ CSDL thực tế")
     public ApiResponse<List<RouteAdminResponse>> getCompanyRoutes(
@@ -169,6 +175,7 @@ public class CompanyManagementController {
         return ApiResponse.success(adminManagementService.getAllRoutes(search, targetId));
     }
 
+    @CacheEvict(value = {"company_routes", "admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     @PostMapping("/routes")
     @Operation(summary = "Tạo mới tuyến đường vào CSDL thực tế cho nhà xe")
     public ApiResponse<RouteAdminResponse> createCompanyRoute(@Valid @RequestBody CreateRouteRequest request) {
@@ -178,6 +185,7 @@ public class CompanyManagementController {
         return ApiResponse.success("Tạo tuyến đường thành công vào CSDL", adminManagementService.createRoute(request));
     }
 
+    @CacheEvict(value = {"company_routes", "admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     @PutMapping("/routes/{id}")
     @Operation(summary = "Cập nhật tuyến đường trong CSDL thực tế")
     public ApiResponse<RouteAdminResponse> updateCompanyRoute(
@@ -186,6 +194,7 @@ public class CompanyManagementController {
         return ApiResponse.success("Cập nhật tuyến đường thành công", adminManagementService.updateRoute(id, request));
     }
 
+    @CacheEvict(value = {"company_routes", "admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     @DeleteMapping("/routes/{id}")
     @Operation(summary = "Xóa tuyến đường khỏi CSDL thực tế")
     public ApiResponse<Void> deleteCompanyRoute(@PathVariable Long id) {
@@ -199,13 +208,10 @@ public class CompanyManagementController {
     @GetMapping("/bookings")
     @Operation(summary = "Lấy danh sách đơn vé hành khách của riêng các chuyến xe của nhà xe")
     public ApiResponse<List<BookingResponse>> getCompanyBookings(@RequestParam(required = false) Long companyId) {
-        Long targetId = companyId != null ? companyId : 1L;
-        List<BookingResponse> companyBookings = bookingService.getAllBookings().stream()
-                .filter(b -> b.getTrip() != null && b.getTrip().getBusCompanyId() != null && b.getTrip().getBusCompanyId().equals(targetId))
-                .collect(Collectors.toList());
-        return ApiResponse.success(companyBookings);
+        return ApiResponse.success(bookingService.getCompanyBookings(companyId));
     }
 
+    @CacheEvict(value = {"company_bookings", "admin_all_bookings", "company_dashboard_stats"}, allEntries = true)
     @PatchMapping("/bookings/{id}/status")
     @Operation(summary = "Cập nhật trạng thái đơn vé trực tiếp trong CSDL (CONFIRMED, CANCELLED)")
     public ApiResponse<BookingResponse> updateCompanyBookingStatus(

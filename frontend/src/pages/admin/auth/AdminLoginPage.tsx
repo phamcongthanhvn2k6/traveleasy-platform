@@ -57,7 +57,7 @@ export const AdminLoginPage: React.FC = () => {
 
       const response = await api.post('/auth/login', {
         identifier: identifier.trim(),
-        password: password
+        password: password.trim()
       });
 
       const data: AuthUser = response.data?.data;
@@ -295,8 +295,8 @@ export const AdminLoginPage: React.FC = () => {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {[
                 { label: 'Admin Hệ Thống', email: 'admin@traveleasy.vn' },
+                { label: 'Admin Đại Phát', email: 'daiphat.admin@traveleasy.vn' },
                 { label: 'Admin Thanh Phong', email: 'phanthanhphong.admin@traveleasy.vn' },
-                { label: 'Admin Trung Kiên', email: 'trungkien.admin@traveleasy.vn' },
               ].map((acc, idx) => (
                 <button
                   key={idx}
@@ -304,6 +304,7 @@ export const AdminLoginPage: React.FC = () => {
                   onClick={() => {
                     setIdentifier(acc.email);
                     setPassword('123456789@');
+                    setErrorMsg(null);
                   }}
                   style={{
                     background: identifier === acc.email ? 'rgba(79, 70, 229, 0.35)' : 'rgba(255, 255, 255, 0.08)',
@@ -353,7 +354,10 @@ export const AdminLoginPage: React.FC = () => {
                 <input
                   type="text"
                   value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  onChange={(e) => {
+                    setIdentifier(e.target.value);
+                    if (errorMsg) setErrorMsg(null);
+                  }}
                   placeholder="Nhập email quản trị viên..."
                   required
                   style={{
@@ -403,7 +407,10 @@ export const AdminLoginPage: React.FC = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errorMsg) setErrorMsg(null);
+                  }}
                   placeholder="Nhập mật khẩu quản trị..."
                   required
                   style={{

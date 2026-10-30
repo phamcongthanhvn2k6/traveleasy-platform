@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import { Bus, Plane, Train, Car, Calendar, ArrowRightLeft, Search, Plus, Check } from 'lucide-react';
 
 interface Props {
@@ -12,6 +13,7 @@ export const SearchTripBar: React.FC<Props> = ({
   defaultOrigin = 'TP. Hồ Chí Minh', 
   defaultDestination = 'Đà Lạt' 
 }) => {
+  const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'bus' | 'plane' | 'train' | 'car'>('bus');
   const [origin, setOrigin] = useState(defaultOrigin);
   const [destination, setDestination] = useState(defaultDestination);
@@ -51,14 +53,17 @@ export const SearchTripBar: React.FC<Props> = ({
 
   return (
     <div style={{
-      backgroundColor: '#ffffff',
+      backgroundColor: isDark ? '#111827' : '#ffffff',
       borderRadius: '20px',
-      boxShadow: '0 20px 40px -10px rgba(0, 50, 150, 0.2), 0 0 1px rgba(0,0,0,0.1)',
+      border: `1px solid ${isDark ? '#1e293b' : 'transparent'}`,
+      boxShadow: isDark ? '0 20px 40px -10px rgba(0, 0, 0, 0.6)' : '0 20px 40px -10px rgba(0, 50, 150, 0.2), 0 0 1px rgba(0,0,0,0.1)',
       padding: '24px',
       maxWidth: '1160px',
       margin: '0 auto',
       position: 'relative',
-      zIndex: 30
+      zIndex: 30,
+      color: isDark ? '#f8fafc' : '#0f172a',
+      transition: 'all 0.25s ease'
     }}>
       {/* 1. Header Tabs: Xe Khách, Máy Bay, Tàu Hỏa, Thuê Xe (Chuẩn Screenshot 1) */}
       <div style={{

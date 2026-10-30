@@ -63,9 +63,24 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header style={{ backgroundColor: '#ffffff', position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+    <header style={{
+      backgroundColor: isDark ? '#111827' : '#ffffff',
+      position: 'sticky',
+      top: 0,
+      zIndex: 50,
+      boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 2px 10px rgba(0,0,0,0.06)',
+      borderBottom: isDark ? '1px solid #1e293b' : '1px solid #f1f5f9',
+      transition: 'all 0.25s ease'
+    }}>
       {/* Top Announcement & Quick Links Bar (Chuẩn Vexere Prototype Screenshot 1) */}
-      <div style={{ backgroundColor: '#1d4ed8', color: '#ffffff', fontSize: '13px', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+      <div style={{
+        backgroundColor: isDark ? '#0f172a' : '#1d4ed8',
+        color: '#ffffff',
+        fontSize: '13px',
+        padding: '6px 0',
+        borderBottom: isDark ? '1px solid #1e293b' : '1px solid rgba(255,255,255,0.1)',
+        transition: 'all 0.25s ease'
+      }}>
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ backgroundColor: '#fbbf24', color: '#1e3a8a', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 800 }}>MỚI</span>
@@ -222,10 +237,10 @@ export const Navbar: React.FC = () => {
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '22px', fontWeight: 900, color: '#1e3a8a', letterSpacing: '-0.5px' }}>TravelEasy</span>
-                <span style={{ backgroundColor: '#fef3c7', color: '#b45309', fontSize: '10px', fontWeight: 800, padding: '1px 6px', borderRadius: '4px' }}>.vn</span>
+                <span style={{ fontSize: '22px', fontWeight: 900, color: isDark ? '#60a5fa' : '#1e3a8a', letterSpacing: '-0.5px' }}>TravelEasy</span>
+                <span style={{ backgroundColor: isDark ? '#854d0e' : '#fef3c7', color: isDark ? '#fef08a' : '#b45309', fontSize: '10px', fontWeight: 800, padding: '1px 6px', borderRadius: '4px' }}>.vn</span>
               </div>
-              <span style={{ display: 'block', fontSize: '11px', color: '#64748b', fontWeight: 600, letterSpacing: '0.2px' }}>
+              <span style={{ display: 'block', fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b', fontWeight: 600, letterSpacing: '0.2px' }}>
                 NỀN TẢNG KẾT NỐI HÀNH KHÁCH VÀ NHÀ XE
               </span>
             </div>
@@ -237,13 +252,13 @@ export const Navbar: React.FC = () => {
               to="/search" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/search' || location.pathname === '/' ? '#2563eb' : '#334155', 
+                color: location.pathname === '/search' || location.pathname === '/' ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#cbd5e1' : '#334155'), 
                 fontWeight: location.pathname === '/search' || location.pathname === '/' ? 700 : 600, 
                 fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '5px',
-                borderBottom: location.pathname === '/search' || location.pathname === '/' ? '2px solid #2563eb' : '2px solid transparent',
+                borderBottom: location.pathname === '/search' || location.pathname === '/' ? `2px solid ${isDark ? '#38bdf8' : '#2563eb'}` : '2px solid transparent',
                 padding: '8px 0',
                 transition: 'all 0.15s ease'
               }}
@@ -256,13 +271,13 @@ export const Navbar: React.FC = () => {
               to="/lookup" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/lookup' || location.pathname.startsWith('/tickets') ? '#2563eb' : '#334155', 
+                color: location.pathname === '/lookup' || location.pathname.startsWith('/tickets') ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#cbd5e1' : '#334155'), 
                 fontWeight: location.pathname === '/lookup' || location.pathname.startsWith('/tickets') ? 700 : 600, 
                 fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '5px',
-                borderBottom: location.pathname === '/lookup' || location.pathname.startsWith('/tickets') ? '2px solid #2563eb' : '2px solid transparent',
+                borderBottom: location.pathname === '/lookup' || location.pathname.startsWith('/tickets') ? `2px solid ${isDark ? '#38bdf8' : '#2563eb'}` : '2px solid transparent',
                 padding: '8px 0',
                 transition: 'all 0.15s ease'
               }}
@@ -275,13 +290,13 @@ export const Navbar: React.FC = () => {
               to="/my-tickets" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/my-tickets' ? '#2563eb' : '#334155', 
+                color: location.pathname === '/my-tickets' ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#cbd5e1' : '#334155'), 
                 fontWeight: location.pathname === '/my-tickets' ? 700 : 600, 
                 fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '5px',
-                borderBottom: location.pathname === '/my-tickets' ? '2px solid #2563eb' : '2px solid transparent',
+                borderBottom: location.pathname === '/my-tickets' ? `2px solid ${isDark ? '#38bdf8' : '#2563eb'}` : '2px solid transparent',
                 padding: '8px 0',
                 transition: 'all 0.15s ease'
               }}
@@ -294,13 +309,13 @@ export const Navbar: React.FC = () => {
               to="/schedule" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/schedule' || location.pathname === '/routes' ? '#2563eb' : '#475569', 
+                color: location.pathname === '/schedule' || location.pathname === '/routes' ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#cbd5e1' : '#475569'), 
                 fontWeight: location.pathname === '/schedule' || location.pathname === '/routes' ? 700 : 600, 
                 fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '5px',
-                borderBottom: location.pathname === '/schedule' || location.pathname === '/routes' ? '2px solid #2563eb' : '2px solid transparent',
+                borderBottom: location.pathname === '/schedule' || location.pathname === '/routes' ? `2px solid ${isDark ? '#38bdf8' : '#2563eb'}` : '2px solid transparent',
                 padding: '8px 0',
                 transition: 'all 0.15s ease'
               }}
@@ -313,19 +328,19 @@ export const Navbar: React.FC = () => {
               to="/promotions" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/promotions' ? '#dc2626' : '#475569', 
+                color: location.pathname === '/promotions' ? '#f87171' : (isDark ? '#cbd5e1' : '#475569'), 
                 fontWeight: location.pathname === '/promotions' ? 700 : 600, 
                 fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '5px',
-                borderBottom: location.pathname === '/promotions' ? '2px solid #dc2626' : '2px solid transparent',
+                borderBottom: location.pathname === '/promotions' ? '2px solid #ef4444' : '2px solid transparent',
                 padding: '8px 0',
                 transition: 'all 0.15s ease'
               }}
             >
-              <Tag size={15} color="#dc2626" /> <span style={{ color: '#dc2626', fontWeight: 700 }}>Khuyến Mãi</span>
-              <span style={{ fontSize: '9px', fontWeight: 800, backgroundColor: '#fef2f2', color: '#dc2626', padding: '1px 5px', borderRadius: '4px', border: '1px solid #fee2e2' }}>
+              <Tag size={15} color="#ef4444" /> <span style={{ color: '#ef4444', fontWeight: 700 }}>Khuyến Mãi</span>
+              <span style={{ fontSize: '9px', fontWeight: 800, backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fef2f2', color: '#ef4444', padding: '1px 5px', borderRadius: '4px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
                 HOT
               </span>
             </Link>
@@ -335,13 +350,13 @@ export const Navbar: React.FC = () => {
               to="/reviews" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/reviews' ? '#2563eb' : '#475569', 
+                color: location.pathname === '/reviews' ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#cbd5e1' : '#475569'), 
                 fontWeight: location.pathname === '/reviews' ? 700 : 600, 
                 fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '5px',
-                borderBottom: location.pathname === '/reviews' ? '2px solid #2563eb' : '2px solid transparent',
+                borderBottom: location.pathname === '/reviews' ? `2px solid ${isDark ? '#38bdf8' : '#2563eb'}` : '2px solid transparent',
                 padding: '8px 0',
                 transition: 'all 0.15s ease'
               }}
@@ -354,13 +369,13 @@ export const Navbar: React.FC = () => {
               to="/policy" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/policy' || location.pathname === '/guide' ? '#2563eb' : '#475569', 
+                color: location.pathname === '/policy' || location.pathname === '/guide' ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#cbd5e1' : '#475569'), 
                 fontWeight: location.pathname === '/policy' || location.pathname === '/guide' ? 700 : 600, 
                 fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '5px',
-                borderBottom: location.pathname === '/policy' || location.pathname === '/guide' ? '2px solid #2563eb' : '2px solid transparent',
+                borderBottom: location.pathname === '/policy' || location.pathname === '/guide' ? `2px solid ${isDark ? '#38bdf8' : '#2563eb'}` : '2px solid transparent',
                 padding: '8px 0',
                 transition: 'all 0.15s ease'
               }}
@@ -373,18 +388,18 @@ export const Navbar: React.FC = () => {
               to="/scanner" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/scanner' ? '#059669' : '#475569', 
+                color: location.pathname === '/scanner' ? '#34d399' : (isDark ? '#cbd5e1' : '#475569'), 
                 fontWeight: location.pathname === '/scanner' ? 700 : 600, 
                 fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '5px',
-                borderBottom: location.pathname === '/scanner' ? '2px solid #059669' : '2px solid transparent',
+                borderBottom: location.pathname === '/scanner' ? '2px solid #10b981' : '2px solid transparent',
                 padding: '8px 0',
                 transition: 'all 0.15s ease'
               }}
             >
-              <QrCode size={15} color="#059669" /> <span style={{ color: location.pathname === '/scanner' ? '#059669' : 'inherit' }}>Quét Vé QR</span>
+              <QrCode size={15} color="#10b981" /> <span style={{ color: location.pathname === '/scanner' ? '#10b981' : 'inherit' }}>Quét Vé QR</span>
             </Link>
           </nav>
         </div>
@@ -396,22 +411,32 @@ export const Navbar: React.FC = () => {
             onClick={toggleTheme}
             title={isDark ? "Chuyển sang Chế độ Sáng" : "Chuyển sang Chế độ Tối (Ban đêm chống chói mắt)"}
             style={{
-              backgroundColor: isDark ? '#1e293b' : '#f8fafc',
-              color: isDark ? '#facc15' : '#475569',
-              border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-              borderRadius: '8px',
-              padding: '6px 10px',
+              backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+              color: isDark ? '#fbbf24' : '#475569',
+              border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+              borderRadius: '20px',
+              padding: '6px 12px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
               fontSize: '12px',
               fontWeight: 700,
-              transition: 'all 0.2s ease',
+              boxShadow: isDark ? '0 0 12px rgba(251, 191, 36, 0.2)' : 'none',
+              transition: 'all 0.25s ease',
             }}
           >
-            {isDark ? <Sun size={15} color="#facc15" /> : <Moon size={15} color="#475569" />}
-            <span style={{ fontSize: '11.5px' }}>{isDark ? 'Sáng' : 'Tối'}</span>
+            {isDark ? (
+              <>
+                <Sun size={15} color="#fbbf24" style={{ filter: 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.6))' }} />
+                <span style={{ fontSize: '12px', color: '#f8fafc' }}>Tối</span>
+              </>
+            ) : (
+              <>
+                <Moon size={15} color="#475569" />
+                <span style={{ fontSize: '12px', color: '#334155' }}>Sáng</span>
+              </>
+            )}
           </button>
           {/* Cổng Đối Tác Nhà Xe CHỈ hiển thị nếu tài khoản đang đăng nhập là OPERATOR */}
           {user?.role === 'OPERATOR' && (

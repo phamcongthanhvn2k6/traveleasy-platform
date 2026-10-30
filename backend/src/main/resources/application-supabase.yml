@@ -5,14 +5,25 @@ spring:
     username: ${SUPABASE_DB_USERNAME:postgres.ctvcwhdepzyvqsncbslf}
     password: ${SUPABASE_DB_PASSWORD:thanhtyou123@}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: TravelEasyHikariPool
+      maximum-pool-size: 20
+      minimum-idle: 10
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      connection-timeout: 10000
+      keepalive-time: 30000
+      leak-detection-threshold: 5000
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_batch_fetch_size: 50
         jdbc:
           batch_size: 50
           order_inserts: true

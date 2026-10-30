@@ -16,13 +16,199 @@
   --danger: #ef4444;
 }
 
+/* =========================================================================
+   TRAVELEASY GLOBAL DARK THEME (HIGH-END MODERN MIDNIGHT PALETTE)
+   Tự động biến đổi toàn diện giao diện sang chế độ Tối sang trọng, chống chói mắt
+   ========================================================================= */
+
 html.dark {
-  --bg-main: #0b1120;
-  --surface: #1e293b;
+  --bg-main: #0b0f19;
+  --surface: #111827;
+  --surface-elevated: #1e293b;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --border: #334155;
+  --border: #1e293b;
+  --border-subtle: #334155;
   color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0b0f19 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Transition mượt mà khi đổi theme */
+body, header, nav, main, footer {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+/* Biến đổi toàn bộ các khối bề mặt sáng sang nền tối sang trọng */
+html.dark [style*="background-color: #ffffff"],
+html.dark [style*="background-color:#ffffff"],
+html.dark [style*="background: #ffffff"],
+html.dark [style*="background:#ffffff"],
+html.dark [style*="background-color: white"],
+html.dark [style*="background: white"],
+html.dark [style*="background-color: rgb(255, 255, 255)"],
+html.dark [style*="background: rgb(255, 255, 255)"] {
+  background-color: #111827 !important;
+  border-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark [style*="background-color: #f8fafc"],
+html.dark [style*="background-color:#f8fafc"],
+html.dark [style*="background: #f8fafc"],
+html.dark [style*="background:#f8fafc"],
+html.dark [style*="background-color: rgb(248, 250, 252)"],
+html.dark [style*="background: rgb(248, 250, 252)"] {
+  background-color: #0b0f19 !important;
+  border-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark [style*="background-color: #f1f5f9"],
+html.dark [style*="background-color:#f1f5f9"],
+html.dark [style*="background: #f1f5f9"],
+html.dark [style*="background:#f1f5f9"],
+html.dark [style*="background-color: rgb(241, 245, 249)"],
+html.dark [style*="background: rgb(241, 245, 249)"] {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Viền (Borders) */
+html.dark [style*="border: 1px solid #e2e8f0"],
+html.dark [style*="border: 1px solid #cbd5e1"],
+html.dark [style*="border: 1px solid #e5e7eb"],
+html.dark [style*="border-color: #e2e8f0"],
+html.dark [style*="border-color: #cbd5e1"],
+html.dark [style*="border-color: #e5e7eb"],
+html.dark [style*="border-bottom: 1px solid #e2e8f0"],
+html.dark [style*="border-bottom: 1px solid #f1f5f9"],
+html.dark [style*="border: 1px solid rgb(226, 232, 240)"] {
+  border-color: #1e293b !important;
+}
+
+/* Tailwind Classes Global Dark Override */
+html.dark .bg-white {
+  background-color: #111827 !important;
+}
+html.dark .bg-slate-50,
+html.dark .bg-gray-50 {
+  background-color: #0b0f19 !important;
+}
+html.dark .bg-slate-100,
+html.dark .bg-gray-100 {
+  background-color: #1e293b !important;
+}
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-300,
+html.dark .border-gray-200 {
+  border-color: #1e293b !important;
+}
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-gray-900,
+html.dark .text-gray-800 {
+  color: #f8fafc !important;
+}
+html.dark .text-slate-700,
+html.dark .text-slate-600,
+html.dark .text-gray-700,
+html.dark .text-gray-600 {
+  color: #cbd5e1 !important;
+}
+html.dark .text-slate-500,
+html.dark .text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+/* Màu chữ (Text contrast) */
+html.dark [style*="color: #0f172a"],
+html.dark [style*="color:#0f172a"],
+html.dark [style*="color: rgb(15, 23, 42)"],
+html.dark [style*="color: #1e293b"],
+html.dark [style*="color:#1e293b"],
+html.dark [style*="color: rgb(30, 41, 59)"] {
+  color: #f8fafc !important;
+}
+
+html.dark [style*="color: #334155"],
+html.dark [style*="color:#334155"],
+html.dark [style*="color: rgb(51, 65, 85)"],
+html.dark [style*="color: #475569"],
+html.dark [style*="color:#475569"],
+html.dark [style*="color: rgb(71, 85, 105)"] {
+  color: #cbd5e1 !important;
+}
+
+html.dark [style*="color: #64748b"],
+html.dark [style*="color:#64748b"],
+html.dark [style*="color: rgb(100, 116, 139)"] {
+  color: #94a3b8 !important;
+}
+
+/* Tiêu đề xanh chính của Brand trong dark mode */
+html.dark [style*="color: #1e3a8a"],
+html.dark [style*="color:#1e3a8a"],
+html.dark [style*="color: #1d4ed8"],
+html.dark [style*="color:#1d4ed8"] {
+  color: #60a5fa !important;
+}
+
+/* Form inputs, selects & textareas */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+  border-color: #3b82f6 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Header Navbar */
+html.dark header {
+  background-color: #111827 !important;
+  border-bottom: 1px solid #1e293b !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Dropdown Menu & Modals */
+html.dark .dropdown,
+html.dark .popover {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Scrollbar tinh tế chuẩn Dark Theme */
+html.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+html.dark ::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
 
 * {

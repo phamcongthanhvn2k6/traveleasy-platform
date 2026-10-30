@@ -35,6 +35,7 @@ public class PublicContentController {
     // ==========================================
     // 1. BANNERS
     // ==========================================
+    @org.springframework.cache.annotation.Cacheable("banners_list")
     @GetMapping("/banners")
     @Operation(summary = "Lấy danh sách banner quảng cáo từ Supabase")
     public ApiResponse<List<Banner>> getActiveBanners() {
@@ -48,6 +49,7 @@ public class PublicContentController {
     // ==========================================
     // 2. KHUYẾN MẠI & VOUCHERS (PROMOTIONS)
     // ==========================================
+    @org.springframework.cache.annotation.Cacheable(value = "promotions_list", key = "#category != null ? #category : 'ALL'")
     @GetMapping("/promotions")
     @Operation(summary = "Lấy toàn bộ danh sách mã giảm giá từ bảng promotions trên Supabase")
     public ApiResponse<List<Promotion>> getPromotions(@RequestParam(required = false) String category) {
@@ -414,25 +416,33 @@ public class PublicContentController {
         return ApiResponse.success(cancellationPolicyRepository.findAll());
     }
 
+    @org.springframework.cache.annotation.Cacheable("routes_list")
     @GetMapping("/routes")
     @Operation(summary = "Lấy toàn bộ tuyến đường vận hành từ CSDL Supabase")
     public ApiResponse<List<Route>> getAllRoutes() {
         return ApiResponse.success(routeRepository.findAllByOrderByDepartureLocationAscArrivalLocationAsc());
     }
 
+    @org.springframework.cache.annotation.Cacheable("popular_routes")
     @GetMapping("/routes/popular")
     @Operation(summary = "Lấy danh sách các tuyến đường phổ biến từ Supabase kèm giá vé thấp nhất thực tế")
     public ApiResponse<List<Map<String, Object>>> getPopularRoutes() {
         List<Route> routes = routeRepository.findAll();
         List<Map<String, Object>> result = new ArrayList<>();
 
+        // TỐI ƯU HÓA: Thay vì duyệt vòng lặp 25 lần gọi qua mạng sang Úc (mất 5-6s),
+        // chỉ gọi 1 truy vấn duy nhất lấy các chuyến sắp tới và gom giá tối thiểu trong RAM!
+        List<Trip> upcomingTrips = tripRepository.searchTrips(null, null, LocalDateTime.now(), null, TripStatus.SCHEDULED);
+        Map<Long, BigDecimal> minPriceMap = new HashMap<>();
+        for (Trip t : upcomingTrips) {
+            if (t.getRoute() != null && t.getRoute().getId() != null && t.getPrice() != null) {
+                Long rId = t.getRoute().getId();
+                minPriceMap.merge(rId, t.getPrice(), (p1, p2) -> p1.compareTo(p2) < 0 ? p1 : p2);
+            }
+        }
+
         for (Route r : routes) {
-            List<Trip> trips = tripRepository.searchTrips(r.getDepartureLocation(), r.getArrivalLocation(), null, null, TripStatus.SCHEDULED);
-            BigDecimal minPrice = trips.stream()
-                    .map(Trip::getPrice)
-                    .filter(Objects::nonNull)
-                    .min(BigDecimal::compareTo)
-                    .orElse(BigDecimal.valueOf(199000));
+            BigDecimal minPrice = minPriceMap.getOrDefault(r.getId(), BigDecimal.valueOf(199000));
 
             String dest = r.getArrivalLocation() != null ? r.getArrivalLocation().toLowerCase() : "";
             String imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289365/traveleasy/banners/banner_hero_dalat_mongmo.jpg";

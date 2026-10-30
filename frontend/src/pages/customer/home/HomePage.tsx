@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../../context/ThemeContext';
 import { SearchTripBar } from '../../../components/SearchTripBar';
 import { TripCard } from '../../../components/TripCard';
 import { CheckoutModal } from '../../../components/CheckoutModal';
@@ -26,7 +27,59 @@ import {
   Check
 } from 'lucide-react';
 
+const DEFAULT_POPULAR_ROUTES = [
+  {
+    id: 1,
+    title: 'Sài Gòn - Đà Lạt',
+    origin: 'TP. Hồ Chí Minh',
+    destination: 'Đà Lạt',
+    price: '280.000đ',
+    oldPrice: '320.000đ',
+    distanceKm: 310,
+    durationHours: 6.5,
+    image: 'https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289365/traveleasy/banners/banner_hero_dalat_mongmo.jpg',
+    bgColor: 'linear-gradient(180deg, transparent 40%, rgba(194, 65, 12, 0.85) 100%)'
+  },
+  {
+    id: 2,
+    title: 'Hà Nội - Sa Pa',
+    origin: 'Hà Nội',
+    destination: 'Sa Pa',
+    price: '350.000đ',
+    oldPrice: '400.000đ',
+    distanceKm: 320,
+    durationHours: 5.5,
+    image: 'https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289364/traveleasy/banners/banner_hero_sapa_fansipan.jpg',
+    bgColor: 'linear-gradient(180deg, transparent 40%, rgba(30, 58, 138, 0.85) 100%)'
+  },
+  {
+    id: 3,
+    title: 'Sài Gòn - Nha Trang',
+    origin: 'TP. Hồ Chí Minh',
+    destination: 'Nha Trang',
+    price: '320.000đ',
+    oldPrice: '370.000đ',
+    distanceKm: 430,
+    durationHours: 8.0,
+    image: 'https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289366/traveleasy/banners/banner_hero_nhatrang_bienxanh.jpg',
+    bgColor: 'linear-gradient(180deg, transparent 40%, rgba(120, 53, 15, 0.85) 100%)'
+  },
+  {
+    id: 4,
+    title: 'Đà Nẵng - Quy Nhơn',
+    origin: 'Đà Nẵng',
+    destination: 'Quy Nhơn',
+    price: '250.000đ',
+    oldPrice: '290.000đ',
+    distanceKm: 300,
+    durationHours: 6.0,
+    image: 'https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289367/traveleasy/banners/banner_hero_quynhon_kyco.jpg',
+    bgColor: 'linear-gradient(180deg, transparent 40%, rgba(4, 120, 87, 0.85) 100%)'
+  }
+];
+
 export const HomePage: React.FC = () => {
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,7 +88,7 @@ export const HomePage: React.FC = () => {
 
   // Dynamic Banners, Popular Routes & Promos from Database
   const [activeBanners, setActiveBanners] = useState<any[]>([]);
-  const [popularRoutes, setPopularRoutes] = useState<any[]>([]);
+  const [popularRoutes, setPopularRoutes] = useState<any[]>(DEFAULT_POPULAR_ROUTES);
   const [featuredPromos, setFeaturedPromos] = useState<any[]>([]);
 
   useEffect(() => {
@@ -63,7 +116,10 @@ export const HomePage: React.FC = () => {
           setPopularRoutes(res.data.data);
         }
       })
-      .catch(e => console.warn('Could not load popular routes from API:', e));
+      .catch(e => {
+        console.warn('Could not load popular routes from API, using default list:', e);
+        setPopularRoutes(DEFAULT_POPULAR_ROUTES);
+      });
 
     // 3. Tải khuyến mại thực tế từ Supabase
     api.get('/promotions')
@@ -296,7 +352,13 @@ export const HomePage: React.FC = () => {
   ];
 
   return (
-    <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', paddingBottom: '60px' }}>
+    <div style={{
+      backgroundColor: isDark ? '#0b0f19' : '#f8fafc',
+      color: isDark ? '#f8fafc' : '#0f172a',
+      minHeight: '100vh',
+      paddingBottom: '60px',
+      transition: 'all 0.25s ease'
+    }}>
       
       {/* =========================================================================
           HERO BANNER & SEARCH SECTION (Chuẩn Vexere Prototype Screenshot 1)
@@ -422,20 +484,20 @@ export const HomePage: React.FC = () => {
       <div ref={resultsRef} className="container" style={{ paddingTop: hasSearched ? '36px' : '0' }}>
         {hasSearched && (
           <div style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: isDark ? '#111827' : '#ffffff',
             borderRadius: '16px',
             padding: '24px',
             marginBottom: '40px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-            border: '1px solid #e2e8f0'
+            boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.06)',
+            border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
               <div>
-                <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Bus size={22} color="#2563eb" />
-                  Kết Quả Chuyến Xe: <span style={{ color: '#2563eb' }}>{searchParams.origin}</span> ➔ <span style={{ color: '#ef4444' }}>{searchParams.destination}</span>
+                <h2 style={{ fontSize: '22px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Bus size={22} color={isDark ? '#38bdf8' : '#2563eb'} />
+                  Kết Quả Chuyến Xe: <span style={{ color: isDark ? '#38bdf8' : '#2563eb' }}>{searchParams.origin}</span> ➔ <span style={{ color: '#ef4444' }}>{searchParams.destination}</span>
                 </h2>
-                <p style={{ fontSize: '14px', color: '#64748b', marginTop: '4px' }}>
+                <p style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#64748b', marginTop: '4px' }}>
                   Tìm thấy <strong>{trips.length}</strong> chuyến xe chất lượng cao từ các nhà xe đối tác uy tín
                 </p>
               </div>
@@ -443,13 +505,13 @@ export const HomePage: React.FC = () => {
               <button
                 onClick={() => setHasSearched(false)}
                 style={{
-                  backgroundColor: '#f1f5f9',
-                  border: 'none',
+                  backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+                  border: isDark ? '1px solid #334155' : 'none',
                   borderRadius: '8px',
                   padding: '8px 16px',
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#475569',
+                  color: isDark ? '#cbd5e1' : '#475569',
                   cursor: 'pointer'
                 }}
               >
@@ -458,17 +520,17 @@ export const HomePage: React.FC = () => {
             </div>
 
             {loading && (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                <div style={{ display: 'inline-block', width: '32px', height: '32px', border: '3px solid #e2e8f0', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              <div style={{ textAlign: 'center', padding: '40px', color: isDark ? '#94a3b8' : '#64748b' }}>
+                <div style={{ display: 'inline-block', width: '32px', height: '32px', border: `3px solid ${isDark ? '#334155' : '#e2e8f0'}`, borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                 <div style={{ marginTop: '12px', fontWeight: 600 }}>Đang cập nhật lịch trình chuyến xe...</div>
               </div>
             )}
 
             {!loading && trips.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '40px 20px', backgroundColor: '#f8fafc', borderRadius: '12px' }}>
+              <div style={{ textAlign: 'center', padding: '40px 20px', backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderRadius: '12px' }}>
                 <Compass size={40} color="#94a3b8" style={{ margin: '0 auto 12px' }} />
-                <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#334155' }}>Chưa tìm thấy chuyến xe phù hợp cho lộ trình này</h4>
-                <p style={{ fontSize: '13.5px', color: '#64748b', marginTop: '6px' }}>
+                <h4 style={{ fontSize: '16px', fontWeight: 700, color: isDark ? '#f8fafc' : '#334155' }}>Chưa tìm thấy chuyến xe phù hợp cho lộ trình này</h4>
+                <p style={{ fontSize: '13.5px', color: isDark ? '#94a3b8' : '#64748b', marginTop: '6px' }}>
                   Vui lòng thử tìm các tuyến liên tỉnh phổ biến: TP. Hồ Chí Minh - Đà Lạt, Hà Nội - Sa Pa, hoặc Sài Gòn - Nha Trang!
                 </p>
               </div>
@@ -487,15 +549,15 @@ export const HomePage: React.FC = () => {
       <section className="container" style={{ marginTop: '48px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div>
-            <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>Tuyến đường phổ biến</h2>
-            <p style={{ fontSize: '14px', color: '#64748b', marginTop: '2px' }}>Chọn ngay điểm đến mơ ước với mức giá ưu đãi nhất hôm nay</p>
+            <h2 style={{ fontSize: '22px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>Tuyến đường phổ biến</h2>
+            <p style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#64748b', marginTop: '2px' }}>Chọn ngay điểm đến mơ ước với mức giá ưu đãi nhất hôm nay</p>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #cbd5e1', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <ChevronLeft size={18} color="#64748b" />
+            <button style={{ width: '36px', height: '36px', borderRadius: '50%', border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`, backgroundColor: isDark ? '#1e293b' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <ChevronLeft size={18} color={isDark ? '#94a3b8' : '#64748b'} />
             </button>
-            <button style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #cbd5e1', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              <ChevronRight size={18} color="#64748b" />
+            <button style={{ width: '36px', height: '36px', borderRadius: '50%', border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`, backgroundColor: isDark ? '#1e293b' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <ChevronRight size={18} color={isDark ? '#94a3b8' : '#64748b'} />
             </button>
           </div>
         </div>
@@ -515,16 +577,16 @@ export const HomePage: React.FC = () => {
                 position: 'relative',
                 height: '240px',
                 cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+                boxShadow: isDark ? '0 4px 14px rgba(0,0,0,0.3)' : '0 4px 14px rgba(0,0,0,0.08)',
                 transition: 'transform 0.2s, box-shadow 0.2s'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.15)';
+                e.currentTarget.style.boxShadow = isDark ? '0 12px 24px rgba(0,0,0,0.45)' : '0 12px 24px rgba(0,0,0,0.15)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.08)';
+                e.currentTarget.style.boxShadow = isDark ? '0 4px 14px rgba(0,0,0,0.3)' : '0 4px 14px rgba(0,0,0,0.08)';
               }}
             >
               <img 
@@ -561,8 +623,8 @@ export const HomePage: React.FC = () => {
           ========================================================================= */}
       <section className="container" style={{ marginTop: '48px' }}>
         <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>Ưu đãi nổi bật</h2>
-          <p style={{ fontSize: '14px', color: '#64748b', marginTop: '2px' }}>Các chương trình khuyến mãi và mã giảm giá vé xe hot nhất</p>
+          <h2 style={{ fontSize: '22px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>Ưu đãi nổi bật</h2>
+          <p style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#64748b', marginTop: '2px' }}>Các chương trình khuyến mãi và mã giảm giá vé xe hot nhất</p>
         </div>
 
         <div style={{
@@ -574,11 +636,11 @@ export const HomePage: React.FC = () => {
             <div
               key={p.id}
               style={{
-                backgroundColor: '#ffffff',
+                backgroundColor: isDark ? '#111827' : '#ffffff',
                 borderRadius: '16px',
                 overflow: 'hidden',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
+                boxShadow: isDark ? '0 2px 10px rgba(0,0,0,0.3)' : '0 2px 10px rgba(0,0,0,0.04)',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
@@ -586,11 +648,11 @@ export const HomePage: React.FC = () => {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.08)';
+                e.currentTarget.style.boxShadow = isDark ? '0 10px 20px rgba(0,0,0,0.45)' : '0 10px 20px rgba(0,0,0,0.08)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.04)';
+                e.currentTarget.style.boxShadow = isDark ? '0 2px 10px rgba(0,0,0,0.3)' : '0 2px 10px rgba(0,0,0,0.04)';
               }}
             >
               <div style={{ position: 'relative', height: '170px' }}>
@@ -611,10 +673,10 @@ export const HomePage: React.FC = () => {
                 </span>
               </div>
               <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <h4 style={{ fontSize: '14.5px', fontWeight: 700, color: '#1e293b', lineHeight: 1.45, marginBottom: '12px' }}>
+                <h4 style={{ fontSize: '14.5px', fontWeight: 700, color: isDark ? '#f8fafc' : '#1e293b', lineHeight: 1.45, marginBottom: '12px' }}>
                   {p.title}
                 </h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: p.accent, fontSize: '13px', fontWeight: 700 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: isDark ? '#38bdf8' : p.accent, fontSize: '13px', fontWeight: 700 }}>
                   Xem chi tiết ưu đãi <ArrowRight size={14} />
                 </div>
               </div>
@@ -628,8 +690,8 @@ export const HomePage: React.FC = () => {
           ========================================================================= */}
       <section className="container" style={{ marginTop: '48px' }}>
         <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>Du lịch Sapa</h2>
-          <p style={{ fontSize: '14px', color: '#64748b', marginTop: '2px' }}>Cẩm nang khám phá xứ sở sương mù, săn mây Fansipan và trải nghiệm văn hóa Tây Bắc</p>
+          <h2 style={{ fontSize: '22px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>Du lịch Sapa</h2>
+          <p style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#64748b', marginTop: '2px' }}>Cẩm nang khám phá xứ sở sương mù, săn mây Fansipan và trải nghiệm văn hóa Tây Bắc</p>
         </div>
 
         <div style={{
@@ -647,7 +709,7 @@ export const HomePage: React.FC = () => {
                 position: 'relative',
                 height: '220px',
                 cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+                boxShadow: isDark ? '0 4px 14px rgba(0,0,0,0.3)' : '0 4px 14px rgba(0,0,0,0.08)',
                 transition: 'transform 0.2s'
               }}
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; }}
@@ -689,8 +751,8 @@ export const HomePage: React.FC = () => {
           ========================================================================= */}
       <section className="container" style={{ marginTop: '48px' }}>
         <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>Cuộc thi sáng tạo Go with TravelEasy</h2>
-          <p style={{ fontSize: '14px', color: '#64748b', marginTop: '2px' }}>Chia sẻ khoảnh khắc du lịch vi vu cùng TravelEasy và rinh giải thưởng hấp dẫn</p>
+          <h2 style={{ fontSize: '22px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>Cuộc thi sáng tạo Go with TravelEasy</h2>
+          <p style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#64748b', marginTop: '2px' }}>Chia sẻ khoảnh khắc du lịch vi vu cùng TravelEasy và rinh giải thưởng hấp dẫn</p>
         </div>
 
         <div style={{
@@ -702,12 +764,12 @@ export const HomePage: React.FC = () => {
             <div
               key={c.id}
               style={{
-                backgroundColor: '#ffffff',
+                backgroundColor: isDark ? '#111827' : '#ffffff',
                 borderRadius: '16px',
                 overflow: 'hidden',
-                border: '1px solid #e2e8f0',
+                border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
                 cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.04)',
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; }}
@@ -717,8 +779,8 @@ export const HomePage: React.FC = () => {
                 <img src={c.image} alt={c.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <div style={{ padding: '16px' }}>
-                <span style={{ color: '#2563eb', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase' }}>{c.tag}</span>
-                <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b', marginTop: '6px', lineHeight: 1.4 }}>
+                <span style={{ color: isDark ? '#38bdf8' : '#2563eb', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase' }}>{c.tag}</span>
+                <h4 style={{ fontSize: '14px', fontWeight: 700, color: isDark ? '#f8fafc' : '#1e293b', marginTop: '6px', lineHeight: 1.4 }}>
                   {c.title}
                 </h4>
               </div>
@@ -732,8 +794,8 @@ export const HomePage: React.FC = () => {
           ========================================================================= */}
       <section className="container" style={{ marginTop: '48px' }}>
         <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>Ưu đãi thanh toán online</h2>
-          <p style={{ fontSize: '14px', color: '#64748b', marginTop: '2px' }}>Tiết kiệm hơn khi thanh toán vé trực tuyến qua ví điện tử và ngân hàng</p>
+          <h2 style={{ fontSize: '22px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>Ưu đãi thanh toán online</h2>
+          <p style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#64748b', marginTop: '2px' }}>Tiết kiệm hơn khi thanh toán vé trực tuyến qua ví điện tử và ngân hàng</p>
         </div>
 
         <div style={{
@@ -790,8 +852,8 @@ export const HomePage: React.FC = () => {
           ========================================================================= */}
       <section className="container" style={{ marginTop: '48px' }}>
         <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>Ưu đãi từ đối tác khác</h2>
-          <p style={{ fontSize: '14px', color: '#64748b', marginTop: '2px' }}>Đặc quyền từ mạng lưới đối tác Grab, Green SM, MOOVTEK và các khu nghỉ dưỡng</p>
+          <h2 style={{ fontSize: '22px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>Ưu đãi từ đối tác khác</h2>
+          <p style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#64748b', marginTop: '2px' }}>Đặc quyền từ mạng lưới đối tác Grab, Green SM, MOOVTEK và các khu nghỉ dưỡng</p>
         </div>
 
         <div style={{
@@ -803,11 +865,11 @@ export const HomePage: React.FC = () => {
             <div
               key={pt.id}
               style={{
-                backgroundColor: '#ffffff',
+                backgroundColor: isDark ? '#111827' : '#ffffff',
                 borderRadius: '16px',
                 padding: '20px',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
+                boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.04)',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
@@ -820,16 +882,16 @@ export const HomePage: React.FC = () => {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                   <span style={{ fontSize: '12px', fontWeight: 800, color: pt.color }}>{pt.partner}</span>
-                  <span style={{ backgroundColor: '#f1f5f9', color: '#0f172a', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' }}>
+                  <span style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9', color: isDark ? '#f8fafc' : '#0f172a', fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' }}>
                     {pt.badge}
                   </span>
                 </div>
-                <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b', lineHeight: 1.45, marginBottom: '6px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: 700, color: isDark ? '#f8fafc' : '#1e293b', lineHeight: 1.45, marginBottom: '6px' }}>
                   {pt.title}
                 </h4>
-                <p style={{ fontSize: '12.5px', color: '#64748b' }}>{pt.desc}</p>
+                <p style={{ fontSize: '12.5px', color: isDark ? '#94a3b8' : '#64748b' }}>{pt.desc}</p>
               </div>
-              <div style={{ marginTop: '16px', fontSize: '12px', color: '#2563eb', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ marginTop: '16px', fontSize: '12px', color: isDark ? '#38bdf8' : '#2563eb', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
                 Nhận mã ngay <ArrowRight size={13} />
               </div>
             </div>
@@ -842,8 +904,8 @@ export const HomePage: React.FC = () => {
           ========================================================================= */}
       <section className="container" style={{ marginTop: '48px' }}>
         <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>TravelEasy có gì mới?</h2>
-          <p style={{ fontSize: '14px', color: '#64748b', marginTop: '2px' }}>Cập nhật các tính năng và dự án ý nghĩa mới nhất từ nền tảng</p>
+          <h2 style={{ fontSize: '22px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>TravelEasy có gì mới?</h2>
+          <p style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#64748b', marginTop: '2px' }}>Cập nhật các tính năng và dự án ý nghĩa mới nhất từ nền tảng</p>
         </div>
 
         <div style={{
@@ -855,11 +917,11 @@ export const HomePage: React.FC = () => {
             <div
               key={n.id}
               style={{
-                backgroundColor: '#ffffff',
+                backgroundColor: isDark ? '#111827' : '#ffffff',
                 borderRadius: '16px',
                 padding: '24px 20px',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
+                boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.04)',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
@@ -871,16 +933,16 @@ export const HomePage: React.FC = () => {
             >
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#2563eb', backgroundColor: '#eff6ff', padding: '3px 8px', borderRadius: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: isDark ? '#38bdf8' : '#2563eb', backgroundColor: isDark ? 'rgba(37,99,235,0.2)' : '#eff6ff', padding: '3px 8px', borderRadius: '6px' }}>
                     {n.category}
                   </span>
-                  <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>{n.date}</span>
+                  <span style={{ fontSize: '11.5px', color: isDark ? '#94a3b8' : '#94a3b8' }}>{n.date}</span>
                 </div>
-                <h4 style={{ fontSize: '14.5px', fontWeight: 700, color: '#1e293b', lineHeight: 1.5 }}>
+                <h4 style={{ fontSize: '14.5px', fontWeight: 700, color: isDark ? '#f8fafc' : '#1e293b', lineHeight: 1.5 }}>
                   {n.title}
                 </h4>
               </div>
-              <div style={{ marginTop: '16px', fontSize: '12.5px', color: '#2563eb', fontWeight: 700 }}>
+              <div style={{ marginTop: '16px', fontSize: '12.5px', color: isDark ? '#38bdf8' : '#2563eb', fontWeight: 700 }}>
                 Tìm hiểu thêm →
               </div>
             </div>
@@ -891,18 +953,18 @@ export const HomePage: React.FC = () => {
       {/* =========================================================================
           SECTION 8: BẾN XE VÀ NHÀ XE HÀNG ĐẦU VIỆT NAM (SEO Directory)
           ========================================================================= */}
-      <section className="container" style={{ marginTop: '56px', backgroundColor: '#ffffff', borderRadius: '20px', padding: '36px 32px', border: '1px solid #e2e8f0' }}>
-        <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>
+      <section className="container" style={{ marginTop: '56px', backgroundColor: isDark ? '#111827' : '#ffffff', borderRadius: '20px', padding: '36px 32px', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}` }}>
+        <h3 style={{ fontSize: '20px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a', marginBottom: '16px' }}>
           Mạng lưới bến xe và nhà xe đối tác hàng đầu
         </h3>
-        <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '24px', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#64748b', marginBottom: '24px', lineHeight: 1.6 }}>
           TravelEasy kết nối trực tiếp với các bến xe trung tâm tại các thành phố lớn cùng hơn 100+ nhà xe uy tín trên khắp mọi miền Tổ quốc.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
           <div>
-            <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#1e3a8a', marginBottom: '10px' }}>Bến xe phía Nam</h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13.5px', color: '#475569', lineHeight: 2 }}>
+            <h4 style={{ fontSize: '15px', fontWeight: 700, color: isDark ? '#60a5fa' : '#1e3a8a', marginBottom: '10px' }}>Bến xe phía Nam</h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13.5px', color: isDark ? '#cbd5e1' : '#475569', lineHeight: 2 }}>
               <li>• Bến xe Miền Đông (Bình Thạnh)</li>
               <li>• Bến xe Miền Tây (Bình Tân)</li>
               <li>• Bến xe An Sương (Hóc Môn)</li>
@@ -912,8 +974,8 @@ export const HomePage: React.FC = () => {
           </div>
 
           <div>
-            <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#1e3a8a', marginBottom: '10px' }}>Bến xe phía Bắc</h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13.5px', color: '#475569', lineHeight: 2 }}>
+            <h4 style={{ fontSize: '15px', fontWeight: 700, color: isDark ? '#60a5fa' : '#1e3a8a', marginBottom: '10px' }}>Bến xe phía Bắc</h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13.5px', color: isDark ? '#cbd5e1' : '#475569', lineHeight: 2 }}>
               <li>• Bến xe Mỹ Đình (Hà Nội)</li>
               <li>• Bến xe Giáp Bát (Hà Nội)</li>
               <li>• Bến xe Nước Ngầm (Hà Nội)</li>
@@ -923,8 +985,8 @@ export const HomePage: React.FC = () => {
           </div>
 
           <div>
-            <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#1e3a8a', marginBottom: '10px' }}>Bến xe miền Trung & Tây Nguyên</h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13.5px', color: '#475569', lineHeight: 2 }}>
+            <h4 style={{ fontSize: '15px', fontWeight: 700, color: isDark ? '#60a5fa' : '#1e3a8a', marginBottom: '10px' }}>Bến xe miền Trung & Tây Nguyên</h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13.5px', color: isDark ? '#cbd5e1' : '#475569', lineHeight: 2 }}>
               <li>• Bến xe Liên tỉnh Đà Lạt</li>
               <li>• Bến xe Trung tâm Đà Nẵng</li>
               <li>• Bến xe Phía Nam Nha Trang</li>
@@ -934,8 +996,8 @@ export const HomePage: React.FC = () => {
           </div>
 
           <div>
-            <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#1e3a8a', marginBottom: '10px' }}>Nhà xe tiêu biểu</h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13.5px', color: '#475569', lineHeight: 2 }}>
+            <h4 style={{ fontSize: '15px', fontWeight: 700, color: isDark ? '#60a5fa' : '#1e3a8a', marginBottom: '10px' }}>Nhà xe tiêu biểu</h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13.5px', color: isDark ? '#cbd5e1' : '#475569', lineHeight: 2 }}>
               <li>• TravelEasy Express Bus</li>
               <li>• Phương Trang (FUTA Bus Lines)</li>
               <li>• Thành Bưởi Limousine</li>
@@ -969,29 +1031,29 @@ export const HomePage: React.FC = () => {
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
           backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 110, padding: '16px'
         }}>
-          <div style={{ backgroundColor: '#fff', borderRadius: '20px', padding: '36px 32px', maxWidth: '480px', width: '100%', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-            <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <CheckCircle size={40} color="#16a34a" />
+          <div style={{ backgroundColor: isDark ? '#111827' : '#fff', borderRadius: '20px', padding: '36px 32px', maxWidth: '480px', width: '100%', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', border: `1px solid ${isDark ? '#1e293b' : 'none'}` }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <CheckCircle size={40} color="#22c55e" />
             </div>
 
-            <h3 style={{ fontSize: '24px', fontWeight: 900, color: '#14532d', marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '24px', fontWeight: 900, color: isDark ? '#4ade80' : '#14532d', marginBottom: '8px' }}>
               Đặt Vé Thành Công!
             </h3>
-            <p style={{ fontSize: '14px', color: '#475569', marginBottom: '24px' }}>
+            <p style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#475569', marginBottom: '24px' }}>
               Cảm ơn quý khách đã tin tưởng đồng hành cùng nền tảng TravelEasy.
             </p>
 
-            <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '12px', textAlign: 'left', fontSize: '14px', marginBottom: '24px', border: '1px solid #e2e8f0' }}>
-              <div style={{ marginBottom: '8px' }}>Mã đặt vé: <strong style={{ color: '#2563eb', fontSize: '16px' }}>{confirmedBooking.bookingCode}</strong></div>
+            <div style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', padding: '20px', borderRadius: '12px', textAlign: 'left', fontSize: '14px', marginBottom: '24px', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, color: isDark ? '#f8fafc' : '#0f172a' }}>
+              <div style={{ marginBottom: '8px' }}>Mã đặt vé: <strong style={{ color: isDark ? '#38bdf8' : '#2563eb', fontSize: '16px' }}>{confirmedBooking.bookingCode}</strong></div>
               <div style={{ marginBottom: '8px' }}>Hành khách: <strong>{confirmedBooking.customerName}</strong> ({confirmedBooking.customerPhone})</div>
               <div style={{ marginBottom: '8px' }}>Tuyến xe: <strong>{confirmedBooking.trip?.originCity} ➔ {confirmedBooking.trip?.destinationCity}</strong></div>
-              <div style={{ marginBottom: '8px' }}>Ghế ngồi: <strong style={{ color: '#0d9488' }}>{confirmedBooking.tickets?.map(t => t.seatNumber).join(', ')}</strong></div>
-              <div style={{ marginBottom: '8px' }}>Tổng tiền: <strong style={{ color: '#d97706', fontSize: '16px' }}>{(confirmedBooking.totalAmount || 0).toLocaleString('vi-VN')} đ</strong></div>
+              <div style={{ marginBottom: '8px' }}>Ghế ngồi: <strong style={{ color: isDark ? '#2dd4bf' : '#0d9488' }}>{confirmedBooking.tickets?.map(t => t.seatNumber).join(', ')}</strong></div>
+              <div style={{ marginBottom: '8px' }}>Tổng tiền: <strong style={{ color: '#f59e0b', fontSize: '16px' }}>{(confirmedBooking.totalAmount || 0).toLocaleString('vi-VN')} đ</strong></div>
               <div>Hình thức thanh toán: <strong>{confirmedBooking.paymentMethod}</strong></div>
             </div>
 

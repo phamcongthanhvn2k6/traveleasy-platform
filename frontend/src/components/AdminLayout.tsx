@@ -19,16 +19,20 @@ import {
   LogOut,
   Calendar,
   Ticket,
-  DollarSign
+  DollarSign,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
+import { useTheme } from '../context/ThemeContext';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+  const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -92,7 +96,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: isDark ? '#0b0f19' : '#f8fafc', color: isDark ? '#f8fafc' : '#0f172a', fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif", transition: 'all 0.25s ease' }}>
       {/* ======================================================== */}
       {/* 1. LEFT SIDEBAR (DARK NAVY THEME)                        */}
       {/* ======================================================== */}
@@ -311,15 +315,16 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         <header
           style={{
             height: '60px',
-            backgroundColor: '#ffffff',
-            borderBottom: '1px solid #e2e8f0',
+            backgroundColor: isDark ? '#111827' : '#ffffff',
+            borderBottom: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
             padding: '0 28px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             position: 'sticky',
             top: 0,
-            zIndex: 30
+            zIndex: 30,
+            transition: 'all 0.25s ease'
           }}
         >
           {/* Search Box */}
@@ -327,8 +332,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             style={{
               display: 'flex',
               alignItems: 'center',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
               borderRadius: '8px',
               padding: '6px 10px',
               width: '280px',
@@ -344,30 +349,53 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 background: 'transparent',
                 outline: 'none',
                 fontSize: '13px',
-                color: '#0f172a',
+                color: isDark ? '#f8fafc' : '#0f172a',
                 flex: 1
               }}
             />
             <span
               style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #cbd5e1',
+                backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                 borderRadius: '4px',
                 padding: '1px 5px',
                 fontSize: '10px',
                 fontWeight: 600,
-                color: '#64748b'
+                color: isDark ? '#94a3b8' : '#64748b'
               }}
             >
               ⌘ K
             </span>
           </div>
 
-          {/* Right Header: Notification & User Profile */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          {/* Right Header: Theme Toggle, Notification & User Profile */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              title={isDark ? 'Chuyển sang Chế độ Sáng' : 'Chuyển sang Chế độ Tối'}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+                color: isDark ? '#facc15' : '#475569',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {isDark ? <Sun size={15} color="#facc15" /> : <Moon size={15} color="#64748b" />}
+              <span>{isDark ? 'Sáng' : 'Tối'}</span>
+            </button>
+
             {/* Bell Icon */}
             <div style={{ position: 'relative', cursor: 'pointer', display: 'flex' }}>
-              <Bell size={18} color="#64748b" />
+              <Bell size={18} color={isDark ? '#94a3b8' : '#64748b'} />
               <span
                 style={{
                   position: 'absolute',
@@ -403,10 +431,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     : 'AD'}
                 </div>
                 <div style={{ lineHeight: 1.15 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
                     {currentUser?.fullName || 'Admin TravelEasy'}
                   </div>
-                  <div style={{ fontSize: '10px', fontWeight: 600, color: '#64748b' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 600, color: isDark ? '#94a3b8' : '#64748b' }}>
                     {currentUser?.role ? `ROLE_${currentUser.role}` : 'SYSTEM_ADMIN'}
                   </div>
                 </div>
@@ -420,24 +448,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '5px',
-                  backgroundColor: '#fee2e2',
-                  border: '1px solid #fecaca',
+                  backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+                  border: `1px solid ${isDark ? 'rgba(239, 68, 68, 0.4)' : '#fecaca'}`,
                   borderRadius: '6px',
                   padding: '5px 9px',
-                  color: '#dc2626',
+                  color: isDark ? '#fca5a5' : '#dc2626',
                   fontSize: '12px',
                   fontWeight: 600,
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#fecaca';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#fee2e2';
-                }}
               >
-                <LogOut size={13} color="#dc2626" />
+                <LogOut size={13} color={isDark ? '#fca5a5' : '#dc2626'} />
                 <span>Đăng xuất</span>
               </button>
             </div>
@@ -445,7 +467,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </header>
 
         {/* Page Content */}
-        <main style={{ flex: 1, padding: '24px 28px', backgroundColor: '#f8fafc' }}>
+        <main style={{ flex: 1, padding: '24px 28px', backgroundColor: isDark ? '#0b0f19' : '#f8fafc', color: isDark ? '#f8fafc' : '#0f172a', transition: 'all 0.25s ease' }}>
           {children}
         </main>
       </div>

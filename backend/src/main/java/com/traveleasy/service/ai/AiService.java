@@ -18,10 +18,106 @@ public class AiService {
         String reply;
         String suggestedRoute = null;
 
-        if (query.contains("huỷ vé") || query.contains("hủy vé") || query.contains("đổi vé")) {
-            reply = "Chính sách hủy vé TravelEasy: Bạn có thể hủy vé trước giờ khởi hành ít nhất 24 giờ để được hoàn 100% tiền qua mã vé hoặc phương thức đã thanh toán. Vui lòng vào mục 'Tra cứu vé' để thực hiện.";
+        if (query.contains("huỷ vé") || query.contains("hủy vé") || query.contains("đổi vé") || query.contains("hoàn tiền")) {
+            reply = """
+                    Chính sách hủy vé TravelEasy: Bạn có thể hủy vé trước giờ khởi hành ít nhất 24 giờ để được hoàn 100% tiền qua mã vé hoặc phương thức đã thanh toán. Vui lòng vào mục 'Tra cứu vé' để thực hiện.
+
+                    ### 🛡️ CHI TIẾT CHÍNH SÁCH HOÀN / HỦY VÉ & ĐỔI CHUYẾN
+                    * **Hủy trước 24 giờ**: Hoàn **90% - 100%** tiền vé tùy theo quy định từng nhà xe.
+                    * **Hủy từ 12 - 24 giờ trước giờ chạy**: Hoàn **70%** giá vé (phí xử lý 30%).
+                    * **Hủy dưới 12 giờ trước giờ chạy**: Không hỗ trợ hoàn tiền do xe đã chốt danh sách xuất bến.
+                    * **Chính sách đổi ngày / đổi chuyến (PBD-02)**: Miễn phí đổi chuyến trước giờ khởi hành tối thiểu **2 tiếng**.
+                    * **Cam kết 150%**: Nếu nhà xe bỏ khách hoặc không cung cấp dịch vụ, TravelEasy bồi thường hoàn tiền **150%**.
+
+                    👉 Bạn có thể vào mục **"Vé Của Tôi"** hoặc **"Tra Cứu Vé"** trên thanh menu để thao tác trực tuyến chỉ với 1 click!
+                    """;
         } else if (query.contains("chào") || query.contains("hello") || query.equals("hi") || query.trim().isEmpty()) {
-            reply = "Chào bạn! Tôi là trợ lý AI TravelEasy. Tôi có thể hỗ trợ bạn tìm chuyến xe khách giá rẻ, tư vấn chọn vị trí ghế chống say xe, hướng dẫn điểm đón trả hoặc chính sách đặt vé của các nhà xe!";
+            reply = """
+                    Chào bạn! Tôi là trợ lý AI TravelEasy. Tôi có thể hỗ trợ bạn tìm chuyến xe khách giá rẻ, tư vấn chọn vị trí ghế chống say xe, hướng dẫn điểm đón trả hoặc chính sách đặt vé của các nhà xe!
+
+                    ✨ **Gợi ý bạn có thể hỏi tôi:**
+                    • *"Tư vấn chuyến đi Đà Lạt 3 ngày 2 đêm"*
+                    • *"Nên chọn ghế tầng mấy để không bị say xe?"*
+                    • *"Hôm nay có những mã giảm giá nào?"*
+                    • *"Chính sách hoàn hủy vé và đổi chuyến ra sao?"*
+                    • *"Thanh toán bằng VietQR PayOS như thế nào?"*
+                    """;
+        } else if (query.contains("say xe") || query.contains("chọn ghế") || query.contains("vị trí ghế") || query.contains("tầng 1") || query.contains("tầng 2") || query.contains("giường nằm")) {
+            reply = """
+                    ### 💺 MẸO CHỌN VỊ TRÍ GHẾ NGỒI / GIƯỜNG NẰM CHỐNG SAY XE TỐI ƯU
+                    * **Vị trí tốt nhất để chống say xe**:
+                      * ✅ **Tầng 1 (Dưới) - Dãy giữa (A02, A03, A04, A05)**: Nằm ở trung tâm trọng tâm xe, biên độ rung lắc thấp nhất khi xe vào cua đèo dốc hoặc qua ổ gà. Cực kỳ êm ái cho người già, trẻ nhỏ và người nhạy cảm với mùi xe.
+                    * **Vị trí ngắm cảnh & thoáng mát riêng tư**:
+                      * 🌟 **Tầng 2 (Trên) - Dãy cửa sổ (B01, B03, B04)**: Tầm nhìn rộng thoáng, không khí mát mẻ, ít bị ảnh hưởng bởi lối đi lại. Rất thích hợp cho các bạn trẻ thích ngắm cảnh đêm hoặc chụp ảnh.
+                    * **Vị trí nên hạn chế nếu dễ bị say xe**:
+                      * ❌ Các ghế sát đuôi xe vì độ nhún nảy mạnh nhất khi qua gờ giảm tốc.
+
+                    💡 *Mẹo TravelEasy*: Hệ thống cho phép bạn **chọn trực tiếp số ghế** trên sơ đồ xe 2 tầng thời gian thực và cam kết giữ chỗ độc quyền 10 phút!
+                    """;
+        } else if (query.contains("thanh toán") || query.contains("payos") || query.contains("vietqr") || query.contains("vnpay") || query.contains("chuyển khoản") || query.contains("ngân hàng")) {
+            reply = """
+                    ### 💳 HƯỚNG DẪN THANH TOÁN VÉ XE TRỰC TUYẾN TẠI TRAVELEASY
+                    TravelEasy hỗ trợ 3 phương thức thanh toán an toàn, bảo mật tiêu chuẩn cao:
+
+                    1. ⚡ **Cổng PayOS — Quét mã VietQR Napas 24/7 (MB Bank)**:
+                       * Hỗ trợ quét mã qua ứng dụng của **tất cả ngân hàng Việt Nam** (Vietcombank, MB, Techcombank, BIDV, ACB, VPBank,...) và ví điện tử.
+                       * **Đặc quyền**: Hệ thống Webhook tự động kích hoạt vé trong **3 giây**, không cần chụp màn hình chuyển khoản hay chờ nhân viên duyệt.
+                    2. 💳 **Cổng thanh toán VNPAY-QR**:
+                       * Hỗ trợ thẻ ATM nội địa Napas, Internet Banking và thẻ quốc tế Visa / MasterCard / JCB.
+                    3. 💵 **Thanh toán tiền mặt khi lên xe (Cash on Board)**:
+                       * Khách hàng thanh toán trực tiếp cho phụ xe hoặc tại văn phòng nhà xe khi làm thủ tục lên xe.
+
+                    🔒 *Bảo chứng an toàn*: Vé điện tử kèm mã QR tra cứu sẽ được phát hành ngay lập tức về Email và số điện thoại của bạn!
+                    """;
+        } else if (query.contains("mã giảm") || query.contains("voucher") || query.contains("khuyến mãi") || query.contains("ưu đãi") || query.contains("giảm giá")) {
+            reply = """
+                    ### 🎟️ DANH SÁCH MÃ GIẢM GIÁ & VOUCHER KHẢ DỤNG HÔM NAY
+                    * 🌟 **SAPA20**: Giảm **20%** vé xe Limousine cabin VIP tuyến Sa Pa.
+                    * 🏔️ **DALATVIP**: Giảm ngay **50.000đ** cho tuyến Sài Gòn ➔ Đà Lạt phòng nằm VIP.
+                    * 🎁 **WELCOME50**: Giảm **15%** (tối đa 50.000đ) cho khách hàng lần đầu đặt vé trên sàn.
+                    * ⚡ **PAYOS50**: Giảm ngay **30.000đ** khi thanh toán quét mã VietQR Napas MB Bank.
+
+                    👉 Bạn chỉ cần bấm **[Sao chép mã]** ở danh sách voucher bên dưới và dán vào ô Mã giảm giá tại bước Thanh Toán để được trừ tiền trực tiếp!
+                    """;
+        } else if (query.contains("hành lý") || query.contains("thú cưng") || query.contains("chó mèo") || query.contains("trẻ em") || query.contains("vali")) {
+            reply = """
+                    ### 🧳 QUY ĐỊNH VỀ HÀNH LÝ, TRẺ EM & VẬN CHUYỂN THÚ CƯNG
+                    * 📦 **Hành lý xách tay & Ký gửi**:
+                      * Mỗi vé được miễn phí **20kg** hành lý ký gửi dưới hầm xe và 1 balo/túi xách nhỏ mang lên khoang ghế.
+                      * Nếu mang theo xe máy, xe đạp hoặc vali ngoại cỡ, bạn vui lòng liên hệ nhà xe trước 2 tiếng để sắp xếp khoang gửi.
+                    * 👶 **Chính sách đối với trẻ em**:
+                      * Trẻ em dưới **5 tuổi** hoặc cao dưới **100cm** ngồi/nằm chung với người lớn được **MIỄN PHÍ VÉ**.
+                      * Trẻ em từ 5 tuổi trở lên hoặc cần nằm giường riêng tính vé như người lớn.
+                    * 🐾 **Vận chuyển thú cưng (Chó, Mèo)**:
+                      * Thú cưng bắt buộc phải có lồng chuồng thông thoáng và được vận chuyển dưới hầm xe có khe thông khí theo quy định an toàn giao thông đường bộ.
+                    """;
+        } else if (query.contains("đà nẵng") || query.contains("da nang") || query.contains("quy nhơn") || query.contains("quy nhon")) {
+            suggestedRoute = "Đà Nẵng -> Quy Nhơn";
+            reply = """
+                    ### 🌊 PHẦN 1: TÓM TẮT NHANH ĐIỂM ĐẾN (QUY NHƠN - ĐÀ NẴNG)
+                    * **Thời tiết & Trang phục**: Khí hậu miền Trung nắng ráo, biển xanh cát vàng từ tháng 3 đến tháng 10. Mang theo trang phục biển, kính râm, kem chống nắng và mũ rộng vành.
+                    * **Di chuyển**: Thuê xe máy vi vu cung đường biển Kỳ Co - Eo Gió hoặc taxi nội thành.
+
+                    ---
+
+                    ### 📍 PHẦN 2: LỊCH TRÌNH KHUYÊN DÙNG (3 NGÀY 2 ĐÊM)
+                    * **Ngày 1**: Đón bình minh Kỳ Co, lặn ngắm san hô Bãi Dứa, ăn trưa hải sản Nhơn Lý. Chiều check-in Eo Gió và Tịnh Xá Ngọc Hòa.
+                    * **Ngày 2**: Tham quan Tháp Đôi Chăm Pa, Ghềnh Ráng Tiên Sa (mộ Hàn Mặc Tử, Bãi Trứng Hoàng Hậu), chiều tắm biển Quy Hòa.
+                    * **Ngày 3**: Thưởng thức Bánh xèo tôm nhảy rau mầm Gia Vỹ, mua bánh ít lá gai & chả ram tôm đất làm quà.
+
+                    ---
+
+                    ### 🚌 PHẦN 3: GỢI Ý CHUYẾN XE KHÁCH TỐI ƯU
+                    * **Khuyên chọn**: Xe Limousine giường nằm cao cấp chạy tuyến **Đà Nẵng ➔ Quy Nhơn** xuất bến lúc 08:00 sáng hoặc 14:00 chiều (mất ~6 giờ chạy đường QL1A ven biển).
+
+                    ---
+
+                    ### 💰 PHẦN 4: DỰ TRÙ KINH PHÍ CHO 1 NGƯỜI
+                    * 🎟️ Vé xe khách khứ hồi: ~`500.000đ`
+                    * 🏨 Khách sạn gần biển (2 đêm): ~`550.000đ`
+                    * 🍜 Ăn uống hải sản & tour cano Kỳ Co: ~`900.000đ`
+                    * 👉 **TỔNG KINH PHÍ DỰ KIẾN: ~1.950.000đ / người**
+                    """;
         } else if (query.contains("đà lạt") || query.contains("da lat") || contextCity.contains("đà lạt")) {
             suggestedRoute = "TP. Hồ Chí Minh -> Đà Lạt";
             reply = """

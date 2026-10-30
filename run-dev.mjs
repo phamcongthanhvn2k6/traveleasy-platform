@@ -44,6 +44,15 @@ ${BOLD}${CYAN}==================================================================
 let backendProcess = null;
 let frontendProcess = null;
 let isShuttingDown = false;
+let frontendStarted = false;
+
+function launchFrontendOnce() {
+  if (!frontendStarted && !isShuttingDown) {
+    frontendStarted = true;
+    console.log(`\n${BOLD}${GREEN}✔ [BACKEND READY] Spring Boot đã sẵn sàng tại http://localhost:8080! Bắt đầu kết nối Frontend Vite...${RESET}\n`);
+    startFrontend();
+  }
+}
 
 // Hàm kill tiến trình và toàn bộ cây tiến trình con (Đặc biệt quan trọng trên Windows cho Java / Vite)
 function killTree(proc) {
@@ -103,12 +112,17 @@ function startBackend() {
 
   const rlOut = readline.createInterface({ input: backendProcess.stdout });
   rlOut.on('line', (line) => {
-    // Thông báo nổi bật khi Spring Boot khởi động xong
-    if (line.includes('Started TraveleasyApplication') || line.includes('Started TravelEasyApplication') || line.includes('Tomcat started on port')) {
-      console.log(`${BOLD}${GREEN}✔ [BACKEND READY] Spring Boot đã sẵn sàng tại http://localhost:8080!${RESET}`);
+    // Thông báo nổi bật khi Spring Boot khởi động xong và kích hoạt Frontend
+    if (line.includes('Started TraveleasyApplication') || line.includes('Started TravelEasyApplication') || line.includes('Tomcat started on port') || line.includes('Tomcat initialized with port')) {
+      launchFrontendOnce();
     }
     console.log(`${CYAN}[BACKEND ]${RESET} ${line}`);
   });
+
+  // Fallback an toàn: Nếu sau 15 giây chưa bắt được dòng log thì vẫn khởi động Frontend
+  setTimeout(() => {
+    launchFrontendOnce();
+  }, 15000);
 
   const rlErr = readline.createInterface({ input: backendProcess.stderr });
   rlErr.on('line', (line) => {
@@ -191,7 +205,7 @@ function preCleanPort(port) {
 preCleanPort(8080);
 preCleanPort(5173);
 
-// Chạy song song
+// Khởi chạy Backend trước, Frontend sẽ tự động kết nối ngay khi Backend sẵn sàng
+console.log(`${YELLOW}⏳ Đang khởi động Backend... Frontend sẽ được kết nối tự động ngay khi máy chủ API sẵn sàng.${RESET}`);
 startBackend();
-startFrontend();
 

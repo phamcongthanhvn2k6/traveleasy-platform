@@ -51,7 +51,7 @@ export const CompanyLoginPage: React.FC = () => {
 
       const response = await api.post('/auth/login', {
         identifier: identifier.trim(),
-        password: password,
+        password: password.trim(),
       });
 
       const data: AuthUser = response.data?.data;
@@ -202,6 +202,7 @@ export const CompanyLoginPage: React.FC = () => {
                 onClick={() => {
                   setIdentifier(acc.email);
                   setPassword('123456789@');
+                  setErrorMsg(null);
                 }}
                 style={{
                   background: identifier === acc.email ? 'rgba(45, 212, 191, 0.3)' : 'rgba(255, 255, 255, 0.08)',
@@ -231,7 +232,10 @@ export const CompanyLoginPage: React.FC = () => {
                 type="text"
                 required
                 value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                onChange={(e) => {
+                  setIdentifier(e.target.value);
+                  if (errorMsg) setErrorMsg(null);
+                }}
                 placeholder="Nhập email hoặc số điện thoại điều hành..."
                 style={{
                   width: '100%',
@@ -258,7 +262,10 @@ export const CompanyLoginPage: React.FC = () => {
                 type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errorMsg) setErrorMsg(null);
+                }}
                 placeholder="Nhập mật khẩu tài khoản..."
                 style={{
                   width: '100%',

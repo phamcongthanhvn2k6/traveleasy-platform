@@ -24,6 +24,7 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final BusCompanyRepository busCompanyRepository;
 
+    @Transactional(readOnly = true)
     public List<VehicleResponse> getVehicles(Long busCompanyId, String type, String status, String search) {
         List<Vehicle> list;
         if (busCompanyId != null) {
@@ -53,6 +54,7 @@ public class VehicleService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public VehicleResponse getVehicleById(Long id) {
         Vehicle v = vehicleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy xe #" + id));

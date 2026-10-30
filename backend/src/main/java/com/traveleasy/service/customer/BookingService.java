@@ -16,9 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -349,17 +347,48 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable("admin_all_bookings")
     public List<BookingResponse> getAllBookings() {
-        return bookingRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"))
-                .stream()
-                .map(b -> {
-                    List<Ticket> tickets = ticketRepository.findByBookingId(b.getId());
-                    return mapToBookingResponse(b, tickets);
-                })
+        List<Booking> bookings = bookingRepository.findAllWithTripDetails();
+        if (bookings.isEmpty()) return Collections.emptyList();
+
+        List<Long> bookingIds = bookings.stream().map(Booking::getId).collect(Collectors.toList());
+        List<Ticket> allTickets = ticketRepository.findByBookingIdIn(bookingIds);
+        Map<Long, List<Ticket>> ticketsByBooking = new HashMap<>();
+        for (Ticket t : allTickets) {
+            if (t.getBooking() != null && t.getBooking().getId() != null) {
+                ticketsByBooking.computeIfAbsent(t.getBooking().getId(), k -> new ArrayList<>()).add(t);
+            }
+        }
+
+        return bookings.stream()
+                .map(b -> mapToBookingResponse(b, ticketsByBooking.getOrDefault(b.getId(), Collections.emptyList())))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "company_bookings", key = "#companyId != null ? #companyId : 1L")
+    public List<BookingResponse> getCompanyBookings(Long companyId) {
+        Long targetId = companyId != null ? companyId : 1L;
+        List<Booking> bookings = bookingRepository.findByBusCompanyIdWithTripDetails(targetId);
+        if (bookings.isEmpty()) return Collections.emptyList();
+
+        List<Long> bookingIds = bookings.stream().map(Booking::getId).collect(Collectors.toList());
+        List<Ticket> allTickets = ticketRepository.findByBookingIdIn(bookingIds);
+        Map<Long, List<Ticket>> ticketsByBooking = new HashMap<>();
+        for (Ticket t : allTickets) {
+            if (t.getBooking() != null && t.getBooking().getId() != null) {
+                ticketsByBooking.computeIfAbsent(t.getBooking().getId(), k -> new ArrayList<>()).add(t);
+            }
+        }
+
+        return bookings.stream()
+                .map(b -> mapToBookingResponse(b, ticketsByBooking.getOrDefault(b.getId(), Collections.emptyList())))
                 .collect(Collectors.toList());
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats"}, allEntries = true)
     public BookingResponse updateBookingStatus(Long id, BookingStatus status) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé"));
