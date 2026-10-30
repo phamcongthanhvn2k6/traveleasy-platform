@@ -46,6 +46,27 @@
 
 ---
 
+## 🔑 BẢNG THÔNG TIN TÀI KHOẢN ĐĂNG NHẬP & KIỂM THỬ HỆ THỐNG (CREDENTIALS)
+
+> [!IMPORTANT]
+> **MẬT KHẨU DÙNG CHUNG CHO TẤT CẢ CÁC TÀI KHOẢN MẪU:**  
+> 🔑 **`123456789@`** *(Đã đồng bộ hóa 100% trên Supabase Cloud Database & hỗ trợ cả `Rikkei@123`)*
+
+| Phân Hệ | Đường Dẫn Truy Cập (URL) | Tài Khoản Đăng Nhập (Email / SĐT) | Mật Khẩu Mẫu | Vai Trò (Role) & Quyền Hạn |
+| :--- | :--- | :--- | :---: | :--- |
+| **👑 Quản Trị Sàn Tổng (Admin Portal)** | [`/admin/login`](http://localhost:5173/admin/login) | • `admin@traveleasy.vn`<br>• `phanthanhphong.admin@traveleasy.vn`<br>• `trungkien.admin@traveleasy.vn`<br>• `admin@gmail.com` | **`123456789@`** | **`ADMIN`** — Toàn quyền Quản trị sàn, xem Dashboard doanh thu/KPI, duyệt đối tác nhà xe, quản lý 480 chuyến xe, kiểm tra Audit Logs và cài đặt Gateway |
+| **🚍 Cổng Đối Tác Nhà Xe (Company Portal)** | [`/company/login`](http://localhost:5173/company/login) | • `operator@futa.vn` / `futa@gmail.com` *(Phương Trang)*<br>• `dieuhanh@thanhbuoi.com.vn` *(Thành Bưởi)*<br>• `dieuhanh@hoamaivungtau.com.vn` *(Hoa Mai)*<br>• `dieuhanh@xesaoviet.com.vn` *(Sao Việt)*<br>• `partner@traveleasy.vn` *(TravelEasy Express)* | **`123456789@`** | **`OPERATOR`** — Quản lý lịch chạy xe, sơ đồ ghế 2 tầng, danh sách hành khách đặt vé theo thời gian thực và theo dõi quyết toán doanh thu |
+| **👤 Cổng Khách Hàng (Customer Portal)** | [`/login`](http://localhost:5173/login) | • `customer@gmail.com` *(SĐT: `0912345678`)*<br>• `tranthib@gmail.com`<br>• `lehoangc@gmail.com`<br>• `phamcongthanhvn2k6@gmail.com` | **`123456789@`** | **`CUSTOMER`** — Đặt vé xe trực tuyến, chọn vị trí ghế tầng 1/tầng 2, áp dụng mã giảm giá voucher, thanh toán VNPay/COD, quản lý vé và đánh giá chuyến đi |
+| **📷 Quét Mã QR Xác Thực Vé Đa Năng** | [`/scanner`](http://localhost:5173/scanner) | *Không cần đăng nhập (Công khai)* | — | Quét camera/webcam điện thoại & máy tính, tải ảnh QR hoặc nhập mã vé để xác thực tính hợp lệ và check-in lên xe |
+
+> [!TIP]
+> **Dữ Liệu Thử Nghiệm Tra Cứu Vé & In Vé Điện Tử Có Sẵn:**
+> * **Mã đặt vé (Booking Code)**: `BKG-20261025-001` (Khách hàng Nguyễn Văn Du Khách - Ghế A01, A02)
+> * **Mã vé con (Ticket Code)**: `TK-20261025-001-A01` hoặc `TK-20261025-001-A02`
+> * **Trang tra cứu tức thì**: [`http://localhost:5173/lookup`](http://localhost:5173/lookup) (Hỗ trợ tra cứu Offline, vẽ lộ trình di chuyển thời gian thực và tải vé PDF kèm mã QR)
+
+---
+
 ## 🎯 MỤC LỤC TỔNG HỢP
 
 1. [TỔNG QUAN DỰ ÁN & TIÊU CHÍ ĐÁNH GIÁ 100 ĐIỂM](#1-tổng-quan-dự-án--tiêu-chí-đánh-giá-100-điểm)
@@ -1059,7 +1080,7 @@ erDiagram
 
 Toàn bộ dữ liệu mẫu thực tế đã được nạp sẵn vào file [`init.sql`](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/init.sql) và lớp [`DataInitializer.java`](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/backend/src/main/java/com/traveleasy/config/DataInitializer.java):
 
-#### 1. Tài khoản người dùng (`users`) — Mật khẩu dùng chung: `Rikkei@123`
+#### 1. Tài khoản người dùng (`users`) — Mật khẩu dùng chung: **`123456789@`** *(hoặc `Rikkei@123`)*
 | ID | Họ và tên | Email đăng nhập | Số điện thoại | Quyền hạn (Role) | Chức năng thử nghiệm |
 |---|---|---|:---:|:---:|---|
 | `11111111-...` | **Phạm Công Thành** | `admin@traveleasy.vn` | `0901234567` | **ADMIN** | Quản trị toàn sàn, xem Dashboard KPI, duyệt chuyến |
@@ -1313,14 +1334,17 @@ docker-compose logs -f
 
 ### 🔑 DANH SÁCH TÀI KHOẢN DÙNG THỬ (SEED DATA CÓ SẴN)
 
-| Vai trò (Role) | Email đăng nhập | Mật khẩu | Quyền hạn & Phân hệ truy cập |
+> **Mật khẩu dùng chung cho tất cả tài khoản:** **`123456789@`** *(hoặc `Rikkei@123`)*
+
+| Vai trò (Role) | Email đăng nhập | Mật khẩu mẫu | Quyền hạn & Phân hệ truy cập |
 |---|---|:---:|---|
-| **Admin (Quản trị sàn)** | `admin@traveleasy.vn` | `Rikkei@123` | Toàn quyền Quản trị, Xem Dashboard KPI, Thêm chuyến xe, Đổi trạng thái chuyến |
-| **Operator (Nhà xe)** | `operator@futa.vn` | `Rikkei@123` | Quản lý lịch trình và kiểm tra danh sách hành khách nhà xe Phương Trang |
-| **Customer (Hành khách)** | `customer@gmail.com` | `Rikkei@123` | Tìm kiếm chuyến, Đặt vé xe COD, Xem lịch sử vé, Nhận vé điện tử |
+| **Admin (Quản trị sàn)** | `admin@traveleasy.vn`<br>`phanthanhphong.admin@traveleasy.vn`<br>`trungkien.admin@traveleasy.vn` | **`123456789@`** | Toàn quyền Quản trị sàn, Xem Dashboard KPI, Quản lý người dùng, Thêm/sửa chuyến xe |
+| **Operator (Nhà xe)** | `operator@futa.vn`<br>`futa@gmail.com`<br>`dieuhanh@thanhbuoi.com.vn`<br>`dieuhanh@hoamaivungtau.com.vn` | **`123456789@`** | Quản lý lịch trình, sơ đồ ghế 2 tầng và danh sách hành khách nhà xe |
+| **Customer (Hành khách)** | `customer@gmail.com` *(SĐT: `0912345678`)*<br>`tranthib@gmail.com` | **`123456789@`** | Tìm kiếm chuyến, Đặt vé xe COD/VNPay, Xem lịch sử vé, Nhận vé điện tử & QR Code |
 
 * **Mã đơn vé mẫu có sẵn để kiểm tra tính năng Tra Cứu Vé & Render QR Code**:
-  * Nhập mã: `BKG-20261025-001` tại trang **Tra Cứu Vé** (`http://localhost:5173/lookup`) để xem chi tiết vé điện tử của khách hàng Nguyễn Văn Du Khách với 2 ghế nằm A01, A02 kèm mã QR chuẩn.
+  * Nhập mã đặt vé: `BKG-20261025-001` tại trang **Tra Cứu Vé** (`http://localhost:5173/lookup`) để xem chi tiết vé điện tử của khách hàng Nguyễn Văn Du Khách với 2 ghế nằm A01, A02 kèm mã QR chuẩn.
+  * Mã vé lẻ: `TK-20261025-001-A01` hoặc `TK-20261025-001-A02` (sử dụng được ngay trên công cụ quét vé [`http://localhost:5173/scanner`](http://localhost:5173/scanner)).
 
 ---
 
@@ -1993,7 +2017,7 @@ Nhằm đáp ứng yêu cầu kiểm thử toàn diện, báo cáo đồ án và
 ---
 
 #### 2. Danh Sách Tài Khoản Thử Nghiệm Chuẩn Hóa
-Mọi tài khoản trong hệ thống đều có thể đăng nhập ngay bằng mật khẩu chung: `Rikkei@123`
+Mọi tài khoản trong hệ thống đều có thể đăng nhập ngay bằng mật khẩu chung: **`123456789@`** *(hoặc `Rikkei@123`)*
 
 1. **Quản Trị Viên Sàn Tổng (Platform Admin)**:
    * `admin@traveleasy.vn` — Quản Trị Viên Hệ Thống
