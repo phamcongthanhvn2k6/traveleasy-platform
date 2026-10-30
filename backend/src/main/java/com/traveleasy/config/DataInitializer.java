@@ -55,6 +55,7 @@ public class DataInitializer implements CommandLineRunner {
         String encodedPass = passwordEncoder.encode("123456789@");
 
         User admin1 = User.builder().email("admin@traveleasy.vn").password(encodedPass).fullName("Quản Trị Viên Hệ Thống").phone("0901234567").role(Role.ADMIN).status("ACTIVE").build();
+        User adminPhat = User.builder().email("daiphat.admin@traveleasy.vn").password(encodedPass).fullName("Nguyễn Đại Phát (Admin)").phone("0908881234").role(Role.ADMIN).status("ACTIVE").build();
         User admin2 = User.builder().email("phanthanhphong.admin@traveleasy.vn").password(encodedPass).fullName("Phạm Thanh Phong").phone("0902223344").role(Role.ADMIN).status("ACTIVE").build();
         User admin3 = User.builder().email("trungkien.admin@traveleasy.vn").password(encodedPass).fullName("Phan Trung Kiên").phone("0903334455").role(Role.ADMIN).status("ACTIVE").build();
 
@@ -89,7 +90,7 @@ public class DataInitializer implements CommandLineRunner {
         User cust15 = User.builder().email("quanghuy.pham@gmail.com").password(encodedPass).fullName("Phạm Quang Huy").phone("0933557799").role(Role.CUSTOMER).status("ACTIVE").build();
 
         userRepository.saveAll(List.of(
-                admin1, admin2, admin3, opFuta, opHoaMai, opHoangLong, opVanMinh,
+                admin1, adminPhat, admin2, admin3, opFuta, opHoaMai, opHoangLong, opVanMinh,
                 opThanhBuoi, opSaoViet, opKumho, opCucTung, opHaiVan, opChinNghia,
                 cust1, cust2, cust3, cust4, cust5,
                 cust6, cust7, cust8, cust9, cust10, cust11, cust12, cust13, cust14, cust15

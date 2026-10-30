@@ -295,8 +295,8 @@ export const AdminLoginPage: React.FC = () => {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {[
                 { label: 'Admin Hệ Thống', email: 'admin@traveleasy.vn' },
+                { label: 'Admin Đại Phát', email: 'daiphat.admin@traveleasy.vn' },
                 { label: 'Admin Thanh Phong', email: 'phanthanhphong.admin@traveleasy.vn' },
-                { label: 'Admin Trung Kiên', email: 'trungkien.admin@traveleasy.vn' },
               ].map((acc, idx) => (
                 <button
                   key={idx}
