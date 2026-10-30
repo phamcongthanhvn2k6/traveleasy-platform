@@ -1,5 +1,6 @@
 package com.traveleasy.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -14,6 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Trip {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,10 +23,12 @@ public class Trip {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "route_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Route route;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bus_company_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private BusCompany busCompany;
 
     @Column(name = "departure_time", nullable = false)
@@ -51,9 +55,6 @@ public class Trip {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -63,8 +64,12 @@ public class Trip {
     @Builder.Default
     private Boolean isActive = true;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @JsonIgnoreProperties({"trip", "hibernateLazyInitializer", "handler"})
     private List<TripSeat> seats = new ArrayList<>();
 
     @Column(name = "created_at", updatable = false)

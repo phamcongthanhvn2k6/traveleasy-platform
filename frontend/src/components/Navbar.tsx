@@ -20,14 +20,19 @@ import {
   Handshake,
   Clock,
   Star,
-  FileText
+  FileText,
+  Sun,
+  Moon,
+  QrCode
 } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
+import { useTheme } from '../context/ThemeContext';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme, toggleTheme, isDark } = useTheme();
 
   const [user, setUser] = useState<AuthUser | null>(() => {
     try {
@@ -362,11 +367,52 @@ export const Navbar: React.FC = () => {
             >
               <FileText size={15} /> <span>Chính Sách & FAQ</span>
             </Link>
+
+            {/* 8. Chức năng Quét Mã Soát Vé */}
+            <Link 
+              to="/scanner" 
+              style={{ 
+                textDecoration: 'none', 
+                color: location.pathname === '/scanner' ? '#059669' : '#475569', 
+                fontWeight: location.pathname === '/scanner' ? 700 : 600, 
+                fontSize: '13.5px',
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '5px',
+                borderBottom: location.pathname === '/scanner' ? '2px solid #059669' : '2px solid transparent',
+                padding: '8px 0',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <QrCode size={15} color="#059669" /> <span style={{ color: location.pathname === '/scanner' ? '#059669' : 'inherit' }}>Quét Vé QR</span>
+            </Link>
           </nav>
         </div>
 
         {/* Right Action Badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Theme Toggle Button (Chế độ Ban Đêm / Sáng) */}
+          <button
+            onClick={toggleTheme}
+            title={isDark ? "Chuyển sang Chế độ Sáng" : "Chuyển sang Chế độ Tối (Ban đêm chống chói mắt)"}
+            style={{
+              backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+              color: isDark ? '#facc15' : '#475569',
+              border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '6px 10px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '12px',
+              fontWeight: 700,
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {isDark ? <Sun size={15} color="#facc15" /> : <Moon size={15} color="#475569" />}
+            <span style={{ fontSize: '11.5px' }}>{isDark ? 'Sáng' : 'Tối'}</span>
+          </button>
           {/* Cổng Đối Tác Nhà Xe CHỈ hiển thị nếu tài khoản đang đăng nhập là OPERATOR */}
           {user?.role === 'OPERATOR' && (
             <Link 
