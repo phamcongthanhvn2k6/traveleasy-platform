@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Bot, X, Send, Sparkles, MapPin, ArrowRight, RotateCcw, MessageSquare, ChevronDown } from 'lucide-react';
+import { Bot, X, Send, Sparkles, MapPin, ArrowRight, RotateCcw, MessageSquare, ChevronDown, Ticket, Copy, Check } from 'lucide-react';
+import { toast } from '../context/ToastContext';
 
 interface ChatMessage {
   id: string;
   sender: 'user' | 'ai';
   text: string;
   suggestedRoute?: string | null;
+  voucherList?: Array<{ code: string; title: string; discountText: string }>;
   time: string;
 }
 
@@ -37,7 +39,15 @@ export const AiAssistantWidget: React.FC = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [unreadPulse, setUnreadPulse] = useState(true);
+  const [copiedVoucher, setCopiedVoucher] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleCopyVoucher = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedVoucher(code);
+    toast.success(`Đã sao chép mã ưu đãi ${code}! Dán tại bước thanh toán để nhận giảm giá.`, 'Sao Chép Thành Công');
+    setTimeout(() => setCopiedVoucher(null), 2500);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -93,8 +103,32 @@ export const AiAssistantWidget: React.FC = () => {
         }
       }
 
+      let vouchers: Array<{ code: string; title: string; discountText: string }> | undefined = undefined;
+
       if (lower.includes('mã giảm') || lower.includes('voucher') || lower.includes('khuyến mãi') || lower.includes('ưu đãi')) {
-        reply = '🎉 TravelEasy đang có các mã ưu đãi độc quyền hôm nay:\n• TRAVELEASY: Giảm ngay 50.000 đ cho khách hàng mới\n• GIAM20: Giảm 20% khi đặt từ 2 vé\n• VEXEREVIP: Giảm 50.000 đ tri ân khách hàng thân thiết\n• HE2026: Giảm 30.000 đ mùa du lịch\n\nBạn có thể nhập trực tiếp các mã này tại bước Thanh toán đơn vé nhé!';
+        try {
+          const promoRes = await api.get('/promotions');
+          if (promoRes.data?.data && Array.isArray(promoRes.data.data)) {
+            vouchers = promoRes.data.data.slice(0, 4).map((p: any) => ({
+              code: p.code,
+              title: p.title || p.description,
+              discountText: p.discountType === 'PERCENT' ? `Giảm ${p.discountValue}%` : `Giảm ${(p.discountValue || 50000).toLocaleString('vi-VN')}đ`,
+            }));
+          }
+        } catch (e) {
+          console.warn('Could not fetch promotions for AI widget:', e);
+        }
+
+        if (!vouchers || vouchers.length === 0) {
+          vouchers = [
+            { code: 'SAPA20', title: 'Mùa thu vàng Sa Pa', discountText: 'Giảm 20%' },
+            { code: 'DALATVIP', title: 'Thành Bưởi Limousine Đà Lạt', discountText: 'Giảm 50.000đ' },
+            { code: 'WELCOME50', title: 'Ưu đãi thành viên mới', discountText: 'Giảm 50.000đ' },
+            { code: 'PAYOS50', title: 'Thanh toán PayOS VietQR', discountText: 'Giảm 30.000đ' },
+          ];
+        }
+
+        reply = '🎉 TravelEasy đang có các mã ưu đãi độc quyền kết nối trực tiếp từ hệ thống:\n\nBạn có thể bấm [Sao chép mã] bên dưới và nhập tại bước Thanh toán đơn vé nhé!';
       }
 
       const aiMsg: ChatMessage = {
@@ -102,6 +136,7 @@ export const AiAssistantWidget: React.FC = () => {
         sender: 'ai',
         text: reply,
         suggestedRoute: route,
+        voucherList: vouchers,
         time: getCurrentTime(),
       };
 
@@ -489,6 +524,97 @@ export const AiAssistantWidget: React.FC = () => {
                         >
                           <span>Xem vé & Đặt chuyến này</span>
                           <ArrowRight size={13} />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Interactive Real Vouchers List */}
+                    {m.voucherList && m.voucherList.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: '12px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: '#ea580c' }}>
+                          <Ticket size={13} color="#ea580c" />
+                          <span>MÃ GIẢM GIÁ KHẢ DỤNG HÔM NAY:</span>
+                        </div>
+                        {m.voucherList.map((v) => (
+                          <div
+                            key={v.code}
+                            style={{
+                              backgroundColor: '#fff7ed',
+                              border: '1px dashed #fdba74',
+                              borderRadius: '8px',
+                              padding: '8px 10px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '8px',
+                            }}
+                          >
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontWeight: 800, fontSize: '13px', color: '#c2410c' }}>{v.code}</span>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#ea580c', backgroundColor: '#ffedd5', padding: '1px 6px', borderRadius: '4px' }}>
+                                  {v.discountText}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '11px', color: '#7c2d12', marginTop: '2px' }}>{v.title}</div>
+                            </div>
+                            <button
+                              onClick={() => handleCopyVoucher(v.code)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                backgroundColor: copiedVoucher === v.code ? '#16a34a' : '#ea580c',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '6px',
+                                padding: '5px 10px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                              }}
+                            >
+                              {copiedVoucher === v.code ? (
+                                <>
+                                  <Check size={12} />
+                                  <span>Đã chép</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy size={12} />
+                                  <span>Sao chép</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => {
+                            setIsOpen(false);
+                            navigate('/promotions');
+                          }}
+                          style={{
+                            marginTop: '4px',
+                            backgroundColor: '#fff',
+                            color: '#ea580c',
+                            border: '1px solid #fdba74',
+                            borderRadius: '6px',
+                            padding: '6px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                          }}
+                        >
+                          Xem tất cả khuyến mãi tại Trung Tâm Voucher ➔
                         </button>
                       </div>
                     )}

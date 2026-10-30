@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "pickup_dropoff_points")
+@Table(name = "pickup_dropoff_points", indexes = {
+    @Index(name = "idx_pdp_route_id", columnList = "route_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,17 +21,15 @@ public class PickupDropoffPoint {
     @JoinColumn(name = "route_id", nullable = false)
     private Route route;
 
-    @Column(nullable = false, length = 150)
-    private String name;
-
-    @Column(nullable = false, length = 255)
-    private String address;
-
     @Enumerated(EnumType.STRING)
-    @Column(name = "point_type", nullable = false, length = 20)
+    @Column(name = "point_type", nullable = false)
     private PointType pointType;
 
+    @Column(nullable = false)
+    private String name;
+
+    private String address;
+
     @Column(name = "display_order")
-    @Builder.Default
-    private Integer displayOrder = 1;
+    private Integer displayOrder;
 }

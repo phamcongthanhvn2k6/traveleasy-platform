@@ -1,12 +1,14 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
+import { DepartureAlertBanner } from './components/DepartureAlertBanner';
 import { Footer } from './components/Footer';
 import { AiAssistantWidget } from './components/AiAssistantWidget';
 import { AdminRoutes } from './routes/adminRoutes';
 import { CompanyRoutes } from './routes/companyRoutes';
 import { ClientRoutes } from './routes/clientRoutes';
 import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 /**
  * =========================================================================
@@ -20,8 +22,9 @@ import { ToastProvider } from './context/ToastContext';
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
-      <ToastProvider>
-        <Routes>
+      <ThemeProvider>
+        <ToastProvider>
+          <Routes>
           {/* 1. Phân hệ Quản trị tối cao (Admin Portal) */}
           <Route path="/admin/*" element={<AdminRoutes />} />
 
@@ -34,6 +37,7 @@ export const App: React.FC = () => {
             element={
               <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                 <Navbar />
+                <DepartureAlertBanner />
                 <main style={{ flex: 1 }}>
                   <ClientRoutes />
                 </main>
@@ -44,6 +48,7 @@ export const App: React.FC = () => {
           />
         </Routes>
       </ToastProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 };

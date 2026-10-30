@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class TripService {
 
     private final TripRepository tripRepository;
@@ -33,8 +34,13 @@ public class TripService {
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
-    @Transactional
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(
+        value = "trips_search",
+        key = "(#origin != null ? #origin : '') + '_' + (#destination != null ? #destination : '') + '_' + (#departureDate != null ? #departureDate.toString() : '')"
+    )
     public List<TripResponse> searchTrips(String origin, String destination, LocalDate departureDate) {
+        long t0 = System.currentTimeMillis();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startTime = null;
         LocalDateTime endTime = null;
@@ -62,20 +68,66 @@ public class TripService {
         }
 
         List<Trip> trips = tripRepository.searchTrips(origin, destination, startTime, endTime, TripStatus.SCHEDULED);
+        long t1 = System.currentTimeMillis();
 
-        // Preload route points in batch to avoid N+1 queries
+        // TỐI ƯU HÓA: Thay vì duyệt vòng lặp N+1 gửi 20-30 query riêng lẻ qua Internet đến Supabase,
+        // chúng ta thực hiện 1 QUERY DUY NHẤT bằng mệnh đề IN để gom toàn bộ điểm đón trả của tất cả tuyến!
         Set<Long> routeIds = trips.stream()
                 .map(t -> t.getRoute() != null ? t.getRoute().getId() : null)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
-        Map<Long, List<PickupDropoffPoint>> routePointsMap = new HashMap<>();
-        for (Long rId : routeIds) {
-            routePointsMap.put(rId, pointRepository.findByRouteIdOrderByDisplayOrderAsc(rId));
-        }
 
-        return trips.stream()
-                .map(t -> mapToTripResponse(t, routePointsMap.getOrDefault(t.getRoute() != null ? t.getRoute().getId() : null, Collections.emptyList())))
+        Map<Long, List<PointResponse>> pickupMap = new HashMap<>();
+        Map<Long, List<PointResponse>> dropoffMap = new HashMap<>();
+
+        if (!routeIds.isEmpty()) {
+            List<PickupDropoffPoint> allPoints = pointRepository.findByRouteIdInOrderByDisplayOrderAsc(routeIds);
+            for (PickupDropoffPoint p : allPoints) {
+                if (p.getRoute() != null && p.getRoute().getId() != null) {
+                    Long rId = p.getRoute().getId();
+                    PointResponse pr = mapToPointResponse(p);
+                    if (p.getPointType() == PointType.PICKUP) {
+                        pickupMap.computeIfAbsent(rId, k -> new ArrayList<>()).add(pr);
+                    } else if (p.getPointType() == PointType.DROPOFF) {
+                        dropoffMap.computeIfAbsent(rId, k -> new ArrayList<>()).add(pr);
+                    }
+                }
+            }
+        }
+        long t2 = System.currentTimeMillis();
+
+        List<TripResponse> responses = trips.stream()
+                .map(t -> {
+                    Long rId = t.getRoute() != null ? t.getRoute().getId() : null;
+                    return TripResponse.builder()
+                            .id(t.getId())
+                            .busCompanyId(t.getBusCompany().getId())
+                            .busCompanyName(t.getBusCompany().getName())
+                            .busCompanyLogo(t.getBusCompany().getLogoUrl())
+                            .busCompanyRating(t.getBusCompany().getAverageRating() != null ? t.getBusCompany().getAverageRating() : BigDecimal.valueOf(4.8))
+                            .routeId(rId)
+                            .originCity(t.getRoute().getDepartureLocation())
+                            .destinationCity(t.getRoute().getArrivalLocation())
+                            .distanceKm(t.getRoute().getDistanceKm() != null ? t.getRoute().getDistanceKm().intValue() : 0)
+                            .durationHours(t.getRoute().getDurationHours() != null ? t.getRoute().getDurationHours().intValue() : 0)
+                            .departureTime(t.getDepartureTime())
+                            .arrivalTime(t.getArrivalTime())
+                            .busType(t.getBusType())
+                            .price(t.getPrice())
+                            .totalSeats(t.getTotalSeats())
+                            .availableSeats(t.getAvailableSeats())
+                            .status(t.getStatus())
+                            .pickupPoints(pickupMap.getOrDefault(rId, Collections.emptyList()))
+                            .dropoffPoints(dropoffMap.getOrDefault(rId, Collections.emptyList()))
+                            .build();
+                })
                 .collect(Collectors.toList());
+        long t3 = System.currentTimeMillis();
+
+        log.info("⚡ [PERF searchTrips] trips query: {}ms, points batch query: {}ms, DTO mapping: {}ms, TOTAL: {}ms (trips: {})",
+                (t1 - t0), (t2 - t1), (t3 - t2), (t3 - t0), responses.size());
+
+        return responses;
     }
 
     @Transactional(readOnly = true)

@@ -396,4 +396,106 @@ public class BookingService {
                 .tickets(ticketResponses)
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public com.traveleasy.dto.booking.VerifiedTicketResponse verifyTicket(String rawCode) {
+        if (rawCode == null || rawCode.trim().isEmpty()) {
+            return com.traveleasy.dto.booking.VerifiedTicketResponse.builder()
+                    .validationStatus("INVALID")
+                    .validationMessage("Mã QR rỗng hoặc không đúng định dạng")
+                    .checkInAllowed(false)
+                    .build();
+        }
+
+        String cleanCode = rawCode.trim();
+        if (cleanCode.contains("|")) {
+            String[] parts = cleanCode.split("\\|");
+            for (String part : parts) {
+                if (part.startsWith("TK-")) cleanCode = part;
+                else if (part.startsWith("BK-") && !cleanCode.startsWith("TK-")) cleanCode = part;
+            }
+        }
+
+        java.util.Optional<Ticket> ticketOpt = ticketRepository.findByTicketCode(cleanCode);
+        if (ticketOpt.isPresent()) {
+            Ticket ticket = ticketOpt.get();
+            Booking booking = ticket.getBooking();
+            return buildVerifiedResponse(ticket, booking);
+        }
+
+        java.util.Optional<Booking> bookingOpt = bookingRepository.findByBookingCode(cleanCode);
+        if (bookingOpt.isPresent()) {
+            Booking booking = bookingOpt.get();
+            List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
+            Ticket ticket = tickets.isEmpty() ? null : tickets.get(0);
+            return buildVerifiedResponse(ticket, booking);
+        }
+
+        return com.traveleasy.dto.booking.VerifiedTicketResponse.builder()
+                .ticketCode(cleanCode)
+                .validationStatus("INVALID")
+                .validationMessage("Mã vé không tồn tại trong hệ thống TravelEasy. Vui lòng kiểm tra lại mã QR!")
+                .checkInAllowed(false)
+                .build();
+    }
+
+    @Transactional
+    public com.traveleasy.dto.booking.VerifiedTicketResponse checkInTicket(String ticketCode) {
+        Ticket ticket = ticketRepository.findByTicketCode(ticketCode)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy mã vé " + ticketCode));
+
+        if (ticket.getStatus() == TicketStatus.CANCELLED) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Vé đã bị hủy, không thể xác nhận lên xe");
+        }
+
+        ticket.setStatus(TicketStatus.USED);
+        ticketRepository.save(ticket);
+        return buildVerifiedResponse(ticket, ticket.getBooking());
+    }
+
+    private com.traveleasy.dto.booking.VerifiedTicketResponse buildVerifiedResponse(Ticket ticket, Booking booking) {
+        Trip trip = booking != null ? booking.getTrip() : null;
+        String valStatus = "VALID";
+        String valMessage = "✓ VÉ HỢP LỆ — ĐÃ XÁC THỰC LÊN XE THÀNH CÔNG";
+        boolean allowed = true;
+
+        if (booking != null && booking.getStatus() == BookingStatus.CANCELLED) {
+            valStatus = "CANCELLED";
+            valMessage = "⚠️ VÉ ĐÃ HỦY: Đơn đặt vé này đã được hủy trước đó.";
+            allowed = false;
+        } else if (ticket != null && ticket.getStatus() == TicketStatus.CANCELLED) {
+            valStatus = "CANCELLED";
+            valMessage = "⚠️ VÉ ĐÃ HỦY: Chỗ ngồi này đã bị hủy.";
+            allowed = false;
+        } else if (ticket != null && ticket.getStatus() == TicketStatus.USED) {
+            valStatus = "ALREADY_CHECKED_IN";
+            valMessage = "ℹ️ ĐÃ SOÁT VÉ: Vé này đã được xác nhận lên xe trước đó.";
+            allowed = false;
+        }
+
+        return com.traveleasy.dto.booking.VerifiedTicketResponse.builder()
+                .bookingCode(booking != null ? booking.getBookingCode() : null)
+                .ticketCode(ticket != null ? ticket.getTicketCode() : null)
+                .passengerName(booking != null ? booking.getPassengerName() : null)
+                .passengerPhone(booking != null ? booking.getPassengerPhone() : null)
+                .passengerEmail(booking != null ? booking.getPassengerEmail() : null)
+                .busCompanyName(trip != null && trip.getBusCompany() != null ? trip.getBusCompany().getName() : "TravelEasy Express")
+                .busType(trip != null && trip.getBusType() != null ? trip.getBusType().name() : "Limousine VIP")
+                .licensePlate(trip != null && trip.getLicensePlate() != null ? trip.getLicensePlate() : "51B-888.88")
+                .routeName(trip != null && trip.getRoute() != null ? (trip.getRoute().getDepartureLocation() + " ➔ " + trip.getRoute().getArrivalLocation()) : "Tuyến liên tỉnh")
+                .originCity(trip != null && trip.getRoute() != null ? trip.getRoute().getDepartureLocation() : null)
+                .destinationCity(trip != null && trip.getRoute() != null ? trip.getRoute().getArrivalLocation() : null)
+                .pickupPoint(booking != null ? booking.getPickupPoint() : null)
+                .dropoffPoint(booking != null ? booking.getDropoffPoint() : null)
+                .departureTime(trip != null ? trip.getDepartureTime() : null)
+                .arrivalTime(trip != null ? trip.getArrivalTime() : null)
+                .seatNumber(ticket != null ? ticket.getSeatNumber() : null)
+                .price(ticket != null ? ticket.getPrice() : (booking != null ? booking.getTotalAmount() : null))
+                .ticketStatus(ticket != null ? ticket.getStatus().name() : null)
+                .bookingStatus(booking != null ? booking.getStatus().name() : null)
+                .validationStatus(valStatus)
+                .validationMessage(valMessage)
+                .checkInAllowed(allowed)
+                .build();
+    }
 }

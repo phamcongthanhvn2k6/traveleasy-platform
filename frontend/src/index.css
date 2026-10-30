@@ -16,6 +16,15 @@
   --danger: #ef4444;
 }
 
+html.dark {
+  --bg-main: #0b1120;
+  --surface: #1e293b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  color-scheme: dark;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

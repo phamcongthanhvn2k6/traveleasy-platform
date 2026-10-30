@@ -11,6 +11,7 @@ import { PolicyPage } from '../pages/customer/policy/PolicyPage';
 import { SchedulePage } from '../pages/customer/schedule/SchedulePage';
 import { PromotionsPage } from '../pages/customer/promotions/PromotionsPage';
 import { ReviewsPage } from '../pages/customer/reviews/ReviewsPage';
+import { TicketScannerPage } from '../pages/customer/scanner/TicketScannerPage';
 import { NotFoundPage } from '../pages/common/NotFoundPage';
 
 /**
@@ -55,6 +56,7 @@ export const ClientRoutes: React.FC = () => {
       <Route path="/routes" element={<SchedulePage />} />
       <Route path="/promotions" element={<PromotionsPage />} />
       <Route path="/reviews" element={<ReviewsPage />} />
+      <Route path="/scanner" element={<TicketScannerPage />} />
 
       {/* Dịch vụ mở rộng khác */}
       <Route path="/flights" element={<NotFoundPage feature="Vé Máy Bay Trực Tuyến" />} />
