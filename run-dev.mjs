@@ -35,7 +35,7 @@ ${BOLD}${CYAN}==================================================================
   🌐 ${BOLD}Frontend Web :${RESET} ${CYAN}http://localhost:5173/${RESET}
   ⚙️  ${BOLD}Backend API  :${RESET} ${GREEN}http://localhost:8080/api/v1${RESET}
   📚 ${BOLD}Swagger Docs :${RESET} ${YELLOW}http://localhost:8080/swagger-ui.html${RESET}
-  🗄️  ${BOLD}Database     :${RESET} ${GRAY}MySQL 8.0 (localhost:3306/traveleasy_db)${RESET}
+  🗄️  ${BOLD}Database     :${RESET} ${GREEN}Supabase Cloud PostgreSQL (Ready & Seeded 482 Trips)${RESET}
 ${BOLD}${CYAN}================================================================================${RESET}
   ${GRAY}💡 Nhấn ${BOLD}Ctrl + C${RESET}${GRAY} bất cứ lúc nào để dừng cả Frontend và Backend an toàn.${RESET}
 ${BOLD}${CYAN}================================================================================${RESET}
@@ -104,7 +104,7 @@ function startBackend() {
   const rlOut = readline.createInterface({ input: backendProcess.stdout });
   rlOut.on('line', (line) => {
     // Thông báo nổi bật khi Spring Boot khởi động xong
-    if (line.includes('Started TravelEasyApplication') || line.includes('Tomcat started on port')) {
+    if (line.includes('Started TraveleasyApplication') || line.includes('Started TravelEasyApplication') || line.includes('Tomcat started on port')) {
       console.log(`${BOLD}${GREEN}✔ [BACKEND READY] Spring Boot đã sẵn sàng tại http://localhost:8080!${RESET}`);
     }
     console.log(`${CYAN}[BACKEND ]${RESET} ${line}`);
@@ -166,6 +166,30 @@ function startFrontend() {
     console.error(`${RED}[FRONTEND ERROR] ${err.message}${RESET}`);
   });
 }
+
+// Tự động dọn dẹp các cổng 8080 và 5173 trước khi khởi chạy nếu có tiến trình cũ bị treo
+function preCleanPort(port) {
+  try {
+    if (isWindows) {
+      const netstat = spawnSync('cmd.exe', ['/c', `netstat -ano | findstr :${port}`], { encoding: 'utf8' });
+      if (netstat.stdout) {
+        const lines = netstat.stdout.split('\n');
+        for (const line of lines) {
+          if (line.includes('LISTENING') || line.includes('ESTABLISHED')) {
+            const parts = line.trim().split(/\s+/);
+            const pid = parts[parts.length - 1];
+            if (pid && !isNaN(pid) && parseInt(pid, 10) !== process.pid && parseInt(pid, 10) > 4) {
+              spawnSync('taskkill', ['/pid', pid, '/T', '/F'], { stdio: 'ignore' });
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {}
+}
+
+preCleanPort(8080);
+preCleanPort(5173);
 
 // Chạy song song
 startBackend();

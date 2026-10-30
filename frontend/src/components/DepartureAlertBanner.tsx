@@ -215,3 +215,4 @@ export const DepartureAlertBanner: React.FC = () => {
     </div>
   );
 };
+

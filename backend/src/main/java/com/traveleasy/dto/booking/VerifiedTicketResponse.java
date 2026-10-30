@@ -36,3 +36,4 @@ public class VerifiedTicketResponse {
     private String validationMessage;
     private boolean checkInAllowed;
 }
+

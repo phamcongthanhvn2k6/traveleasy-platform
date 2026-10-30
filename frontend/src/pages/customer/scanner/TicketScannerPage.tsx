@@ -680,3 +680,4 @@ export const TicketScannerPage: React.FC = () => {
     </div>
   );
 };
+
