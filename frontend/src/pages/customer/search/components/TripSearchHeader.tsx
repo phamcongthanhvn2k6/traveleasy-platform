@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '../../../../context/ThemeContext';
 import { ArrowLeftRight, Calendar, ChevronLeft, ChevronRight, Search, MapPin } from 'lucide-react';
 
 interface Props {
@@ -16,6 +17,7 @@ export const TripSearchHeader: React.FC<Props> = ({
   totalTrips,
   onSearchChange,
 }) => {
+  const { isDark } = useTheme();
   const [isEditing, setIsEditing] = useState(true);
   const [tempOrigin, setTempOrigin] = useState(origin);
   const [tempDestination, setTempDestination] = useState(destination);
@@ -88,10 +90,11 @@ export const TripSearchHeader: React.FC<Props> = ({
   return (
     <div
       style={{
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e2e8f0',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.03)',
+        backgroundColor: isDark ? '#111827' : '#ffffff',
+        borderBottom: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
+        boxShadow: isDark ? '0 4px 20px rgba(0, 0, 0, 0.4)' : '0 2px 4px rgba(0, 0, 0, 0.03)',
         marginBottom: '20px',
+        transition: 'all 0.25s ease',
       }}
     >
       <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '16px 20px' }}>
@@ -106,14 +109,14 @@ export const TripSearchHeader: React.FC<Props> = ({
           }}
         >
           <div>
-            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 500, marginBottom: '2px' }}>
-              Vé xe khách <span style={{ color: '#94a3b8' }}>/</span> {!origin && !destination ? 'Tất cả tuyến đường toàn quốc' : 'Tuyến đường đang chọn'}
+            <div style={{ fontSize: '13px', color: isDark ? '#94a3b8' : '#64748b', fontWeight: 500, marginBottom: '2px' }}>
+              Vé xe khách <span style={{ color: isDark ? '#64748b' : '#94a3b8' }}>/</span> {!origin && !destination ? 'Tất cả tuyến đường toàn quốc' : 'Tuyến đường đang chọn'}
             </div>
             <h1
               style={{
                 fontSize: '22px',
                 fontWeight: 800,
-                color: '#0f172a',
+                color: isDark ? '#f8fafc' : '#0f172a',
                 margin: 0,
                 display: 'flex',
                 alignItems: 'center',
@@ -126,7 +129,7 @@ export const TripSearchHeader: React.FC<Props> = ({
               ) : (
                 <>
                   <span>{origin || 'Tất cả điểm đi'}</span>
-                  <span style={{ color: '#2563eb' }}>→</span>
+                  <span style={{ color: isDark ? '#38bdf8' : '#2563eb' }}>→</span>
                   <span>{destination || 'Tất cả điểm đến'}</span>
                 </>
               )}
@@ -134,8 +137,9 @@ export const TripSearchHeader: React.FC<Props> = ({
                 style={{
                   fontSize: '13px',
                   fontWeight: 600,
-                  backgroundColor: '#eff6ff',
-                  color: '#2563eb',
+                  backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : '#eff6ff',
+                  color: isDark ? '#38bdf8' : '#2563eb',
+                  border: isDark ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid transparent',
                   padding: '3px 10px',
                   borderRadius: '9999px',
                 }}
@@ -154,9 +158,9 @@ export const TripSearchHeader: React.FC<Props> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  backgroundColor: '#fef2f2',
-                  color: '#dc2626',
-                  border: '1px solid #fecaca',
+                  backgroundColor: isDark ? 'rgba(220, 38, 38, 0.2)' : '#fef2f2',
+                  color: isDark ? '#f87171' : '#dc2626',
+                  border: isDark ? '1px solid rgba(220, 38, 38, 0.35)' : '1px solid #fecaca',
                   padding: '8px 14px',
                   borderRadius: '8px',
                   fontWeight: 700,
@@ -175,9 +179,11 @@ export const TripSearchHeader: React.FC<Props> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                backgroundColor: isEditing ? '#f1f5f9' : '#eff6ff',
-                color: '#2563eb',
-                border: '1px solid #bfdbfe',
+                backgroundColor: isEditing
+                  ? (isDark ? '#1e293b' : '#f1f5f9')
+                  : (isDark ? 'rgba(37, 99, 235, 0.2)' : '#eff6ff'),
+                color: isDark ? '#60a5fa' : '#2563eb',
+                border: isDark ? '1px solid #334155' : '1px solid #bfdbfe',
                 padding: '8px 16px',
                 borderRadius: '8px',
                 fontWeight: 700,
@@ -197,8 +203,8 @@ export const TripSearchHeader: React.FC<Props> = ({
           <form
             onSubmit={handleApplyEdit}
             style={{
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+              border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
               borderRadius: '12px',
               padding: '16px',
               marginTop: '16px',
@@ -210,7 +216,7 @@ export const TripSearchHeader: React.FC<Props> = ({
           >
             {/* Origin */}
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b', textTransform: 'uppercase' }}>
                 Nơi xuất phát
               </label>
               <select
@@ -220,10 +226,11 @@ export const TripSearchHeader: React.FC<Props> = ({
                   width: '100%',
                   padding: '9px 12px',
                   borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
+                  border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                   fontWeight: 600,
                   fontSize: '14px',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                  color: isDark ? '#f8fafc' : '#0f172a',
                 }}
               >
                 <option value="">Tất cả điểm xuất phát (Toàn quốc)</option>
@@ -244,22 +251,24 @@ export const TripSearchHeader: React.FC<Props> = ({
                   width: '36px',
                   height: '36px',
                   borderRadius: '50%',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                  border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                  color: isDark ? '#f8fafc' : '#0f172a',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  color: '#2563eb',
+                  transition: 'all 0.15s ease',
                 }}
+                title="Đảo chiều nơi xuất phát và nơi đến"
               >
-                <ArrowLeftRight size={15} />
+                <ArrowLeftRight size={16} color={isDark ? '#94a3b8' : '#475569'} />
               </button>
             </div>
 
             {/* Destination */}
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b', textTransform: 'uppercase' }}>
                 Nơi đến
               </label>
               <select
@@ -269,10 +278,11 @@ export const TripSearchHeader: React.FC<Props> = ({
                   width: '100%',
                   padding: '9px 12px',
                   borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
+                  border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                   fontWeight: 600,
                   fontSize: '14px',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                  color: isDark ? '#f8fafc' : '#0f172a',
                 }}
               >
                 <option value="">Tất cả điểm đến (Toàn quốc)</option>
@@ -284,43 +294,44 @@ export const TripSearchHeader: React.FC<Props> = ({
               </select>
             </div>
 
-            {/* Departure Date */}
+            {/* Date */}
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-                Ngày đi (Tùy chọn)
+              <label style={{ fontSize: '11px', fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b', textTransform: 'uppercase' }}>
+                Ngày đi (tùy chọn)
               </label>
               <input
                 type="date"
                 value={tempDate}
-                min={todayStr}
                 onChange={(e) => setTempDate(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '8px 12px',
+                  padding: '9px 12px',
                   borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
+                  border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                   fontWeight: 600,
                   fontSize: '14px',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                  color: isDark ? '#f8fafc' : '#0f172a',
                 }}
               />
             </div>
 
-            {/* Submit */}
-            <div style={{ paddingTop: '16px', display: 'flex', gap: '8px' }}>
+            {/* Submit Button */}
+            <div style={{ paddingTop: '16px' }}>
               <button
                 type="submit"
                 style={{
                   backgroundColor: '#2563eb',
                   color: '#ffffff',
-                  border: 'none',
                   padding: '10px 20px',
-                  borderRadius: '8px',
+                  borderRadius: '6px',
                   fontWeight: 700,
                   fontSize: '14px',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(37,99,235,0.3)',
+                  border: 'none',
                   whiteSpace: 'nowrap',
+                  boxShadow: '0 2px 6px rgba(37,99,235,0.3)',
+                  transition: 'background-color 0.15s ease',
                 }}
               >
                 Tìm Chuyến

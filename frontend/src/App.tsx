@@ -8,7 +8,31 @@ import { AdminRoutes } from './routes/adminRoutes';
 import { CompanyRoutes } from './routes/companyRoutes';
 import { ClientRoutes } from './routes/clientRoutes';
 import { ToastProvider } from './context/ToastContext';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+
+const ClientLayout: React.FC = () => {
+  const { isDark } = useTheme();
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        backgroundColor: isDark ? '#0b0f19' : '#f8fafc',
+        color: isDark ? '#f8fafc' : '#0f172a',
+        transition: 'background-color 0.25s ease, color 0.25s ease',
+      }}
+    >
+      <Navbar />
+      <DepartureAlertBanner />
+      <main style={{ flex: 1 }}>
+        <ClientRoutes />
+      </main>
+      <AiAssistantWidget />
+      <Footer />
+    </div>
+  );
+};
 
 /**
  * =========================================================================
@@ -32,20 +56,7 @@ export const App: React.FC = () => {
           <Route path="/company/*" element={<CompanyRoutes />} />
 
           {/* 3. Phân hệ Người dùng & Khách hàng đặt vé (Client Portal) */}
-          <Route
-            path="/*"
-            element={
-              <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                <Navbar />
-                <DepartureAlertBanner />
-                <main style={{ flex: 1 }}>
-                  <ClientRoutes />
-                </main>
-                <AiAssistantWidget />
-                <Footer />
-              </div>
-            }
-          />
+          <Route path="/*" element={<ClientLayout />} />
         </Routes>
       </ToastProvider>
       </ThemeProvider>

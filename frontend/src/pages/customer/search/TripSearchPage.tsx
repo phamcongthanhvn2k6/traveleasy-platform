@@ -9,6 +9,7 @@ import { TripResultCard } from './components/TripResultCard';
 import { Pagination } from '../../../components/Pagination';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { toast } from '../../../context/ToastContext';
+import { useTheme } from '../../../context/ThemeContext';
 import { Bus, AlertCircle } from 'lucide-react';
 
 // Bộ nhớ đệm Client-side SWR: Giữ kết quả tìm kiếm trong RAM và SessionStorage để hiển thị tức thì (0ms)
@@ -29,6 +30,7 @@ const setSessionSearchCache = (key: string, item: { data: Trip[]; timestamp: num
 };
 
 export const TripSearchPage: React.FC = () => {
+  const { isDark } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -515,7 +517,13 @@ export const TripSearchPage: React.FC = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#f8fafc', minHeight: '80vh', paddingBottom: '60px' }}>
+    <div style={{
+      backgroundColor: isDark ? '#0b0f19' : '#f8fafc',
+      color: isDark ? '#f8fafc' : '#0f172a',
+      minHeight: '80vh',
+      paddingBottom: '60px',
+      transition: 'background-color 0.25s ease, color 0.25s ease'
+    }}>
       {/* 1. Header with Title & Date Switcher */}
       <TripSearchHeader
         origin={origin}

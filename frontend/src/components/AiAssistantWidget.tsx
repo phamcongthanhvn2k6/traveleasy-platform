@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Bot, X, Send, Sparkles, MapPin, ArrowRight, RotateCcw, MessageSquare, ChevronDown, Ticket, Copy, Check } from 'lucide-react';
 import { toast } from '../context/ToastContext';
+import { useTheme } from '../context/ThemeContext';
 
 interface ChatMessage {
   id: string;
@@ -33,6 +34,7 @@ const QUICK_PROMPTS = [
 ];
 
 export const AiAssistantWidget: React.FC = () => {
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(DEFAULT_MESSAGES);
@@ -300,13 +302,13 @@ export const AiAssistantWidget: React.FC = () => {
             maxWidth: 'calc(100vw - 32px)',
             height: '600px',
             maxHeight: 'calc(100vh - 50px)',
-            backgroundColor: '#ffffff',
+            backgroundColor: isDark ? '#111827' : '#ffffff',
             borderRadius: '20px',
-            boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.35)',
+            boxShadow: isDark ? '0 25px 50px -12px rgba(0, 0, 0, 0.7)' : '0 25px 50px -12px rgba(15, 23, 42, 0.35)',
             display: 'flex',
             flexDirection: 'column',
             zIndex: 9999,
-            border: '1px solid #e2e8f0',
+            border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
             overflow: 'hidden',
           }}
         >
@@ -399,8 +401,8 @@ export const AiAssistantWidget: React.FC = () => {
           <div
             style={{
               padding: '10px 14px',
-              backgroundColor: '#f8fafc',
-              borderBottom: '1px solid #e2e8f0',
+              backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+              borderBottom: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
               display: 'flex',
               gap: '8px',
               overflowX: 'auto',
@@ -417,22 +419,22 @@ export const AiAssistantWidget: React.FC = () => {
                   fontWeight: 600,
                   padding: '5px 11px',
                   borderRadius: '16px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  color: '#1e293b',
+                  border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                  background: isDark ? '#1e293b' : '#ffffff',
+                  color: isDark ? '#f8fafc' : '#1e293b',
                   cursor: 'pointer',
                   flexShrink: 0,
                   transition: 'all 0.15s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#eff6ff';
-                  e.currentTarget.style.borderColor = '#93c5fd';
-                  e.currentTarget.style.color = '#1d4ed8';
+                  e.currentTarget.style.backgroundColor = isDark ? '#334155' : '#eff6ff';
+                  e.currentTarget.style.borderColor = isDark ? '#38bdf8' : '#93c5fd';
+                  e.currentTarget.style.color = isDark ? '#38bdf8' : '#1d4ed8';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#ffffff';
-                  e.currentTarget.style.borderColor = '#cbd5e1';
-                  e.currentTarget.style.color = '#1e293b';
+                  e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#ffffff';
+                  e.currentTarget.style.borderColor = isDark ? '#334155' : '#cbd5e1';
+                  e.currentTarget.style.color = isDark ? '#f8fafc' : '#1e293b';
                 }}
               >
                 {p.label}
@@ -449,7 +451,7 @@ export const AiAssistantWidget: React.FC = () => {
               display: 'flex',
               flexDirection: 'column',
               gap: '14px',
-              backgroundColor: '#f8fafc',
+              backgroundColor: isDark ? '#0b0f19' : '#f8fafc',
             }}
           >
             {messages.map((m) => {
@@ -467,16 +469,16 @@ export const AiAssistantWidget: React.FC = () => {
                 >
                   <div
                     style={{
-                      backgroundColor: isUser ? '#2563eb' : '#ffffff',
-                      color: isUser ? '#ffffff' : '#0f172a',
+                      backgroundColor: isUser ? '#2563eb' : (isDark ? '#1e293b' : '#ffffff'),
+                      color: isUser ? '#ffffff' : (isDark ? '#f8fafc' : '#0f172a'),
                       padding: '12px 16px',
                       borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                       fontSize: '13px',
                       lineHeight: 1.5,
                       boxShadow: isUser
                         ? '0 4px 12px rgba(37, 99, 235, 0.25)'
-                        : '0 2px 6px rgba(0, 0, 0, 0.05)',
-                      border: isUser ? 'none' : '1px solid #e2e8f0',
+                        : (isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 6px rgba(0, 0, 0, 0.05)'),
+                      border: isUser ? 'none' : `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
                       whiteSpace: 'pre-line',
                     }}
                   >
@@ -488,19 +490,19 @@ export const AiAssistantWidget: React.FC = () => {
                         style={{
                           marginTop: '12px',
                           padding: '10px 12px',
-                          backgroundColor: '#eff6ff',
+                          backgroundColor: isDark ? '#0f172a' : '#eff6ff',
                           borderRadius: '10px',
-                          border: '1px solid #bfdbfe',
+                          border: `1px solid ${isDark ? '#1d4ed8' : '#bfdbfe'}`,
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '6px',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: '#1e40af' }}>
-                          <MapPin size={13} color="#2563eb" />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: isDark ? '#93c5fd' : '#1e40af' }}>
+                          <MapPin size={13} color={isDark ? '#38bdf8' : '#2563eb'} />
                           <span>GỢI Ý TUYẾN ĐƯỜNG PHÙ HỢP:</span>
                         </div>
-                        <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>
                           {m.suggestedRoute}
                         </div>
                         <button
@@ -546,8 +548,8 @@ export const AiAssistantWidget: React.FC = () => {
                           <div
                             key={v.code}
                             style={{
-                              backgroundColor: '#fff7ed',
-                              border: '1px dashed #fdba74',
+                              backgroundColor: isDark ? '#431407' : '#fff7ed',
+                              border: `1px dashed ${isDark ? '#ea580c' : '#fdba74'}`,
                               borderRadius: '8px',
                               padding: '8px 10px',
                               display: 'flex',
@@ -558,12 +560,12 @@ export const AiAssistantWidget: React.FC = () => {
                           >
                             <div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontWeight: 800, fontSize: '13px', color: '#c2410c' }}>{v.code}</span>
-                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#ea580c', backgroundColor: '#ffedd5', padding: '1px 6px', borderRadius: '4px' }}>
+                                <span style={{ fontWeight: 800, fontSize: '13px', color: isDark ? '#fdba74' : '#c2410c' }}>{v.code}</span>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: isDark ? '#fed7aa' : '#ea580c', backgroundColor: isDark ? 'rgba(234,88,12,0.3)' : '#ffedd5', padding: '1px 6px', borderRadius: '4px' }}>
                                   {v.discountText}
                                 </span>
                               </div>
-                              <div style={{ fontSize: '11px', color: '#7c2d12', marginTop: '2px' }}>{v.title}</div>
+                              <div style={{ fontSize: '11px', color: isDark ? '#fbcfe8' : '#7c2d12', marginTop: '2px' }}>{v.title}</div>
                             </div>
                             <button
                               onClick={() => handleCopyVoucher(v.code)}
@@ -603,9 +605,9 @@ export const AiAssistantWidget: React.FC = () => {
                           }}
                           style={{
                             marginTop: '4px',
-                            backgroundColor: '#fff',
-                            color: '#ea580c',
-                            border: '1px solid #fdba74',
+                            backgroundColor: isDark ? '#1e293b' : '#fff',
+                            color: isDark ? '#fb923c' : '#ea580c',
+                            border: `1px solid ${isDark ? '#ea580c' : '#fdba74'}`,
                             borderRadius: '6px',
                             padding: '6px',
                             fontSize: '11px',
@@ -623,7 +625,7 @@ export const AiAssistantWidget: React.FC = () => {
                   <span
                     style={{
                       fontSize: '10.5px',
-                      color: '#94a3b8',
+                      color: isDark ? '#64748b' : '#94a3b8',
                       marginTop: '4px',
                       padding: '0 4px',
                     }}
@@ -639,10 +641,10 @@ export const AiAssistantWidget: React.FC = () => {
               <div
                 style={{
                   alignSelf: 'flex-start',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
                   padding: '12px 18px',
                   borderRadius: '18px 18px 18px 4px',
-                  border: '1px solid #e2e8f0',
+                  border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
                   boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
                   display: 'flex',
                   alignItems: 'center',
@@ -652,7 +654,7 @@ export const AiAssistantWidget: React.FC = () => {
                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#2563eb', animation: 'bounceDot 1.4s infinite ease-in-out both', animationDelay: '0s' }} />
                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#2563eb', animation: 'bounceDot 1.4s infinite ease-in-out both', animationDelay: '0.2s' }} />
                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#2563eb', animation: 'bounceDot 1.4s infinite ease-in-out both', animationDelay: '0.4s' }} />
-                <span style={{ fontSize: '12px', color: '#64748b', marginLeft: '4px', fontWeight: 600 }}>
+                <span style={{ fontSize: '12px', color: isDark ? '#cbd5e1' : '#64748b', marginLeft: '4px', fontWeight: 600 }}>
                   AI đang tư vấn...
                 </span>
               </div>
@@ -665,8 +667,8 @@ export const AiAssistantWidget: React.FC = () => {
           <div
             style={{
               padding: '14px 16px',
-              backgroundColor: '#ffffff',
-              borderTop: '1px solid #e2e8f0',
+              backgroundColor: isDark ? '#111827' : '#ffffff',
+              borderTop: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
               display: 'flex',
               gap: '10px',
               alignItems: 'center',
@@ -682,20 +684,21 @@ export const AiAssistantWidget: React.FC = () => {
                 flex: 1,
                 padding: '10px 14px',
                 borderRadius: '12px',
-                border: '1px solid #cbd5e1',
+                border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                 fontSize: '13px',
                 outline: 'none',
-                backgroundColor: '#f8fafc',
+                backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+                color: isDark ? '#f8fafc' : '#0f172a',
                 transition: 'border-color 0.2s ease',
               }}
               onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
-              onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+              onBlur={(e) => (e.target.style.borderColor = isDark ? '#334155' : '#cbd5e1')}
             />
             <button
               onClick={() => handleSend()}
               disabled={loading || !input.trim()}
               style={{
-                backgroundColor: input.trim() && !loading ? '#2563eb' : '#cbd5e1',
+                backgroundColor: input.trim() && !loading ? '#2563eb' : (isDark ? '#334155' : '#cbd5e1'),
                 color: '#ffffff',
                 border: 'none',
                 width: '40px',
