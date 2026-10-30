@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Clock, Bus, MapPin, X, QrCode, ArrowRight, ShieldCheck } from 'lucide-react';
-import { Booking } from '../types';
+import { Bell, Clock, Bus, MapPin, X, QrCode } from 'lucide-react';
 
 export const DepartureAlertBanner: React.FC = () => {
   const navigate = useNavigate();
@@ -10,53 +9,81 @@ export const DepartureAlertBanner: React.FC = () => {
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    // 1. Check if user dismissed recently
+    // 1. Kiểm tra nếu người dùng đã chủ động tắt thông báo trong phiên làm việc này
     const dismissedTime = sessionStorage.getItem('traveleasy_dismiss_departure_alert');
     if (dismissedTime) {
       setIsDismissed(true);
       return;
     }
 
-    // 2. Read from localStorage saved tickets or default demo booking
-    try {
-      const cacheRaw = localStorage.getItem('traveleasy_saved_tickets');
+    const checkUpcomingDeparture = async () => {
+      const token = localStorage.getItem('traveleasy_token');
+      const now = Date.now();
       let targetBooking: any = null;
 
-      if (cacheRaw) {
-        const cache = JSON.parse(cacheRaw);
-        const keys = Object.keys(cache);
-        if (keys.length > 0) {
-          // Take the most recent booking
-          targetBooking = cache[keys[keys.length - 1]];
+      // Trường hợp 1: Người dùng đã đăng nhập -> Gọi API backend lấy danh sách vé thực tế
+      if (token) {
+        try {
+          const res = await fetch('http://localhost:8080/api/v1/bookings/my-bookings', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const bookings: any[] = data?.data || [];
+            // Lọc các vé thực tế sắp khởi hành trong vòng 48 giờ tới
+            const upcoming = bookings
+              .filter(b => {
+                if (b.status !== 'CONFIRMED' && b.status !== 'PAID') return false;
+                if (!b.trip?.departureTime) return false;
+                const depTime = new Date(b.trip.departureTime).getTime();
+                const diff = depTime - now;
+                return diff > 0 && diff <= 48 * 3600 * 1000;
+              })
+              .sort((a, b) => new Date(a.trip.departureTime).getTime() - new Date(b.trip.departureTime).getTime());
+
+            if (upcoming.length > 0) {
+              targetBooking = upcoming[0];
+            }
+          }
+        } catch {
+          // Bỏ qua lỗi mạng
         }
       }
 
-      // If no stored booking, create an intelligent realistic upcoming departure
+      // Trường hợp 2: Nếu chưa đăng nhập, chỉ kiểm tra các vé người dùng vừa đặt thật trên thiết bị này (trong localStorage)
       if (!targetBooking) {
-        // Sample trip today departing in 3 hours
-        const depTime = new Date(Date.now() + (3 * 3600 + 25 * 60) * 1000);
-        targetBooking = {
-          bookingCode: 'BK-20261030-8888',
-          passengerName: 'Hành khách TravelEasy',
-          trip: {
-            originCity: 'Hà Nội',
-            destinationCity: 'Sa Pa',
-            busCompanyName: 'Sao Việt Express',
-            departureTime: depTime.toISOString(),
-            licensePlate: '29B-888.88',
-          },
-          pickupPointName: 'Bến xe Mỹ Đình (Cổng 2)',
-          tickets: [{ seatNumber: 'A02' }],
-        };
+        try {
+          const cacheRaw = localStorage.getItem('traveleasy_saved_tickets');
+          if (cacheRaw) {
+            const cache = JSON.parse(cacheRaw);
+            const validLocalBookings = Object.values(cache)
+              .filter((b: any) => {
+                if (!b?.trip?.departureTime) return false;
+                const depTime = new Date(b.trip.departureTime).getTime();
+                const diff = depTime - now;
+                return diff > 0 && diff <= 48 * 3600 * 1000;
+              })
+              .sort((a: any, b: any) => new Date(a.trip.departureTime).getTime() - new Date(b.trip.departureTime).getTime());
+
+            if (validLocalBookings.length > 0) {
+              targetBooking = validLocalBookings[0];
+            }
+          }
+        } catch {
+          // Bỏ qua lỗi JSON
+        }
       }
 
+      // Tuyệt đối không dùng dữ liệu giả lập (mock data). Nếu người dùng chưa có vé thật -> Ẩn banner.
       setUpcomingBooking(targetBooking);
-    } catch {
-      // Ignored
-    }
+    };
+
+    checkUpcomingDeparture();
   }, []);
 
-  // Countdown timer effect
+  // Hiệu ứng đếm ngược thời gian thực
   useEffect(() => {
     if (!upcomingBooking?.trip?.departureTime) return;
 
@@ -88,6 +115,7 @@ export const DepartureAlertBanner: React.FC = () => {
     sessionStorage.setItem('traveleasy_dismiss_departure_alert', 'true');
   };
 
+  // Nếu người dùng đã tắt, hoặc chưa đăng nhập / không có vé thật sắp khởi hành -> Không hiển thị
   if (isDismissed || !upcomingBooking || !timeLeft) return null;
 
   return (
@@ -113,7 +141,7 @@ export const DepartureAlertBanner: React.FC = () => {
           gap: '12px',
         }}
       >
-        {/* Left info */}
+        {/* Khối thông tin chuyến xe bên trái */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
@@ -150,9 +178,9 @@ export const DepartureAlertBanner: React.FC = () => {
           </div>
         </div>
 
-        {/* Right countdown & Action */}
+        {/* Khối đồng hồ đếm ngược và nút hành động bên phải */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          {/* Countdown Clock */}
+          {/* Đồng hồ đếm ngược */}
           <div
             style={{
               backgroundColor: '#ffffff',
@@ -173,7 +201,7 @@ export const DepartureAlertBanner: React.FC = () => {
             </span>
           </div>
 
-          {/* Action button */}
+          {/* Nút xem mã QR vé */}
           <button
             onClick={() => navigate(`/lookup?code=${upcomingBooking.bookingCode}`)}
             style={{
@@ -194,7 +222,7 @@ export const DepartureAlertBanner: React.FC = () => {
             <QrCode size={14} /> Xuất Trình Vé QR
           </button>
 
-          {/* Dismiss button */}
+          {/* Nút đóng banner */}
           <button
             onClick={handleDismiss}
             title="Đóng thông báo"
@@ -215,4 +243,3 @@ export const DepartureAlertBanner: React.FC = () => {
     </div>
   );
 };
-
