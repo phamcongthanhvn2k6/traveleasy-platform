@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +25,7 @@ public class AdminManagementController {
     // ==========================================
     // 1. QUẢN LÝ NGƯỜI DÙNG (/admin/users)
     // ==========================================
+    @Cacheable(value = "admin_users", key = "(#role != null ? #role : '') + '_' + (#status != null ? #status : '') + '_' + (#search != null ? #search : '')")
     @GetMapping("/users")
     @Operation(summary = "Danh sách người dùng (hỗ trợ lọc vai trò, trạng thái, tìm kiếm)")
     public ApiResponse<List<UserAdminResponse>> getUsers(
@@ -32,18 +35,21 @@ public class AdminManagementController {
         return ApiResponse.success(adminManagementService.getAllUsers(role, status, search));
     }
 
+    @CacheEvict(value = {"admin_users", "system_stats"}, allEntries = true)
     @PostMapping("/users")
     @Operation(summary = "Tạo mới tài khoản người dùng bởi Admin")
     public ApiResponse<UserAdminResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         return ApiResponse.success("Tạo người dùng thành công", adminManagementService.createUser(request));
     }
 
+    @CacheEvict(value = {"admin_users", "system_stats"}, allEntries = true)
     @PutMapping("/users/{id}")
     @Operation(summary = "Cập nhật thông tin người dùng (Họ tên, SĐT, Vai trò)")
     public ApiResponse<UserAdminResponse> updateUser(@PathVariable Long id, @Valid @RequestBody CreateUserRequest request) {
         return ApiResponse.success("Cập nhật người dùng thành công", adminManagementService.updateUser(id, request));
     }
 
+    @CacheEvict(value = {"admin_users", "system_stats"}, allEntries = true)
     @DeleteMapping("/users/{id}")
     @Operation(summary = "Xoá tài khoản người dùng")
     public ApiResponse<Void> deleteUser(@PathVariable Long id) {
@@ -51,6 +57,7 @@ public class AdminManagementController {
         return ApiResponse.success("Xoá người dùng thành công", null);
     }
 
+    @CacheEvict(value = {"admin_users", "system_stats"}, allEntries = true)
     @PatchMapping("/users/{id}/status")
     @Operation(summary = "Khoá hoặc mở khoá tài khoản người dùng (ACTIVE <-> LOCKED)")
     public ApiResponse<UserAdminResponse> toggleUserStatus(@PathVariable Long id) {
@@ -60,6 +67,7 @@ public class AdminManagementController {
     // ==========================================
     // 2. QUẢN LÝ ĐỐI TÁC NHÀ XE (/admin/bus-companies)
     // ==========================================
+    @Cacheable(value = "admin_bus_companies", key = "(#status != null ? #status : '') + '_' + (#search != null ? #search : '')")
     @GetMapping("/bus-companies")
     @Operation(summary = "Danh sách nhà xe đối tác (lọc theo tab ALL, PENDING, ACTIVE, SUSPENDED)")
     public ApiResponse<List<BusCompanyAdminResponse>> getBusCompanies(
@@ -68,12 +76,14 @@ public class AdminManagementController {
         return ApiResponse.success(adminManagementService.getAllBusCompanies(status, search));
     }
 
+    @CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)
     @PostMapping("/bus-companies")
     @Operation(summary = "Thêm mới đối tác nhà xe vào sàn")
     public ApiResponse<BusCompanyAdminResponse> createBusCompany(@Valid @RequestBody CreateBusCompanyRequest request) {
         return ApiResponse.success("Tạo nhà xe thành công", adminManagementService.createBusCompany(request));
     }
 
+    @CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)
     @PutMapping("/bus-companies/{id}")
     @Operation(summary = "Cập nhật thông tin đối tác nhà xe")
     public ApiResponse<BusCompanyAdminResponse> updateBusCompany(
@@ -82,6 +92,7 @@ public class AdminManagementController {
         return ApiResponse.success("Cập nhật nhà xe thành công", adminManagementService.updateBusCompany(id, request));
     }
 
+    @CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)
     @DeleteMapping("/bus-companies/{id}")
     @Operation(summary = "Xoá đối tác nhà xe khỏi hệ thống")
     public ApiResponse<Void> deleteBusCompany(@PathVariable Long id) {
@@ -89,6 +100,7 @@ public class AdminManagementController {
         return ApiResponse.success("Xoá nhà xe thành công", null);
     }
 
+    @CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)
     @PatchMapping("/bus-companies/{id}/status")
     @Operation(summary = "Phê duyệt hoặc tạm ngưng hoạt động nhà xe (ACTIVE, SUSPENDED, PENDING_APPROVAL)")
     public ApiResponse<BusCompanyAdminResponse> updateCompanyStatus(
@@ -256,6 +268,7 @@ public class AdminManagementController {
     // ==========================================
     // 10. QUẢN LÝ TUYẾN ĐƯỜNG (/admin/routes)
     // ==========================================
+    @Cacheable(value = "admin_routes", key = "(#search != null ? #search : '') + '_' + (#companyId != null ? #companyId : '')")
     @GetMapping("/routes")
     @Operation(summary = "Danh sách tuyến đường trên toàn sàn")
     public ApiResponse<List<RouteAdminResponse>> getRoutes(
@@ -264,12 +277,14 @@ public class AdminManagementController {
         return ApiResponse.success(adminManagementService.getAllRoutes(search, companyId));
     }
 
+    @CacheEvict(value = {"admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     @PostMapping("/routes")
     @Operation(summary = "Tạo mới tuyến đường kết nối các tỉnh thành")
     public ApiResponse<RouteAdminResponse> createRoute(@Valid @RequestBody CreateRouteRequest request) {
         return ApiResponse.success("Tạo tuyến đường thành công", adminManagementService.createRoute(request));
     }
 
+    @CacheEvict(value = {"admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     @PutMapping("/routes/{id}")
     @Operation(summary = "Cập nhật lộ trình, cự ly và thời gian của tuyến đường")
     public ApiResponse<RouteAdminResponse> updateRoute(
@@ -278,6 +293,7 @@ public class AdminManagementController {
         return ApiResponse.success("Cập nhật tuyến đường thành công", adminManagementService.updateRoute(id, request));
     }
 
+    @CacheEvict(value = {"admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     @DeleteMapping("/routes/{id}")
     @Operation(summary = "Xoá tuyến đường khỏi hệ thống")
     public ApiResponse<Void> deleteRoute(@PathVariable Long id) {
@@ -288,6 +304,7 @@ public class AdminManagementController {
     // ==========================================
     // 12. ĐỐI SOÁT & QUYẾT TOÁN (/admin/settlements)
     // ==========================================
+    @Cacheable("admin_settlements")
     @GetMapping("/settlements")
     @Operation(summary = "Lấy dữ liệu đối soát toàn sàn từ CSDL đơn đặt vé Supabase")
     public ApiResponse<List<java.util.Map<String, Object>>> getSettlements() {

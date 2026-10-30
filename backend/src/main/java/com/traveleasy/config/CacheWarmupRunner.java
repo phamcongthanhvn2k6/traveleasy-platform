@@ -16,30 +16,43 @@ import java.time.LocalDate;
 public class CacheWarmupRunner {
 
     private final TripService tripService;
+    private final com.traveleasy.service.admin.AdminTripService adminTripService;
+    private final com.traveleasy.service.admin.AdminManagementService adminManagementService;
+    private final com.traveleasy.service.customer.BookingService bookingService;
+    private final com.traveleasy.service.company.VehicleService vehicleService;
 
     @Async
     @EventListener(ApplicationReadyEvent.class)
     public void warmupCache() {
         try {
-            log.info("🔥 [CACHE WARMUP] Bắt đầu làm nóng bộ nhớ đệm ngầm cho các truy vấn phổ biến...");
+            log.info("🔥 [CACHE WARMUP] Bắt đầu làm nóng bộ nhớ đệm ngầm cho toàn hệ thống (Customer, Admin & Đối tác)...");
             long t0 = System.currentTimeMillis();
 
-            // 1. Warmup toàn bộ chuyến xe (mặc định trang /search không chọn bộ lọc)
+            // 1. Warmup Khách hàng: Toàn bộ chuyến xe & các tuyến trọng điểm
             tripService.searchTrips(null, null, null);
 
-            // 2. Warmup các tuyến phổ biến cho ngày hôm nay và ngày mai
             LocalDate today = LocalDate.now();
             LocalDate tomorrow = today.plusDays(1);
-            
             tripService.searchTrips("TP. Hồ Chí Minh", "Đà Lạt", today);
             tripService.searchTrips("Hà Nội", "Sa Pa", today);
             tripService.searchTrips("TP. Hồ Chí Minh", "Nha Trang", today);
             tripService.searchTrips("TP. Hồ Chí Minh", "Đà Lạt", tomorrow);
 
+            // 2. Warmup Admin Portal & Partner: Thống kê Dashboard, Chuyến xe toàn sàn, Người dùng, Nhà xe, Tuyến đường, Đơn vé, Đội xe, Quyết toán
+            adminTripService.getDashboardStats();
+            adminTripService.getAllTrips();
+            adminManagementService.getAllUsers(null, null, null);
+            adminManagementService.getAllBusCompanies(null, null);
+            adminManagementService.getAllRoutes(null, null);
+            adminManagementService.getAdminSettlements();
+            bookingService.getAllBookings();
+            vehicleService.getVehicles(null, null, null, null);
+
             long t1 = System.currentTimeMillis();
-            log.info("✔ [CACHE WARMUP] Hoàn tất làm nóng bộ nhớ đệm trong {}ms. Trang /search sẵn sàng phản hồi trong <10ms!", (t1 - t0));
+            log.info("✔ [CACHE WARMUP] Hoàn tất làm nóng bộ nhớ đệm toàn hệ thống trong {}ms. Các cổng Customer, Admin và Đối tác đã sẵn sàng phản hồi tức thì trong <15ms!", (t1 - t0));
         } catch (Exception e) {
             log.warn("⚠️ [CACHE WARMUP] Lỗi khi làm nóng bộ nhớ đệm: {}", e.getMessage());
         }
     }
 }
+

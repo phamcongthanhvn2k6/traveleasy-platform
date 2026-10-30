@@ -9,12 +9,13 @@ import com.traveleasy.entity.*;
 import com.traveleasy.repository.*;
 import com.traveleasy.service.customer.TripService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -26,9 +27,11 @@ public class AdminTripService {
     private final RouteRepository routeRepository;
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
+    private final PickupDropoffPointRepository pointRepository;
     private final TripService tripService;
 
     @Transactional
+    @CacheEvict(value = {"admin_all_trips", "company_trips", "company_dashboard_stats", "system_stats", "trips_search"}, allEntries = true)
     public TripResponse createTrip(CreateTripRequest request) {
         if (request.getArrivalTime().isBefore(request.getDepartureTime())) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Thời gian đến phải sau thời gian khởi hành");
@@ -91,13 +94,40 @@ public class AdminTripService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable("admin_all_trips")
     public List<TripResponse> getAllTrips() {
-        return tripRepository.findAllByOrderByDepartureTimeDesc().stream()
-                .map(tripService::mapToTripResponse)
+        List<Trip> trips = tripRepository.findAllByOrderByDepartureTimeDesc();
+        return mapTripsWithPointsBatch(trips);
+    }
+
+    public List<TripResponse> mapTripsWithPointsBatch(List<Trip> trips) {
+        if (trips == null || trips.isEmpty()) return Collections.emptyList();
+
+        Set<Long> routeIds = trips.stream()
+                .map(t -> t.getRoute() != null ? t.getRoute().getId() : null)
+                .filter(Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+
+        Map<Long, List<PickupDropoffPoint>> routePointsMap = new HashMap<>();
+        if (!routeIds.isEmpty()) {
+            List<PickupDropoffPoint> allPoints = pointRepository.findByRouteIdInOrderByDisplayOrderAsc(routeIds);
+            for (PickupDropoffPoint p : allPoints) {
+                if (p.getRoute() != null && p.getRoute().getId() != null) {
+                    routePointsMap.computeIfAbsent(p.getRoute().getId(), k -> new ArrayList<>()).add(p);
+                }
+            }
+        }
+
+        return trips.stream()
+                .map(t -> {
+                    Long rId = t.getRoute() != null ? t.getRoute().getId() : null;
+                    return tripService.mapToTripResponse(t, routePointsMap.getOrDefault(rId, Collections.emptyList()));
+                })
                 .collect(java.util.stream.Collectors.toList());
     }
 
     @Transactional
+    @CacheEvict(value = {"admin_all_trips", "company_trips", "company_dashboard_stats", "system_stats", "trips_search"}, allEntries = true)
     public TripResponse updateTripStatus(Long tripId, TripStatus status) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe"));
@@ -106,6 +136,7 @@ public class AdminTripService {
     }
 
     @Transactional
+    @CacheEvict(value = {"admin_all_trips", "company_trips", "company_dashboard_stats", "system_stats", "trips_search"}, allEntries = true)
     public TripResponse updateTrip(Long tripId, com.traveleasy.dto.admin.UpdateTripRequest request) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe"));
@@ -125,6 +156,7 @@ public class AdminTripService {
     }
 
     @Transactional
+    @CacheEvict(value = {"admin_all_trips", "company_trips", "company_dashboard_stats", "system_stats", "trips_search"}, allEntries = true)
     public void deleteTrip(Long tripId) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe"));

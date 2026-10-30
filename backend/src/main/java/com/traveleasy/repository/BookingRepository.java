@@ -16,6 +16,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b JOIN FETCH b.trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE b.status IN (com.traveleasy.entity.BookingStatus.CONFIRMED, com.traveleasy.entity.BookingStatus.COMPLETED) ORDER BY b.createdAt DESC")
     List<Booking> findRecentCompletedEligibleBookings();
 
+    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.trip t LEFT JOIN FETCH t.busCompany bc LEFT JOIN FETCH t.route r ORDER BY b.createdAt DESC")
+    List<Booking> findAllWithTripDetails();
+
+    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.trip t LEFT JOIN FETCH t.busCompany bc LEFT JOIN FETCH t.route r WHERE t.busCompany.id = :busCompanyId ORDER BY b.createdAt DESC")
+    List<Booking> findByBusCompanyIdWithTripDetails(@Param("busCompanyId") Long busCompanyId);
+
     @Query("SELECT b FROM Booking b JOIN FETCH b.trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE b.user.id = :userId ORDER BY b.createdAt DESC")
     List<Booking> findByUserIdWithTripDetails(@Param("userId") Long userId);
 
