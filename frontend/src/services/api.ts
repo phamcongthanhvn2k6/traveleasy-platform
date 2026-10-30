@@ -39,17 +39,48 @@ interface CacheItem {
 }
 
 const memoryCache = new Map<string, CacheItem>();
+const inFlightRequests = new Map<string, Promise<any>>();
 const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 phút TTL
+
+const getSessionCache = (key: string): CacheItem | null => {
+  try {
+    const raw = sessionStorage.getItem(`api_cache_${key}`);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+};
+
+const setSessionCache = (key: string, item: CacheItem) => {
+  try {
+    sessionStorage.setItem(`api_cache_${key}`, JSON.stringify(item));
+  } catch (e) {}
+};
 
 export const clearApiCache = (keyword?: string) => {
   if (!keyword) {
     memoryCache.clear();
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const k = sessionStorage.key(i);
+        if (k && k.startsWith('api_cache_')) keysToRemove.push(k);
+      }
+      keysToRemove.forEach((k) => sessionStorage.removeItem(k));
+    } catch (e) {}
   } else {
     for (const key of memoryCache.keys()) {
       if (key.includes(keyword)) {
         memoryCache.delete(key);
       }
     }
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const k = sessionStorage.key(i);
+        if (k && k.startsWith('api_cache_') && k.includes(keyword)) keysToRemove.push(k);
+      }
+      keysToRemove.forEach((k) => sessionStorage.removeItem(k));
+    } catch (e) {}
   }
 };
 
@@ -60,7 +91,7 @@ const originalPut = api.put.bind(api);
 const originalPatch = api.patch.bind(api);
 const originalDelete = api.delete.bind(api);
 
-// Mở rộng api.get với cơ chế Cache-First SWR
+// Mở rộng api.get với cơ chế Cache-First SWR + In-flight Request Deduplication
 api.get = (async (url: string, config?: any): Promise<any> => {
   if (config?.skipCache) {
     return originalGet(url, config);
@@ -69,26 +100,53 @@ api.get = (async (url: string, config?: any): Promise<any> => {
   const queryParams = config?.params ? JSON.stringify(config.params) : '';
   const cacheKey = `GET:${url}:${queryParams}`;
   const now = Date.now();
-  const cached = memoryCache.get(cacheKey);
+  const cached = memoryCache.get(cacheKey) || getSessionCache(cacheKey);
   const ttl = config?.ttl || DEFAULT_TTL_MS;
 
-  // 1. Instant Cache Hit: Trả về kết quả ngay lập tức (0ms) nếu còn trong TTL
+  // 1. Instant Cache Hit: Trả về kết quả ngay lập tức (0ms) từ RAM hoặc SessionStorage
   if (cached && (now - cached.timestamp < ttl)) {
+    // Lưu ngược lại vào memoryCache nếu đọc từ sessionStorage
+    if (!memoryCache.has(cacheKey)) {
+      memoryCache.set(cacheKey, cached);
+    }
     // 2. Chạy ngầm cập nhật dữ liệu mới nếu cache đã cũ hơn 30 giây (Stale-While-Revalidate)
-    if (now - cached.timestamp > 30_000) {
-      originalGet(url, config)
+    if (now - cached.timestamp > 30_000 && !inFlightRequests.has(cacheKey)) {
+      const revalPromise = originalGet(url, config)
         .then((fresh: any) => {
-          memoryCache.set(cacheKey, { response: fresh, timestamp: Date.now() });
+          const freshItem = { response: fresh, timestamp: Date.now() };
+          memoryCache.set(cacheKey, freshItem);
+          setSessionCache(cacheKey, freshItem);
+          inFlightRequests.delete(cacheKey);
         })
-        .catch(() => {});
+        .catch(() => {
+          inFlightRequests.delete(cacheKey);
+        });
+      inFlightRequests.set(cacheKey, revalPromise);
     }
     return Promise.resolve(cached.response);
   }
 
-  // 3. Nếu chưa có cache -> Gọi Backend thực tế và lưu vào RAM
-  const response = await originalGet(url, config);
-  memoryCache.set(cacheKey, { response, timestamp: Date.now() });
-  return response;
+  // 3. Request Deduplication: Nếu cùng một request GET đang chạy ngầm, tái sử dụng Promise hiện tại
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey);
+  }
+
+  // 4. Nếu chưa có cache -> Gọi Backend thực tế, lưu vào RAM + SessionStorage và chia sẻ Promise
+  const fetchPromise = originalGet(url, config)
+    .then((response: any) => {
+      const item = { response, timestamp: Date.now() };
+      memoryCache.set(cacheKey, item);
+      setSessionCache(cacheKey, item);
+      inFlightRequests.delete(cacheKey);
+      return response;
+    })
+    .catch((err: any) => {
+      inFlightRequests.delete(cacheKey);
+      throw err;
+    });
+
+  inFlightRequests.set(cacheKey, fetchPromise);
+  return fetchPromise;
 }) as any;
 
 // Tự động xóa cache tương ứng khi người dùng thực hiện tạo mới / sửa / xóa dữ liệu

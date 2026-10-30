@@ -11,8 +11,22 @@ import { CheckoutModal } from '../../../components/CheckoutModal';
 import { toast } from '../../../context/ToastContext';
 import { Bus, AlertCircle } from 'lucide-react';
 
-// Bộ nhớ đệm Client-side SWR: Giữ kết quả tìm kiếm trong RAM để hiển thị tức thì (0ms)
+// Bộ nhớ đệm Client-side SWR: Giữ kết quả tìm kiếm trong RAM và SessionStorage để hiển thị tức thì (0ms)
 const tripSearchClientCache = new Map<string, { data: Trip[]; timestamp: number }>();
+
+const getSessionSearchCache = (key: string): { data: Trip[]; timestamp: number } | null => {
+  try {
+    const raw = sessionStorage.getItem(`trip_search_${key}`);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+};
+
+const setSessionSearchCache = (key: string, item: { data: Trip[]; timestamp: number }) => {
+  try {
+    sessionStorage.setItem(`trip_search_${key}`, JSON.stringify(item));
+  } catch (e) {}
+};
 
 export const TripSearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,9 +37,9 @@ export const TripSearchPage: React.FC = () => {
   const date = searchParams.get('date') || '';
   const companyParam = searchParams.get('company') || '';
 
-  // Khởi tạo ngay lập tức từ bộ nhớ đệm nếu có sẵn để chuyển trang 0ms không chớp màn hình
+  // Khởi tạo ngay lập tức từ RAM hoặc SessionStorage để tải trang 0ms không bao giờ chớp màn hình
   const initialCacheKey = `${origin}_${destination}_${date}`;
-  const initialCached = tripSearchClientCache.get(initialCacheKey);
+  const initialCached = tripSearchClientCache.get(initialCacheKey) || getSessionSearchCache(initialCacheKey);
 
   const [trips, setTrips] = useState<Trip[]>(() => (initialCached ? initialCached.data : []));
   const [loading, setLoading] = useState<boolean>(() => !initialCached);
@@ -63,17 +77,20 @@ export const TripSearchPage: React.FC = () => {
 
   const fetchTrips = async (orig: string, dest: string, depDate: string) => {
     const cacheKey = `${orig}_${dest}_${depDate}`;
-    const cached = tripSearchClientCache.get(cacheKey);
+    const cached = tripSearchClientCache.get(cacheKey) || getSessionSearchCache(cacheKey);
     const now = Date.now();
 
-    // 1. Instant Cache Hit: Hiển thị ngay lập tức (0ms) nếu đã tải trong vòng 5 phút
-    if (cached && (now - cached.timestamp < 300_000)) {
+    // 1. Instant Cache Hit: Hiển thị ngay lập tức (0ms) nếu đã tải trong vòng 10 phút
+    if (cached && (now - cached.timestamp < 600_000)) {
       setTrips(cached.data);
+      if (!tripSearchClientCache.has(cacheKey)) {
+        tripSearchClientCache.set(cacheKey, cached);
+      }
       setLoading(false);
       return;
     }
 
-    // 2. Optimistic Rendering: Nếu có dữ liệu trong cache, hiển thị trước và không bật loading spinner
+    // 2. Optimistic Rendering: Nếu có dữ liệu trong cache cũ, hiển thị trước và không bật loading spinner
     if (cached) {
       setTrips(cached.data);
       setLoading(false);
@@ -91,9 +108,12 @@ export const TripSearchPage: React.FC = () => {
 
       const data = res.data?.data || [];
       setTrips(data);
-      tripSearchClientCache.set(cacheKey, { data, timestamp: Date.now() });
+      const cacheItem = { data, timestamp: Date.now() };
+      tripSearchClientCache.set(cacheKey, cacheItem);
+      setSessionSearchCache(cacheKey, cacheItem);
 
-      if (data.length > 0) {
+      // Chỉ hiển thị toast nếu chưa có cache hiển thị trước đó để tránh trùng lặp
+      if (!cached && data.length > 0) {
         if (!orig && !dest) {
           toast.success(`Đang hiển thị toàn bộ ${data.length} chuyến xe toàn quốc!`, 'Tất Cả Chuyến Xe');
         } else if (orig && dest) {
@@ -103,7 +123,7 @@ export const TripSearchPage: React.FC = () => {
         } else {
           toast.success(`Tìm thấy ${data.length} chuyến xe đến ${dest}!`, 'Kết Quả');
         }
-      } else {
+      } else if (!cached && data.length === 0) {
         toast.info('Không tìm thấy chuyến xe nào phù hợp. Vui lòng thử nới lỏng bộ lọc!', 'Thông Báo');
       }
     } catch (err) {
