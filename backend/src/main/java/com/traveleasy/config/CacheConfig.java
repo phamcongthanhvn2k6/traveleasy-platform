@@ -16,7 +16,9 @@ public class CacheConfig {
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
         
-        // Cấu hình mặc định cho các cache: TTL 10 phút, kích thước tối đa 500 mục
+        // Cấu hình bộ nhớ đệm Caffeine in-memory: TTL 10 phút, kích thước tối đa 500 mục
+        // Không giới hạn cứng danh sách cacheNames để hệ thống tự động khởi tạo cache động (dynamic)
+        // cho bất kỳ @Cacheable nào (popular_routes, banners_list, trips_search, promotions_list...)
         cacheManager.setCaffeine(
             Caffeine.newBuilder()
                 .initialCapacity(50)
@@ -24,17 +26,6 @@ public class CacheConfig {
                 .expireAfterWrite(Duration.ofMinutes(10))
                 .recordStats()
         );
-
-        // Khai báo trước các tên cache cốt lõi của hệ thống
-        cacheManager.setCacheNames(List.of(
-            "trips_search",
-            "routes_list",
-            "bus_companies",
-            "locations_list",
-            "cancellation_policies",
-            "promotions_list",
-            "system_stats"
-        ));
 
         return cacheManager;
     }
