@@ -113,7 +113,7 @@ export const Navbar: React.FC = () => {
             </Link>
 
             <Link
-              to="/hop-tac-nha-xe"
+              to="/partner"
               style={{
                 textDecoration: 'none',
                 color: '#ffffff',
