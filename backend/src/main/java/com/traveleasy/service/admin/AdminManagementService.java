@@ -460,6 +460,18 @@ public class AdminManagementService {
         return saved;
     }
 
+    @Transactional
+    public GatewayConfig toggleGatewaySandbox(String provider) {
+        GatewayConfig gw = gatewayConfigRepository.findByProvider(provider.toUpperCase())
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy cấu hình gateway: " + provider));
+        boolean current = Boolean.TRUE.equals(gw.getIsSandbox());
+        gw.setIsSandbox(!current);
+        gw.setUpdatedAt(LocalDateTime.now());
+        GatewayConfig saved = gatewayConfigRepository.save(gw);
+        logAction("admin@traveleasy.vn", "TOGGLE_GATEWAY_SANDBOX", "gateway #" + provider, "isSandbox: " + current, "isSandbox: " + !current);
+        return saved;
+    }
+
     // ==========================================
     // 7. REVIEW REPORTS
     // ==========================================

@@ -236,6 +236,12 @@ public class AdminManagementController {
         return ApiResponse.success("Cập nhật cổng kết nối thành công", adminManagementService.toggleGatewayStatus(provider));
     }
 
+    @PatchMapping("/gateways/{provider}/sandbox")
+    @Operation(summary = "Chuyển đổi chế độ Sandbox (Thử nghiệm) / Production (Thực tế)")
+    public ApiResponse<GatewayConfig> toggleGatewaySandbox(@PathVariable String provider) {
+        return ApiResponse.success("Cập nhật chế độ môi trường thành công", adminManagementService.toggleGatewaySandbox(provider));
+    }
+
     // ==========================================
     // 7. BÁO CÁO ĐÁNH GIÁ VI PHẠM (/admin/review-reports)
     // ==========================================
