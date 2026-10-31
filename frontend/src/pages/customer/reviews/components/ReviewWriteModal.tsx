@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Star, Upload, CheckCircle2, Building2, MapPin, Sparkles, Clock, UserCheck, AlertCircle, Ticket, UploadCloud, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { X, Star, Upload, CheckCircle2, Building2, MapPin, Sparkles, Clock, UserCheck, AlertCircle, Ticket, UploadCloud, Loader2, Image as ImageIcon, Lock, ArrowRight } from 'lucide-react';
 import { IReview } from '../types';
 import { toast } from '../../../../context/ToastContext';
 import api from '../../../../services/api';
@@ -32,6 +33,14 @@ export const ReviewWriteModal: React.FC<ReviewWriteModalProps> = ({
   onSubmitReview,
   prefilledBookingCode,
 }) => {
+  const token = localStorage.getItem('traveleasy_token');
+  const userJson = localStorage.getItem('traveleasy_user');
+  let user: any = null;
+  try {
+    user = userJson ? JSON.parse(userJson) : null;
+  } catch (e) {}
+
+  const [loadingEligible, setLoadingEligible] = useState(false);
   const [eligibleBookings, setEligibleBookings] = useState<EligibleBooking[]>([]);
   const [selectedBookingCode, setSelectedBookingCode] = useState<string>(prefilledBookingCode || '');
   const [manualCode, setManualCode] = useState<string>(prefilledBookingCode || '');
@@ -46,7 +55,7 @@ export const ReviewWriteModal: React.FC<ReviewWriteModalProps> = ({
   const [cleanliness, setCleanliness] = useState(5);
   const [service, setService] = useState(5);
 
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(user?.fullName || '');
   const [comment, setComment] = useState('');
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -84,6 +93,11 @@ export const ReviewWriteModal: React.FC<ReviewWriteModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setErrorMessage(null);
+      if (!token) {
+        setEligibleBookings([]);
+        return;
+      }
+      setLoadingEligible(true);
       api.get('/reviews/eligible-bookings')
         .then((res) => {
           if (res.data?.data && Array.isArray(res.data.data)) {
@@ -96,13 +110,19 @@ export const ReviewWriteModal: React.FC<ReviewWriteModalProps> = ({
             } else if (res.data.data.length > 0) {
               applyBookingSelection(res.data.data[0]);
             }
+          } else {
+            setEligibleBookings([]);
           }
         })
         .catch((err) => {
           console.warn('Lỗi lấy danh sách chuyến xe đủ điều kiện:', err);
+          setEligibleBookings([]);
+        })
+        .finally(() => {
+          setLoadingEligible(false);
         });
     }
-  }, [isOpen, prefilledBookingCode]);
+  }, [isOpen, prefilledBookingCode, token]);
 
   const applyBookingSelection = (b: EligibleBooking) => {
     setSelectedBookingCode(b.bookingCode);
@@ -238,61 +258,111 @@ export const ReviewWriteModal: React.FC<ReviewWriteModalProps> = ({
           </button>
         </div>
 
-        {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 md:p-6 overflow-y-auto space-y-4 text-xs md:text-sm">
-          {/* Error Message Alert */}
-          {errorMessage && (
-            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-rose-800 text-xs">
-              <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />
-              <div>
-                <strong className="block font-bold">Chưa thể gửi đánh giá:</strong>
-                <span>{errorMessage}</span>
-              </div>
+        {/* Body content based on Auth and Eligibility */}
+        {!token ? (
+          <div className="p-8 md:p-10 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-500 mx-auto flex items-center justify-center border-2 border-amber-200">
+              <Lock size={30} />
             </div>
-          )}
+            <h4 className="text-xl font-black text-slate-800">Yêu Cầu Đăng Nhập Tài Khoản</h4>
+            <p className="text-xs md:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+              Để bảo đảm <strong>100% người đánh giá thật</strong> và chống review ảo, TravelEasy chỉ cho phép những hành khách <strong>đã đăng nhập và hoàn thành chuyến xe thực tế</strong> mới được gửi đánh giá.
+            </p>
+            <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                to="/auth?redirect=/reviews"
+                onClick={onClose}
+                className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs md:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+              >
+                <span>Đăng Nhập / Đăng Ký Ngay</span>
+                <ArrowRight size={16} />
+              </Link>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full sm:w-auto px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs md:text-sm rounded-xl transition-all"
+              >
+                Đóng & Xem Đánh Giá
+              </button>
+            </div>
+          </div>
+        ) : loadingEligible ? (
+          <div className="p-16 text-center space-y-3">
+            <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto" />
+            <div className="text-xs font-bold text-slate-600">Đang kiểm tra các chuyến xe đã hoàn thành của bạn...</div>
+          </div>
+        ) : eligibleBookings.length === 0 ? (
+          <div className="p-8 md:p-10 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-500 mx-auto flex items-center justify-center border-2 border-slate-200">
+              <Ticket size={30} />
+            </div>
+            <h4 className="text-xl font-black text-slate-800">Chưa Có Chuyến Xe Đã Hoàn Thành</h4>
+            <p className="text-xs md:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+              Tài khoản <strong>{user?.fullName || user?.email}</strong> hiện chưa có chuyến xe nào đã hoàn tất hành trình để đánh giá (hoặc bạn đã đánh giá tất cả các chuyến đi trước đó).
+              <br /><br />
+              Chức năng đánh giá chỉ được mở sau khi chuyến xe của bạn <strong>đã thực sự khởi hành và hoàn tất hành trình</strong>.
+            </p>
+            <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                to="/search"
+                onClick={onClose}
+                className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs md:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+              >
+                <span>Tìm & Đặt Chuyến Xe Ngay</span>
+                <ArrowRight size={16} />
+              </Link>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full sm:w-auto px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs md:text-sm rounded-xl transition-all"
+              >
+                Đóng & Xem Đánh Giá Khác
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Scrollable Form Body */
+          <form onSubmit={handleSubmit} className="p-5 md:p-6 overflow-y-auto space-y-4 text-xs md:text-sm">
+            {/* Error Message Alert */}
+            {errorMessage && (
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-rose-800 text-xs">
+                <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="block font-bold">Chưa thể gửi đánh giá:</strong>
+                  <span>{errorMessage}</span>
+                </div>
+              </div>
+            )}
 
-          {/* 1. Chọn chuyến xe đã hoàn thành từ Supabase */}
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
-            <label className="block text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
-              <Ticket size={14} className="text-emerald-600" />
-              Chọn chuyến xe bạn đã đi (Hoàn thành hành trình) *
-            </label>
-            
-            {eligibleBookings.length > 0 ? (
+            {/* 1. Chọn chuyến xe đã hoàn thành từ Supabase */}
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+              <label className="block text-xs font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+                <Ticket size={14} className="text-emerald-600" />
+                Chọn chuyến xe bạn đã đi (Hoàn thành hành trình) *
+              </label>
+              
               <select
                 value={selectedBookingCode}
                 onChange={(e) => handleBookingChange(e.target.value)}
                 className="w-full py-2.5 px-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                required
               >
                 {eligibleBookings.map((b) => (
                   <option key={b.bookingCode} value={b.bookingCode}>
-                    [{b.bookingCode}] {b.busCompanyName} • {b.routeName} (Ghế {b.seatNumbers})
+                    [{b.bookingCode}] {b.busCompanyName} • {b.routeName} (Ghế {b.seatNumbers || 'Chỗ ngồi'})
                   </option>
                 ))}
               </select>
-            ) : (
-              <div className="text-xs text-slate-500 mb-2">
-                Nhập mã vé chuyến xe đã hoàn thành (VD: BKG-20261025-001):
-              </div>
-            )}
 
-            <div className="mt-2.5 flex items-center gap-2">
-              <input
-                type="text"
-                value={manualCode}
-                onChange={(e) => {
-                  setManualCode(e.target.value);
-                  setSelectedBookingCode(e.target.value);
-                }}
-                placeholder="Mã đặt vé (VD: BKG-20261025-001)"
-                className="flex-1 py-2 px-3 bg-white border border-slate-200 rounded-xl font-mono font-bold text-slate-800 text-xs uppercase"
-                required
-              />
-              <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                ✓ Đã hoàn thành
-              </span>
+              <div className="mt-2.5 flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                <span className="font-mono font-bold text-slate-800 text-xs">
+                  Mã vé xác thực: <strong>{selectedBookingCode}</strong>
+                </span>
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                  ✓ Đã hoàn thành hành trình
+                </span>
+              </div>
             </div>
-          </div>
 
           {/* 2. Thông tin nhà xe & Tuyến */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -548,7 +618,8 @@ export const ReviewWriteModal: React.FC<ReviewWriteModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
+      )}
     </div>
-  );
+  </div>
+);
 };

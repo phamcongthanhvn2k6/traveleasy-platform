@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ReviewScorecard } from './components/ReviewScorecard';
 import { ReviewFilterBar } from './components/ReviewFilterBar';
 import { ReviewCard } from './components/ReviewCard';
@@ -11,6 +11,7 @@ import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 
 export const ReviewsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const urlBookingCode = searchParams.get('bookingCode');
 
@@ -48,14 +49,20 @@ export const ReviewsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 6;
 
-  // Auto-open modal if bookingCode is passed in URL
+  // Auto-open modal if bookingCode is passed in URL (Yêu cầu đăng nhập trước khi viết)
   useEffect(() => {
     if (urlBookingCode) {
+      const token = localStorage.getItem('traveleasy_token');
+      if (!token) {
+        toast.warning(`Vui lòng đăng nhập tài khoản để đánh giá chuyến xe [${urlBookingCode}]!`, 'Yêu Cầu Đăng Nhập');
+        navigate(`/auth?redirect=/reviews?bookingCode=${encodeURIComponent(urlBookingCode)}`);
+        return;
+      }
       setPrefilledCode(urlBookingCode);
       setIsWriteModalOpen(true);
       toast.info(`Đã điền tự động mã vé [${urlBookingCode}]. Hãy chia sẻ trải nghiệm của bạn!`, 'Đánh Giá Chuyến Đi');
     }
-  }, [urlBookingCode]);
+  }, [urlBookingCode, navigate]);
 
   // Load reviews & summary from Supabase
   const loadDataFromSupabase = useCallback(() => {
@@ -272,6 +279,12 @@ export const ReviewsPage: React.FC = () => {
           sortBy={sortBy}
           onSortByChange={setSortBy}
           onOpenWriteModal={() => {
+            const token = localStorage.getItem('traveleasy_token');
+            if (!token) {
+              toast.warning('Bạn cần đăng nhập tài khoản để viết đánh giá cho chuyến xe đã đi!', 'Yêu Cầu Đăng Nhập');
+              navigate('/auth?redirect=/reviews');
+              return;
+            }
             setPrefilledCode(undefined);
             setIsWriteModalOpen(true);
           }}

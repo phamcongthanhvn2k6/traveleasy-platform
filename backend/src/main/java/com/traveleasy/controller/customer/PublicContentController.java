@@ -247,16 +247,34 @@ public class PublicContentController {
             @RequestParam(required = false) String phone,
             Principal principal
     ) {
+        if (principal == null) {
+            // Chưa đăng nhập -> Tuyệt đối không trả về bất kỳ chuyến xe nào của người khác!
+            return ApiResponse.success(Collections.emptyList());
+        }
+
+        User currentUser = userRepository.findByEmail(principal.getName()).orElse(null);
+        if (currentUser == null) {
+            return ApiResponse.success(Collections.emptyList());
+        }
+
         List<Booking> candidates = new ArrayList<>();
 
         if (bookingCode != null && !bookingCode.isBlank()) {
-            bookingRepository.findByBookingCodeWithTripDetails(bookingCode.trim()).ifPresent(candidates::add);
-        } else if (principal != null) {
-            userRepository.findByEmail(principal.getName())
-                    .ifPresent(u -> candidates.addAll(bookingRepository.findByUserIdWithTripDetails(u.getId())));
+            bookingRepository.findByBookingCodeWithTripDetails(bookingCode.trim())
+                    .filter(b -> (b.getUser() != null && b.getUser().getId().equals(currentUser.getId()))
+                            || (b.getPassengerPhone() != null && b.getPassengerPhone().equals(currentUser.getPhone()))
+                            || (b.getPassengerEmail() != null && b.getPassengerEmail().equalsIgnoreCase(currentUser.getEmail())))
+                    .ifPresent(candidates::add);
         } else {
-            // Lấy trực tiếp các booking đã hoàn thành bằng 1 single JOIN FETCH query
-            candidates.addAll(bookingRepository.findRecentCompletedEligibleBookings());
+            candidates.addAll(bookingRepository.findByUserIdWithTripDetails(currentUser.getId()));
+            if (currentUser.getPhone() != null && !currentUser.getPhone().isBlank()) {
+                List<Booking> byPhone = bookingRepository.findByPassengerPhoneOrderByCreatedAtDesc(currentUser.getPhone());
+                for (Booking b : byPhone) {
+                    if (candidates.stream().noneMatch(c -> c.getId().equals(b.getId()))) {
+                        bookingRepository.findByBookingCodeWithTripDetails(b.getBookingCode()).ifPresent(candidates::add);
+                    }
+                }
+            }
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -303,6 +321,15 @@ public class PublicContentController {
     @PostMapping("/reviews")
     @Operation(summary = "Khách hàng gửi đánh giá sau khi chuyến xe đã hoàn thành chuyến đi")
     public ApiResponse<?> submitReview(@RequestBody CreateReviewDto request, Principal principal) {
+        if (principal == null) {
+            return ApiResponse.error("Vui lòng đăng nhập tài khoản để gửi đánh giá chuyến đi!");
+        }
+
+        User currentUser = userRepository.findByEmail(principal.getName()).orElse(null);
+        if (currentUser == null) {
+            return ApiResponse.error("Không tìm thấy thông tin tài khoản người dùng!");
+        }
+
         if (request.getBookingCode() == null || request.getBookingCode().isBlank()) {
             return ApiResponse.error("Vui lòng cung cấp mã đặt vé (Booking Code) của chuyến đi cần đánh giá");
         }
@@ -314,6 +341,15 @@ public class PublicContentController {
         }
 
         Booking booking = bookingOpt.get();
+
+        // Kiểm tra quyền sở hữu đơn đặt vé:
+        boolean isOwner = (booking.getUser() != null && booking.getUser().getId().equals(currentUser.getId()))
+                || (booking.getPassengerPhone() != null && booking.getPassengerPhone().equals(currentUser.getPhone()))
+                || (booking.getPassengerEmail() != null && booking.getPassengerEmail().equalsIgnoreCase(currentUser.getEmail()));
+
+        if (!isOwner) {
+            return ApiResponse.error("Bạn không có quyền đánh giá đơn đặt vé này vì chuyến đi không thuộc tài khoản của bạn!");
+        }
 
         // 1. Kiểm tra đã đánh giá chưa
         if (reviewRepository.existsByBookingCode(code)) {
