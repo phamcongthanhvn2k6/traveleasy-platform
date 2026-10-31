@@ -80,3 +80,4 @@ export const ThemeToggle: React.FC<{ showLabel?: boolean }> = ({ showLabel = tru
 };
 
 export default ThemeToggle;
+

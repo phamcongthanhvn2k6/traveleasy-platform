@@ -586,8 +586,7 @@ public class AdminManagementService {
     @Transactional(readOnly = true)
     @org.springframework.cache.annotation.Cacheable(value = "admin_routes", key = "(#search != null ? #search : '') + '_' + (#companyId != null ? #companyId : '')")
     public List<RouteAdminResponse> getAllRoutes(String search, Long companyId) {
-        return routeRepository.findAll().stream()
-                .filter(r -> companyId == null || (r.getBusCompany() != null && r.getBusCompany().getId().equals(companyId)))
+        return routeRepository.findAllWithDetailsByCompanyId(companyId).stream()
                 .filter(r -> search == null || search.isBlank() ||
                         r.getDepartureLocation().toLowerCase().contains(search.toLowerCase()) ||
                         r.getArrivalLocation().toLowerCase().contains(search.toLowerCase()) ||

@@ -459,11 +459,12 @@ public class PublicContentController {
         return ApiResponse.success(cancellationPolicyRepository.findAll());
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @org.springframework.cache.annotation.Cacheable("routes_list")
     @GetMapping("/routes")
     @Operation(summary = "Lấy toàn bộ tuyến đường vận hành từ CSDL Supabase")
     public ApiResponse<List<Route>> getAllRoutes() {
-        return ApiResponse.success(routeRepository.findAllByOrderByDepartureLocationAscArrivalLocationAsc());
+        return ApiResponse.success(routeRepository.findAllWithDetails());
     }
 
     @org.springframework.cache.annotation.Cacheable("popular_routes")

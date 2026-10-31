@@ -374,9 +374,6 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
         <main style={{ flex: 1, padding: '24px 28px', backgroundColor: isDark ? '#0b0f19' : '#f8fafc', color: isDark ? '#f8fafc' : '#0f172a', transition: 'all 0.25s ease' }}>
           {children}
         </main>
-        <main style={{ flex: 1, padding: '24px 28px', backgroundColor: '#f8fafc' }}>
-          {children}
-        </main>
       </div>
     </div>
   );

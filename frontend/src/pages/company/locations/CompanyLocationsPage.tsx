@@ -47,7 +47,7 @@ export const CompanyLocationsPage: React.FC = () => {
   // Tải danh sách Master Locations từ Backend CSDL
   const fetchMasterLocations = async () => {
     try {
-      const res = await api.get('/admin/locations');
+      const res = await api.get('/locations');
       if (res.data?.data && Array.isArray(res.data.data)) {
         setMasterLocations(
           res.data.data.map((l: any) => ({
