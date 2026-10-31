@@ -215,20 +215,13 @@ public class TripService {
                 .map(this::mapToPointResponse)
                 .collect(Collectors.toList());
 
-        // 4. Tìm các chuyến xe chiều đi (Outbound)
+        // 4. Tìm các chuyến xe chiều đi (Outbound) thực tế từ CSDL Supabase
         List<Trip> realOutboundTrips = tripRepository.searchTrips(from, to, null, null, TripStatus.SCHEDULED);
-        List<ScheduleTripItem> outboundItems;
+        List<ScheduleTripItem> outboundItems = realOutboundTrips.stream()
+                .map(t -> mapToScheduleTripItem(t, outboundPoints))
+                .collect(Collectors.toList());
 
-        if (!realOutboundTrips.isEmpty()) {
-            outboundItems = realOutboundTrips.stream()
-                    .map(t -> mapToScheduleTripItem(t, outboundPoints))
-                    .collect(Collectors.toList());
-        } else {
-            // Trường hợp tuyến mới chưa tạo chuyến, sinh lịch trình chạy giờ tiêu chuẩn theo tuyến
-            outboundItems = generateSyntheticTrips(from, to, durationHours, distanceKm, false);
-        }
-
-        // 5. Tìm tuyến đường và các chuyến xe chiều về (Inbound)
+        // 5. Tìm tuyến đường và các chuyến xe chiều về (Inbound) thực tế từ CSDL Supabase
         Optional<Route> inboundRouteOpt = routeRepository.findByDepartureLocationAndArrivalLocation(to, from);
         Route inboundRoute = inboundRouteOpt.orElse(null);
         Long returnRouteId = inboundRoute != null ? inboundRoute.getId() : null;
@@ -238,15 +231,9 @@ public class TripService {
                 : List.of();
 
         List<Trip> realInboundTrips = tripRepository.searchTrips(to, from, null, null, TripStatus.SCHEDULED);
-        List<ScheduleTripItem> inboundItems;
-
-        if (!realInboundTrips.isEmpty()) {
-            inboundItems = realInboundTrips.stream()
-                    .map(t -> mapToScheduleTripItem(t, inboundPoints))
-                    .collect(Collectors.toList());
-        } else {
-            inboundItems = generateSyntheticTrips(to, from, durationHours, distanceKm, true);
-        }
+        List<ScheduleTripItem> inboundItems = realInboundTrips.stream()
+                .map(t -> mapToScheduleTripItem(t, inboundPoints))
+                .collect(Collectors.toList());
 
         // 6. Tính giá vé min, max và tần suất
         BigDecimal minPrice = outboundItems.stream()
@@ -382,83 +369,6 @@ public class TripService {
                 .pickupPoints(pickups)
                 .dropoffPoints(dropoffs)
                 .build();
-    }
-
-    private List<ScheduleTripItem> generateSyntheticTrips(String from, String to, BigDecimal duration, BigDecimal distance, boolean isReturn) {
-        List<ScheduleTripItem> list = new ArrayList<>();
-        LocalDate today = LocalDate.now();
-
-        // 5 mốc thời gian xuất bến chuẩn bao quát đầy đủ cả 4 khung giờ trong ngày
-        int[][] departureSlots = {
-                {4, 30, 350000, 34, 26}, // 00h - 06h (Sáng sớm)
-                {7, 30, 320000, 34, 28}, // 06h - 12h (Buổi sáng)
-                {10, 30, 280000, 40, 22}, // 06h - 12h (Buổi sáng)
-                {15, 0, 340000, 34, 18},  // 12h - 18h (Buổi chiều)
-                {22, 30, 390000, 34, 30}  // 18h - 24h (Buổi tối)
-        };
-
-        if (isReturn) {
-            departureSlots = new int[][]{
-                    {5, 0, 350000, 34, 24},  // 00h - 06h (Sáng sớm)
-                    {8, 0, 320000, 34, 25},  // 06h - 12h (Buổi sáng)
-                    {11, 0, 280000, 40, 19}, // 06h - 12h (Buổi sáng)
-                    {16, 30, 340000, 34, 15},// 12h - 18h (Buổi chiều)
-                    {23, 0, 390000, 34, 29}  // 18h - 24h (Buổi tối)
-            };
-        }
-
-        long durMinutes = duration != null ? Math.round(duration.doubleValue() * 60) : 360;
-
-        for (int i = 0; i < departureSlots.length; i++) {
-            int hour = departureSlots[i][0];
-            int minute = departureSlots[i][1];
-            BigDecimal price = BigDecimal.valueOf(departureSlots[i][2]);
-            int totalSeats = departureSlots[i][3];
-            int availableSeats = departureSlots[i][4];
-
-            LocalDateTime dep = today.atTime(hour, minute);
-            LocalDateTime arr = dep.plusMinutes(durMinutes);
-
-            BusType bType = totalSeats == 40 ? BusType.SLEEPER : BusType.LIMOUSINE;
-            String companyName = (i % 2 == 0) ? "TravelEasy Express" : "Thành Bưởi Limousine";
-
-            List<PointResponse> pickups = List.of(
-                    PointResponse.builder().id((long) (100 + i * 2)).name("Bến xe Trung Tâm " + from).address("Cổng số 1, " + from).pointType(PointType.PICKUP).orderIndex(1).build(),
-                    PointResponse.builder().id((long) (101 + i * 2)).name("Trạm đón khách trung chuyển " + from).address("Đại lộ chính, " + from).pointType(PointType.PICKUP).orderIndex(2).build()
-            );
-
-            List<PointResponse> dropoffs = List.of(
-                    PointResponse.builder().id((long) (200 + i * 2)).name("Bến xe Liên Tỉnh " + to).address("Trung tâm TP. " + to).pointType(PointType.DROPOFF).orderIndex(1).build(),
-                    PointResponse.builder().id((long) (201 + i * 2)).name("Văn phòng trả khách " + to).address("Nội thành, " + to).pointType(PointType.DROPOFF).orderIndex(2).build()
-            );
-
-            list.add(ScheduleTripItem.builder()
-                    .id((long) (1000 + i + (isReturn ? 50 : 0)))
-                    .busCompanyId(1L)
-                    .busCompanyName(companyName)
-                    .busCompanyLogo(null)
-                    .busCompanyRating(4.9)
-                    .departureTime(dep)
-                    .arrivalTime(arr)
-                    .departureTimeFormatted(dep.format(TIME_FMT))
-                    .arrivalTimeFormatted(arr.format(TIME_FMT))
-                    .durationFormatted(formatDuration(dep, arr))
-                    .busType(bType)
-                    .busTypeName(mapBusTypeName(bType))
-                    .price(price)
-                    .totalSeats(totalSeats)
-                    .availableSeats(availableSeats)
-                    .status(TripStatus.SCHEDULED)
-                    .originCity(from)
-                    .destinationCity(to)
-                    .mainPickupPoint("Bến xe Trung Tâm " + from)
-                    .mainDropoffPoint("Bến xe Liên Tỉnh " + to)
-                    .pickupPoints(pickups)
-                    .dropoffPoints(dropoffs)
-                    .build());
-        }
-
-        return list;
     }
 
     private String formatDuration(LocalDateTime dep, LocalDateTime arr) {

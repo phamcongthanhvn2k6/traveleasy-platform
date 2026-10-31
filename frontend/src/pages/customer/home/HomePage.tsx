@@ -27,57 +27,6 @@ import {
   Check
 } from 'lucide-react';
 
-const DEFAULT_POPULAR_ROUTES = [
-  {
-    id: 1,
-    title: 'Sài Gòn - Đà Lạt',
-    origin: 'TP. Hồ Chí Minh',
-    destination: 'Đà Lạt',
-    price: '280.000đ',
-    oldPrice: '320.000đ',
-    distanceKm: 310,
-    durationHours: 6.5,
-    image: 'https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289365/traveleasy/banners/banner_hero_dalat_mongmo.jpg',
-    bgColor: 'linear-gradient(180deg, transparent 40%, rgba(194, 65, 12, 0.85) 100%)'
-  },
-  {
-    id: 2,
-    title: 'Hà Nội - Sa Pa',
-    origin: 'Hà Nội',
-    destination: 'Sa Pa',
-    price: '350.000đ',
-    oldPrice: '400.000đ',
-    distanceKm: 320,
-    durationHours: 5.5,
-    image: 'https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289364/traveleasy/banners/banner_hero_sapa_fansipan.jpg',
-    bgColor: 'linear-gradient(180deg, transparent 40%, rgba(30, 58, 138, 0.85) 100%)'
-  },
-  {
-    id: 3,
-    title: 'Sài Gòn - Nha Trang',
-    origin: 'TP. Hồ Chí Minh',
-    destination: 'Nha Trang',
-    price: '320.000đ',
-    oldPrice: '370.000đ',
-    distanceKm: 430,
-    durationHours: 8.0,
-    image: 'https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289366/traveleasy/banners/banner_hero_nhatrang_bienxanh.jpg',
-    bgColor: 'linear-gradient(180deg, transparent 40%, rgba(120, 53, 15, 0.85) 100%)'
-  },
-  {
-    id: 4,
-    title: 'Đà Nẵng - Quy Nhơn',
-    origin: 'Đà Nẵng',
-    destination: 'Quy Nhơn',
-    price: '250.000đ',
-    oldPrice: '290.000đ',
-    distanceKm: 300,
-    durationHours: 6.0,
-    image: 'https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289367/traveleasy/banners/banner_hero_quynhon_kyco.jpg',
-    bgColor: 'linear-gradient(180deg, transparent 40%, rgba(4, 120, 87, 0.85) 100%)'
-  }
-];
-
 export const HomePage: React.FC = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
@@ -86,9 +35,9 @@ export const HomePage: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [searchParams, setSearchParams] = useState({ origin: 'TP. Hồ Chí Minh', destination: 'Đà Lạt' });
 
-  // Dynamic Banners, Popular Routes & Promos from Database
+  // Dynamic Banners, Popular Routes & Promos from Database (Supabase)
   const [activeBanners, setActiveBanners] = useState<any[]>([]);
-  const [popularRoutes, setPopularRoutes] = useState<any[]>(DEFAULT_POPULAR_ROUTES);
+  const [popularRoutes, setPopularRoutes] = useState<any[]>([]);
   const [featuredPromos, setFeaturedPromos] = useState<any[]>([]);
 
   useEffect(() => {
@@ -117,8 +66,8 @@ export const HomePage: React.FC = () => {
         }
       })
       .catch(e => {
-        console.warn('Could not load popular routes from API, using default list:', e);
-        setPopularRoutes(DEFAULT_POPULAR_ROUTES);
+        console.warn('Could not load popular routes from API:', e);
+        setPopularRoutes([]);
       });
 
     // 3. Tải khuyến mại thực tế từ Supabase
