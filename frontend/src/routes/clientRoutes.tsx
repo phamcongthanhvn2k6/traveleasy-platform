@@ -12,6 +12,7 @@ import { SchedulePage } from '../pages/customer/schedule/SchedulePage';
 import { PromotionsPage } from '../pages/customer/promotions/PromotionsPage';
 import { ReviewsPage } from '../pages/customer/reviews/ReviewsPage';
 import { TicketScannerPage } from '../pages/customer/scanner/TicketScannerPage';
+import { PartnerCooperationPage } from '../pages/customer/partner-cooperation/PartnerCooperationPage';
 import { NotFoundPage } from '../pages/common/NotFoundPage';
 
 /**
@@ -57,6 +58,11 @@ export const ClientRoutes: React.FC = () => {
       <Route path="/promotions" element={<PromotionsPage />} />
       <Route path="/reviews" element={<ReviewsPage />} />
       <Route path="/scanner" element={<TicketScannerPage />} />
+
+      {/* Hợp tác mở bán vé cùng TravelEasy */}
+      <Route path="/hop-tac-nha-xe" element={<PartnerCooperationPage />} />
+      <Route path="/partner-with-us" element={<PartnerCooperationPage />} />
+      <Route path="/mo-ban-ve" element={<PartnerCooperationPage />} />
 
       {/* Dịch vụ mở rộng khác */}
       <Route path="/flights" element={<NotFoundPage feature="Vé Máy Bay Trực Tuyến" />} />

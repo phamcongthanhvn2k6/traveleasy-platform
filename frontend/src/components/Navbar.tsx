@@ -112,32 +112,26 @@ export const Navbar: React.FC = () => {
               <span>Cổng Đối Tác Nhà Xe</span>
             </Link>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (user?.role === 'OPERATOR') {
-                  navigate('/company/dashboard');
-                } else {
-                  setShowPartnerModal(true);
-                }
-              }}
+            <Link
+              to="/hop-tac-nha-xe"
               style={{
-                background: 'none',
-                border: 'none',
+                textDecoration: 'none',
                 color: '#ffffff',
                 opacity: 0.95,
-                cursor: 'pointer',
                 fontSize: '12.5px',
                 padding: '2px 0',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '5px',
-                fontWeight: 600
+                fontWeight: 600,
+                transition: 'opacity 0.2s',
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.95')}
             >
               <Handshake size={14} />
               <span>Hợp tác mở bán vé</span>
-            </button>
+            </Link>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.9, cursor: 'pointer' }}>
               <Globe size={14} /> 🇻🇳 VN
             </div>

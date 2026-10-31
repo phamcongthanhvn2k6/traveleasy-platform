@@ -92,6 +92,11 @@ export const Footer: React.FC = () => {
               </Link>
             </li>
             <li>
+              <Link to="/hop-tac-nha-xe" style={{ ...linkStyle, color: '#f59e0b', fontWeight: 800 }}>
+                🤝 Hợp tác mở bán vé cùng TravelEasy
+              </Link>
+            </li>
+            <li>
               <Link to="/company/login" style={{ ...linkStyle, color: '#38bdf8', fontWeight: 700 }}>
                 → Cổng đăng nhập đối tác nhà xe
               </Link>
