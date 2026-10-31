@@ -140,99 +140,101 @@ export const AdminRoutesPage: React.FC = () => {
           border: '1px solid #e2e8f0',
           borderRadius: '12px',
           overflow: 'hidden',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
         }}
       >
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>MÃ TUYẾN</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>NHÀ XE KHAI THÁC</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>LỘ TRÌNH (XUẤT PHÁT → ĐẾN)</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>THỜI GIAN CHẠY</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>QUÃNG ĐƯỜNG</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>ĐIỂM ĐÓN/TRẢ</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px', textAlign: 'right' }}>THAO TÁC</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>
-                  Đang tải mạng lưới tuyến đường từ CSDL...
-                </td>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', minWidth: '950px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#f8fafc' }}>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: 700, fontSize: '11.5px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>MÃ TUYẾN</th>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: 700, fontSize: '11.5px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>NHÀ XE KHAI THÁC</th>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: 700, fontSize: '11.5px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>LỘ TRÌNH (XUẤT PHÁT → ĐẾN)</th>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: 700, fontSize: '11.5px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>THỜI GIAN CHẠY</th>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: 700, fontSize: '11.5px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>QUÃNG ĐƯỜNG</th>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: 700, fontSize: '11.5px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>ĐIỂM ĐÓN/TRẢ</th>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: 700, fontSize: '11.5px', letterSpacing: '0.5px', textAlign: 'right', whiteSpace: 'nowrap' }}>THAO TÁC</th>
               </tr>
-            ) : filteredRoutes.length === 0 ? (
-              <tr>
-                <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>
-                  Không tìm thấy tuyến đường nào.
-                </td>
-              </tr>
-            ) : (
-              filteredRoutes.map(r => (
-                <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '14px 18px', fontWeight: 700, color: '#64748b' }}>
-                    #{r.id}
-                  </td>
-                  <td style={{ padding: '14px 18px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Bus size={15} />
-                      </div>
-                      <span style={{ fontWeight: 700, color: '#0f172a' }}>{r.busCompanyName}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '14px 18px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontWeight: 700, color: '#1e3a8a' }}>{r.departureLocation}</span>
-                      <span style={{ color: '#94a3b8' }}>→</span>
-                      <span style={{ fontWeight: 700, color: '#d97706' }}>{r.arrivalLocation}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '14px 18px', color: '#475569' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <Clock size={14} color="#64748b" />
-                      <span>{r.durationHours} giờ</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '14px 18px', color: '#475569' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <Navigation size={14} color="#64748b" />
-                      <span>{r.distanceKm} km</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '14px 18px' }}>
-                    <span style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '3px 8px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 600 }}>
-                      {r.pointsCount || 2} trạm đón/trả
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                    <button
-                      onClick={() => setSelectedRoute(r)}
-                      title="Xem chi tiết lộ trình tuyến đường"
-                      style={{
-                        backgroundColor: '#eff6ff',
-                        color: '#2563eb',
-                        border: '1px solid #bfdbfe',
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <Eye size={13} /> Chi Tiết Lộ Trình
-                    </button>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>
+                    Đang tải mạng lưới tuyến đường từ CSDL...
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : filteredRoutes.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>
+                    Không tìm thấy tuyến đường nào.
+                  </td>
+                </tr>
+              ) : (
+                filteredRoutes.map(r => (
+                  <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '14px 18px', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>
+                      #{r.id}
+                    </td>
+                    <td style={{ padding: '14px 18px', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Bus size={15} />
+                        </div>
+                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{r.busCompanyName}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 18px', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#f8fafc', padding: '4px 10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <span style={{ fontWeight: 700, color: '#1e3a8a' }}>{r.departureLocation}</span>
+                        <span style={{ color: '#94a3b8' }}>→</span>
+                        <span style={{ fontWeight: 700, color: '#d97706' }}>{r.arrivalLocation}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 18px', color: '#475569', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Clock size={14} color="#64748b" />
+                        <span>{r.durationHours} giờ</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 18px', color: '#475569', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Navigation size={14} color="#64748b" />
+                        <span>{r.distanceKm} km</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 18px', whiteSpace: 'nowrap' }}>
+                      <span style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '3px 8px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 600 }}>
+                        {r.pointsCount || 2} trạm đón/trả
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 18px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <button
+                        onClick={() => setSelectedRoute(r)}
+                        title="Xem chi tiết lộ trình tuyến đường"
+                        style={{
+                          backgroundColor: '#eff6ff',
+                          color: '#2563eb',
+                          border: '1px solid #bfdbfe',
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <Eye size={13} /> Chi Tiết Lộ Trình
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal: Xem Chi Tiết Lộ Trình Tuyến Đường */}
