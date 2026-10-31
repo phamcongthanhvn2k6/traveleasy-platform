@@ -17,11 +17,11 @@ spring:
     hikari:
       pool-name: TravelEasyHikariPool
       maximum-pool-size: 15
-      minimum-idle: 2
-      idle-timeout: 30000
-      max-lifetime: 120000
-      connection-timeout: 15000
-      keepalive-time: 25000
+      minimum-idle: 5
+      idle-timeout: 60000
+      max-lifetime: 180000
+      connection-timeout: 20000
+      keepalive-time: 30000
       leak-detection-threshold: 60000
   jpa:
     hibernate:

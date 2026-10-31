@@ -33,6 +33,7 @@ public class BookingService {
     private final SeatRealtimeService seatRealtimeService;
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats", "trips_search"}, allEntries = true)
     public BookingResponse createBooking(CreateBookingRequest request, String userEmail) {
         Trip trip = tripRepository.findById(request.getTripId())
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe"));
@@ -160,6 +161,7 @@ public class BookingService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats", "trips_search"}, allEntries = true)
     public BookingResponse cancelBooking(Long bookingId, String userEmail) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé"));

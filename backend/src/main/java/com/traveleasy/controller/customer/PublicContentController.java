@@ -178,6 +178,7 @@ public class PublicContentController {
         return ApiResponse.success(list);
     }
 
+    @org.springframework.cache.annotation.Cacheable(value = "reviews_summary", key = "#busCompanyId != null ? #busCompanyId : 'ALL'")
     @GetMapping("/reviews/summary")
     @Operation(summary = "Lấy số liệu scorecard tổng quan đánh giá từ Supabase")
     public ApiResponse<ReviewSummaryResponse> getReviewSummary(@RequestParam(required = false) Long busCompanyId) {
@@ -320,6 +321,7 @@ public class PublicContentController {
         return ApiResponse.success(result);
     }
 
+    @org.springframework.cache.annotation.CacheEvict(value = {"reviews_summary", "bus_companies_list"}, allEntries = true)
     @PostMapping("/reviews")
     @Operation(summary = "Khách hàng gửi đánh giá sau khi chuyến xe đã hoàn thành chuyến đi")
     public ApiResponse<?> submitReview(@RequestBody CreateReviewDto request, Principal principal) {
@@ -436,18 +438,21 @@ public class PublicContentController {
     // ==========================================
     // 4. DANH MỤC KHÁC
     // ==========================================
+    @org.springframework.cache.annotation.Cacheable("bus_companies_list")
     @GetMapping("/bus-companies")
     @Operation(summary = "Lấy danh mục đối tác nhà xe từ Supabase")
     public ApiResponse<List<BusCompany>> getBusCompanies() {
         return ApiResponse.success(busCompanyRepository.findAll());
     }
 
+    @org.springframework.cache.annotation.Cacheable("locations_list")
     @GetMapping("/locations")
     @Operation(summary = "Lấy danh mục bến xe và điểm đón trả từ Supabase")
     public ApiResponse<List<Location>> getLocations() {
         return ApiResponse.success(locationRepository.findAll());
     }
 
+    @org.springframework.cache.annotation.Cacheable("cancellation_policies_list")
     @GetMapping("/cancellation-policies")
     @Operation(summary = "Lấy chính sách hủy đổi vé từ Supabase")
     public ApiResponse<List<CancellationPolicy>> getCancellationPolicies() {
@@ -468,14 +473,14 @@ public class PublicContentController {
         List<Route> routes = routeRepository.findAll();
         List<Map<String, Object>> result = new ArrayList<>();
 
-        // TỐI ƯU HÓA: Thay vì duyệt vòng lặp 25 lần gọi qua mạng sang Úc (mất 5-6s),
-        // chỉ gọi 1 truy vấn duy nhất lấy các chuyến sắp tới và gom giá tối thiểu trong RAM!
-        List<Trip> upcomingTrips = tripRepository.searchTrips(null, null, LocalDateTime.now(), null, TripStatus.SCHEDULED);
+        // TỐI ƯU HÓA SIÊU TỐC: Gom giá tối thiểu theo Route ID bằng JPQL GROUP BY trực tiếp trên PostgreSQL (<1ms)
+        List<Object[]> minPrices = tripRepository.findMinPricesPerRouteGrouped(LocalDateTime.now());
         Map<Long, BigDecimal> minPriceMap = new HashMap<>();
-        for (Trip t : upcomingTrips) {
-            if (t.getRoute() != null && t.getRoute().getId() != null && t.getPrice() != null) {
-                Long rId = t.getRoute().getId();
-                minPriceMap.merge(rId, t.getPrice(), (p1, p2) -> p1.compareTo(p2) < 0 ? p1 : p2);
+        for (Object[] row : minPrices) {
+            Long rId = (Long) row[0];
+            BigDecimal minP = (BigDecimal) row[1];
+            if (rId != null && minP != null) {
+                minPriceMap.put(rId, minP);
             }
         }
 

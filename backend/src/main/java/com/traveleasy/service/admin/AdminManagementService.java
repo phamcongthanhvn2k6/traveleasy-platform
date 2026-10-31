@@ -11,8 +11,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -39,6 +42,7 @@ public class AdminManagementService {
     // 1. USER MANAGEMENT
     // ==========================================
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "admin_users", key = "(#role != null ? #role : '') + '_' + (#status != null ? #status : '') + '_' + (#search != null ? #search : '')")
     public List<UserAdminResponse> getAllUsers(String role, String status, String search) {
         return userRepository.findAll().stream()
                 .filter(u -> role == null || role.equalsIgnoreCase("ALL") || u.getRole().name().equalsIgnoreCase(role))
@@ -145,6 +149,7 @@ public class AdminManagementService {
     // 2. BUS COMPANY MANAGEMENT
     // ==========================================
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "admin_bus_companies", key = "(#status != null ? #status : '') + '_' + (#search != null ? #search : '')")
     public List<BusCompanyAdminResponse> getAllBusCompanies(String status, String search) {
         return busCompanyRepository.findAll().stream()
                 .filter(c -> {
@@ -512,6 +517,7 @@ public class AdminManagementService {
     // 10. ROUTE MANAGEMENT (/admin/routes)
     // ==========================================
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "admin_routes", key = "(#search != null ? #search : '') + '_' + (#companyId != null ? #companyId : '')")
     public List<RouteAdminResponse> getAllRoutes(String search, Long companyId) {
         return routeRepository.findAll().stream()
                 .filter(r -> companyId == null || (r.getBusCompany() != null && r.getBusCompany().getId().equals(companyId)))
@@ -524,6 +530,7 @@ public class AdminManagementService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     public RouteAdminResponse createRoute(CreateRouteRequest request) {
         if (request.getDepartureLocation() != null && request.getArrivalLocation() != null &&
                 request.getDepartureLocation().trim().equalsIgnoreCase(request.getArrivalLocation().trim())) {
@@ -548,6 +555,7 @@ public class AdminManagementService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     public RouteAdminResponse updateRoute(Long id, CreateRouteRequest request) {
         Route route = routeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy tuyến đường"));
@@ -561,6 +569,7 @@ public class AdminManagementService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     public void deleteRoute(Long id) {
         Route route = routeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy tuyến đường"));
@@ -572,22 +581,29 @@ public class AdminManagementService {
     }
 
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable("admin_settlements")
     public List<java.util.Map<String, Object>> getAdminSettlements() {
         List<BusCompany> companies = busCompanyRepository.findAll();
         List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
-        List<Booking> allBookings = bookingRepository.findAll();
+
+        // TỐI ƯU HÓA: Truy vấn tổng hợp doanh thu và số vé trực tiếp từ CSDL Postgres thay vì tải toàn bộ bookings
+        List<Object[]> statsList = bookingRepository.getBookingStatsGroupedByCompany();
+        Map<Long, Long> ticketCountMap = new HashMap<>();
+        Map<Long, BigDecimal> grossAmountMap = new HashMap<>();
+        for (Object[] row : statsList) {
+            Long compId = (Long) row[0];
+            Long cnt = (Long) row[1];
+            BigDecimal sum = (BigDecimal) row[2];
+            if (compId != null) {
+                ticketCountMap.put(compId, cnt != null ? cnt : 0L);
+                grossAmountMap.put(compId, sum != null ? sum : BigDecimal.ZERO);
+            }
+        }
 
         for (BusCompany c : companies) {
-            List<Booking> companyBookings = allBookings.stream()
-                    .filter(b -> b.getTrip() != null && b.getTrip().getBusCompany() != null && b.getTrip().getBusCompany().getId().equals(c.getId()))
-                    .collect(Collectors.toList());
+            int count = ticketCountMap.getOrDefault(c.getId(), 0L).intValue();
+            java.math.BigDecimal gross = grossAmountMap.getOrDefault(c.getId(), java.math.BigDecimal.ZERO);
 
-            java.math.BigDecimal gross = companyBookings.stream()
-                    .map(Booking::getTotalAmount)
-                    .filter(java.util.Objects::nonNull)
-                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
-
-            int count = companyBookings.size();
             if (count == 0 && gross.compareTo(java.math.BigDecimal.ZERO) == 0) {
                 gross = java.math.BigDecimal.valueOf(450000000 + (c.getId() * 30000000));
                 count = 1200 + (int)(c.getId() * 100);

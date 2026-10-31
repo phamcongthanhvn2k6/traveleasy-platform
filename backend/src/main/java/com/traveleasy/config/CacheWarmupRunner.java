@@ -20,6 +20,7 @@ public class CacheWarmupRunner {
     private final com.traveleasy.service.admin.AdminManagementService adminManagementService;
     private final com.traveleasy.service.customer.BookingService bookingService;
     private final com.traveleasy.service.company.VehicleService vehicleService;
+    private final com.traveleasy.controller.customer.PublicContentController publicContentController;
 
     @Async
     @EventListener(ApplicationReadyEvent.class)
@@ -28,7 +29,14 @@ public class CacheWarmupRunner {
             log.info("🔥 [CACHE WARMUP] Bắt đầu làm nóng bộ nhớ đệm ngầm cho toàn hệ thống (Customer, Admin & Đối tác)...");
             long t0 = System.currentTimeMillis();
 
-            // 1. Warmup Khách hàng: Toàn bộ chuyến xe & các tuyến trọng điểm
+            // 1. Warmup Trang chủ & Công khai (Banners, Tuyến hot, Khuyến mại, Nhà xe, Bến xe)
+            publicContentController.getActiveBanners();
+            publicContentController.getPopularRoutes();
+            publicContentController.getBusCompanies();
+            publicContentController.getLocations();
+            publicContentController.getPromotions("ALL");
+
+            // 2. Warmup Khách hàng: Toàn bộ chuyến xe & các tuyến trọng điểm
             tripService.searchTrips(null, null, null);
 
             LocalDate today = LocalDate.now();
@@ -38,7 +46,7 @@ public class CacheWarmupRunner {
             tripService.searchTrips("TP. Hồ Chí Minh", "Nha Trang", today);
             tripService.searchTrips("TP. Hồ Chí Minh", "Đà Lạt", tomorrow);
 
-            // 2. Warmup Admin Portal & Partner: Thống kê Dashboard, Chuyến xe toàn sàn, Người dùng, Nhà xe, Tuyến đường, Đơn vé, Đội xe, Quyết toán
+            // 3. Warmup Admin Portal & Partner: Thống kê Dashboard, Chuyến xe toàn sàn, Người dùng, Nhà xe, Tuyến đường, Đơn vé, Đội xe, Quyết toán
             adminTripService.getDashboardStats();
             adminTripService.getAllTrips();
             adminManagementService.getAllUsers(null, null, null);

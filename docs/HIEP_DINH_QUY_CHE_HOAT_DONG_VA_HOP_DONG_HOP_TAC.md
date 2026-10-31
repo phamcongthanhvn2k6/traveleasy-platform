@@ -158,3 +158,4 @@ Bản **Hiệp Định Phân Định Trách Nhiệm & Quy Chế Hoạt Động**
 **TM. HỘI ĐỒNG QUẢN TRỊ & BAN GIÁM ĐỐC**
 **NỀN TẢNG SỐ TRAVELEASY PLATFORM**
 *(Đã ký duyệt và ban hành áp dụng thống nhất trên toàn hệ sinh thái)*
+

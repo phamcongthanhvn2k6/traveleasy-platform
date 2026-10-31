@@ -63,9 +63,9 @@ public class TripService {
                 tripAutomationService.ensureTripsForRouteAndDate(origin, destination, departureDate);
             }
         } else {
-            // Không truyền ngày: Mặc định hiển thị các chuyến mở bán trong 7 ngày tới để tối ưu hiệu năng
+            // Không truyền ngày: Mặc định hiển thị các chuyến mở bán trong 3 ngày tới nếu chưa lọc tuyến (hoặc 7 ngày nếu đã chọn tuyến) để phản hồi siêu tốc
             startTime = now;
-            endTime = now.plusDays(7);
+            endTime = (origin == null && destination == null) ? now.plusDays(3) : now.plusDays(7);
         }
 
         List<Trip> trips = tripRepository.searchTrips(origin, destination, startTime, endTime, TripStatus.SCHEDULED);
