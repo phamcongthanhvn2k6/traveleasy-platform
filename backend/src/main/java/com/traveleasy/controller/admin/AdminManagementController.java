@@ -25,7 +25,6 @@ public class AdminManagementController {
     // ==========================================
     // 1. QUẢN LÝ NGƯỜI DÙNG (/admin/users)
     // ==========================================
-    @Cacheable(value = "admin_users", key = "(#role != null ? #role : '') + '_' + (#status != null ? #status : '') + '_' + (#search != null ? #search : '')")
     @GetMapping("/users")
     @Operation(summary = "Danh sách người dùng (hỗ trợ lọc vai trò, trạng thái, tìm kiếm)")
     public ApiResponse<List<UserAdminResponse>> getUsers(
@@ -67,7 +66,6 @@ public class AdminManagementController {
     // ==========================================
     // 2. QUẢN LÝ ĐỐI TÁC NHÀ XE (/admin/bus-companies)
     // ==========================================
-    @Cacheable(value = "admin_bus_companies", key = "(#status != null ? #status : '') + '_' + (#search != null ? #search : '')")
     @GetMapping("/bus-companies")
     @Operation(summary = "Danh sách nhà xe đối tác (lọc theo tab ALL, PENDING, ACTIVE, SUSPENDED)")
     public ApiResponse<List<BusCompanyAdminResponse>> getBusCompanies(
@@ -277,7 +275,6 @@ public class AdminManagementController {
     // ==========================================
     // 10. QUẢN LÝ TUYẾN ĐƯỜNG (/admin/routes)
     // ==========================================
-    @Cacheable(value = "admin_routes", key = "(#search != null ? #search : '') + '_' + (#companyId != null ? #companyId : '')")
     @GetMapping("/routes")
     @Operation(summary = "Danh sách tuyến đường trên toàn sàn")
     public ApiResponse<List<RouteAdminResponse>> getRoutes(
@@ -313,7 +310,6 @@ public class AdminManagementController {
     // ==========================================
     // 12. ĐỐI SOÁT & QUYẾT TOÁN (/admin/settlements)
     // ==========================================
-    @Cacheable("admin_settlements")
     @GetMapping("/settlements")
     @Operation(summary = "Lấy dữ liệu đối soát toàn sàn từ CSDL đơn đặt vé Supabase")
     public ApiResponse<List<java.util.Map<String, Object>>> getSettlements() {
