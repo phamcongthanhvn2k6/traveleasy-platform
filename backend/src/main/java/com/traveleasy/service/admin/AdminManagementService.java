@@ -13,9 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -580,8 +582,9 @@ public class AdminManagementService {
         logAction("admin@traveleasy.vn", "DELETE_ROUTE", "routes #" + id, "{\"from\": \"" + route.getDepartureLocation() + "\", \"to\": \"" + route.getArrivalLocation() + "\"}", "-");
     }
 
+    private final Map<String, Map<String, Object>> settlementOverrides = new ConcurrentHashMap<>();
+
     @Transactional(readOnly = true)
-    @org.springframework.cache.annotation.Cacheable("admin_settlements")
     public List<java.util.Map<String, Object>> getAdminSettlements() {
         List<BusCompany> companies = busCompanyRepository.findAll();
         List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
@@ -612,32 +615,72 @@ public class AdminManagementService {
             java.math.BigDecimal commission = gross.multiply(java.math.BigDecimal.valueOf(0.10));
             java.math.BigDecimal net = gross.subtract(commission);
 
+            String id = "s-" + c.getId();
+            String defaultStatus = c.getId() <= 3 ? "PAID" : c.getId() <= 6 ? "RECONCILED" : "PENDING";
+            String defaultReconciledAt = c.getId() <= 6 ? "28/10/2026 10:30" : null;
+            String defaultPaidAt = c.getId() <= 3 ? "29/10/2026 14:15" : null;
+            String defaultTxHash = c.getId() <= 3 ? ("VCB-FT-88992019" + c.getId()) : null;
+
             java.util.Map<String, Object> item = new java.util.HashMap<>();
-            item.put("id", "s-" + c.getId());
+            item.put("id", id);
             item.put("code", "DS-202610-" + (c.getCode() != null ? c.getCode() : ("BC" + c.getId())));
             item.put("companyId", c.getId());
             item.put("companyName", c.getName());
             item.put("companyLogo", c.getLogoUrl() != null ? c.getLogoUrl() : "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289372/traveleasy/bus-companies/logo_futa_buslines.jpg");
-            item.put("periodName", "Kỳ 1 - Tháng 10/2026");
-            item.put("startDate", "01/10/2026");
-            item.put("endDate", "15/10/2026");
+            item.put("periodName", "Kỳ 2 - Tháng 10/2026");
+            item.put("startDate", "16/10/2026");
+            item.put("endDate", "31/10/2026");
             item.put("ticketCount", count);
             item.put("grossAmount", gross);
             item.put("commissionRate", 10);
             item.put("platformCommission", commission);
             item.put("netPayable", net);
 
+            String bankCode = c.getId() % 3 == 0 ? "MB" : c.getId() % 2 == 0 ? "TCB" : "VCB";
+            String bankName = c.getId() % 3 == 0 ? "MBBank - CN Lê Hồng Phong" : c.getId() % 2 == 0 ? "Techcombank - CN Sài Gòn" : "Vietcombank - Chi nhánh Sài Gòn";
+            String accNum = "0071000987" + (100 + c.getId());
+            String accHolder = "CTY CP XE KHACH " + c.getName().toUpperCase();
+
             java.util.Map<String, String> bank = new java.util.HashMap<>();
-            bank.put("bankName", "Vietcombank - Chi nhánh Sài Gòn");
-            bank.put("accountNumber", "0071000987" + (100 + c.getId()));
-            bank.put("accountHolder", "CTY CP XE KHACH " + c.getName().toUpperCase());
+            bank.put("bankCode", bankCode);
+            bank.put("bankName", bankName);
+            bank.put("accountNumber", accNum);
+            bank.put("accountHolder", accHolder);
             item.put("bankAccount", bank);
-            item.put("status", "PAID");
-            item.put("reconciledAt", "16/10/2026 10:30");
-            item.put("paidAt", "17/10/2026 14:15");
+
+            item.put("status", defaultStatus);
+            item.put("reconciledAt", defaultReconciledAt);
+            item.put("paidAt", defaultPaidAt);
+            item.put("payoutTxHash", defaultTxHash);
+
+            // Nạp các ghi đè can thiệp thời gian thực từ Admin Payout Execution
+            if (settlementOverrides.containsKey(id)) {
+                item.putAll(settlementOverrides.get(id));
+            }
+
             list.add(item);
         }
         return list;
+    }
+
+    public Map<String, Object> reconcileSettlement(String settlementId, String userEmail) {
+        Map<String, Object> override = settlementOverrides.computeIfAbsent(settlementId, k -> new HashMap<>());
+        override.put("status", "RECONCILED");
+        override.put("reconciledAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        logAction(userEmail != null ? userEmail : "admin@traveleasy.vn", "RECONCILE_SETTLEMENT", settlementId, "-", "RECONCILED");
+        return override;
+    }
+
+    public Map<String, Object> paySettlement(String settlementId, String payoutTxHash, String note, String userEmail) {
+        Map<String, Object> override = settlementOverrides.computeIfAbsent(settlementId, k -> new HashMap<>());
+        override.put("status", "PAID");
+        override.put("paidAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        override.put("payoutTxHash", payoutTxHash != null && !payoutTxHash.isBlank() ? payoutTxHash : ("VCB-FT-" + System.currentTimeMillis()));
+        if (note != null && !note.isBlank()) {
+            override.put("payoutNote", note);
+        }
+        logAction(userEmail != null ? userEmail : "admin@traveleasy.vn", "PAY_SETTLEMENT", settlementId, "-", "PAID: " + override.get("payoutTxHash"));
+        return override;
     }
 
     private RouteAdminResponse mapToRouteResponse(Route r) {

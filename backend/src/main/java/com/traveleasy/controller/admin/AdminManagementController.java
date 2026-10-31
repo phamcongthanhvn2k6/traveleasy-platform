@@ -10,9 +10,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -314,6 +317,26 @@ public class AdminManagementController {
     @Operation(summary = "Lấy dữ liệu đối soát toàn sàn từ CSDL đơn đặt vé Supabase")
     public ApiResponse<List<java.util.Map<String, Object>>> getSettlements() {
         return ApiResponse.success(adminManagementService.getAdminSettlements());
+    }
+
+    @PatchMapping("/settlements/{id}/reconcile")
+    @Operation(summary = "Admin xác nhận chốt số liệu đối soát doanh thu với nhà xe")
+    public ApiResponse<Map<String, Object>> reconcileSettlement(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : "admin@traveleasy.vn";
+        return ApiResponse.success("Đã xác nhận chốt đối soát thành công", adminManagementService.reconcileSettlement(id, email));
+    }
+
+    @PatchMapping("/settlements/{id}/pay")
+    @Operation(summary = "Admin giải ngân tiền / xác nhận chuyển khoản Payout qua VietQR cho đối tác")
+    public ApiResponse<Map<String, Object>> paySettlement(
+            @PathVariable String id,
+            @RequestParam(required = false) String payoutTxHash,
+            @RequestParam(required = false) String note,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : "admin@traveleasy.vn";
+        return ApiResponse.success("Đã xác nhận giải ngân thành công", adminManagementService.paySettlement(id, payoutTxHash, note, email));
     }
 }
 

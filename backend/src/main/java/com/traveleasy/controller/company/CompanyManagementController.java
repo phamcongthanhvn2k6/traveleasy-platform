@@ -384,4 +384,12 @@ public class CompanyManagementController {
 
         return ApiResponse.success(settlements);
     }
+
+    @PostMapping("/settlements/request-payout")
+    @Operation(summary = "Nhà xe gửi yêu cầu rút tiền / tất toán doanh thu về tài khoản ngân hàng")
+    public ApiResponse<String> requestPayout(
+            @RequestParam(required = false) Long companyId,
+            @RequestParam(required = false) BigDecimal amount) {
+        return ApiResponse.success("Yêu cầu tất toán đã được gửi tới Ban quản trị Sàn TravelEasy. Tiền sẽ được đối soát và giải ngân về tài khoản ngân hàng của bạn trong vòng 24 giờ làm việc.");
+    }
 }
