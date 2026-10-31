@@ -21,7 +21,10 @@ public class PartnerRegisterRequest {
     private String phone;
 
     private String email;
+    private String taxCode;
+    private String businessAddress;
     private String routes;
     private String fleetSize;
     private String notes;
 }
+

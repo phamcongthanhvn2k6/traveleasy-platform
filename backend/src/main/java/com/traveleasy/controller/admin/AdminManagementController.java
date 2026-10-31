@@ -109,6 +109,15 @@ public class AdminManagementController {
         return ApiResponse.success("Cập nhật trạng thái nhà xe thành công", adminManagementService.updateCompanyStatus(id, status));
     }
 
+    @CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)
+    @PostMapping("/bus-companies/{id}/reject")
+    @Operation(summary = "Từ chối hồ sơ đăng ký hợp tác của đối tác nhà xe kèm lý do")
+    public ApiResponse<BusCompanyAdminResponse> rejectCompany(
+            @PathVariable Long id,
+            @RequestParam(required = false) String reason) {
+        return ApiResponse.success("Đã từ chối hồ sơ đăng ký đối tác", adminManagementService.rejectCompany(id, reason));
+    }
+
     // ==========================================
     // 3. DANH MỤC LOẠI GHẾ & MẪU SƠ ĐỒ GHẾ (/admin/seat-catalog/*)
     // ==========================================

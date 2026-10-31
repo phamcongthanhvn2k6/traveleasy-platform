@@ -12,7 +12,6 @@ import {
   Star,
   Shield,
   Clock,
-  Store,
   Search,
   Bell,
   ChevronDown,
@@ -257,31 +256,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
 
         {/* Bottom Pinned Button */}
-        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <Link
-            to="/company/dashboard"
-            style={{
-              width: '100%',
-              backgroundColor: '#151e34',
-              border: '1px solid #1e293b',
-              borderRadius: '8px',
-              padding: '9px 12px',
-              color: '#94a3b8',
-              fontSize: '12px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              boxSizing: 'border-box',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <Store size={15} color="#94a3b8" />
-            <span>Sang TravelEasy Partner</span>
-          </Link>
-
+        <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <button
             onClick={handleLogout}
             style={{

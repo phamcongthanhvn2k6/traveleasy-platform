@@ -86,9 +86,11 @@ export const PartnerCooperationPage: React.FC = () => {
   // =========================================================================
   const [formData, setFormData] = useState({
     companyName: '',
+    taxCode: '',
     contactName: '',
     phone: '',
     email: '',
+    businessAddress: '',
     routes: '',
     fleetSize: '6 - 20 xe',
     notes: '',
@@ -128,9 +130,11 @@ export const PartnerCooperationPage: React.FC = () => {
     try {
       const payload = {
         companyName: formData.companyName.trim(),
+        taxCode: formData.taxCode?.trim() || undefined,
         contactName: formData.contactName.trim(),
         phone: formData.phone.trim(),
         email: formData.email?.trim() || undefined,
+        businessAddress: formData.businessAddress?.trim() || undefined,
         routes: formData.routes?.trim() || undefined,
         fleetSize: formData.fleetSize,
       };
@@ -1846,6 +1850,53 @@ export const PartnerCooperationPage: React.FC = () => {
                     placeholder="Ví dụ: dieuhanh@namcuongbus.vn"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '13px 16px',
+                      borderRadius: '12px',
+                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+                      color: isDark ? '#f8fafc' : '#0f172a',
+                      fontSize: '14.5px',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Mã Số Thuế & Trụ Sở Doanh Nghiệp */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, marginBottom: '6px', color: isDark ? '#e2e8f0' : '#334155' }}>
+                    Mã Số Thuế / Số Giấy Phép ĐKKD
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: 0312345678"
+                    value={formData.taxCode}
+                    onChange={(e) => setFormData({ ...formData, taxCode: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '13px 16px',
+                      borderRadius: '12px',
+                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+                      color: isDark ? '#f8fafc' : '#0f172a',
+                      fontSize: '14.5px',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, marginBottom: '6px', color: isDark ? '#e2e8f0' : '#334155' }}>
+                    Địa Chỉ Trụ Sở Đăng Ký Kinh Doanh
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: 123 Lê Duẩn, Q. Hoàn Kiếm, Hà Nội"
+                    value={formData.businessAddress}
+                    onChange={(e) => setFormData({ ...formData, businessAddress: e.target.value })}
                     style={{
                       width: '100%',
                       padding: '13px 16px',

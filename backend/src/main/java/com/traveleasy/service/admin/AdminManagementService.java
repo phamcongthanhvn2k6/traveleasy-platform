@@ -169,11 +169,49 @@ public class AdminManagementService {
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
 
         String before = "{\"status\": \"" + company.getStatus() + "\"}";
-        company.setStatus(status.toUpperCase());
+        String normalizedStatus = status.equalsIgnoreCase("ACTIVE") ? "ACTIVE" :
+                                 (status.equalsIgnoreCase("PENDING") || status.equalsIgnoreCase("PENDING_APPROVAL")) ? "PENDING_APPROVAL" :
+                                 status.equalsIgnoreCase("REJECTED") ? "REJECTED" : "SUSPENDED";
+
+        company.setStatus(normalizedStatus);
         BusCompany saved = busCompanyRepository.save(company);
 
-        logAction("admin@traveleasy.vn", status.equalsIgnoreCase("ACTIVE") ? "APPROVE_COMPANY" : "SUSPEND_COMPANY",
-                "bus_companies #" + id, before, "{\"status\": \"" + status + "\"}");
+        // NẾU PHÊ DUYỆT ĐƯA LÊN SÀN (ACTIVE): TỰ ĐỘNG KHỞI TẠO TÀI KHOẢN ĐỐI TÁC (ROLE_OPERATOR)
+        if ("ACTIVE".equals(normalizedStatus) && company.getEmail() != null && !company.getEmail().isBlank()) {
+            String opEmail = company.getEmail().trim().toLowerCase();
+            if (!userRepository.existsByEmail(opEmail)) {
+                User operator = User.builder()
+                        .email(opEmail)
+                        .password(passwordEncoder.encode("123456789@"))
+                        .fullName("Điều Hành " + company.getName())
+                        .phone(company.getHotline())
+                        .role(Role.OPERATOR)
+                        .status("ACTIVE")
+                        .build();
+                userRepository.save(operator);
+                logAction("admin@traveleasy.vn", "PROVISION_OPERATOR_ACCOUNT", "users #" + operator.getEmail(), "-",
+                        "{\"companyId\": " + company.getId() + ", \"companyName\": \"" + company.getName() + "\"}");
+                log.info("✅ Đã tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác: {} ({})", company.getName(), opEmail);
+            }
+        }
+
+        logAction("admin@traveleasy.vn", normalizedStatus.equals("ACTIVE") ? "APPROVE_COMPANY" : "UPDATE_COMPANY_STATUS",
+                "bus_companies #" + id, before, "{\"status\": \"" + normalizedStatus + "\"}");
+        return mapToCompanyResponse(saved);
+    }
+
+    @Transactional
+    public BusCompanyAdminResponse rejectCompany(Long id, String reason) {
+        BusCompany company = busCompanyRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
+
+        String before = "{\"status\": \"" + company.getStatus() + "\"}";
+        company.setStatus("REJECTED");
+        BusCompany saved = busCompanyRepository.save(company);
+
+        logAction("admin@traveleasy.vn", "REJECT_PARTNER_APPLICATION", "bus_companies #" + id, before,
+                "{\"status\": \"REJECTED\", \"reason\": \"" + (reason != null ? reason : "Chưa đáp ứng đủ quy chuẩn vận tải sàn") + "\"}");
+        log.info("🚫 Đã từ chối hồ sơ đối tác: {} với lý do: {}", company.getName(), reason);
         return mapToCompanyResponse(saved);
     }
 
@@ -222,7 +260,8 @@ public class AdminManagementService {
     private BusCompanyAdminResponse mapToCompanyResponse(BusCompany c) {
         String status = c.getStatus() != null ? c.getStatus() : "ACTIVE";
         String statusLabel = switch (status) {
-            case "PENDING_APPROVAL" -> "Chờ duyệt";
+            case "PENDING_APPROVAL", "PENDING" -> "Chờ duyệt";
+            case "REJECTED" -> "Bị từ chối";
             case "SUSPENDED" -> "Tạm ngưng";
             default -> "Hoạt động";
         };

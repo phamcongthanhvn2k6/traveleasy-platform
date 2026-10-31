@@ -556,6 +556,10 @@ public class PublicContentController {
         if (request.getContactName() != null && !request.getContactName().isBlank()) {
             addressBuilder.append("Đại diện: ").append(request.getContactName().trim());
         }
+        if (request.getTaxCode() != null && !request.getTaxCode().isBlank()) {
+            if (addressBuilder.length() > 0) addressBuilder.append(" | ");
+            addressBuilder.append("MST: ").append(request.getTaxCode().trim());
+        }
         if (request.getFleetSize() != null && !request.getFleetSize().isBlank()) {
             if (addressBuilder.length() > 0) addressBuilder.append(" | ");
             addressBuilder.append("Quy mô: ").append(request.getFleetSize().trim());
@@ -563,6 +567,10 @@ public class PublicContentController {
         if (request.getRoutes() != null && !request.getRoutes().isBlank()) {
             if (addressBuilder.length() > 0) addressBuilder.append(" | ");
             addressBuilder.append("Tuyến: ").append(request.getRoutes().trim());
+        }
+        if (request.getBusinessAddress() != null && !request.getBusinessAddress().isBlank()) {
+            if (addressBuilder.length() > 0) addressBuilder.append(" | ");
+            addressBuilder.append("Trụ sở: ").append(request.getBusinessAddress().trim());
         }
         String address = addressBuilder.length() > 0 ? addressBuilder.toString() : "Việt Nam";
 
