@@ -39,11 +39,12 @@ public class AdminTripController {
     }
 
     @PatchMapping("/bookings/{id}/status")
-    @Operation(summary = "Cập nhật trạng thái đơn đặt vé (CONFIRMED, CANCELLED, PENDING)")
+    @Operation(summary = "Cập nhật trạng thái đơn đặt vé với quy trình can thiệp an toàn")
     public ApiResponse<BookingResponse> updateBookingStatus(
             @PathVariable Long id,
-            @RequestParam BookingStatus status) {
-        return ApiResponse.success("Cập nhật trạng thái đơn vé thành công", bookingService.updateBookingStatus(id, status));
+            @RequestParam BookingStatus status,
+            @RequestParam(required = false) String reason) {
+        return ApiResponse.success("Cập nhật trạng thái đơn vé thành công", bookingService.updateBookingStatusWithReason(id, status, reason));
     }
 
     @PostMapping("/trips")

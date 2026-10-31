@@ -390,13 +390,101 @@ public class BookingService {
     }
 
     @Transactional
-    @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats"}, allEntries = true)
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats", "trips_search"}, allEntries = true)
     public BookingResponse updateBookingStatus(Long id, BookingStatus status) {
+        return updateBookingStatusWithReason(id, status, null);
+    }
+
+    @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats", "trips_search"}, allEntries = true)
+    public BookingResponse updateBookingStatusWithReason(Long id, BookingStatus targetStatus, String reason) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé"));
-        booking.setStatus(status);
+
+        BookingStatus oldStatus = booking.getStatus();
+        if (oldStatus == targetStatus) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé đã ở trạng thái " + targetStatus);
+        }
+
+        Trip trip = booking.getTrip();
         List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
-        return mapToBookingResponse(bookingRepository.save(booking), tickets);
+        List<String> seatCodes = new ArrayList<>();
+        if (tickets != null && !tickets.isEmpty()) {
+            for (Ticket t : tickets) {
+                if (t.getSeatNumber() != null && !t.getSeatNumber().trim().isEmpty()) {
+                    seatCodes.add(t.getSeatNumber().trim());
+                }
+            }
+        }
+        if (seatCodes.isEmpty() && booking.getSeatNumbers() != null) {
+            String[] parts = booking.getSeatNumbers().split("[,;\\s]+");
+            for (String p : parts) {
+                if (!p.trim().isEmpty()) seatCodes.add(p.trim());
+            }
+        }
+
+        if (targetStatus == BookingStatus.CANCELLED) {
+            // Hủy đơn an toàn:
+            // 1. Cập nhật vé con sang CANCELLED
+            if (tickets != null) {
+                for (Ticket t : tickets) {
+                    t.setStatus(TicketStatus.CANCELLED);
+                }
+                ticketRepository.saveAll(tickets);
+            }
+            // 2. Trả ghế về AVAILABLE
+            if (trip != null && !seatCodes.isEmpty()) {
+                List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(trip.getId(), seatCodes);
+                for (TripSeat seat : seats) {
+                    seat.setStatus(SeatStatus.AVAILABLE);
+                }
+                tripSeatRepository.saveAll(seats);
+
+                // Cập nhật số ghế trống của chuyến
+                trip.setAvailableSeats(trip.getAvailableSeats() + seats.size());
+                tripRepository.save(trip);
+
+                // Broadcast WebSocket ghế đã được trả
+                seatRealtimeService.broadcastReleased(trip.getId(), seatCodes);
+            }
+        } else if (targetStatus == BookingStatus.CONFIRMED) {
+            // Xác nhận đơn an toàn:
+            if (trip != null && !seatCodes.isEmpty()) {
+                List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(trip.getId(), seatCodes);
+                List<String> takenSeats = new ArrayList<>();
+                for (TripSeat s : seats) {
+                    if (s.getStatus() == SeatStatus.BOOKED && oldStatus == BookingStatus.CANCELLED) {
+                        takenSeats.add(s.getSeatCode());
+                    }
+                }
+                if (!takenSeats.isEmpty()) {
+                    throw new AppException(ErrorCode.VALIDATION_ERROR,
+                            "Không thể xác nhận lại đơn vì ghế [" + String.join(", ", takenSeats) + "] đã được hành khách khác đặt!");
+                }
+
+                for (TripSeat s : seats) {
+                    s.setStatus(SeatStatus.BOOKED);
+                }
+                tripSeatRepository.saveAll(seats);
+
+                if (oldStatus == BookingStatus.CANCELLED) {
+                    trip.setAvailableSeats(Math.max(0, trip.getAvailableSeats() - seats.size()));
+                    tripRepository.save(trip);
+                }
+                seatRealtimeService.broadcastBooked(trip.getId(), seatCodes);
+            }
+
+            if (tickets != null) {
+                for (Ticket t : tickets) {
+                    t.setStatus(TicketStatus.ISSUED);
+                }
+                ticketRepository.saveAll(tickets);
+            }
+        }
+
+        booking.setStatus(targetStatus);
+        Booking saved = bookingRepository.save(booking);
+        return mapToBookingResponse(saved, tickets != null ? tickets : Collections.emptyList());
     }
 
     public BookingResponse mapToBookingResponse(Booking b, List<Ticket> tickets) {
