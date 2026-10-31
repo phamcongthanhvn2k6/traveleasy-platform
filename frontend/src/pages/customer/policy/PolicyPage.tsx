@@ -12,7 +12,8 @@ import {
   ChevronRight,
   CheckCircle2,
   AlertTriangle,
-  Bus
+  Bus,
+  Scale
 } from 'lucide-react';
 
 export const PolicyPage: React.FC = () => {
@@ -93,6 +94,30 @@ export const PolicyPage: React.FC = () => {
             >
               <Award size={17} color={currentTab === 'guarantee' ? '#2563eb' : '#64748b'} />
               <span>Cam kết giữ chỗ & Hoàn 150%</span>
+            </button>
+
+            <button
+              onClick={() => setTab('partner-sla')}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '12px 14px',
+                borderRadius: '10px',
+                border: 'none',
+                backgroundColor: currentTab === 'partner-sla' ? '#eff6ff' : 'transparent',
+                color: currentTab === 'partner-sla' ? '#1d4ed8' : '#334155',
+                fontWeight: currentTab === 'partner-sla' ? 700 : 500,
+                fontSize: '13.5px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.15s ease',
+                marginBottom: '4px',
+              }}
+            >
+              <Scale size={17} color={currentTab === 'partner-sla' ? '#2563eb' : '#64748b'} />
+              <span>Hiệp định trách nhiệm đối tác</span>
             </button>
 
             <button
@@ -279,6 +304,116 @@ export const PolicyPage: React.FC = () => {
                   <li>Nhà xe tự ý chuyển đổi từ xe Giường nằm / VIP Cabin sang xe ghế ngồi thông thường.</li>
                   <li>Khách hàng có mặt đúng giờ hẹn đón nhưng nhà xe bỏ khách và không có xe trung chuyển thay thế.</li>
                 </ul>
+              </div>
+            )}
+
+            {/* TAB: PARTNER SLA & HIỆP ĐỊNH TRÁCH NHIỆM */}
+            {currentTab === 'partner-sla' && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#2563eb', backgroundColor: '#eff6ff', padding: '4px 10px', borderRadius: '6px', border: '1px solid #bfdbfe', letterSpacing: '0.5px' }}>
+                    VĂN BẢN PHÁP LÝ CHÍNH THỨC
+                  </span>
+                </div>
+                <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', margin: '0 0 8px 0', letterSpacing: '-0.4px' }}>
+                  Hiệp Định Phân Định Trách Nhiệm Pháp Lý &amp; Quy Chế Vận Hành Đối Tác
+                </h2>
+                <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.6, marginBottom: '22px' }}>
+                  Quy chế chuẩn mực thiết lập ranh giới quyền hạn, nghĩa vụ bồi thường và cơ chế bảo vệ giao dịch giữa <strong>Sàn TravelEasy</strong>, <strong>Doanh nghiệp Vận tải (Nhà xe)</strong> và <strong>Hành khách</strong>.
+                </p>
+
+                {/* 3 Pillars Summary Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '26px' }}>
+                  <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '16px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#1d4ed8', textTransform: 'uppercase', marginBottom: '4px' }}>
+                      BÊN A: SÀN TRAVELEASY
+                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>
+                      Nền Tảng Công Nghệ &amp; Escrow
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#475569', lineHeight: 1.5 }}>
+                      Bảo đảm máy chủ 99.5%, tạm giữ tiền vé an toàn, đối soát định kỳ, phân xử khiếu nại. Tuyệt đối không can thiệp giá vé/giờ chạy của đối tác.
+                    </div>
+                  </div>
+
+                  <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '16px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#15803d', textTransform: 'uppercase', marginBottom: '4px' }}>
+                      BÊN B: NHÀ XE ĐỐI TÁC
+                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>
+                      Đơn Vị Vận Tải Trực Tiếp
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#475569', lineHeight: 1.5 }}>
+                      Sở hữu phương tiện, đăng kiểm, bảo hiểm bắt buộc, bố trí tài xế đủ điều kiện, niêm yết giá trung thực và chịu trách nhiệm 100% khi xe lăn bánh.
+                    </div>
+                  </div>
+
+                  <div style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '16px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#b45309', textTransform: 'uppercase', marginBottom: '4px' }}>
+                      BÊN C: HÀNH KHÁCH
+                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>
+                      Người Sử Dụng Dịch Vụ
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#475569', lineHeight: 1.5 }}>
+                      Cung cấp đúng số điện thoại nhận vé, có mặt trước giờ chạy 30-60 phút, tuân thủ an toàn hành lý và quy định văn minh xe khách.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detailed Legal Articles */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', fontSize: '13.5px', color: '#334155', lineHeight: 1.7 }}>
+                  <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
+                      Điều 1: Phân Định Ranh Giới Nghiệp Vụ &amp; Trách Nhiệm Dân Sự
+                    </h3>
+                    <p style={{ margin: '0 0 8px 0' }}>
+                      1.1. Sàn TravelEasy là nền tảng thương mại điện tử trung gian, cung cấp giải pháp bán vé trực tuyến và thanh toán bảo đảm (Escrow). TravelEasy không sở hữu xe khách và không phải là người vận chuyển trực tiếp theo Bộ luật Dân sự.
+                    </p>
+                    <p style={{ margin: 0 }}>
+                      1.2. Mọi hợp đồng vận chuyển hành khách được xác lập trực tiếp giữa Hành khách và Nhà xe đối tác ngay khi mã vé điện tử được phát hành hợp lệ trên hệ thống.
+                    </p>
+                  </div>
+
+                  <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
+                      Điều 2: Quy Chuẩn Xử Lý Sự Cố &amp; Bồi Thường Thiệt Hại
+                    </h3>
+                    <p style={{ margin: '0 0 8px 0' }}>
+                      <strong>2.1. Sự cố xe hỏng, trễ giờ, hủy chuyến đột xuất:</strong> Nhà xe đối tác chịu trách nhiệm 100%. Nhà xe phải điều xe thay thế trong vòng 60-120 phút. Nếu không thể thay thế, nhà xe phải hoàn trả 100% tiền vé và bồi thường theo Quy chế vận tải.
+                    </p>
+                    <p style={{ margin: '0 0 8px 0' }}>
+                      <strong>2.2. Sự cố bán trùng ghế (Double Booking):</strong> Nếu lỗi do nhà xe tự bán vé tại quầy trùng với khách online, nhà xe phải ưu tiên chỗ cho khách online hoặc nâng hạng xe miễn phí; nếu khách không đồng ý, nhà xe bồi thường 150% giá vé theo cam kết giữ chỗ.
+                    </p>
+                    <p style={{ margin: 0 }}>
+                      <strong>2.3. Sự cố lỗi thanh toán / Cổng Napas VietQR:</strong> Sàn TravelEasy chịu trách nhiệm tra soát và kích hoạt vé hoặc hoàn tiền trong vòng tối đa 15 phút.
+                    </p>
+                  </div>
+
+                  <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
+                      Điều 3: Quản Lý Dòng Tiền &amp; Đối Soát Hoa Hồng Sàn
+                    </h3>
+                    <p style={{ margin: '0 0 8px 0' }}>
+                      3.1. Phí dịch vụ sàn TravelEasy áp dụng cố định từ <strong>5% đến 8%</strong> trên tổng doanh thu vé bán thành công qua nền tảng.
+                    </p>
+                    <p style={{ margin: 0 }}>
+                      3.2. Kỳ đối soát tài chính thực hiện định kỳ vào <strong>ngày 15</strong> và <strong>ngày cuối cùng mỗi tháng</strong>. Doanh thu sau khi khấu trừ hoa hồng được chuyển khoản trực tiếp vào tài khoản ngân hàng của Doanh nghiệp vận tải trong vòng 02 ngày làm việc.
+                    </p>
+                  </div>
+
+                  <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '18px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
+                      Điều 4: Nghiêm Cấm Hành Vi Chèn Ép Giá &amp; Chế Tài Vi Phạm
+                    </h3>
+                    <p style={{ margin: '0 0 8px 0' }}>
+                      4.1. Nghiêm cấm Nhà xe tự ý thu thêm phụ phí ngoài giá vé đã niêm yết trên sàn trong các đợt cao điểm Lễ, Tết.
+                    </p>
+                    <p style={{ margin: 0 }}>
+                      4.2. Nhà xe vi phạm sẽ bị tạm khóa mở bán 07 ngày (`SUSPENDED`) ở lần vi phạm đầu tiên, và chấm dứt vĩnh viễn hợp đồng hợp tác nếu tái phạm, đồng thời chuyển hồ sơ sang Sở Giao thông Vận tải xử lý theo quy định pháp luật.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 

@@ -2018,8 +2018,12 @@ export const PartnerCooperationPage: React.FC = () => {
                 )}
               </button>
 
-              <div style={{ textAlign: 'center', fontSize: '12.5px', color: isDark ? '#94a3b8' : '#64748b' }}>
-                🔒 TravelEasy cam kết bảo mật 100% dữ liệu danh tính và thông tin kinh doanh của nhà xe.
+              <div style={{ textAlign: 'center', fontSize: '12.5px', color: isDark ? '#94a3b8' : '#64748b', lineHeight: 1.6 }}>
+                🔒 Bằng việc gửi hồ sơ đăng ký, Nhà xe xác nhận đã đọc và chấp thuận{' '}
+                <Link to="/policy?tab=partner-sla" target="_blank" style={{ color: isDark ? '#38bdf8' : '#2563eb', fontWeight: 600, textDecoration: 'underline' }}>
+                  Hiệp Định Phân Định Trách Nhiệm &amp; Quy Chế Vận Hành Đối Tác
+                </Link>{' '}
+                của Sàn TravelEasy. Dữ liệu kinh doanh được cam kết bảo mật 100%.
               </div>
             </form>
           )}
