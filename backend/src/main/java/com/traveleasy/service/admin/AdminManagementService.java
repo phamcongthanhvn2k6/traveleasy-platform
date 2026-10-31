@@ -517,8 +517,61 @@ public class AdminManagementService {
     }
 
     // ==========================================
-    // 9. AUDIT LOGS
+    // 9. AUDIT LOGS & SYSTEM DEFENSE SHIELD
     // ==========================================
+    private final Map<String, Object> systemDefenseState = new ConcurrentHashMap<>(Map.of(
+            "mode", "NORMAL",
+            "isLockdown", false,
+            "incidentType", "NONE",
+            "reason", "Hệ thống hoạt động bình thường, các cơ chế an ninh mạng đang giám sát 24/7.",
+            "publicNotice", "",
+            "disclaimerActive", false,
+            "disclaimerText", "Điều khoản Bất khả kháng & Miễn trừ trách nhiệm bồi thường theo Điều 14 Quy chế Sàn TravelEasy.",
+            "activatedAt", "",
+            "activatedBy", "System Sentinel"
+    ));
+
+    public Map<String, Object> getSystemDefenseStatus() {
+        return new HashMap<>(systemDefenseState);
+    }
+
+    @Transactional
+    public Map<String, Object> updateSystemDefenseStatus(Map<String, Object> payload, String adminEmail) {
+        String nextMode = String.valueOf(payload.getOrDefault("mode", "NORMAL")).toUpperCase();
+        String incidentType = String.valueOf(payload.getOrDefault("incidentType", "OTHER"));
+        String reason = String.valueOf(payload.getOrDefault("reason", ""));
+        String publicNotice = String.valueOf(payload.getOrDefault("publicNotice", ""));
+        boolean disclaimerActive = Boolean.parseBoolean(String.valueOf(payload.getOrDefault("disclaimerActive", "true")));
+
+        String prevMode = String.valueOf(systemDefenseState.getOrDefault("mode", "NORMAL"));
+        String nowStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+
+        systemDefenseState.put("mode", nextMode);
+        systemDefenseState.put("isLockdown", "LOCKDOWN".equals(nextMode));
+        systemDefenseState.put("incidentType", incidentType);
+        systemDefenseState.put("reason", reason);
+        systemDefenseState.put("publicNotice", publicNotice);
+        systemDefenseState.put("disclaimerActive", disclaimerActive);
+        systemDefenseState.put("activatedAt", nowStr);
+        systemDefenseState.put("activatedBy", adminEmail != null ? adminEmail : "admin@traveleasy.vn");
+
+        // Ghi Audit Log pháp lý bất biến
+        String actionName = "LOCKDOWN".equals(nextMode)
+                ? "TRIGGER_EMERGENCY_LOCKDOWN"
+                : "MAINTENANCE".equals(nextMode)
+                ? "TRIGGER_MAINTENANCE_MODE"
+                : "RESTORE_SYSTEM_NORMAL";
+
+        String target = "PLATFORM_SECURITY_SHIELD";
+        String before = "{\"mode\": \"" + prevMode + "\"}";
+        String after = String.format("{\"mode\": \"%s\", \"incident\": \"%s\", \"disclaimerActive\": %b, \"reason\": \"%s\"}",
+                nextMode, incidentType, disclaimerActive, reason.replace("\"", "\\\""));
+
+        logAction(adminEmail, actionName, target, before, after);
+
+        return new HashMap<>(systemDefenseState);
+    }
+
     @Transactional(readOnly = true)
     public List<AuditLog> getAllAuditLogs(String action) {
         if (action != null && !action.equalsIgnoreCase("ALL")) {

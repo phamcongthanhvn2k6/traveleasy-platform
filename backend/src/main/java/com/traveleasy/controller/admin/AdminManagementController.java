@@ -281,6 +281,22 @@ public class AdminManagementController {
         return ApiResponse.success(adminManagementService.getAllAuditLogs(action));
     }
 
+    @GetMapping("/system/defense-status")
+    @Operation(summary = "Lấy trạng thái cơ chế phòng vệ an ninh mạng & bảo trì khẩn cấp của sàn")
+    public ApiResponse<Map<String, Object>> getSystemDefenseStatus() {
+        return ApiResponse.success(adminManagementService.getSystemDefenseStatus());
+    }
+
+    @PostMapping("/system/defense-status")
+    @Operation(summary = "Kích hoạt hoặc khôi phục trạng thái phòng vệ an ninh / bảo trì khẩn cấp")
+    public ApiResponse<Map<String, Object>> updateSystemDefenseStatus(
+            @RequestBody Map<String, Object> payload,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String adminEmail = userDetails != null ? userDetails.getUsername() : "admin@traveleasy.vn";
+        return ApiResponse.success("Cập nhật trạng thái phòng vệ an ninh hệ thống thành công",
+                adminManagementService.updateSystemDefenseStatus(payload, adminEmail));
+    }
+
     // ==========================================
     // 10. QUẢN LÝ TUYẾN ĐƯỜNG (/admin/routes)
     // ==========================================
