@@ -20,6 +20,8 @@ import {
 import { toast } from '../context/ToastContext';
 import { AuthUser } from '../types';
 import { useTheme } from '../context/ThemeContext';
+import { ThemeToggle } from './ThemeToggle';
+import { NotificationDropdown } from './NotificationDropdown';
 
 interface CompanyLayoutProps {
   children: React.ReactNode;
@@ -290,29 +292,9 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
           </div>
 
           {/* Right Header: Theme Toggle, Company Selector, Notification & User Profile */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             {/* Theme Toggle Button */}
-            <button
-              onClick={toggleTheme}
-              title={isDark ? 'Chuyển sang Chế độ Sáng' : 'Chuyển sang Chế độ Tối'}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                borderRadius: '20px',
-                border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-                backgroundColor: isDark ? '#1e293b' : '#f8fafc',
-                color: isDark ? '#facc15' : '#475569',
-                fontSize: '12px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {isDark ? <Sun size={15} color="#facc15" /> : <Moon size={15} color="#64748b" />}
-              <span>{isDark ? 'Sáng' : 'Tối'}</span>
-            </button>
+            <ThemeToggle showLabel={false} />
 
             {/* Current Company Switcher */}
             <div
@@ -333,21 +315,8 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
               <ChevronDown size={13} color={isDark ? '#38bdf8' : '#0284c7'} />
             </div>
 
-            {/* Bell Icon */}
-            <div style={{ position: 'relative', cursor: 'pointer', display: 'flex' }}>
-              <Bell size={18} color={isDark ? '#94a3b8' : '#64748b'} />
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '-1px',
-                  right: '-1px',
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: '#ef4444'
-                }}
-              />
-            </div>
+            {/* Notification Center Popover */}
+            <NotificationDropdown />
 
             {/* Profile */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>

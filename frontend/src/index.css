@@ -182,9 +182,38 @@ html.dark textarea::placeholder {
 
 /* Header Navbar */
 html.dark header {
-  background-color: #111827 !important;
+  background-color: #0f172a !important;
   border-bottom: 1px solid #1e293b !important;
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Tables in Dark Mode */
+html.dark table {
+  background-color: #111827 !important;
+  color: #f1f5f9 !important;
+}
+html.dark thead tr {
+  background-color: #0f172a !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+html.dark th {
+  background-color: #0f172a !important;
+  color: #94a3b8 !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+html.dark tr {
+  border-bottom-color: #1e293b !important;
+}
+html.dark tbody tr:hover {
+  background-color: #1e293b !important;
+}
+html.dark [style*="background-color: #fafafa"],
+html.dark [style*="background-color:#fafafa"] {
+  background-color: #0f172a !important;
+}
+html.dark [style*="background-color: #fff"],
+html.dark [style*="background-color:#fff"] {
+  background-color: #111827 !important;
 }
 
 /* Dropdown Menu & Modals */
@@ -249,5 +278,16 @@ input, select {
   to {
     transform: translateX(0);
     opacity: 1;
+  }
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
