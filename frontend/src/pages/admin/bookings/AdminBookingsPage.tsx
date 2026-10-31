@@ -44,6 +44,7 @@ export const AdminBookingsPage: React.FC = () => {
         setBookings(res.data.data);
       }
     } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load bookings from API:', err);
       toast.error('Không thể tải danh sách đơn đặt vé từ CSDL', 'Lỗi Kết Nối');
     } finally {

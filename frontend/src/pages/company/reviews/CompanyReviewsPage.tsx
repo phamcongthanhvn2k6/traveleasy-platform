@@ -43,7 +43,8 @@ export const CompanyReviewsPage: React.FC = () => {
         }));
         setReviews(mapped);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load reviews from Supabase:', err);
       toast.error('Không thể tải đánh giá từ CSDL', 'Lỗi CSDL');
     } finally {

@@ -44,7 +44,8 @@ export const CompanySettlementsPage: React.FC = () => {
       if (res.data?.data && Array.isArray(res.data.data)) {
         setSettlements(res.data.data);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load settlements from Supabase:', err);
       toast.error('Không thể tải dữ liệu quyết toán từ CSDL', 'Lỗi CSDL');
     } finally {

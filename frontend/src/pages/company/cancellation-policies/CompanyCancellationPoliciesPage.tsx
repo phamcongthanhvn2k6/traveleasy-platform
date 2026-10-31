@@ -45,7 +45,8 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
         }));
         setPolicies(mapped);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load cancellation policies from Supabase:', err);
       toast.error('Không thể tải chính sách hủy vé từ CSDL', 'Lỗi CSDL');
     } finally {

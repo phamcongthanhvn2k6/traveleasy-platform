@@ -34,6 +34,7 @@ export const CompanyDashboardPage: React.FC = () => {
         setStats(res.data.data);
       }
     } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load company dashboard stats:', err);
       toast.error('Không thể tải thống kê nhà xe từ CSDL', 'Lỗi Kết Nối');
     } finally {

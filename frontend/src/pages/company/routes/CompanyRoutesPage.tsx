@@ -44,6 +44,7 @@ export const CompanyRoutesPage: React.FC = () => {
         setRoutes(res.data.data);
       }
     } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load company routes:', err);
       toast.error('Không thể tải danh sách tuyến đường từ CSDL', 'Lỗi CSDL');
     } finally {

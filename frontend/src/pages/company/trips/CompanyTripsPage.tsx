@@ -47,7 +47,8 @@ export const CompanyTripsPage: React.FC = () => {
         }));
         setTrips(mapped);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load trips from Supabase:', err);
       toast.error('Không thể tải danh sách chuyến xe từ CSDL', 'Lỗi CSDL');
     } finally {

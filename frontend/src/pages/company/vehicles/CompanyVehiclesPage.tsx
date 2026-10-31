@@ -67,7 +67,8 @@ export const CompanyVehiclesPage: React.FC = () => {
         }));
         setVehicles(list);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('API /company/vehicles error:', err);
       toast.error('Không thể tải danh sách phương tiện từ CSDL', 'Lỗi CSDL');
     } finally {

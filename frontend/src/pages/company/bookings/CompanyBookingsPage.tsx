@@ -55,7 +55,8 @@ export const CompanyBookingsPage: React.FC = () => {
         }));
         setBookings(mapped);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load bookings from Supabase:', err);
       toast.error('Không thể tải danh sách đơn vé từ CSDL', 'Lỗi CSDL');
     } finally {

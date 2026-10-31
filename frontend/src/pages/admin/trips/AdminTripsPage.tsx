@@ -69,6 +69,7 @@ export const AdminTripsPage: React.FC = () => {
         setTrips(res.data.data);
       }
     } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load trips from API:', err);
       toast.error('Không thể tải danh sách chuyến xe từ CSDL', 'Lỗi Kết Nối');
     } finally {
