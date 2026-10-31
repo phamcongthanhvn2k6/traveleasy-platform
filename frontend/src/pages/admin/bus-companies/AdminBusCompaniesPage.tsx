@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bus, Eye, Ban, Check, Plus, RefreshCw, X, Edit2, Trash2 } from 'lucide-react';
+import { Bus, Eye, Ban, Check, Plus, RefreshCw, X, Edit2, Trash2, FileText, Phone, Mail, MapPin, Building2, User } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 
@@ -36,6 +36,9 @@ export const AdminBusCompaniesPage: React.FC = () => {
   const [editHotline, setEditHotline] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editAddress, setEditAddress] = useState('');
+
+  // Modal View Dossier
+  const [viewingCompany, setViewingCompany] = useState<BusCompanyItem | null>(null);
 
   const fetchCompanies = async () => {
     try {
@@ -172,7 +175,9 @@ export const AdminBusCompaniesPage: React.FC = () => {
         })
       );
 
-      if (willSuspend) {
+      if (target.status === 'PENDING') {
+        toast.success(`Đã phê duyệt và đưa nhà xe "${target.name}" lên sàn TravelEasy thành công!`, 'Phê Duyệt Thành Công');
+      } else if (willSuspend) {
         toast.warning(`Đã tạm ngưng hoạt động nhà xe "${target.name}"!`, 'Tạm Ngưng Nhà Xe');
       } else {
         toast.success(`Đã kích hoạt nhà xe "${target.name}" hoạt động trở lại!`, 'Kích Hoạt Nhà Xe');
@@ -373,6 +378,27 @@ export const AdminBusCompaniesPage: React.FC = () => {
                     <td style={{ padding: '14px 18px', color: '#64748b' }}>{c.createdAt}</td>
                     <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        {/* Nút Xem Hồ Sơ Đăng Ký */}
+                        <button
+                          onClick={() => setViewingCompany(c)}
+                          title="Xem hồ sơ đăng ký đối tác"
+                          style={{
+                            backgroundColor: '#f8fafc',
+                            color: '#475569',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '6px',
+                            padding: '5px 10px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Eye size={13} /> Xem
+                        </button>
+
                         {/* Nút Sửa */}
                         <button
                           onClick={() => openEditModal(c)}
@@ -394,8 +420,29 @@ export const AdminBusCompaniesPage: React.FC = () => {
                           <Edit2 size={13} /> Sửa
                         </button>
 
-                        {/* Nút Tạm ngưng / Kích hoạt */}
-                        {c.status === 'ACTIVE' ? (
+                        {/* Nút Phê Duyệt / Tạm ngưng */}
+                        {c.status === 'PENDING' ? (
+                          <button
+                            onClick={() => toggleCompanyStatus(c.id)}
+                            title="Phê duyệt đối tác nhà xe và kích hoạt lên sàn"
+                            style={{
+                              backgroundColor: '#10b981',
+                              color: '#ffffff',
+                              border: '1px solid #059669',
+                              borderRadius: '6px',
+                              padding: '5px 12px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.35)',
+                            }}
+                          >
+                            <Check size={13} /> Phê Duyệt
+                          </button>
+                        ) : c.status === 'ACTIVE' ? (
                           <button
                             onClick={() => toggleCompanyStatus(c.id)}
                             title="Tạm ngưng nhà xe"
@@ -418,7 +465,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
                         ) : (
                           <button
                             onClick={() => toggleCompanyStatus(c.id)}
-                            title="Kích hoạt nhà xe"
+                            title="Mở lại nhà xe"
                             style={{
                               backgroundColor: '#ecfdf5',
                               color: '#059669',
@@ -433,7 +480,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
                               gap: '4px',
                             }}
                           >
-                            <Check size={13} /> Duyệt
+                            <Check size={13} /> Mở lại
                           </button>
                         )}
 
@@ -723,6 +770,225 @@ export const AdminBusCompaniesPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modal: Xem Hồ Sơ Đăng Ký Đối Tác */}
+      {viewingCompany && (() => {
+        const addr = viewingCompany.address || '';
+        let rep = '';
+        let fleet = '';
+        let routes = '';
+        if (addr.includes(' | ')) {
+          addr.split(' | ').forEach((p) => {
+            if (p.startsWith('Đại diện: ')) rep = p.replace('Đại diện: ', '');
+            else if (p.startsWith('Quy mô: ')) fleet = p.replace('Quy mô: ', '');
+            else if (p.startsWith('Tuyến: ')) routes = p.replace('Tuyến: ', '');
+          });
+        }
+
+        const isPending = viewingCompany.status === 'PENDING';
+
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(15, 23, 42, 0.65)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '20px',
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '16px',
+                width: '100%',
+                maxWidth: '560px',
+                boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  padding: '18px 24px',
+                  borderBottom: '1px solid #e2e8f0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  backgroundColor: '#f8fafc',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '10px',
+                      backgroundColor: isPending ? '#fef3c7' : '#eff6ff',
+                      color: isPending ? '#d97706' : '#2563eb',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
+                      Hồ Sơ Đăng Ký Đối Tác Nhà Xe
+                    </h3>
+                    <div style={{ fontSize: '12px', color: '#64748b' }}>
+                      Mã đối tác: <strong style={{ color: '#0f172a' }}>{viewingCompany.code || 'Chưa cấp'}</strong> • ID #{viewingCompany.id}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setViewingCompany(null)}
+                  style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div style={{ padding: '24px' }}>
+                {/* Header card with name and badge */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '16px',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                    marginBottom: '20px',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                      ĐƠN VỊ VẬN TẢI
+                    </div>
+                    <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>
+                      {viewingCompany.name}
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      backgroundColor: isPending ? '#fef3c7' : viewingCompany.status === 'ACTIVE' ? '#dcfce7' : '#fee2e2',
+                      color: isPending ? '#b45309' : viewingCompany.status === 'ACTIVE' ? '#15803d' : '#b91c1c',
+                      border: `1px solid ${isPending ? '#fde68a' : viewingCompany.status === 'ACTIVE' ? '#bbf7d0' : '#fecaca'}`,
+                    }}
+                  >
+                    {isPending ? '⏳ Chờ Quản Trị Phê Duyệt' : viewingCompany.statusLabel}
+                  </span>
+                </div>
+
+                {/* Details grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+                  <div style={{ padding: '12px', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                      <User size={13} /> NGƯỜI ĐẠI DIỆN / QUẢN LÝ
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b' }}>
+                      {rep || 'Không cung cấp'}
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '12px', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                      <Phone size={13} /> SỐ ĐIỆN THOẠI LIÊN HỆ
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#2563eb' }}>
+                      {viewingCompany.phone || 'Chưa cập nhật'}
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '12px', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                      <Mail size={13} /> EMAIL DOANH NGHIỆP
+                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155', wordBreak: 'break-all' }}>
+                      {viewingCompany.email || 'Không cung cấp'}
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '12px', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                      <Building2 size={13} /> QUY MÔ ĐỘI XE
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                      {fleet || 'Chưa xác định'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Routes / Address */}
+                <div style={{ padding: '14px', border: '1px solid #e2e8f0', borderRadius: '10px', backgroundColor: '#fcfcfd', marginBottom: '20px' }}>
+                  <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                    <MapPin size={13} /> {routes ? 'TUYẾN ĐƯỜNG ĐĂNG KÝ KHAI THÁC' : 'ĐỊA CHỈ TRỤ SỞ / ĐĂNG KÝ'}
+                  </div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', lineHeight: 1.5 }}>
+                    {routes || viewingCompany.address || 'Đang cập nhật'}
+                  </div>
+                </div>
+
+                {/* Footer Buttons */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setViewingCompany(null)}
+                    style={{
+                      padding: '9px 18px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      backgroundColor: '#f1f5f9',
+                      color: '#475569',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Đóng
+                  </button>
+
+                  {isPending && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const targetId = viewingCompany.id;
+                        setViewingCompany(null);
+                        await toggleCompanyStatus(targetId);
+                      }}
+                      style={{
+                        padding: '9px 20px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        backgroundColor: '#10b981',
+                        color: '#ffffff',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 6px rgba(16, 185, 129, 0.35)',
+                      }}
+                    >
+                      <Check size={16} /> Phê Duyệt & Mở Hoạt Động
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

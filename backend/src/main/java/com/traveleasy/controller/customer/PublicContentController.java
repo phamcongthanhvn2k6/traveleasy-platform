@@ -1,6 +1,7 @@
 package com.traveleasy.controller.customer;
 
 import com.traveleasy.common.dto.ApiResponse;
+import com.traveleasy.dto.admin.PartnerRegisterRequest;
 import com.traveleasy.entity.*;
 import com.traveleasy.repository.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +32,7 @@ public class PublicContentController {
     private final UserRepository userRepository;
     private final RouteRepository routeRepository;
     private final TripRepository tripRepository;
+    private final AuditLogRepository auditLogRepository;
 
     // ==========================================
     // 1. BANNERS
@@ -518,6 +520,79 @@ public class PublicContentController {
             result.add(map);
         }
         return ApiResponse.success(result);
+    }
+
+    // ==========================================
+    // 7. PARTNER REGISTRATION (HỢP TÁC MỞ BÁN VÉ)
+    // ==========================================
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)
+    @PostMapping("/partners/register")
+    @Operation(summary = "Đăng ký đối tác mở bán vé trực tuyến (Public Form)")
+    public ApiResponse<?> registerPartner(@RequestBody PartnerRegisterRequest request) {
+        if (request.getCompanyName() == null || request.getCompanyName().isBlank()) {
+            return ApiResponse.error("Vui lòng nhập Tên Nhà Xe / Đơn Vị Vận Tải!");
+        }
+        if (request.getContactName() == null || request.getContactName().isBlank()) {
+            return ApiResponse.error("Vui lòng nhập Họ Và Tên Người Đại Diện!");
+        }
+        if (request.getPhone() == null || request.getPhone().isBlank()) {
+            return ApiResponse.error("Vui lòng nhập Số Điện Thoại Liên Hệ!");
+        }
+
+        String name = request.getCompanyName().trim();
+        if (busCompanyRepository.existsByName(name)) {
+            return ApiResponse.error("Nhà xe '" + name + "' đã tồn tại trong danh mục hệ thống. Vui lòng kiểm tra lại hoặc liên hệ tổng đài!");
+        }
+
+        String rand = String.format("%04d", new Random().nextInt(10000));
+        String code = "NX-" + rand;
+
+        String hotline = request.getPhone().trim();
+        String email = (request.getEmail() != null && !request.getEmail().isBlank())
+                ? request.getEmail().trim()
+                : ("partner." + rand + "@traveleasy.vn");
+
+        StringBuilder addressBuilder = new StringBuilder();
+        if (request.getContactName() != null && !request.getContactName().isBlank()) {
+            addressBuilder.append("Đại diện: ").append(request.getContactName().trim());
+        }
+        if (request.getFleetSize() != null && !request.getFleetSize().isBlank()) {
+            if (addressBuilder.length() > 0) addressBuilder.append(" | ");
+            addressBuilder.append("Quy mô: ").append(request.getFleetSize().trim());
+        }
+        if (request.getRoutes() != null && !request.getRoutes().isBlank()) {
+            if (addressBuilder.length() > 0) addressBuilder.append(" | ");
+            addressBuilder.append("Tuyến: ").append(request.getRoutes().trim());
+        }
+        String address = addressBuilder.length() > 0 ? addressBuilder.toString() : "Việt Nam";
+
+        BusCompany company = BusCompany.builder()
+                .name(name)
+                .code(code)
+                .hotline(hotline)
+                .email(email)
+                .address(address)
+                .logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=120")
+                .averageRating(BigDecimal.valueOf(5.0))
+                .status("PENDING_APPROVAL")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        BusCompany saved = busCompanyRepository.save(company);
+
+        try {
+            AuditLog auditLog = AuditLog.builder()
+                    .userEmail(email)
+                    .action("PARTNER_REGISTRATION")
+                    .target("bus_companies #" + saved.getId())
+                    .beforeState("-")
+                    .afterState("{\"name\": \"" + saved.getName() + "\", \"status\": \"PENDING_APPROVAL\"}")
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            auditLogRepository.save(auditLog);
+        } catch (Exception ignored) {}
+
+        return ApiResponse.success("Đăng ký hồ sơ đối tác nhà xe thành công! Hồ sơ đã được chuyển đến ban quản trị hệ thống để xét duyệt.", saved);
     }
 
     // ==========================================

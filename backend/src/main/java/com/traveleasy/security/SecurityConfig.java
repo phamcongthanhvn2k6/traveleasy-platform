@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/banners/**").permitAll()
                         .requestMatchers("/api/v1/reviews/**").permitAll()
                         .requestMatchers("/api/v1/bus-companies/**").permitAll()
+                        .requestMatchers("/api/v1/partners/**").permitAll()
                         .requestMatchers("/api/v1/promotions/**").permitAll()
                         .requestMatchers("/api/v1/upload/**").permitAll()
                         .requestMatchers("/api/v1/ai/**").permitAll()

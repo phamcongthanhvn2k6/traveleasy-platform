@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import { useTheme } from '../../../context/ThemeContext';
+import api from '../../../services/api';
 
 export const PartnerCooperationPage: React.FC = () => {
   const { isDark } = useTheme();
@@ -114,7 +115,7 @@ export const PartnerCooperationPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.companyName.trim() || !formData.contactName.trim() || !formData.phone.trim()) {
@@ -124,14 +125,33 @@ export const PartnerCooperationPage: React.FC = () => {
 
     setSubmitting(true);
 
-    setTimeout(() => {
+    try {
+      const payload = {
+        companyName: formData.companyName.trim(),
+        contactName: formData.contactName.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email?.trim() || undefined,
+        routes: formData.routes?.trim() || undefined,
+        fleetSize: formData.fleetSize,
+      };
+
+      const res = await api.post('/partners/register', payload);
+
+      if (res.data?.success) {
+        setSubmitted(true);
+        toast.success(
+          `Chúc mừng nhà xe ${formData.companyName}! Hồ sơ đăng ký đã được gửi thành công vào hệ thống để Ban Quản Trị phê duyệt.`,
+          'Đăng Ký Thành Công'
+        );
+      } else {
+        toast.error(res.data?.message || 'Không thể gửi đăng ký đối tác!', 'Đăng Ký Thất Bại');
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Lỗi khi gửi thông tin đăng ký';
+      toast.error(msg, 'Đăng Ký Thất Bại');
+    } finally {
       setSubmitting(false);
-      setSubmitted(true);
-      toast.success(
-        `Chúc mừng nhà xe ${formData.companyName}! Yêu cầu hợp tác đã được ghi nhận. Chuyên viên vùng của TravelEasy sẽ liên hệ qua SĐT ${formData.phone} trong vòng 24 giờ.`,
-        'Đăng Ký Thành Công'
-      );
-    }, 900);
+    }
   };
 
   // =========================================================================

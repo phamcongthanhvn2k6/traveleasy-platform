@@ -147,7 +147,14 @@ public class AdminManagementService {
     @Transactional(readOnly = true)
     public List<BusCompanyAdminResponse> getAllBusCompanies(String status, String search) {
         return busCompanyRepository.findAll().stream()
-                .filter(c -> status == null || status.equalsIgnoreCase("ALL") || (c.getStatus() != null && c.getStatus().equalsIgnoreCase(status)))
+                .filter(c -> {
+                    if (status == null || status.equalsIgnoreCase("ALL")) return true;
+                    if (c.getStatus() == null) return false;
+                    if (c.getStatus().equalsIgnoreCase(status)) return true;
+                    if (status.equalsIgnoreCase("PENDING") && c.getStatus().equalsIgnoreCase("PENDING_APPROVAL")) return true;
+                    if (status.equalsIgnoreCase("PENDING_APPROVAL") && c.getStatus().equalsIgnoreCase("PENDING")) return true;
+                    return false;
+                })
                 .filter(c -> search == null || search.isBlank() ||
                         c.getName().toLowerCase().contains(search.toLowerCase()) ||
                         (c.getEmail() != null && c.getEmail().toLowerCase().contains(search.toLowerCase())) ||
