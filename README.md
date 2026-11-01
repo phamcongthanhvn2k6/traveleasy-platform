@@ -112,11 +112,17 @@
    - Cách 4: Khởi chạy thủ công với MySQL vật lý
    - 8.5 Quy chuẩn & Lưu ý sống còn cho thành viên khi code Backend & Kết nối Database
    - Danh sách tài khoản thử nghiệm có sẵn
-9. [QUY CHUẨN LÀM VIỆC VỚI GIT & QUY TRÌNH PHÂN NHÁNH (GIT WORKFLOW)](#9-quy-chuẩn-làm-việc-với-git--quy-trình-phân-nhánh-git-workflow)
-   - 9.1 Mô hình phân nhánh chuẩn (Branching Strategy)
-   - 9.2 Quy chuẩn đặt tên commit (Conventional Commits)
-   - 9.3 Quy trình 7 bước hàng ngày của thành viên nhóm
-   - 9.4 Cấu hình Branch Protection Rules trên GitHub
+9. [QUY CHUẨN LÀM VIỆC VỚI GIT & BỘ NGUYÊN TẮC PHÂN NHÁNH - COMMIT CHUẨN DOANH NGHIỆP](#9-quy-chuẩn-làm-việc-với-git--bộ-nguyên-tắc-phân-nhánh---commit-chuẩn-doanh-nghiệp)
+   - 9.1 Triết lý & Bộ nguyên tắc cốt lõi (Core Git Principles)
+   - 9.2 Mô hình phân nhánh chuẩn Enterprise Git Flow (Branching Strategy)
+   - 9.3 Quy chuẩn đặt tên nhánh (Branch Naming Convention & Matrix Phân Công Thành Viên)
+   - 9.4 Quy chuẩn đặt tên commit (Conventional Commits 1.0.0 & Bảng Tra Cứu Scope)
+   - 9.5 Bảng nguyên tắc Do's and Don'ts khi thao tác Git
+   - 9.6 Quy trình 7 bước làm việc hàng ngày của lập trình viên (Daily Workflow Standard)
+   - 9.7 Mẫu Pull Request chuẩn & Bộ tiêu chí đánh giá Code Review (PR Quality Gate)
+   - 9.8 Cấu hình Branch Protection Rules trên GitHub & Quản lý Bảo mật Secret Zero-Leakage
+   - 9.9 Cẩm nang xử lý xung đột mã nguồn chuyên sâu (Deep Merge Conflict Resolution)
+   - 9.10 Bảng tra cứu nhanh lệnh Git thường dùng (Git Daily Cheat Sheet)
 10. [KỊCH BẢN DEMO BẢO VỆ TỐT NGHIỆP 100/100 ĐIỂM (15 PHÚT)](#10-kịch-bản-demo-bảo-vệ-tốt-nghiệp-100100-điểm-15-phút)
 11. [BÁO CÁO NGHIỆM THU BACKEND API (30/30 PASS) & HỆ THỐNG MINH CHỨNG GIAO DIỆN (UI EVIDENCE GALLERY)](#11-báo-cáo-nghiệm-thu-backend-api-3030-pass--hệ-thống-minh-chứng-giao-diện-ui-evidence-gallery)
     - 11.1 Ma trận nghiệm thu 30 API Backend cốt lõi (100% Pass)
@@ -1453,37 +1459,339 @@ docker-compose logs -f
 
 ---
 
-## 9. QUY CHUẨN LÀM VIỆC VỚI GIT & QUY TRÌNH PHÂN NHÁNH (GIT WORKFLOW)
+## 9. QUY CHUẨN LÀM VIỆC VỚI GIT & BỘ NGUYÊN TẮC PHÂN NHÁNH - COMMIT CHUẨN DOANH NGHIỆP
 
-Dựa trên tài liệu chuẩn `docs/GIT_WORKFLOW.md`:
+> **Mục tiêu chiến lược:**  
+> Hệ thống TravelEasy Platform áp dụng chuẩn quản lý phiên bản mã nguồn phân tán (Distributed Version Control System - DVCS) theo mô hình **Git Flow chuẩn doanh nghiệp**. Toàn bộ 5 thành viên thực tập trong dự án phải tuân thủ nghiêm ngặt 100% quy chuẩn này nhằm:  
+> 1. Đạt điểm tối đa tiêu chí đánh giá: *"Lịch sử hoạt động nhóm rõ ràng, commit có ý nghĩa, phân nhánh chuẩn chỉ và vận hành CI/CD pipeline ổn định"*.  
+> 2. Bảo vệ nhánh `main` luôn ở trạng thái sẵn sàng nghiệm thu (Production-Ready) không bao giờ bị gián đoạn.  
+> 3. Triệt tiêu 100% tình trạng ghi đè mã nguồn (Code Overwriting) và tối ưu hóa thời gian xử lý xung đột (Merge Conflict Resolution).
 
-### 9.1 Mô hình phân nhánh chuẩn (Branching Strategy)
-* **Nhánh `main` (Production)**: Chứa mã nguồn ổn định nhất, đã được kiểm thử kỹ lưỡng. **Bật Branch Protection**: Cấm push trực tiếp, bắt buộc phải tạo Pull Request (PR) từ `dev` và có ít nhất 1 phê duyệt (Approve) từ Nhóm trưởng.
-* **Nhánh `dev` (Tích hợp)**: Nhánh làm việc chung của cả nhóm. Mọi PR tính năng từ các nhánh con đều merge vào đây.
-* **Nhánh `feature/*`**: Nhánh tính năng cá nhân của từng thành viên, tách ra từ `dev`:
-  * Thành: `feature/company-portal-operations` (Cổng Đối Tác Nhà Xe & Hệ thống lõi)
-  * Phát: `feature/admin-portal-management` (Cổng Quản Trị Sàn Tổng Admin)
-  * Phong: `feature/customer-search-seatmap` (Tìm kiếm, Sơ đồ ghế 2 tầng & Khóa Concurrency)
-  * Đức: `feature/customer-checkout-booking` (Đặt vé Checkout, Thanh toán đa kênh & Quản lý vé)
-  * Cường: `feature/customer-lookup-qr-scanner` (Trang chủ, Tra cứu Offline, Quét mã QR & Reviews)
-  *(Phan Trung Kiên: Miễn thực tập OJT theo quy định đào tạo)*
+---
 
-### 9.2 Quy chuẩn đặt tên commit (Conventional Commits)
-$$	ext{type}(	ext{scope}): 	ext{mô tả ngắn gọn bằng tiếng Việt}$$
-* `feat`: Thêm tính năng / API mới (VD: `feat(booking): hoàn thiện API đặt vé COD`).
-* `fix`: Sửa lỗi (VD: `fix(concurrency): khắc phục race condition trừ ghế`).
-* `docs`: Cập nhật tài liệu (VD: `docs(readme): chuẩn hóa tài liệu master`).
-* `test`: Viết thêm kiểm thử (VD: `test(auth): bổ sung 5 test case login`).
-* `ci`: Cập nhật pipeline GitHub Actions.
+### 9.1 Triết lý & Bộ nguyên tắc cốt lõi (Core Git Principles)
 
-### 9.3 Quy trình 7 bước hàng ngày của thành viên nhóm
-1. Kéo mã nguồn mới nhất từ `dev`: `git checkout dev && git pull origin dev`
-2. Tạo nhánh tính năng: `git checkout -b feature/<tên-nhánh>`
-3. Viết code và commit thường xuyên theo chuẩn Conventional Commits.
-4. Kéo cập nhật mới nhất từ `dev` về nhánh của mình: `git checkout dev && git pull origin dev && git checkout feature/... && git merge dev`
-5. Đẩy nhánh lên GitHub: `git push -u origin feature/...`
-6. Tạo Pull Request vào nhánh `dev` trên giao diện GitHub.
-7. **Nhóm trưởng Phạm Công Thành** review code và duyệt merge.
+1. **Production-First (`main` là bất khả xâm phạm)**: Nhánh `main` phản ánh mã nguồn thực thi chính xác trên môi trường bàn giao nghiệm thu. Tuyệt đối không commit hoặc push thử nghiệm trực tiếp lên `main`.
+2. **Nguyên tử hóa Commit (Atomic Commits)**: Mỗi commit chỉ thực hiện một thay đổi duy nhất, hoàn chỉnh và có thể độc lập hoàn tác (`git revert`) mà không gây ảnh hưởng hay làm gãy các module khác.
+3. **Trung tâm tích hợp duy nhất (`dev`)**: Toàn bộ các nhánh tính năng (`feature/*`), nhánh sửa lỗi (`bugfix/*`) đều phải tích hợp, kiểm thử liên kết và chạy thành công test suite trên `dev` trước khi mở Release PR lên `main`.
+4. **Không rò rỉ bí mật (Zero-Secret Leakage)**: Tuyệt đối không bao giờ commit các thông tin nhạy cảm (JWT secret, DB password, API keys, file `.env`) vào Git. Luôn duy trì file `.gitignore` nghiêm ngặt và cung cấp file mẫu `.env.example`.
+5. **Lịch sử mã nguồn sạch (Clean Linear History)**: Khuyến khích pull có đồng bộ cập nhật (`git pull origin dev`) và giải quyết xung đột tại máy cá nhân trước khi mở Pull Request để giữ sơ đồ commit rõ ràng, minh bạch.
+
+---
+
+### 9.2 Mô hình phân nhánh chuẩn Enterprise Git Flow (Branching Strategy)
+
+Dự án áp dụng mô hình phân cấp 2 tầng nhánh chính (Protected Branches) và 3 tầng nhánh nghiệp vụ ngắn hạn (Working Branches):
+
+```mermaid
+gitGraph
+   commit id: "init-repo" tag: "v1.0.0"
+   branch dev
+   checkout dev
+   commit id: "dev-setup"
+   branch feature/thanh-company-tenant-isolation
+   checkout feature/thanh-company-tenant-isolation
+   commit id: "feat(company): tenant isolation guard"
+   commit id: "feat(policy): scope bus cancellation rules"
+   checkout dev
+   merge feature/thanh-company-tenant-isolation id: "pr-101-approved"
+   branch feature/phong-customer-pessimistic-lock
+   checkout feature/phong-customer-pessimistic-lock
+   commit id: "feat(seatmap): 2-deck svg seat layout"
+   commit id: "feat(concurrency): lock trip seat on booking"
+   checkout dev
+   merge feature/phong-customer-pessimistic-lock id: "pr-102-approved"
+   branch feature/duc-customer-vietqr-vnpay
+   checkout feature/duc-customer-vietqr-vnpay
+   commit id: "feat(payment): vietqr dynamic payload"
+   checkout dev
+   merge feature/duc-customer-vietqr-vnpay id: "pr-103-approved"
+   checkout main
+   merge dev tag: "v1.1.0-release" id: "release-v1.1.0"
+```
+
+#### Chi tiết vai trò của từng nhánh:
+1. **Nhánh `main` (Production Branch - BẢO VỆ CẤP ĐỘ CAO NHẤT)**:
+   * Chứa phiên bản sản phẩm ổn định nhất phục vụ Hội đồng giám khảo chấm thi và người dùng thực tế.
+   * **Branch Protection**: Khóa cứng quyền push trực tiếp (`Deny Direct Push`). Chỉ tiếp nhận mã nguồn thông qua Pull Request từ `dev`.
+   * Mỗi lần merge vào `main` bắt buộc gắn Tag phiên bản theo Semantic Versioning (`v1.0.0`, `v1.1.0`).
+2. **Nhánh `dev` (Sprint Integration Branch - TRUNG TÂM TÍCH HỢP)**:
+   * Nhánh làm việc chung của 5 thành viên thực tập.
+   * Toàn bộ các Pull Request tính năng hoàn thành đều phải được merge vào đây sau khi vượt qua vòng Code Review của Team Lead.
+   * GitHub Actions tự động kích hoạt kiểm thử Unit Test Backend (`./gradlew test`) và Build Frontend (`npm run build`) khi có commit mới trên `dev`.
+3. **Nhánh `feature/*` (Feature Branches - TÍNH NĂNG MỚI)**:
+   * Tách ra từ `dev` khi bắt đầu thực hiện User Story mới.
+   * Đặt tên theo chuẩn định danh cá nhân và chức năng cụ thể.
+   * Sau khi hoàn thiện, kiểm thử cục bộ pass 100%, mở Pull Request vào `dev` và xóa nhánh sau khi merge.
+4. **Nhánh `bugfix/*` (Bugfix Branches - VÁ LỖI TÍCH HỢP)**:
+   * Tách ra từ `dev` để xử lý các bug phát hiện trong quá trình kiểm thử liên thông (Integration Test) trước khi đóng gói Release.
+5. **Nhánh `hotfix/*` (Hotfix Branches - SỬA LỖI KHẨN CẤP PRODUCTION)**:
+   * Chỉ tạo khi phát hiện lỗi nghiêm trọng trên `main` sát giờ bảo vệ.
+   * Tách trực tiếp từ `main`, sửa lỗi, kiểm tra kỹ lưỡng, sau đó merge đồng thời vào cả `main` lẫn `dev`.
+
+---
+
+### 9.3 Quy chuẩn đặt tên nhánh (Branch Naming Convention & Matrix Phân Công Thành Viên)
+
+#### Cú pháp chuẩn bắt buộc:
+```text
+<type>/<tên-thành-viên>-<module>-<mô-tả-ngắn-kebab-case>
+```
+
+* `<type>`: `feature` (tính năng mới), `bugfix` (sửa lỗi trên dev), `hotfix` (sửa lỗi khẩn cấp main), `refactor` (tối ưu mã), `docs` (tài liệu).
+* `<tên-thành-viên>`: `thanh`, `phat`, `phong`, `duc`, `cuong`.
+* `<module>`: `company`, `admin`, `seatmap`, `booking`, `payment`, `home`, `scanner`, `auth`, `concurrency`.
+* `<mô-tả-ngắn-kebab-case>`: 2-4 từ tiếng Anh viết thường, ngăn cách bởi dấu gạch ngang `-`.
+
+#### Bảng Matrix phân công nhánh chuẩn cho 5 thành viên nhóm thực tập:
+
+| Thành viên & Vai trò | Phân hệ (Module) phụ trách | Định danh nhánh chuẩn (Branch Examples) | Mục tiêu nghiệm thu tính năng |
+|:---|:---|:---|:---|
+| **Phạm Công Thành**<br/>*(Team Leader & Architect)* | Cổng Đối Tác Nhà Xe, Tenant Isolation, Ký quỹ Escrow, Đối soát doanh thu | `feature/thanh-company-tenant-isolation`<br/>`feature/thanh-company-cancellation-policy`<br/>`feature/thanh-company-escrow-settlement` | Cách ly dữ liệu đa nhà xe 100%, quản lý chính sách hoàn hủy riêng biệt, ví ký quỹ doanh thu an toàn. |
+| **Nguyễn Đại Phát**<br/>*(Full-Stack Developer)* | Cổng Tổng Admin, Điều phối Chuyến xe, Công cụ lọc đa tiêu chí | `feature/phat-admin-dashboard-kpi`<br/>`feature/phat-admin-trip-dispatch`<br/>`feature/phat-admin-user-companies-crud` | Giám sát toàn sàn theo thời gian thực, điều phối lịch trình xe xuất bến, quản trị người dùng và nhà xe. |
+| **Trần Nam Phong**<br/>*(Full-Stack Developer)* | Sơ đồ ghế 2 tầng, Danh mục chuyến đi, Khóa Concurrency | `feature/phong-customer-trip-catalog`<br/>`feature/phong-customer-seatmap-2deck`<br/>`feature/phong-customer-pessimistic-lock` | Giao diện chọn ghế trực quan 2 tầng Limousine/Giường nằm, khóa ghế bi quan chống race condition 100%. |
+| **Trần Hữu Đức**<br/>*(Full-Stack Developer)* | Đặt vé Checkout, Thanh toán đa kênh (VietQR, VNPAY, COD), Quản lý vé | `feature/duc-customer-checkout-flow`<br/>`feature/duc-customer-vietqr-vnpay-gateway`<br/>`feature/duc-customer-ticket-management` | Quy trình thanh toán tự động qua mã QR động PayOS, tích hợp VNPAY Sandbox, tra cứu lịch sử vé đã mua. |
+| **Nguyễn Trọng Cường**<br/>*(Frontend & Mobile Specialist)* | Trang chủ, Banner Cloudinary, Tra cứu vé Offline, Quét mã QR Camera | `feature/cuong-home-banner-slider`<br/>`feature/cuong-offline-ticket-lookup`<br/>`feature/cuong-qr-camera-scanner`<br/>`feature/cuong-customer-reviews-rating` | Giao diện chuẩn Responsive Mobile/Tablet, tra cứu vé không cần internet qua LocalStorage, quét mã QR soát vé. |
+| *(Phan Trung Kiên)* | *(Miễn thực tập OJT theo quyết định đào tạo của Nhà trường)* | *(N/A)* | *(N/A)* |
+
+---
+
+### 9.4 Quy chuẩn đặt tên commit (Conventional Commits 1.0.0 & Bảng Tra Cứu Scope)
+
+Dự án áp dụng chặt chẽ đặc tả **Conventional Commits 1.0.0**. Mọi commit message đều phải có cấu trúc 3 phần rõ ràng:
+
+```text
+<type>(<scope>): <mô tả ngắn gọn bằng tiếng Anh hoặc tiếng Việt dưới 72 ký tự>
+
+[Mô tả chi tiết tùy chọn: giải thích lý do thực hiện và giải pháp kỹ thuật đã áp dụng]
+
+[Footer tùy chọn: liên kết mã công việc, ví dụ: Ref #42, Closes #15]
+```
+
+#### Bảng danh mục 10 Types chuẩn doanh nghiệp:
+| Type | Ý nghĩa nghiệp vụ | Ví dụ minh họa thực tế trong dự án |
+|:---|:---|:---|
+| `feat` | Bổ sung tính năng mới, API mới, component giao diện mới | `feat(seatmap): render 2-deck layout with floor toggle button` |
+| `fix` | Sửa chữa lỗi nghiệp vụ, xử lý ngoại lệ phát sinh | `fix(concurrency): prevent double booking on simultaneous checkout` |
+| `security` | Vá lỗ hổng bảo mật, kiểm soát phân quyền, mã hóa dữ liệu | `security(company): enforce strict tenant isolation on cancellation policies` |
+| `perf` | Tối ưu hóa hiệu năng, giảm thời gian truy vấn SQL, giảm dung lượng bundle | `perf(trips): add database index on departure_time and route_id` |
+| `refactor` | Tái cấu trúc mã nguồn (không đổi logic bên ngoài, không sửa bug) | `refactor(booking): extract price calculation logic into Domain Service` |
+| `style` | Căn chỉnh giao diện CSS, Responsive Mobile/Tablet, format code | `style(responsive): add horizontal scroll wrapper for admin data tables` |
+| `docs` | Cập nhật tài liệu kỹ thuật, Swagger API, hướng dẫn README | `docs(git): define comprehensive enterprise branching and commit convention` |
+| `test` | Viết thêm hoặc chỉnh sửa Unit Test, Integration Test | `test(auth): add 5 test cases verifying jwt token expiration and claims` |
+| `chore` | Cập nhật dependencies, build script, cấu hình Gradle, Vite, Docker | `chore(deps): upgrade tailwindcss and lucide-react to latest patch` |
+| `ci` | Chỉnh sửa cấu hình workflow GitHub Actions, pipeline CI/CD | `ci(github): add automated gradle compile check on pull request` |
+
+#### Bảng danh mục Scope chuẩn hóa cho hệ thống:
+* `auth`: Xác thực tài khoản, JWT, BCrypt, Spring Security, phân quyền vai trò.
+* `company`: Cổng thông tin nhà xe, quản lý xe, điểm đón trả, tài xế, tuyến đường đăng ký.
+* `policy`: Chính sách hoàn hủy vé của nhà xe và chuẩn hệ thống.
+* `admin`: Cổng quản trị sàn tổng, thống kê doanh thu, quản lý tài khoản đối tác.
+* `trips`: Quản lý danh mục chuyến xe, lộ trình di chuyển, giờ xuất bến.
+* `seatmap`: Sơ đồ ghế 2 tầng, ma trận vị trí ghế, giá vé phân hạng.
+* `concurrency`: Cơ chế khóa dữ liệu (Pessimistic Locking), xử lý tranh chấp chỗ ngồi.
+* `booking`: Tạo đơn đặt vé, trạng thái vé, tạo mã vé điện tử BK-*.
+* `payment`: Cổng thanh toán VietQR PayOS, VNPAY, thanh toán tiền mặt COD, webhook IPN.
+* `settlement`: Quản lý ví ký quỹ Escrow, đối soát doanh thu sàn và chia sẻ lợi nhuận.
+* `responsive`: Tối ưu giao diện hiển thị trên Mobile (iOS/Android) và Tablet (iPad/Galaxy Tab).
+* `qr`: Khởi tạo và quét mã QR Code vé xe qua Camera trên thiết bị di động.
+* `offline`: Lưu trữ vé cục bộ qua LocalStorage/IndexedDB để tra cứu khi mất mạng.
+* `reviews`: Đánh giá chất lượng dịch vụ nhà xe, bình luận khách hàng 5 sao.
+
+---
+
+### 9.5 Bảng nguyên tắc Do's and Don'ts khi thao tác Git
+
+| ✅ NGUYÊN TẮC NÊN LÀM (DO'S) | ❌ HÀNH VI TUYỆT ĐỐI CẤM (DON'TS) |
+|:---|:---|
+| **Kéo mã nguồn mới nhất mỗi ngày**: Luôn chạy `git checkout dev ; git pull origin dev` trước khi bắt đầu viết code mới. | **Cấm commit thẳng lên `main` hoặc `dev`**: Tuyệt đối không bao giờ push trực tiếp vào 2 nhánh bảo vệ. |
+| **Commit nhỏ và nguyên tử (Atomic Commit)**: Chia nhỏ công việc thành từng commit độc lập, diễn đạt chính xác hành động vừa hoàn thành. | **Không gom commit "rác"**: Không gộp cả ngày làm việc vào 1 commit khổng lồ với thông điệp vô nghĩa (`fix`, `update`, `test`, `done`). |
+| **Kiểm tra trạng thái trước khi commit**: Luôn dùng `git status` và `git diff` để rà soát kỹ các file thay đổi trước khi `git add`. | **Không commit file nhạy cảm**: Tuyệt đối không commit file `.env`, mật khẩu database, file `.log`, thư mục `build/`, `dist/`, `node_modules/`. |
+| **Kiểm tra tính toàn vẹn (Build Check)**: Luôn chạy thử `./gradlew compileJava` và `npm run build` thành công trên máy trước khi push. | **Không push code gãy build**: Không bao giờ đẩy code đang bị lỗi biên dịch lên remote làm hỏng môi trường của đồng đội. |
+| **Đồng bộ nhánh trước khi mở PR**: Merge `dev` vào nhánh `feature` của mình tại local để tự giải quyết triệt để conflict trước khi tạo PR. | **Không mở PR khi đang bị conflict**: Không bao giờ để Pull Request ở trạng thái đỏ "This branch has conflicts that must be resolved". |
+| **Xóa nhánh feature sau khi merge**: Xóa nhánh cá nhân trên GitHub sau khi PR được merge để giữ Repository luôn gọn gàng, tinh gọn. | **Không sử dụng `git push --force`**: Nghiêm cấm dùng cờ `--force` trên các nhánh dùng chung vì sẽ ghi đè và làm mất lịch sử của đồng đội. |
+
+---
+
+### 9.6 Quy trình 7 bước làm việc hàng ngày của lập trình viên (Daily Workflow Standard)
+
+Toàn bộ thành viên thực hiện nghiêm ngặt chu trình 7 bước sau trong mỗi ngày phát triển:
+
+#### Bước 1: Đồng bộ mã nguồn mới nhất từ nhánh `dev`
+Mở Terminal (PowerShell trên Windows) tại thư mục gốc dự án:
+```powershell
+git checkout dev
+git pull origin dev
+```
+
+#### Bước 2: Khởi tạo nhánh tính năng mới theo đúng chuẩn
+Tạo và chuyển sang nhánh làm việc cá nhân (ví dụ: Trần Nam Phong làm phần khóa ghế):
+```powershell
+git checkout -b feature/phong-customer-pessimistic-lock
+```
+
+#### Bước 3: Phát triển tính năng & Rà soát thay đổi cục bộ
+Viết code, lưu file và kiểm tra danh sách file đã thay đổi:
+```powershell
+git status
+git diff
+```
+
+#### Bước 4: Tạo commit nguyên tử chuẩn Conventional Commits
+Chỉ thêm các file liên quan trực tiếp đến tính năng và tạo commit rõ ràng:
+```powershell
+git add backend/src/main/java/com/traveleasy/service/BookingService.java
+git commit -m "feat(concurrency): implement pessimistic write lock on trip seat reservation"
+```
+
+#### Bước 5: Kéo cập nhật mới nhất từ `dev` về nhánh cá nhân để phòng ngừa conflict
+Trước khi đẩy mã nguồn lên GitHub, đảm bảo nhánh cá nhân đã hòa trộn toàn bộ code mới nhất của các bạn khác:
+```powershell
+git checkout dev
+git pull origin dev
+git checkout feature/phong-customer-pessimistic-lock
+git merge dev
+```
+*(Nếu xuất hiện xung đột, xem mục 9.9 để giải quyết xung đột trên VS Code, lưu file và commit hoàn tất)*.
+
+#### Bước 6: Chạy thử nghiệm biên dịch toàn diện (Pre-push Health Check)
+Bảo đảm không có lỗi compile backend và lỗi đóng gói frontend:
+```powershell
+# Kiểm tra biên dịch Backend Java:
+.\gradlew.bat compileJava
+
+# Kiểm tra biên dịch Frontend React:
+cd frontend ; npm run build ; cd ..
+```
+
+#### Bước 7: Đẩy nhánh lên GitHub & Khởi tạo Pull Request
+Đẩy nhánh làm việc lên remote repository:
+```powershell
+git push -u origin feature/phong-customer-pessimistic-lock
+```
+Sau đó truy cập GitHub, tạo Pull Request trỏ từ `feature/phong-customer-pessimistic-lock` vào nhánh đích `dev`.
+
+---
+
+### 9.7 Mẫu Pull Request chuẩn & Bộ tiêu chí đánh giá Code Review (PR Quality Gate)
+
+Mỗi khi tạo Pull Request trên GitHub, người tạo bắt buộc điền đầy đủ theo biểu mẫu chuẩn sau:
+
+```markdown
+### 📌 Tóm tắt công việc (Summary)
+- Triển khai cơ chế khóa bi quan (Pessimistic Locking) trong `BookingService.java` nhằm giải quyết dứt điểm lỗi tranh chấp chỗ ngồi khi nhiều khách cùng đặt 1 ghế cùng thời điểm.
+- Bổ sung transaction rollback an toàn và trả mã lỗi HTTP 409 Conflict với thông điệp rõ ràng cho frontend.
+
+### 🏷️ Loại thay đổi (Type of Change)
+- [x] Tính năng mới (New Feature)
+- [ ] Sửa lỗi (Bug Fix)
+- [ ] Tối ưu hóa hiệu năng (Performance Optimization)
+- [ ] Tái cấu trúc mã nguồn (Refactor)
+- [ ] Cập nhật giao diện / Responsive (UI / Style)
+
+### 🧪 Bằng chứng kiểm thử (Verification & Test Evidence)
+- [x] Đã chạy `.\gradlew.bat compileJava` thành công (0 errors).
+- [x] Đã chạy `npm run build` thành công, bundle không phát sinh cảnh báo lỗi.
+- [x] Đã kiểm thử thực tế trên 2 trình duyệt ẩn danh đồng thời: Khách hàng B nhận ngay thông báo lỗi 409 khi Khách hàng A đang giữ ghế.
+
+### 📋 Checklist trước khi yêu cầu Review
+- [x] Nhánh đã được merge cập nhật mới nhất từ `dev` và không có merge conflict.
+- [x] Không để lại code thừa, comment không cần thiết hoặc lệnh `console.log` rác.
+- [x] Tuyệt đối không chứa mật khẩu, key bí mật hay file `.env`.
+```
+
+#### Tiêu chí phê duyệt (PR Quality Gate):
+1. **Tối thiểu 1 lượt phê duyệt (Approve)** từ Nhóm trưởng (Phạm Công Thành).
+2. **100% CI Checks Passed**: GitHub Actions build thành công cả Backend và Frontend.
+3. **Không xung đột (Zero Conflicts)**: Nhánh có thể tự động merge sạch sẽ vào `dev`.
+
+---
+
+### 9.8 Cấu hình Branch Protection Rules trên GitHub & Quản lý Bảo mật Secret Zero-Leakage
+
+Nhóm trưởng thực hiện thiết lập bảo vệ nhánh trên giao diện GitHub Repository:
+
+```
+GitHub Repo ➔ Settings ➔ Branches ➔ Add branch protection rule
+```
+
+#### Cấu hình chi tiết cho nhánh `main` và nhánh `dev`:
+1. **Branch name pattern**: Điền `main` (và tạo thêm một rule tương tự cho `dev`).
+2. **Protect matching branches**:
+   * ✅ **Require a pull request before merging**: Bắt buộc mọi thay đổi phải thông qua Pull Request, vô hiệu hóa hoàn toàn lệnh `git push` trực tiếp.
+   * ✅ **Require approvals**: Thiết lập giá trị là **1** (Cần ít nhất 1 thành viên review và phê duyệt).
+   * ✅ **Dismiss stale pull request approvals when new commits are pushed**: Tự động hủy phê duyệt cũ nếu tác giả đẩy thêm commit mới, buộc phải review lại.
+   * ✅ **Require status checks to pass before merging**: Bắt buộc pipeline CI/CD (Build Gradle & Vite) phải trả kết quả xanh (Success) mới được phép merge.
+   * ✅ **Do not allow bypassing the above settings**: Áp dụng quy tắc cho toàn bộ thành viên, kể cả Repository Owner / Admin.
+
+#### Nguyên tắc quản lý biến môi trường an toàn:
+* File `.env` và thư mục `credentials/` được khai báo cố định trong `.gitignore`.
+* Dự án cung cấp file mẫu `backend/src/main/resources/application.properties.example` và `frontend/.env.example` chứa các biến môi trường mẫu không có mật khẩu thật để thành viên mới clone về tự cấu hình:
+  ```powershell
+  # Copy file cấu hình mẫu sang file môi trường thực tế tại máy cá nhân:
+  Copy-Item frontend\.env.example frontend\.env
+  ```
+
+---
+
+### 9.9 Cẩm nang xử lý xung đột mã nguồn chuyên sâu (Deep Merge Conflict Resolution)
+
+Xung đột mã nguồn (Merge Conflict) xuất hiện khi hai thành viên cùng chỉnh sửa trên cùng một dòng code trong cùng một file. Quy trình xử lý xung đột chuẩn xác:
+
+1. **Nhận diện file xung đột**: Khi thực hiện `git merge dev`, Git sẽ hiển thị thông báo `CONFLICT (content): Merge conflict in <tên-file>`. Chạy `git status` để xem danh sách các file đang bị xung đột màu đỏ.
+2. **Cấu trúc vùng đánh dấu xung đột**:
+   ```java
+   <<<<<<< HEAD (Mã nguồn hiện tại trên nhánh feature của bạn)
+   public ResponseEntity<?> processBooking(BookingRequest req) {
+       return bookingService.createBookingWithPessimisticLock(req);
+   }
+   =======
+   public ResponseEntity<?> processBooking(BookingRequest req) {
+       return bookingService.createBookingWithOptimisticLock(req);
+   }
+   >>>>>>> dev (Mã nguồn mới nhất từ nhánh dev của đồng đội vừa được merge lên)
+   ```
+3. **Quy tắc giải quyết xung đột**:
+   * Mở file trên Visual Studio Code hoặc IntelliJ IDEA. Trình soạn thảo sẽ hiển thị 4 tùy chọn trực quan:
+     * `Accept Current Change`: Giữ code của nhánh mình.
+     * `Accept Incoming Change`: Giữ code từ nhánh `dev`.
+     * `Accept Both Changes`: Giữ cả hai đoạn code.
+     * `Compare Changes`: So sánh trực tiếp từng dòng.
+   * **Nguyên tắc vàng**: Trao đổi trực tiếp ngay với tác giả đoạn code xung đột để thống nhất giải pháp kỹ thuật tối ưu nhất. **Tuyệt đối không tự ý xóa bỏ logic xử lý của đồng đội!**
+4. **Đóng gói hoàn tất sau khi giải quyết**:
+   ```powershell
+   # 1. Thêm file đã resolve sạch conflict vào staging:
+   git add backend/src/main/java/com/traveleasy/service/BookingService.java
+
+   # 2. Hoàn tất commit merge:
+   git commit -m "chore(merge): resolve conflict with dev in booking service logic"
+
+   # 3. Đẩy nhánh đã xử lý sạch sẽ lên remote:
+   git push origin feature/phong-customer-pessimistic-lock
+   ```
+
+---
+
+### 9.10 Bảng tra cứu nhanh lệnh Git thường dùng (Git Daily Cheat Sheet)
+
+| Lệnh Git thực thi (Command) | Ý nghĩa nghiệp vụ & Hoàn cảnh sử dụng |
+|:---|:---|
+| `git status` | Kiểm tra trạng thái hiện tại: các file đã sửa, file chưa tracked, nhánh hiện hành. |
+| `git branch -a` | Liệt kê toàn bộ các nhánh cục bộ (local) và nhánh trên máy chủ (remote). |
+| `git checkout -b <tên-nhánh>` | Tạo một nhánh mới và tự động chuyển ngay sang nhánh vừa tạo. |
+| `git checkout <tên-nhánh>` | Chuyển đổi qua lại giữa các nhánh làm việc. |
+| `git pull origin dev` | Kéo toàn bộ mã nguồn cập nhật mới nhất từ nhánh `dev` trên remote về local. |
+| `git add .` | Thêm toàn bộ các file đã thay đổi vào khu vực chờ commit (Staging Area). |
+| `git add <đường-dẫn-file>` | Thêm chỉ định một file cụ thể vào Staging Area (khuyến khích dùng cho commit nguyên tử). |
+| `git commit -m "<message>"` | Đóng gói các thay đổi trong Staging Area thành commit mới với thông điệp chuẩn. |
+| `git push -u origin <tên-nhánh>` | Đẩy nhánh từ local lên GitHub và thiết lập liên kết theo dõi (upstream tracking). |
+| `git stash` | Tạm thời cất giữ các thay đổi chưa commit vào bộ nhớ đệm khi cần chuyển nhánh gấp. |
+| `git stash pop` | Lấy lại và áp dụng lại các thay đổi đã cất trong bộ nhớ đệm stash. |
+| `git log --oneline --graph -n 10` | Xem 10 commit gần nhất dạng sơ đồ cây trực quan, gọn gàng trên 1 dòng. |
+| `git reset --soft HEAD~1` | Hủy commit gần nhất nhưng vẫn giữ nguyên toàn bộ file đã sửa trong Staging Area. |
+| `git remote -v` | Kiểm tra địa chỉ đường dẫn URL của kho mã nguồn GitHub từ xa. |
+
+---
 
 ---
 

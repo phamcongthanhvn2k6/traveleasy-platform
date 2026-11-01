@@ -57,7 +57,7 @@ $$\text{Loại nhánh} / \text{Mã thành viên hoặc Tên} - \text{Tên tính 
 | **Member 1 (Lead / AI)** | Tích hợp Spring AI Chatbot & SEO Generator | `feature/m1-spring-ai-chatbot`<br/>`feature/m1-ai-seo-generator` |
 | **Member 2 (Auth & User)** | Xác thực JWT, BCrypt, Trang Đăng ký/Đăng nhập | `feature/m2-auth-jwt-security`<br/>`feature/m2-user-profile-page` |
 | **Member 3 (Trips Catalog)** | Tuyến xe, Chuyến xe, Tìm kiếm Nơi đi - Nơi đến | `feature/m3-trip-catalog-api`<br/>`feature/m3-search-filter-ui` |
-| **Member 4 (Seat & Booking)**| Sơ đồ ghế 2 tầng, Đặt vé COD, Trừ ghế nguyên tử | `feature/m4-bus-seat-map`<br/>`feature/m4-booking-checkout-cod` |
+| **Member 4 (Seat & Booking)**| Sơ đồ ghế 2 tầng, Đặt vé COD, Trừ ghế nguyên tử | `feature/m4-bus-seat-map`<br/>`feature/phong-customer-pessimistic-lock` |
 | **Member 5 (Admin & Order)** | Admin Dashboard, Quản lý chuyến xe, Duyệt vé | `feature/m5-admin-trip-crud`<br/>`feature/m5-admin-booking-status` |
 | **Member 6 (DevOps & QA)** | Dockerfile, Docker Compose, CI/CD, Test Cases | `feature/m6-docker-containerize`<br/>`feature/m6-github-actions-cicd` |
 
@@ -102,7 +102,7 @@ git pull origin dev
 
 ### Bước 2: Tạo nhánh tính năng mới từ `dev`
 ```bash
-git checkout -b feature/m4-booking-checkout-cod
+git checkout -b feature/phong-customer-pessimistic-lock
 ```
 
 ### Bước 3: Viết code và commit thường xuyên
@@ -117,14 +117,14 @@ Tránh xung đột mã nguồn với đồng đội:
 ```bash
 git checkout dev
 git pull origin dev
-git checkout feature/m4-booking-checkout-cod
+git checkout feature/phong-customer-pessimistic-lock
 git merge dev
 ```
 *(Nếu có xung đột, giải quyết conflict ngay trên IDE, sau đó commit lại)*.
 
 ### Bước 5: Đẩy nhánh tính năng lên GitHub
 ```bash
-git push -u origin feature/m4-booking-checkout-cod
+git push -u origin feature/phong-customer-pessimistic-lock
 ```
 
 ### Bước 6: Tạo Pull Request (PR) trên giao diện GitHub
@@ -132,7 +132,7 @@ git push -u origin feature/m4-booking-checkout-cod
 2.  Bấm nút **"Compare & pull request"**.
 3.  Chọn:
     *   **base branch (nhánh đích):** `dev`
-    *   **compare branch (nhánh nguồn):** `feature/m4-booking-checkout-cod`
+    *   **compare branch (nhánh nguồn):** `feature/phong-customer-pessimistic-lock`
 4.  Điền tiêu đề PR rõ ràng: `[FEATURE] Hoàn thiện giao diện đặt vé COD và trừ ghế trống`.
 5.  Gắn tag Reviewer (chọn Team Lead hoặc đồng đội phụ trách cùng module).
 
