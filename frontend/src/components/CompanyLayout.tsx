@@ -41,6 +41,22 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
     }
   });
 
+  const getCompanyDisplayName = () => {
+    if (!currentUser?.fullName) return 'Sao Việt';
+    const name = currentUser.fullName;
+    if (name.includes('Sao Việt')) return 'Sao Việt';
+    if (name.includes('Phương Trang') || name.includes('FUTA')) return 'Phương Trang (FUTA)';
+    if (name.includes('Thành Bưởi')) return 'Thành Bưởi';
+    if (name.includes('Hoa Mai')) return 'Xe Khách Hoa Mai';
+    if (name.includes('Hoàng Long')) return 'Hoàng Long Asia';
+    if (name.includes('Văn Minh')) return 'Nhà Xe Văn Minh';
+    if (name.includes('Cúc Tùng')) return 'Cúc Tùng Limousine';
+    if (name.includes('Hải Vân')) return 'Hải Vân Express';
+    if (name.includes('Chín Nghĩa')) return 'Chín Nghĩa';
+    if (name.includes('Kumho')) return 'Kumho Samco';
+    return name.replace(/^(Điều Hành|Nhân Viên Vận Hành|Quản Trị)\s*(Xe\s*)?/i, '').trim() || 'Sao Việt';
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('traveleasy_token');
     localStorage.removeItem('traveleasy_user');
@@ -311,7 +327,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                 cursor: 'pointer'
               }}
             >
-              <span>Nha xe: <strong style={{ color: isDark ? '#38bdf8' : '#0284c7' }}>TravelEasy Express</strong></span>
+              <span>Nhà xe: <strong style={{ color: isDark ? '#38bdf8' : '#0284c7' }}>{getCompanyDisplayName()}</strong></span>
               <ChevronDown size={13} color={isDark ? '#38bdf8' : '#0284c7'} />
             </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Shield, Edit2, Trash2, CheckCircle, X, Info } from 'lucide-react';
+import { Plus, Shield, Edit2, Trash2, CheckCircle, X, Info, Lock, ShieldCheck, RefreshCw } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 
@@ -15,33 +15,71 @@ export interface CancellationPolicy {
   description: string;
   isSystem: boolean;
   isDefault: boolean;
+  busCompanyName?: string;
   rules: PolicyRule[];
   createdAt: string;
 }
-
-const STORAGE_KEY = 'traveleasy_company_cancellation_policies';
 
 export const CompanyCancellationPoliciesPage: React.FC = () => {
   const [policies, setPolicies] = useState<CancellationPolicy[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Nhận diện nhà xe đang đăng nhập từ tài khoản người dùng
+  const currentCompany = (() => {
+    try {
+      const saved = localStorage.getItem('traveleasy_user');
+      if (saved) {
+        const u = JSON.parse(saved);
+        const name = u.fullName || '';
+        if (name.includes('Sao Việt')) return 'Sao Việt';
+        if (name.includes('Phương Trang') || name.includes('FUTA')) return 'Phương Trang (FUTA Bus Lines)';
+        if (name.includes('Thành Bưởi')) return 'Thành Bưởi';
+        if (name.includes('Hoa Mai')) return 'Xe Khách Hoa Mai';
+        if (name.includes('Hoàng Long')) return 'Hoàng Long Asia';
+        if (name.includes('Văn Minh')) return 'Nhà Xe Văn Minh';
+        if (name.includes('Cúc Tùng')) return 'Cúc Tùng Limousine';
+        if (name.includes('Hải Vân')) return 'Hải Vân Express';
+        if (name.includes('Chín Nghĩa')) return 'Chín Nghĩa';
+        if (name.includes('Kumho')) return 'Kumho Samco';
+        const clean = name.replace(/^(Điều Hành|Nhân Viên Vận Hành|Quản Trị)\s*(Xe\s*)?/i, '').trim();
+        if (clean) return clean;
+      }
+    } catch {}
+    return 'Sao Việt';
+  })();
+
+  const isSystemCheck = (p: any) => {
+    const bName = (p.busCompanyName || '').toLowerCase();
+    const pName = (p.name || '').toLowerCase();
+    return (
+      bName.includes('hệ thống') ||
+      bName.includes('traveleasy') ||
+      bName.includes('toàn sàn') ||
+      pName.includes('tiêu chuẩn traveleasy') ||
+      (Boolean(p.isDefault) && String(p.id) === '1')
+    );
+  };
+
   const fetchPoliciesFromDb = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/company/cancellation-policies');
+      const res = await api.get('/company/cancellation-policies', {
+        params: { companyName: currentCompany },
+      });
       if (res.data?.data && Array.isArray(res.data.data)) {
         const mapped: CancellationPolicy[] = res.data.data.map((p: any) => ({
           id: String(p.id),
           name: p.name,
           description: p.description || 'Quy định hoàn hủy vé theo khung thời gian khởi hành',
-          isSystem: false,
+          isSystem: isSystemCheck(p),
           isDefault: Boolean(p.isDefault),
-          createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : '24/10/2026',
+          busCompanyName: p.busCompanyName || (isSystemCheck(p) ? 'Hệ thống TravelEasy' : `Nhà xe ${currentCompany}`),
+          createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : '29/10/2026',
           rules: [
             { condition: 'Trước giờ khởi hành >= 24 tiếng', refundRate: '100%', type: 'FULL' },
             { condition: 'Từ 12 đến 24 tiếng trước khởi hành', refundRate: '50%', type: 'PARTIAL' },
             { condition: 'Dưới 12 tiếng trước khởi hành', refundRate: '0%', type: 'NONE' },
-          ]
+          ],
         }));
         setPolicies(mapped);
       }
@@ -69,20 +107,12 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
   const [rate12to24, setRate12to24] = useState('50%');
   const [rateBelow12, setRateBelow12] = useState('0%');
   const [isDefaultForm, setIsDefaultForm] = useState(false);
-
-  // Persist to localStorage whenever policies change
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(policies));
-    } catch {
-      // ignore
-    }
-  }, [policies]);
+  const [saving, setSaving] = useState(false);
 
   const openCreateModal = () => {
     setEditingPolicy(null);
-    setFormName('');
-    setFormDesc('');
+    setFormName(`Chính sách hoàn hủy ${currentCompany}`);
+    setFormDesc(`Áp dụng hoàn hủy linh hoạt cho các chuyến xe thuộc nhà xe ${currentCompany}`);
     setRateAbove24('100%');
     setRate12to24('50%');
     setRateBelow12('0%');
@@ -112,329 +142,369 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
       return;
     }
 
+    setSaving(true);
     try {
-      await api.post('/company/cancellation-policies', {
-        name: formName.trim(),
-        description: formDesc.trim() || 'Chính sách hoàn tiền áp dụng của nhà xe',
-        isDefault: isDefaultForm,
-      });
+      if (editingPolicy) {
+        await api.put(`/company/cancellation-policies/${editingPolicy.id}`, {
+          name: formName.trim(),
+          description: formDesc.trim() || `Chính sách hoàn tiền của ${currentCompany}`,
+          isDefault: isDefaultForm,
+          companyName: currentCompany,
+        });
+        toast.success(`Đã cập nhật chính sách "${formName}" vào CSDL!`, 'Cập Nhật Thành Công');
+      } else {
+        await api.post('/company/cancellation-policies', {
+          name: formName.trim(),
+          description: formDesc.trim() || `Chính sách hoàn tiền của ${currentCompany}`,
+          isDefault: isDefaultForm,
+          companyName: currentCompany,
+        });
+        toast.success(`Đã lưu chính sách hủy vé "${formName}" cho nhà xe ${currentCompany}!`, 'Lưu Thành Công');
+      }
       await fetchPoliciesFromDb();
-      toast.success(`Đã lưu chính sách hủy vé "${formName}" trực tiếp vào CSDL!`, 'Lưu Thành Công');
       setIsModalOpen(false);
-      return;
-    } catch {}
-
-    const rules: PolicyRule[] = [
-      {
-        condition: 'Trước khởi hành trên 24 giờ',
-        refundRate: `${rateAbove24} hoàn tiền`,
-        type: rateAbove24 === '0%' ? 'NONE' : rateAbove24 === '100%' ? 'FULL' : 'PARTIAL',
-      },
-      {
-        condition: 'Trước khởi hành 12 - 24 giờ',
-        refundRate: `${rate12to24} hoàn tiền`,
-        type: rate12to24 === '0%' ? 'NONE' : rate12to24 === '100%' ? 'FULL' : 'PARTIAL',
-      },
-      {
-        condition: 'Trước khởi hành dưới 12 giờ',
-        refundRate: `${rateBelow12} hoàn tiền${rateBelow12 === '0%' ? ' (Không hoàn)' : ''}`,
-        type: rateBelow12 === '0%' ? 'NONE' : rateBelow12 === '100%' ? 'FULL' : 'PARTIAL',
-      },
-    ];
-
-    if (editingPolicy) {
-      // Update existing
-      setPolicies((prev) =>
-        prev.map((p) => {
-          if (p.id === editingPolicy.id) {
-            return {
-              ...p,
-              name: formName.trim(),
-              description: formDesc.trim() || 'Chính sách áp dụng của nhà xe',
-              isDefault: isDefaultForm,
-              rules,
-            };
-          }
-          if (isDefaultForm) {
-            return { ...p, isDefault: false };
-          }
-          return p;
-        })
-      );
-      toast.success(`Đã cập nhật chính sách "${formName}" thành công!`, 'Cập Nhật Thành Công');
-    } else {
-      // Create new
-      const newPolicy: CancellationPolicy = {
-        id: `policy-comp-${Date.now()}`,
-        name: formName.trim(),
-        description: formDesc.trim() || 'Chính sách hoàn/hủy vé tùy chỉnh do nhà xe thiết lập',
-        isSystem: false,
-        isDefault: isDefaultForm,
-        createdAt: new Date().toLocaleDateString('vi-VN'),
-        rules,
-      };
-
-      setPolicies((prev) => {
-        let updated = prev;
-        if (isDefaultForm) {
-          updated = updated.map((p) => ({ ...p, isDefault: false }));
-        }
-        return [...updated, newPolicy];
-      });
-      toast.success(`Đã tạo chính sách hủy vé "${formName}" thành công!`, 'Tạo Thành Công');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Không thể lưu chính sách hủy vé!';
+      toast.error(msg, 'Lỗi');
+    } finally {
+      setSaving(false);
     }
-
-    setIsModalOpen(false);
   };
 
-  const handleDelete = (policy: CancellationPolicy) => {
+  const handleDelete = async (policy: CancellationPolicy) => {
     if (policy.isSystem) {
-      toast.warning('Không thể xóa chính sách mặc định của hệ thống!', 'Hành Động Bị Chặn');
+      toast.warning('Chính sách quy chuẩn toàn sàn của hệ thống không thể xóa!', 'Hành Động Bị Chặn');
       return;
     }
-    if (window.confirm(`Bạn có chắc chắn muốn xóa chính sách "${policy.name}"?`)) {
-      setPolicies((prev) => prev.filter((p) => p.id !== policy.id));
-      toast.success(`Đã xóa chính sách "${policy.name}"!`, 'Đã Xóa');
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa chính sách "${policy.name}" của nhà xe ${currentCompany}?`)) {
+      return;
+    }
+    try {
+      await api.delete(`/company/cancellation-policies/${policy.id}`, {
+        params: { companyName: currentCompany },
+      });
+      toast.success(`Đã xóa chính sách "${policy.name}" khỏi CSDL!`, 'Đã Xóa');
+      await fetchPoliciesFromDb();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Không thể xóa chính sách!';
+      toast.error(msg, 'Lỗi Phân Quyền');
     }
   };
 
-  const handleSetDefault = (policy: CancellationPolicy) => {
-    setPolicies((prev) =>
-      prev.map((p) => ({
-        ...p,
-        isDefault: p.id === policy.id,
-      }))
-    );
-    toast.success(`Đã đặt "${policy.name}" làm chính sách mặc định cho nhà xe!`, 'Chính Sách Mặc Định');
+  const handleSetDefault = async (policy: CancellationPolicy) => {
+    try {
+      await api.patch(`/company/cancellation-policies/${policy.id}/set-default`, null, {
+        params: { companyName: currentCompany },
+      });
+      toast.success(`Đã đặt "${policy.name}" làm chính sách mặc định cho ${currentCompany}!`, 'Chính Sách Mặc Định');
+      await fetchPoliciesFromDb();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Không thể đặt mặc định!';
+      toast.error(msg, 'Lỗi');
+    }
   };
 
-  const customCount = policies.filter((p) => !p.isSystem).length;
+  const ownPolicies = policies.filter((p) => !p.isSystem);
+  const systemPolicies = policies.filter((p) => p.isSystem);
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Breadcrumb & Header Title */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '18px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
-            Nhà xe <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Chính sách hủy
+            Nhà xe <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Vận hành{' '}
+            <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Chính sách hủy riêng
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
-            Chính sách hủy vé
+            Chính Sách Hoàn Hủy Vé — {currentCompany}
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            {customCount} chính sách của nhà xe + 1 mặc định hệ thống
+            {ownPolicies.length} chính sách của nhà xe + {systemPolicies.length} quy chuẩn mặc định toàn sàn
           </div>
         </div>
 
-        <button
-          onClick={openCreateModal}
-          style={{
-            backgroundColor: '#4f46e5',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '9px 16px',
-            fontSize: '13px',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            cursor: 'pointer',
-            boxShadow: '0 1px 2px rgba(79, 70, 229, 0.2)',
-            transition: 'background-color 0.15s ease'
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#4338ca')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#4f46e5')}
-        >
-          <Plus size={16} />
-          <span>Tạo chính sách</span>
-        </button>
-      </div>
-
-      {/* Grid of Policies */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: '20px' }}>
-        {policies.map((policy) => (
-          <div
-            key={policy.id}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={fetchPoliciesFromDb}
             style={{
-              backgroundColor: '#ffffff',
-              border: policy.isDefault ? '2px solid #4f46e5' : '1px solid #e2e8f0',
-              borderRadius: '12px',
-              padding: '20px 24px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+              backgroundColor: '#f1f5f9',
+              color: '#334155',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              padding: '9px 14px',
+              fontSize: '13px',
+              fontWeight: 600,
               display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              position: 'relative'
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
             }}
           >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-                      {policy.name}
-                    </h2>
-                    {policy.isDefault && (
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          backgroundColor: '#eef2ff',
-                          color: '#4f46e5',
-                          padding: '2px 8px',
-                          borderRadius: '6px',
-                          border: '1px solid #c7d2fe',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                      >
-                        <CheckCircle size={11} /> Mặc định áp dụng
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', lineHeight: 1.4 }}>
-                    {policy.description}
-                  </div>
-                </div>
+            <RefreshCw size={14} /> Làm mới
+          </button>
+          <button
+            onClick={openCreateModal}
+            style={{
+              backgroundColor: '#4f46e5',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '9px 16px',
+              fontSize: '13px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(79, 70, 229, 0.2)',
+            }}
+          >
+            <Plus size={16} />
+            <span>Tạo chính sách riêng</span>
+          </button>
+        </div>
+      </div>
 
-                <span
-                  style={{
-                    padding: '3px 10px',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    backgroundColor: policy.isSystem ? '#eff6ff' : '#f8fafc',
-                    color: policy.isSystem ? '#2563eb' : '#475569',
-                    border: `1px solid ${policy.isSystem ? '#bfdbfe' : '#e2e8f0'}`,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    flexShrink: 0
-                  }}
-                >
-                  <Shield size={12} />
-                  <span>{policy.isSystem ? 'Hệ thống' : 'Nhà xe'}</span>
-                </span>
-              </div>
+      {/* Tenant Isolation Security Notice Banner */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '12px',
+          padding: '14px 18px',
+          backgroundColor: '#f0fdf4',
+          border: '1px solid #bbf7d0',
+          borderRadius: '10px',
+          marginBottom: '22px',
+          fontSize: '13px',
+          color: '#166534',
+          lineHeight: 1.5,
+        }}
+      >
+        <ShieldCheck size={18} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
+        <div>
+          <strong>Bảo mật phân quyền đối tác (Tenant Isolation):</strong> Nhà xe{' '}
+          <strong>{currentCompany}</strong> chỉ được xem, chỉnh sửa và quản lý các chính sách hoàn hủy riêng do chính đơn vị
+          mình sở hữu. Toàn bộ chính sách của các nhà xe đối tác khác trên sàn (Phương Trang, Thành Bưởi, Hoa Mai,...)
+          được bảo mật tuyệt đối và ẩn hoàn toàn. Chính sách mặc định toàn sàn là quy chuẩn dùng chung đối sánh dự phòng,
+          nhà xe không thể sửa đổi hoặc xóa bỏ.
+        </div>
+      </div>
 
-              {/* Rules List */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
-                {policy.rules.map((rule, idx) => {
-                  const isZero = rule.type === 'NONE';
-                  const isFull = rule.type === 'FULL';
-                  return (
-                    <div
-                      key={idx}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 14px',
-                        borderRadius: '8px',
-                        backgroundColor: '#f8fafc',
-                        border: '1px solid #f1f5f9'
-                      }}
-                    >
-                      <span style={{ fontSize: '13px', color: '#334155', fontWeight: 500 }}>
-                        {rule.condition}
-                      </span>
-                      <span
-                        style={{
-                          padding: '3px 9px',
-                          borderRadius: '6px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          backgroundColor: isZero ? '#fef2f2' : isFull ? '#ecfdf5' : '#fffbeb',
-                          color: isZero ? '#dc2626' : isFull ? '#059669' : '#d97706',
-                          border: `1px solid ${isZero ? '#fecaca' : isFull ? '#a7f3d0' : '#fde68a'}`
-                        }}
-                      >
-                        {rule.refundRate}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Actions Footer */}
+      {/* Loading state */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b' }}>
+          Đang tải danh sách chính sách hoàn hủy của {currentCompany}...
+        </div>
+      ) : policies.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          Chưa có chính sách hoàn hủy nào. Hãy nhấn <strong>"Tạo chính sách riêng"</strong> để bắt đầu.
+        </div>
+      ) : (
+        /* Grid of Policies */
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: '20px' }}>
+          {policies.map((policy) => (
             <div
+              key={policy.id}
               style={{
+                backgroundColor: '#ffffff',
+                border: policy.isDefault ? '2px solid #4f46e5' : '1px solid #e2e8f0',
+                borderRadius: '12px',
+                padding: '20px 24px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                 display: 'flex',
-                alignItems: 'center',
+                flexDirection: 'column',
                 justifyContent: 'space-between',
-                marginTop: '18px',
-                paddingTop: '14px',
-                borderTop: '1px solid #f1f5f9'
+                position: 'relative',
               }}
             >
-              <div style={{ fontSize: '11px', color: '#94a3b8' }}>
-                Ngày tạo: {policy.createdAt}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ flex: 1, paddingRight: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                        {policy.name}
+                      </h2>
+                      {policy.isDefault && (
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            backgroundColor: '#eef2ff',
+                            color: '#4f46e5',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            border: '1px solid #c7d2fe',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <CheckCircle size={11} /> Mặc định áp dụng
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', lineHeight: 1.4 }}>
+                      {policy.description}
+                    </div>
+                  </div>
+
+                  <span
+                    style={{
+                      padding: '3px 10px',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      backgroundColor: policy.isSystem ? '#eff6ff' : '#ecfdf5',
+                      color: policy.isSystem ? '#2563eb' : '#059669',
+                      border: `1px solid ${policy.isSystem ? '#bfdbfe' : '#a7f3d0'}`,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Shield size={12} />
+                    <span>{policy.isSystem ? 'Hệ thống Sàn' : `Nhà xe ${currentCompany}`}</span>
+                  </span>
+                </div>
+
+                {/* Rules List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                  {policy.rules.map((rule, idx) => {
+                    const isZero = rule.type === 'NONE';
+                    const isFull = rule.type === 'FULL';
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          backgroundColor: '#f8fafc',
+                          border: '1px solid #f1f5f9',
+                        }}
+                      >
+                        <span style={{ fontSize: '13px', color: '#334155', fontWeight: 500 }}>
+                          {rule.condition}
+                        </span>
+                        <span
+                          style={{
+                            padding: '3px 9px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            backgroundColor: isZero ? '#fef2f2' : isFull ? '#ecfdf5' : '#fffbeb',
+                            color: isZero ? '#dc2626' : isFull ? '#059669' : '#d97706',
+                            border: `1px solid ${isZero ? '#fecaca' : isFull ? '#a7f3d0' : '#fde68a'}`,
+                          }}
+                        >
+                          {rule.refundRate}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {!policy.isDefault && (
-                  <button
-                    onClick={() => handleSetDefault(policy)}
-                    style={{
-                      background: 'none',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '6px',
-                      padding: '4px 10px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: '#475569',
-                      cursor: 'pointer'
-                    }}
-                    title="Đặt làm mặc định"
-                  >
-                    Đặt mặc định
-                  </button>
-                )}
+              {/* Actions Footer */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginTop: '18px',
+                  paddingTop: '14px',
+                  borderTop: '1px solid #f1f5f9',
+                }}
+              >
+                <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                  Ngày tạo: {policy.createdAt}
+                </div>
 
-                {!policy.isSystem && (
-                  <>
-                    <button
-                      onClick={() => openEditModal(policy)}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {policy.isSystem ? (
+                    <span
                       style={{
-                        background: 'none',
-                        border: 'none',
+                        fontSize: '12px',
                         color: '#64748b',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        display: 'flex',
+                        fontWeight: 600,
+                        display: 'inline-flex',
                         alignItems: 'center',
-                        borderRadius: '4px'
+                        gap: '5px',
+                        backgroundColor: '#f1f5f9',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
                       }}
-                      title="Chỉnh sửa"
+                      title="Quy chuẩn toàn sàn của TravelEasy Platform. Không được sửa đổi hay xóa bỏ."
                     >
-                      <Edit2 size={15} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(policy)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#ef4444',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        borderRadius: '4px'
-                      }}
-                      title="Xóa"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </>
-                )}
+                      <Lock size={12} color="#64748b" /> Quy chuẩn sàn (Chỉ xem)
+                    </span>
+                  ) : (
+                    <>
+                      {!policy.isDefault && (
+                        <button
+                          onClick={() => handleSetDefault(policy)}
+                          style={{
+                            background: '#ffffff',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '6px',
+                            padding: '4px 10px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: '#334155',
+                            cursor: 'pointer',
+                          }}
+                          title={`Đặt làm mặc định cho nhà xe ${currentCompany}`}
+                        >
+                          Đặt mặc định
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => openEditModal(policy)}
+                        style={{
+                          background: '#eff6ff',
+                          border: '1px solid #bfdbfe',
+                          color: '#2563eb',
+                          cursor: 'pointer',
+                          padding: '5px 7px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          borderRadius: '6px',
+                        }}
+                        title="Chỉnh sửa chính sách của nhà xe"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(policy)}
+                        style={{
+                          background: '#fef2f2',
+                          border: '1px solid #fecaca',
+                          color: '#dc2626',
+                          cursor: 'pointer',
+                          padding: '5px 7px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          borderRadius: '6px',
+                        }}
+                        title="Xóa chính sách của nhà xe"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* MODAL: Create / Edit Policy */}
       {isModalOpen && (
@@ -442,195 +512,210 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.5)',
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 9999,
-            padding: '16px'
+            padding: '16px',
           }}
-          onClick={() => setIsModalOpen(false)}
         >
           <div
             style={{
               backgroundColor: '#ffffff',
-              borderRadius: '12px',
-              maxWidth: '520px',
+              borderRadius: '16px',
               width: '100%',
-              padding: '24px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              boxSizing: 'border-box'
+              maxWidth: '560px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+              overflow: 'hidden',
             }}
-            onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>
-                  {editingPolicy ? 'Chỉnh Sửa Chính Sách Hủy' : 'Tạo Chính Sách Hủy Mới'}
-                </h3>
-                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748b' }}>
-                  Cấu hình quy định hoàn tiền khi hành khách yêu cầu hủy vé
-                </p>
+            <div
+              style={{
+                padding: '18px 24px',
+                borderBottom: '1px solid #e2e8f0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backgroundColor: '#f8fafc',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
+                    backgroundColor: '#eef2ff',
+                    color: '#4f46e5',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Shield size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
+                    {editingPolicy ? 'Chỉnh Sửa Chính Sách Hoàn Hủy' : 'Tạo Chính Sách Hoàn Hủy Riêng'}
+                  </h3>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>
+                    Áp dụng cho: <strong>Nhà xe {currentCompany}</strong>
+                  </div>
+                </div>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#94a3b8',
-                  cursor: 'pointer',
-                  padding: '4px'
-                }}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
               >
                 <X size={20} />
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSave}>
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                  Tên chính sách <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Chính sách Limousine ngày Lễ"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '13px',
-                    boxSizing: 'border-box',
-                    outline: 'none'
-                  }}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                  Mô tả / Ghi chú áp dụng
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Áp dụng cho các tuyến đêm và dòng xe phòng nằm..."
-                  value={formDesc}
-                  onChange={(e) => setFormDesc(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '13px',
-                    boxSizing: 'border-box',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              {/* Refund Tiers */}
-              <div style={{ backgroundColor: '#f8fafc', padding: '14px', borderRadius: '8px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: '#0f172a', marginBottom: '10px' }}>
-                  <Info size={14} color="#4f46e5" /> Quy định tỷ lệ hoàn vé theo mốc giờ
+            <form onSubmit={handleSave} style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Tên chính sách <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    placeholder={`VD: Chính sách mùa cao điểm ${currentCompany}`}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      boxSizing: 'border-box',
+                    }}
+                  />
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span style={{ color: '#334155', fontWeight: 500 }}>Trước khởi hành trên 24 giờ:</span>
-                    <select
-                      value={rateAbove24}
-                      onChange={(e) => setRateAbove24(e.target.value)}
-                      style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px' }}
-                    >
-                      <option value="100%">Hoàn 100%</option>
-                      <option value="90%">Hoàn 90%</option>
-                      <option value="80%">Hoàn 80%</option>
-                      <option value="70%">Hoàn 70%</option>
-                      <option value="50%">Hoàn 50%</option>
-                    </select>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Mô tả ngắn gọn
+                  </label>
+                  <input
+                    type="text"
+                    value={formDesc}
+                    onChange={(e) => setFormDesc(e.target.value)}
+                    placeholder="Mô tả tóm tắt quy định hoàn trả..."
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div style={{ padding: '14px', backgroundColor: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Khung tỷ lệ hoàn tiền theo giờ khởi hành
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span style={{ color: '#334155', fontWeight: 500 }}>Trước khởi hành 12 - 24 giờ:</span>
-                    <select
-                      value={rate12to24}
-                      onChange={(e) => setRate12to24(e.target.value)}
-                      style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px' }}
-                    >
-                      <option value="70%">Hoàn 70%</option>
-                      <option value="50%">Hoàn 50%</option>
-                      <option value="30%">Hoàn 30%</option>
-                      <option value="20%">Hoàn 20%</option>
-                      <option value="0%">Hoàn 0%</option>
-                    </select>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
+                        Khởi hành {'>='} 24h
+                      </label>
+                      <select
+                        value={rateAbove24}
+                        onChange={(e) => setRateAbove24(e.target.value)}
+                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                      >
+                        <option value="100%">Hoàn 100%</option>
+                        <option value="95%">Hoàn 95%</option>
+                        <option value="90%">Hoàn 90%</option>
+                        <option value="85%">Hoàn 85%</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
+                        Khởi hành từ 12h - 24h
+                      </label>
+                      <select
+                        value={rate12to24}
+                        onChange={(e) => setRate12to24(e.target.value)}
+                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                      >
+                        <option value="70%">Hoàn 70%</option>
+                        <option value="50%">Hoàn 50%</option>
+                        <option value="30%">Hoàn 30%</option>
+                        <option value="0%">Không hoàn (0%)</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <span style={{ color: '#334155', fontWeight: 500 }}>Trước khởi hành dưới 12 giờ:</span>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
+                      Khởi hành {'<'} 12h
+                    </label>
                     <select
                       value={rateBelow12}
                       onChange={(e) => setRateBelow12(e.target.value)}
-                      style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px' }}
+                      style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px' }}
                     >
-                      <option value="0%">0% (Không hoàn tiền)</option>
+                      <option value="0%">Không hoàn tiền (0%)</option>
                       <option value="20%">Hoàn 20%</option>
-                      <option value="30%">Hoàn 30%</option>
                     </select>
                   </div>
                 </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    id="isDefaultPolicyCheck"
+                    checked={isDefaultForm}
+                    onChange={(e) => setIsDefaultForm(e.target.checked)}
+                    style={{ width: '16px', height: '16px', accentColor: '#4f46e5', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="isDefaultPolicyCheck" style={{ fontSize: '13px', fontWeight: 600, color: '#334155', cursor: 'pointer' }}>
+                    Đặt làm chính sách mặc định cho toàn bộ chuyến xe của nhà xe {currentCompany}
+                  </label>
+                </div>
               </div>
 
-              {/* Set default checkbox */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                <input
-                  type="checkbox"
-                  id="setDefaultCheck"
-                  checked={isDefaultForm}
-                  onChange={(e) => setIsDefaultForm(e.target.checked)}
-                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                />
-                <label htmlFor="setDefaultCheck" style={{ fontSize: '12px', color: '#334155', cursor: 'pointer' }}>
-                  Đặt làm chính sách mặc định cho tất cả chuyến xe của nhà xe
-                </label>
-              </div>
-
-              {/* Modal Buttons */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   style={{
-                    padding: '8px 16px',
+                    padding: '9px 16px',
                     borderRadius: '8px',
                     border: '1px solid #cbd5e1',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: '#f1f5f9',
                     color: '#475569',
                     fontSize: '13px',
                     fontWeight: 600,
-                    cursor: 'pointer'
+                    cursor: 'pointer',
                   }}
                 >
-                  Hủy bỏ
+                  Hủy Bỏ
                 </button>
                 <button
                   type="submit"
+                  disabled={saving}
                   style={{
-                    padding: '8px 18px',
+                    padding: '9px 20px',
                     borderRadius: '8px',
                     border: 'none',
                     backgroundColor: '#4f46e5',
                     color: '#ffffff',
                     fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 2px rgba(79, 70, 229, 0.2)'
+                    fontWeight: 700,
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    opacity: saving ? 0.7 : 1,
                   }}
                 >
-                  {editingPolicy ? 'Cập Nhật' : 'Tạo Chính Sách'}
+                  {saving ? 'Đang lưu...' : editingPolicy ? 'Lưu Thay Đổi' : 'Tạo Chính Sách'}
                 </button>
               </div>
             </form>
