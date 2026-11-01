@@ -38,8 +38,10 @@ html.dark body {
 }
 
 /* Transition mượt mà khi đổi theme */
-body, header, nav, main, footer {
-  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+body, header, nav, main, footer, aside {
+  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Biến đổi toàn bộ các khối bề mặt sáng sang nền tối sang trọng */
@@ -50,10 +52,14 @@ html.dark [style*="background:#ffffff"],
 html.dark [style*="background-color: white"],
 html.dark [style*="background: white"],
 html.dark [style*="background-color: rgb(255, 255, 255)"],
-html.dark [style*="background: rgb(255, 255, 255)"] {
+html.dark [style*="background-color:rgb(255, 255, 255)"],
+html.dark [style*="background-color: rgb(255,255,255)"],
+html.dark [style*="background: rgb(255, 255, 255)"],
+html.dark [style*="background: rgb(255,255,255)"] {
   background-color: #111827 !important;
   border-color: #1e293b !important;
   color: #f1f5f9 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
 }
 
 html.dark [style*="background-color: #f8fafc"],
@@ -61,7 +67,10 @@ html.dark [style*="background-color:#f8fafc"],
 html.dark [style*="background: #f8fafc"],
 html.dark [style*="background:#f8fafc"],
 html.dark [style*="background-color: rgb(248, 250, 252)"],
-html.dark [style*="background: rgb(248, 250, 252)"] {
+html.dark [style*="background-color:rgb(248, 250, 252)"],
+html.dark [style*="background-color: rgb(248,250,252)"],
+html.dark [style*="background: rgb(248, 250, 252)"],
+html.dark [style*="background: rgb(248,250,252)"] {
   background-color: #0b0f19 !important;
   border-color: #1e293b !important;
   color: #f1f5f9 !important;
@@ -72,22 +81,64 @@ html.dark [style*="background-color:#f1f5f9"],
 html.dark [style*="background: #f1f5f9"],
 html.dark [style*="background:#f1f5f9"],
 html.dark [style*="background-color: rgb(241, 245, 249)"],
-html.dark [style*="background: rgb(241, 245, 249)"] {
+html.dark [style*="background-color:rgb(241, 245, 249)"],
+html.dark [style*="background-color: rgb(241,245,249)"],
+html.dark [style*="background: rgb(241, 245, 249)"],
+html.dark [style*="background: rgb(241,245,249)"] {
   background-color: #1e293b !important;
   border-color: #334155 !important;
   color: #f1f5f9 !important;
+}
+
+/* Light tint backgrounds used in banners, status badges, and cards */
+html.dark [style*="background-color: rgb(240, 253, 244)"],
+html.dark [style*="background-color: #f0fdf4"],
+html.dark [style*="background-color:#f0fdf4"] {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+html.dark [style*="background-color: rgb(240, 249, 255)"],
+html.dark [style*="background-color: #f0f9ff"],
+html.dark [style*="background-color:#f0f9ff"] {
+  background-color: rgba(56, 189, 248, 0.12) !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+html.dark [style*="background-color: rgb(254, 242, 242)"],
+html.dark [style*="background-color: #fef2f2"],
+html.dark [style*="background-color:#fef2f2"] {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+html.dark [style*="background-color: rgb(254, 243, 199)"],
+html.dark [style*="background-color: #fef3c7"],
+html.dark [style*="background-color:#fef3c7"] {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+html.dark [style*="background-color: rgb(245, 243, 255)"],
+html.dark [style*="background-color: #f5f3ff"],
+html.dark [style*="background-color:#f5f3ff"] {
+  background-color: rgba(139, 92, 246, 0.15) !important;
+  border-color: rgba(139, 92, 246, 0.35) !important;
 }
 
 /* Viền (Borders) */
 html.dark [style*="border: 1px solid #e2e8f0"],
 html.dark [style*="border: 1px solid #cbd5e1"],
 html.dark [style*="border: 1px solid #e5e7eb"],
+html.dark [style*="border: 1px solid rgb(226, 232, 240)"],
+html.dark [style*="border: 1px solid rgb(203, 213, 225)"],
 html.dark [style*="border-color: #e2e8f0"],
 html.dark [style*="border-color: #cbd5e1"],
 html.dark [style*="border-color: #e5e7eb"],
 html.dark [style*="border-bottom: 1px solid #e2e8f0"],
 html.dark [style*="border-bottom: 1px solid #f1f5f9"],
-html.dark [style*="border: 1px solid rgb(226, 232, 240)"] {
+html.dark [style*="border-top: 1px solid #e2e8f0"],
+html.dark [style*="border-top: 1px solid #f1f5f9"] {
   border-color: #1e293b !important;
 }
 

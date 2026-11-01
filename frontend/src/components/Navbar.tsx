@@ -28,6 +28,8 @@ import {
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
+import { ThemeToggle } from './ThemeToggle';
+import { NotificationDropdown } from './NotificationDropdown';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
@@ -401,37 +403,10 @@ export const Navbar: React.FC = () => {
         {/* Right Action Badges */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Theme Toggle Button (Chế độ Ban Đêm / Sáng) */}
-          <button
-            onClick={toggleTheme}
-            title={isDark ? "Chuyển sang Chế độ Sáng" : "Chuyển sang Chế độ Tối (Ban đêm chống chói mắt)"}
-            style={{
-              backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
-              color: isDark ? '#fbbf24' : '#475569',
-              border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
-              borderRadius: '20px',
-              padding: '6px 12px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '12px',
-              fontWeight: 700,
-              boxShadow: isDark ? '0 0 12px rgba(251, 191, 36, 0.2)' : 'none',
-              transition: 'all 0.25s ease',
-            }}
-          >
-            {isDark ? (
-              <>
-                <Sun size={15} color="#fbbf24" style={{ filter: 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.6))' }} />
-                <span style={{ fontSize: '12px', color: '#f8fafc' }}>Tối</span>
-              </>
-            ) : (
-              <>
-                <Moon size={15} color="#475569" />
-                <span style={{ fontSize: '12px', color: '#334155' }}>Sáng</span>
-              </>
-            )}
-          </button>
+          <ThemeToggle showLabel={true} />
+
+          {/* Real-time Notification Dropdown */}
+          <NotificationDropdown />
           {/* Cổng Đối Tác Nhà Xe CHỈ hiển thị nếu tài khoản đang đăng nhập là OPERATOR */}
           {user?.role === 'OPERATOR' && (
             <Link 
