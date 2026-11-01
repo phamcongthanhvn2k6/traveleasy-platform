@@ -177,3 +177,31 @@ git push -u origin feature/phong-customer-pessimistic-lock
 *Tài liệu được ban hành bởi Team Lead — Dự án TravelEasy Platform.*  
 *Chúc toàn đội làm việc ăn ý, mượt mà và giành trọn điểm số tối đa!*
 
+
+---
+
+## 7. QUY CHUẨN TẠO NHÁNH KIỂM THỬ NGHIỆM THU (ACCEPTANCE TESTING ROADMAP)
+
+Để phục vụ công tác kiểm thử tính năng toàn diện và lập biên bản nghiệm thu trước khi bảo vệ đồ án:
+* **Quy chuẩn đặt tên nhánh kiểm thử**:
+  ```bash
+  test/<tên-thành-viên>-acceptance-testing
+  ```
+  * Thành: `test/thanh-company-acceptance`
+  * Phát: `test/phat-admin-acceptance`
+  * Phong: `test/phong-booking-acceptance`
+  * Đức: `test/duc-customer-acceptance`
+  * Cường: `test/cuong-mobile-acceptance`
+* **Quy chuẩn lưu ảnh minh chứng**:
+  * Chụp ảnh màn hình các trang web hoạt động bình thường và lưu vào thư mục `docs/screenshots/`.
+  * Đặt tên ảnh theo cú pháp: `docs/screenshots/test_<phân-hệ>_<tên-trang>.png`.
+* **Cập nhật Biên bản nghiệm thu**:
+  * Điền kết quả kiểm thử vào file [`docs/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md`](BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md).
+* **Commit chuẩn Conventional Commits**:
+  ```bash
+  git add docs/screenshots/ docs/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md
+  git commit -m "test(acceptance): hoàn thành kiểm thử và bổ sung minh chứng nghiệm thu [Tên Bạn]"
+  git push -u origin <tên-nhánh-kiểm-thử>
+  ```
+* **Thời hạn chót (Deadline)**: **Hết ngày mai (23:59:00)**.
+* **Hỗ trợ kỹ thuật**: Nhắn tin riêng trực tiếp cho Nhóm trưởng Phạm Công Thành nếu gặp bất kỳ lỗi nào!
