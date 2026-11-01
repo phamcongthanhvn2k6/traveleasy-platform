@@ -147,14 +147,13 @@ export const OrderSummaryPanel: React.FC<Props> = ({
 
   return (
     <div
+      className="order-summary-card"
       style={{
         backgroundColor: '#ffffff',
         border: '1px solid #e2e8f0',
         borderRadius: '14px',
         padding: '24px',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.04)',
-        position: 'sticky',
-        top: '90px',
       }}
     >
       <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 16px 0' }}>

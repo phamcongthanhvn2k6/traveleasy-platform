@@ -392,6 +392,47 @@ input, select {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 12px !important;
   }
+
+  .checkout-responsive-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.order-summary-card {
+  position: sticky;
+  top: 90px;
+}
+
+@media (max-width: 1024px) {
+  .order-summary-card {
+    position: static !important;
+  }
+}
+
+.checkout-responsive-grid {
+  grid-template-columns: 1.7fr 1fr;
+}
+
+.stepper-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.stepper-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* User Profile Responsive Layout */
+.profile-responsive-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 850px) {
+  .profile-responsive-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* Mobile Breakpoint (<= 768px) */

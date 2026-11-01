@@ -509,11 +509,12 @@ export const AdminReviewsPage: React.FC = () => {
           backgroundColor: '#ffffff',
           border: '1px solid #e2e8f0',
           borderRadius: '14px',
-          overflow: 'hidden',
+          overflowX: 'auto',
           boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+          WebkitOverflowScrolling: 'touch',
         }}
       >
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+        <table style={{ width: '100%', minWidth: '780px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
               <th style={{ padding: '12px 18px', color: '#475569', fontWeight: 700, fontSize: '11.5px' }}>
@@ -752,8 +753,8 @@ export const AdminReviewsPage: React.FC = () => {
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               width: '100%',
-              maxWidth: '680px',
-              padding: '26px',
+              maxWidth: 'min(680px, 94vw)',
+              padding: '24px 20px',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
               maxHeight: '90vh',
               overflowY: 'auto',

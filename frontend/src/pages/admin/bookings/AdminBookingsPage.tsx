@@ -509,7 +509,7 @@ export const AdminBookingsPage: React.FC = () => {
         </div>
 
         {/* Status Tabs */}
-        <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
+        <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '8px', overflowX: 'auto', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
           {[
             { key: 'ALL', label: `Tất cả (${bookings.length})` },
             { key: 'CONFIRMED', label: `Đã thanh toán (${confirmedCount})` },
@@ -1213,10 +1213,11 @@ export const AdminBookingsPage: React.FC = () => {
             style={{
               backgroundColor: '#ffffff',
               borderRadius: '16px',
-              maxWidth: '560px',
+              maxWidth: 'min(560px, 94vw)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               width: '100%',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              overflow: 'hidden',
             }}
             onClick={e => e.stopPropagation()}
           >

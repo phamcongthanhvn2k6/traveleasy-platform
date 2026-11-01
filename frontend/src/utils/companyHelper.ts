@@ -76,3 +76,4 @@ export const getStoredCompany = (): CompanyInfo => {
   // Mặc định là Sao Việt nếu không tìm thấy
   return KNOWN_COMPANIES[2];
 };
+

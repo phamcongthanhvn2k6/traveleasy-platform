@@ -30,15 +30,21 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
   const currentCompany = companyInfo.name;
 
   const isSystemCheck = (p: any) => {
-    const bName = (p.busCompanyName || '').toLowerCase();
-    const pName = (p.name || '').toLowerCase();
+    const bName = (p.busCompanyName || '').toLowerCase().trim();
+    const pName = (p.name || '').toLowerCase().trim();
     return (
-      bName.includes('hệ thống') ||
-      bName.includes('traveleasy') ||
-      bName.includes('toàn sàn') ||
-      pName.includes('tiêu chuẩn traveleasy') ||
-      (Boolean(p.isDefault) && String(p.id) === '1')
+      String(p.id) === '1' ||
+      bName === 'hệ thống traveleasy' ||
+      pName.includes('tiêu chuẩn traveleasy')
     );
+  };
+
+  const isBelongingToCurrentCompany = (p: any) => {
+    if (isSystemCheck(p)) return false;
+    const bName = (p.busCompanyName || '').toLowerCase();
+    const cName = currentCompany.toLowerCase();
+    const sName = (companyInfo.shortName || '').toLowerCase();
+    return bName.includes(cName) || cName.includes(bName) || (Boolean(sName) && bName.includes(sName));
   };
 
   const fetchPoliciesFromDb = async () => {
@@ -51,20 +57,30 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
         },
       });
       if (res.data?.data && Array.isArray(res.data.data)) {
-        const mapped: CancellationPolicy[] = res.data.data.map((p: any) => ({
-          id: String(p.id),
-          name: p.name,
-          description: p.description || 'Quy định hoàn hủy vé theo khung thời gian khởi hành',
-          isSystem: isSystemCheck(p),
-          isDefault: Boolean(p.isDefault),
-          busCompanyName: p.busCompanyName || (isSystemCheck(p) ? 'Hệ thống TravelEasy' : `Nhà xe ${currentCompany}`),
-          createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : '29/10/2026',
-          rules: [
-            { condition: 'Trước giờ khởi hành >= 24 tiếng', refundRate: '100%', type: 'FULL' },
-            { condition: 'Từ 12 đến 24 tiếng trước khởi hành', refundRate: '50%', type: 'PARTIAL' },
-            { condition: 'Dưới 12 tiếng trước khởi hành', refundRate: '0%', type: 'NONE' },
-          ],
-        }));
+        // BẢO MẬT PHÂN QUYỀN ĐỐI TÁC NGHIÊM NGẶT (TENANT ISOLATION DEFENSE-IN-DEPTH):
+        // Chỉ chấp nhận hiển thị:
+        // 1. Quy chuẩn mặc định toàn sàn của hệ thống (Chỉ xem)
+        // 2. Chính sách hoàn hủy của riêng nhà xe đang đăng nhập
+        // ẨN TUYỆT ĐỐI VÀ LOẠI BỎ toàn bộ chính sách của các nhà xe khác trên sàn!
+        const validPolicies = res.data.data.filter((p: any) => isSystemCheck(p) || isBelongingToCurrentCompany(p));
+
+        const mapped: CancellationPolicy[] = validPolicies.map((p: any) => {
+          const isSys = isSystemCheck(p);
+          return {
+            id: String(p.id),
+            name: p.name,
+            description: p.description || 'Quy định hoàn hủy vé theo khung thời gian khởi hành',
+            isSystem: isSys,
+            isDefault: Boolean(p.isDefault),
+            busCompanyName: isSys ? 'Hệ thống TravelEasy' : (p.busCompanyName || `Nhà xe ${companyInfo.shortName}`),
+            createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : '29/10/2026',
+            rules: [
+              { condition: 'Trước giờ khởi hành >= 24 tiếng', refundRate: '100%', type: 'FULL' },
+              { condition: 'Từ 12 đến 24 tiếng trước khởi hành', refundRate: '50%', type: 'PARTIAL' },
+              { condition: 'Dưới 12 tiếng trước khởi hành', refundRate: '0%', type: 'NONE' },
+            ],
+          };
+        });
         setPolicies(mapped);
       }
     } catch (err: any) {
@@ -176,11 +192,15 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
   };
 
   const handleSetDefault = async (policy: CancellationPolicy) => {
+    if (policy.isSystem) {
+      toast.warning('Quy chuẩn mặc định toàn sàn của hệ thống là mặc định chung, không thể can thiệp!', 'Hành Động Bị Chặn');
+      return;
+    }
     try {
       await api.patch(`/company/cancellation-policies/${policy.id}/set-default`, null, {
         params: { companyName: currentCompany },
       });
-      toast.success(`Đã đặt "${policy.name}" làm chính sách mặc định cho ${currentCompany}!`, 'Chính Sách Mặc Định');
+      toast.success(`Đã đặt "${policy.name}" làm chính sách mặc định cho ${companyInfo.shortName}!`, 'Chính Sách Mặc Định');
       await fetchPoliciesFromDb();
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Không thể đặt mặc định!';
@@ -201,10 +221,10 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
             <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Chính sách hủy riêng
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
-            Chính Sách Hoàn Hủy Vé — {currentCompany}
+            Chính Sách Hoàn Hủy Vé — {companyInfo.shortName}
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            {ownPolicies.length} chính sách của nhà xe + {systemPolicies.length} quy chuẩn mặc định toàn sàn
+            {ownPolicies.length} chính sách của riêng nhà xe {companyInfo.shortName} + {systemPolicies.length} quy chuẩn mặc định toàn sàn
           </div>
         </div>
 
@@ -350,7 +370,7 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
                     }}
                   >
                     <Shield size={12} />
-                    <span>{policy.isSystem ? 'Hệ thống Sàn' : `Nhà xe ${currentCompany}`}</span>
+                    <span>{policy.isSystem ? 'Quy chuẩn toàn sàn' : `Nhà xe ${companyInfo.shortName}`}</span>
                   </span>
                 </div>
 

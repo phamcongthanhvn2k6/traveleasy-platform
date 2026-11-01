@@ -178,7 +178,7 @@ export const AdminBannersPage: React.FC = () => {
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Breadcrumb & Header Title */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
             TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Hệ thống <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Banner
@@ -234,8 +234,8 @@ export const AdminBannersPage: React.FC = () => {
       </div>
 
       {/* Filter Row */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-        <div style={{ position: 'relative', flex: 1 }}>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
           <input
             type="text"
             placeholder="Tìm theo tiêu đề banner..."
@@ -294,7 +294,8 @@ export const AdminBannersPage: React.FC = () => {
 
       {/* Table */}
       <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', minWidth: '850px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
           <thead>
             <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
               <th style={{ padding: '12px 18px' }}>ẢNH & TIÊU ĐỀ BANNER</th>
@@ -447,6 +448,7 @@ export const AdminBannersPage: React.FC = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Modal Thêm Banner Mới Với Cloudinary Upload */}
@@ -470,9 +472,9 @@ export const AdminBannersPage: React.FC = () => {
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               width: '100%',
-              maxWidth: '640px',
+              maxWidth: 'min(640px, 94vw)',
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-              overflow: 'hidden',
+              overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
               maxHeight: '90vh',

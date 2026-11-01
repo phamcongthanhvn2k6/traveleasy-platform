@@ -355,17 +355,21 @@ export const CheckoutPage: React.FC = () => {
 
         {/* Stepper Header (Chuẩn Vexere) */}
         <div
+          className="stepper-scroll"
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'flex-start',
             gap: '8px',
             backgroundColor: '#ffffff',
-            padding: '14px 20px',
+            padding: '14px 16px',
             borderRadius: '12px',
             border: '1px solid #e2e8f0',
             marginBottom: '20px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            whiteSpace: 'nowrap',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#16a34a', fontWeight: 700, fontSize: '13px' }}>
@@ -406,8 +410,8 @@ export const CheckoutPage: React.FC = () => {
         {/* 10-Minute Hard-Hold Countdown Timer */}
         <CheckoutTimer initialSeconds={600} onExpire={handleTimerExpire} />
 
-        {/* Main 2-Column Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.7fr 1fr', gap: '24px', alignItems: 'start' }}>
+        {/* Main 2-Column Responsive Layout */}
+        <div className="checkout-responsive-grid" style={{ display: 'grid', gap: '24px', alignItems: 'start' }}>
           {/* Left Column: Form & Payment Method */}
           <div>
             <PassengerInfoForm

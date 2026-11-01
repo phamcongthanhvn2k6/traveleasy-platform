@@ -265,8 +265,8 @@ export const UserProfilePage: React.FC = () => {
           </div>
         )}
 
-        {/* 2-Column Grid Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', alignItems: 'start' }}>
+        {/* 2-Column Responsive Grid Layout (Desktop 2-Col, Mobile 1-Col Stacked) */}
+        <div className="profile-responsive-grid">
           {/* Left Column: Profile Card & Sidebar Navigation */}
           <div style={{ backgroundColor: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
             {/* User Avatar & Info */}

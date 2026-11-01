@@ -246,7 +246,7 @@ export const TicketLookupPage: React.FC = () => {
             </div>
 
             {/* Itinerary details */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '18px', fontSize: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '16px', marginBottom: '18px', fontSize: '14px' }}>
               <div style={{ backgroundColor: '#fff', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                 <div style={{ color: '#64748b', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase' }}>Nhà xe & Tuyến đường</div>
                 <div style={{ fontWeight: 800, fontSize: '16px', color: '#0f172a', margin: '4px 0' }}>{booking.trip.busCompanyName}</div>

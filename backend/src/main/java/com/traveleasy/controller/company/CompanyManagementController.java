@@ -338,15 +338,19 @@ public class CompanyManagementController {
         CancellationPolicy policy = cancellationPolicyRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chính sách"));
 
-        String targetCompanyName = resolveTargetCompanyName(null, companyName, authentication);
-
-        if (!isSystemPolicy(policy) && !isBelongingToCompany(policy, targetCompanyName)) {
-            throw new AppException(ErrorCode.FORBIDDEN, "Từ chối thao tác! Không thể đặt chính sách của nhà xe khác làm mặc định.");
+        if (isSystemPolicy(policy)) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Quy chuẩn toàn sàn của hệ thống là mặc định chung, không thể gán làm mặc định riêng của hãng!");
         }
 
-        // Bỏ mặc định các chính sách khác của nhà xe này
+        String targetCompanyName = resolveTargetCompanyName(null, companyName, authentication);
+
+        if (!isBelongingToCompany(policy, targetCompanyName)) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Từ chối thao tác! Bạn không có quyền đặt chính sách của nhà xe khác làm mặc định.");
+        }
+
+        // Bỏ mặc định các chính sách khác của riêng nhà xe này
         List<CancellationPolicy> ownPolicies = cancellationPolicyRepository.findAll().stream()
-                .filter(p -> !isSystemPolicy(p) && isBelongingToCompany(p, targetCompanyName))
+                .filter(p -> isBelongingToCompany(p, targetCompanyName))
                 .collect(Collectors.toList());
         for (CancellationPolicy p : ownPolicies) {
             p.setIsDefault(p.getId().equals(id));
@@ -553,15 +557,16 @@ public class CompanyManagementController {
 
     private boolean isSystemPolicy(CancellationPolicy p) {
         if (p == null) return false;
-        String bName = p.getBusCompanyName() != null ? p.getBusCompanyName().toLowerCase() : "";
-        String pName = p.getName() != null ? p.getName().toLowerCase() : "";
-        return bName.contains("hệ thống") || bName.contains("traveleasy") || bName.contains("toàn sàn") ||
-               pName.contains("tiêu chuẩn traveleasy") || (Boolean.TRUE.equals(p.getIsDefault()) && p.getId() != null && p.getId() == 1L);
+        if (p.getId() != null && p.getId() == 1L) return true;
+        String bName = p.getBusCompanyName() != null ? p.getBusCompanyName().trim().toLowerCase() : "";
+        String pName = p.getName() != null ? p.getName().trim().toLowerCase() : "";
+        return bName.equals("hệ thống traveleasy") || pName.contains("tiêu chuẩn traveleasy");
     }
 
     private boolean isBelongingToCompany(CancellationPolicy p, String companyName) {
         if (p == null || companyName == null || companyName.isBlank()) return false;
-        if (p.getBusCompanyName() == null) return false;
+        if (isSystemPolicy(p)) return false; // Chính sách hệ thống không thuộc quyền sở hữu riêng của bất kỳ hãng nào
+        if (p.getBusCompanyName() == null || p.getBusCompanyName().isBlank()) return false;
         String bName = p.getBusCompanyName().toLowerCase();
         String cName = companyName.toLowerCase();
         // Kiểm tra khớp từ khóa tên nhà xe (ví dụ: "Sao Việt", "Phương Trang", "Thành Bưởi")

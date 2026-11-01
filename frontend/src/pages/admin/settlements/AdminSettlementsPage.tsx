@@ -230,7 +230,7 @@ export const AdminSettlementsPage: React.FC = () => {
   return (
     <div style={{ maxWidth: '1440px', margin: '0 auto', paddingBottom: '40px' }}>
       {/* 1. Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
             TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Tài chính{' '}
@@ -286,7 +286,7 @@ export const AdminSettlementsPage: React.FC = () => {
       </div>
 
       {/* 2. KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '22px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: '16px', marginBottom: '22px' }}>
         <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: 600 }}>TỔNG DOANH THU VÉ (GMV)</span>
@@ -352,9 +352,10 @@ export const AdminSettlementsPage: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '12px',
+          flexWrap: 'wrap',
         }}
       >
-        <div style={{ position: 'relative', flex: 1, maxWidth: '420px' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: '240px', maxWidth: '420px' }}>
           <input
             type="text"
             placeholder="Tìm theo Mã đối soát, Tên nhà xe..."
@@ -374,7 +375,7 @@ export const AdminSettlementsPage: React.FC = () => {
           <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
         </div>
 
-        <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
+        <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '8px', overflowX: 'auto', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
           {[
             { key: 'ALL', label: `Tất cả (${settlements.length})` },
             { key: 'PAID', label: `Đã giải ngân (${settlements.filter((s) => s.status === 'PAID').length})` },
@@ -617,7 +618,7 @@ export const AdminSettlementsPage: React.FC = () => {
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               width: '100%',
-              maxWidth: '680px',
+              maxWidth: 'min(680px, 94vw)',
               padding: '24px',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
               maxHeight: '90vh',
@@ -837,7 +838,9 @@ export const AdminSettlementsPage: React.FC = () => {
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               width: '100%',
-              maxWidth: '640px',
+              maxWidth: 'min(640px, 94vw)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               padding: '24px',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
             }}

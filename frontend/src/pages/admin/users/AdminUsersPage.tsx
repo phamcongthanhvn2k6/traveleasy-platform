@@ -189,7 +189,7 @@ export const AdminUsersPage: React.FC = () => {
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
             TravelEasy Admin <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> <span style={{ color: '#0f172a' }}>Người dùng</span>
@@ -245,7 +245,7 @@ export const AdminUsersPage: React.FC = () => {
       </div>
 
       {/* Filter Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
         <input
           type="text"
           value={search}
@@ -315,7 +315,8 @@ export const AdminUsersPage: React.FC = () => {
           boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
         }}
       >
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', minWidth: '950px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>HỌ TÊN & EMAIL</th>
@@ -465,6 +466,7 @@ export const AdminUsersPage: React.FC = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Modal: Thêm Người Dùng Mới */}
@@ -486,9 +488,10 @@ export const AdminUsersPage: React.FC = () => {
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               width: '100%',
-              maxWidth: '520px',
+              maxWidth: 'min(520px, 94vw)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
-              overflow: 'hidden',
             }}
           >
             {/* Header */}
@@ -685,9 +688,10 @@ export const AdminUsersPage: React.FC = () => {
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               width: '100%',
-              maxWidth: '500px',
+              maxWidth: 'min(500px, 94vw)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
-              overflow: 'hidden',
             }}
           >
             {/* Header */}

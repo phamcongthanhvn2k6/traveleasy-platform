@@ -602,7 +602,8 @@ export const AdminAuditLogsPage: React.FC = () => {
           boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
         }}
       >
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
               <th style={{ padding: '12px 18px', color: '#475569', fontWeight: 700, fontSize: '11.5px' }}>THỜI GIAN</th>
@@ -769,6 +770,7 @@ export const AdminAuditLogsPage: React.FC = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* ========================================================================= */}
@@ -794,7 +796,7 @@ export const AdminAuditLogsPage: React.FC = () => {
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               width: '100%',
-              maxWidth: '680px',
+              maxWidth: 'min(680px, 94vw)',
               padding: '26px',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)',
               maxHeight: '90vh',
@@ -1022,7 +1024,7 @@ export const AdminAuditLogsPage: React.FC = () => {
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               width: '100%',
-              maxWidth: '640px',
+              maxWidth: 'min(640px, 94vw)',
               padding: '24px',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
               maxHeight: '90vh',
@@ -1151,7 +1153,7 @@ export const AdminAuditLogsPage: React.FC = () => {
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               width: '100%',
-              maxWidth: '820px',
+              maxWidth: 'min(820px, 94vw)',
               padding: '30px',
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)',
               maxHeight: '90vh',

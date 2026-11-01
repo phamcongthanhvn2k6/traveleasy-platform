@@ -145,8 +145,8 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 1. TOP STATS ROW (4 Cards) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+      {/* 1. TOP STATS ROW (Responsive Grid) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: '16px', marginBottom: '24px' }}>
         {kpiStats.map((item, idx) => {
           const Icon = item.icon;
           return (
@@ -193,8 +193,8 @@ export const AdminDashboardPage: React.FC = () => {
         })}
       </div>
 
-      {/* 2. MAIN CONTENT (2 Columns: Chart on Left, Real Upcoming Trips on Right) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+      {/* 2. MAIN CONTENT (Responsive Grid: Chart & Real Upcoming Trips) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))', gap: '20px', marginBottom: '24px' }}>
         {/* Left Column: Interactive Revenue Trend Chart */}
         <div>
           <RevenueChart

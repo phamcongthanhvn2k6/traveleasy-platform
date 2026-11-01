@@ -376,7 +376,7 @@ export const AdminTripsPage: React.FC = () => {
         </div>
 
         {/* Status Tabs */}
-        <div style={{ display: 'flex', gap: '6px' }}>
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {[
             { key: 'ALL', label: 'Tất cả' },
             { key: 'SCHEDULED', label: `Đang mở bán (${scheduledCount})` },

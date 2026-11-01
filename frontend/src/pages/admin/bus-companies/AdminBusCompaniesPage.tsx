@@ -275,7 +275,8 @@ export const AdminBusCompaniesPage: React.FC = () => {
           boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
         }}
       >
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>ĐƠN VỊ VẬN TẢI</th>
@@ -538,6 +539,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Modal: Sửa Thông Tin Cơ Bản */}
@@ -559,9 +561,10 @@ export const AdminBusCompaniesPage: React.FC = () => {
               backgroundColor: '#ffffff',
               borderRadius: '16px',
               width: '100%',
-              maxWidth: '520px',
+              maxWidth: 'min(520px, 94vw)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
-              overflow: 'hidden',
             }}
           >
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
@@ -705,9 +708,10 @@ export const AdminBusCompaniesPage: React.FC = () => {
                 backgroundColor: '#ffffff',
                 borderRadius: '16px',
                 width: '100%',
-                maxWidth: '620px',
+                maxWidth: 'min(620px, 94vw)',
+                maxHeight: '90vh',
+                overflowY: 'auto',
                 boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
-                overflow: 'hidden',
               }}
             >
               <div
