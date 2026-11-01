@@ -23,7 +23,8 @@ import {
   FileText,
   Sun,
   Moon,
-  QrCode
+  QrCode,
+  Menu
 } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
@@ -46,6 +47,7 @@ export const Navbar: React.FC = () => {
   });
 
   const [showPartnerModal, setShowPartnerModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -242,7 +244,7 @@ export const Navbar: React.FC = () => {
             </div>
           </Link>
 
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <nav className="hide-on-tablet hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
             {/* 1. Chức năng Đặt Vé Xe */}
             <Link 
               to="/search" 
@@ -439,6 +441,7 @@ export const Navbar: React.FC = () => {
           {user?.role === 'ADMIN' && (
             <Link 
               to="/admin/dashboard" 
+              className="hide-on-mobile"
               style={{ 
                 textDecoration: 'none', 
                 color: '#1e3a8a', 
@@ -457,6 +460,27 @@ export const Navbar: React.FC = () => {
               <LayoutDashboard size={16} color="#2563eb" /> Quản Trị Sàn (ADMIN)
             </Link>
           )}
+
+          {/* Mobile & Tablet Hamburger Menu Trigger */}
+          <button
+            className="show-tablet-mobile"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Mở Menu Điều Hướng"
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+              border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+              color: isDark ? '#f8fafc' : '#0f172a',
+              cursor: 'pointer',
+              display: 'flex',
+            }}
+          >
+            <Menu size={20} />
+          </button>
         </div>
       </div>
 
@@ -603,6 +627,330 @@ export const Navbar: React.FC = () => {
               >
                 Đã hiểu
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MOBILE & TABLET SLIDE-OVER NAVIGATION DRAWER             */}
+      {/* ======================================================== */}
+      {mobileMenuOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 99999,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            animation: 'fadeIn 0.2s ease',
+          }}
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div
+            style={{
+              width: '320px',
+              maxWidth: '85vw',
+              height: '100%',
+              backgroundColor: isDark ? '#0f172a' : '#ffffff',
+              color: isDark ? '#f8fafc' : '#0f172a',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '-8px 0 30px rgba(0, 0, 0, 0.35)',
+              overflowY: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drawer Header */}
+            <div
+              style={{
+                padding: '16px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderBottom: `1px solid ${isDark ? '#1e293b' : '#f1f5f9'}`,
+                backgroundColor: isDark ? '#111827' : '#f8fafc',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', padding: '6px', borderRadius: '8px', color: '#fff', display: 'flex' }}>
+                  <Bus size={18} />
+                </div>
+                <span style={{ fontSize: '18px', fontWeight: 900, color: isDark ? '#60a5fa' : '#1e3a8a' }}>TravelEasy.vn</span>
+              </div>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Đóng Menu"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: isDark ? '#cbd5e1' : '#64748b',
+                  cursor: 'pointer',
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* User Account Info / Login Button */}
+            <div
+              style={{
+                padding: '16px 20px',
+                borderBottom: `1px solid ${isDark ? '#1e293b' : '#f1f5f9'}`,
+                backgroundColor: isDark ? 'rgba(30, 41, 59, 0.4)' : '#eff6ff',
+              }}
+            >
+              {user ? (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        backgroundColor: '#2563eb',
+                        color: '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '14px',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {user.fullName ? user.fullName.substring(0, 1).toUpperCase() : 'U'}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13.5px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {user.fullName || user.email}
+                      </div>
+                      <div style={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }}>
+                        {user.role} • {user.phone || user.email}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Link
+                      to="/profile"
+                      onClick={() => setMobileMenuOpen(false)}
+                      style={{
+                        flex: 1,
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                        border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        color: isDark ? '#38bdf8' : '#2563eb',
+                        textAlign: 'center',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Hồ sơ của tôi
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+                        border: 'none',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        color: '#dc2626',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize: '12.5px', color: isDark ? '#cbd5e1' : '#475569', marginBottom: '8px' }}>
+                    Chào mừng bạn đến với TravelEasy!
+                  </div>
+                  <Link
+                    to="/auth"
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '9px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <User size={15} /> Đăng nhập / Đăng ký
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Navigation Links */}
+            <div style={{ flex: 1, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {[
+                { label: 'Đặt Vé Xe Khách', path: '/search', icon: Bus },
+                { label: 'Tra Cứu Vé Bằng Mã / SĐT', path: '/lookup', icon: ShieldCheck },
+                { label: 'Vé Của Tôi (Lịch Sử Đặt)', path: '/my-tickets', icon: Ticket },
+                { label: 'Lịch Trình Tuyến Đường', path: '/schedule', icon: Clock },
+                { label: 'Đánh Giá Từ Khách Hàng', path: '/reviews', icon: Star },
+                { label: 'Khuyến Mại & Voucher Hot', path: '/promotions', icon: Tag },
+                { label: 'Quét Mã Vé QR Scanner', path: '/scanner', icon: QrCode },
+              ].map((item) => {
+                const Icon = item.icon;
+                const active = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '13.5px',
+                      fontWeight: active ? 700 : 500,
+                      color: active
+                        ? isDark
+                          ? '#38bdf8'
+                          : '#2563eb'
+                        : isDark
+                        ? '#cbd5e1'
+                        : '#334155',
+                      backgroundColor: active
+                        ? isDark
+                          ? '#1e293b'
+                          : '#eff6ff'
+                        : 'transparent',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <Icon size={17} color={active ? (isDark ? '#38bdf8' : '#2563eb') : '#94a3b8'} />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+
+              {/* Portal Shortcuts */}
+              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${isDark ? '#1e293b' : '#f1f5f9'}` }}>
+                {user?.role === 'OPERATOR' && (
+                  <Link
+                    to="/company/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: isDark ? 'rgba(13, 148, 136, 0.2)' : '#f0fdfa',
+                      border: '1px solid #ccfbf1',
+                      color: isDark ? '#2dd4bf' : '#0f766e',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      marginBottom: '6px',
+                    }}
+                  >
+                    <Building2 size={16} /> Cổng Điều Hành Xe (OPERATOR)
+                  </Link>
+                )}
+
+                {user?.role === 'ADMIN' && (
+                  <Link
+                    to="/admin/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: isDark ? 'rgba(37, 99, 235, 0.2)' : '#eff6ff',
+                      border: '1px solid #dbeafe',
+                      color: isDark ? '#60a5fa' : '#1e40af',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      marginBottom: '6px',
+                    }}
+                  >
+                    <LayoutDashboard size={16} /> Quản Trị Sàn (ADMIN)
+                  </Link>
+                )}
+
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setShowPartnerModal(true);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 14px',
+                    width: '100%',
+                    borderRadius: '8px',
+                    color: isDark ? '#cbd5e1' : '#475569',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Handshake size={16} color="#0d9488" /> Hợp tác mở bán vé
+                </button>
+              </div>
+            </div>
+
+            {/* Hotline Footer */}
+            <div
+              style={{
+                padding: '14px 20px',
+                borderTop: `1px solid ${isDark ? '#1e293b' : '#f1f5f9'}`,
+                backgroundColor: isDark ? '#111827' : '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div style={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }}>
+                Tổng đài hỗ trợ 24/7
+              </div>
+              <a
+                href="tel:19006868"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  color: isDark ? '#fbbf24' : '#b45309',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                }}
+              >
+                <PhoneCall size={14} /> 1900 6868
+              </a>
             </div>
           </div>
         </div>

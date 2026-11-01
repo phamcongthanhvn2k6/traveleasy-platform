@@ -10,7 +10,7 @@ import { Pagination } from '../../../components/Pagination';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { toast } from '../../../context/ToastContext';
 import { useTheme } from '../../../context/ThemeContext';
-import { Bus, AlertCircle } from 'lucide-react';
+import { Bus, AlertCircle, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 
 // Bộ nhớ đệm Client-side SWR: Giữ kết quả tìm kiếm trong RAM và SessionStorage để hiển thị tức thì (0ms)
 const tripSearchClientCache = new Map<string, { data: Trip[]; timestamp: number }>();
@@ -48,6 +48,7 @@ export const TripSearchPage: React.FC = () => {
 
   // Sorting and Filtering State
   const [sortOption, setSortOption] = useState<SortOption>('DEFAULT');
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     timeRange: [0, 24],
     timeSlots: [],
@@ -535,10 +536,11 @@ export const TripSearchPage: React.FC = () => {
 
       {/* 2. Main Body Grid: Left Sidebar & Right Results */}
       <div
+        className="search-page-grid"
         style={{
           maxWidth: '1240px',
           margin: '0 auto',
-          padding: '0 20px',
+          padding: '0 16px',
           display: 'grid',
           gridTemplateColumns: '300px 1fr',
           gap: '24px',
@@ -547,18 +549,54 @@ export const TripSearchPage: React.FC = () => {
       >
         {/* Left: Filter Sidebar */}
         <div>
-          <FilterSidebar
-            filters={filters}
-            sortOption={sortOption}
-            onSortChange={setSortOption}
-            availableCompanies={availableCompanies}
-            availablePickupPoints={availablePickupPoints}
-            availableDropoffPoints={availableDropoffPoints}
-            availableBusTypes={availableBusTypes}
-            facetCounts={facetCounts}
-            onChange={setFilters}
-            onReset={handleResetFilters}
-          />
+          {/* Mobile Filter Toggle Button */}
+          <div className="show-tablet-mobile" style={{ marginBottom: '14px' }}>
+            <button
+              onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 18px',
+                backgroundColor: isDark ? '#111827' : '#ffffff',
+                border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                borderRadius: '12px',
+                color: isDark ? '#f8fafc' : '#0f172a',
+                fontSize: '13.5px',
+                fontWeight: 700,
+                boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 1px 4px rgba(0,0,0,0.06)',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <SlidersHorizontal size={17} color={isDark ? '#38bdf8' : '#2563eb'} />
+                <span>Bộ Lọc & Sắp Xếp Chuyến Xe</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: isDark ? '#38bdf8' : '#2563eb' }}>
+                <span>{mobileFilterOpen ? 'Thu gọn' : 'Mở rộng'}</span>
+                {mobileFilterOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </div>
+            </button>
+          </div>
+
+          <div
+            className={mobileFilterOpen ? '' : 'hide-on-tablet hide-on-mobile'}
+            style={{ marginBottom: mobileFilterOpen ? '16px' : '0' }}
+          >
+            <FilterSidebar
+              filters={filters}
+              sortOption={sortOption}
+              onSortChange={setSortOption}
+              availableCompanies={availableCompanies}
+              availablePickupPoints={availablePickupPoints}
+              availableDropoffPoints={availableDropoffPoints}
+              availableBusTypes={availableBusTypes}
+              facetCounts={facetCounts}
+              onChange={setFilters}
+              onReset={handleResetFilters}
+            />
+          </div>
         </div>
 
         {/* Right: Sort Tab Bar & Trips List */}

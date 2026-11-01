@@ -321,6 +321,128 @@ input, select {
   padding: 0 16px;
 }
 
+/* =========================================================================
+   RESPONSIVE DESIGN SYSTEM (MOBILE & TABLET VIEWPORT OPTIMIZATIONS)
+   ========================================================================= */
+
+/* Responsive Table Wrapper */
+.responsive-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 12px;
+}
+
+.responsive-table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.responsive-table-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 3px;
+}
+
+/* Base Display Helpers */
+.show-mobile-only {
+  display: none !important;
+}
+
+.show-tablet-mobile {
+  display: none !important;
+}
+
+.hide-on-mobile {
+  display: inherit;
+}
+
+.hide-on-tablet {
+  display: inherit;
+}
+
+/* Tablet Breakpoint (<= 1024px) */
+@media (max-width: 1024px) {
+  .show-tablet-mobile {
+    display: flex !important;
+  }
+  
+  .hide-on-tablet {
+    display: none !important;
+  }
+
+  .container {
+    padding: 0 14px;
+  }
+
+  /* Universal Responsive Table Scrolling */
+  div:has(> table) {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  table {
+    min-width: 680px !important;
+  }
+
+  .search-page-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .search-bar-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+}
+
+/* Mobile Breakpoint (<= 768px) */
+@media (max-width: 768px) {
+  .show-mobile-only {
+    display: flex !important;
+  }
+
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  .container {
+    padding: 0 12px;
+  }
+
+  /* Padding at bottom for mobile bottom nav bar */
+  body.has-mobile-nav {
+    padding-bottom: 64px !important;
+  }
+
+  .search-bar-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .search-page-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .mobile-full-width {
+    width: 100% !important;
+  }
+
+  .mobile-stack {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  /* Adjust typography for mobile */
+  h1 {
+    font-size: 1.35rem !important;
+    line-height: 1.3 !important;
+  }
+
+  h2 {
+    font-size: 1.2rem !important;
+  }
+}
+
 @keyframes toastSlideIn {
   from {
     transform: translateX(110%);

@@ -183,3 +183,4 @@ export const sendAppNotification = (item: Omit<AppNotification, 'id' | 'timestam
 
   return newNotif;
 };
+

@@ -10,7 +10,7 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer style={{ backgroundColor: '#0f172a', color: '#94a3b8', padding: '56px 0 28px', marginTop: '64px' }}>
+    <footer style={{ backgroundColor: '#0f172a', color: '#94a3b8', padding: '56px 0 84px', marginTop: '64px' }}>
       <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '36px', marginBottom: '36px' }}>
         {/* Brand & Introduction */}
         <div>
