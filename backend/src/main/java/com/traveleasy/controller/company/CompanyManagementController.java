@@ -52,8 +52,10 @@ public class CompanyManagementController {
     @org.springframework.cache.annotation.Cacheable(value = "company_dashboard_stats", key = "#companyId != null ? #companyId : 1L")
     @GetMapping("/dashboard/stats")
     @Operation(summary = "Lấy thống kê KPI và danh sách chuyến xe sắp tới của riêng nhà xe đối tác từ CSDL")
-    public ApiResponse<Map<String, Object>> getCompanyDashboardStats(@RequestParam(required = false) Long companyId) {
-        Long targetId = companyId != null ? companyId : 1L; // Mặc định là nhà xe đang quản lý
+    public ApiResponse<Map<String, Object>> getCompanyDashboardStats(
+            @RequestParam(required = false) Long companyId,
+            Authentication authentication) {
+        Long targetId = resolveTargetCompanyId(companyId, authentication);
         BigDecimal totalRevenue = bookingRepository.sumTotalRevenueByBusCompanyId(targetId);
         long totalTrips = tripRepository.countByBusCompanyId(targetId);
         long totalBookings = bookingRepository.countByBusCompanyId(targetId);
@@ -85,8 +87,10 @@ public class CompanyManagementController {
     @Cacheable(value = "company_trips", key = "#companyId != null ? #companyId : 1L")
     @GetMapping("/trips")
     @Operation(summary = "Lấy danh sách chuyến xe của riêng nhà xe đối tác từ CSDL thực tế")
-    public ApiResponse<List<TripResponse>> getCompanyTrips(@RequestParam(required = false) Long companyId) {
-        Long targetId = companyId != null ? companyId : 1L;
+    public ApiResponse<List<TripResponse>> getCompanyTrips(
+            @RequestParam(required = false) Long companyId,
+            Authentication authentication) {
+        Long targetId = resolveTargetCompanyId(companyId, authentication);
         // TỐI ƯU HÓA: Chỉ truy vấn các chuyến xe của riêng hãng từ CSDL và batch map điểm đón/trả
         List<Trip> companyTripsRaw = tripRepository.findByBusCompanyIdOrderByDepartureTimeDesc(targetId);
         List<TripResponse> companyTrips = adminTripService.mapTripsWithPointsBatch(companyTripsRaw);
@@ -96,10 +100,11 @@ public class CompanyManagementController {
     @CacheEvict(value = {"company_trips", "company_dashboard_stats", "admin_all_trips", "trips_search"}, allEntries = true)
     @PostMapping("/trips")
     @Operation(summary = "Tạo chuyến xe mới vào CSDL thực tế cho nhà xe (Tự động sinh kho ghế 34 chỗ)")
-    public ApiResponse<TripResponse> createCompanyTrip(@Valid @RequestBody CreateTripRequest request) {
-        if (request.getBusCompanyId() == null) {
-            request.setBusCompanyId(1L);
-        }
+    public ApiResponse<TripResponse> createCompanyTrip(
+            @Valid @RequestBody CreateTripRequest request,
+            Authentication authentication) {
+        Long targetId = resolveTargetCompanyId(request.getBusCompanyId(), authentication);
+        request.setBusCompanyId(targetId);
         return ApiResponse.success("Tạo chuyến xe thành công và lưu vào CSDL", adminTripService.createTrip(request));
     }
 
@@ -128,8 +133,10 @@ public class CompanyManagementController {
     @CacheEvict(value = {"company_trips", "company_dashboard_stats", "admin_all_trips", "trips_search"}, allEntries = true)
     @PostMapping("/trips/auto-generate")
     @Operation(summary = "Tự động sinh chuyến theo lịch chạy định kỳ (Recurring Schedule Generator) cho nhà xe")
-    public ApiResponse<Map<String, Object>> autoGenerateCompanyTrips(@RequestBody com.traveleasy.dto.company.AutoGenerateTripsRequest request) {
-        Long targetCompanyId = request.getBusCompanyId() != null ? request.getBusCompanyId() : 1L;
+    public ApiResponse<Map<String, Object>> autoGenerateCompanyTrips(
+            @RequestBody com.traveleasy.dto.company.AutoGenerateTripsRequest request,
+            Authentication authentication) {
+        Long targetCompanyId = resolveTargetCompanyId(request.getBusCompanyId(), authentication);
         int days = request.getDaysAhead() != null ? request.getDaysAhead() : 30;
         int generatedCount = tripAutomationService.batchGenerateForCompany(
                 targetCompanyId,
@@ -151,8 +158,10 @@ public class CompanyManagementController {
 
     @GetMapping("/trips/automation-status")
     @Operation(summary = "Kiểm tra trạng thái hệ thống tự động sinh và lăn chuyến (Daily Auto-Rolling Engine)")
-    public ApiResponse<Map<String, Object>> getAutomationStatus(@RequestParam(required = false) Long companyId) {
-        Long targetId = companyId != null ? companyId : 1L;
+    public ApiResponse<Map<String, Object>> getAutomationStatus(
+            @RequestParam(required = false) Long companyId,
+            Authentication authentication) {
+        Long targetId = resolveTargetCompanyId(companyId, authentication);
         long scheduledTrips = tripRepository.countByBusCompanyIdAndStatus(targetId, TripStatus.SCHEDULED);
         return ApiResponse.success(Map.of(
                 "autoRollingActive", true,
@@ -171,18 +180,20 @@ public class CompanyManagementController {
     @Operation(summary = "Lấy danh sách tuyến đường đã đăng ký của nhà xe từ CSDL thực tế")
     public ApiResponse<List<RouteAdminResponse>> getCompanyRoutes(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) Long companyId) {
-        Long targetId = companyId != null ? companyId : 1L;
+            @RequestParam(required = false) Long companyId,
+            Authentication authentication) {
+        Long targetId = resolveTargetCompanyId(companyId, authentication);
         return ApiResponse.success(adminManagementService.getAllRoutes(search, targetId));
     }
 
     @CacheEvict(value = {"company_routes", "admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     @PostMapping("/routes")
     @Operation(summary = "Tạo mới tuyến đường vào CSDL thực tế cho nhà xe")
-    public ApiResponse<RouteAdminResponse> createCompanyRoute(@Valid @RequestBody CreateRouteRequest request) {
-        if (request.getBusCompanyId() == null) {
-            request.setBusCompanyId(1L);
-        }
+    public ApiResponse<RouteAdminResponse> createCompanyRoute(
+            @Valid @RequestBody CreateRouteRequest request,
+            Authentication authentication) {
+        Long targetId = resolveTargetCompanyId(request.getBusCompanyId(), authentication);
+        request.setBusCompanyId(targetId);
         return ApiResponse.success("Tạo tuyến đường thành công vào CSDL", adminManagementService.createRoute(request));
     }
 
@@ -208,8 +219,11 @@ public class CompanyManagementController {
     // =========================================================================
     @GetMapping("/bookings")
     @Operation(summary = "Lấy danh sách đơn vé hành khách của riêng các chuyến xe của nhà xe")
-    public ApiResponse<List<BookingResponse>> getCompanyBookings(@RequestParam(required = false) Long companyId) {
-        return ApiResponse.success(bookingService.getCompanyBookings(companyId));
+    public ApiResponse<List<BookingResponse>> getCompanyBookings(
+            @RequestParam(required = false) Long companyId,
+            Authentication authentication) {
+        Long targetId = resolveTargetCompanyId(companyId, authentication);
+        return ApiResponse.success(bookingService.getCompanyBookings(targetId));
     }
 
     @CacheEvict(value = {"company_bookings", "admin_all_bookings", "company_dashboard_stats"}, allEntries = true)
@@ -439,8 +453,10 @@ public class CompanyManagementController {
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @GetMapping("/settlements")
     @Operation(summary = "Lấy dữ liệu đối soát và thanh quyết toán thực tế từ CSDL đơn đặt vé Supabase")
-    public ApiResponse<List<Map<String, Object>>> getCompanySettlements(@RequestParam(required = false) Long companyId) {
-        Long targetId = companyId != null ? companyId : 1L;
+    public ApiResponse<List<Map<String, Object>>> getCompanySettlements(
+            @RequestParam(required = false) Long companyId,
+            Authentication authentication) {
+        Long targetId = resolveTargetCompanyId(companyId, authentication);
 
         // TỐI ƯU HÓA: Sử dụng truy vấn SQL index tổng hợp thay vì tải toàn bộ bookings
         BigDecimal totalGross = bookingRepository.sumTotalRevenueByBusCompanyId(targetId);
@@ -496,13 +512,45 @@ public class CompanyManagementController {
     @Operation(summary = "Nhà xe gửi yêu cầu rút tiền / tất toán doanh thu về tài khoản ngân hàng")
     public ApiResponse<String> requestPayout(
             @RequestParam(required = false) Long companyId,
-            @RequestParam(required = false) BigDecimal amount) {
+            @RequestParam(required = false) BigDecimal amount,
+            Authentication authentication) {
+        Long targetId = resolveTargetCompanyId(companyId, authentication);
         return ApiResponse.success("Yêu cầu tất toán đã được gửi tới Ban quản trị Sàn TravelEasy. Tiền sẽ được đối soát và giải ngân về tài khoản ngân hàng của bạn trong vòng 24 giờ làm việc.");
     }
 
     // =========================================================================
     // HELPER METHODS: TENANT ISOLATION CHO ĐỐI TÁC NHÀ XE
     // =========================================================================
+    private Long resolveTargetCompanyId(Long explicitCompanyId, Authentication authentication) {
+        if (explicitCompanyId != null) {
+            return explicitCompanyId;
+        }
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
+            String email = authentication.getName();
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user != null && user.getFullName() != null) {
+                String fullName = user.getFullName().toLowerCase();
+                for (BusCompany bc : busCompanyRepository.findAll()) {
+                    String bcName = bc.getName().toLowerCase();
+                    if (fullName.contains(bcName) || bcName.contains(fullName)) {
+                        return bc.getId();
+                    }
+                }
+                if (fullName.contains("sao việt") || fullName.contains("sao viet")) return 3L;
+                if (fullName.contains("phương trang") || fullName.contains("futa")) return 1L;
+                if (fullName.contains("thành bưởi") || fullName.contains("thanh buoi")) return 2L;
+                if (fullName.contains("kumho")) return 4L;
+                if (fullName.contains("hoa mai")) return 5L;
+                if (fullName.contains("hoàng long") || fullName.contains("hoang long")) return 6L;
+                if (fullName.contains("văn minh") || fullName.contains("van minh")) return 7L;
+                if (fullName.contains("cúc tùng") || fullName.contains("cuc tung")) return 8L;
+                if (fullName.contains("hải vân") || fullName.contains("hai van")) return 9L;
+                if (fullName.contains("chín nghĩa") || fullName.contains("chin nghia")) return 10L;
+            }
+        }
+        return 3L; // Mặc định là Sao Việt nếu không định danh
+    }
+
     private boolean isSystemPolicy(CancellationPolicy p) {
         if (p == null) return false;
         String bName = p.getBusCompanyName() != null ? p.getBusCompanyName().toLowerCase() : "";

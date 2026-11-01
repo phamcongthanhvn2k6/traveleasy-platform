@@ -24,6 +24,7 @@ import { AuthUser } from '../types';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeToggle } from './ThemeToggle';
 import { NotificationDropdown } from './NotificationDropdown';
+import { getStoredCompany } from '../utils/companyHelper';
 
 interface CompanyLayoutProps {
   children: React.ReactNode;
@@ -58,19 +59,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
   });
 
   const getCompanyDisplayName = () => {
-    if (!currentUser?.fullName) return 'Sao Việt';
-    const name = currentUser.fullName;
-    if (name.includes('Sao Việt')) return 'Sao Việt';
-    if (name.includes('Phương Trang') || name.includes('FUTA')) return 'Phương Trang (FUTA)';
-    if (name.includes('Thành Bưởi')) return 'Thành Bưởi';
-    if (name.includes('Hoa Mai')) return 'Xe Khách Hoa Mai';
-    if (name.includes('Hoàng Long')) return 'Hoàng Long Asia';
-    if (name.includes('Văn Minh')) return 'Nhà Xe Văn Minh';
-    if (name.includes('Cúc Tùng')) return 'Cúc Tùng Limousine';
-    if (name.includes('Hải Vân')) return 'Hải Vân Express';
-    if (name.includes('Chín Nghĩa')) return 'Chín Nghĩa';
-    if (name.includes('Kumho')) return 'Kumho Samco';
-    return name.replace(/^(Điều Hành|Nhân Viên Vận Hành|Quản Trị)\s*(Xe\s*)?/i, '').trim() || 'Sao Việt';
+    return getStoredCompany().shortName;
   };
 
   const handleLogout = () => {

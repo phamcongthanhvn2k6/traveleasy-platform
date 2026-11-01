@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Shield, Edit2, Trash2, CheckCircle, X, Info, Lock, ShieldCheck, RefreshCw } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
+import { getStoredCompany } from '../../../utils/companyHelper';
 
 export interface PolicyRule {
   condition: string;
@@ -25,28 +26,8 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Nhận diện nhà xe đang đăng nhập từ tài khoản người dùng
-  const currentCompany = (() => {
-    try {
-      const saved = localStorage.getItem('traveleasy_user');
-      if (saved) {
-        const u = JSON.parse(saved);
-        const name = u.fullName || '';
-        if (name.includes('Sao Việt')) return 'Sao Việt';
-        if (name.includes('Phương Trang') || name.includes('FUTA')) return 'Phương Trang (FUTA Bus Lines)';
-        if (name.includes('Thành Bưởi')) return 'Thành Bưởi';
-        if (name.includes('Hoa Mai')) return 'Xe Khách Hoa Mai';
-        if (name.includes('Hoàng Long')) return 'Hoàng Long Asia';
-        if (name.includes('Văn Minh')) return 'Nhà Xe Văn Minh';
-        if (name.includes('Cúc Tùng')) return 'Cúc Tùng Limousine';
-        if (name.includes('Hải Vân')) return 'Hải Vân Express';
-        if (name.includes('Chín Nghĩa')) return 'Chín Nghĩa';
-        if (name.includes('Kumho')) return 'Kumho Samco';
-        const clean = name.replace(/^(Điều Hành|Nhân Viên Vận Hành|Quản Trị)\s*(Xe\s*)?/i, '').trim();
-        if (clean) return clean;
-      }
-    } catch {}
-    return 'Sao Việt';
-  })();
+  const companyInfo = getStoredCompany();
+  const currentCompany = companyInfo.name;
 
   const isSystemCheck = (p: any) => {
     const bName = (p.busCompanyName || '').toLowerCase();
@@ -64,7 +45,10 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
     setLoading(true);
     try {
       const res = await api.get('/company/cancellation-policies', {
-        params: { companyName: currentCompany },
+        params: {
+          companyId: companyInfo.id,
+          companyName: companyInfo.name,
+        },
       });
       if (res.data?.data && Array.isArray(res.data.data)) {
         const mapped: CancellationPolicy[] = res.data.data.map((p: any) => ({
@@ -210,7 +194,7 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Breadcrumb & Header Title */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '18px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
             Nhà xe <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Vận hành{' '}
@@ -224,7 +208,7 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
             onClick={fetchPoliciesFromDb}
             style={{
@@ -303,7 +287,7 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
         </div>
       ) : (
         /* Grid of Policies */
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '20px' }}>
           {policies.map((policy) => (
             <div
               key={policy.id}
@@ -526,8 +510,9 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
               borderRadius: '16px',
               width: '100%',
               maxWidth: '560px',
+              maxHeight: '90vh',
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
-              overflow: 'hidden',
+              overflowY: 'auto',
             }}
           >
             <div

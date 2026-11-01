@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
+import { getStoredCompany } from '../../../utils/companyHelper';
 
 interface PartnerSettlementRecord {
   id: string;
@@ -36,6 +37,7 @@ interface PartnerSettlementRecord {
 }
 
 export const CompanySettlementsPage: React.FC = () => {
+  const currentCompany = getStoredCompany();
   const [settlements, setSettlements] = useState<PartnerSettlementRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState<PartnerSettlementRecord | null>(null);
@@ -49,7 +51,12 @@ export const CompanySettlementsPage: React.FC = () => {
   const fetchSettlements = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/company/settlements');
+      const res = await api.get('/company/settlements', {
+        params: {
+          companyId: currentCompany.id,
+          companyName: currentCompany.name,
+        },
+      });
       if (res.data?.data && Array.isArray(res.data.data)) {
         setSettlements(res.data.data);
       }
@@ -136,21 +143,21 @@ export const CompanySettlementsPage: React.FC = () => {
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', paddingBottom: '40px' }}>
       {/* 1. Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap', gap: '14px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
             Đối tác TravelEasy <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Tài chính{' '}
             <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Đối soát & Quyết toán
           </div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.3px' }}>
-            Doanh Thu & Đối Soát Nhận Tiền Từ Sàn
+            Doanh Thu & Đối Soát — {currentCompany.name}
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '3px' }}>
             Theo dõi chi tiết số tiền bán vé qua sàn TravelEasy và tiến độ chuyển khoản giải ngân về tài khoản nhà xe
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
             onClick={openWithdrawModal}
             style={{
@@ -259,7 +266,7 @@ export const CompanySettlementsPage: React.FC = () => {
       </div>
 
       {/* 3. Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '18px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '18px', marginBottom: '24px' }}>
         <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '20px 22px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: 600 }}>TỔNG BÁN VÉ QUA SÀN</span>

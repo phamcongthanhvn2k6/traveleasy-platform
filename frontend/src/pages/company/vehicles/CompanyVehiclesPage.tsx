@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Bus, Search, Plus, Eye, Edit2, Trash2, Calendar, User, Layers, X, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
+import { getStoredCompany } from '../../../utils/companyHelper';
 
 interface VehicleItem {
   id: string | number;
@@ -20,6 +21,7 @@ interface VehicleItem {
 const DEFAULT_VEHICLES: VehicleItem[] = [];
 
 export const CompanyVehiclesPage: React.FC = () => {
+  const currentCompany = getStoredCompany();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -50,21 +52,33 @@ export const CompanyVehiclesPage: React.FC = () => {
   const fetchVehicles = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/company/vehicles');
+      const res = await api.get('/company/vehicles', {
+        params: {
+          busCompanyId: currentCompany.id,
+          companyName: currentCompany.name,
+        },
+      });
       if (res.data?.data && Array.isArray(res.data.data)) {
-        const list = res.data.data.map((v: any) => ({
-          id: v.id,
-          plate: v.plate || v.plateNumber,
-          code: v.code || `v${v.id}`,
-          type: v.type || v.vehicleType || 'SLEEPER',
-          floors: v.floors || 2,
-          year: v.year || v.manufactureYear || 2023,
-          operator: v.operator || 'TravelEasy Express',
-          status: v.status || 'ACTIVE',
-          statusLabel: (v.status || 'ACTIVE') === 'ACTIVE' ? 'Hoạt động' : 'Ngừng hoạt động',
-          seatLayout: v.seatLayout || 'Giường nằm 2 tầng 34 chỗ',
-          image: v.image || v.imageUrl,
-        }));
+        const list = res.data.data
+          .filter((v: any) => {
+            // Nghiêm ngặt cách ly theo từng nhà xe đối tác
+            if (v.busCompanyId && Number(v.busCompanyId) !== currentCompany.id) return false;
+            if (v.operator && !v.operator.toLowerCase().includes(currentCompany.shortName.toLowerCase()) && !currentCompany.name.toLowerCase().includes(v.operator.toLowerCase())) return false;
+            return true;
+          })
+          .map((v: any) => ({
+            id: v.id,
+            plate: v.plate || v.plateNumber,
+            code: v.code || `v${v.id}`,
+            type: v.type || v.vehicleType || 'SLEEPER',
+            floors: v.floors || 2,
+            year: v.year || v.manufactureYear || 2023,
+            operator: v.operator || currentCompany.name,
+            status: v.status || 'ACTIVE',
+            statusLabel: (v.status || 'ACTIVE') === 'ACTIVE' ? 'Hoạt động' : 'Ngừng hoạt động',
+            seatLayout: v.seatLayout || 'Giường nằm 2 tầng 34 chỗ',
+            image: v.image || v.imageUrl,
+          }));
         setVehicles(list);
       }
     } catch (err: any) {
@@ -99,6 +113,7 @@ export const CompanyVehiclesPage: React.FC = () => {
     setSubmitting(true);
     try {
       const payload = {
+        busCompanyId: currentCompany.id,
         plateNumber: newPlate.trim().toUpperCase(),
         vehicleType: newType,
         floors: Number(newFloors),
@@ -117,7 +132,7 @@ export const CompanyVehiclesPage: React.FC = () => {
           type: payload.vehicleType,
           floors: payload.floors,
           year: payload.manufactureYear,
-          operator: 'TravelEasy Express',
+          operator: currentCompany.name,
           status: 'ACTIVE',
           statusLabel: 'Hoạt động',
           seatLayout: payload.seatLayout,
@@ -132,7 +147,7 @@ export const CompanyVehiclesPage: React.FC = () => {
           type: newType,
           floors: Number(newFloors),
           year: Number(newYear),
-          operator: 'TravelEasy Express',
+          operator: currentCompany.name,
           status: 'ACTIVE',
           statusLabel: 'Hoạt động',
           seatLayout: newSeatLayout,
@@ -153,7 +168,7 @@ export const CompanyVehiclesPage: React.FC = () => {
         type: newType,
         floors: Number(newFloors),
         year: Number(newYear),
-        operator: 'TravelEasy Express',
+        operator: currentCompany.name,
         status: 'ACTIVE',
         statusLabel: 'Hoạt động',
         seatLayout: newSeatLayout,
@@ -296,7 +311,7 @@ export const CompanyVehiclesPage: React.FC = () => {
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Breadcrumb & Header Title */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap', gap: '14px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
             Nhà xe <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Vận hành <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Đội xe
@@ -305,11 +320,11 @@ export const CompanyVehiclesPage: React.FC = () => {
             Quản Lý Đội Xe Vận Hành
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            {vehicles.length} xe trong đội — <strong>TravelEasy Express</strong>
+            {vehicles.length} xe trong đội — <strong>{currentCompany.name}</strong>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
             onClick={fetchVehicles}
             style={{
@@ -353,8 +368,8 @@ export const CompanyVehiclesPage: React.FC = () => {
       </div>
 
       {/* Filter Row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: 1 }}>
           <div
             style={{
               display: 'flex',
@@ -363,7 +378,8 @@ export const CompanyVehiclesPage: React.FC = () => {
               border: '1px solid #e2e8f0',
               borderRadius: '8px',
               padding: '8px 12px',
-              width: '260px',
+              minWidth: '220px',
+              flex: '1 1 220px',
               gap: '8px',
             }}
           >
@@ -658,8 +674,9 @@ export const CompanyVehiclesPage: React.FC = () => {
               borderRadius: '16px',
               width: '100%',
               maxWidth: '520px',
+              maxHeight: '90vh',
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
-              overflow: 'hidden',
+              overflowY: 'auto',
             }}
           >
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
@@ -669,7 +686,7 @@ export const CompanyVehiclesPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>Thêm Xe Mới Vào Đội Xe</h3>
-                  <div style={{ fontSize: '12px', color: '#64748b' }}>Nhà xe điều hành: TravelEasy Express</div>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>Nhà xe điều hành: <strong>{currentCompany.name}</strong></div>
                 </div>
               </div>
               <button onClick={() => setShowCreateModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}>
@@ -866,8 +883,9 @@ export const CompanyVehiclesPage: React.FC = () => {
               borderRadius: '16px',
               width: '100%',
               maxWidth: '520px',
+              maxHeight: '90vh',
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
-              overflow: 'hidden',
+              overflowY: 'auto',
             }}
           >
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
@@ -1056,8 +1074,9 @@ export const CompanyVehiclesPage: React.FC = () => {
               borderRadius: '16px',
               width: '100%',
               maxWidth: '480px',
+              maxHeight: '90vh',
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
-              overflow: 'hidden',
+              overflowY: 'auto',
             }}
           >
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
