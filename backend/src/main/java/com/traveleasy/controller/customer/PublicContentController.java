@@ -488,28 +488,77 @@ public class PublicContentController {
         for (Route r : routes) {
             BigDecimal minPrice = minPriceMap.getOrDefault(r.getId(), BigDecimal.valueOf(199000));
 
+            String orig = r.getDepartureLocation() != null ? r.getDepartureLocation().toLowerCase() : "";
             String dest = r.getArrivalLocation() != null ? r.getArrivalLocation().toLowerCase() : "";
-            String imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289365/traveleasy/banners/banner_hero_dalat_mongmo.jpg";
+            String imgUrl = "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=600&auto=format&fit=crop&q=80";
             String bgColor = "linear-gradient(180deg, transparent 40%, rgba(30, 58, 138, 0.85) 100%)";
+            String busType = "Limousine VIP 34 Phòng";
+            String region = "TPHCM";
+            int dailyTrips = 24;
+
+            if (orig.contains("hà nội") || orig.contains("ha noi") || orig.contains("hải phòng")) {
+                region = "HANOI";
+            } else if (orig.contains("đà nẵng") || orig.contains("huế") || orig.contains("nha trang") || orig.contains("buôn ma thuột")) {
+                region = "MIENTRUNG";
+            } else if (orig.contains("cần thơ") || orig.contains("rạch giá") || orig.contains("cà mau")) {
+                region = "MIENTAY";
+            }
 
             if (dest.contains("sa pa") || dest.contains("sapa")) {
                 imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289364/traveleasy/banners/banner_hero_sapa_fansipan.jpg";
                 bgColor = "linear-gradient(180deg, transparent 40%, rgba(30, 58, 138, 0.85) 100%)";
+                busType = "Cabin Đôi Cung Điện";
+                dailyTrips = 36;
             } else if (dest.contains("đà lạt") || dest.contains("da lat")) {
                 imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289365/traveleasy/banners/banner_hero_dalat_mongmo.jpg";
                 bgColor = "linear-gradient(180deg, transparent 40%, rgba(194, 65, 12, 0.85) 100%)";
+                busType = "Limousine Phòng Riêng VIP";
+                dailyTrips = 48;
             } else if (dest.contains("nha trang")) {
                 imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289366/traveleasy/banners/banner_hero_nhatrang_bienxanh.jpg";
                 bgColor = "linear-gradient(180deg, transparent 40%, rgba(120, 53, 15, 0.85) 100%)";
+                busType = "Limousine VIP 22 Phòng";
+                dailyTrips = 32;
             } else if (dest.contains("vũng tàu") || dest.contains("vung tau")) {
                 imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289368/traveleasy/banners/banner_hero_vungtau_hoamai.jpg";
                 bgColor = "linear-gradient(180deg, transparent 40%, rgba(13, 148, 136, 0.85) 100%)";
-            } else if (dest.contains("đà nẵng") || dest.contains("da nang") || dest.contains("huế") || dest.contains("hội an")) {
-                imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289367/traveleasy/banners/banner_hero_mientrung_disan.jpg";
+                busType = "Limousine Ghế Massage VIP";
+                dailyTrips = 60;
+            } else if (dest.contains("cần thơ") || dest.contains("can tho")) {
+                imgUrl = "https://images.unsplash.com/photo-1596401057633-54a8fe8ef647?w=600&auto=format&fit=crop&q=80";
                 bgColor = "linear-gradient(180deg, transparent 40%, rgba(2, 132, 199, 0.85) 100%)";
-            } else if (dest.contains("hải phòng") || dest.contains("hà nội")) {
-                imgUrl = "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289370/traveleasy/banners/banner_promo_welcome_newuser.jpg";
+                busType = "Giường Nằm Cao Cấp";
+                dailyTrips = 40;
+            } else if (dest.contains("phan thiết") || dest.contains("mũi né") || dest.contains("phan thiet")) {
+                imgUrl = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80";
+                bgColor = "linear-gradient(180deg, transparent 40%, rgba(217, 119, 6, 0.85) 100%)";
+                busType = "Limousine VIP 34 Phòng";
+                dailyTrips = 28;
+            } else if (dest.contains("buôn ma thuột") || dest.contains("buon ma thuot") || dest.contains("gia lai")) {
+                imgUrl = "https://images.unsplash.com/photo-1518457607834-6e8d80c183c5?w=600&auto=format&fit=crop&q=80";
+                bgColor = "linear-gradient(180deg, transparent 40%, rgba(180, 83, 9, 0.85) 100%)";
+                busType = "Limousine Cung Điện Đôi";
+                dailyTrips = 22;
+            } else if (dest.contains("đà nẵng") || dest.contains("da nang") || dest.contains("huế") || dest.contains("hội an")) {
+                imgUrl = "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=600&auto=format&fit=crop&q=80";
+                bgColor = "linear-gradient(180deg, transparent 40%, rgba(67, 56, 202, 0.85) 100%)";
+                busType = "Limousine VIP 24 Phòng";
+                dailyTrips = 30;
+            } else if (dest.contains("quy nhơn") || dest.contains("quy nhon") || dest.contains("phú yên")) {
+                imgUrl = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80";
+                bgColor = "linear-gradient(180deg, transparent 40%, rgba(14, 116, 144, 0.85) 100%)";
+                busType = "Limousine Giường Nằm VIP";
+                dailyTrips = 20;
+            } else if (dest.contains("hải phòng") || dest.contains("hạ long") || dest.contains("quảng ninh")) {
+                imgUrl = "https://images.unsplash.com/photo-1528127269322-539801943592?w=600&auto=format&fit=crop&q=80";
+                bgColor = "linear-gradient(180deg, transparent 40%, rgba(8, 145, 178, 0.85) 100%)";
+                busType = "Limousine VIP 9 Chỗ";
+                dailyTrips = 35;
+            } else if (dest.contains("hà nội") || dest.contains("ha noi")) {
+                imgUrl = "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&auto=format&fit=crop&q=80";
                 bgColor = "linear-gradient(180deg, transparent 40%, rgba(55, 48, 163, 0.85) 100%)";
+                busType = "Limousine VIP Giường Nằm";
+                dailyTrips = 50;
             }
 
             Map<String, Object> map = new HashMap<>();
@@ -521,6 +570,9 @@ public class PublicContentController {
             map.put("oldPrice", String.format("%,dđ", minPrice.multiply(BigDecimal.valueOf(1.15)).longValue()));
             map.put("distanceKm", r.getDistanceKm());
             map.put("durationHours", r.getDurationHours());
+            map.put("busType", busType);
+            map.put("region", region);
+            map.put("dailyTrips", dailyTrips);
             map.put("image", imgUrl);
             map.put("bgColor", bgColor);
             result.add(map);

@@ -241,3 +241,4 @@ Truy cập GitHub Repository và bấm **"Compare & pull request"** trỏ vào n
 ---
 *Biên bản nghiệm thu được lập và ban hành ngày 01/11/2026 bởi Nhóm trưởng Phạm Công Thành.*  
 *Đại diện toàn thể Nhóm 7 — Dự án TravelEasy Platform.*
+
