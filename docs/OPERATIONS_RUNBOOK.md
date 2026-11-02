@@ -1,7 +1,7 @@
 # TÀI LIỆU VẬN HÀNH KIẾN TRÚC & QUY TRÌNH TRIỂN KHAI (RUNBOOK)
 > **Dự án OJT:** Nền tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy  
-> **Phiên bản:** v1.0.0-RELEASE (Sprint 4 - Thẻ S407, S414, S420, S421)  
-> **Nhóm thực hiện:** Nhóm 7 (Phạm Công Thành - Leader, Nguyễn Đại Phát, Phạm Thanh Phong, Nguyễn Bá Triệu, Nguyễn Đăng Khoa)
+> **Phiên bản:** v1.0.0-RELEASE (Sprint 3 - Vận hành Sẵn sàng Sản xuất)  
+> **Nhóm thực hiện:** Nhóm 7 (Phạm Công Thành - Leader, Nguyễn Đại Phát, Phạm Thanh Phong, Đoàn Nhật Cường, Trần Minh Đức; Phan Trung Kiên: Miễn OJT)
 
 ---
 
@@ -131,3 +131,4 @@ npm run dev
 | `JWT_EXPIRATION` | Thời hạn hiệu lực JWT token | `86400000` (24 giờ) |
 | `VNPAY_TMN_CODE` | Mã định danh đơn vị VNPAY Sandbox | `VNPAYTRAVELEASY` |
 | `VNPAY_HASH_SECRET` | Khóa bí mật checksum VNPAY | (Cung cấp bởi VNPAY Sandbox) |
+

@@ -55,8 +55,8 @@
 | Mã US | Tiêu đề User Story | Story Points | Thành viên phụ trách | Phân hệ / Màn hình |
 |:---:|:---|:---:|:---:|:---|
 | **US-06** | Là một Quản trị viên, tôi muốn quản lý danh sách người dùng và phân quyền RBAC an toàn bằng JWT để kiểm soát quyền truy cập hệ thống | **(5)** | **Nguyễn Đại Phát** | Admin Portal / `/admin/users` |
-| **US-11** | Là một Kỹ sư hệ thống, tôi muốn quản lý danh mục bến xe toàn quốc, hạng ghế phụ thu và mẫu sơ đồ xe 34 chỗ để cấu hình dữ liệu xe | **(5)** | **Trần Nam Phong** | Master Data / `/admin/locations`, `/admin/seat-templates` |
-| **US-14** | Là một Khách hàng, tôi muốn đăng ký/đăng nhập nhanh bằng JWT và nhận các mã ưu đãi giảm giá chuyến đi | **(3)** | **Trần Hữu Đức** | Customer Portal / `/login`, `/register`, `/promotions` |
+| **US-11** | Là một Kỹ sư hệ thống, tôi muốn quản lý danh mục bến xe toàn quốc, hạng ghế phụ thu và mẫu sơ đồ xe 34 chỗ để cấu hình dữ liệu xe | **(5)** | **Phạm Thanh Phong** | Master Data / `/admin/locations`, `/admin/seat-templates` |
+| **US-14** | Là một Khách hàng, tôi muốn đăng ký/đăng nhập nhanh bằng JWT và nhận các mã ưu đãi giảm giá chuyến đi | **(3)** | **Trần Minh Đức** | Customer Portal / `/login`, `/register`, `/promotions` |
 | **US-03** | Là một Quản trị viên, tôi muốn quản lý danh mục nhà xe đối tác và phương tiện để kiểm soát đội xe trên hệ thống | **(5)** | **Nguyễn Đại Phát** | Admin Portal / `/admin/bus-companies`, `/admin/vehicles` |
 | **US-04** | Là một Quản trị viên, tôi muốn quản lý các tuyến đường 25+ chặng trọng điểm kèm mốc giờ ETA để tối ưu lộ trình xe di chuyển | **(5)** | **Nguyễn Đại Phát** | Admin Portal / `/admin/routes` |
 
@@ -75,10 +75,10 @@
 
 | Mã US | Tiêu đề User Story | Story Points | Thành viên phụ trách | Phân hệ / Màn hình |
 |:---:|:---|:---:|:---:|:---|
-| **US-08** | Là một Khách hàng, tôi muốn tìm kiếm chuyến xe kết hợp bộ lọc nâng cao thời gian thực và xem sơ đồ 2 tầng 34 chỗ Limousine VIP | **(8)** | **Trần Nam Phong** | Search Engine / `/search` |
-| **US-09** | Là một Khách hàng, tôi muốn hệ thống giữ chỗ độc quyền trong 10 phút có đồng hồ đếm ngược bằng Pessimistic Lock chống cướp vé | **(8)** | **Trần Nam Phong** | Concurrency Lock / `SeatLockController` |
+| **US-08** | Là một Khách hàng, tôi muốn tìm kiếm chuyến xe kết hợp bộ lọc nâng cao thời gian thực và xem sơ đồ 2 tầng 34 chỗ Limousine VIP | **(8)** | **Phạm Thanh Phong** | Search Engine / `/search` |
+| **US-09** | Là một Khách hàng, tôi muốn hệ thống giữ chỗ độc quyền trong 10 phút có đồng hồ đếm ngược bằng Pessimistic Lock chống cướp vé | **(8)** | **Phạm Thanh Phong** | Concurrency Lock / `SeatLockController` |
 | **US-02** | Là một Quản trị viên, tôi muốn giám sát và điều phối 480 chuyến xe toàn sàn, đổi trạng thái xuất bến/hủy chuyến để vận hành lịch trình xe chạy | **(8)** | **Nguyễn Đại Phát** | Admin Trips / `/admin/trips` |
-| **US-15** | Là một Khách hàng, tôi muốn tra cứu lịch trình xe chạy toàn quốc và xem các tuyến đường hot trên trang chủ hiện đại | **(5)** | **Nguyễn Trọng Cường** | Home & Schedule / `/`, `/schedule` |
+| **US-15** | Là một Khách hàng, tôi muốn tra cứu lịch trình xe chạy toàn quốc và xem các tuyến đường hot trên trang chủ hiện đại | **(5)** | **Đoàn Nhật Cường** | Home & Schedule / `/`, `/schedule` |
 
 * **Bàn giao Sprint 2**: Tìm kiếm chuyến xe phản hồi <100ms; Sơ đồ ghế 2 tầng biểu diễn mượt mà; Kiểm thử 2 tab cùng click 1 ghế tại cùng 1 giây chứng minh chỉ 1 người giữ được ghế thành công tuyệt đối.
 
@@ -95,10 +95,10 @@
 
 | Mã US | Tiêu đề User Story | Story Points | Thành viên phụ trách | Phân hệ / Màn hình |
 |:---:|:---|:---:|:---:|:---|
-| **US-10** | Là một Khách hàng, tôi muốn xác nhận đặt vé, chọn điểm đón/trả và thanh toán đa kênh an toàn (VietQR, VNPAY, COD) qua giao dịch Serializable | **(8)** | **Trần Nam Phong** | Payment Engine / `/checkout` |
-| **US-12** | Là một Khách hàng, tôi muốn xem lịch sử vé đã mua và thực hiện hủy vé online nhận hoàn tiền tự động theo chính sách giờ chạy | **(5)** | **Trần Hữu Đức** | My Tickets / `/my-tickets` |
-| **US-13** | Là một Khách hàng, tôi muốn quản lý thông tin tài khoản cá nhân, cập nhật SĐT và đổi mật khẩu bảo mật thuận tiện | **(3)** | **Trần Hữu Đức** | Customer Profile / `/profile` |
-| **US-17** | Là một Nhân viên phụ xe / Hành khách, tôi muốn dùng camera quét trực tiếp mã QR trên vé để xác thực và Check-in lên xe trong 0.2s | **(5)** | **Nguyễn Trọng Cường** | QR Scanner / `/scanner` |
+| **US-10** | Là một Khách hàng, tôi muốn xác nhận đặt vé, chọn điểm đón/trả và thanh toán đa kênh an toàn (VietQR, VNPAY, COD) qua giao dịch Serializable | **(8)** | **Phạm Thanh Phong** | Payment Engine / `/checkout` |
+| **US-12** | Là một Khách hàng, tôi muốn xem lịch sử vé đã mua và thực hiện hủy vé online nhận hoàn tiền tự động theo chính sách giờ chạy | **(5)** | **Trần Minh Đức** | My Tickets / `/my-tickets` |
+| **US-13** | Là một Khách hàng, tôi muốn quản lý thông tin tài khoản cá nhân, cập nhật SĐT và đổi mật khẩu bảo mật thuận tiện | **(3)** | **Trần Minh Đức** | Customer Profile / `/profile` |
+| **US-17** | Là một Nhân viên phụ xe / Hành khách, tôi muốn dùng camera quét trực tiếp mã QR trên vé để xác thực và Check-in lên xe trong 0.2s | **(5)** | **Đoàn Nhật Cường** | QR Scanner / `/scanner` |
 
 * **Bàn giao Sprint 3**: Quy trình đặt vé và thanh toán trơn tru; Quét mã QR qua webcam/camera điện thoại check-in vé thành công tức thì; Hủy vé tính toán tiền hoàn tự động chính xác từng đồng.
 
@@ -119,7 +119,7 @@
 | **US-01** | Là một Quản trị viên, tôi muốn xem Dashboard 4 chỉ số KPI và bảng điều phối để nắm bắt tức thời tình hình vận hành của hệ thống | **(8)** | **Nguyễn Đại Phát** | Admin Dashboard / `/admin/dashboard` |
 | **US-05** | Là một Quản trị viên, tôi muốn cấu hình bảng quy tắc hoàn tiền hủy vé sàn và tạo kỳ quyết toán tài chính để tự động hóa dòng tiền | **(5)** | **Nguyễn Đại Phát** | Settlements / `/admin/settlements`, `/admin/cancellation-policies` |
 | **US-07** | Là một Quản trị viên, tôi muốn theo dõi nhật ký audit log bất biến để đảm bảo an toàn bảo mật và kiểm tra lịch sử thao tác toàn sàn | **(5)** | **Nguyễn Đại Phát** | Audit Trail / `/admin/audit-logs` |
-| **US-16** | Là một Khách hàng, tôi muốn tra cứu thông tin vé nhanh bằng SĐT hoặc mã đơn và xem được vé khi không có kết nối mạng Internet | **(5)** | **Nguyễn Trọng Cường** | Offline Lookup / `/lookup` |
+| **US-16** | Là một Khách hàng, tôi muốn tra cứu thông tin vé nhanh bằng SĐT hoặc mã đơn và xem được vé khi không có kết nối mạng Internet | **(5)** | **Đoàn Nhật Cường** | Offline Lookup / `/lookup` |
 
 * **Bàn giao Sprint 4**: Cổng Admin và Cổng Nhà xe vận hành độc lập bảo mật; Bảng quyết toán tài chính chính xác; Hệ thống hoàn thiện 100% sẵn sàng bảo vệ.
 

@@ -114,9 +114,9 @@ Truy cập GitHub Repository và bấm **"Compare & pull request"** trỏ vào n
 |:---|:---|:---:|:---|
 | **1. Phạm Công Thành**<br/>*(Team Leader & Architect)* | **Toàn bộ Cổng Đối Tác Nhà Xe (`/company/*`)** + Nền tảng Core System Architecture | **10 Trang** | `operator@futa.vn`<br/>`dieuhanh@xesaoviet.com.vn`<br/>Mật khẩu: `123456789@` |
 | **2. Nguyễn Đại Phát**<br/>*(Admin Lead & Full-Stack)* | **Toàn bộ 10 Trang Cốt lõi Quản trị Sàn Tổng (`/admin/*`)** | **10 Trang** | `daiphat.admin@traveleasy.vn`<br/>`admin@traveleasy.vn`<br/>Mật khẩu: `123456789@` |
-| **3. Trần Nam Phong**<br/>*(Core Booking & Seat Engine)* | **6 Trang Lõi Nghiệp vụ Đặt chỗ, Thuật toán Concurrency & Master Data Xe** | **6 Trang** | Khách vãng lai & `customer@gmail.com`<br/>(Test đồng thời 2 tab ẩn danh) |
-| **4. Trần Hữu Đức**<br/>*(Full-Stack Developer)* | **4 Trang Khách Hàng, Quản lý Vé của tôi & Tài khoản cá nhân** | **4 Trang** | `customer@gmail.com`<br/>`minhduc@gmail.com`<br/>Mật khẩu: `123456789@` |
-| **5. Nguyễn Trọng Cường**<br/>*(Frontend & Mobile Specialist)* | **5 Trang Truyền Thông, Tra cứu vé Offline & 📷 Quét mã QR Soát vé** | **5 Trang** | Khách công cộng & Thiết bị Di động (Mobile / Camera) |
+| **3. Phạm Thanh Phong**<br/>*(Core Booking & Seat Engine)* | **6 Trang Lõi Nghiệp vụ Đặt chỗ, Thuật toán Concurrency & Master Data Xe** | **6 Trang** | Khách vãng lai & `customer@gmail.com`<br/>(Test đồng thời 2 tab ẩn danh) |
+| **4. Trần Minh Đức**<br/>*(Full-Stack Developer)* | **4 Trang Khách Hàng, Quản lý Vé của tôi & Tài khoản cá nhân** | **4 Trang** | `customer@gmail.com`<br/>`minhduc@gmail.com`<br/>Mật khẩu: `123456789@` |
+| **5. Đoàn Nhật Cường**<br/>*(Frontend & Mobile Specialist)* | **5 Trang Truyền Thông, Tra cứu vé Offline & 📷 Quét mã QR Soát vé** | **5 Trang** | Khách công cộng & Thiết bị Di động (Mobile / Camera) |
 | *(Phan Trung Kiên)* | *(Miễn thực tập OJT theo quy định đào tạo)* | *(0 Trang)* | *(N/A)* |
 
 ---
@@ -175,7 +175,7 @@ Truy cập GitHub Repository và bấm **"Compare & pull request"** trỏ vào n
 
 ### 3.3 TRẦN NAM PHONG — NGHIỆM THU ĐẶT VÉ, CONCURRENCY LOCK & MASTER DATA XE (6 TRANG)
 
-* **Họ và tên**: **Trần Nam Phong** (Full-Stack Developer — Core Booking & Seat Engine)
+* **Họ và tên**: **Phạm Thanh Phong** (Full-Stack Developer — Core Booking & Seat Engine)
 * **Nhánh kiểm thử**: `test/phong-booking-acceptance`
 * **Phạm vi kiểm thử**: 6 Trang nghiệp vụ cốt lõi chịu tải cao và cấu hình xe (`/search`, `/checkout`, `/admin/locations`, `/admin/seat-types`, `/admin/seat-templates`, `/admin/gateways`)
 
@@ -188,14 +188,14 @@ Truy cập GitHub Repository và bấm **"Compare & pull request"** trỏ vào n
 | **P5** | **Quản Lý Hạng Ghế & Phụ Thu**| `/admin/seat-types` | Cấu hình các hạng ghế sàn: `STANDARD`, `VIP`, `LIMOUSINE` kèm phụ thu giường nằm tầng 1. | Đơn giá phụ thu tự động cộng dồn chính xác vào giá vé chuyến khi khách chọn ghế VIP. | **PASS** | `docs/screenshots/test_core_admin_seat_types.png` |
 | **P6** | **Mẫu Sơ Đồ Xe & Gateways** | `/admin/seat-templates`<br/>`/admin/gateways` | Quản lý mẫu sơ đồ xe 34 chỗ, xe 22 phòng; cấu hình bật/tắt các cổng thanh toán điện tử. | Render bố cục sơ đồ xe trực quan, switch bật/tắt cổng thanh toán phản hồi tức thì. | **PASS** | `docs/screenshots/test_core_admin_seat_gateways.png` |
 
-* **Nhận xét & Đánh giá cá nhân của Trần Nam Phong**:
+* **Nhận xét & Đánh giá cá nhân của Phạm Thanh Phong**:
   > *"Thuật toán khóa ghế bi quan Pessimistic Lock kết hợp đếm ngược giữ chỗ 10 phút (TTL) xử lý triệt để bài toán tranh chấp chỗ ngồi cao điểm Lễ/Tết. Khi mở 2 tab song song đặt cùng lúc, hệ thống phản hồi lỗi 409 Conflict lập tức cho khách đến sau. Quy trình thanh toán đa kênh VietQR và VNPAY hoạt động trơn tru."*
 
 ---
 
 ### 3.4 TRẦN HỮU ĐỨC — NGHIỆM THU KHÁCH HÀNG & QUẢN LÝ VÉ CÁ NHÂN (4 TRANG)
 
-* **Họ và tên**: **Trần Hữu Đức** (Full-Stack Developer)
+* **Họ và tên**: **Trần Minh Đức** (Full-Stack Developer)
 * **Nhánh kiểm thử**: `test/duc-customer-acceptance`
 * **Phạm vi kiểm thử**: 4 Trang chức năng Khách hàng & Quản lý vé (`/my-tickets`, `/profile`, `/login`, `/register`, `/promotions`)
 
@@ -206,14 +206,14 @@ Truy cập GitHub Repository và bấm **"Compare & pull request"** trỏ vào n
 | **D3** | **Hồ Sơ Cá Nhân Khách Hàng**| `/profile` | Cập nhật họ tên, số điện thoại liên hệ, thử nghiệm chức năng đổi mật khẩu bảo mật. | Cập nhật thông tin thành công, form validate mật khẩu cũ và mật khẩu mới an toàn. | **PASS** | `docs/screenshots/test_customer_profile.png` |
 | **D4** | **Kho Khuyến Mại Voucher** | `/promotions` | Xem danh mục các mã giảm giá (Voucher 20k, 50k, 100k, giảm 15%), bấm nút sao chép mã ưu đãi. | Bấm sao chép mã tự động copy vào clipboard kèm thông báo Toast xanh thân thiện. | **PASS** | `docs/screenshots/test_customer_promotions.png` |
 
-* **Nhận xét & Đánh giá cá nhân của Trần Hữu Đức**:
+* **Nhận xét & Đánh giá cá nhân của Trần Minh Đức**:
   > *"Trang Quản lý vé của tôi hiển thị rất rõ ràng, thao tác hủy vé trực tuyến tự động hoàn tiền diễn ra minh bạch có popup cảnh báo số tiền hoàn lại trước khi khách xác nhận. Form hồ sơ cá nhân và kho voucher hoạt động mượt mà."*
 
 ---
 
 ### 3.5 NGUYỄN TRỌNG CƯỜNG — NGHIỆM THU DI ĐỘNG, TRA CỨU OFFLINE & QUÉT MÃ QR (5 TRANG)
 
-* **Họ và tên**: **Nguyễn Trọng Cường** (Frontend & Mobile Specialist)
+* **Họ và tên**: **Đoàn Nhật Cường** (Frontend & Mobile Specialist)
 * **Nhánh kiểm thử**: `test/cuong-mobile-acceptance`
 * **Phạm vi kiểm thử**: 5 Trang trải nghiệm người dùng, quét mã di động và truyền thông (`/`, `/lookup`, `/scanner`, `/schedule`, `/reviews`, `/guide`)
 
@@ -225,7 +225,7 @@ Truy cập GitHub Repository và bấm **"Compare & pull request"** trỏ vào n
 | **M4** | **Lịch Trình Toàn Quốc** | `/schedule` | Xem bảng giờ xuất bến định kỳ của các tuyến xe 3 miền Bắc - Trung - Nam, cự ly km và thời gian di chuyển. | Bảng lịch trình bố cục rõ ràng, tìm kiếm tuyến xe nhanh chóng, có nút bấm đặt vé tức thì. | **PASS** | `docs/screenshots/test_mobile_schedule.png` |
 | **M5** | **Đánh Giá Review & Cẩm Nang FAQ**| `/reviews`<br/>`/guide` | Xem điểm trung bình sao ⭐, gửi đánh giá trải nghiệm chuyến đi, xem cẩm nang quy định hành lý. | Gửi đánh giá thành công, Accordion danh mục câu hỏi FAQ đóng/mở mượt mà. | **PASS** | `docs/screenshots/test_mobile_reviews_faq.png` |
 
-* **Nhận xét & Đánh giá cá nhân của Nguyễn Trọng Cường**:
+* **Nhận xét & Đánh giá cá nhân của Đoàn Nhật Cường**:
   > *"Tính năng quét mã QR soát vé qua Camera (`/scanner`) hoạt động siêu nhạy, nhận diện mã vé trong chớp mắt và cập nhật trạng thái `CHECKED_IN` ngay trên CSDL. Trang tra cứu vé Offline qua LocalStorage rất hữu ích cho hành khách khi ra bến xe sóng yếu."*
 
 ---

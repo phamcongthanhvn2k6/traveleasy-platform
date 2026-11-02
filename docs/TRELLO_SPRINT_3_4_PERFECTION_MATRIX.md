@@ -1,7 +1,7 @@
 # MA TRẬN CHUẨN HÓA & NGHIỆM THU 79 THẺ TRELLO (SPRINT 3 & SPRINT 4)
 > **Dự án OJT:** Nền tảng Bán Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy  
 > **Bảng Trello:** [TravelEasy_Platform | Trello](https://trello.com/b/AA5BYoe1/traveleasyplatform)  
-> **Quy tắc phân công:** Phân theo trang chức năng End-to-End (UI + Service + API). Phan Trung Kiên được miễn OJT (0 việc). Nhóm gồm 5 thành viên: Phạm Công Thành (Leader - đóng gói & admin), Nguyễn Đại Phát (nhà xe & soát vé), Phạm Thanh Phong (đặt vé & realtime), Nguyễn Bá Triệu (tra cứu & vé cá nhân), Nguyễn Đăng Khoa (nội dung công khai).  
+> **Quy tắc phân công:** Phân theo trang chức năng End-to-End (UI + Service + API). Phan Trung Kiên được miễn OJT (0 việc). Nhóm gồm 5 thành viên: Phạm Công Thành (Leader - đóng gói & admin), Nguyễn Đại Phát (nhà xe & soát vé), Phạm Thanh Phong (đặt vé & realtime), Đoàn Nhật Cường (tra cứu & vé cá nhân), Trần Minh Đức (nội dung công khai).  
 
 ---
 
@@ -44,7 +44,7 @@ Script sẽ tự động thực hiện 3 hành động chính:
 | 18 | [6ae8113b](https://trello.com/c/GBdWKGdr) | **[Ưu tiên: 2] [3 SP] [FE][S312] Kiểm thử nghiệm thu trang chủ — Banner khuyến mãi và lịch chạy (/)** | Phạm Thanh Phong | `Sprint Backlog - SPRINT 3` -> **`Done Sprint 3`** | Đạt 5/5 mục [X] |
 | 19 | [6ae8113c](https://trello.com/c/rVY9QbZW) | **[Ưu tiên: 2] [3 SP] [BE][S312] Kiểm thử hồi quy API nội dung công khai — Banner và lịch chạy (/api/public)** | Phạm Thanh Phong | `Sprint Backlog - SPRINT 3` -> **`Done Sprint 3`** | Đạt 5/5 mục [X] |
 | 20 | [6ae8113c](https://trello.com/c/7bQsMEhY) | **[Ưu tiên: 2] [Ưu tiên: 2] [3 SP] [FE][S313] Kiểm thử nghiệm thu tra cứu vé — Lưu ngoại tuyến và hiển thị tuyến (/tickets/lookup)** | Phạm Thanh Phong | `Sprint Backlog - SPRINT 3` -> **`Done Sprint 3`** | Đạt 5/5 mục [X] |
-| 21 | [6ae8113d](https://trello.com/c/39f1d6RV) | **[Ưu tiên: 2] [Ưu tiên: 2] [3 SP] [BE][S313] Kiểm thử tích hợp API tra cứu vé — Mã vé, số điện thoại và tuyến (/api/tickets/lookup)** | Nguyễn Bá Triệu | `Sprint Backlog - SPRINT 3` -> **`Done Sprint 3`** | Đạt 5/5 mục [X] |
+| 21 | [6ae8113d](https://trello.com/c/39f1d6RV) | **[Ưu tiên: 2] [Ưu tiên: 2] [3 SP] [BE][S313] Kiểm thử tích hợp API tra cứu vé — Mã vé, số điện thoại và tuyến (/api/tickets/lookup)** | Đoàn Nhật Cường | `Sprint Backlog - SPRINT 3` -> **`Done Sprint 3`** | Đạt 5/5 mục [X] |
 | 22 | [6ae8113d](https://trello.com/c/fbLPglcn) | **[Ưu tiên: 2] [3 SP] [FE][S314] Kiểm thử nghiệm thu soát vé — Quét QR và nhập mã thủ công (/operator/check-in)** | Nguyễn Đại Phát | `Sprint Backlog - SPRINT 3` -> **`Done Sprint 3`** | Đạt 5/5 mục [X] |
 | 23 | [6ae8113e](https://trello.com/c/E50EZkQL) | **[Ưu tiên: 2] [3 SP] [BE][S314] Kiểm thử tích hợp API soát vé — Xác thực vé, chống quét trùng và phân quyền (/api/check-in)** | Phạm Thanh Phong | `Sprint Backlog - SPRINT 3` -> **`Done Sprint 3`** | Đạt 5/5 mục [X] |
 | 24 | [6ae8113e](https://trello.com/c/vp85tyXS) | **[Ưu tiên: 2] [3 SP] [FE][S315] Kiểm thử nghiệm thu đánh giá — Phản hồi nhà xe và trang hướng dẫn (/reviews)** | Phạm Thanh Phong | `Sprint Backlog - SPRINT 3` -> **`Done Sprint 3`** | Đạt 5/5 mục [X] |
@@ -80,7 +80,7 @@ Script sẽ tự động thực hiện 3 hành động chính:
 | 12 | [6ae8117d](https://trello.com/c/EOKuxfnr) | **[Ưu tiên: 2] [5 SP] [BE][S406] Gia cố cấu hình backend — Biến môi trường và quản lý bí mật (/)** | Phạm Công Thành (Leader) | `Sprint Backlog - SPRINT 4` -> **`Done Sprint 4`** | Đạt 5/5 mục [X] |
 | 13 | [6ae8117d](https://trello.com/c/5YpF6qXS) | **[Ưu tiên: 2] [5 SP] [FE][S407] Hoàn thiện trạng thái vận hành — Bảo trì và dịch vụ tạm ngừng (/)** | Phạm Thanh Phong | `Sprint Backlog - SPRINT 4` -> **`Done Sprint 4`** | Đạt 5/5 mục [X] |
 | 14 | [6ae8117e](https://trello.com/c/5XKFARXA) | **[Ưu tiên: 2] [5 SP] [BE][S407] Hoàn thiện khả năng giám sát backend — Health, readiness, nhật ký và chỉ số (/health)** | Phạm Công Thành (Leader) | `Sprint Backlog - SPRINT 4` -> **`Done Sprint 4`** | Đạt 5/5 mục [X] |
-| 15 | [6ae8117e](https://trello.com/c/3VCx2GL4) | **[Ưu tiên: 2] [5 SP] [FE][S408] Hoàn thiện tra cứu ngoại tuyến — Hết hạn bộ nhớ đệm, làm mới và khôi phục (/tickets/lookup)** | Nguyễn Bá Triệu | `Sprint Backlog - SPRINT 4` -> **`Done Sprint 4`** | Đạt 5/5 mục [X] |
+| 15 | [6ae8117e](https://trello.com/c/3VCx2GL4) | **[Ưu tiên: 2] [5 SP] [FE][S408] Hoàn thiện tra cứu ngoại tuyến — Hết hạn bộ nhớ đệm, làm mới và khôi phục (/tickets/lookup)** | Đoàn Nhật Cường | `Sprint Backlog - SPRINT 4` -> **`Done Sprint 4`** | Đạt 5/5 mục [X] |
 | 16 | [6ae8117f](https://trello.com/c/LfYF0pub) | **[Ưu tiên: 2] [5 SP] [BE][S408] Kiểm thử vận hành dữ liệu — Sao lưu, khôi phục và di trú lặp lại (/database)** | Phạm Công Thành (Leader) | `Sprint Backlog - SPRINT 4` -> **`Done Sprint 4`** | Đạt 5/5 mục [X] |
 | 17 | [6ae8117f](https://trello.com/c/pDwPqIUE) | **[Ưu tiên: 2] [5 SP] [FE][S409] Hoàn thiện soát vé — Quyền camera QR và quét trên nhiều thiết bị (/operator/check-in)** | Nguyễn Đại Phát | `Sprint Backlog - SPRINT 4` -> **`Done Sprint 4`** | Đạt 5/5 mục [X] |
 | 18 | [6ae81180](https://trello.com/c/i6uzHGtW) | **[Ưu tiên: 2] [5 SP] [BE][S409] Gia cố soát vé — Kiểm tra vé, chống quét trùng và kiểm soát quyền (/api/check-in)** | Phạm Thanh Phong | `Sprint Backlog - SPRINT 4` -> **`Done Sprint 4`** | Đạt 5/5 mục [X] |
