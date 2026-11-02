@@ -26,13 +26,14 @@ Bảng Trello Live: [TravelEasy_Platform | Trello Board](https://trello.com/b/AA
 
 Để tiếp tục nâng tầm TravelEasy thành Siêu Ứng Dụng Di Chuyển & Dịch Vụ Du Lịch Toàn Diện (All-in-One Mobility Platform), nhóm nghiên cứu và thiết kế 8 phân hệ tính năng và trang màn hình mới:
 
-### 🚐 1. Trang Cho Thuê Xe Hợp Đồng Du Lịch (`/charter` / `/rental`)
-* **Mô tả nghiệp vụ**: Phục vụ đối tượng khách hàng đoàn (doanh nghiệp du lịch, trường học, đám cưới, gia đình đông người) có nhu cầu thuê nguyên xe 16 chỗ, 29 chỗ, 34 phòng VIP hoặc 45 chỗ có tài xế riêng.
+### 🚐 1. Dịch Vụ Cho Thuê Xe Hợp Đồng Du Lịch Đa Kênh (`/charter` & `/company/pos/charter`)
+* **Mô tả nghiệp vụ**: Phục vụ đối tượng khách hàng đoàn (doanh nghiệp du lịch, trường học, đám cưới, gia đình đông người) có nhu cầu thuê nguyên xe 16 chỗ, 29 chỗ, 34 phòng VIP hoặc 45 chỗ có tài xế riêng thông qua 2 kênh tiếp cận: Đặt trực tuyến trên Web/App hoặc Khách ghé hỏi trực tiếp tại quầy vé bến xe của nhà xe.
 * **Tính năng chính**:
-  - Giao diện chọn điểm đi, điểm đến, ngày khởi hành, ngày về, số lượng hành khách.
-  - Công cụ tính cước tự động theo tổng số km lộ trình và loại xe.
-  - Cổng đối tác nhà xe tiếp nhận đơn thuê xe, duyệt báo giá và điều động phương tiện/tài xế.
-* **Phân công phụ trách**: **Nguyễn Đại Phát** (Full-Stack).
+  - Khách đặt online (`/charter`): Chọn điểm đi/đến, ngày đi/về, số lượng khách, ước tính cước tự động theo km.
+  - Khách hỏi tại bến: Nhân viên quầy vé của nhà xe kiểm tra lịch xe trống, tư vấn lộ trình và in Phiếu giữ xe hợp đồng trực tiếp tại quầy.
+  - Sàn đấu giá báo giá cạnh tranh (`/company/charter-bids`): Nhà xe gửi báo giá trọn gói, ảnh xe thực tế và thông tin tài xế.
+  - Ký quỹ an toàn Escrow 30% (`/admin/charters`): Sàn giữ cọc đảm bảo quyền lợi, giải ngân cho nhà xe sau khi chuyến đi hoàn tất.
+* **Phân công phụ trách**: **Nguyễn Đại Phát** (Backend & Quản trị Escrow) & **Trần Minh Đức** (Frontend Khách hàng).
 
 ---
 
@@ -55,11 +56,13 @@ Bảng Trello Live: [TravelEasy_Platform | Trello Board](https://trello.com/b/AA
 
 ---
 
-### 🤝 4. Trang Cổng Đại Lý Vé Xe & Điểm Bán Vé Tại Bến (`/agent/portal`)
-* **Mô tả nghiệp vụ**: Kênh phân phối vé dành cho các quầy bán vé trực tiếp tại bến xe hoặc đại lý du lịch địa phương.
+### 🤝 4. Phân Hệ Bán Vé Nhanh Tại Quầy Bến Xe Của Nhà Xe (`/company/pos` & `/company/pos/shifts`)
+* **Mô tả nghiệp vụ**: Mô phỏng chính xác mô hình thực tế tại các bến xe lớn (Bến xe Miền Đông, Bến xe Miền Tây, Mỹ Đình, Giáp Bát): Các nhà xe thuê quầy vé riêng và bố trí **chính nhân viên của nhà xe** trực quầy để phục vụ hành khách mua vé trực tiếp/khách lớn tuổi.
 * **Tính năng chính**:
-  - Giao diện đặt vé nhanh cho khách vãng lai, in vé giấy mini khổ nhiệt 80mm có mã vạch QR check-in tức thì.
-  - Quản lý hạn mức công nợ đại lý, thống kê hoa hồng chiết khấu đại lý 5-8%.
+  - Giao diện POS bán lẻ siêu tốc: Nhân viên chọn chuyến ➔ chọn ghế ➔ nhập nhanh SĐT ➔ chọn thanh toán `Tiền mặt (CASH)` hoặc `Quét VietQR tại quầy` ➔ Xuất vé trong 3 click chuột (< 10 giây).
+  - In vé nhiệt hóa đơn cầm tay khổ 80mm có thông tin chuyến đi và Mã QR bảo mật cho tài xế quét soát vé.
+  - Đồng bộ khóa giữ chỗ thời gian thực: Ghế bán tại quầy đổi màu tức thì trên App/Web, triệt tiêu 100% rủi ro trùng ghế.
+  - Quản lý mở/kết ca trực & đối soát tiền mặt (`/company/pos/shifts`): In phiếu Z-Report tổng kết tiền mặt cuối ca nộp cho thủ quỹ nhà xe, chống thất thoát doanh thu.
 * **Phân công phụ trách**: **Phạm Thanh Phong** (Full-Stack).
 
 ---
@@ -106,7 +109,7 @@ Bảng Trello Live: [TravelEasy_Platform | Trello Board](https://trello.com/b/AA
 |:---|:---|:---|:---|
 | **Phạm Công Thành** | **Nhóm trưởng & System Architect** | **0 task mới** *(Đã hoàn thành xuất sắc toàn bộ Core Architecture, Cổng Nhà xe 10 trang, Docker, CI/CD, DB, Tracing)* | Giám sát chất lượng & Điều phối chung |
 | **Nguyễn Đại Phát** | **Admin Lead & Full-Stack** | • Trang Cho thuê xe hợp đồng du lịch (`/charter`)<br>• Trang Quản trị giá vé động & Flash Sale (`/company/pricing-rules`)<br>• Backend Quản lý ví điểm thưởng EasyXu & Ledger tài chính | Đảm nhận phân hệ Đối tác & Quản trị mở rộng |
-| **Phạm Thanh Phong** | **Core Booking & Seat Engine** | • Trang Cổng đại lý vé xe & Điểm bán bến (`/agent/portal`)<br>• Backend tiếp nhận GPS Live Tracking & Stream tọa độ SSE<br>• Backend Động cơ tính cước gửi hàng & Vận đơn bưu kiện | Đảm nhận lõi xử lý cước phí & dữ liệu thời gian thực |
+| **Phạm Thanh Phong** | **Core Booking & Seat Engine** | • Phân hệ Bán vé nhanh tại Quầy bến xe của Nhà xe (`/company/pos`)<br>• Quản lý ca trực & đối soát tiền mặt quầy (`/company/pos/shifts`)<br>• Backend tiếp nhận GPS Live Tracking & Stream tọa độ SSE<br>• Backend Động cơ tính cước gửi hàng & Vận đơn bưu kiện | Đảm nhận phân hệ bán vé quầy bến xe & dữ liệu thời gian thực |
 | **Đoàn Nhật Cường** | **Mobile Specialist & QR Scanner** | • Trang Trung tâm cứu hộ & Chăm sóc khách hàng 24/7 (`/support`)<br>• Frontend Bản đồ GPS Live Tracking trên di động (`/tracking/:tripId`) | Đảm nhận giao diện thời gian thực & hỗ trợ hành khách |
 | **Trần Minh Đức** | **Customer Portal & Ticket Management** | • Trang Bảo hiểm chuyến đi & Nộp hồ sơ bồi thường (`/insurance`)<br>• Frontend Giao diện gửi bưu kiện & Tra cứu vận đơn (`/cargo`)<br>• Frontend Ví điểm thưởng EasyXu & Vòng quay may mắn (`/rewards`) | Đảm nhận phân hệ dịch vụ giá trị gia tăng cho hành khách |
 | **Phan Trung Kiên** | **Sinh viên** | **0 task** *(Miễn thực tập OJT theo quyết định đào tạo của Nhà trường / Doanh nghiệp)* | Miễn OJT |
