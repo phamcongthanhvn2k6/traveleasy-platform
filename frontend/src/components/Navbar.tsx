@@ -96,6 +96,28 @@ export const Navbar: React.FC = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '13px' }}>
             <Link
+              to="/demo"
+              style={{
+                color: '#fef08a',
+                textDecoration: 'none',
+                fontWeight: 700,
+                fontSize: '12.5px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                backgroundColor: 'rgba(254, 240, 138, 0.18)',
+                border: '1px solid rgba(254, 240, 138, 0.35)',
+                padding: '3px 10px',
+                borderRadius: '6px',
+                transition: 'all 0.15s ease'
+              }}
+              title="Kịch bản trình bày 15 phút và trung tâm kiểm thử demo Sprint 4"
+            >
+              <Sparkles size={13} style={{ color: '#fde047' }} />
+              <span>Demo 15'</span>
+            </Link>
+
+            <Link
               to="/company/login"
               style={{
                 color: '#93c5fd',
