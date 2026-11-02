@@ -2,16 +2,46 @@ import axios, { AxiosResponse } from 'axios';
 import { toast } from '../context/ToastContext';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080/api/v1' : '/api/v1'),
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+export const isTokenExpired = (token: string | null): boolean => {
+  if (!token) return true;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const decoded = JSON.parse(jsonPayload);
+    if (!decoded.exp) return false;
+    // Buffer by 5 seconds
+    return Date.now() >= (decoded.exp * 1000 - 5000);
+  } catch (e) {
+    return true;
+  }
+};
+
+let isHandling401 = false;
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('traveleasy_token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    if (isTokenExpired(token)) {
+      localStorage.removeItem('traveleasy_token');
+      localStorage.removeItem('traveleasy_user');
+      clearApiCache();
+    } else {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
@@ -21,7 +51,33 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (!error.response) {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('traveleasy_token');
+      localStorage.removeItem('traveleasy_user');
+      clearApiCache();
+
+      if (!isHandling401) {
+        isHandling401 = true;
+        const path = window.location.pathname;
+        if (path.startsWith('/admin') && !path.includes('/login')) {
+          toast.warning('Phiên đăng nhập Quản trị viên đã hết hạn. Vui lòng đăng nhập lại!', 'Hết Hạn Phiên');
+          setTimeout(() => {
+            isHandling401 = false;
+            window.location.href = '/admin/login';
+          }, 600);
+        } else if (path.startsWith('/company') && !path.includes('/login')) {
+          toast.warning('Phiên đăng nhập Đối tác đã hết hạn. Vui lòng đăng nhập lại!', 'Hết Hạn Phiên');
+          setTimeout(() => {
+            isHandling401 = false;
+            window.location.href = '/company/login';
+          }, 600);
+        } else {
+          setTimeout(() => {
+            isHandling401 = false;
+          }, 1500);
+        }
+      }
+    } else if (!error.response) {
       toast.error('Không thể kết nối đến máy chủ Backend (Port 8080). Vui lòng kiểm tra kết nối mạng!', 'Lỗi Kết Nối');
     }
     return Promise.reject(error);

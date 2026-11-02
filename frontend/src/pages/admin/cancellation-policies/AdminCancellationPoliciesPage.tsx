@@ -169,7 +169,8 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
           boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
         }}
       >
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', minWidth: '850px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TÊN CHÍNH SÁCH</th>
@@ -248,6 +249,7 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Modal: Thêm chính sách */}
@@ -268,7 +270,9 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
             style={{
               backgroundColor: '#ffffff',
               borderRadius: '16px',
-              maxWidth: '480px',
+              maxWidth: 'min(480px, 94vw)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               width: '100%',
               padding: '24px',
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',

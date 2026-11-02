@@ -33,6 +33,12 @@ export const AdminLoginPage: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isOperatorAttempt, setIsOperatorAttempt] = useState(false);
 
+  React.useEffect(() => {
+    if (location.state?.reason === 'expired') {
+      setErrorMsg('Phiên đăng nhập quản trị đã hết hạn (24 giờ). Vui lòng đăng nhập lại để tiếp tục làm việc an toàn!');
+    }
+  }, [location.state]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);

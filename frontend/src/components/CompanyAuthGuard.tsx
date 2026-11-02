@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ShieldAlert, ArrowLeft, LogOut, Building2, ShieldCheck } from 'lucide-react';
 import { AuthUser } from '../types';
+import { isTokenExpired } from '../services/api';
 
 interface CompanyAuthGuardProps {
   children: React.ReactNode;
@@ -29,9 +30,13 @@ export const CompanyAuthGuard: React.FC<CompanyAuthGuardProps> = ({ children }) 
   const token = localStorage.getItem('traveleasy_token');
   const userJson = localStorage.getItem('traveleasy_user');
 
-  // 1. Chưa đăng nhập -> Chuyển về cổng đăng nhập đối tác
-  if (!token || !userJson) {
-    return <Navigate to="/company/login" state={{ from: location }} replace />;
+  // 1. Chưa đăng nhập hoặc token đã hết hạn -> Chuyển về cổng đăng nhập đối tác
+  if (!token || !userJson || isTokenExpired(token)) {
+    if (token) {
+      localStorage.removeItem('traveleasy_token');
+      localStorage.removeItem('traveleasy_user');
+    }
+    return <Navigate to="/company/login" state={{ from: location, reason: token ? 'expired' : undefined }} replace />;
   }
 
   let user: AuthUser | null = null;

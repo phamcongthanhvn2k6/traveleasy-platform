@@ -28,9 +28,13 @@ jobs:
       working-directory: ./backend
       run: chmod +x gradlew
 
+    - name: Run Backend Unit Tests
+      working-directory: ./backend
+      run: ./gradlew test --no-daemon
+
     - name: Build Backend (Spring Boot JAR)
       working-directory: ./backend
-      run: ./gradlew bootJar --no-daemon
+      run: ./gradlew bootJar --no-daemon -x test
 
     - name: Upload Backend JAR Artifact
       uses: actions/upload-artifact@v4

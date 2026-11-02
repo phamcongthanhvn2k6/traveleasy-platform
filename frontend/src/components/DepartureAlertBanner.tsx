@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Clock, Bus, MapPin, X, QrCode } from 'lucide-react';
+import api from '../services/api';
 
 export const DepartureAlertBanner: React.FC = () => {
   const navigate = useNavigate();
@@ -24,28 +25,21 @@ export const DepartureAlertBanner: React.FC = () => {
       // Trường hợp 1: Người dùng đã đăng nhập -> Gọi API backend lấy danh sách vé thực tế
       if (token) {
         try {
-          const res = await fetch('http://localhost:8080/api/v1/bookings/my-bookings', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            const bookings: any[] = data?.data || [];
-            // Lọc các vé thực tế sắp khởi hành trong vòng 48 giờ tới
-            const upcoming = bookings
-              .filter(b => {
-                if (b.status !== 'CONFIRMED' && b.status !== 'PAID') return false;
-                if (!b.trip?.departureTime) return false;
-                const depTime = new Date(b.trip.departureTime).getTime();
-                const diff = depTime - now;
-                return diff > 0 && diff <= 48 * 3600 * 1000;
-              })
-              .sort((a, b) => new Date(a.trip.departureTime).getTime() - new Date(b.trip.departureTime).getTime());
+          const res = await api.get('/bookings/my-bookings');
+          const bookings: any[] = res.data?.data || [];
+          // Lọc các vé thực tế sắp khởi hành trong vòng 48 giờ tới
+          const upcoming = bookings
+            .filter(b => {
+              if (b.status !== 'CONFIRMED' && b.status !== 'PAID') return false;
+              if (!b.trip?.departureTime) return false;
+              const depTime = new Date(b.trip.departureTime).getTime();
+              const diff = depTime - now;
+              return diff > 0 && diff <= 48 * 3600 * 1000;
+            })
+            .sort((a, b) => new Date(a.trip.departureTime).getTime() - new Date(b.trip.departureTime).getTime());
 
-            if (upcoming.length > 0) {
-              targetBooking = upcoming[0];
-            }
+          if (upcoming.length > 0) {
+            targetBooking = upcoming[0];
           }
         } catch {
           // Bỏ qua lỗi mạng

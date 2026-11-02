@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Search, Plus, Edit2, Trash2, Building2, X, CheckCircle, RefreshCw, Info } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
+import { getStoredCompany } from '../../../utils/companyHelper';
 
 interface CompanyLocationItem {
   id: string | number;
@@ -24,6 +25,7 @@ interface MasterLocation {
 }
 
 export const CompanyLocationsPage: React.FC = () => {
+  const currentCompany = getStoredCompany();
   const [search, setSearch] = useState('');
   const [locations, setLocations] = useState<CompanyLocationItem[]>([]);
   const [masterLocations, setMasterLocations] = useState<MasterLocation[]>([]);
@@ -47,7 +49,7 @@ export const CompanyLocationsPage: React.FC = () => {
   // Tải danh sách Master Locations từ Backend CSDL
   const fetchMasterLocations = async () => {
     try {
-      const res = await api.get('/admin/locations');
+      const res = await api.get('/locations');
       if (res.data?.data && Array.isArray(res.data.data)) {
         setMasterLocations(
           res.data.data.map((l: any) => ({
@@ -103,9 +105,9 @@ export const CompanyLocationsPage: React.FC = () => {
     if (masterLocations.length > 0) {
       const first = masterLocations[0];
       setSelectedMasterId(first.id);
-      setDisplayName(`TE - ${first.name}`);
+      setDisplayName(`${currentCompany.shortName} - ${first.name}`);
       setCustomAddress(first.address);
-      setPickupGuide('Đến quầy vé TravelEasy trước giờ xuất bến 30 phút.');
+      setPickupGuide(`Đến quầy vé ${currentCompany.shortName} trước giờ xuất bến 30 phút.`);
     }
     setShowAssignModal(true);
   };
@@ -227,7 +229,7 @@ export const CompanyLocationsPage: React.FC = () => {
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Breadcrumb & Header Title */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '14px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
             Nhà xe <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Vận hành <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Địa điểm
@@ -236,11 +238,11 @@ export const CompanyLocationsPage: React.FC = () => {
             Địa Điểm Đón Trả Của Nhà Xe
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            {locations.length} cấu hình đón trả — <strong>TravelEasy Express</strong>
+            {locations.length} cấu hình đón trả — <strong>{currentCompany.name}</strong>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
             onClick={() => {
               loadLocations();
@@ -486,8 +488,9 @@ export const CompanyLocationsPage: React.FC = () => {
               borderRadius: '16px',
               width: '100%',
               maxWidth: '520px',
+              maxHeight: '90vh',
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
-              overflow: 'hidden',
+              overflowY: 'auto',
             }}
           >
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
@@ -658,8 +661,9 @@ export const CompanyLocationsPage: React.FC = () => {
               borderRadius: '16px',
               width: '100%',
               maxWidth: '520px',
+              maxHeight: '90vh',
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
-              overflow: 'hidden',
+              overflowY: 'auto',
             }}
           >
             <div style={{ padding: '18px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>

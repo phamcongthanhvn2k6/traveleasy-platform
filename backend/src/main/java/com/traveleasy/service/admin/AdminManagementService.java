@@ -11,8 +11,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -39,6 +44,7 @@ public class AdminManagementService {
     // 1. USER MANAGEMENT
     // ==========================================
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "admin_users", key = "(#role != null ? #role : '') + '_' + (#status != null ? #status : '') + '_' + (#search != null ? #search : '')")
     public List<UserAdminResponse> getAllUsers(String role, String status, String search) {
         return userRepository.findAll().stream()
                 .filter(u -> role == null || role.equalsIgnoreCase("ALL") || u.getRole().name().equalsIgnoreCase(role))
@@ -145,9 +151,17 @@ public class AdminManagementService {
     // 2. BUS COMPANY MANAGEMENT
     // ==========================================
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "admin_bus_companies", key = "(#status != null ? #status : '') + '_' + (#search != null ? #search : '')")
     public List<BusCompanyAdminResponse> getAllBusCompanies(String status, String search) {
         return busCompanyRepository.findAll().stream()
-                .filter(c -> status == null || status.equalsIgnoreCase("ALL") || (c.getStatus() != null && c.getStatus().equalsIgnoreCase(status)))
+                .filter(c -> {
+                    if (status == null || status.equalsIgnoreCase("ALL")) return true;
+                    if (c.getStatus() == null) return false;
+                    if (c.getStatus().equalsIgnoreCase(status)) return true;
+                    if (status.equalsIgnoreCase("PENDING") && c.getStatus().equalsIgnoreCase("PENDING_APPROVAL")) return true;
+                    if (status.equalsIgnoreCase("PENDING_APPROVAL") && c.getStatus().equalsIgnoreCase("PENDING")) return true;
+                    return false;
+                })
                 .filter(c -> search == null || search.isBlank() ||
                         c.getName().toLowerCase().contains(search.toLowerCase()) ||
                         (c.getEmail() != null && c.getEmail().toLowerCase().contains(search.toLowerCase())) ||
@@ -162,11 +176,49 @@ public class AdminManagementService {
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
 
         String before = "{\"status\": \"" + company.getStatus() + "\"}";
-        company.setStatus(status.toUpperCase());
+        String normalizedStatus = status.equalsIgnoreCase("ACTIVE") ? "ACTIVE" :
+                                 (status.equalsIgnoreCase("PENDING") || status.equalsIgnoreCase("PENDING_APPROVAL")) ? "PENDING_APPROVAL" :
+                                 status.equalsIgnoreCase("REJECTED") ? "REJECTED" : "SUSPENDED";
+
+        company.setStatus(normalizedStatus);
         BusCompany saved = busCompanyRepository.save(company);
 
-        logAction("admin@traveleasy.vn", status.equalsIgnoreCase("ACTIVE") ? "APPROVE_COMPANY" : "SUSPEND_COMPANY",
-                "bus_companies #" + id, before, "{\"status\": \"" + status + "\"}");
+        // NẾU PHÊ DUYỆT ĐƯA LÊN SÀN (ACTIVE): TỰ ĐỘNG KHỞI TẠO TÀI KHOẢN ĐỐI TÁC (ROLE_OPERATOR)
+        if ("ACTIVE".equals(normalizedStatus) && company.getEmail() != null && !company.getEmail().isBlank()) {
+            String opEmail = company.getEmail().trim().toLowerCase();
+            if (!userRepository.existsByEmail(opEmail)) {
+                User operator = User.builder()
+                        .email(opEmail)
+                        .password(passwordEncoder.encode("123456789@"))
+                        .fullName("Điều Hành " + company.getName())
+                        .phone(company.getHotline())
+                        .role(Role.OPERATOR)
+                        .status("ACTIVE")
+                        .build();
+                userRepository.save(operator);
+                logAction("admin@traveleasy.vn", "PROVISION_OPERATOR_ACCOUNT", "users #" + operator.getEmail(), "-",
+                        "{\"companyId\": " + company.getId() + ", \"companyName\": \"" + company.getName() + "\"}");
+                log.info("✅ Đã tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác: {} ({})", company.getName(), opEmail);
+            }
+        }
+
+        logAction("admin@traveleasy.vn", normalizedStatus.equals("ACTIVE") ? "APPROVE_COMPANY" : "UPDATE_COMPANY_STATUS",
+                "bus_companies #" + id, before, "{\"status\": \"" + normalizedStatus + "\"}");
+        return mapToCompanyResponse(saved);
+    }
+
+    @Transactional
+    public BusCompanyAdminResponse rejectCompany(Long id, String reason) {
+        BusCompany company = busCompanyRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
+
+        String before = "{\"status\": \"" + company.getStatus() + "\"}";
+        company.setStatus("REJECTED");
+        BusCompany saved = busCompanyRepository.save(company);
+
+        logAction("admin@traveleasy.vn", "REJECT_PARTNER_APPLICATION", "bus_companies #" + id, before,
+                "{\"status\": \"REJECTED\", \"reason\": \"" + (reason != null ? reason : "Chưa đáp ứng đủ quy chuẩn vận tải sàn") + "\"}");
+        log.info("🚫 Đã từ chối hồ sơ đối tác: {} với lý do: {}", company.getName(), reason);
         return mapToCompanyResponse(saved);
     }
 
@@ -215,7 +267,8 @@ public class AdminManagementService {
     private BusCompanyAdminResponse mapToCompanyResponse(BusCompany c) {
         String status = c.getStatus() != null ? c.getStatus() : "ACTIVE";
         String statusLabel = switch (status) {
-            case "PENDING_APPROVAL" -> "Chờ duyệt";
+            case "PENDING_APPROVAL", "PENDING" -> "Chờ duyệt";
+            case "REJECTED" -> "Bị từ chối";
             case "SUSPENDED" -> "Tạm ngưng";
             default -> "Hoạt động";
         };
@@ -407,6 +460,18 @@ public class AdminManagementService {
         return saved;
     }
 
+    @Transactional
+    public GatewayConfig toggleGatewaySandbox(String provider) {
+        GatewayConfig gw = gatewayConfigRepository.findByProvider(provider.toUpperCase())
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy cấu hình gateway: " + provider));
+        boolean current = Boolean.TRUE.equals(gw.getIsSandbox());
+        gw.setIsSandbox(!current);
+        gw.setUpdatedAt(LocalDateTime.now());
+        GatewayConfig saved = gatewayConfigRepository.save(gw);
+        logAction("admin@traveleasy.vn", "TOGGLE_GATEWAY_SANDBOX", "gateway #" + provider, "isSandbox: " + current, "isSandbox: " + !current);
+        return saved;
+    }
+
     // ==========================================
     // 7. REVIEW REPORTS
     // ==========================================
@@ -452,8 +517,61 @@ public class AdminManagementService {
     }
 
     // ==========================================
-    // 9. AUDIT LOGS
+    // 9. AUDIT LOGS & SYSTEM DEFENSE SHIELD
     // ==========================================
+    private final Map<String, Object> systemDefenseState = new ConcurrentHashMap<>(Map.of(
+            "mode", "NORMAL",
+            "isLockdown", false,
+            "incidentType", "NONE",
+            "reason", "Hệ thống hoạt động bình thường, các cơ chế an ninh mạng đang giám sát 24/7.",
+            "publicNotice", "",
+            "disclaimerActive", false,
+            "disclaimerText", "Điều khoản Bất khả kháng & Miễn trừ trách nhiệm bồi thường theo Điều 14 Quy chế Sàn TravelEasy.",
+            "activatedAt", "",
+            "activatedBy", "System Sentinel"
+    ));
+
+    public Map<String, Object> getSystemDefenseStatus() {
+        return new HashMap<>(systemDefenseState);
+    }
+
+    @Transactional
+    public Map<String, Object> updateSystemDefenseStatus(Map<String, Object> payload, String adminEmail) {
+        String nextMode = String.valueOf(payload.getOrDefault("mode", "NORMAL")).toUpperCase();
+        String incidentType = String.valueOf(payload.getOrDefault("incidentType", "OTHER"));
+        String reason = String.valueOf(payload.getOrDefault("reason", ""));
+        String publicNotice = String.valueOf(payload.getOrDefault("publicNotice", ""));
+        boolean disclaimerActive = Boolean.parseBoolean(String.valueOf(payload.getOrDefault("disclaimerActive", "true")));
+
+        String prevMode = String.valueOf(systemDefenseState.getOrDefault("mode", "NORMAL"));
+        String nowStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+
+        systemDefenseState.put("mode", nextMode);
+        systemDefenseState.put("isLockdown", "LOCKDOWN".equals(nextMode));
+        systemDefenseState.put("incidentType", incidentType);
+        systemDefenseState.put("reason", reason);
+        systemDefenseState.put("publicNotice", publicNotice);
+        systemDefenseState.put("disclaimerActive", disclaimerActive);
+        systemDefenseState.put("activatedAt", nowStr);
+        systemDefenseState.put("activatedBy", adminEmail != null ? adminEmail : "admin@traveleasy.vn");
+
+        // Ghi Audit Log pháp lý bất biến
+        String actionName = "LOCKDOWN".equals(nextMode)
+                ? "TRIGGER_EMERGENCY_LOCKDOWN"
+                : "MAINTENANCE".equals(nextMode)
+                ? "TRIGGER_MAINTENANCE_MODE"
+                : "RESTORE_SYSTEM_NORMAL";
+
+        String target = "PLATFORM_SECURITY_SHIELD";
+        String before = "{\"mode\": \"" + prevMode + "\"}";
+        String after = String.format("{\"mode\": \"%s\", \"incident\": \"%s\", \"disclaimerActive\": %b, \"reason\": \"%s\"}",
+                nextMode, incidentType, disclaimerActive, reason.replace("\"", "\\\""));
+
+        logAction(adminEmail, actionName, target, before, after);
+
+        return new HashMap<>(systemDefenseState);
+    }
+
     @Transactional(readOnly = true)
     public List<AuditLog> getAllAuditLogs(String action) {
         if (action != null && !action.equalsIgnoreCase("ALL")) {
@@ -466,9 +584,9 @@ public class AdminManagementService {
     // 10. ROUTE MANAGEMENT (/admin/routes)
     // ==========================================
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "admin_routes", key = "(#search != null ? #search : '') + '_' + (#companyId != null ? #companyId : '')")
     public List<RouteAdminResponse> getAllRoutes(String search, Long companyId) {
-        return routeRepository.findAll().stream()
-                .filter(r -> companyId == null || (r.getBusCompany() != null && r.getBusCompany().getId().equals(companyId)))
+        return routeRepository.findAllWithDetailsByCompanyId(companyId).stream()
                 .filter(r -> search == null || search.isBlank() ||
                         r.getDepartureLocation().toLowerCase().contains(search.toLowerCase()) ||
                         r.getArrivalLocation().toLowerCase().contains(search.toLowerCase()) ||
@@ -478,6 +596,7 @@ public class AdminManagementService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     public RouteAdminResponse createRoute(CreateRouteRequest request) {
         if (request.getDepartureLocation() != null && request.getArrivalLocation() != null &&
                 request.getDepartureLocation().trim().equalsIgnoreCase(request.getArrivalLocation().trim())) {
@@ -502,6 +621,7 @@ public class AdminManagementService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     public RouteAdminResponse updateRoute(Long id, CreateRouteRequest request) {
         Route route = routeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy tuyến đường"));
@@ -515,6 +635,7 @@ public class AdminManagementService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_routes", "routes_list", "popular_routes", "trips_search"}, allEntries = true)
     public void deleteRoute(Long id) {
         Route route = routeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy tuyến đường"));
@@ -525,23 +646,31 @@ public class AdminManagementService {
         logAction("admin@traveleasy.vn", "DELETE_ROUTE", "routes #" + id, "{\"from\": \"" + route.getDepartureLocation() + "\", \"to\": \"" + route.getArrivalLocation() + "\"}", "-");
     }
 
+    private final Map<String, Map<String, Object>> settlementOverrides = new ConcurrentHashMap<>();
+
     @Transactional(readOnly = true)
     public List<java.util.Map<String, Object>> getAdminSettlements() {
         List<BusCompany> companies = busCompanyRepository.findAll();
         List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
-        List<Booking> allBookings = bookingRepository.findAll();
+
+        // TỐI ƯU HÓA: Truy vấn tổng hợp doanh thu và số vé trực tiếp từ CSDL Postgres thay vì tải toàn bộ bookings
+        List<Object[]> statsList = bookingRepository.getBookingStatsGroupedByCompany();
+        Map<Long, Long> ticketCountMap = new HashMap<>();
+        Map<Long, BigDecimal> grossAmountMap = new HashMap<>();
+        for (Object[] row : statsList) {
+            Long compId = (Long) row[0];
+            Long cnt = (Long) row[1];
+            BigDecimal sum = (BigDecimal) row[2];
+            if (compId != null) {
+                ticketCountMap.put(compId, cnt != null ? cnt : 0L);
+                grossAmountMap.put(compId, sum != null ? sum : BigDecimal.ZERO);
+            }
+        }
 
         for (BusCompany c : companies) {
-            List<Booking> companyBookings = allBookings.stream()
-                    .filter(b -> b.getTrip() != null && b.getTrip().getBusCompany() != null && b.getTrip().getBusCompany().getId().equals(c.getId()))
-                    .collect(Collectors.toList());
+            int count = ticketCountMap.getOrDefault(c.getId(), 0L).intValue();
+            java.math.BigDecimal gross = grossAmountMap.getOrDefault(c.getId(), java.math.BigDecimal.ZERO);
 
-            java.math.BigDecimal gross = companyBookings.stream()
-                    .map(Booking::getTotalAmount)
-                    .filter(java.util.Objects::nonNull)
-                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
-
-            int count = companyBookings.size();
             if (count == 0 && gross.compareTo(java.math.BigDecimal.ZERO) == 0) {
                 gross = java.math.BigDecimal.valueOf(450000000 + (c.getId() * 30000000));
                 count = 1200 + (int)(c.getId() * 100);
@@ -550,32 +679,72 @@ public class AdminManagementService {
             java.math.BigDecimal commission = gross.multiply(java.math.BigDecimal.valueOf(0.10));
             java.math.BigDecimal net = gross.subtract(commission);
 
+            String id = "s-" + c.getId();
+            String defaultStatus = c.getId() <= 3 ? "PAID" : c.getId() <= 6 ? "RECONCILED" : "PENDING";
+            String defaultReconciledAt = c.getId() <= 6 ? "28/10/2026 10:30" : null;
+            String defaultPaidAt = c.getId() <= 3 ? "29/10/2026 14:15" : null;
+            String defaultTxHash = c.getId() <= 3 ? ("VCB-FT-88992019" + c.getId()) : null;
+
             java.util.Map<String, Object> item = new java.util.HashMap<>();
-            item.put("id", "s-" + c.getId());
+            item.put("id", id);
             item.put("code", "DS-202610-" + (c.getCode() != null ? c.getCode() : ("BC" + c.getId())));
             item.put("companyId", c.getId());
             item.put("companyName", c.getName());
             item.put("companyLogo", c.getLogoUrl() != null ? c.getLogoUrl() : "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289372/traveleasy/bus-companies/logo_futa_buslines.jpg");
-            item.put("periodName", "Kỳ 1 - Tháng 10/2026");
-            item.put("startDate", "01/10/2026");
-            item.put("endDate", "15/10/2026");
+            item.put("periodName", "Kỳ 2 - Tháng 10/2026");
+            item.put("startDate", "16/10/2026");
+            item.put("endDate", "31/10/2026");
             item.put("ticketCount", count);
             item.put("grossAmount", gross);
             item.put("commissionRate", 10);
             item.put("platformCommission", commission);
             item.put("netPayable", net);
 
+            String bankCode = c.getId() % 3 == 0 ? "MB" : c.getId() % 2 == 0 ? "TCB" : "VCB";
+            String bankName = c.getId() % 3 == 0 ? "MBBank - CN Lê Hồng Phong" : c.getId() % 2 == 0 ? "Techcombank - CN Sài Gòn" : "Vietcombank - Chi nhánh Sài Gòn";
+            String accNum = "0071000987" + (100 + c.getId());
+            String accHolder = "CTY CP XE KHACH " + c.getName().toUpperCase();
+
             java.util.Map<String, String> bank = new java.util.HashMap<>();
-            bank.put("bankName", "Vietcombank - Chi nhánh Sài Gòn");
-            bank.put("accountNumber", "0071000987" + (100 + c.getId()));
-            bank.put("accountHolder", "CTY CP XE KHACH " + c.getName().toUpperCase());
+            bank.put("bankCode", bankCode);
+            bank.put("bankName", bankName);
+            bank.put("accountNumber", accNum);
+            bank.put("accountHolder", accHolder);
             item.put("bankAccount", bank);
-            item.put("status", "PAID");
-            item.put("reconciledAt", "16/10/2026 10:30");
-            item.put("paidAt", "17/10/2026 14:15");
+
+            item.put("status", defaultStatus);
+            item.put("reconciledAt", defaultReconciledAt);
+            item.put("paidAt", defaultPaidAt);
+            item.put("payoutTxHash", defaultTxHash);
+
+            // Nạp các ghi đè can thiệp thời gian thực từ Admin Payout Execution
+            if (settlementOverrides.containsKey(id)) {
+                item.putAll(settlementOverrides.get(id));
+            }
+
             list.add(item);
         }
         return list;
+    }
+
+    public Map<String, Object> reconcileSettlement(String settlementId, String userEmail) {
+        Map<String, Object> override = settlementOverrides.computeIfAbsent(settlementId, k -> new HashMap<>());
+        override.put("status", "RECONCILED");
+        override.put("reconciledAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        logAction(userEmail != null ? userEmail : "admin@traveleasy.vn", "RECONCILE_SETTLEMENT", settlementId, "-", "RECONCILED");
+        return override;
+    }
+
+    public Map<String, Object> paySettlement(String settlementId, String payoutTxHash, String note, String userEmail) {
+        Map<String, Object> override = settlementOverrides.computeIfAbsent(settlementId, k -> new HashMap<>());
+        override.put("status", "PAID");
+        override.put("paidAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        override.put("payoutTxHash", payoutTxHash != null && !payoutTxHash.isBlank() ? payoutTxHash : ("VCB-FT-" + System.currentTimeMillis()));
+        if (note != null && !note.isBlank()) {
+            override.put("payoutNote", note);
+        }
+        logAction(userEmail != null ? userEmail : "admin@traveleasy.vn", "PAY_SETTLEMENT", settlementId, "-", "PAID: " + override.get("payoutTxHash"));
+        return override;
     }
 
     private RouteAdminResponse mapToRouteResponse(Route r) {

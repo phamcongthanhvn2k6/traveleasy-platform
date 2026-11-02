@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Route as RouteIcon, Plus, Search, Edit2, Trash2, Clock, MapPin, RefreshCw, X, CheckCircle } from 'lucide-react';
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
+import { getStoredCompany } from '../../../utils/companyHelper';
 
 interface RouteItem {
   id: number;
@@ -16,16 +17,17 @@ interface RouteItem {
 }
 
 export const CompanyRoutesPage: React.FC = () => {
+  const currentCompany = getStoredCompany();
   const [routes, setRoutes] = useState<RouteItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   // Create Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formDeparture, setFormDeparture] = useState('TP. Hồ Chí Minh');
-  const [formArrival, setFormArrival] = useState('Đà Lạt');
-  const [formDuration, setFormDuration] = useState('6.0');
-  const [formDistance, setFormDistance] = useState('305');
+  const [formDeparture, setFormDeparture] = useState('Hà Nội');
+  const [formArrival, setFormArrival] = useState('Sa Pa');
+  const [formDuration, setFormDuration] = useState('5.5');
+  const [formDistance, setFormDistance] = useState('315');
   const [submitting, setSubmitting] = useState(false);
 
   // Edit Modal
@@ -39,11 +41,22 @@ export const CompanyRoutesPage: React.FC = () => {
   const fetchRoutes = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/company/routes');
+      const res = await api.get('/company/routes', {
+        params: {
+          companyId: currentCompany.id,
+          companyName: currentCompany.name,
+        },
+      });
       if (res.data?.data && Array.isArray(res.data.data)) {
-        setRoutes(res.data.data);
+        const filtered = res.data.data.filter((r: any) => {
+          if (r.busCompanyId && Number(r.busCompanyId) !== currentCompany.id) return false;
+          if (r.busCompanyName && !r.busCompanyName.toLowerCase().includes(currentCompany.shortName.toLowerCase()) && !currentCompany.name.toLowerCase().includes(r.busCompanyName.toLowerCase())) return false;
+          return true;
+        });
+        setRoutes(filtered);
       }
     } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load company routes:', err);
       toast.error('Không thể tải danh sách tuyến đường từ CSDL', 'Lỗi CSDL');
     } finally {
@@ -65,7 +78,7 @@ export const CompanyRoutesPage: React.FC = () => {
     setSubmitting(true);
     try {
       const payload = {
-        busCompanyId: 1, // Nhà xe đối tác TravelEasy Express
+        busCompanyId: currentCompany.id,
         departureLocation: formDeparture.trim(),
         arrivalLocation: formArrival.trim(),
         durationHours: parseFloat(formDuration) || 6.0,
@@ -149,7 +162,7 @@ export const CompanyRoutesPage: React.FC = () => {
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', paddingBottom: '40px' }}>
       {/* Breadcrumb & Header Title */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap', gap: '14px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
             Nhà xe <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Tuyến đường vận hành
@@ -158,11 +171,11 @@ export const CompanyRoutesPage: React.FC = () => {
             Tuyến Đường Nhà Xe
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            Quản lý danh mục các lộ trình vận chuyển hành khách trực tiếp trên CSDL MySQL
+            {routes.length} tuyến đường khai thác — <strong>{currentCompany.name}</strong>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
             onClick={fetchRoutes}
             disabled={loading}
@@ -439,8 +452,9 @@ export const CompanyRoutesPage: React.FC = () => {
               borderRadius: '16px',
               width: '100%',
               maxWidth: '520px',
+              maxHeight: '90vh',
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-              overflow: 'hidden',
+              overflowY: 'auto',
             }}
           >
             <div
@@ -610,8 +624,9 @@ export const CompanyRoutesPage: React.FC = () => {
               borderRadius: '16px',
               width: '100%',
               maxWidth: '520px',
+              maxHeight: '90vh',
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-              overflow: 'hidden',
+              overflowY: 'auto',
             }}
           >
             <div

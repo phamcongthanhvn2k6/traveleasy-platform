@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ShieldAlert, ArrowLeft, LogOut } from 'lucide-react';
 import { AuthUser } from '../types';
+import { isTokenExpired } from '../services/api';
 
 interface AdminAuthGuardProps {
   children: React.ReactNode;
@@ -29,9 +30,13 @@ export const AdminAuthGuard: React.FC<AdminAuthGuardProps> = ({ children }) => {
   const token = localStorage.getItem('traveleasy_token');
   const userJson = localStorage.getItem('traveleasy_user');
 
-  // 1. Trường hợp chưa đăng nhập -> Chuyển về cổng đăng nhập Admin
-  if (!token || !userJson) {
-    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  // 1. Trường hợp chưa đăng nhập hoặc token đã hết hạn -> Chuyển về cổng đăng nhập Admin
+  if (!token || !userJson || isTokenExpired(token)) {
+    if (token) {
+      localStorage.removeItem('traveleasy_token');
+      localStorage.removeItem('traveleasy_user');
+    }
+    return <Navigate to="/admin/login" state={{ from: location, reason: token ? 'expired' : undefined }} replace />;
   }
 
   let user: AuthUser | null = null;

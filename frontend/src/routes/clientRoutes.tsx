@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from '../pages/customer/home/HomePage';
 import { TripSearchPage } from '../pages/customer/search/TripSearchPage';
 import { CheckoutPage } from '../pages/customer/checkout/CheckoutPage';
@@ -12,6 +12,7 @@ import { SchedulePage } from '../pages/customer/schedule/SchedulePage';
 import { PromotionsPage } from '../pages/customer/promotions/PromotionsPage';
 import { ReviewsPage } from '../pages/customer/reviews/ReviewsPage';
 import { TicketScannerPage } from '../pages/customer/scanner/TicketScannerPage';
+import { PartnerCooperationPage } from '../pages/customer/partner-cooperation/PartnerCooperationPage';
 import { NotFoundPage } from '../pages/common/NotFoundPage';
 
 /**
@@ -57,6 +58,12 @@ export const ClientRoutes: React.FC = () => {
       <Route path="/promotions" element={<PromotionsPage />} />
       <Route path="/reviews" element={<ReviewsPage />} />
       <Route path="/scanner" element={<TicketScannerPage />} />
+
+      {/* Hợp tác mở bán vé cùng TravelEasy (Chuẩn hóa URL tiếng Anh) */}
+      <Route path="/partner" element={<PartnerCooperationPage />} />
+      <Route path="/partner-with-us" element={<PartnerCooperationPage />} />
+      <Route path="/hop-tac-nha-xe" element={<Navigate to="/partner" replace />} />
+      <Route path="/mo-ban-ve" element={<Navigate to="/partner" replace />} />
 
       {/* Dịch vụ mở rộng khác */}
       <Route path="/flights" element={<NotFoundPage feature="Vé Máy Bay Trực Tuyến" />} />

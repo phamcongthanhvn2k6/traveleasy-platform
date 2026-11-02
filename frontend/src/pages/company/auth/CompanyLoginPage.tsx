@@ -28,6 +28,12 @@ export const CompanyLoginPage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isAdminAttempt, setIsAdminAttempt] = useState(false);
 
+  React.useEffect(() => {
+    if (location.state?.reason === 'expired') {
+      setErrorMsg('Phiên làm việc đối tác đã hết hạn (24 giờ). Vui lòng đăng nhập lại để tiếp tục làm việc an toàn!');
+    }
+  }, [location.state]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);

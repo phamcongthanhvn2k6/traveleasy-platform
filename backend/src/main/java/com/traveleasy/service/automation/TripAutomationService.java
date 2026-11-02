@@ -27,6 +27,7 @@ public class TripAutomationService {
     private final TripSeatRepository tripSeatRepository;
     private final RouteRepository routeRepository;
     private final BusCompanyRepository busCompanyRepository;
+    private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
     public record RouteScheduleTemplate(
             String origin,
@@ -103,7 +104,11 @@ public class TripAutomationService {
         // Chạy bất đồng bộ hoàn toàn để KHÔNG chặn tiến trình khởi động server
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
-                expirePastTrips();
+                if (transactionTemplate != null) {
+                    transactionTemplate.executeWithoutResult(status -> {
+                        expirePastTrips();
+                    });
+                }
                 long scheduledCount = tripRepository.countByStatus(TripStatus.SCHEDULED);
                 if (scheduledCount < 20) {
                     log.info("Số chuyến hiện tại ({}) ít hơn 20, tiến hành sinh bổ sung lịch chạy...", scheduledCount);

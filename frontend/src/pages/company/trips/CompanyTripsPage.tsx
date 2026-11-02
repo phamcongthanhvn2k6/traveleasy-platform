@@ -3,6 +3,7 @@ import { Plus, Eye, Clock, AlertTriangle, CheckCircle, Play, Ban, X, RefreshCw, 
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { PassengerManifestModal } from '../../../components/PassengerManifestModal';
+import { getStoredCompany } from '../../../utils/companyHelper';
 
 export interface CompanyTripItem {
   id: string;
@@ -22,6 +23,7 @@ export interface CompanyTripItem {
 const STORAGE_KEY = 'traveleasy_company_trips';
 
 export const CompanyTripsPage: React.FC = () => {
+  const currentCompany = getStoredCompany();
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [trips, setTrips] = useState<CompanyTripItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,25 +31,37 @@ export const CompanyTripsPage: React.FC = () => {
   const fetchTripsFromDb = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/company/trips');
+      const res = await api.get('/company/trips', {
+        params: {
+          companyId: currentCompany.id,
+          companyName: currentCompany.name,
+        },
+      });
       if (res.data?.data && Array.isArray(res.data.data)) {
-        const mapped: CompanyTripItem[] = res.data.data.map((item: any) => ({
-          id: String(item.id),
-          code: item.code || `TR-${item.id}`,
-          routeName: item.routeName || (item.originCity && item.destinationCity ? `${item.originCity} - ${item.destinationCity}` : 'Sài Gòn - Đà Lạt'),
-          vehiclePlate: item.licensePlate || item.vehiclePlate || '51B-123.45',
-          busType: item.busType || 'Limousine 34 Phòng VIP',
-          departureTime: item.departureTime ? formatDisplayTime(item.departureTime) : '-',
-          arrivalTime: item.arrivalTime ? formatDisplayTime(item.arrivalTime) : '-',
-          price: item.price || 300000,
-          totalSeats: item.totalSeats || 34,
-          delayText: item.delayText || '-',
-          status: item.status || 'SCHEDULED',
-          statusLabel: item.status === 'RUNNING' ? 'Đang chạy' : item.status === 'COMPLETED' ? 'Hoàn thành' : item.status === 'CANCELLED' ? 'Đã hủy' : 'Đã lên lịch',
-        }));
+        const mapped: CompanyTripItem[] = res.data.data
+          .filter((item: any) => {
+            if (item.busCompanyId && Number(item.busCompanyId) !== currentCompany.id) return false;
+            if (item.busCompanyName && !item.busCompanyName.toLowerCase().includes(currentCompany.shortName.toLowerCase()) && !currentCompany.name.toLowerCase().includes(item.busCompanyName.toLowerCase())) return false;
+            return true;
+          })
+          .map((item: any) => ({
+            id: String(item.id),
+            code: item.code || `TR-${item.id}`,
+            routeName: item.routeName || (item.originCity && item.destinationCity ? `${item.originCity} - ${item.destinationCity}` : `${item.originCity || 'Hà Nội'} - ${item.destinationCity || 'Sa Pa'}`),
+            vehiclePlate: item.licensePlate || item.vehiclePlate || '29B-888.77',
+            busType: item.busType || 'Limousine VIP',
+            departureTime: item.departureTime ? formatDisplayTime(item.departureTime) : '-',
+            arrivalTime: item.arrivalTime ? formatDisplayTime(item.arrivalTime) : '-',
+            price: item.price || 350000,
+            totalSeats: item.totalSeats || 34,
+            delayText: item.delayText || '-',
+            status: item.status || 'SCHEDULED',
+            statusLabel: item.status === 'RUNNING' ? 'Đang chạy' : item.status === 'COMPLETED' ? 'Hoàn thành' : item.status === 'CANCELLED' ? 'Đã hủy' : 'Đã lên lịch',
+          }));
         setTrips(mapped);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load trips from Supabase:', err);
       toast.error('Không thể tải danh sách chuyến xe từ CSDL', 'Lỗi CSDL');
     } finally {
@@ -63,7 +77,7 @@ export const CompanyTripsPage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAutoModalOpen, setIsAutoModalOpen] = useState(false);
   const [isAutoGenerating, setIsAutoGenerating] = useState(false);
-  const [autoRouteId, setAutoRouteId] = useState<number>(1);
+  const [autoRouteId, setAutoRouteId] = useState<number>(4);
   const [autoDays, setAutoDays] = useState<number>(30);
   const [autoBusType, setAutoBusType] = useState<string>('LIMOUSINE');
   const [autoPrice, setAutoPrice] = useState<number>(390000);
@@ -87,7 +101,7 @@ export const CompanyTripsPage: React.FC = () => {
     setIsAutoGenerating(true);
     try {
       const res = await api.post('/company/trips/auto-generate', {
-        busCompanyId: 1,
+        busCompanyId: currentCompany.id,
         routeId: autoRouteId,
         daysAhead: autoDays,
         timeSlots: autoSelectedSlots,
@@ -279,7 +293,7 @@ export const CompanyTripsPage: React.FC = () => {
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Breadcrumb & Header Title */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap', gap: '14px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
             Nhà xe <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Chuyến xe
@@ -288,11 +302,11 @@ export const CompanyTripsPage: React.FC = () => {
             Quản lý chuyến xe
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            Tổng cộng {trips.length} chuyến xe trong hệ thống nhà xe
+            Tổng cộng {trips.length} chuyến xe — <strong>{currentCompany.name}</strong>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={() => setIsAutoModalOpen(true)}
             style={{

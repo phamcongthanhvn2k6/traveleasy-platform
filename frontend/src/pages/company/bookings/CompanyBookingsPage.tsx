@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Eye, CheckCircle, XCircle, Printer, X, User, Phone, Mail, MapPin, Calendar, CreditCard } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
+import { getStoredCompany } from '../../../utils/companyHelper';
 
 export interface CompanyBookingItem {
   id: string;
@@ -25,6 +26,7 @@ export interface CompanyBookingItem {
 const STORAGE_KEY = 'traveleasy_company_bookings';
 
 export const CompanyBookingsPage: React.FC = () => {
+  const currentCompany = getStoredCompany();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [bookings, setBookings] = useState<CompanyBookingItem[]>([]);
@@ -33,7 +35,12 @@ export const CompanyBookingsPage: React.FC = () => {
   const fetchBookingsFromDb = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/company/bookings');
+      const res = await api.get('/company/bookings', {
+        params: {
+          companyId: currentCompany.id,
+          companyName: currentCompany.name,
+        },
+      });
       if (res.data?.data && Array.isArray(res.data.data)) {
         const mapped: CompanyBookingItem[] = res.data.data.map((b: any) => ({
           id: String(b.id),
@@ -42,11 +49,11 @@ export const CompanyBookingsPage: React.FC = () => {
           customerEmail: b.passengerEmail || 'customer@gmail.com',
           customerPhone: b.passengerPhone || '0912345678',
           tripCode: b.tripCode || `TR-${b.tripId || 1}`,
-          routeName: b.routeName || 'Sài Gòn - Đà Lạt',
+          routeName: b.routeName || 'Hà Nội - Sa Pa',
           seats: b.seats || (b.seatNumber ? [b.seatNumber] : ['A01']),
-          pickupPoint: b.pickupPoint || 'Bến xe Miền Tây',
-          dropoffPoint: b.dropoffPoint || 'Bến xe Đà Lạt',
-          totalAmount: b.totalPrice || b.totalAmount || 320000,
+          pickupPoint: b.pickupPoint || 'Bến xe Mỹ Đình',
+          dropoffPoint: b.dropoffPoint || 'Bến xe Sa Pa',
+          totalAmount: b.totalPrice || b.totalAmount || 380000,
           paymentMethod: b.paymentMethod || 'COD',
           paymentStatus: b.paymentStatus || 'PAID',
           status: b.status || 'CONFIRMED',
@@ -55,7 +62,8 @@ export const CompanyBookingsPage: React.FC = () => {
         }));
         setBookings(mapped);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load bookings from Supabase:', err);
       toast.error('Không thể tải danh sách đơn vé từ CSDL', 'Lỗi CSDL');
     } finally {
@@ -166,7 +174,7 @@ export const CompanyBookingsPage: React.FC = () => {
           Quản lý đặt vé
         </h1>
         <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-          Tổng cộng {bookings.length} đơn đặt vé của nhà xe
+          Tổng cộng {bookings.length} đơn đặt vé — <strong>{currentCompany.name}</strong>
         </div>
       </div>
 
@@ -180,7 +188,9 @@ export const CompanyBookingsPage: React.FC = () => {
             border: '1px solid #e2e8f0',
             borderRadius: '8px',
             padding: '8px 12px',
-            width: '320px',
+            minWidth: '220px',
+            flex: '1 1 260px',
+            maxWidth: '400px',
             gap: '8px'
           }}
         >

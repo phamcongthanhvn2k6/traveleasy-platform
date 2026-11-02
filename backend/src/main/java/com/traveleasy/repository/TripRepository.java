@@ -16,8 +16,8 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
         SELECT t FROM Trip t
         JOIN FETCH t.route r
         JOIN FETCH t.busCompany c
-        WHERE (CAST(:origin AS string) IS NULL OR LOWER(r.departureLocation) LIKE CONCAT('%', LOWER(CAST(:origin AS string)), '%'))
-          AND (CAST(:destination AS string) IS NULL OR LOWER(r.arrivalLocation) LIKE CONCAT('%', LOWER(CAST(:destination AS string)), '%'))
+        WHERE (:origin IS NULL OR :origin = '' OR LOWER(r.departureLocation) LIKE CONCAT('%', LOWER(:origin), '%'))
+          AND (:destination IS NULL OR :destination = '' OR LOWER(r.arrivalLocation) LIKE CONCAT('%', LOWER(:destination), '%'))
           AND (CAST(:startTime AS java.time.LocalDateTime) IS NULL OR t.departureTime >= :startTime)
           AND (CAST(:endTime AS java.time.LocalDateTime) IS NULL OR t.departureTime <= :endTime)
           AND (:status IS NULL OR t.status = :status)
@@ -31,6 +31,9 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
         @Param("endTime") LocalDateTime endTime,
         @Param("status") TripStatus status
     );
+
+    @Query("SELECT t.route.id, MIN(t.price) FROM Trip t WHERE t.status = com.traveleasy.entity.TripStatus.SCHEDULED AND t.departureTime >= :startTime GROUP BY t.route.id")
+    List<Object[]> findMinPricesPerRouteGrouped(@Param("startTime") LocalDateTime startTime);
 
     @org.springframework.data.jpa.repository.Modifying
     @Query("UPDATE Trip t SET t.status = com.traveleasy.entity.TripStatus.COMPLETED WHERE t.status = com.traveleasy.entity.TripStatus.SCHEDULED AND t.departureTime < :now")

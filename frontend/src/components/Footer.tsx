@@ -10,7 +10,7 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer style={{ backgroundColor: '#0f172a', color: '#94a3b8', padding: '56px 0 28px', marginTop: '64px' }}>
+    <footer style={{ backgroundColor: '#0f172a', color: '#94a3b8', padding: '56px 0 84px', marginTop: '64px' }}>
       <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '36px', marginBottom: '36px' }}>
         {/* Brand & Introduction */}
         <div>
@@ -89,6 +89,11 @@ export const Footer: React.FC = () => {
             <li>
               <Link to="/search?origin=TP.+H%E1%BB%93+Ch%C3%AD+Minh&destination=Nha+Trang" style={linkStyle}>
                 → Phương Trang FUTA Bus Lines
+              </Link>
+            </li>
+            <li>
+              <Link to="/partner" style={{ ...linkStyle, color: '#f59e0b', fontWeight: 800 }}>
+                🤝 Hợp tác mở bán vé cùng TravelEasy
               </Link>
             </li>
             <li>

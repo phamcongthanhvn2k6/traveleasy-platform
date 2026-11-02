@@ -236,14 +236,17 @@ export const SearchTripBar: React.FC<Props> = ({
 
       {/* 2. Unified Search Inputs Container with Golden Search CTA Button */}
       <form onSubmit={handleSubmit}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: hasReturnDate 
-            ? 'minmax(200px, 1.2fr) auto minmax(200px, 1.2fr) minmax(150px, 1fr) minmax(150px, 1fr) auto'
-            : 'minmax(220px, 1.3fr) auto minmax(220px, 1.3fr) minmax(180px, 1.1fr) auto auto',
-          gap: '12px',
-          alignItems: 'center'
-        }}>
+        <div 
+          className="search-bar-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: hasReturnDate 
+              ? 'minmax(200px, 1.2fr) auto minmax(200px, 1.2fr) minmax(150px, 1fr) minmax(150px, 1fr) auto'
+              : 'minmax(220px, 1.3fr) auto minmax(220px, 1.3fr) minmax(180px, 1.1fr) auto auto',
+            gap: '12px',
+            alignItems: 'center'
+          }}
+        >
           {/* Nơi xuất phát */}
           <div style={{
             border: '1px solid #cbd5e1',

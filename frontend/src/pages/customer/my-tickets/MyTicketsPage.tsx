@@ -246,6 +246,9 @@ export const MyTicketsPage: React.FC = () => {
             borderRadius: '12px',
             border: '1px solid #e2e8f0',
             marginBottom: '20px',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            maxWidth: '100%',
           }}
         >
           {[
@@ -260,7 +263,8 @@ export const MyTicketsPage: React.FC = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 style={{
-                  flex: 1,
+                  flex: '1 0 auto',
+                  minWidth: '120px',
                   padding: '10px 16px',
                   borderRadius: '8px',
                   border: 'none',
@@ -270,6 +274,7 @@ export const MyTicketsPage: React.FC = () => {
                   fontSize: '13px',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {tab.label}

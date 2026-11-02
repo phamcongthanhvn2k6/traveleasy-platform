@@ -47,4 +47,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT COUNT(b) FROM Booking b WHERE b.trip.busCompany.id = :busCompanyId")
     long countByBusCompanyId(@Param("busCompanyId") Long busCompanyId);
+
+    @Query("SELECT b.trip.busCompany.id, COUNT(b), COALESCE(SUM(b.totalAmount), 0) FROM Booking b WHERE b.status = com.traveleasy.entity.BookingStatus.CONFIRMED GROUP BY b.trip.busCompany.id")
+    List<Object[]> getBookingStatsGroupedByCompany();
 }

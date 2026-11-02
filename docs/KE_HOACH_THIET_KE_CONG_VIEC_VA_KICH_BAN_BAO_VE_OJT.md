@@ -26,23 +26,30 @@ Dự án áp dụng kiến trúc **Three-Portal Architecture (3 Phân Hệ Doanh
 
 ```
 +------------------------------------------------------------------------------------------------------------------+
-|                                    MA TRẬN PHÂN CHIA TRÁCH NHIỆM (RACI V4 CHUẨN OJT)                              |
+|                          MA TRẬN PHÂN CHIA THEO TRANG CHỨC NĂNG (PAGE-BASED RACI V5 CHUẨN OJT)                    |
 +------------------------------------------------------------------------------------------------------------------+
-| 👑 PHẠM CÔNG THÀNH (TRƯỞNG NHÓM & KIẾN TRÚC SƯ TRƯỞNG):                                                          |
-|    - Toàn quyền phụ trách: CỔNG ĐỐI TÁC NHÀ XE (COMPANY PORTAL — 9 TRANG: /company/*)                            |
+| 👑 PHẠM CÔNG THÀNH (TRƯỞNG NHÓM & KIẾN TRÚC SƯ TRƯỞNG) — KHỐI LƯỢNG LỚN NHẤT:                                    |
+|    - Toàn quyền phụ trách: CỔNG ĐỐI TÁC NHÀ XE (COMPANY PORTAL — 10 TRANG TRỌN GÓI: /company/*)                  |
 |    - Kiến trúc tổng thể hệ thống, Bảo mật Spring Security JWT, CSDL 36 bảng Supabase Cloud, Docker & CI/CD       |
 +------------------------------------------------------------------------------------------------------------------+
-| 🛡️ NGUYỄN ĐẠI PHÁT (FULL-STACK DEVELOPER PHỤ TRÁCH ADMIN):                                                       |
-|    - Toàn quyền phụ trách: CỔNG QUẢN TRỊ SÀN TỔNG (ADMIN PORTAL — 14 TRANG: /admin/*)                            |
-|    - Dashboard sàn 4 KPIs, Giám sát 480 chuyến xe, Quản trị Người dùng RBAC, Duyệt Hãng, Tuyến & Audit Logs      |
+| 🛡️ NGUYỄN ĐẠI PHÁT (FULL-STACK DEVELOPER PHỤ TRÁCH ADMIN LEAD) — KHỐI LƯỢNG LỚN:                                  |
+|    - Toàn quyền phụ trách: CỔNG QUẢN TRỊ SÀN TỔNG (ADMIN PORTAL — 10 TRANG CỐT LÕI: /admin/*)                    |
+|    - Dashboard sàn 4 KPIs, Giám sát 480 chuyến xe, Quản trị Người dùng RBAC, Duyệt Hãng, Tuyến, Vé & Audit Logs  |
 +------------------------------------------------------------------------------------------------------------------+
-| 🌐 NHÓM PHỤ TRÁCH TÍNH NĂNG USERS / PUBLIC PORTAL (11 TRANG):                                                    |
-|    • PHẠM THANH PHONG  -> Tìm kiếm siêu tốc, Sơ đồ ghế 2 tầng VIP & Concurrency Pessimistic Lock 10:00           |
-|    • TRẦN MINH ĐỨC 2   -> Điểm đón/trả, Đặt vé Checkout, Cổng thanh toán đa kênh & Quản lý vé cá nhân/Hủy vé    |
-|    • ĐOÀN NHẬT CƯỜNG   -> Trang chủ, Lịch trình, Tra cứu vé Offline, Quét mã QR Camera (/scanner) & Đánh giá    |
+| ⚡ TRẦN NAM PHONG (FULL-STACK DEVELOPER — CORE BOOKING & MASTER DATA XE) — KHỐI LƯỢNG LỚN:                        |
+|    - Đóng gói 6 TRANG LÕI NGHIỆP VỤ NẶNG: /search (Ghế 2 tầng VIP & Concurrency Lock), /checkout (Thanh toán     |
+|      đa kênh Serializable), Master Data bến xe (/admin/locations), Hạng ghế, Mẫu sơ đồ xe & Gateways            |
++------------------------------------------------------------------------------------------------------------------+
+| 🎫 TRẦN HỮU ĐỨC (FULL-STACK DEVELOPER — CUSTOMER & TICKETS):                                                     |
+|    - Đóng gói 4 TRANG KHÁCH HÀNG: Vé của tôi & Hủy vé tự động (/my-tickets), Hồ sơ cá nhân (/profile),           |
+|      Đăng nhập/Ký khách hàng (/login, /register), Kho mã giảm giá Voucher (/promotions)                           |
++------------------------------------------------------------------------------------------------------------------+
+| 📱 NGUYỄN TRỌNG CƯỜNG (FRONTEND & MOBILE SPECIALIST — SCANNER & MEDIA):                                          |
+|    - Đóng gói 5 TRANG DI ĐỘNG & TRUYỀN THÔNG: Trang chủ (/), Tra cứu vé Offline (/lookup), 📷 Quét mã QR Soát   |
+|      vé qua Camera (/scanner), Lịch trình xe toàn quốc (/schedule), Đánh giá review & Cẩm nang FAQ (/reviews)    |
 +------------------------------------------------------------------------------------------------------------------+
 | 🎓 PHAN TRUNG KIÊN (SINH VIÊN):                                                                                  |
-|    • MIỄN THỰC TẬP OJT (EXEMPTED) theo quy định đào tạo. Không nhận phân công task trong dự án.                  |
+|    • MIỄN THỰC TẬP OJT (EXEMPTED) theo quyết định đào tạo của Nhà trường / Doanh nghiệp. Không nhận phân công task|
 +------------------------------------------------------------------------------------------------------------------+
 ```
 
@@ -194,9 +201,9 @@ Dự án áp dụng kiến trúc **Three-Portal Architecture (3 Phân Hệ Doanh
 +--------------------------------------------------------------------------------------------------------------------+
 | 00:00 - 03:00 (3 phút) : Phạm Công Thành  - Kiến trúc hệ thống, Supabase DB, Cổng Đối Tác Nhà Xe (/company/*)      |
 | 03:00 - 06:00 (3 phút) : Nguyễn Đại Phát  - Cổng Quản Trị Sàn Tổng (/admin/*), Giám sát 480 chuyến xe, RBAC, Logs  |
-| 06:00 - 09:00 (3 phút) : Phạm Thanh Phong - Tìm kiếm siêu tốc, Sơ đồ ghế 2 tầng VIP & Concurrency Pessimistic Lock |
-| 09:00 - 12:00 (3 phút) : Trần Minh Đức 2  - Đặt vé Checkout, Cổng thanh toán đa kênh VNPay/COD & Quản lý vé/Hủy vé|
-| 12:00 - 15:00 (3 phút) : Đoàn Nhật Cường  - Tra cứu vé Offline, Quét mã QR Camera (/scanner), Trợ lý AI & Báo cáo QA|
+| 06:00 - 09:00 (3 phút) : Trần Nam Phong - Tìm kiếm siêu tốc, Sơ đồ ghế 2 tầng VIP & Concurrency Pessimistic Lock |
+| 09:00 - 12:00 (3 phút) : Trần Hữu Đức  - Đặt vé Checkout, Cổng thanh toán đa kênh VNPay/COD & Quản lý vé/Hủy vé|
+| 12:00 - 15:00 (3 phút) : Nguyễn Trọng Cường  - Tra cứu vé Offline, Quét mã QR Camera (/scanner), Trợ lý AI & Báo cáo QA|
 +--------------------------------------------------------------------------------------------------------------------+
 ```
 
@@ -216,20 +223,20 @@ Dự án áp dụng kiến trúc **Three-Portal Architecture (3 Phân Hệ Doanh
   - **Quản trị Người dùng & RBAC (`/admin/users`)**: Phân quyền tài khoản, khóa/mở khóa tài khoản vi phạm và minh chứng cơ chế bảo vệ chống xóa Admin tối cao (`admin@traveleasy.vn`).
   - **Minh chứng Vết kiểm toán bất biến (`/admin/audit-logs`)**: Hiển thị nhật ký ghi nhận thời gian thực mọi hành vi thêm/sửa/xóa của quản trị viên và nhà xe.
 
-#### 3. Mốc 06:00 - 09:00: Phạm Thanh Phong (Full-Stack Developer Phụ Trách Tìm Kiếm & Sơ Đồ Ghế)
+#### 3. Mốc 06:00 - 09:00: Trần Nam Phong (Full-Stack Developer Phụ Trách Tìm Kiếm & Sơ Đồ Ghế)
 * **Nội dung trình bày**:
   - Thao tác trên Trang tìm kiếm `/search`: Lọc chuyến xe đa chiều (Khoảng giá vé, Khung giờ sáng/tối, Nhà xe Phương Trang/Thành Bưởi, Đánh giá ⭐). Trình diễn tốc độ tải siêu tốc nhờ SWR Cache và Spring Boot Caching.
   - Bấm **"Chọn chuyến"** tại chuyến Limousine VIP 34 chỗ. Sơ đồ ghế 2 tầng bung ra trực quan (Tầng 1 A01-A17, Tầng 2 B01-B17) với 3 mã màu: Ghế trống (xanh), Ghế đang chọn (cam), Ghế đã bán (xám).
   - **Demo Concurrency Lock đỉnh cao**: Mở 2 tab trình duyệt song song giả lập 2 khách hàng cùng click đặt 1 ghế A05 tại cùng 1 giây ➔ Chứng minh thuật toán **Pessimistic Lock (`SELECT ... FOR UPDATE`)** chặn tuyệt đối hiện tượng Double-Booking, chỉ duy nhất 1 khách hàng giữ được ghế và đồng hồ đếm ngược 10:00 (TTL) bắt đầu đếm lùi an toàn.
 
-#### 4. Mốc 09:00 - 12:00: Trần Minh Đức 2 (Full-Stack Developer Phụ Trách Đặt Vé & Thanh Toán)
+#### 4. Mốc 09:00 - 12:00: Trần Hữu Đức (Full-Stack Developer Phụ Trách Đặt Vé & Thanh Toán)
 * **Nội dung trình bày**:
   - Chuyển tiếp sang màn hình Xác nhận đặt vé `/checkout`: Chọn điểm đón kèm mốc giờ ETA dự kiến, điểm trả, nhập thông tin hành khách và áp dụng mã Voucher giảm giá 50.000đ.
   - **Cổng thanh toán đa kênh an toàn**: Lựa chọn phương thức thanh toán linh hoạt (VNPay QR Code động, Ví điện tử MoMo, hoặc Tiền mặt COD khi lên xe) được bảo vệ bằng giao dịch nguyên tử `@Transactional(SERIALIZABLE)`.
   - **Quản lý vé của tôi (`/my-tickets`)**: Đăng nhập tài khoản khách hàng, xem danh sách toàn bộ vé đã mua, trạng thái vé (`ISSUED`, `USED`, `CANCELLED`).
   - **Demo Hủy vé trực tuyến & Hoàn tiền tự động**: Thử nghiệm thao tác bấm nút Hủy vé ➔ Hệ thống tự động tính toán số tiền hoàn dựa trên chính sách giờ chạy (>24h hoàn 90%, 12-24h hoàn 70%) và lập tức giải phóng ghế về trạng thái sẵn sàng mở bán.
 
-#### 5. Mốc 12:00 - 15:00: Đoàn Nhật Cường (Full-Stack Developer Phụ Trách Tra Cứu, QR Scanner & Tổng Kết)
+#### 5. Mốc 12:00 - 15:00: Nguyễn Trọng Cường (Full-Stack Developer Phụ Trách Tra Cứu, QR Scanner & Tổng Kết)
 * **Nội dung trình bày**:
   - **Tra cứu vé điện tử Offline & Bản đồ lộ trình (`/lookup`)**: Tra cứu theo mã đặt vé `BKG-20261025-001`, hiển thị thẻ vé sang trọng kèm bản đồ lộ trình di chuyển thời gian thực, hỗ trợ lưu và xem vé Offline không cần mạng.
   - **📷 Trình diễn Quét mã QR soát vé đa năng (`/scanner`)**: Bật camera laptop/điện thoại quét trực tiếp mã QR trên vé điện tử ➔ Hệ thống xác thực vé hợp lệ trong 0.2s và bấm nút "Xác nhận Check-in lên xe", trạng thái vé lập tức chuyển sang `CHECKED_IN`.

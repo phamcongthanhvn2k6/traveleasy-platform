@@ -3,6 +3,7 @@ import { TrendingUp, Calendar, Ticket, Star, RefreshCw, Bus, Clock, MapPin, Chec
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
 import { RevenueChart } from '../../../components/RevenueChart';
+import { getStoredCompany } from '../../../utils/companyHelper';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -15,6 +16,7 @@ interface DashboardStats {
 }
 
 export const CompanyDashboardPage: React.FC = () => {
+  const currentCompany = getStoredCompany();
   const [stats, setStats] = useState<DashboardStats>({
     totalRevenue: 0,
     totalTrips: 0,
@@ -29,11 +31,17 @@ export const CompanyDashboardPage: React.FC = () => {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/company/dashboard/stats');
+      const res = await api.get('/company/dashboard/stats', {
+        params: {
+          companyId: currentCompany.id,
+          companyName: currentCompany.name,
+        },
+      });
       if (res.data?.data) {
         setStats(res.data.data);
       }
     } catch (err: any) {
+      if (err?.response?.status === 401) return;
       console.error('Failed to load company dashboard stats:', err);
       toast.error('Không thể tải thống kê nhà xe từ CSDL', 'Lỗi Kết Nối');
     } finally {
@@ -103,7 +111,7 @@ export const CompanyDashboardPage: React.FC = () => {
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', paddingBottom: '40px' }}>
       {/* Breadcrumb & Header Title */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap', gap: '14px' }}>
         <div>
           <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '4px', fontWeight: 500 }}>
             Nhà xe <span style={{ margin: '0 4px', color: '#94a3b8' }}>/</span> Tổng quan vận hành
@@ -112,7 +120,7 @@ export const CompanyDashboardPage: React.FC = () => {
             Tổng Quan Điều Hành Nhà Xe
           </h1>
           <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            TravelEasy Express — Dữ liệu thời gian thực đồng bộ trực tiếp từ CSDL MySQL 8.0
+            <strong>{currentCompany.name}</strong> — Dữ liệu thời gian thực đồng bộ trực tiếp từ CSDL MySQL 8.0
           </div>
         </div>
 
@@ -142,7 +150,7 @@ export const CompanyDashboardPage: React.FC = () => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: '16px',
           marginBottom: '26px',
         }}

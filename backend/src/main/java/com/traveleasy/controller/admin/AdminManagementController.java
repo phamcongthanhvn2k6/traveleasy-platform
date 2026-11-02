@@ -10,9 +10,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -25,7 +28,6 @@ public class AdminManagementController {
     // ==========================================
     // 1. QUẢN LÝ NGƯỜI DÙNG (/admin/users)
     // ==========================================
-    @Cacheable(value = "admin_users", key = "(#role != null ? #role : '') + '_' + (#status != null ? #status : '') + '_' + (#search != null ? #search : '')")
     @GetMapping("/users")
     @Operation(summary = "Danh sách người dùng (hỗ trợ lọc vai trò, trạng thái, tìm kiếm)")
     public ApiResponse<List<UserAdminResponse>> getUsers(
@@ -67,7 +69,6 @@ public class AdminManagementController {
     // ==========================================
     // 2. QUẢN LÝ ĐỐI TÁC NHÀ XE (/admin/bus-companies)
     // ==========================================
-    @Cacheable(value = "admin_bus_companies", key = "(#status != null ? #status : '') + '_' + (#search != null ? #search : '')")
     @GetMapping("/bus-companies")
     @Operation(summary = "Danh sách nhà xe đối tác (lọc theo tab ALL, PENDING, ACTIVE, SUSPENDED)")
     public ApiResponse<List<BusCompanyAdminResponse>> getBusCompanies(
@@ -107,6 +108,15 @@ public class AdminManagementController {
             @PathVariable Long id,
             @RequestParam String status) {
         return ApiResponse.success("Cập nhật trạng thái nhà xe thành công", adminManagementService.updateCompanyStatus(id, status));
+    }
+
+    @CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)
+    @PostMapping("/bus-companies/{id}/reject")
+    @Operation(summary = "Từ chối hồ sơ đăng ký hợp tác của đối tác nhà xe kèm lý do")
+    public ApiResponse<BusCompanyAdminResponse> rejectCompany(
+            @PathVariable Long id,
+            @RequestParam(required = false) String reason) {
+        return ApiResponse.success("Đã từ chối hồ sơ đăng ký đối tác", adminManagementService.rejectCompany(id, reason));
     }
 
     // ==========================================
@@ -226,6 +236,12 @@ public class AdminManagementController {
         return ApiResponse.success("Cập nhật cổng kết nối thành công", adminManagementService.toggleGatewayStatus(provider));
     }
 
+    @PatchMapping("/gateways/{provider}/sandbox")
+    @Operation(summary = "Chuyển đổi chế độ Sandbox (Thử nghiệm) / Production (Thực tế)")
+    public ApiResponse<GatewayConfig> toggleGatewaySandbox(@PathVariable String provider) {
+        return ApiResponse.success("Cập nhật chế độ môi trường thành công", adminManagementService.toggleGatewaySandbox(provider));
+    }
+
     // ==========================================
     // 7. BÁO CÁO ĐÁNH GIÁ VI PHẠM (/admin/review-reports)
     // ==========================================
@@ -265,10 +281,25 @@ public class AdminManagementController {
         return ApiResponse.success(adminManagementService.getAllAuditLogs(action));
     }
 
+    @GetMapping("/system/defense-status")
+    @Operation(summary = "Lấy trạng thái cơ chế phòng vệ an ninh mạng & bảo trì khẩn cấp của sàn")
+    public ApiResponse<Map<String, Object>> getSystemDefenseStatus() {
+        return ApiResponse.success(adminManagementService.getSystemDefenseStatus());
+    }
+
+    @PostMapping("/system/defense-status")
+    @Operation(summary = "Kích hoạt hoặc khôi phục trạng thái phòng vệ an ninh / bảo trì khẩn cấp")
+    public ApiResponse<Map<String, Object>> updateSystemDefenseStatus(
+            @RequestBody Map<String, Object> payload,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String adminEmail = userDetails != null ? userDetails.getUsername() : "admin@traveleasy.vn";
+        return ApiResponse.success("Cập nhật trạng thái phòng vệ an ninh hệ thống thành công",
+                adminManagementService.updateSystemDefenseStatus(payload, adminEmail));
+    }
+
     // ==========================================
     // 10. QUẢN LÝ TUYẾN ĐƯỜNG (/admin/routes)
     // ==========================================
-    @Cacheable(value = "admin_routes", key = "(#search != null ? #search : '') + '_' + (#companyId != null ? #companyId : '')")
     @GetMapping("/routes")
     @Operation(summary = "Danh sách tuyến đường trên toàn sàn")
     public ApiResponse<List<RouteAdminResponse>> getRoutes(
@@ -304,11 +335,30 @@ public class AdminManagementController {
     // ==========================================
     // 12. ĐỐI SOÁT & QUYẾT TOÁN (/admin/settlements)
     // ==========================================
-    @Cacheable("admin_settlements")
     @GetMapping("/settlements")
     @Operation(summary = "Lấy dữ liệu đối soát toàn sàn từ CSDL đơn đặt vé Supabase")
     public ApiResponse<List<java.util.Map<String, Object>>> getSettlements() {
         return ApiResponse.success(adminManagementService.getAdminSettlements());
+    }
+
+    @PatchMapping("/settlements/{id}/reconcile")
+    @Operation(summary = "Admin xác nhận chốt số liệu đối soát doanh thu với nhà xe")
+    public ApiResponse<Map<String, Object>> reconcileSettlement(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : "admin@traveleasy.vn";
+        return ApiResponse.success("Đã xác nhận chốt đối soát thành công", adminManagementService.reconcileSettlement(id, email));
+    }
+
+    @PatchMapping("/settlements/{id}/pay")
+    @Operation(summary = "Admin giải ngân tiền / xác nhận chuyển khoản Payout qua VietQR cho đối tác")
+    public ApiResponse<Map<String, Object>> paySettlement(
+            @PathVariable String id,
+            @RequestParam(required = false) String payoutTxHash,
+            @RequestParam(required = false) String note,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : "admin@traveleasy.vn";
+        return ApiResponse.success("Đã xác nhận giải ngân thành công", adminManagementService.paySettlement(id, payoutTxHash, note, email));
     }
 }
 

@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar';
 import { DepartureAlertBanner } from './components/DepartureAlertBanner';
 import { Footer } from './components/Footer';
 import { AiAssistantWidget } from './components/AiAssistantWidget';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { AdminRoutes } from './routes/adminRoutes';
 import { CompanyRoutes } from './routes/companyRoutes';
 import { ClientRoutes } from './routes/clientRoutes';
@@ -30,6 +31,7 @@ const ClientLayout: React.FC = () => {
       </main>
       <AiAssistantWidget />
       <Footer />
+      <MobileBottomNav />
     </div>
   );
 };
