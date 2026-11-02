@@ -409,6 +409,18 @@ flowchart TD
 
 ---
 
+#### 🏃 Lộ Trình Phân Chia 4 Sprint Hoàn Chỉnh (Đồng bộ 100% Bảng Trello Live):
+> 📄 **Tài liệu chi tiết**: [docs/KE_HOACH_PHAN_CHIA_SPRINT_AGILE.md](docs/KE_HOACH_PHAN_CHIA_SPRINT_AGILE.md) & [docs/TRELLO_BOARD_MANAGEMENT.md](docs/TRELLO_BOARD_MANAGEMENT.md)
+
+| Sprint | Thời gian & Trọng tâm | User Stories | Điểm SP | Deliverables then chốt | Trạng thái |
+|:---:|---|:---:|:---:|---|:---:|
+| **🚀 Sprint 1** | **Ngày 1 - 2**: Kiến trúc, CSDL Supabase, JWT & Master Data | US-03, US-04, US-06, US-11, US-14 | **23 SP** | CSDL 36 bảng, Stateless JWT RBAC, Master Data bến xe & xe 34 chỗ | **DONE (100%)** |
+| **⚡ Sprint 2** | **Ngày 3 - 4**: Core Booking, Sơ đồ 2 tầng & Khóa Lock 10:00 | US-02, US-08, US-09, US-15 | **29 SP** | SWR Cache 0ms, Sơ đồ VIP 2 tầng, Pessimistic Lock chống cướp vé | **DONE (100%)** |
+| **💳 Sprint 3** | **Ngày 5 - 6**: Checkout, Cổng thanh toán & Vé QR Code | US-10, US-12, US-13, US-17 | **21 SP** | Thanh toán VietQR MB Bank/PayOS, Quét QR Camera 0.2s, Hủy vé tự động | **DONE (100%)** |
+| **👑 Sprint 4** | **Ngày 7**: Admin Portal, Cổng Nhà xe, Quyết toán & QA | US-01, US-05, US-07, US-16 | **22 SP** | Dashboard 4 KPIs, Quyết toán sàn 10%, Audit Logs & Pass 25 Test Cases | **DONE (100%)** |
+| **📦 Backlog** | **Phase 2 Roadmap**: Trợ lý AI RAG, Vé PDF, Sổ địa chỉ | US-21 đến US-25 | **19 SP** | Kế hoạch mở rộng hậu MVP phục vụ hội đồng chấm thi | **ROADMAP** |
+
+
 #### 👑 PHÂN HỆ QUẢN TRỊ (ADMIN PORTAL) — NGUYỄN ĐẠI PHÁT (7 USER STORIES)
 
 ##### (8) US-01: Là một Quản trị viên, tôi muốn xem Dashboard 4 chỉ số KPI và bảng điều phối để nắm bắt tức thời tình hình vận hành của hệ thống
