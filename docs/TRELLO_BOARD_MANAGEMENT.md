@@ -17,25 +17,25 @@ Bảng Trello được cấu hình theo đúng quy chuẩn **Multi-Sprint Scrum 
 
 `
 +-----------------------------------+-----------------------------------+-----------------------------------+
-| 📦 Product Backlog (19 SP)        | 🚀 Sprint 1: Architecture (23 SP) | ⚡ Sprint 2: Core Booking (29 SP) |
+| Product Backlog (19 SP)        | Sprint 1: Architecture (23 SP) | Sprint 2: Core Booking (29 SP) |
 | (5 US Lộ trình Phase 2 mở rộng)   | (5 US - CSDL, JWT, Master Data)   | (4 US - Search, Sơ đồ, Lock 10:00)|
 +-----------------------------------+-----------------------------------+-----------------------------------+
-| 💳 Sprint 3: Payment (21 SP)      | 👑 Sprint 4: Admin Portal (22 SP) | 🧪 Testing & QA Verification      |
+| Sprint 3: Payment (21 SP)      | Sprint 4: Admin Portal (22 SP) | Testing & QA Verification      |
 | (4 US - Checkout, Vé QR, Hủy vé)  | (4 US - Dashboard, Quyết toán)    | (2 Thẻ - Biên bản & 25 Test Cases)|
 +-----------------------------------+-----------------------------------+-----------------------------------+
-| 🏆 Sprint Retrospective & Defense | 🐛 Bug Tracking (0 Critical Bugs) |
+| Sprint Retrospective & Defense | Bug Tracking (0 Critical Bugs) |
 | (2 Thẻ - Kịch bản & Bàn giao)     | (0 lỗi chặn - Hệ thống ổn định)   |
 +-----------------------------------+-----------------------------------+
 `
 
-1. **📦 Product Backlog (Phase 2 Roadmap - 19 SP)**: Chứa 5 User Stories mở rộng cho phiên bản tương lai (US-21 đến US-25).
-2. **🚀 Sprint 1: Architecture, CSDL & Auth (23 SP) [DONE]**: Nền tảng dự án, CSDL 36 bảng Supabase Cloud, Stateless JWT Bearer, phân quyền RBAC và Master Data (US-06, US-11, US-14, US-03, US-04).
-3. **⚡ Sprint 2: Core Booking & Concurrency Lock (29 SP) [DONE]**: Lõi tìm kiếm chuyến xe SWR Cache 0ms, sơ đồ 34 ghế 2 tầng Limousine VIP, Khóa giữ chỗ Concurrency Lock 10:00 (US-08, US-09, US-02, US-15).
-4. **💳 Sprint 3: Payment, Boarding Pass & Tickets (21 SP) [DONE]**: Đặt vé Serializable, Cổng thanh toán đa kênh VietQR/VNPAY/COD, Thẻ vé QR Code Boarding Pass, Quét camera 0.2s và Hủy vé tự động (US-10, US-12, US-13, US-17).
-5. **👑 Sprint 4: Admin Portal, Settlements & Logs (22 SP) [DONE]**: Dashboard 4 KPIs, Cổng điều hành đối tác nhà xe 10 trang, Đối soát quyết toán 10%, Audit Logs bất biến và Tra cứu Offline (US-01, US-05, US-07, US-16).
-6. **🧪 Testing & QA Verification (25/25 Pass)**: Biên bản nghiệm thu kiểm thử tính năng nội bộ Nhóm 7 và Báo cáo kiểm thử 25/25 Test Cases.
-7. **🏆 Sprint Retrospective & Defense Ready (100/100)**: Kịch bản thuyết trình bảo vệ 15 phút và Hồ sơ bàn giao toàn sàn 100/100 điểm.
-8. **🐛 Bug Tracking (0 Critical Issues)**: Theo dõi lỗi hệ thống (0 bug nghiêm trọng, 100% pass).
+1. **Product Backlog (Phase 2 Roadmap - 19 SP)**: Chứa 5 User Stories mở rộng cho phiên bản tương lai (US-21 đến US-25).
+2. **Sprint 1: Architecture, CSDL & Auth (23 SP) [DONE]**: Nền tảng dự án, CSDL 36 bảng Supabase Cloud, Stateless JWT Bearer, phân quyền RBAC và Master Data (US-06, US-11, US-14, US-03, US-04).
+3. **Sprint 2: Core Booking & Concurrency Lock (29 SP) [DONE]**: Lõi tìm kiếm chuyến xe SWR Cache 0ms, sơ đồ 34 ghế 2 tầng Limousine VIP, Khóa giữ chỗ Concurrency Lock 10:00 (US-08, US-09, US-02, US-15).
+4. **Sprint 3: Payment, Boarding Pass & Tickets (21 SP) [DONE]**: Đặt vé Serializable, Cổng thanh toán đa kênh VietQR/VNPAY/COD, Thẻ vé QR Code Boarding Pass, Quét camera 0.2s và Hủy vé tự động (US-10, US-12, US-13, US-17).
+5. **Sprint 4: Admin Portal, Settlements & Logs (22 SP) [DONE]**: Dashboard 4 KPIs, Cổng điều hành đối tác nhà xe 10 trang, Đối soát quyết toán 10%, Audit Logs bất biến và Tra cứu Offline (US-01, US-05, US-07, US-16).
+6. **Testing & QA Verification (25/25 Pass)**: Biên bản nghiệm thu kiểm thử tính năng nội bộ Nhóm 7 và Báo cáo kiểm thử 25/25 Test Cases.
+7. **Sprint Retrospective & Defense Ready (100/100)**: Kịch bản thuyết trình bảo vệ 15 phút và Hồ sơ bàn giao toàn sàn 100/100 điểm.
+8. **Bug Tracking (0 Critical Issues)**: Theo dõi lỗi hệ thống (0 bug nghiêm trọng, 100% pass).
 
 ---
 

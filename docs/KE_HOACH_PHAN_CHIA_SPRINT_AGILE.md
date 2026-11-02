@@ -1,11 +1,11 @@
-# 🏃 KẾ HOẠCH PHÂN CHIA SPRINT AGILE / SCRUM TOÀN DIỆN (100/100 ĐIỂM)
+# KẾ HOẠCH PHÂN CHIA SPRINT AGILE / SCRUM TOÀN DIỆN (100/100 ĐIỂM)
 ## DỰ ÁN: TRAVELEASY PLATFORM — HỆ THỐNG QUẢN LÝ NHÀ XE & ĐẶT VÉ XE KHÁCH LIÊN TỈNH
 ### ĐƠN VỊ: RIKKEI ACADEMY | NHÓM 7 | MÃ DỰ ÁN: `PRJ-TRAVELEASY-MVP-01`
 ### TRƯỞNG NHÓM (TEAM LEADER & SYSTEM ARCHITECT): PHẠM CÔNG THÀNH
 
 ---
 
-> 🎯 **MỤC TIÊU TÀI LIỆU:**  
+> **MỤC TIÊU TÀI LIỆU:**  
 > • Chuẩn hóa toàn bộ lộ trình phát triển nước rút 7 ngày (hoặc chu kỳ 2 - 4 tuần) theo phương pháp luận **Agile / Scrum quốc tế**.  
 > • Phân bổ tường minh **17 User Stories (95 Story Points)** cam kết cho MVP vào **4 Sprint tuần tự**, đảm bảo không chồng chéo, không xung đột mã nguồn.  
 > • Định hình rõ ràng **5 User Stories (19 Story Points)** trong **Product Backlog** phục vụ kế hoạch phát triển mở rộng Phase 2 (Roadmap).  
@@ -13,7 +13,7 @@
 
 ---
 
-## 📌 PHẦN 1: TỔNG QUAN CHU KỲ PHÁT TRIỂN & CHỈ SỐ VELOCITY
+## PHẦN 1: TỔNG QUAN CHU KỲ PHÁT TRIỂN & CHỈ SỐ VELOCITY
 
 ```
 +-------------------------------------------------------------------------------------------------------------------+
@@ -39,11 +39,11 @@
 
 ---
 
-## 🚀 PHẦN 2: ĐẶC TẢ CHI TIẾT 4 SPRINT & PRODUCT BACKLOG
+## PHẦN 2: ĐẶC TẢ CHI TIẾT 4 SPRINT & PRODUCT BACKLOG
 
 ---
 
-### 🔹 SPRINT 1: NỀN TẢNG KIẾN TRÚC, CSDL SUPABASE, BẢO MẬT JWT & MASTER DATA
+### SPRINT 1: NỀN TẢNG KIẾN TRÚC, CSDL SUPABASE, BẢO MẬT JWT & MASTER DATA
 * **Thời gian thực hiện**: Ngày 1 – Ngày 2
 * **Quy mô**: **5 User Stories — 23 Story Points**
 * **Mục tiêu then chốt**:
@@ -64,7 +64,7 @@
 
 ---
 
-### 🔹 SPRINT 2: LÕI NGHIỆP VỤ — TÌM KIẾM SIÊU TỐC, SƠ ĐỒ GHẾ 2 TẦNG & KHÓA GIỮ CHỖ CONCURRENCY
+### SPRINT 2: LÕI NGHIỆP VỤ — TÌM KIẾM SIÊU TỐC, SƠ ĐỒ GHẾ 2 TẦNG & KHÓA GIỮ CHỖ CONCURRENCY
 * **Thời gian thực hiện**: Ngày 3 – Ngày 4
 * **Quy mô**: **4 User Stories — 29 Story Points** *(Khối lượng thuật toán nặng nhất)*
 * **Mục tiêu then chốt**:
@@ -84,7 +84,7 @@
 
 ---
 
-### 🔹 SPRINT 3: GIAO DỊCH — CHECKOUT, THANH TOÁN ĐA KÊNH, VÉ QR CODE & HỦY VÉ TỰ ĐỘNG
+### SPRINT 3: GIAO DỊCH — CHECKOUT, THANH TOÁN ĐA KÊNH, VÉ QR CODE & HỦY VÉ TỰ ĐỘNG
 * **Thời gian thực hiện**: Ngày 5 – Ngày 6
 * **Quy mô**: **4 User Stories — 21 Story Points**
 * **Mục tiêu then chốt**:
@@ -104,7 +104,7 @@
 
 ---
 
-### 🔹 SPRINT 4: ĐIỀU HÀNH & VẬN HÀNH — ADMIN DASHBOARD, CỔNG NHÀ XE, QUYẾT TOÁN & NGHIỆM THU QA
+### SPRINT 4: ĐIỀU HÀNH & VẬN HÀNH — ADMIN DASHBOARD, CỔNG NHÀ XE, QUYẾT TOÁN & NGHIỆM THU QA
 * **Thời gian thực hiện**: Ngày 7
 * **Quy mô**: **4 User Stories — 22 Story Points**
 * **Mục tiêu then chốt**:
@@ -125,7 +125,7 @@
 
 ---
 
-### 📦 PRODUCT BACKLOG (LỘ TRÌNH PHÁT TRIỂN PHASE 2 — POST-MVP)
+### PRODUCT BACKLOG (LỘ TRÌNH PHÁT TRIỂN PHASE 2 — POST-MVP)
 * **Quy mô**: **5 User Stories — 19 Story Points**
 * **Bản chất**: Các tính năng mở rộng nằm trong Product Vision, thể hiện tư duy quản trị vòng đời sản phẩm lâu dài trước Hội đồng chấm thi:
 
@@ -139,7 +139,7 @@
 
 ---
 
-## 👥 PHẦN 3: MA TRẬN PHÂN BỔ STORY POINTS THEO THÀNH VIÊN (RACI V5)
+## PHẦN 3: MA TRẬN PHÂN BỔ STORY POINTS THEO THÀNH VIÊN (RACI V5)
 
 ```
 +-------------------------------------------------------------------------------------------------------------------+
@@ -157,7 +157,7 @@
 
 ---
 
-## 📈 PHẦN 4: BIỂU ĐỒ SPRINT BURNDOWN CHART (TIẾN TRÌNH NƯỚC RÚT)
+## PHẦN 4: BIỂU ĐỒ SPRINT BURNDOWN CHART (TIẾN TRÌNH NƯỚC RÚT)
 
 ```
 Story Points còn lại
@@ -176,7 +176,7 @@ Story Points còn lại
 
 ---
 
-## 🌐 PHẦN 5: CẤU TRÚC ĐỒNG BỘ TRÊN BẢNG TRELLO TRỰC TUYẾN
+## PHẦN 5: CẤU TRÚC ĐỒNG BỘ TRÊN BẢNG TRELLO TRỰC TUYẾN
 
 Trên bảng Trello chính thức: **`https://trello.com/b/AA5BYoe1`**, toàn bộ các cột đã được ánh xạ chuẩn xác:
 
