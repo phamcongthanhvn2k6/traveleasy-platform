@@ -64,3 +64,4 @@ Xây dựng nền tảng hạ tầng kỹ thuật vững chắc, mô hình hóa 
 - ✅ Kết nối CSDL Supabase Cloud ổn định, không lỗi kết nối connection pool.
 - ✅ Đăng nhập phân quyền chính xác: Khách hàng, Nhà xe và Admin được chuyển hướng đúng cổng tương ứng.
 - ✅ Tổng kết: **53/53 Thẻ hoàn thành (175 SP) — Đạt 100% mục tiêu Sprint 1**.
+

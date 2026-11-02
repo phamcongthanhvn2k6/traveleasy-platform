@@ -65,3 +65,4 @@ Kiểm thử tích hợp toàn diện (E2E Integration Testing) xuyên suốt 3 
 - 🔄 Quét mã QR kiểm thử thành công trên cả trình duyệt máy tính và camera điện thoại thật.
 - 🔄 Không còn lỗi nghiêm trọng (Critical/Blocker Bug) ảnh hưởng đến luồng thanh toán và xuất vé.
 - 🔄 **Mục tiêu hoàn thành: 54/54 Thẻ (216 SP) khi kết thúc Sprint 3.**
+

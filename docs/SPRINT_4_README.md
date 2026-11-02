@@ -70,3 +70,4 @@ Chi tiết tại tài liệu `docs/KE_HOACH_NANG_CAP_TINH_NANG_VA_TRANG_MOI.md`:
 - ✅ Tất cả thành viên trả lời đúng và sâu sắc về phân hệ mình phụ trách theo ma trận RACI.
 - ✅ Đầy đủ minh chứng: Mã nguồn sạch, bảng Trello chuẩn chỉ, CSDL chuẩn hóa, tài liệu kỹ thuật chuyên nghiệp.
 - ✅ Đạt điểm tối đa theo thang tiêu chí đánh giá đồ án OJT của Nhà trường và Doanh nghiệp.
+

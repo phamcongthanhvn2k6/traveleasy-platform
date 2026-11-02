@@ -58,3 +58,4 @@ Hiện thực hóa toàn bộ luồng nghiệp vụ kinh doanh cốt lõi (Core 
 - ✅ Kiểm thử đồng thời: Mô phỏng 2 phiên trình duyệt cùng chọn 1 ghế ➔ Chỉ người bấm trước được giữ ghế, người thứ hai nhận thông báo ghế đã có người giữ.
 - ✅ Thanh toán thực tế: Quét mã VietQR thành công ➔ Trạng thái vé chuyển ngay sang `PAID` và gửi mã vé về giao diện.
 - ✅ Cân đối: **53/53 Thẻ hoàn thành (169 SP) — Đạt 100% mục tiêu Sprint 2**.
+
