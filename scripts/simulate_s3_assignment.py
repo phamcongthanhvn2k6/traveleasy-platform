@@ -68,3 +68,4 @@ print()
 print("=== THẺ CỦA PHẠM CÔNG THÀNH (SẼ CHUYỂN SANG DONE SPRINT 3) ===")
 for i, c in enumerate(assignments['thanh']):
     print(f"  [{i+1}] {c['name'][:70]}")
+

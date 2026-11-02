@@ -91,3 +91,4 @@ print(f"  Phạm Thanh Phong : {len(phong_cards):2d} thẻ  (Sprint Backlog S3)"
 print(f"  Đoàn Nhật Cường  : {len(cuong_cards):2d} thẻ  (Sprint Backlog S3)")
 print(f"  Trần Minh Đức    : {len(duc_cards):2d} thẻ  (Sprint Backlog S3)")
 print(f"  Tổng cộng        : {len(thanh_cards)+len(phat_cards)+len(phong_cards)+len(cuong_cards)+len(duc_cards)} thẻ")
+

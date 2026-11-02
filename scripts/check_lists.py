@@ -9,3 +9,4 @@ BASE  = 'https://api.trello.com/1'
 r = requests.get(f'{BASE}/boards/{BOARD}/lists', params={'key':KEY,'token':TOKEN})
 for l in r.json():
     print(f"{l['name']}: {l['id']} - closed: {l['closed']}")
+

@@ -91,3 +91,4 @@ print()
 print(f"Danh sách {len(thanh_cards)} thẻ của Phạm Công Thành sẽ chuyển sang Done Sprint 3:")
 for i, c in enumerate(thanh_cards):
     print(f"  [{i+1:2d}] {c['name'][:75]}")
+

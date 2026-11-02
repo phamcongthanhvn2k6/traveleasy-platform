@@ -130,3 +130,4 @@ graph TD
 | **Phạm Thanh Phong** | Quầy vé Bến xe POS (`/company/pos`), Ca trực (`/company/pos/shifts`), Backend GPS SSE & Cước hàng | `frontend/src/pages/company/pos/`, `backend/.../cargo/`, `backend/.../realtime/` |
 | **Đoàn Nhật Cường** | Bản đồ GPS Live Tracking (`/tracking/:tripId`), Trung tâm hỗ trợ (`/support`) | `frontend/src/pages/customer/tracking/`, `pages/customer/support/` |
 | **Trần Minh Đức** | Thuê xe hợp đồng (`/charter`), Gửi hàng (`/cargo`), Bảo hiểm (`/insurance`), Ví EasyXu (`/rewards`) | `frontend/src/pages/customer/charter/`, `cargo/`, `insurance/`, `rewards/` |
+

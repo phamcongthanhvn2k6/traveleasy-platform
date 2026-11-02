@@ -120,3 +120,4 @@ Nhom7_QUANLYNHAXE/
    * Ví dụ Đức: `git checkout -b feature/charter-cargo-duc`
 2. **Cam kết không sửa chéo file ngoài thư mục phụ trách:** Nếu cần dùng API chung, trao đổi với Thành để cập nhật `apiService.js` hoặc cấu hình route chung trong `AppRoutes.jsx`.
 3. **Trước khi tạo Pull Request:** Chạy `npm run lint` hoặc `npm run build` ở frontend và `./gradlew test` ở backend để đảm bảo không gãy dự án.
+

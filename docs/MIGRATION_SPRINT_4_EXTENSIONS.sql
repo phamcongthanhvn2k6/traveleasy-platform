@@ -207,3 +207,4 @@ CREATE TABLE travel_insurance_policies (
   UNIQUE KEY uq_insurance_ticket (ticket_id),
   CONSTRAINT fk_insurance_ticket FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

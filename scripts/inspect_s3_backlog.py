@@ -16,3 +16,4 @@ for i, c in enumerate(cards):
             assignee = line.strip()
             break
     print(f'[{i+1:2d}] {c["name"][:55]} | {assignee} | Members: {c.get("idMembers")}')
+
