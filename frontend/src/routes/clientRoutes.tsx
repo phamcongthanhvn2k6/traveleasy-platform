@@ -13,6 +13,7 @@ import { PromotionsPage } from '../pages/customer/promotions/PromotionsPage';
 import { ReviewsPage } from '../pages/customer/reviews/ReviewsPage';
 import { TicketScannerPage } from '../pages/customer/scanner/TicketScannerPage';
 import { PartnerCooperationPage } from '../pages/customer/partner-cooperation/PartnerCooperationPage';
+import { DemoPage } from '../pages/customer/demo/DemoPage';
 import { NotFoundPage } from '../pages/common/NotFoundPage';
 
 /**
@@ -58,6 +59,7 @@ export const ClientRoutes: React.FC = () => {
       <Route path="/promotions" element={<PromotionsPage />} />
       <Route path="/reviews" element={<ReviewsPage />} />
       <Route path="/scanner" element={<TicketScannerPage />} />
+      <Route path="/demo" element={<DemoPage />} />
 
       {/* Hợp tác mở bán vé cùng TravelEasy (Chuẩn hóa URL tiếng Anh) */}
       <Route path="/partner" element={<PartnerCooperationPage />} />

@@ -49,6 +49,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/health/**").permitAll()
+                        .requestMatchers("/api/v1/demo/**").permitAll()
                         .requestMatchers("/api/v1/trips/**").permitAll()
                         .requestMatchers("/api/v1/routes/**").permitAll()
                         .requestMatchers("/api/v1/bookings/code/**", "/api/v1/bookings/verify-ticket/**", "/api/v1/bookings/check-in/**").permitAll()
@@ -90,7 +92,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "X-Correlation-Id"));
+        configuration.setExposedHeaders(Arrays.asList("X-Correlation-Id"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
