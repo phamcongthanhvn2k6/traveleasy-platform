@@ -1407,3 +1407,229 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- =====================================================================
 -- HẾT SCHEMA
 -- =====================================================================
+
+
+-- =====================================================================
+-- PHẦN BỔ SUNG SPRINT 4 — QUY CHUẨN CƠ SỞ DỮ LIỆU TOÀN HỆ THỐNG
+-- (Bổ sung cột mở rộng, 8 bảng mới và toàn bộ dữ liệu mẫu gốc chuẩn hóa)
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- 1. BỔ SUNG CỘT CHO CÁC BẢNG HIỆN HỮU (ALTER TABLE)
+-- ---------------------------------------------------------------------
+
+-- Bổ sung nguồn đặt vé, ca trực và nhân viên quầy cho bảng `bookings`
+ALTER TABLE bookings
+  ADD COLUMN IF NOT EXISTS booking_channel VARCHAR(30) NOT NULL DEFAULT 'ONLINE' 
+    COMMENT 'Kênh đặt vé: ONLINE, POS_COUNTER, PHONE_ORDER',
+  ADD COLUMN IF NOT EXISTS pos_shift_id CHAR(36) NULL 
+    COMMENT 'ID ca trực nếu đặt vé tại quầy bến xe',
+  ADD COLUMN IF NOT EXISTS staff_user_id CHAR(36) NULL 
+    COMMENT 'Nhân viên quầy thực hiện bán vé';
+
+-- Bổ sung trạng thái in vé nhiệt và bảo hiểm cho bảng `tickets`
+ALTER TABLE tickets
+  ADD COLUMN IF NOT EXISTS is_printed TINYINT(1) NOT NULL DEFAULT 0 
+    COMMENT 'Đã in vé nhiệt giấy tại quầy: 0=Chưa, 1=Đã in',
+  ADD COLUMN IF NOT EXISTS printed_at DATETIME(3) NULL 
+    COMMENT 'Thời điểm in vé nhiệt tại bến xe',
+  ADD COLUMN IF NOT EXISTS has_insurance TINYINT(1) NOT NULL DEFAULT 0 
+    COMMENT 'Có mua gói bảo hiểm tai nạn chuyến đi (10.000đ): 0=Không, 1=Có';
+
+-- Bổ sung tọa độ GPS thời gian thực cho bảng `trips`
+ALTER TABLE trips
+  ADD COLUMN IF NOT EXISTS current_latitude DECIMAL(10, 7) NULL 
+    COMMENT 'Tọa độ vĩ độ hiện tại của xe',
+  ADD COLUMN IF NOT EXISTS current_longitude DECIMAL(10, 7) NULL 
+    COMMENT 'Tọa độ kinh độ hiện tại của xe',
+  ADD COLUMN IF NOT EXISTS current_speed_kmh INT NULL DEFAULT 0 
+    COMMENT 'Tốc độ xe chạy hiện tại (km/h)',
+  ADD COLUMN IF NOT EXISTS last_gps_updated_at DATETIME(3) NULL 
+    COMMENT 'Thời điểm xe gửi tọa độ GPS gần nhất';
+
+-- ---------------------------------------------------------------------
+-- 2. TẠO 8 BẢNG MỚI CHO SPRINT 4 (CREATE TABLE)
+-- ---------------------------------------------------------------------
+
+-- 2.1. Bảng Quản lý Ca trực Quầy vé Tiền mặt của Nhà xe
+CREATE TABLE IF NOT EXISTS pos_shifts (
+  id                      CHAR(36)      NOT NULL DEFAULT (UUID()),
+  company_id              CHAR(36)      NOT NULL COMMENT 'Nhà xe sở hữu quầy',
+  staff_user_id           CHAR(36)      NOT NULL COMMENT 'Nhân viên trực ca',
+  terminal_location_id    CHAR(36)      NOT NULL COMMENT 'Vị trí bến xe (BXMĐ, Bến xe Miền Tây...)',
+  counter_name            VARCHAR(50)   NOT NULL DEFAULT 'Quầy số 1' COMMENT 'Tên/Số quầy vé tại bến',
+  opened_at               DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  closed_at               DATETIME(3)   NULL,
+  initial_cash_amount     DECIMAL(14,2) NOT NULL DEFAULT 0.00 COMMENT 'Tiền mặt lẻ đầu ca để thối',
+  total_cash_collected    DECIMAL(14,2) NOT NULL DEFAULT 0.00 COMMENT 'Tổng tiền mặt thu trong ca',
+  total_qr_collected      DECIMAL(14,2) NOT NULL DEFAULT 0.00 COMMENT 'Tổng tiền quét VietQR tại quầy',
+  total_tickets_sold      INT           NOT NULL DEFAULT 0    COMMENT 'Tổng số vé bán ra trong ca',
+  status                  VARCHAR(20)   NOT NULL DEFAULT 'OPEN' COMMENT 'OPEN, CLOSED, AUDITED',
+  notes                   TEXT          NULL,
+  created_at              DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at              DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_pos_shifts_company (company_id),
+  KEY idx_pos_shifts_staff (staff_user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 2.2. Bảng Yêu cầu Thuê xe Hợp đồng Du lịch (Charter Requests)
+CREATE TABLE IF NOT EXISTS charter_requests (
+  id                      CHAR(36)      NOT NULL DEFAULT (UUID()),
+  customer_user_id        CHAR(36)      NULL COMMENT 'NULL nếu khách vãng lai đặt tại quầy',
+  contact_full_name       VARCHAR(255)  NOT NULL,
+  contact_phone_number    VARCHAR(20)   NOT NULL,
+  origin_address          VARCHAR(255)  NOT NULL COMMENT 'Điểm đón (Ví dụ: 123 Nguyễn Huệ, Q.1)',
+  destination_address     VARCHAR(255)  NOT NULL COMMENT 'Điểm đến (Ví dụ: Bãi Sau Vũng Tàu)',
+  departure_time          DATETIME(3)   NOT NULL COMMENT 'Ngày giờ khởi hành đi',
+  return_time             DATETIME(3)   NULL     COMMENT 'Ngày giờ về (nếu thuê 2 chiều)',
+  vehicle_type_needed     VARCHAR(30)   NOT NULL COMMENT '16_SEAT, 29_SEAT, 34_ROOM, 45_SEAT',
+  estimated_distance_km   INT           NOT NULL DEFAULT 0 COMMENT 'Ước tính khoảng cách km',
+  special_requests        TEXT          NULL COMMENT 'Karaoke, nước suối, ghế massage...',
+  status                  VARCHAR(30)   NOT NULL DEFAULT 'PENDING_QUOTES' 
+    COMMENT 'PENDING_QUOTES, QUOTED, DEPOSIT_PAID, IN_PROGRESS, COMPLETED, CANCELLED',
+  created_at              DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at              DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_charter_customer (customer_user_id),
+  KEY idx_charter_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 2.3. Bảng Báo giá Đấu thầu Thuê xe & Quản lý Cọc Escrow 30%
+CREATE TABLE IF NOT EXISTS charter_bids (
+  id                      CHAR(36)      NOT NULL DEFAULT (UUID()),
+  charter_request_id      CHAR(36)      NOT NULL,
+  company_id              CHAR(36)      NOT NULL COMMENT 'Nhà xe gửi báo giá',
+  vehicle_id              CHAR(36)      NULL     COMMENT 'Xe phân công chạy hợp đồng',
+  driver_user_id          CHAR(36)      NULL     COMMENT 'Tài xế phân công',
+  quoted_total_price      DECIMAL(14,2) NOT NULL COMMENT 'Giá trọn gói nhà xe đề xuất',
+  required_deposit_amount DECIMAL(14,2) NOT NULL COMMENT 'Số tiền cọc 30% giữ chỗ',
+  escrow_status           VARCHAR(30)   NOT NULL DEFAULT 'NOT_PAID' 
+    COMMENT 'NOT_PAID, HELD_IN_ESCROW, RELEASED_TO_COMPANY, REFUNDED',
+  bid_status              VARCHAR(20)   NOT NULL DEFAULT 'OFFERED' 
+    COMMENT 'OFFERED, ACCEPTED, REJECTED, EXPIRED',
+  company_notes           TEXT          NULL COMMENT 'Ghi chú tiện ích xe, bảo hiểm...',
+  created_at              DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_charter_bids_request (charter_request_id),
+  KEY idx_charter_bids_company (company_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 2.4. Bảng Đơn Hàng Gửi Hàng Hóa Bưu Kiện Hầm Xe (Cargo Orders)
+CREATE TABLE IF NOT EXISTS cargo_orders (
+  id                      CHAR(36)      NOT NULL DEFAULT (UUID()),
+  tracking_code           VARCHAR(30)   NOT NULL UNIQUE COMMENT 'Mã vận đơn bưu kiện: CG-2026-XXXXX',
+  company_id              CHAR(36)      NOT NULL COMMENT 'Nhà xe vận chuyển',
+  trip_id                 CHAR(36)      NULL     COMMENT 'Chuyến xe chở hàng',
+  sender_name             VARCHAR(255)  NOT NULL,
+  sender_phone            VARCHAR(20)   NOT NULL,
+  receiver_name           VARCHAR(255)  NOT NULL,
+  receiver_phone          VARCHAR(20)   NOT NULL,
+  origin_point_id         CHAR(36)      NOT NULL COMMENT 'Điểm gửi hàng tại bến đi',
+  destination_point_id    CHAR(36)      NOT NULL COMMENT 'Điểm nhận hàng tại bến đến',
+  cargo_type              VARCHAR(30)   NOT NULL COMMENT 'DOCUMENT, PARCEL, HEAVY, BIKE, FRESH_FOOD',
+  weight_kg               DECIMAL(6,2)  NOT NULL DEFAULT 1.00,
+  dimensions_cm           VARCHAR(50)   NULL     COMMENT 'Dài x Rộng x Cao (cm)',
+  shipping_fee            DECIMAL(14,2) NOT NULL COMMENT 'Tiền cước vận chuyển',
+  cod_amount              DECIMAL(14,2) NOT NULL DEFAULT 0.00 COMMENT 'Tiền thu hộ COD (nếu có)',
+  payment_status          VARCHAR(20)   NOT NULL DEFAULT 'PAID' COMMENT 'PAID, UNPAID_COD',
+  status                  VARCHAR(30)   NOT NULL DEFAULT 'RECEIVED_AT_TERMINAL'
+    COMMENT 'RECEIVED_AT_TERMINAL, IN_TRANSIT, ARRIVED_AT_DESTINATION, DELIVERED, RETURNED',
+  delivery_otp_code       CHAR(6)       NOT NULL COMMENT 'Mã OTP 6 số để nhận hàng tại bến',
+  created_at              DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at              DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_cargo_company (company_id),
+  KEY idx_cargo_receiver (receiver_phone)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 2.5. Bảng Nhật Ký Tọa Độ GPS Xe Chạy Thời Gian Thực (Trip Tracking Logs)
+CREATE TABLE IF NOT EXISTS trip_tracking_logs (
+  id                      BIGINT AUTO_INCREMENT NOT NULL,
+  trip_id                 CHAR(36)      NOT NULL,
+  latitude                DECIMAL(10, 7) NOT NULL,
+  longitude               DECIMAL(10, 7) NOT NULL,
+  speed_kmh               INT           NOT NULL DEFAULT 0,
+  heading_degrees         INT           NULL DEFAULT 0 COMMENT 'Góc hướng xe chạy (0 - 360)',
+  recorded_at             DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_tracking_trip_time (trip_id, recorded_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 2.6. Bảng Quản Trị Giá Vé Động & Flash Sale (Dynamic Pricing Rules)
+CREATE TABLE IF NOT EXISTS dynamic_pricing_rules (
+  id                      CHAR(36)      NOT NULL DEFAULT (UUID()),
+  company_id              CHAR(36)      NOT NULL,
+  route_template_id       CHAR(36)      NULL COMMENT 'NULL nghĩa là áp dụng toàn bộ tuyến của hãng',
+  rule_name               VARCHAR(100)  NOT NULL COMMENT 'Tên luật giá: Flash Sale Đêm, Phụ Thu Lễ 30/4...',
+  rule_type               VARCHAR(30)   NOT NULL COMMENT 'SURCHARGE_HOLIDAY, FLASH_SALE_LAST_HOUR, EARLY_BIRD',
+  adjustment_percent      DECIMAL(5,2)  NOT NULL COMMENT 'Phần trăm tăng/giảm (+20.00 hoặc -15.00)',
+  condition_hours_before  INT           NULL     COMMENT 'Áp dụng khi còn cách giờ chạy X tiếng',
+  condition_empty_seat_threshold INT   NULL     COMMENT 'Áp dụng khi tỷ lệ trống > X chỗ',
+  start_date              DATE          NULL,
+  end_date                DATE          NULL,
+  is_active               TINYINT(1)    NOT NULL DEFAULT 1,
+  created_at              DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_pricing_company (company_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 2.7. Bảng Ví Tích Điểm Thưởng Khách Hàng (User Reward Wallets)
+CREATE TABLE IF NOT EXISTS user_reward_wallets (
+  user_id                 CHAR(36)      NOT NULL,
+  balance_points          INT           NOT NULL DEFAULT 0    COMMENT 'Số dư EasyXu khả dụng (1 Xu = 1 VNĐ)',
+  total_earned_points     INT           NOT NULL DEFAULT 0    COMMENT 'Tổng xu đã tích lũy từ trước đến nay',
+  total_spent_points      INT           NOT NULL DEFAULT 0    COMMENT 'Tổng xu đã đổi trừ tiền vé',
+  updated_at              DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 2.8. Bảng Hợp Đồng Bảo Hiểm Chuyến Đi (Travel Insurance Policies)
+CREATE TABLE IF NOT EXISTS travel_insurance_policies (
+  id                      CHAR(36)      NOT NULL DEFAULT (UUID()),
+  ticket_id               CHAR(36)      NOT NULL,
+  policy_number           VARCHAR(50)   NOT NULL COMMENT 'Mã hợp đồng: BV-2026-XXXXX',
+  insurance_provider      VARCHAR(50)   NOT NULL DEFAULT 'BaoViet_Insurance' COMMENT 'Bảo Việt / PTI',
+  premium_amount          DECIMAL(10,2) NOT NULL DEFAULT 10000.00 COMMENT 'Phí bảo hiểm 10.000đ/vé',
+  max_coverage_amount     DECIMAL(14,2) NOT NULL DEFAULT 400000000.00 COMMENT 'Mức đền bù tối đa 400 triệu',
+  claim_status            VARCHAR(20)   NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE, CLAIM_SUBMITTED, PAID, REJECTED',
+  created_at              DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_insurance_ticket (ticket_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ---------------------------------------------------------------------
+-- 3. DỮ LIỆU MẪU GỐC CHO CÁC PHÂN HỆ SPRINT 4 (SEED DATA)
+-- ---------------------------------------------------------------------
+
+-- 3.1. Ca trực Quầy Bán Vé Bến Xe Mẫu
+INSERT INTO pos_shifts (id, company_id, staff_user_id, terminal_location_id, counter_name, initial_cash_amount, total_cash_collected, total_qr_collected, total_tickets_sold, status, notes)
+VALUES ('shift-sample-01', 'bc-futa', '22222222-2222-2222-2222-222222222222', 'loc-bx-mientay', 'Quầy FUTA số 12 (Bến xe Miền Tây)', 1000000.00, 2450000.00, 1200000.00, 12, 'OPEN', 'Ca sáng 06:00 - 14:00, máy in nhiệt bill 80mm hoạt động ổn định.')
+ON DUPLICATE KEY UPDATE status=VALUES(status);
+
+-- 3.2. Yêu cầu Thuê xe Hợp đồng Du lịch Mẫu
+INSERT INTO charter_requests (id, customer_user_id, contact_full_name, contact_phone_number, origin_address, destination_address, departure_time, return_time, vehicle_type_needed, estimated_distance_km, special_requests, status)
+VALUES ('charter-sample-01', '33333333-3333-3333-3333-333333333333', 'Công Ty Du Lịch Sài Gòn Mới', '0987654321', '123 Lê Lợi, Quận 1, TP.HCM', 'Bãi Sau, TP. Vũng Tàu', DATE_ADD(CURRENT_DATE(), INTERVAL '3 07:00:00' DAY_SECOND), DATE_ADD(CURRENT_DATE(), INTERVAL '5 17:00:00' DAY_SECOND), '29_SEAT', 125, 'Xe đời mới máy lạnh êm, tài xế lịch sự, hỗ trợ nước suối và khăn lạnh', 'PENDING_QUOTES')
+ON DUPLICATE KEY UPDATE status=VALUES(status);
+
+-- 3.3. Đơn Hàng Ký Gửi Bưu Kiện Mẫu
+INSERT INTO cargo_orders (id, tracking_code, company_id, trip_id, sender_name, sender_phone, receiver_name, receiver_phone, origin_point_id, destination_point_id, cargo_type, weight_kg, dimensions_cm, shipping_fee, cod_amount, payment_status, status, delivery_otp_code)
+VALUES ('cargo-sample-01', 'CG-2026-889901', 'bc-futa', 'trip-1', 'Nguyễn Văn Gửi', '0912345678', 'Trần Thị Nhận', '0987654321', 'loc-bx-mientay', 'loc-bx-dalat', 'PARCEL', 3.50, '30x20x15', 75000.00, 0.00, 'PAID', 'RECEIVED_AT_TERMINAL', '889922')
+ON DUPLICATE KEY UPDATE status=VALUES(status);
+
+-- 3.4. Luật Giá Vé Động Mẫu
+INSERT INTO dynamic_pricing_rules (id, company_id, route_template_id, rule_name, rule_type, adjustment_percent, condition_hours_before, condition_empty_seat_threshold, is_active)
+VALUES ('rule-flash-01', 'bc-futa', 'rt-futa-hcm-dl', 'Flash Sale Giờ Chót Chuyến Đêm', 'FLASH_SALE_LAST_HOUR', -15.00, 2, 10, 1)
+ON DUPLICATE KEY UPDATE adjustment_percent=VALUES(adjustment_percent);
+
+-- 3.5. Ví Điểm Thưởng EasyXu Mẫu Cho Khách Hàng
+INSERT INTO user_reward_wallets (user_id, balance_points, total_earned_points, total_spent_points)
+VALUES ('33333333-3333-3333-3333-333333333333', 35000, 50000, 15000)
+ON DUPLICATE KEY UPDATE balance_points=VALUES(balance_points);
+
+-- 3.6. Tọa độ GPS Live Tracking Mẫu cho Xe Khách
+INSERT INTO trip_tracking_logs (trip_id, latitude, longitude, speed_kmh, heading_degrees)
+VALUES 
+('trip-1', 10.776889, 106.700806, 45, 120),
+('trip-1', 10.823099, 106.772545, 75, 115),
+('trip-1', 10.957432, 107.085432, 80, 110);
