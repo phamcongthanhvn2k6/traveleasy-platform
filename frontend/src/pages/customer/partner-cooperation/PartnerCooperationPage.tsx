@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  AlertCircle,
   UploadCloud,
   FileUp,
   File,
@@ -114,6 +115,8 @@ export const PartnerCooperationPage: React.FC = () => {
   });
 
   const fillSampleKybData = () => {
+    setErrors({});
+    setRouteList(['Hà Nội ⇄ Hải Phòng', 'Hà Nội ⇄ Quảng Ninh']);
     setFormData({
       companyName: 'Công ty TNHH Vận Tải Hoàng Long Express',
       taxCode: '0101234567',
@@ -157,6 +160,127 @@ export const PartnerCooperationPage: React.FC = () => {
   }>({});
 
   const [uploadingField, setUploadingField] = useState<string | null>(null);
+
+  // State lưu trữ lỗi xác thực từng trường
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Xóa lỗi của một trường khi người dùng nhập lại
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  // Hàm thẩm định toàn bộ dữ liệu form trước khi gửi
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // 1. Tên nhà xe / Doanh nghiệp
+    if (!formData.companyName.trim()) {
+      newErrors.companyName = 'Vui lòng nhập Tên Nhà Xe / Doanh Nghiệp Vận Tải';
+    } else if (formData.companyName.trim().length < 3) {
+      newErrors.companyName = 'Tên nhà xe quá ngắn (tối thiểu 3 ký tự)';
+    }
+
+    // 2. Người liên hệ / Quản lý
+    if (!formData.contactName.trim()) {
+      newErrors.contactName = 'Vui lòng nhập Họ Và Tên Người Đại Diện / Quản Lý';
+    } else if (!formData.contactName.trim().includes(' ')) {
+      newErrors.contactName = 'Vui lòng nhập đầy đủ cả Họ và Tên (ví dụ: Nguyễn Văn Hoàng)';
+    }
+
+    // 3. Số điện thoại
+    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+    const cleanPhone = formData.phone.replace(/\s+/g, '');
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Vui lòng nhập Số Điện Thoại Liên Hệ';
+    } else if (!phoneRegex.test(cleanPhone)) {
+      newErrors.phone = 'Số điện thoại không hợp lệ (Phải là số ĐT Việt Nam 10 chữ số, ví dụ: 0912345678)';
+    }
+
+    // 4. Email (nếu nhập thì phải đúng chuẩn)
+    if (formData.email?.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        newErrors.email = 'Địa chỉ email không đúng định dạng (ví dụ: dieuhanh@namcuong.vn)';
+      }
+    }
+
+    // 5. Mã số thuế / ĐKKD
+    if (!formData.taxCode?.trim()) {
+      newErrors.taxCode = 'Vui lòng nhập Mã Số Thuế Doanh Nghiệp / Số Giấy Phép ĐKKD';
+    } else {
+      const cleanTax = formData.taxCode.replace(/[^0-9]/g, '');
+      if (cleanTax.length !== 10 && cleanTax.length !== 13) {
+        newErrors.taxCode = 'Mã số thuế không hợp lệ (Phải gồm 10 số cho DN hoặc 13 số cho chi nhánh)';
+      }
+    }
+
+    // 6. Trụ sở doanh nghiệp
+    if (!formData.businessAddress?.trim()) {
+      newErrors.businessAddress = 'Vui lòng nhập Địa Chỉ Trụ Sở Đăng Ký Kinh Doanh';
+    }
+
+    // 7. Tuyến đường vận tải
+    if (routeList.length === 0) {
+      newErrors.routes = 'Vui lòng nhập điểm đi - điểm đến và bấm "+ Thêm Tuyến" ít nhất 1 tuyến đường';
+    }
+
+    // 8. Số CCCD định danh người đại diện
+    if (!formData.identityCardNumber?.trim()) {
+      newErrors.identityCardNumber = 'Vui lòng nhập Số Căn Cước Công Dân (CCCD)';
+    } else {
+      const cleanCccd = formData.identityCardNumber.replace(/\s+/g, '');
+      if (!/^[0-9]{12}$/.test(cleanCccd)) {
+        newErrors.identityCardNumber = 'Số CCCD phải gồm đúng 12 chữ số theo quy chuẩn Bộ Công An';
+      }
+    }
+
+    // 9. Giấy tờ CCCD mặt trước
+    if (!formData.identityCardFrontUrl?.trim()) {
+      newErrors.identityCardFrontUrl = 'Vui lòng tải lên tập tin Ảnh CCCD Mặt Trước';
+    }
+
+    // 10. Giấy tờ CCCD mặt sau
+    if (!formData.identityCardBackUrl?.trim()) {
+      newErrors.identityCardBackUrl = 'Vui lòng tải lên tập tin Ảnh CCCD Mặt Sau';
+    }
+
+    // 11. Giấy phép kinh doanh / vận tải
+    if (!formData.businessLicenseUrl?.trim()) {
+      newErrors.businessLicenseUrl = 'Vui lòng tải lên File Giấy Phép Kinh Doanh / Vận Tải (Ảnh hoặc PDF)';
+    }
+
+    // 12. Tài khoản ngân hàng Escrow
+    if (!formData.bankAccountNumber?.trim()) {
+      newErrors.bankAccountNumber = 'Vui lòng nhập Số Tài Khoản Ngân Hàng nhận quyết toán';
+    } else {
+      const cleanAcc = formData.bankAccountNumber.replace(/\s+/g, '');
+      if (!/^[0-9]{6,20}$/.test(cleanAcc)) {
+        newErrors.bankAccountNumber = 'Số tài khoản ngân hàng chỉ chứa số (từ 6 đến 20 số)';
+      }
+    }
+
+    // 13. Tên chủ tài khoản
+    if (!formData.bankAccountOwner?.trim()) {
+      newErrors.bankAccountOwner = 'Vui lòng nhập Tên Chủ Tài Khoản (In hoa không dấu)';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      // Lấy lỗi đầu tiên để thông báo toast cho người dùng
+      const firstError = Object.values(newErrors)[0];
+      toast.error(firstError, 'Thông Tin Chưa Hợp Lệ');
+      return false;
+    }
+
+    return true;
+  };
 
   // Hàm upload file ảnh hoặc PDF lên backend
   const handleUploadFile = async (
@@ -282,8 +406,7 @@ export const PartnerCooperationPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.companyName.trim() || !formData.contactName.trim() || !formData.phone.trim()) {
-      toast.error('Vui lòng điền đầy đủ Tên nhà xe, Người liên hệ và Số điện thoại.', 'Thiếu Thông Tin');
+    if (!validateForm()) {
       return;
     }
 
@@ -1994,18 +2117,26 @@ export const PartnerCooperationPage: React.FC = () => {
                     required
                     placeholder="Ví dụ: Xe Khách Nam Cường Limousine"
                     value={formData.companyName}
-                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, companyName: e.target.value });
+                      clearError('companyName');
+                    }}
                     style={{
                       width: '100%',
                       padding: '13px 16px',
                       borderRadius: '12px',
-                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      border: errors.companyName ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                       backgroundColor: isDark ? '#1e293b' : '#f8fafc',
                       color: isDark ? '#f8fafc' : '#0f172a',
                       fontSize: '14.5px',
                       outline: 'none',
                     }}
                   />
+                  {errors.companyName && (
+                    <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertCircle size={13} /> {errors.companyName}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -2017,18 +2148,26 @@ export const PartnerCooperationPage: React.FC = () => {
                     required
                     placeholder="Ví dụ: Nguyễn Văn An"
                     value={formData.contactName}
-                    onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, contactName: e.target.value });
+                      clearError('contactName');
+                    }}
                     style={{
                       width: '100%',
                       padding: '13px 16px',
                       borderRadius: '12px',
-                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      border: errors.contactName ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                       backgroundColor: isDark ? '#1e293b' : '#f8fafc',
                       color: isDark ? '#f8fafc' : '#0f172a',
                       fontSize: '14.5px',
                       outline: 'none',
                     }}
                   />
+                  {errors.contactName && (
+                    <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertCircle size={13} /> {errors.contactName}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2042,18 +2181,26 @@ export const PartnerCooperationPage: React.FC = () => {
                     required
                     placeholder="Ví dụ: 0912 345 678"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, phone: e.target.value });
+                      clearError('phone');
+                    }}
                     style={{
                       width: '100%',
                       padding: '13px 16px',
                       borderRadius: '12px',
-                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      border: errors.phone ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                       backgroundColor: isDark ? '#1e293b' : '#f8fafc',
                       color: isDark ? '#f8fafc' : '#0f172a',
                       fontSize: '14.5px',
                       outline: 'none',
                     }}
                   />
+                  {errors.phone && (
+                    <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertCircle size={13} /> {errors.phone}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -2089,18 +2236,26 @@ export const PartnerCooperationPage: React.FC = () => {
                     type="text"
                     placeholder="Ví dụ: 0312345678"
                     value={formData.taxCode}
-                    onChange={(e) => setFormData({ ...formData, taxCode: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, taxCode: e.target.value });
+                      clearError('taxCode');
+                    }}
                     style={{
                       width: '100%',
                       padding: '13px 16px',
                       borderRadius: '12px',
-                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      border: errors.taxCode ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                       backgroundColor: isDark ? '#1e293b' : '#f8fafc',
                       color: isDark ? '#f8fafc' : '#0f172a',
                       fontSize: '14.5px',
                       outline: 'none',
                     }}
                   />
+                  {errors.taxCode && (
+                    <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertCircle size={13} /> {errors.taxCode}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -2111,18 +2266,26 @@ export const PartnerCooperationPage: React.FC = () => {
                     type="text"
                     placeholder="Ví dụ: 123 Lê Duẩn, Q. Hoàn Kiếm, Hà Nội"
                     value={formData.businessAddress}
-                    onChange={(e) => setFormData({ ...formData, businessAddress: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, businessAddress: e.target.value });
+                      clearError('businessAddress');
+                    }}
                     style={{
                       width: '100%',
                       padding: '13px 16px',
                       borderRadius: '12px',
-                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      border: errors.businessAddress ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                       backgroundColor: isDark ? '#1e293b' : '#f8fafc',
                       color: isDark ? '#f8fafc' : '#0f172a',
                       fontSize: '14.5px',
                       outline: 'none',
                     }}
                   />
+                  {errors.businessAddress && (
+                    <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertCircle size={13} /> {errors.businessAddress}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2229,6 +2392,11 @@ export const PartnerCooperationPage: React.FC = () => {
                   </button>
                 </div>
 
+                {errors.routes && (
+                  <div style={{ color: '#ef4444', fontSize: '12.5px', fontWeight: 700, marginBottom: '10px', padding: '8px 12px', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <AlertCircle size={15} /> {errors.routes}
+                  </div>
+                )}
                 {/* Danh sách các tuyến đã thêm (Tags) */}
                 <div style={{ marginBottom: '14px' }}>
                   <div style={{ fontSize: '12px', fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b', marginBottom: '8px' }}>
@@ -2395,23 +2563,46 @@ export const PartnerCooperationPage: React.FC = () => {
                       maxLength={12}
                       placeholder="Ví dụ: 031088012345"
                       value={formData.identityCardNumber}
-                      onChange={(e) => setFormData({ ...formData, identityCardNumber: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, identityCardNumber: e.target.value });
+                        clearError('identityCardNumber');
+                      }}
                       style={{
                         width: '100%',
                         padding: '11px 14px',
                         borderRadius: '10px',
-                        border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                        border: errors.identityCardNumber ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                         backgroundColor: isDark ? '#0f172a' : '#ffffff',
                         color: isDark ? '#f8fafc' : '#0f172a',
                         fontSize: '13.5px',
                         outline: 'none',
                       }}
                     />
+                    {errors.identityCardNumber && (
+                      <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertCircle size={13} /> {errors.identityCardNumber}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Khung tải lên tệp giấy tờ trực tiếp (Ảnh hoặc PDF) */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                  {errors.identityCardFrontUrl && (
+                    <div style={{ gridColumn: '1 / -1', color: '#ef4444', fontSize: '12.5px', fontWeight: 700, padding: '8px 12px', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <AlertCircle size={15} /> {errors.identityCardFrontUrl}
+                    </div>
+                  )}
+                  {errors.identityCardBackUrl && (
+                    <div style={{ gridColumn: '1 / -1', color: '#ef4444', fontSize: '12.5px', fontWeight: 700, padding: '8px 12px', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <AlertCircle size={15} /> {errors.identityCardBackUrl}
+                    </div>
+                  )}
+                  {errors.businessLicenseUrl && (
+                    <div style={{ gridColumn: '1 / -1', color: '#ef4444', fontSize: '12.5px', fontWeight: 700, padding: '8px 12px', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <AlertCircle size={15} /> {errors.businessLicenseUrl}
+                    </div>
+                  )}
                   {/* TẬP TIN 1: CCCD MẶT TRƯỚC */}
                   <div
                     style={{
@@ -2769,18 +2960,26 @@ export const PartnerCooperationPage: React.FC = () => {
                       type="text"
                       placeholder="Ví dụ: 091288899999"
                       value={formData.bankAccountNumber}
-                      onChange={(e) => setFormData({ ...formData, bankAccountNumber: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, bankAccountNumber: e.target.value });
+                        clearError('bankAccountNumber');
+                      }}
                       style={{
                         width: '100%',
                         padding: '11px 14px',
                         borderRadius: '10px',
-                        border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                        border: errors.bankAccountNumber ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                         backgroundColor: isDark ? '#0f172a' : '#ffffff',
                         color: isDark ? '#f8fafc' : '#0f172a',
                         fontSize: '13.5px',
                         outline: 'none',
                       }}
                     />
+                    {errors.bankAccountNumber && (
+                      <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertCircle size={13} /> {errors.bankAccountNumber}
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -2791,18 +2990,26 @@ export const PartnerCooperationPage: React.FC = () => {
                       type="text"
                       placeholder="Ví dụ: CONG TY TNHH VAN TAI HOANG LONG"
                       value={formData.bankAccountOwner}
-                      onChange={(e) => setFormData({ ...formData, bankAccountOwner: e.target.value.toUpperCase() })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, bankAccountOwner: e.target.value.toUpperCase() });
+                        clearError('bankAccountOwner');
+                      }}
                       style={{
                         width: '100%',
                         padding: '11px 14px',
                         borderRadius: '10px',
-                        border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                        border: errors.bankAccountOwner ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                         backgroundColor: isDark ? '#0f172a' : '#ffffff',
                         color: isDark ? '#f8fafc' : '#0f172a',
                         fontSize: '13.5px',
                         outline: 'none',
                       }}
                     />
+                    {errors.bankAccountOwner && (
+                      <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertCircle size={13} /> {errors.bankAccountOwner}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

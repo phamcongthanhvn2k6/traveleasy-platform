@@ -640,8 +640,24 @@ public class PublicContentController {
                 .address(address)
                 .logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=120")
                 .averageRating(BigDecimal.valueOf(5.0))
-                .status("PENDING_APPROVAL")
+                .status("PENDING")
                 .createdAt(LocalDateTime.now())
+                // Hồ sơ pháp lý KYB
+                .taxCode(request.getTaxCode() != null && !request.getTaxCode().isBlank() ? request.getTaxCode().trim() : null)
+                .legalRepresentative(request.getLegalRepresentative() != null && !request.getLegalRepresentative().isBlank() 
+                        ? request.getLegalRepresentative().trim() 
+                        : (request.getContactName() != null ? request.getContactName().trim() : null))
+                .identityCardNumber(request.getIdentityCardNumber() != null && !request.getIdentityCardNumber().isBlank() ? request.getIdentityCardNumber().trim() : null)
+                .identityCardFrontUrl(request.getIdentityCardFrontUrl() != null && !request.getIdentityCardFrontUrl().isBlank() ? request.getIdentityCardFrontUrl().trim() : null)
+                .identityCardBackUrl(request.getIdentityCardBackUrl() != null && !request.getIdentityCardBackUrl().isBlank() ? request.getIdentityCardBackUrl().trim() : null)
+                .businessLicenseUrl(request.getBusinessLicenseUrl() != null && !request.getBusinessLicenseUrl().isBlank() ? request.getBusinessLicenseUrl().trim() : null)
+                .transportLicenseUrl(request.getTransportLicenseUrl() != null && !request.getTransportLicenseUrl().isBlank() ? request.getTransportLicenseUrl().trim() : null)
+                // Tài khoản ngân hàng Escrow
+                .bankName(request.getBankName() != null && !request.getBankName().isBlank() ? request.getBankName().trim() : "MB Bank")
+                .bankAccountNumber(request.getBankAccountNumber() != null && !request.getBankAccountNumber().isBlank() ? request.getBankAccountNumber().trim() : null)
+                .bankAccountOwner(request.getBankAccountOwner() != null && !request.getBankAccountOwner().isBlank() ? request.getBankAccountOwner().trim().toUpperCase() : null)
+                .kycStatus("PENDING")
+                .commissionRate(BigDecimal.valueOf(0.08))
                 .build();
 
         BusCompany saved = busCompanyRepository.save(company);
