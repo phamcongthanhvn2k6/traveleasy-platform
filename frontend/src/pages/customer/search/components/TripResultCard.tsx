@@ -30,6 +30,135 @@ interface Props {
   ) => void;
 }
 
+// Skeleton loading representation for 2-deck bus seat map
+const SeatMapSkeleton: React.FC<{ isDark?: boolean; totalSeats?: number }> = ({ isDark, totalSeats = 34 }) => {
+  const seatsPerFloor = Math.ceil(totalSeats / 2);
+
+  return (
+    <div
+      style={{
+        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+        padding: '16px',
+        borderRadius: '12px',
+        border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          marginBottom: '14px',
+          color: '#3b82f6',
+          fontSize: '13px',
+          fontWeight: 700,
+        }}
+      >
+        <div
+          style={{
+            width: '14px',
+            height: '14px',
+            border: '2px solid #3b82f6',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }}
+        />
+        <span>⚡ Đang đồng bộ sơ đồ ghế thời gian thực...</span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        {/* Tầng 1 */}
+        <div
+          style={{
+            backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+            padding: '12px',
+            borderRadius: '10px',
+            border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+          }}
+        >
+          <div
+            style={{
+              height: '16px',
+              backgroundColor: isDark ? '#334155' : '#cbd5e1',
+              borderRadius: '4px',
+              width: '60%',
+              margin: '0 auto 12px auto',
+              opacity: 0.6,
+            }}
+          />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+            {Array.from({ length: seatsPerFloor }).map((_, idx) => (
+              <div
+                key={idx}
+                style={{
+                  height: '38px',
+                  backgroundColor: isDark ? '#1e293b' : '#e2e8f0',
+                  borderRadius: '6px',
+                  border: `1px dashed ${isDark ? '#334155' : '#cbd5e1'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: isDark ? '#475569' : '#94a3b8',
+                  animation: 'pulse 1.4s ease-in-out infinite',
+                }}
+              >
+                A{String(idx + 1).padStart(2, '0')}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tầng 2 */}
+        <div
+          style={{
+            backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+            padding: '12px',
+            borderRadius: '10px',
+            border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+          }}
+        >
+          <div
+            style={{
+              height: '16px',
+              backgroundColor: isDark ? '#334155' : '#cbd5e1',
+              borderRadius: '4px',
+              width: '60%',
+              margin: '0 auto 12px auto',
+              opacity: 0.6,
+            }}
+          />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+            {Array.from({ length: seatsPerFloor }).map((_, idx) => (
+              <div
+                key={idx}
+                style={{
+                  height: '38px',
+                  backgroundColor: isDark ? '#1e293b' : '#e2e8f0',
+                  borderRadius: '6px',
+                  border: `1px dashed ${isDark ? '#334155' : '#cbd5e1'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: isDark ? '#475569' : '#94a3b8',
+                  animation: 'pulse 1.4s ease-in-out infinite',
+                }}
+              >
+                B{String(idx + 1).padStart(2, '0')}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
   const { isDark } = useTheme();
   const [expanded, setExpanded] = useState(false);
@@ -130,16 +259,28 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
   };
 
   const toggleExpand = async () => {
-    if (!expanded && !tripDetail) {
+    const nextExpanded = !expanded;
+    setExpanded(nextExpanded);
+
+    // Điểm đón / trả: Khởi tạo NGAY LẬP TỨC từ prop trip để người dùng tương tác tức thì
+    if (!selectedPickup && trip.pickupPoints && trip.pickupPoints.length > 0) {
+      setSelectedPickup(trip.pickupPoints[0].id);
+    }
+    if (!selectedDropoff && trip.dropoffPoints && trip.dropoffPoints.length > 0) {
+      setSelectedDropoff(trip.dropoffPoints[0].id);
+    }
+
+    // Tải sơ đồ ghế ngầm (chỉ gọi 1 lần và cache trong state)
+    if (nextExpanded && !tripDetail) {
       setLoadingDetail(true);
       try {
         const res = await api.get(`/trips/${trip.id}`);
         const data = res.data.data;
         setTripDetail(data);
-        if (data.pickupPoints?.length > 0) {
+        if (data.pickupPoints?.length > 0 && !selectedPickup) {
           setSelectedPickup(data.pickupPoints[0].id);
         }
-        if (data.dropoffPoints?.length > 0) {
+        if (data.dropoffPoints?.length > 0 && !selectedDropoff) {
           setSelectedDropoff(data.dropoffPoints[0].id);
         }
       } catch (err) {
@@ -148,7 +289,6 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
         setLoadingDetail(false);
       }
     }
-    setExpanded(!expanded);
   };
 
   const handleToggleSeat = (seatNumber: string) => {
@@ -176,8 +316,17 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
   };
 
-  const pickupPointObj = tripDetail?.pickupPoints.find((p) => p.id === selectedPickup);
-  const dropoffPointObj = tripDetail?.dropoffPoints.find((p) => p.id === selectedDropoff);
+  // Điểm đón & trả ưu tiên lấy từ tripDetail, nếu đang tải thì lấy ngay tức thì từ prop trip
+  const pickupList = (tripDetail?.pickupPoints && tripDetail.pickupPoints.length > 0)
+    ? tripDetail.pickupPoints
+    : (trip.pickupPoints || []);
+
+  const dropoffList = (tripDetail?.dropoffPoints && tripDetail.dropoffPoints.length > 0)
+    ? tripDetail.dropoffPoints
+    : (trip.dropoffPoints || []);
+
+  const pickupPointObj = pickupList.find((p) => p.id === selectedPickup);
+  const dropoffPointObj = dropoffList.find((p) => p.id === selectedDropoff);
 
   const totalPrice = selectedSeats.length * trip.price;
 
@@ -470,58 +619,55 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
           {/* TAB 1: SEATS & STOPS */}
           {activeTab === 'SEATS' && (
             <div>
-              {loadingDetail ? (
-                <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
-                  Đang tải sơ đồ ghế và điểm đón trả...
-                </div>
-              ) : tripDetail ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
+                {/* Left: Seat Map */}
                 <div>
-                  {/* Grid 2 Columns: Left is Bus Seat Map, Right is Pickup/Dropoff selection */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
-                    {/* Left: Seat Map */}
-                    <div>
-                      <div
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '10px',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                    }}
+                  >
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
+                      Chọn vị trí ghế (Tối đa 6 vé/lần đặt)
+                    </div>
+
+                    {/* Live SSE Status Badge */}
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        backgroundColor: sseConnected ? (isDark ? 'rgba(34, 197, 94, 0.15)' : '#f0fdf4') : (isDark ? '#1e293b' : '#f8fafc'),
+                        border: sseConnected ? (isDark ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid #bbf7d0') : (isDark ? '1px solid #334155' : '1px solid #e2e8f0'),
+                        padding: '4px 10px',
+                        borderRadius: '9999px',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        color: sseConnected ? (isDark ? '#4ade80' : '#15803d') : (isDark ? '#94a3b8' : '#64748b'),
+                      }}
+                    >
+                      <span
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          marginBottom: '10px',
-                          flexWrap: 'wrap',
-                          gap: '8px',
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: sseConnected ? '#22c55e' : '#94a3b8',
+                          boxShadow: sseConnected ? '0 0 0 2px rgba(34, 197, 94, 0.3)' : 'none',
                         }}
-                      >
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
-                          Chọn vị trí ghế (Tối đa 6 vé/lần đặt)
-                        </div>
+                      />
+                      {sseConnected ? 'SSE Live: Đang đồng bộ thời gian thực' : 'Đang kết nối luồng...'}
+                    </div>
+                  </div>
 
-                        {/* Live SSE Status Badge */}
-                        <div
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            backgroundColor: sseConnected ? (isDark ? 'rgba(34, 197, 94, 0.15)' : '#f0fdf4') : (isDark ? '#1e293b' : '#f8fafc'),
-                            border: sseConnected ? (isDark ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid #bbf7d0') : (isDark ? '1px solid #334155' : '1px solid #e2e8f0'),
-                            padding: '4px 10px',
-                            borderRadius: '9999px',
-                            fontSize: '11.5px',
-                            fontWeight: 700,
-                            color: sseConnected ? (isDark ? '#4ade80' : '#15803d') : (isDark ? '#94a3b8' : '#64748b'),
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: sseConnected ? '#22c55e' : '#94a3b8',
-                              boxShadow: sseConnected ? '0 0 0 2px rgba(34, 197, 94, 0.3)' : 'none',
-                            }}
-                          />
-                          {sseConnected ? 'SSE Live: Đang đồng bộ thời gian thực' : 'Đang kết nối luồng...'}
-                        </div>
-                      </div>
-
+                  {loadingDetail || !tripDetail ? (
+                    <SeatMapSkeleton isDark={isDark} totalSeats={trip.totalSeats} />
+                  ) : (
+                    <>
                       {/* Interactive Demo Simulation Toolbar */}
                       <div
                         style={{
@@ -669,7 +815,9 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                         selectedSeatNumbers={selectedSeats}
                         onToggleSeat={handleToggleSeat}
                       />
-                    </div>
+                    </>
+                  )}
+                </div>
 
                     {/* Right: Pickup & Dropoff Selection */}
                     <div>
@@ -679,7 +827,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                           Điểm đón tại {trip.originCity}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {tripDetail.pickupPoints.map((pt) => (
+                          {pickupList.map((pt) => (
                             <label
                               key={pt.id}
                               style={{
@@ -718,7 +866,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                           Điểm trả tại {trip.destinationCity}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {tripDetail.dropoffPoints.map((pt) => (
+                          {dropoffList.map((pt) => (
                             <label
                               key={pt.id}
                               style={{
@@ -796,8 +944,6 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                       </button>
                     </div>
                   )}
-                </div>
-              ) : null}
             </div>
           )}
 
