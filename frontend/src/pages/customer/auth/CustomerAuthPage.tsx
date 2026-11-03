@@ -622,7 +622,7 @@ export const CustomerAuthPage: React.FC = () => {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                     {[
                       { label: 'Nguyễn Văn Du Khách', email: 'customer@gmail.com' },
-                      { label: 'Nguyễn Thùy Linh', email: 'thuylinh.travel@gmail.com' },
+                      { label: 'Trần Thị Bích Ngọc', email: 'tranthib@gmail.com' },
                     ].map((acc, idx) => (
                       <button
                         key={idx}
