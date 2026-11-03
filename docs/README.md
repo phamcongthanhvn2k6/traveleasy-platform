@@ -7,7 +7,12 @@
 
 ---
 
-## 🧭 CẤU TRÚC PHÂN LOẠI TÀI LIỆU (5 PHÂN HỆ CHÍNH)
+
+> [!IMPORTANT]
+> ### 🏆 NGUYÊN TẮC VÀNG: BẮT BUỘC COMMIT BẰNG TIẾNG VIỆT CÓ DẤU
+> Toàn bộ thành viên nhóm 7 khi làm việc với Git bắt buộc phải tuân thủ quy định: **100% commit message phải viết bằng Tiếng Việt có dấu đầy đủ** theo chuẩn `type(scope): mô tả hành động bằng Tiếng Việt có dấu`. Chi tiết xem tại [GIT_WORKFLOW.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/03-api-and-deployment/GIT_WORKFLOW.md).
+
+## 🧭 CẤU TRÚC PHÂN LOẠI TÀI LIỆU (6 PHÂN HỆ CHÍNH)
 
 Toàn bộ tài liệu kỹ thuật, nghiệp vụ, kiến trúc và quy trình quản trị dự án được cấu trúc tinh gọn thành **5 phân hệ chuyên biệt**:
 
@@ -20,6 +25,7 @@ docs/
 ├── 03-api-and-deployment/                       # 3️⃣ Phân hệ API, Triển Khai & Vận Hành
 ├── 04-agile-and-sprints/                        # 4️⃣ Phân hệ Quản Trị Agile, Trello & Sprints
 ├── 05-qa-and-testing/                           # 5️⃣ Phân hệ Đảm Bảo Chất Lượng (QA) & Kiểm Thử
+├── 06-business-logic-audits/                    # 6️⃣ Phân hệ Kiểm Toán Nghiệp Vụ & Báo Cáo Lỗ Hổng
 ├── test-reports/                                # 🧪 Báo cáo kiểm thử cá nhân từng thành viên
 └── screenshots/                                 # 📸 Hình ảnh minh chứng nghiệm thu thực tế
 ```

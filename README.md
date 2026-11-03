@@ -1580,31 +1580,39 @@ gitGraph
 
 ---
 
-### 9.4 Quy chuẩn đặt tên commit (Conventional Commits 1.0.0 & Bảng Tra Cứu Scope)
+### 9.4 Quy chuẩn đặt tên commit (Conventional Commits 1.0.0 & NGUYÊN TẮC VÀNG TIẾNG VIỆT CÓ DẤU)
 
-Dự án áp dụng chặt chẽ đặc tả **Conventional Commits 1.0.0**. Mọi commit message đều phải có cấu trúc 3 phần rõ ràng:
+> [!IMPORTANT]
+> ### 🏆 NGUYÊN TẮC VÀNG BẮT BUỘC (THE GOLDEN RULE)
+> **100% COMMIT MESSAGE TRONG TOÀN BỘ DỰ ÁN BẮT BUỘC PHẢI VIẾT BẰNG TIẾNG VIỆT CÓ DẤU!**  
+> Nhóm 7 thống nhất quy định bắt buộc: Mọi thao tác commit lên Git Repository đều phải sử dụng **Tiếng Việt có dấu đầy đủ, rõ ràng và chuẩn chính tả**.  
+> • ❌ **CẤM:** Viết commit bằng tiếng Anh (ví dụ: `fix bug`, `update code`, `refactor service`).  
+> • ❌ **CẤM:** Viết tiếng Việt không dấu (ví dụ: `sua loi dat ve`, `them tinh nang huy ve`).  
+> • ❌ **CẤM:** Commit cụt lủn không rõ nghĩa (ví dụ: `update`, `fix`, `done`, `test`).  
+> • ✅ **BẮT BUỘC:** Tuân thủ chuẩn Conventional Commits kết hợp **mô tả bằng Tiếng Việt có dấu**:  
+>   `type(scope): mô tả ngắn gọn bằng Tiếng Việt có dấu dưới 72 ký tự`
 
 ```text
-<type>(<scope>): <mô tả ngắn gọn bằng tiếng Anh hoặc tiếng Việt dưới 72 ký tự>
+<type>(<scope>): <mô tả ngắn gọn bằng Tiếng Việt có dấu dưới 72 ký tự>
 
-[Mô tả chi tiết tùy chọn: giải thích lý do thực hiện và giải pháp kỹ thuật đã áp dụng]
+[Mô tả chi tiết tùy chọn: giải thích lý do thực hiện và giải pháp kỹ thuật đã áp dụng bằng Tiếng Việt có dấu]
 
 [Footer tùy chọn: liên kết mã công việc, ví dụ: Ref #42, Closes #15]
 ```
 
-#### Bảng danh mục 10 Types chuẩn doanh nghiệp:
-| Type | Ý nghĩa nghiệp vụ | Ví dụ minh họa thực tế trong dự án |
+#### Bảng danh mục 10 Types chuẩn hóa với ví dụ Tiếng Việt có dấu:
+| Type | Ý nghĩa nghiệp vụ | Ví dụ minh họa chuẩn Tiếng Việt có dấu |
 |:---|:---|:---|
-| `feat` | Bổ sung tính năng mới, API mới, component giao diện mới | `feat(seatmap): render 2-deck layout with floor toggle button` |
-| `fix` | Sửa chữa lỗi nghiệp vụ, xử lý ngoại lệ phát sinh | `fix(concurrency): prevent double booking on simultaneous checkout` |
-| `security` | Vá lỗ hổng bảo mật, kiểm soát phân quyền, mã hóa dữ liệu | `security(company): enforce strict tenant isolation on cancellation policies` |
-| `perf` | Tối ưu hóa hiệu năng, giảm thời gian truy vấn SQL, giảm dung lượng bundle | `perf(trips): add database index on departure_time and route_id` |
-| `refactor` | Tái cấu trúc mã nguồn (không đổi logic bên ngoài, không sửa bug) | `refactor(booking): extract price calculation logic into Domain Service` |
-| `style` | Căn chỉnh giao diện CSS, Responsive Mobile/Tablet, format code | `style(responsive): add horizontal scroll wrapper for admin data tables` |
-| `docs` | Cập nhật tài liệu kỹ thuật, Swagger API, hướng dẫn README | `docs(git): define comprehensive enterprise branching and commit convention` |
-| `test` | Viết thêm hoặc chỉnh sửa Unit Test, Integration Test | `test(auth): add 5 test cases verifying jwt token expiration and claims` |
-| `chore` | Cập nhật dependencies, build script, cấu hình Gradle, Vite, Docker | `chore(deps): upgrade tailwindcss and lucide-react to latest patch` |
-| `ci` | Chỉnh sửa cấu hình workflow GitHub Actions, pipeline CI/CD | `ci(github): add automated gradle compile check on pull request` |
+| `feat` | Bổ sung tính năng mới, API mới, component giao diện mới | `feat(seatmap): hoàn thiện sơ đồ ghế 2 tầng kèm nút chuyển tầng trực quan` |
+| `fix` | Sửa chữa lỗi nghiệp vụ, xử lý ngoại lệ phát sinh | `fix(concurrency): chặn đặt trùng ghế khi nhiều khách cùng thanh toán` |
+| `security` | Vá lỗ hổng bảo mật, kiểm soát phân quyền, mã hóa dữ liệu | `security(company): áp dụng phân quyền nghiêm ngặt chặn nhà xe can thiệp chuyến của nhau` |
+| `perf` | Tối ưu hóa hiệu năng, giảm thời gian truy vấn SQL | `perf(trips): bổ sung composite index cho departure_time và route_id` |
+| `refactor` | Tái cấu trúc mã nguồn (tối ưu hóa hàm, không đổi logic bên ngoài) | `refactor(booking): tách logic tính giá vé và phụ thu tầng vào Domain Service` |
+| `style` | Căn chỉnh giao diện CSS, Responsive Mobile/Tablet | `style(responsive): bổ sung thanh cuộn ngang cho bảng dữ liệu quản trị viên` |
+| `docs` | Cập nhật tài liệu kỹ thuật, SRS, thiết kế CSDL, hướng dẫn vận hành | `docs(git): ban hành nguyên tắc vàng bắt buộc commit bằng tiếng Việt có dấu` |
+| `test` | Viết thêm hoặc chỉnh sửa Unit Test, Integration Test | `test(auth): bổ sung 5 ca kiểm thử xác thực thời hạn và quyền hạn của JWT token` |
+| `chore` | Cập nhật dependencies, build script, cấu hình Gradle, Vite, Docker | `chore(deps): nâng cấp thư viện tailwindcss và lucide-react lên bản mới nhất` |
+| `ci` | Chỉnh sửa cấu hình workflow GitHub Actions, pipeline CI/CD | `ci(github): bổ sung bước tự động kiểm tra biên dịch Gradle khi mở pull request` |
 
 #### Bảng danh mục Scope chuẩn hóa cho hệ thống:
 * `auth`: Xác thực tài khoản, JWT, BCrypt, Spring Security, phân quyền vai trò.
@@ -1665,7 +1673,7 @@ git diff
 Chỉ thêm các file liên quan trực tiếp đến tính năng và tạo commit rõ ràng:
 ```powershell
 git add backend/src/main/java/com/traveleasy/service/BookingService.java
-git commit -m "feat(concurrency): implement pessimistic write lock on trip seat reservation"
+git commit -m "feat(concurrency): triển khai khóa bi quan pessimistic write lock khi giữ chỗ ghế"
 ```
 
 #### Bước 5: Kéo cập nhật mới nhất từ `dev` về nhánh cá nhân để phòng ngừa conflict
