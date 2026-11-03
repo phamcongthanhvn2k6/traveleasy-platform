@@ -66,15 +66,15 @@ Hệ thống hoạt động dưới mô hình Web Application / Mobile Web, kế
 ### 2.2 Chức năng sản phẩm (Product Functions)
 Hệ thống cung cấp 6 nhóm chức năng chính được phân quyền rõ ràng:
 1.  **Quản lý người dùng & Khách hàng:** Đăng ký tài khoản, đăng nhập bằng OTP SĐT hoặc Google OAuth2, quản lý thông tin cá nhân, quyền riêng tư (PDPD - Nghị định 13/2023/NĐ-CP).
-2.  **Tìm kiếm & Đặt vé thông minh:** Tìm kiếm chuyến xe theo nơi đi/nơi đến/ngày đi, bộ lọc đa tiêu chí, hiển thị sơ đồ ghế 2 tầng thời gian thực, cơ chế khóa giữ ghế hai lớp (Soft-Hold 180s & Hard-Hold 600s), thanh toán trực tuyến đa kênh (VietQR, VNPAY, COD).
+2.  **Tìm kiếm & Đặt vé thông minh:** Tìm kiếm chuyến xe theo nơi đi/nơi đến/ngày đi, bộ lọc đa tiêu chí, hiển thị sơ đồ ghế 2 tầng thời gian thực, cơ chế khóa giữ ghế hai lớp (Soft-Hold 180s & Hard-Hold 600s), thanh toán trực tuyến đa kênh (VietQR, VNPAY, COD); Trợ lý ảo AI tư vấn thông minh (Google Gemini AI Assistant) hỗ trợ gợi ý lịch trình, giá vé và giải đáp thắc mắc 24/7; Áp dụng mã ưu đãi / Voucher giảm giá linh hoạt (theo % hoặc số tiền cố định).
 3.  **Gia nhập Đối tác & Thẩm định Pháp lý (Partner Onboarding & KYB Verification):** 
     - Đơn vị kinh doanh vận tải mới nộp đơn đăng ký hợp tác trực tuyến: khai báo pháp nhân, MST, giấy phép con vận tải hành khách của Sở GTVT, thông tin tài khoản ngân hàng thụ hưởng, cam kết quy chế sàn.
     - **Bắt buộc tải lên file ảnh chụp/scan 2 mặt Căn cước công dân (CCCD) gắn chip** của Người đại diện theo pháp luật để xác minh danh tính.
     - Quy trình thẩm định đa tầng (KYB Workflow) do Quản trị viên sàn (Admin) thực hiện: tra cứu MST quốc gia, đối chiếu CCCD, thẩm định giấy phép, gọi điện xác minh hotline trước khi ra quyết định Phê duyệt, Yêu cầu bổ sung hoặc Bác bỏ hồ sơ.
     - Kích hoạt tự động: Khi được duyệt, hệ thống tự động sinh tài khoản Quản trị nhà xe (`ROLE_OPERATOR`), phát hành Hợp đồng hợp tác điện tử và gửi thông tin đăng nhập qua email.
-4.  **Vận hành & Điều hành Nhà xe:** Quản lý đội xe và **bắt buộc thẩm định bộ 4 giấy tờ lưu hành xe** (Cà vẹt xe, Sổ đăng kiểm, Bảo hiểm TNDS/hành khách, Phù hiệu xe Sở GTVT; tự động khóa xe khi hết hạn), cấu hình điểm đón/trả, thiết lập tuyến mẫu, khởi tạo chuyến đi, bán vé tại quầy, ghép ghế bán tự động khi đổi xe khẩn cấp, máy quét mã QR soát vé di động chống quét trùng lặp.
+4.  **Vận hành & Điều hành Nhà xe:** Quản lý đội xe và **bắt buộc thẩm định bộ 4 giấy tờ lưu hành xe** (Cà vẹt xe, Sổ đăng kiểm, Bảo hiểm TNDS/hành khách, Phù hiệu xe Sở GTVT; tự động khóa xe khi hết hạn), cấu hình điểm đón/trả, thiết lập tuyến mẫu, khởi tạo chuyến đi, bán vé tại quầy, ghép ghế bán tự động khi đổi xe khẩn cấp, ứng dụng quét mã QR soát vé trực tiếp di động (`/scanner` & `/lookup`) chống gian lận và chống quét trùng lặp, xuất vé điện tử PDF.
 5.  **Hệ thống thông báo & Dịch vụ khách hàng:** Tự động gửi Email/SMS vé điện tử QR Code, thông báo hoàn hủy, nhắc nhở lịch trình và cập nhật thời gian đến dự kiến (ETA) động; hệ thống đánh giá chuyến đi và báo cáo vi phạm có SLA 48h.
-6.  **Quản trị, Đối soát & Kết toán Tài chính (Admin & Settlement):** Bảng điều khiển tổng quan chỉ số sàn (GMV, doanh thu hoa hồng, occupancy rate), thẩm định nhà xe, đối soát doanh thu tự động, kết toán ví Escrow cho nhà xe sau khi hoàn thành chuyến đi, quản lý dữ liệu gốc (Master Data), cấu hình cổng thanh toán, xem nhật ký kiểm toán (Audit Log) bất biến qua `X-Correlation-Id`.
+6.  **Quản trị, Đối soát & Kết toán Tài chính (Admin & Settlement):** Bảng điều khiển tổng quan chỉ số sàn (GMV, doanh thu hoa hồng, occupancy rate), trung tâm thẩm định nhà xe KYB 5 bước (hỗ trợ đọc trực tiếp PDF và soi ảnh CCCD), quản lý chương trình khuyến mại/voucher sàn, đối soát doanh thu tự động và quyết toán chi trả ký quỹ (Escrow) định kỳ (ngày 15 & cuối tháng) sau khi trừ hoa hồng sàn (5-15%), quản lý dữ liệu gốc (Master Data), cấu hình cổng thanh toán, xem nhật ký kiểm toán (Audit Log) bất biến qua `X-Correlation-Id`.
 
 ### 2.3 Tác nhân & Đặc điểm người dùng (User Classes and Characteristics)
 *   **Khách hàng (Customer / Traveler):** Hành khách có nhu cầu tìm kiếm chuyến xe, chọn vị trí ghế, thanh toán và nhận vé điện tử QR Code. Không yêu cầu kỹ năng công nghệ cao, giao diện trực quan, thao tác nhanh gọn trên thiết bị di động/máy tính.
@@ -179,8 +179,11 @@ stateDiagram-v2
 | **Khởi tạo tài khoản Quản trị nhà xe & HĐĐT** | - | I | I | I | **R, A** |
 | **Khai báo phương tiện & 4 giấy tờ xe (UC-2.2)** | - | - | **R, A** | C (Giám sát) | C (Khóa khi hết hạn) |
 | **Tạo chuyến xe & Mở bán vé trực tuyến (UC-2.5)** | - | - | **R, A** | I | C (Đồng bộ) |
-| **Quét mã QR soát vé lên xe (Check-in)** | I | - | **R, A** | I | C (Chống quét trùng) |
-| **Đối soát & Kết toán tài chính Escrow (UC-1.13)** | - | - | C (Đối chiếu) | **R, A** | C (Tính hoa hồng) |
+| **Tư vấn lịch trình qua Trợ lý ảo AI (UC-1.17)** | **R, A** | - | - | I | C (Gemini LLM) |
+| **Áp dụng mã ưu đãi / Voucher giảm giá (UC-1.18)** | **R, A** | - | - | I | C (Validate) |
+| **Quét mã QR & Soát vé lên xe trực tiếp (UC-2.12)** | I | - | **R, A** | I | C (Chống quét trùng) |
+| **Quản trị khuyến mại & Vouchers (UC-3.12)** | - | - | I | **R, A** | C (Lưu trữ) |
+| **Quyết toán ký quỹ Escrow & Chi trả nhà xe (UC-3.13)** | - | - | C (Đối chiếu) | **R, A** | C (Tính hoa hồng) |
 
 ## 3. YÊU CẦU CHI TIẾT (SPECIFIC REQUIREMENTS)
 
@@ -419,6 +422,41 @@ stateDiagram-v2
     *   Trạng thái giữa Phase 1 và Phase 2 là **nhất quán và bền vững** (không dở dang): `newBooking.status = PENDING_PAYMENT`, hệ thống có thể khởi động lại và tái xử lý IPN nhờ `rescheduleOperationId`. **`PENDING_PAYMENT` có nghĩa là ghế mới đang được giữ tạm thời (Hard Hold TTL = 600 giây), payment chưa hoàn tất — không phải trạng thái lưu trữ vĩnh viễn.** Khi TTL hết mà payment chưa SUCCESS: ghế mới giải phóng, `newBooking` không được finalize, Old Ticket vẫn ACTIVE, Reschedule attempt này chưa thành công (`new_ticket_id = NULL`).
 
 
+##### UC-1.17: Trợ Lý Ảo AI Tư Vấn Thông Minh (AI Smart Travel Assistant)
+*   **Tác nhân:** Hành khách / Khách vãng lai truy cập website.
+*   **Tiền điều kiện:** Ứng dụng đã khởi động, kết nối Internet ổn định.
+*   **Giao diện:** Widget Trợ lý AI nổi (Floating Chat Widget) tại góc dưới màn hình hoặc trang hội thoại chuyên biệt.
+*   **Luồng sự kiện chính:**
+    1.  Khách hàng mở khung chat và gửi câu hỏi ngôn ngữ tự nhiên (ví dụ: *"Có chuyến xe nào từ Sài Gòn đi Đà Lạt tối nay giá dưới 300k không?", "Chính sách hủy vé trước mấy tiếng được hoàn tiền?", "Nên chọn xe phòng đôi hay giường nằm đơn?"*).
+    2.  Hệ thống Backend (`AiController` / `AiService`) tiếp nhận câu hỏi, kết hợp với bộ ngữ cảnh động của hệ thống (Danh mục nhà xe uy tín, lịch trình chuyến, khung giá, chính sách vé, câu hỏi thường gặp FAQ) và gửi prompt tới mô hình ngôn ngữ lớn (Google Gemini API).
+    3.  Hệ thống xử lý câu trả lời dạng Markdown trực quan, kèm các thẻ gợi ý chuyến đi nhanh (Quick Trip Cards) có nút bấm điều hướng thẳng vào luồng đặt vé tương ứng.
+    4.  Khách hàng có thể tiếp tục hội thoại nhiều lượt (Multi-turn Context) hoặc chọn các câu hỏi gợi ý có sẵn (Quick Prompt Chips).
+*   **Hậu điều kiện:** Khách hàng nhận được câu trả lời giải đáp chính xác, tự nhiên trong vòng 2-3 giây.
+*   **Ngoại lệ:** Khi API AI gặp sự cố hoặc timeout (> 10s), hệ thống tự động fallback về câu trả lời chuẩn tắc kèm số Hotline tổng đài 1900 8888.
+
+##### UC-1.18: Áp Dụng Mã Ưu Đãi / Voucher Giảm Giá (Promotions & Coupon Discounts)
+*   **Tác nhân:** Khách hàng đặt vé trực tuyến.
+*   **Tiền điều kiện:** Khách hàng đang ở bước Thanh toán (`/checkout`) hoặc xem danh mục ưu đãi (`/promotions`).
+*   **Luồng sự kiện chính:**
+    1.  Hệ thống hiển thị danh sách các mã giảm giá công khai đang có hiệu lực (kèm giá trị giảm, hạn sử dụng, điều kiện đơn tối thiểu) để khách hàng chọn nhanh bằng 1-Click.
+    2.  Khách hàng có thể nhập mã khuyến mãi thủ công vào ô nhập liệu (ví dụ: `HELLOSUMMER`, `VEXERE10`, `TRIAN2026`) và nhấn "Áp dụng".
+    3.  Hệ thống kiểm tra các quy tắc nghiệp vụ thời gian thực:
+        - Mã voucher có tồn tại trong hệ thống và đang ở trạng thái `ACTIVE`.
+        - Thời gian hiện tại nằm trong khoảng hiệu lực: `validFrom <= currentTime <= validTo`.
+        - Tổng giá trị đơn vé đạt mức tối thiểu: `totalAmount >= minBookingAmount`.
+        - Số lượt sử dụng của mã chưa đạt giới hạn tối đa: `usedCount < usageLimit`.
+        - Chuyến xe đặt thuộc phạm vi áp dụng (theo nhà xe hoặc toàn sàn).
+    4.  Hệ thống tính toán số tiền chiết khấu (`discountAmount`):
+        - Nếu loại chiết khấu là Phần trăm (`PERCENTAGE`): `discountAmount = min(totalAmount * discountPercent / 100, maxDiscountAmount)`.
+        - Nếu loại chiết khấu là Số tiền cố định (`FIXED_AMOUNT`): `discountAmount = min(discountValue, totalAmount)`.
+    5.  Hệ thống cập nhật lại Tổng số tiền thanh toán thực tế: `finalAmount = totalAmount - discountAmount`.
+    6.  Khi khách hàng hoàn tất thanh toán thành công (IPN SUCCESS), hệ thống tăng bộ đếm `usedCount = usedCount + 1` và ghi nhận mã voucher đã dùng vào chi tiết đơn hàng (`booking.voucherCode`, `booking.discountAmount`).
+*   **Ràng buộc nghiệp vụ:**
+    - Mỗi đơn đặt vé chỉ được áp dụng duy nhất 01 voucher tại một thời điểm.
+    - Tiền giảm giá không được vượt quá tổng giá trị đơn vé (`discountAmount <= totalAmount`).
+    - Voucher không được áp dụng đối với giao dịch nộp tiền chênh lệch đổi vé (`RESCHEDULE_SURCHARGE`).
+*   **Hậu điều kiện:** Đơn hàng được ghi nhận số tiền giảm trừ hợp lệ; số tiền yêu cầu thanh toán trên cổng VNPay/MoMo/VietQR khớp đúng `finalAmount`.
+
 ---
 
 #### 3.2.1.X: Đặc tả cơ chế xác nhận thanh toán (IPN) & Khóa đồng thời Hoàn tiền (Refund Concurrency)
@@ -508,19 +546,28 @@ Nhằm đảm bảo tính tin cậy tuyệt đối cho các giao dịch tài ch�
 *   **Tiền điều kiện:** Đối tác truy cập Cổng Đăng ký Đối tác trên giao diện Web (`/partner-register` hoặc modal "Hợp tác mở bán vé").
 *   **Luồng sự kiện chính:**
     1.  **Bước 1: Khai báo thông tin pháp nhân & thương hiệu vận tải:**
-        - Tên pháp lý đầy đủ của Doanh nghiệp / Hợp tác xã vận tải (theo Giấy chứng nhận ĐKKD).
-        - Tên thương mại hiển thị cho hành khách (ví dụ: "Phương Trang FUTA Bus Lines", "Hoa Mai Vũng Tàu").
-        - Mã số thuế (MST): Bắt buộc 10 chữ số (đối với Doanh nghiệp) hoặc 13 chữ số (đối với Chi nhánh / Địa điểm kinh doanh). Hệ thống tự động kiểm tra định dạng và chuẩn hóa ký tự.
-        - Địa chỉ trụ sở chính đăng ký kinh doanh và Địa chỉ văn phòng đại diện giao dịch.
+        - Tên Nhà xe / Doanh nghiệp Vận tải: Tối thiểu 3 ký tự, tự động kiểm tra không trùng lặp tên với các nhà xe đã hoạt động trên sàn.
+        - Họ và tên Người đại diện / Quản lý: Tối thiểu 2 từ, viết hoa chữ cái đầu.
+        - Số điện thoại liên hệ: Bắt buộc 10 chữ số, đúng đầu số di động tiêu chuẩn Việt Nam (03x, 05x, 07x, 08x, 09x).
+        - Email công ty: Kiểm tra đúng cú pháp RFC 5322 regex.
+        - Mã số thuế (MST) / Giấy phép ĐKKD: Bắt buộc đúng 10 chữ số (doanh nghiệp) hoặc 13 chữ số (chi nhánh/địa điểm kinh doanh).
+        - Địa chỉ trụ sở đăng ký kinh doanh: Tối thiểu 10 ký tự, mô tả rõ số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành.
+        - **Bộ tạo Tuyến đường Vận tải đang khai thác (Interactive Route Builder):**
+          * Cung cấp 2 danh mục chọn điểm: **Điểm xuất phát (Tỉnh/Thành đi)** và **Điểm đến (Tỉnh/Thành đến)**, hỗ trợ nút bấm thêm tuyến 2 chiều (`⇄`) vào danh sách một cách trực quan, **không yêu cầu người dùng phải gõ thủ công ký tự mũi tên đặc biệt**.
+          * Bổ sung nút xóa tuyến khỏi danh sách dạng thẻ tag trực quan.
+          * Cung cấp danh sách 10 tuyến đường trọng điểm gợi ý nhanh (1-Click Suggestions: *Sài Gòn ⇄ Đà Lạt, Hà Nội ⇄ Sa Pa, Sài Gòn ⇄ Nha Trang, Hà Nội ⇄ Đà Nẵng, Sài Gòn ⇄ Vũng Tàu, Hà Nội ⇄ Hải Phòng...*).
+          * Yêu cầu tối thiểu phải khai báo ít nhất 01 tuyến đường vận tải hoạt động.
+        - Quy mô đội xe hiện tại: Lựa chọn phân khúc đội xe (*1-5 xe, 6-20 xe, 21-50 xe, Trên 50 xe*).
+        - **Bộ tính toán Doanh thu Tiềm năng (Interactive ROI Calculator):** Tích hợp công cụ trực quan cho nhà xe kéo thanh trượt số lượng chuyến/ngày, số ghế/chuyến, giá vé trung bình và tỷ lệ lấp đầy để ước tính doanh thu thuần tăng thêm mỗi tháng khi hợp tác cùng sàn TravelEasy.
     2.  **Bước 2: Khai báo thông tin Giấy phép con Vận tải hành khách:**
         - Số Giấy phép kinh doanh vận tải bằng xe ô tô do Sở Giao thông Vận tải cấp.
         - Ngày cấp, Nơi cấp (Tỉnh/Thành phố trực thuộc Trung ương) và Ngày hết hạn giấy phép (phải còn hiệu lực tối thiểu 06 tháng tại thời điểm đăng ký).
         - Loại hình vận tải đăng ký mở bán: Vận tải hành khách theo tuyến cố định, Vận tải hành khách hợp đồng du lịch, hoặc Vận chuyển hàng hóa ký gửi.
-    3.  **Bước 3: Tải lên bộ tài liệu số hóa minh chứng (KYB Document Attachments):**
-        - Bản chụp / Scan Giấy chứng nhận Đăng ký Doanh nghiệp (ĐKKD) (định dạng PDF, JPG, PNG; độ phân giải cao, rõ nét 4 góc).
-        - Bản scan Giấy phép Kinh doanh Vận tải bằng ô tô do Sở GTVT cấp (có dấu mộc đỏ hợp lệ).
-        - Ảnh chụp mẫu phương tiện tiêu biểu (xe Limousine, xe giường nằm) có thể hiện rõ biển kiểm soát và phù hiệu xe do cơ quan nhà nước cấp.
-        - Logo thương hiệu chính thức (ảnh vector hoặc PNG nền trong suốt).
+    3.  **Bước 3: Tải lên bộ tài liệu số hóa minh chứng trực tiếp (Direct File Dropzone — Cloudinary Storage):**
+        - **Cơ chế nộp tài liệu bắt buộc:** Hệ thống cung cấp khu vực kéo thả tập tin (Drag & Drop Zone), **tải file trực tiếp từ máy tính người dùng lên kho lưu trữ bảo mật Cloudinary (thư mục `partner_kyb/`), tuyệt đối không bắt người dùng tự nhập liên kết URL thủ công**.
+        - **(1) File Ảnh Căn cước công dân Mặt trước (`identity_card_front`):** Ảnh chụp bản gốc rõ nét 4 góc, đủ thông tin số định danh (hỗ trợ JPG, PNG, WEBP, dung lượng tối đa 10MB).
+        - **(2) File Ảnh Căn cước công dân Mặt sau (`identity_card_back`):** Ảnh chụp mặt sau có vân tay và chip điện tử rõ ràng (hỗ trợ JPG, PNG, WEBP, tối đa 10MB).
+        - **(3) File Scan Giấy Phép Kinh Doanh / Vận Tải Tuyến Cố Định (`business_license`):** Bản scan màu có dấu mộc đỏ của Sở GTVT. Hỗ trợ linh hoạt cả **file tài liệu định dạng PDF (`.pdf`)** lẫn **file ảnh (`.png, .jpg, .jpeg, .webp`)**, dung lượng tối đa 10MB.
     4.  **Bước 4: Khai báo Người đại diện theo pháp luật, Tải lên CCCD 2 mặt & Tài khoản Ngân hàng Quyết toán:**
         - Họ và tên người đại diện pháp luật, Chức vụ (Giám đốc, Tổng Giám đốc, Chủ tịch HĐQT).
         - Số CCCD/Hộ chiếu người đại diện, Ngày cấp, Nơi cấp.
@@ -594,7 +641,7 @@ Nhằm đảm bảo tính tin cậy tuyệt đối cho các giao dịch tài ch�
     1.  **Quản lý Tuyến mẫu (`RouteTemplate`):** Nhà xe tạo lập tuyến đường mẫu cố định:
         - Khai báo `originLocationId` và `destinationLocationId` làm **Default Representative Locations (Search Anchors / Fallback)** của tuyến.
         - Khai báo danh sách điểm dừng vận hành (`RouteTemplateStop`) theo thứ tự `sequence`. Hệ thống tự động gọi Routing API (như Google Maps) để **tính thời lượng di chuyển dự kiến giữa hai điểm dừng liên tiếp** (`estimatedTravelDurationFromPreviousStopMinutes`). **Nhà xe không có quyền chỉnh sửa/ghi đè giá trị này**. Stop đầu tiên (`sequence = 1`) luôn có `estimatedTravelDurationFromPreviousStopMinutes = 0` (NOT NULL). Không dùng giờ tuyệt đối hay cumulative duration tính từ điểm xuất phát.
-        - **Cấu hình Dịch vụ Xe trung chuyển (`RouteTemplateShuttleService`):** Khai báo dịch vụ Đón (`PICKUP`) và Trả (`DROPOFF`) độc lập. **`[MEDIUM-4]`** Mỗi Tuyến mẫu có tối đa **0..1 PICKUP** và tối đa **0..1 DROPOFF** Shuttle Service (`UNIQUE(routeTemplateId, shuttleType)`) — các điểm/ lựa chọn mà khách nhìn thấy trong UI thuộc về service đó và **KHÔNG** được hiểu thành nhiều Shuttle Service độc lập. Mỗi dịch vụ trung chuyển bắt buộc sở hữu `referenceStop` là mốc thời gian vận hành chính do **Nhà xe tự chọn thủ công** từ các `RouteTemplateStop` thuộc tuyến (NOT NULL, không mặc định/suy luận từ điểm cuối hay origin/destination). Khai báo `shuttleOffsetMinutes`, phạm vi phục vụ `coverageAreaDescription` (văn bản mô tả, không tạo Location entity riêng), loại phí `pricingType` (`FREE` ở V1, sẵn sàng mở rộng `PAID`/`feeAmount` ở V2). Không xây dựng Voucher/Discount System.
+        - **Cấu hình Dịch vụ Xe trung chuyển (`RouteTemplateShuttleService`):** Khai báo dịch vụ Đón (`PICKUP`) và Trả (`DROPOFF`) độc lập. **`[MEDIUM-4]`** Mỗi Tuyến mẫu có tối đa **0..1 PICKUP** và tối đa **0..1 DROPOFF** Shuttle Service (`UNIQUE(routeTemplateId, shuttleType)`) — các điểm/ lựa chọn mà khách nhìn thấy trong UI thuộc về service đó và **KHÔNG** được hiểu thành nhiều Shuttle Service độc lập. Mỗi dịch vụ trung chuyển bắt buộc sở hữu `referenceStop` là mốc thời gian vận hành chính do **Nhà xe tự chọn thủ công** từ các `RouteTemplateStop` thuộc tuyến (NOT NULL, không mặc định/suy luận từ điểm cuối hay origin/destination). Khai báo `shuttleOffsetMinutes`, phạm vi phục vụ `coverageAreaDescription` (văn bản mô tả, không tạo Location entity riêng), loại phí `pricingType` (`FREE` ở V1, sẵn sàng mở rộng `PAID`/`feeAmount` ở V2). Hệ thống Khuyến mại & Mã giảm giá (Voucher) được quản lý tập trung và áp dụng độc lập tại bước Checkout (xem UC-1.18 và UC-3.12).
         - Khai báo khung giá vé cho từng loại ghế (`RouteTemplateSeatPrice`).
     2.  **Khởi tạo Chuyến đi (`Trip`):** Khi khởi tạo một chuyến đi thực tế từ Tuyến mẫu, Nhà xe nhập **Ngày chạy** và **Giờ xuất phát gốc** (`TripSchedule.baseDepartureTime`). Hệ thống thực hiện snapshot bất biến:
         - Clone danh sách điểm dừng `RouteTemplateStop` thành danh sách `TripPoint` trên `Trip`. Hệ thống tự động tính `TripPoint.eta` bằng cách cộng dồn tuần tự từng đoạn theo sequence: `TripPoint[1].eta = baseDepartureTime` (vì duration của stop 1 = 0), `TripPoint[i].eta = TripPoint[i-1].eta + Stop[i].estimatedTravelDurationFromPreviousStopMinutes` (với i > 1). Đồng thời **sao chép thông tin vận hành** từ Cấu hình Địa điểm (`BusCompanyLocationConfig`) sang `TripPoint`: tên hiển thị, cờ cho đón/trả trực tiếp, hotline, hướng dẫn gặp tài xế, cổng, nền đỗ, mốc nhận biết. Các giá trị này **bất biến** sau khi chuyến được tạo và là nguồn duy nhất để hiển thị cho khách (không đọc lại cấu hình hiện hành).
@@ -663,6 +710,31 @@ Nhằm đảm bảo tính tin cậy tuyệt đối cho các giao dịch tài ch�
 *   **Hậu điều kiện:** Tổng số phút trễ hiện tại của chuyến được cập nhật và lưu vết; ETA gốc của các Trip Point được bảo toàn nguyên vẹn.
 *   **Ngoại lệ:** Không chấp nhận số phút trễ âm (`CHECK (delay_minutes >= 0)`).
 
+##### UC-2.12: Quét Mã QR & Soát Vé Lên Xe Trực Tiếp (Live Ticket Scanner & Check-in)
+*   **Tác nhân:** Nhân viên kiểm soát vé / Tiếp viên / Phụ xe / Tài xế nhà xe (`ROLE_OPERATOR`).
+*   **Tiền điều kiện:** Nhân viên đã đăng nhập tài khoản nhà xe trên thiết bị di động hoặc máy tính bảng; Khách hàng xuất trình vé điện tử QR Code (trên app, web, email hoặc bản in PDF).
+*   **Giao diện:** 
+    - Chế độ Camera Trực tiếp (`/scanner`): Tích hợp luồng video camera qua thư viện quét mã vạch HTML5 QR Code Scanner với khung ngắm định vị và đèn flash trợ sáng.
+    - Chế độ Tra cứu Thủ công (`/lookup`): Cho phép gõ trực tiếp Mã vé (Ticket Code) hoặc Số điện thoại đặt vé khi màn hình điện thoại khách bị vỡ hoặc camera không nhận diện được.
+*   **Luồng sự kiện chính:**
+    1.  Nhân viên mở màn hình Quét vé (`/scanner`), chọn chuyến xe chuẩn bị khởi hành.
+    2.  Hướng camera thiết bị về phía mã QR trên vé điện tử của hành khách.
+    3.  Hệ thống giải mã tức thì nội dung QR (chứa `ticketCode` và chữ ký bảo mật xác thực) và gọi API kiểm tra vé (`POST /api/bookings/check-in`).
+    4.  Hệ thống kiểm tra toàn diện 4 điều kiện nghiệp vụ:
+        - Vé tồn tại và thuộc đúng quyền quản lý của Nhà xe hiện tại.
+        - Vé thuộc đúng Chuyến xe (`tripId`) đang thực hiện đón khách.
+        - Trạng thái vé hợp lệ (`status = 'ISSUED'` hoặc `'CONFIRMED'`).
+        - Vé chưa từng được soát lên xe trước đó (`checked_in_at IS NULL`).
+    5.  Hệ thống chuyển trạng thái vé sang `CHECKED_IN`, ghi nhận mốc thời gian soát vé (`checked_in_at = CURRENT_TIMESTAMP`) và ID nhân viên thực hiện.
+    6.  Giao diện phát âm thanh thông báo thành công (Beep) kèm thẻ thông tin màu xanh lá: Tên hành khách, Số ghế, Điểm đón, Điểm trả, Trạng thái thanh toán ĐÃ THU ĐỦ.
+    7.  Hệ thống tự động cập nhật sĩ số khách đã lên xe / tổng số khách trên chuyến đi (ví dụ: *Đã lên xe 28/34 khách*).
+*   **Các luồng ngoại lệ & Cảnh báo an ninh:**
+    - *Ngoại lệ 1 (Vé đã soát trước đó - Quét trùng lặp):* Hệ thống hiển thị cảnh báo đỏ toàn màn hình kèm âm thanh cảnh báo: **"CẢNH BÁO: Vé này đã được check-in vào lúc HH:mm:ss ngày DD/MM bởi nhân viên [Tên]! Nguy cơ hành khách dùng vé trùng hoặc gian lận!"**.
+    - *Ngoại lệ 2 (Vé đã bị hủy / hoàn tiền):* Hệ thống hiển thị cảnh báo: **"VÉ KHÔNG HỢP LỆ: Vé này đã bị hủy hoàn tiền trên hệ thống lúc HH:mm:ss!"**. Chặn không cho hành khách lên xe.
+    - *Ngoại lệ 3 (Vé sai chuyến đi):* Hiển thị thông báo: **"Vé thuộc chuyến đi khác (Biển số: [XX], Khởi hành: [HH:mm])"**.
+*   **Tính năng bổ trợ:** Cho phép in vé giấy lưu động qua máy in nhiệt Bluetooth mini hoặc bấm "Xuất vé điện tử PDF" để gửi lại cho hành khách khi có yêu cầu xuất trình hóa đơn vé.
+*   **Hậu điều kiện:** Trạng thái vé được cập nhật thành công; dữ liệu đồng bộ tức thì lên hệ thống quản lý trung tâm của nhà xe và quản trị viên.
+
 ---
 
 #### 3.2.3 Phân hệ Quản trị viên (Admin)
@@ -678,14 +750,21 @@ Lưu ý kiến trúc: Hệ thống KHÔNG triển khai RBAC động (Admin tự 
 *   **Tác nhân:** Quản trị viên Sàn (Admin) / Bộ phận Pháp chế & Kiểm soát Tuân thủ (Compliance Officer).
 *   **Tiền điều kiện:** Admin đăng nhập Cổng Quản trị Sàn với quyền `ROLE_ADMIN`, truy cập màn hình Thẩm định Nhà xe (`/admin/bus-companies` hoặc tab *Duyệt đối tác*).
 *   **Luồng sự kiện chính:**
-    1.  **Bước 1: Tiếp nhận hàng đợi Thẩm định & Kiểm tra Cú pháp Tự động (Layer 1 - Sanity & Format Check):**
+    1.  **Bước 1: Tiếp nhận hàng đợi Thẩm định & Kiểm tra Hồ sơ Tổng quan (KYB Audit Dashboard):**
         - Admin mở danh sách các hồ sơ ở trạng thái `PENDING_APPROVAL` (hoặc `PENDING_SUPPLEMENT`).
-        - Hệ thống hiển thị huy hiệu cảnh báo (Pending Badge), thời gian nộp đơn và điểm tín nhiệm sơ bộ.
-        - Hệ thống tự động kiểm tra định dạng Mã số thuế (MST), định dạng CCCD người đại diện, kiểm tra trùng lặp trên Blacklist vi phạm của sàn.
-    2.  **Bước 2: Thẩm định Tính Pháp Lý Đa Tầng (Layer 2 - Cross-Verification & Legal Compliance):**
-        - **Đối chiếu CSDL Quốc gia về Đăng ký Doanh nghiệp:** Admin bấm nút "Tra cứu MST tự động" (kết nối API hoặc điều hướng sang `dangkykinhdoanh.gov.vn` / Cổng Tổng cục Thuế `tracuunnt.gdt.gov.vn`) để kiểm tra: Doanh nghiệp đang hoạt động hợp pháp (không bị đóng mã số thuế, không bị giải thể hay tạm ngừng hoạt động); Tên công ty và địa chỉ trên hồ sơ khớp 100% với CSDL Quốc gia.
-        - **Kiểm tra Giấy phép Kinh doanh Vận tải bằng ô tô (Sở GTVT cấp):** Admin xem tài liệu scan, phóng to kiểm tra dấu mộc đỏ, thẩm quyền ký, ngày hết hạn (còn hạn tối thiểu 06 tháng) và phạm vi cấp phép có đúng luồng "Vận tải hành khách tuyến cố định / Hợp đồng" hay không.
-        - **Kiểm tra Tài khoản Ngân hàng Thụ hưởng (Escrow Account Verification):** Đối chiếu tên chủ tài khoản thụ hưởng với Tên công ty hoặc Tên người đại diện theo pháp luật trên GPKD (Tuyệt đối không duyệt tài khoản thụ hưởng của cá nhân lạ để phòng chống rửa tiền và gian lận thanh toán).
+        - Màn hình trực quan phân nhóm rõ ràng: Thông tin Doanh nghiệp, Người đại diện, Đội xe & Tuyến đường, Tài liệu số hóa, và Tài khoản thụ hưởng.
+        - Hệ thống tự động kiểm tra cú pháp 13 trường dữ liệu, hiển thị huy hiệu xác nhận tính toàn vẹn hồ sơ.
+    2.  **Bước 2: Trình Xem & Kiểm Tra Tài Liệu Trực Tiếp (Embedded PDF Viewer & High-Res Image Lightbox):**
+        - **Kiểm tra CCCD 2 mặt:** Trình xem ảnh phóng to toàn màn hình hỗ trợ kiểm tra chi tiết 4 góc ảnh, đối chiếu khuôn mặt, số định danh 12 chữ số và con chip điện tử.
+        - **Trình đọc Giấy phép Vận tải nhúng (Embedded Full-Screen PDF Reader):** Đối với các tài liệu scan tải lên dưới dạng file `.pdf`, hệ thống tích hợp sẵn trình đọc tài liệu PDF trực tiếp trên giao diện Admin (có tính năng phóng to, thu nhỏ, cuộn nhiều trang, mở tab mới). Admin không cần tải file về máy tính cá nhân để xem, giúp tăng tốc độ xử lý thẩm định gấp 3 lần và ngăn ngừa rủi ro mã độc tệp tin.
+        - Kiểm tra tính xác thực: Dấu mộc đỏ pháp nhân, chữ ký của Lãnh đạo Sở GTVT, ngày cấp, thời hạn hiệu lực và tuyến đường được cấp phép khai thác.
+    3.  **Bước 3: Tra Cứu CSDL Thuế & Đăng Ký Doanh Nghiệp Quốc Gia 1-Click:**
+        - Admin nhấn nút "Tra cứu MST tự động" để mở nhanh liên kết kiểm tra chéo trên Cổng thông tin Quốc gia về Đăng ký Doanh nghiệp (`dangkykinhdoanh.gov.vn`) hoặc Cổng tra cứu người nộp thuế (`tracuunnt.gdt.gov.vn`).
+        - Kiểm tra tình trạng hoạt động thực tế: Đang hoạt động, Đã tạm ngừng kinh doanh, hay Đã đóng mã số thuế.
+    4.  **Bước 4: Kiểm Soát Tuân Thủ Rửa Tiền & Tài Khoản Thụ Hưởng Ký Quỹ (AML Check):**
+        - Hệ thống chạy thuật toán đối soát tự động: So khớp chuỗi ký tự `accountHolderName` của tài khoản ngân hàng thụ hưởng với `representativeName` (Người đại diện) và `name` (Tên pháp nhân công ty).
+        - Nếu tên chủ tài khoản khớp hoàn toàn hoặc chứa tên người đại diện -> Đánh dấu xanh "Tài khoản Thụ hưởng Hợp Lệ".
+        - Nếu tên chủ tài khoản là cá nhân hoàn toàn xa lạ -> Hệ thống hiển thị cảnh báo đỏ **"RỦI RO TIỀN KÝ QUỸ: Tên chủ tài khoản không trùng khớp với đại diện pháp luật!"** nhằm ngăn chặn tuyệt đối các hành vi trục lợi tài chính hoặc mở bán vé lừa đảo.
     3.  **Bước 3: Xác minh Thực địa & Hotline Điều Hành (Layer 3 - Tele-Verification Call):**
         - Admin thực hiện cuộc gọi kiểm chứng (Verification Call) tới Hotline đặt vé và SĐT Người đại diện để xác nhận tính chính danh của người nộp hồ sơ.
         - Đánh giá sơ bộ thái độ phục vụ và quy mô phục vụ của nhà xe, ghi chú biên bản cuộc gọi vào hệ thống.
@@ -764,6 +843,48 @@ Lưu ý kiến trúc: Hệ thống KHÔNG triển khai RBAC động (Admin tự 
 *   **Luồng sự kiện chính:** Xem nhật ký hoạt động hệ thống bao gồm: lịch sử đăng nhập, lịch sử thay đổi cấu hình tiền tệ, API thanh toán, thao tác CRUD chuyến đi của nhà xe và admin.
 *   **Hậu điều kiện:** Giao diện audit log được hiển thị đầy đủ (dữ liệu này là Read-Only).
 
+##### UC-3.12: Quản Trị Chương Trình Khuyến Mại & Vouchers (Promotions & Coupon Management)
+*   **Tác nhân:** Quản trị viên Sàn (Admin) / Bộ phận Marketing.
+*   **Tiền điều kiện:** Admin đăng nhập Cổng Quản trị (`/admin/promotions`).
+*   **Luồng sự kiện chính:**
+    1.  Admin xem danh sách toàn bộ các chiến dịch khuyến mại và mã voucher trên hệ thống (kèm mã code, loại giảm giá, số lượt đã dùng, hạn sử dụng, trạng thái `ACTIVE / INACTIVE / EXPIRED`).
+    2.  **Tạo mới mã khuyến mại:**
+        - Nhập mã Voucher (viết hoa, không dấu, ví dụ: `HELLOSUMMER`, `SALE50K`).
+        - Tiêu đề và mô tả ngắn chiến dịch ưu đãi.
+        - Chọn loại giảm giá: Phần trăm (`PERCENTAGE`) hoặc Số tiền cố định (`FIXED_AMOUNT`).
+        - Nhập giá trị giảm (`discountValue`) và Giới hạn mức giảm tối đa (`maxDiscountAmount` đối với loại %).
+        - Nhập giá trị đơn hàng tối thiểu để được áp dụng (`minBookingAmount`).
+        - Thiết lập thời gian bắt đầu (`validFrom`) và thời gian kết thúc (`validTo`).
+        - Thiết lập giới hạn tổng số lượt sử dụng (`usageLimit`).
+        - Chọn phạm vi áp dụng: Toàn sàn (All Bus Companies) hoặc Chỉ định cụ thể cho một số Nhà xe liên kết tài trợ.
+    3.  **Kích hoạt / Tạm dừng mã voucher:** Admin có thể bật/tắt tức thì trạng thái mã khuyến mại khi ngân sách chiến dịch thay đổi.
+*   **Hậu điều kiện:** Mã khuyến mại mới được xuất bản, hiển thị công khai tại trang `/promotions` và có hiệu lực ngay lập tức tại bước thanh toán của khách hàng (UC-1.18).
+
+##### UC-3.13: Quản Lý Quyết Toán Ký Quỹ & Chi Trả Doanh Thu Nhà Xe (Escrow Financial Settlements)
+*   **Tác nhân:** Quản trị viên Sàn (Admin) / Bộ phận Kế toán Đối soát Tài chính.
+*   **Tiền điều kiện:** Admin đăng nhập Cổng Quản trị (`/admin/settlements`).
+*   **Mô hình Ký Quỹ Sàn (Escrow Architecture):**
+    - Toàn bộ tiền vé hành khách thanh toán trực tuyến (qua VNPAY, MoMo, VietQR) được giữ an toàn tại Tài khoản Ký Quỹ Trung Gian của Sàn TravelEasy.
+    - Sàn chỉ thực hiện kết toán và chuyển giao doanh thu cho Nhà xe sau khi chuyến đi đã hoàn thành xuất sắc (`COMPLETED`), không có khiếu nại tranh chấp chưa xử lý từ hành khách.
+*   **Luồng sự kiện chính:**
+    1.  **Chu kỳ quyết toán định kỳ:** Hệ thống thiết lập chu kỳ quyết toán tự động 2 lần mỗi tháng:
+        - Đợt 1: Ngày 15 hàng tháng (quyết toán cho các chuyến đi hoàn tất từ ngày 01 đến ngày 14).
+        - Đợt 2: Ngày cuối cùng của tháng (quyết toán cho các chuyến đi hoàn tất từ ngày 15 đến ngày áp chót).
+    2.  **Tính toán và Khấu trừ Hoa hồng Sàn (Platform Commission):**
+        - Doanh thu vé gộp (`Gross Ticket Sales`) = Tổng tiền vé thực tế của các chuyến xe `COMPLETED` trong kỳ.
+        - Phí hoa hồng sàn (`Platform Fee`) = `Gross Ticket Sales * commissionRate` (tỷ lệ hoa hồng từ 5% đến 15% đã ký kết trong Hợp đồng hợp tác điện tử tại UC-3.2).
+        - Số tiền thực nhận của Nhà xe (`Net Settlement Amount`) = `Gross Ticket Sales - Platform Fee - Phí hoàn tiền chuyến hủy (nếu có)`.
+    3.  **Lập Bảng Kê Đối Soát (Reconciliation Statement):**
+        - Hệ thống tự động kết xuất Bảng kê chi tiết từng chuyến xe, từng mã vé, số tiền thu hộ, tỷ lệ hoa hồng và số tiền thực chi trả.
+        - Admin kế toán kiểm tra đối soát số liệu và nhấn nút "Phê duyệt Lệnh Chi Trả".
+    4.  **Thực hiện Chuyển khoản Chi trả:**
+        - Kế toán thực hiện lệnh chuyển khoản ngân hàng (Batch Payout / Bank Transfer) trực tiếp vào Tài khoản Ngân hàng Quyết toán đã được thẩm định KYB của nhà xe.
+        - Chuyển trạng thái quyết toán sang `PAID`, đính kèm mã tham chiếu giao dịch ngân hàng (`bankTransactionRef`).
+        - Hệ thống tự động gửi Email Báo cáo Quyết toán định kỳ kèm file sao kê PDF/Excel tới đại diện nhà xe.
+    5.  **Cổng Nhà Xe Tra Cứu Doanh Thu (`/company/settlements`):**
+        - Nhà xe có quyền truy cập tab Quyết toán trong Cổng điều hành để xem lịch sử nhận tiền, trạng thái đối soát các kỳ, tải bảng kê hóa đơn và theo dõi doanh thu giữ hộ thời gian thực.
+*   **Hậu điều kiện:** Dòng tiền bán vé được minh bạch hóa 100%; nghĩa vụ tài chính giữa Sàn và Nhà xe được tất toán đúng cam kết hợp đồng.
+
 ---
 
 #### 3.2.4 Quy Tắc Nghiệp Vụ Quản Trị & Thẩm Định Đối Tác Nhà Xe (KYB Business Rules)
@@ -827,4 +948,4 @@ Nhằm tuân thủ các quy định pháp luật hiện hành của Việt Nam v
 | 4 | **Runtime Delay ETA** `[D6]` | ✅ Đã đồng bộ | `TripDelayReportService` **SET** `TripSchedule.delayMinutes` = **tổng** số phút trễ hiện tại (absolute, không cộng dồn). `TripPoint.eta` là **ETA gốc bất biến**, không bao giờ bị ghi đè. Giờ thực tế = `eta + delayMinutes` tính khi đọc → báo trễ nhiều lần không double-count, đặt lại về 0 khôi phục đúng lịch gốc. Không gọi lại Routing API runtime. |
 | 5 | **Shuttle Service Model** | ✅ Đã đồng bộ | Thiết lập mô hình snapshot `RouteTemplateShuttleService` -> `TripShuttleService`. Pickup và Dropoff là 2 cấu hình độc lập. Bắt buộc có `referenceStop` do **Nhà xe tự chọn thủ công** từ các `RouteTemplateStop` của tuyến (NOT NULL). `displayTime` được snapshot tính từ `TripPoint(referenceStop).eta +/- shuttleOffsetMinutes`. |
 | 6 | **Phạm vi Shuttle (Coverage Area)** | ✅ Đã đồng bộ | Coverage là chuỗi văn bản mô tả (`coverageAreaDescription`), không tạo `Location` entity mới. |
-| 7 | **Shuttle Pricing** | ✅ Đã đồng bộ | V1 hỗ trợ `FREE`, không khóa khả năng mở rộng `PAID`/`feeAmount` ở V2. Không xây dựng hệ thống Voucher/Discount. |
+| 7 | **Shuttle Pricing & Promotions** | ✅ Đã đồng bộ | V1 hỗ trợ Shuttle `FREE` (sẵn sàng mở rộng `PAID`/`feeAmount` ở V2). Hệ thống Khuyến mại & Voucher Giảm giá đã được triển khai hoàn chỉnh (UC-1.18, UC-3.12, hỗ trợ giảm theo % hoặc số tiền cố định, kiểm tra hạn mức và điều kiện áp dụng thời gian thực). |
