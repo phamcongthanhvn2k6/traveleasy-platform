@@ -87,6 +87,7 @@ export interface AuthUser {
   phone: string;
   role: 'ADMIN' | 'OPERATOR' | 'CUSTOMER';
   token: string;
+  busCompanyId?: number;
 }
 
 export interface ScheduleTripItem {

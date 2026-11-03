@@ -2861,6 +2861,17 @@ Hệ thống đã được củng cố toàn diện tầng Backend nhằm đảm
 5. **Chống trùng lặp số điện thoại khi cập nhật Profile**: `AuthService.updateProfile()` kiểm tra tính duy nhất của số điện thoại qua `existsByPhoneAndIdNot`, tránh xung đột định danh.
 6. **Chống đổi mật khẩu trùng mật khẩu cũ**: `AuthService.changePassword()` bắt buộc mật khẩu mới phải khác mật khẩu hiện tại.
 7. **Cơ chế Idempotency cho Webhook thanh toán**: `PaymentService.confirmVietQrTransfer()` tự động kiểm tra nếu đơn vé đã được thanh toán thành công từ trước thì trả kết quả thành công ngay, tránh ghi đè dữ liệu hoặc xuất vé trùng khi Webhook gửi nhiều lần.
+8. **Chống quét trùng vé & Gian lận soát vé QR (`BookingService.checkInTicket()`)**:
+   * Khi soát vé lần đầu: Hệ thống chuyển trạng thái vé sang `USED`, lưu mốc thời gian khách lên xe (`boardedAt = now()`), trả về trạng thái xác thực `validationStatus = "VALID"` kèm thông điệp `"✓ VÉ HỢP LỆ — ĐÃ XÁC NHẬN LÊN XE THÀNH CÔNG"` và cờ `checkInAllowed = false` (chốt vé đã hoàn thành check-in).
+   * Khi quét lại vé đã ở trạng thái `USED`: Hệ thống ném ngay ngoại lệ `AppException(VALIDATION_ERROR, "CẢNH BÁO: Vé này đã được soát lên xe trước đó rồi!")` (HTTP 400 Bad Request kèm mốc giờ lên xe). Màn hình `/scanner` bật cảnh báo đỏ toàn màn hình kèm âm thanh còi hú, chặn tuyệt đối hành vi dùng vé lặp lại hoặc gian lận lên xe lần 2.
+9. **Cô lập dữ liệu Đa đối tác Nhà xe (Strict Multi-Tenancy Tenant Isolation)**:
+   * Bổ sung trường `busCompanyId` trực tiếp vào Entity `User` (ánh xạ cột `bus_company_id`) và phản hồi đăng nhập `AuthResponse`.
+   * Khi Admin phê duyệt hồ sơ đối tác KYB (`AdminManagementService.approveCompany()`), hệ thống tự động khởi tạo tài khoản Quản trị nhà xe (`ROLE_OPERATOR`) và khóa cứng `operator.busCompanyId(company.getId())`.
+   * Cổng Đối tác Nhà xe (`frontend/src/utils/companyHelper.ts`) tự động nhận diện và khóa phạm vi làm việc theo `user.busCompanyId`, ngăn ngừa triệt để việc nhà xe này xem hoặc sửa đổi chuyến xe, sơ đồ ghế, soát vé hoặc doanh thu của nhà xe khác.
+10. **Tự động giải phóng ghế Hard-Hold sau 10 phút (Automated Booking Expiration Cleanup)**:
+   * Tác vụ nền định kỳ 60 giây (`@Scheduled(fixedDelay = 60000)` trong `TripAutomationService`) kích hoạt phương thức `bookingService.cleanupExpiredPendingBookings(10)`.
+   * Tự động quét toàn bộ đơn đặt vé `Booking` ở trạng thái `PENDING` quá 10 phút chưa thanh toán, cập nhật trạng thái đơn sang `CANCELLED`, hủy vé `Ticket` sang `CANCELLED`, giải phóng ghế `TripSeat.status` từ `HARD_HELD` về lại `AVAILABLE`, tăng lại số ghế khả dụng của chuyến `availableSeats`.
+   * Đồng thời phát tín hiệu thời gian thực (Real-time Broadcast) qua STOMP/WebSocket (`SeatRealtimeService`) tới toàn bộ các máy khách đang xem sơ đồ ghế để lập tức mở khóa ghế sang màu trắng/xanh.
 
 ---
 

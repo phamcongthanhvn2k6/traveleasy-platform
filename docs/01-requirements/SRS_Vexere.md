@@ -280,7 +280,14 @@ stateDiagram-v2
                 ↓
         TripSeat.status = AVAILABLE
         ```
-        Mục tiêu: không để tồn tại lâu dài tình trạng *Redis không còn Hold* nhưng *Database vẫn `HARD_HELD`*. Yêu cầu ở mức nghiệp vụ là **eventual consistency**; cơ chế triển khai cụ thể thuộc phạm vi thiết kế kỹ thuật, không ràng buộc ở tài liệu này.
+        Mục tiêu: không để tồn tại lâu dài tình trạng *Redis không còn Hold* nhưng *Database vẫn `HARD_HELD`*. Yêu cầu ở mức nghiệp vụ là **eventual consistency**; cơ chế triển khai cụ thể:
+        - **Cơ chế Đồng Bộ Tự Động Hóa (Scheduled Background Cleanup Cron):** Hệ thống kích hoạt tác vụ ngầm định kỳ mỗi 60 giây (`@Scheduled(fixedDelay = 60000)` trong `TripAutomationService`) gọi `bookingService.cleanupExpiredPendingBookings(10)`:
+          1. Quét toàn bộ đơn đặt vé `Booking` ở trạng thái `PENDING` đã quá thời hạn 10 phút (`createdAt < now() - 10 minutes`).
+          2. Cập nhật `Booking.status = CANCELLED`.
+          3. Cập nhật toàn bộ vé liên quan `Ticket.status = CANCELLED`.
+          4. Hoàn trả trạng thái ghế `TripSeat.status = AVAILABLE`.
+          5. Tăng lại số ghế khả dụng `Trip.availableSeats` tương ứng.
+          6. Phát sóng (broadcast) sự kiện cập nhật ghế qua STOMP/WebSocket (`SeatRealtimeService`) tới toàn bộ client đang xem chuyến để sơ đồ ghế lập tức mở khóa sang màu trắng/xanh.
     *   **Không** phát sinh `Ticket` hợp lệ từ một Hold đã hết hạn — tính hợp lệ của Hard Hold phải được kiểm trên Redis tại thời điểm finalize.
     *   **Ba kịch bản canonical:**
 
@@ -725,11 +732,13 @@ Nhằm đảm bảo tính tin cậy tuyệt đối cho các giao dịch tài ch�
         - Vé thuộc đúng Chuyến xe (`tripId`) đang thực hiện đón khách.
         - Trạng thái vé hợp lệ (`status = 'ISSUED'` hoặc `'CONFIRMED'`).
         - Vé chưa từng được soát lên xe trước đó (`checked_in_at IS NULL`).
-    5.  Hệ thống chuyển trạng thái vé sang `CHECKED_IN`, ghi nhận mốc thời gian soát vé (`checked_in_at = CURRENT_TIMESTAMP`) và ID nhân viên thực hiện.
+    5.  **Xác nhận soát vé lần đầu:** Hệ thống chuyển trạng thái vé sang `USED`, ghi nhận mốc thời gian khách lên xe (`boarded_at = CURRENT_TIMESTAMP`), trả về phản hồi chuẩn: `validationStatus = "VALID"`, thông điệp `"✓ VÉ HỢP LỆ — ĐÃ XÁC NHẬN LÊN XE THÀNH CÔNG"`, cờ `checkInAllowed = false` (đánh dấu vé đã đóng và không cho phép soát lại).
     6.  Giao diện phát âm thanh thông báo thành công (Beep) kèm thẻ thông tin màu xanh lá: Tên hành khách, Số ghế, Điểm đón, Điểm trả, Trạng thái thanh toán ĐÃ THU ĐỦ.
     7.  Hệ thống tự động cập nhật sĩ số khách đã lên xe / tổng số khách trên chuyến đi (ví dụ: *Đã lên xe 28/34 khách*).
 *   **Các luồng ngoại lệ & Cảnh báo an ninh:**
-    - *Ngoại lệ 1 (Vé đã soát trước đó - Quét trùng lặp):* Hệ thống hiển thị cảnh báo đỏ toàn màn hình kèm âm thanh cảnh báo: **"CẢNH BÁO: Vé này đã được check-in vào lúc HH:mm:ss ngày DD/MM bởi nhân viên [Tên]! Nguy cơ hành khách dùng vé trùng hoặc gian lận!"**.
+    - *Ngoại lệ 1 (Vé đã soát trước đó — Chống quét trùng lặp & Gian lận vé):*
+        * **Quy tắc chặn từ Backend:** Khi nhận yêu cầu check-in một vé đã có trạng thái `ticket.status == TicketStatus.USED`, Backend lập tức từ chối và ném `AppException(ErrorCode.VALIDATION_ERROR, "CẢNH BÁO: Vé này đã được soát lên xe trước đó rồi!")` (HTTP 400 Bad Request kèm thời gian soát `boarded_at`).
+        * **Phản hồi Giao diện:** Hệ thống hiển thị cảnh báo đỏ toàn màn hình kèm âm thanh còi hú cảnh báo: **"CẢNH BÁO: Vé này đã được check-in vào lúc HH:mm:ss ngày DD/MM! Nguy cơ hành khách dùng vé trùng hoặc gian lận!"**. Khóa hoàn toàn nút xác nhận lên xe lần 2.
     - *Ngoại lệ 2 (Vé đã bị hủy / hoàn tiền):* Hệ thống hiển thị cảnh báo: **"VÉ KHÔNG HỢP LỆ: Vé này đã bị hủy hoàn tiền trên hệ thống lúc HH:mm:ss!"**. Chặn không cho hành khách lên xe.
     - *Ngoại lệ 3 (Vé sai chuyến đi):* Hiển thị thông báo: **"Vé thuộc chuyến đi khác (Biển số: [XX], Khởi hành: [HH:mm])"**.
 *   **Tính năng bổ trợ:** Cho phép in vé giấy lưu động qua máy in nhiệt Bluetooth mini hoặc bấm "Xuất vé điện tử PDF" để gửi lại cho hành khách khi có yêu cầu xuất trình hóa đơn vé.
@@ -770,9 +779,10 @@ Lưu ý kiến trúc: Hệ thống KHÔNG triển khai RBAC động (Admin tự 
         - Đánh giá sơ bộ thái độ phục vụ và quy mô phục vụ của nhà xe, ghi chú biên bản cuộc gọi vào hệ thống.
     4.  **Bước 4: Ra Quyết Định Thẩm Định (Admin Decision Matrix):**
         - **Nhánh A — PHÊ DUYỆT ĐỐI TÁC (`APPROVED / ACTIVE`):**
-            * Admin nhấn "Phê Duyệt Nhà Xe", thiết lập tỷ lệ hoa hồng sàn (`commissionRate` mặc định từ 5% đến 10% tùy thỏa thuận), hạn mức công nợ và chu kỳ quyết toán Escrow (hàng tuần / 2 lần mỗi tháng).
+            * Admin nhấn "Phê Duyệt Nhà Xe", thiết lập tỷ lệ hoa hồng sàn (`commissionRate` mặc định từ 5% đến 10% tùy thỏa thuận), hạn mức công nợ và chu kỳ quyết toán Escrow (hàng tuần / 2 lần mỗi tháng), kèm ghi chú thẩm định (`note` / `adminNote`).
             * Hệ thống chuyển trạng thái nhà xe `status = 'ACTIVE'`, `kyc_status = 'VERIFIED'`.
             * Hệ thống **tự động khởi tạo tài khoản Quản trị nhà xe (`Role.OPERATOR`)** với email đăng ký của người đại diện, sinh mật khẩu ngẫu nhiên an toàn mã hóa BCrypt.
+            * **Ràng buộc Cô lập Đa đối tác (Strict Multi-Tenancy Isolation):** Hệ thống gán trực tiếp ID pháp nhân nhà xe vừa duyệt vào tài khoản nhà xe (`user.busCompanyId = company.getId()`) và trả về `busCompanyId` trong phản hồi `AuthResponse`. Tài khoản `OPERATOR` bị khóa cứng phạm vi truy cập theo đúng `busCompanyId` này, ngăn chặn triệt để nguy cơ truy cập chéo dữ liệu giữa các nhà xe đối tác trên sàn.
             * Hệ thống sinh **Hợp đồng Hợp tác Điện tử (Partner e-Contract)** kèm mã băm SHA-256 lưu trữ vĩnh viễn trong CSDL.
             * Hệ thống tự động gửi Email thông báo chúc mừng kèm thông tin đăng nhập Cổng điều hành (`/company/login`) và tài liệu hướng dẫn cấu hình xe, tuyến đường, giá vé.
         - **Nhánh B — YÊU CẦU BỔ SUNG HỒ SƠ (`REQUIRES_SUPPLEMENT`):**

@@ -25,6 +25,18 @@ export const getStoredCompany = (): CompanyInfo => {
     const saved = localStorage.getItem('traveleasy_user');
     if (saved) {
       const u = JSON.parse(saved);
+      if (u.busCompanyId) {
+        const found = KNOWN_COMPANIES.find(c => c.id === Number(u.busCompanyId));
+        if (found) return found;
+        return {
+          id: Number(u.busCompanyId),
+          name: u.busCompanyName || u.fullName || 'Nhà Xe Đối Tác',
+          shortName: u.busCompanyName || u.fullName || 'Nhà Xe',
+          code: 'COMPANY_' + u.busCompanyId,
+          email: u.email || '',
+          hotline: u.phone || '1900 8888',
+        };
+      }
       const name = (u.fullName || '').trim().toLowerCase();
       const email = (u.email || '').toLowerCase();
 

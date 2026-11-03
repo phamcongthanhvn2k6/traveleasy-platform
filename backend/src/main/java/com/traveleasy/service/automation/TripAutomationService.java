@@ -25,6 +25,7 @@ public class TripAutomationService {
 
     private final TripRepository tripRepository;
     private final TripSeatRepository tripSeatRepository;
+    private final com.traveleasy.service.customer.BookingService bookingService;
     private final RouteRepository routeRepository;
     private final BusCompanyRepository busCompanyRepository;
     private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
@@ -127,6 +128,19 @@ public class TripAutomationService {
      * - Đóng các chuyến đã qua giờ khởi hành hôm qua
      * - Đảm bảo luôn duy trì cửa sổ 30 ngày chuyến xe mở bán trong tương lai
      */
+    /**
+     * Tự động quét mỗi 60 giây dọn dẹp các đơn PENDING_PAYMENT quá 10 phút (Hard-Hold Expired)
+     * và hoàn trả lại ghế trống AVAILABLE để khách khác có thể đặt vé.
+     */
+    @Scheduled(fixedDelay = 60000)
+    public void cleanupExpiredBookingsJob() {
+        try {
+            bookingService.cleanupExpiredPendingBookings(10);
+        } catch (Exception e) {
+            log.warn("Lỗi khi tự động giải phóng ghế quá hạn: {}", e.getMessage());
+        }
+    }
+
     @Scheduled(cron = "0 0 1 * * ?")
     public void dailyMidnightMaintenance() {
         log.info("⏰ [TripAutomationService] Thực hiện bảo trì định kỳ lúc nửa đêm...");

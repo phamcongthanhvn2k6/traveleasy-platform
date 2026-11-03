@@ -117,8 +117,10 @@ public class AdminManagementController {
     public ApiResponse<BusCompanyAdminResponse> approveCompany(
             @PathVariable Long id,
             @RequestParam(required = false) BigDecimal commissionRate,
-            @RequestParam(required = false) String note) {
-        return ApiResponse.success("Phê duyệt đối tác nhà xe thành công!", adminManagementService.approveCompanyWithCommission(id, commissionRate, note));
+            @RequestParam(required = false) String note,
+            @RequestParam(required = false) String adminNote) {
+        String finalNote = adminNote != null && !adminNote.isBlank() ? adminNote : note;
+        return ApiResponse.success("Phê duyệt đối tác nhà xe thành công!", adminManagementService.approveCompanyWithCommission(id, commissionRate, finalNote));
     }
 
     @CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)

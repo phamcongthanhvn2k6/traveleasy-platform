@@ -207,6 +207,7 @@ public class AdminManagementService {
                         .fullName("Điều Hành " + company.getName())
                         .phone(company.getHotline())
                         .role(Role.OPERATOR)
+                        .busCompanyId(company.getId())
                         .status("ACTIVE")
                         .build();
                 userRepository.save(operator);
