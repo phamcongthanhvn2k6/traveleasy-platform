@@ -100,7 +100,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
 
   // Lightbox xem ảnh lớn
-  const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string; isPdf?: boolean } | null>(null);
 
   const fetchCompanies = async () => {
     try {
@@ -1133,46 +1133,148 @@ export const AdminBusCompaniesPage: React.FC = () => {
                     </span>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
-                    <div
-                      onClick={() =>
-                        setLightboxImage({
-                          url: c.businessLicenseUrl || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80',
-                          title: `Giấy Phép Kinh Doanh & Vận Tải - ${c.name}`,
-                        })
-                      }
-                      style={{
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '10px',
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                        backgroundColor: '#f8fafc',
-                      }}
-                    >
-                      <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 700, color: '#334155', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Bản Scan Giấy Phép Kinh Doanh Vận Tải</span>
-                        <span style={{ color: '#2563eb', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                          <ZoomIn size={13} /> Xem bản gốc
-                        </span>
-                      </div>
-                      <img
-                        src={c.businessLicenseUrl || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80'}
-                        alt="Giấy phép kinh doanh vận tải"
-                        style={{ width: '100%', height: '140px', objectFit: 'cover', display: 'block' }}
-                      />
-                    </div>
+                  {(() => {
+                    const licenseUrl = c.businessLicenseUrl || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80';
+                    const isPdf = licenseUrl.toLowerCase().includes('.pdf') || licenseUrl.startsWith('data:application/pdf');
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
-                      <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', fontSize: '12.5px' }}>
-                        <strong>Tiêu chuẩn thẩm định pháp lý:</strong>
-                        <ul style={{ margin: '6px 0 0 16px', padding: 0, color: '#475569' }}>
-                          <li>Giấy phép do Sở GTVT tỉnh/thành phố cấp còn thời hạn ít nhất 6 tháng.</li>
-                          <li>Đã đăng ký phương thức kinh doanh vận tải hành khách theo tuyến cố định.</li>
-                          <li>Xe lắp thiết bị giám sát hành trình (GPS) và camera theo quy chuẩn QCVN 31:2014/BGTVT.</li>
-                        </ul>
+                    return (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+                        {isPdf ? (
+                          /* Hiển thị Card PDF */
+                          <div
+                            style={{
+                              border: '1px solid #fca5a5',
+                              borderRadius: '12px',
+                              padding: '16px',
+                              backgroundColor: '#fff5f5',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'space-between',
+                              gap: '12px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div
+                                style={{
+                                  width: '46px',
+                                  height: '46px',
+                                  borderRadius: '10px',
+                                  backgroundColor: '#fee2e2',
+                                  color: '#dc2626',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 900,
+                                  fontSize: '13px',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                PDF
+                              </div>
+                              <div>
+                                <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#991b1b' }}>
+                                  Văn Bản Giấy Phép Kinh Doanh Vận Tải
+                                </div>
+                                <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }}>
+                                  Tài liệu PDF kỹ thuật số có dấu mộc đỏ
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setLightboxImage({
+                                    url: licenseUrl,
+                                    title: `Tài Liệu PDF: Giấy Phép Kinh Doanh & Vận Tải - ${c.name}`,
+                                    isPdf: true,
+                                  })
+                                }
+                                style={{
+                                  backgroundColor: '#dc2626',
+                                  color: '#ffffff',
+                                  border: 'none',
+                                  padding: '8px 14px',
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                              >
+                                <Eye size={13} /> Đọc Trực Tiếp PDF
+                              </button>
+
+                              <a
+                                href={licenseUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  backgroundColor: '#ffffff',
+                                  color: '#dc2626',
+                                  border: '1px solid #fca5a5',
+                                  padding: '8px 12px',
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  textDecoration: 'none',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                              >
+                                <ExternalLink size={13} /> Mở Tab Mới
+                              </a>
+                            </div>
+                          </div>
+                        ) : (
+                          /* Hiển thị Card Ảnh Scan */
+                          <div
+                            onClick={() =>
+                              setLightboxImage({
+                                url: licenseUrl,
+                                title: `Giấy Phép Kinh Doanh & Vận Tải - ${c.name}`,
+                                isPdf: false,
+                              })
+                            }
+                            style={{
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '10px',
+                              overflow: 'hidden',
+                              cursor: 'pointer',
+                              backgroundColor: '#f8fafc',
+                            }}
+                          >
+                            <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 700, color: '#334155', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Bản Scan Giấy Phép Kinh Doanh Vận Tải</span>
+                              <span style={{ color: '#2563eb', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                <ZoomIn size={13} /> Xem bản gốc
+                              </span>
+                            </div>
+                            <img
+                              src={licenseUrl}
+                              alt="Giấy phép kinh doanh vận tải"
+                              style={{ width: '100%', height: '140px', objectFit: 'cover', display: 'block' }}
+                            />
+                          </div>
+                        )}
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
+                          <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', fontSize: '12.5px' }}>
+                            <strong>Tiêu chuẩn thẩm định pháp lý:</strong>
+                            <ul style={{ margin: '6px 0 0 16px', padding: 0, color: '#475569' }}>
+                              <li>Giấy phép do Sở GTVT tỉnh/thành phố cấp còn thời hạn ít nhất 6 tháng.</li>
+                              <li>Đã đăng ký phương thức kinh doanh vận tải hành khách theo tuyến cố định.</li>
+                              <li>Xe lắp thiết bị giám sát hành trình (GPS) và camera theo quy chuẩn QCVN 31:2014/BGTVT.</li>
+                            </ul>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
 
                 {/* 5. KHỐI 4: ĐỐI CHIẾU TÀI KHOẢN NGÂN HÀNG QUYẾT TOÁN KÝ QUỸ (ESCROW AML CHECK) */}
@@ -1703,17 +1805,27 @@ export const AdminBusCompaniesPage: React.FC = () => {
                 <X size={20} /> Đóng
               </button>
             </div>
-            <img
-              src={lightboxImage.url}
-              alt={lightboxImage.title}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '80vh',
-                borderRadius: '8px',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
-                objectFit: 'contain',
-              }}
-            />
+            {lightboxImage.isPdf ? (
+              <div style={{ width: '85vw', height: '80vh', backgroundColor: '#ffffff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)' }}>
+                <iframe
+                  src={`${lightboxImage.url}#toolbar=1`}
+                  title={lightboxImage.title}
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                />
+              </div>
+            ) : (
+              <img
+                src={lightboxImage.url}
+                alt={lightboxImage.title}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '80vh',
+                  borderRadius: '8px',
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+                  objectFit: 'contain',
+                }}
+              />
+            )}
           </div>
         </div>
       )}

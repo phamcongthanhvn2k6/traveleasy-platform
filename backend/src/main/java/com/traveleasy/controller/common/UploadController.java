@@ -23,7 +23,7 @@ public class UploadController {
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     private static final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList(
-            "image/jpeg", "image/png", "image/webp", "image/gif", "image/avif", "image/bmp"
+            "image/jpeg", "image/png", "image/webp", "image/gif", "image/avif", "image/bmp", "application/pdf"
     );
 
     @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
