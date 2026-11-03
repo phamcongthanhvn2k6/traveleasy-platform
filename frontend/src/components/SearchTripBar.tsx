@@ -40,7 +40,11 @@ export const SearchTripBar: React.FC<Props> = ({
     'Phan Thiết'
   ];
 
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSwap = () => {
+    setValidationError(null);
     const temp = origin;
     setOrigin(destination);
     setDestination(temp);
@@ -48,7 +52,27 @@ export const SearchTripBar: React.FC<Props> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(origin, destination, departureDate, hasReturnDate ? returnDate : undefined);
+    if (isSubmitting) return;
+
+    if (!origin.trim() || !destination.trim()) {
+      setValidationError('Vui lòng chọn đầy đủ điểm xuất phát và điểm đến.');
+      return;
+    }
+
+    if (origin.trim().toLowerCase() === destination.trim().toLowerCase()) {
+      setValidationError('Điểm xuất phát và điểm đến không được trùng nhau. Vui lòng chọn lộ trình hợp lệ.');
+      return;
+    }
+
+    setValidationError(null);
+    setIsSubmitting(true);
+    try {
+      onSearch(origin.trim(), destination.trim(), departureDate, hasReturnDate ? returnDate : undefined);
+    } finally {
+      setTimeout(() => {
+        setIsSubmitting(false);
+      }, 1200);
+    }
   };
 
   return (
@@ -236,6 +260,26 @@ export const SearchTripBar: React.FC<Props> = ({
 
       {/* 2. Unified Search Inputs Container with Golden Search CTA Button */}
       <form onSubmit={handleSubmit}>
+        {validationError && (
+          <div 
+            role="alert"
+            style={{
+              backgroundColor: '#fef2f2',
+              color: '#b91c1c',
+              border: '1px solid #fecaca',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              fontSize: '13.5px',
+              fontWeight: 600,
+              marginBottom: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <span style={{ fontSize: '16px' }}>⚠️</span> {validationError}
+          </div>
+        )}
         <div 
           className="search-bar-grid"
           style={{
@@ -285,9 +329,10 @@ export const SearchTripBar: React.FC<Props> = ({
             type="button"
             onClick={handleSwap}
             title="Đổi chiều xuất phát / điểm đến"
+            aria-label="Đổi chiều xuất phát và điểm đến"
             style={{
-              width: '40px',
-              height: '40px',
+              width: '44px',
+              height: '44px',
               borderRadius: '50%',
               border: '1px solid #e2e8f0',
               backgroundColor: '#f8fafc',
@@ -427,27 +472,48 @@ export const SearchTripBar: React.FC<Props> = ({
           {/* Primary Action Button "Tìm kiếm" (Vibrant Golden Yellow #ffc700 - Chuẩn Vexere) */}
           <button
             type="submit"
+            disabled={isSubmitting}
+            aria-label="Tìm kiếm chuyến xe"
+            aria-busy={isSubmitting}
             style={{
-              backgroundColor: '#ffc700',
-              color: '#111827',
+              backgroundColor: isSubmitting ? '#cbd5e1' : '#ffc700',
+              color: isSubmitting ? '#64748b' : '#111827',
               border: 'none',
               borderRadius: '12px',
               padding: '0 32px',
               height: '56px',
               fontSize: '16.5px',
               fontWeight: 800,
-              cursor: 'pointer',
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              boxShadow: '0 4px 14px rgba(255, 199, 0, 0.4)',
+              boxShadow: isSubmitting ? 'none' : '0 4px 14px rgba(255, 199, 0, 0.4)',
               transition: 'all 0.2s',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              opacity: isSubmitting ? 0.75 : 1
             }}
           >
-            <Search size={20} strokeWidth={2.5} />
-            Tìm kiếm
+            {isSubmitting ? (
+              <>
+                <span style={{ 
+                  display: 'inline-block',
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid #64748b',
+                  borderTopColor: 'transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                Đang tìm...
+              </>
+            ) : (
+              <>
+                <Search size={20} strokeWidth={2.5} />
+                Tìm kiếm
+              </>
+            )}
           </button>
         </div>
       </form>

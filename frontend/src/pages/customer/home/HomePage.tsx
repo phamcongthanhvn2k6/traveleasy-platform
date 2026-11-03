@@ -167,6 +167,46 @@ export const HomePage: React.FC = () => {
     setBookingPoints(points);
   };
 
+  // Fallback featured promos nếu API chưa nạp hoặc rỗng
+  const defaultFeaturedPromos = [
+    {
+      id: 'promo-def-1',
+      tag: 'KHÁCH MỚI',
+      title: 'Chào bạn mới: Giảm ngay 20% cho chuyến xe liên tỉnh đầu tiên trên TravelEasy',
+      badge: 'GIẢM 20%',
+      accent: '#2563eb',
+      image: CLOUDINARY_IMAGES.banners.heroSapa,
+      code: 'NEW20'
+    },
+    {
+      id: 'promo-def-2',
+      tag: 'HOT DEAL',
+      title: 'Flash Sale đêm Sài Gòn - Đà Lạt: Giảm trực tiếp 50.000đ khi thanh toán',
+      badge: 'GIẢM 50K',
+      accent: '#d97706',
+      image: CLOUDINARY_IMAGES.banners.flashSale,
+      code: 'DALAT50'
+    },
+    {
+      id: 'promo-def-3',
+      tag: 'ƯU ĐÃI SÀN',
+      title: 'Đồng hành cùng gia đình: Đặt vé khứ hồi Limousine nhận hoàn tiền 10%',
+      badge: 'HOÀN TIỀN 10%',
+      accent: '#16a34a',
+      image: CLOUDINARY_IMAGES.destinations.daNang,
+      code: 'COMBO10'
+    },
+    {
+      id: 'promo-def-4',
+      tag: 'CUỐI TUẦN',
+      title: 'Vi vu cuối tuần Nha Trang, Vũng Tàu: Giảm 30.000đ cho nhóm từ 2 vé',
+      badge: 'TIẾT KIỆM 30K',
+      accent: '#7c3aed',
+      image: CLOUDINARY_IMAGES.destinations.sapa,
+      code: 'WEEKEND30'
+    }
+  ];
+
   // 3. Du lịch Sapa (Screenshot 3)
   const sapaGuides = [
     {
@@ -535,9 +575,10 @@ export const HomePage: React.FC = () => {
             <button 
               onClick={() => handleScrollRoutes('left')}
               title="Xem các tuyến trước"
+              aria-label="Cuộn sang trái danh sách tuyến đường"
               style={{ 
-                width: '40px', 
-                height: '40px', 
+                width: '44px', 
+                height: '44px', 
                 borderRadius: '50%', 
                 border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, 
                 backgroundColor: isDark ? '#1e293b' : '#ffffff', 
@@ -562,9 +603,10 @@ export const HomePage: React.FC = () => {
             <button 
               onClick={() => handleScrollRoutes('right')}
               title="Xem các tuyến tiếp theo"
+              aria-label="Cuộn sang phải danh sách tuyến đường"
               style={{ 
-                width: '40px', 
-                height: '40px', 
+                width: '44px', 
+                height: '44px', 
                 borderRadius: '50%', 
                 border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, 
                 backgroundColor: isDark ? '#1e293b' : '#ffffff', 
@@ -1348,7 +1390,7 @@ export const HomePage: React.FC = () => {
           gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
           gap: '20px'
         }}>
-          {(activeBanners.length > 0 ? activeBanners : featuredPromos).map(p => (
+          {(activeBanners.length > 0 ? activeBanners : (featuredPromos.length > 0 ? featuredPromos : defaultFeaturedPromos)).map(p => (
             <div
               key={p.id}
               style={{
