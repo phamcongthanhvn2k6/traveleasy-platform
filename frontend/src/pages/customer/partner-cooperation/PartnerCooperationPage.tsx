@@ -1,6 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  AlertCircle,
+  UploadCloud,
+  FileUp,
+  File,
+  ArrowRightLeft,
+  Plus,
+  Eye,
   Building2,
   Bus,
   ShieldCheck,
@@ -94,10 +101,280 @@ export const PartnerCooperationPage: React.FC = () => {
     routes: '',
     fleetSize: '6 - 20 xe',
     notes: '',
+    // Hồ sơ định danh KYB & CCCD
+    legalRepresentative: '',
+    identityCardNumber: '',
+    identityCardFrontUrl: '',
+    identityCardBackUrl: '',
+    businessLicenseUrl: '',
+    transportLicenseUrl: '',
+    // Tài khoản ngân hàng quyết toán Escrow
+    bankName: 'MB Bank (Ngân hàng TMCP Quân Đội)',
+    bankAccountNumber: '',
+    bankAccountOwner: '',
   });
+
+  const fillSampleKybData = () => {
+    setErrors({});
+    setRouteList(['Hà Nội ⇄ Hải Phòng', 'Hà Nội ⇄ Quảng Ninh']);
+    setFormData({
+      companyName: 'Công ty TNHH Vận Tải Hoàng Long Express',
+      taxCode: '0101234567',
+      contactName: 'Nguyễn Văn Hoàng',
+      legalRepresentative: 'Nguyễn Văn Hoàng',
+      identityCardNumber: '031088012345',
+      phone: '0912888999',
+      email: 'contact@hoanglongexpress.vn',
+      businessAddress: 'Số 152 Đường Lê Duẩn, Phường Khâm Thiên, Quận Đống Đa, TP. Hà Nội',
+      routes: 'Hà Nội ⇄ Hải Phòng, Hà Nội ⇄ Quảng Ninh',
+
+      fleetSize: '21 - 50 xe',
+      notes: 'Đăng ký tham gia mạng lưới bán vé điện tử kết hợp đối soát Escrow',
+      identityCardFrontUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80',
+      identityCardBackUrl: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80',
+      businessLicenseUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80',
+      transportLicenseUrl: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?auto=format&fit=crop&w=800&q=80',
+      bankName: 'MB Bank (Ngân hàng TMCP Quân Đội)',
+      bankAccountNumber: '091288899999',
+      bankAccountOwner: 'CONG TY TNHH VAN TAI HOANG LONG EXPRESS',
+    });
+    toast.success('Đã điền thông tin hồ sơ pháp lý mẫu chuẩn của nhà xe!', 'Điền Dữ Liệu Mẫu');
+  };
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  // Danh sách các tuyến xe đăng ký dạng tags
+  const [routeList, setRouteList] = useState<string[]>([
+    'Sài Gòn ⇄ Đà Lạt'
+  ]);
+  const [originInput, setOriginInput] = useState('');
+  const [destInput, setDestInput] = useState('');
+  const [isTwoWay, setIsTwoWay] = useState(true);
+
+  // Metadata của các file giấy tờ tải lên (tên file, dung lượng, kiểu)
+  const [uploadedFilesInfo, setUploadedFilesInfo] = useState<{
+    idFront?: { name: string; size: string; isPdf: boolean };
+    idBack?: { name: string; size: string; isPdf: boolean };
+    bizLicense?: { name: string; size: string; isPdf: boolean };
+  }>({});
+
+  const [uploadingField, setUploadingField] = useState<string | null>(null);
+
+  // State lưu trữ lỗi xác thực từng trường
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Xóa lỗi của một trường khi người dùng nhập lại
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  // Hàm thẩm định toàn bộ dữ liệu form trước khi gửi
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // 1. Tên nhà xe / Doanh nghiệp
+    if (!formData.companyName.trim()) {
+      newErrors.companyName = 'Vui lòng nhập Tên Nhà Xe / Doanh Nghiệp Vận Tải';
+    } else if (formData.companyName.trim().length < 3) {
+      newErrors.companyName = 'Tên nhà xe quá ngắn (tối thiểu 3 ký tự)';
+    }
+
+    // 2. Người liên hệ / Quản lý
+    if (!formData.contactName.trim()) {
+      newErrors.contactName = 'Vui lòng nhập Họ Và Tên Người Đại Diện / Quản Lý';
+    } else if (!formData.contactName.trim().includes(' ')) {
+      newErrors.contactName = 'Vui lòng nhập đầy đủ cả Họ và Tên (ví dụ: Nguyễn Văn Hoàng)';
+    }
+
+    // 3. Số điện thoại
+    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+    const cleanPhone = formData.phone.replace(/\s+/g, '');
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Vui lòng nhập Số Điện Thoại Liên Hệ';
+    } else if (!phoneRegex.test(cleanPhone)) {
+      newErrors.phone = 'Số điện thoại không hợp lệ (Phải là số ĐT Việt Nam 10 chữ số, ví dụ: 0912345678)';
+    }
+
+    // 4. Email (nếu nhập thì phải đúng chuẩn)
+    if (formData.email?.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        newErrors.email = 'Địa chỉ email không đúng định dạng (ví dụ: dieuhanh@namcuong.vn)';
+      }
+    }
+
+    // 5. Mã số thuế / ĐKKD
+    if (!formData.taxCode?.trim()) {
+      newErrors.taxCode = 'Vui lòng nhập Mã Số Thuế Doanh Nghiệp / Số Giấy Phép ĐKKD';
+    } else {
+      const cleanTax = formData.taxCode.replace(/[^0-9]/g, '');
+      if (cleanTax.length !== 10 && cleanTax.length !== 13) {
+        newErrors.taxCode = 'Mã số thuế không hợp lệ (Phải gồm 10 số cho DN hoặc 13 số cho chi nhánh)';
+      }
+    }
+
+    // 6. Trụ sở doanh nghiệp
+    if (!formData.businessAddress?.trim()) {
+      newErrors.businessAddress = 'Vui lòng nhập Địa Chỉ Trụ Sở Đăng Ký Kinh Doanh';
+    }
+
+    // 7. Tuyến đường vận tải
+    if (routeList.length === 0) {
+      newErrors.routes = 'Vui lòng nhập điểm đi - điểm đến và bấm "+ Thêm Tuyến" ít nhất 1 tuyến đường';
+    }
+
+    // 8. Số CCCD định danh người đại diện
+    if (!formData.identityCardNumber?.trim()) {
+      newErrors.identityCardNumber = 'Vui lòng nhập Số Căn Cước Công Dân (CCCD)';
+    } else {
+      const cleanCccd = formData.identityCardNumber.replace(/\s+/g, '');
+      if (!/^[0-9]{12}$/.test(cleanCccd)) {
+        newErrors.identityCardNumber = 'Số CCCD phải gồm đúng 12 chữ số theo quy chuẩn Bộ Công An';
+      }
+    }
+
+    // 9. Giấy tờ CCCD mặt trước
+    if (!formData.identityCardFrontUrl?.trim()) {
+      newErrors.identityCardFrontUrl = 'Vui lòng tải lên tập tin Ảnh CCCD Mặt Trước';
+    }
+
+    // 10. Giấy tờ CCCD mặt sau
+    if (!formData.identityCardBackUrl?.trim()) {
+      newErrors.identityCardBackUrl = 'Vui lòng tải lên tập tin Ảnh CCCD Mặt Sau';
+    }
+
+    // 11. Giấy phép kinh doanh / vận tải
+    if (!formData.businessLicenseUrl?.trim()) {
+      newErrors.businessLicenseUrl = 'Vui lòng tải lên File Giấy Phép Kinh Doanh / Vận Tải (Ảnh hoặc PDF)';
+    }
+
+    // 12. Tài khoản ngân hàng Escrow
+    if (!formData.bankAccountNumber?.trim()) {
+      newErrors.bankAccountNumber = 'Vui lòng nhập Số Tài Khoản Ngân Hàng nhận quyết toán';
+    } else {
+      const cleanAcc = formData.bankAccountNumber.replace(/\s+/g, '');
+      if (!/^[0-9]{6,20}$/.test(cleanAcc)) {
+        newErrors.bankAccountNumber = 'Số tài khoản ngân hàng chỉ chứa số (từ 6 đến 20 số)';
+      }
+    }
+
+    // 13. Tên chủ tài khoản
+    if (!formData.bankAccountOwner?.trim()) {
+      newErrors.bankAccountOwner = 'Vui lòng nhập Tên Chủ Tài Khoản (In hoa không dấu)';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      // Lấy lỗi đầu tiên để thông báo toast cho người dùng
+      const firstError = Object.values(newErrors)[0];
+      toast.error(firstError, 'Thông Tin Chưa Hợp Lệ');
+      return false;
+    }
+
+    return true;
+  };
+
+  // Hàm upload file ảnh hoặc PDF lên backend
+  const handleUploadFile = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    fieldKey: 'identityCardFrontUrl' | 'identityCardBackUrl' | 'businessLicenseUrl'
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isImage = file.type.startsWith('image/');
+
+    if (!isImage && !isPdf) {
+      toast.error('Chỉ chấp nhận tập tin hình ảnh (PNG, JPG, WEBP) hoặc tài liệu PDF!', 'Định Dạng Không Hỗ Trợ');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Dung lượng tập tin vượt quá 10MB. Vui lòng chọn file nhẹ hơn!', 'Tập Tin Quá Lớn');
+      return;
+    }
+
+    const sizeFormatted = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+    const fileInfo = { name: file.name, size: sizeFormatted, isPdf };
+
+    // Tạm lưu thông tin file
+    if (fieldKey === 'identityCardFrontUrl') setUploadedFilesInfo(prev => ({ ...prev, idFront: fileInfo }));
+    else if (fieldKey === 'identityCardBackUrl') setUploadedFilesInfo(prev => ({ ...prev, idBack: fileInfo }));
+    else setUploadedFilesInfo(prev => ({ ...prev, bizLicense: fileInfo }));
+
+    // Preview nhanh bằng DataURL
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        setFormData(prev => ({ ...prev, [fieldKey]: result }));
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // Upload lên máy chủ Cloudinary qua API backend
+    setUploadingField(fieldKey);
+    try {
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('folder', 'kyb_documents');
+
+      const res = await api.post('/upload/image', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (res.data?.data?.url) {
+        setFormData(prev => ({ ...prev, [fieldKey]: res.data.data.url }));
+        toast.success(`Đã tải lên tệp "${file.name}" thành công!`, 'Tải Lên Thành Công');
+      }
+    } catch (err: any) {
+      console.warn('Lỗi khi upload lên Cloudinary, sử dụng bản lưu tạm thời:', err);
+      toast.info('Tập tin đã được lưu trong đơn đăng ký!', 'Đã Tiếp Nhận File');
+    } finally {
+      setUploadingField(null);
+    }
+  };
+
+  // Hàm thêm tuyến đường vào danh sách
+  const handleAddRoute = () => {
+    const origin = originInput.trim();
+    const dest = destInput.trim();
+    if (!origin || !dest) {
+      toast.error('Vui lòng nhập cả Điểm Khởi Hành và Điểm Đến!', 'Thiếu Thông Tin Tuyến');
+      return;
+    }
+
+    const arrow = isTwoWay ? ' ⇄ ' : ' ➔ ';
+    const newRoute = `${origin}${arrow}${dest}`;
+
+    if (routeList.includes(newRoute)) {
+      toast.warning('Tuyến đường này đã có trong danh sách đăng ký!', 'Tuyến Đã Tồn Tại');
+      return;
+    }
+
+    const updated = [...routeList, newRoute];
+    setRouteList(updated);
+    setFormData(prev => ({ ...prev, routes: updated.join(', ') }));
+    setOriginInput('');
+    setDestInput('');
+    toast.success(`Đã thêm tuyến "${newRoute}"`, 'Thêm Tuyến Thành Công');
+  };
+
+  // Hàm xóa tuyến đường
+  const handleRemoveRoute = (routeToRemove: string) => {
+    const updated = routeList.filter(r => r !== routeToRemove);
+    setRouteList(updated);
+    setFormData(prev => ({ ...prev, routes: updated.join(', ') }));
+  };
 
   // Quick route suggestion pills
   const POPULAR_ROUTES = [
@@ -107,21 +384,29 @@ export const PartnerCooperationPage: React.FC = () => {
     'Hà Nội ⇄ Đà Nẵng',
     'Sài Gòn ⇄ Vũng Tàu',
     'Hà Nội ⇄ Hải Phòng',
+    'Sài Gòn ⇄ Buôn Ma Thuột',
+    'Hà Nội ⇄ Quảng Ninh',
+    'Sài Gòn ⇄ Cần Thơ',
+    'Đà Nẵng ⇄ Huế',
   ];
 
   const handleQuickAddRoute = (route: string) => {
-    if (!formData.routes) {
-      setFormData({ ...formData, routes: route });
-    } else if (!formData.routes.includes(route)) {
-      setFormData({ ...formData, routes: `${formData.routes}, ${route}` });
+    if (!routeList.includes(route)) {
+      const updated = [...routeList, route];
+      setRouteList(updated);
+      setFormData(prev => ({ ...prev, routes: updated.join(', ') }));
+      toast.success(`Đã thêm tuyến "${route}"`, 'Thêm Tuyến');
+    } else {
+      toast.info('Tuyến này đã có trong danh sách của bạn.', 'Thông Báo');
     }
   };
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.companyName.trim() || !formData.contactName.trim() || !formData.phone.trim()) {
-      toast.error('Vui lòng điền đầy đủ Tên nhà xe, Người liên hệ và Số điện thoại.', 'Thiếu Thông Tin');
+    if (!validateForm()) {
       return;
     }
 
@@ -137,6 +422,18 @@ export const PartnerCooperationPage: React.FC = () => {
         businessAddress: formData.businessAddress?.trim() || undefined,
         routes: formData.routes?.trim() || undefined,
         fleetSize: formData.fleetSize,
+        notes: formData.notes?.trim() || undefined,
+        // Hồ sơ pháp lý KYB
+        legalRepresentative: formData.legalRepresentative?.trim() || formData.contactName.trim(),
+        identityCardNumber: formData.identityCardNumber?.trim() || undefined,
+        identityCardFrontUrl: formData.identityCardFrontUrl?.trim() || undefined,
+        identityCardBackUrl: formData.identityCardBackUrl?.trim() || undefined,
+        businessLicenseUrl: formData.businessLicenseUrl?.trim() || undefined,
+        transportLicenseUrl: formData.transportLicenseUrl?.trim() || undefined,
+        // Tài khoản ngân hàng Escrow
+        bankName: formData.bankName?.trim() || undefined,
+        bankAccountNumber: formData.bankAccountNumber?.trim() || undefined,
+        bankAccountOwner: formData.bankAccountOwner?.trim() || undefined,
       };
 
       const res = await api.post('/partners/register', payload);
@@ -1769,6 +2066,47 @@ export const PartnerCooperationPage: React.FC = () => {
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Quick Fill Demo Banner */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 18px',
+                  borderRadius: '12px',
+                  backgroundColor: isDark ? '#1e3a8a33' : '#eff6ff',
+                  border: '1px dashed #3b82f6',
+                  marginBottom: '4px',
+                  flexWrap: 'wrap',
+                  gap: '10px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Sparkles size={18} style={{ color: '#2563eb' }} />
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: isDark ? '#93c5fd' : '#1d4ed8' }}>
+                    Thử nghiệm demo quy trình thẩm định KYB của Admin?
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={fillSampleKybData}
+                  style={{
+                    backgroundColor: '#2563eb',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '7px 14px',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <Sparkles size={14} /> Điền Nhanh Hồ Sơ Mẫu Chuẩn (1-Click)
+                </button>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, marginBottom: '6px', color: isDark ? '#e2e8f0' : '#334155' }}>
@@ -1779,18 +2117,26 @@ export const PartnerCooperationPage: React.FC = () => {
                     required
                     placeholder="Ví dụ: Xe Khách Nam Cường Limousine"
                     value={formData.companyName}
-                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, companyName: e.target.value });
+                      clearError('companyName');
+                    }}
                     style={{
                       width: '100%',
                       padding: '13px 16px',
                       borderRadius: '12px',
-                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      border: errors.companyName ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                       backgroundColor: isDark ? '#1e293b' : '#f8fafc',
                       color: isDark ? '#f8fafc' : '#0f172a',
                       fontSize: '14.5px',
                       outline: 'none',
                     }}
                   />
+                  {errors.companyName && (
+                    <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertCircle size={13} /> {errors.companyName}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1802,18 +2148,26 @@ export const PartnerCooperationPage: React.FC = () => {
                     required
                     placeholder="Ví dụ: Nguyễn Văn An"
                     value={formData.contactName}
-                    onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, contactName: e.target.value });
+                      clearError('contactName');
+                    }}
                     style={{
                       width: '100%',
                       padding: '13px 16px',
                       borderRadius: '12px',
-                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      border: errors.contactName ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                       backgroundColor: isDark ? '#1e293b' : '#f8fafc',
                       color: isDark ? '#f8fafc' : '#0f172a',
                       fontSize: '14.5px',
                       outline: 'none',
                     }}
                   />
+                  {errors.contactName && (
+                    <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertCircle size={13} /> {errors.contactName}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1827,18 +2181,26 @@ export const PartnerCooperationPage: React.FC = () => {
                     required
                     placeholder="Ví dụ: 0912 345 678"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, phone: e.target.value });
+                      clearError('phone');
+                    }}
                     style={{
                       width: '100%',
                       padding: '13px 16px',
                       borderRadius: '12px',
-                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      border: errors.phone ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                       backgroundColor: isDark ? '#1e293b' : '#f8fafc',
                       color: isDark ? '#f8fafc' : '#0f172a',
                       fontSize: '14.5px',
                       outline: 'none',
                     }}
                   />
+                  {errors.phone && (
+                    <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertCircle size={13} /> {errors.phone}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1874,18 +2236,26 @@ export const PartnerCooperationPage: React.FC = () => {
                     type="text"
                     placeholder="Ví dụ: 0312345678"
                     value={formData.taxCode}
-                    onChange={(e) => setFormData({ ...formData, taxCode: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, taxCode: e.target.value });
+                      clearError('taxCode');
+                    }}
                     style={{
                       width: '100%',
                       padding: '13px 16px',
                       borderRadius: '12px',
-                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      border: errors.taxCode ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                       backgroundColor: isDark ? '#1e293b' : '#f8fafc',
                       color: isDark ? '#f8fafc' : '#0f172a',
                       fontSize: '14.5px',
                       outline: 'none',
                     }}
                   />
+                  {errors.taxCode && (
+                    <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertCircle size={13} /> {errors.taxCode}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1896,61 +2266,213 @@ export const PartnerCooperationPage: React.FC = () => {
                     type="text"
                     placeholder="Ví dụ: 123 Lê Duẩn, Q. Hoàn Kiếm, Hà Nội"
                     value={formData.businessAddress}
-                    onChange={(e) => setFormData({ ...formData, businessAddress: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, businessAddress: e.target.value });
+                      clearError('businessAddress');
+                    }}
                     style={{
                       width: '100%',
                       padding: '13px 16px',
                       borderRadius: '12px',
-                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      border: errors.businessAddress ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                       backgroundColor: isDark ? '#1e293b' : '#f8fafc',
                       color: isDark ? '#f8fafc' : '#0f172a',
                       fontSize: '14.5px',
                       outline: 'none',
                     }}
                   />
+                  {errors.businessAddress && (
+                    <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertCircle size={13} /> {errors.businessAddress}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Tuyến đường đang khai thác with Quick Pills */}
-              <div>
-                <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, marginBottom: '6px', color: isDark ? '#e2e8f0' : '#334155' }}>
-                  Tuyến Đường Chính Đang Khai Thác
+              {/* ================= BỘ CÔNG CỤ TẠO TUYẾN ĐƯỜNG (ROUTE BUILDER) ================= */}
+              <div
+                style={{
+                  padding: '18px 20px',
+                  borderRadius: '14px',
+                  backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+                  border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                }}
+              >
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 800, marginBottom: '6px', color: isDark ? '#f8fafc' : '#0f172a' }}>
+                  Tuyến Đường Vận Tải Đang Khai Thác
                 </label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Sài Gòn ⇄ Đà Lạt, Nha Trang ⇄ Buôn Ma Thuột..."
-                  value={formData.routes}
-                  onChange={(e) => setFormData({ ...formData, routes: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '13px 16px',
-                    borderRadius: '12px',
-                    border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
-                    backgroundColor: isDark ? '#1e293b' : '#f8fafc',
-                    color: isDark ? '#f8fafc' : '#0f172a',
-                    fontSize: '14.5px',
-                    outline: 'none',
-                  }}
-                />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
-                  <span style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b' }}>Gợi ý nhanh:</span>
+                <p style={{ margin: '0 0 14px 0', fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b' }}>
+                  Chọn điểm xuất phát và điểm đến để thêm vào danh sách, không cần gõ thủ công ký tự mũi tên
+                </p>
+
+                {/* Khung nhập 2 điểm đầu cuối */}
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '14px' }}>
+                  <div style={{ flex: '1 1 180px' }}>
+                    <input
+                      type="text"
+                      placeholder="Điểm khởi hành (ví dụ: Sài Gòn, Hà Nội, Đà Nẵng...)"
+                      value={originInput}
+                      onChange={(e) => setOriginInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRoute())}
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px',
+                        borderRadius: '10px',
+                        border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#f8fafc' : '#0f172a',
+                        fontSize: '13.5px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  {/* Nút đổi chiều khứ hồi hoặc 1 chiều */}
+                  <button
+                    type="button"
+                    onClick={() => setIsTwoWay(!isTwoWay)}
+                    title={isTwoWay ? 'Đang chọn: Tuyến 2 chiều khứ hồi (⇄)' : 'Đang chọn: Tuyến 1 chiều (➔)'}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      backgroundColor: isTwoWay ? '#eff6ff' : '#f1f5f9',
+                      color: isTwoWay ? '#2563eb' : '#475569',
+                      border: isTwoWay ? '1px solid #bfdbfe' : '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <ArrowRightLeft size={16} />
+                    <span>{isTwoWay ? '2 Chiều (⇄)' : '1 Chiều (➔)'}</span>
+                  </button>
+
+                  <div style={{ flex: '1 1 180px' }}>
+                    <input
+                      type="text"
+                      placeholder="Điểm đến (ví dụ: Đà Lạt, Sa Pa, Nha Trang...)"
+                      value={destInput}
+                      onChange={(e) => setDestInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRoute())}
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px',
+                        borderRadius: '10px',
+                        border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#f8fafc' : '#0f172a',
+                        fontSize: '13.5px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddRoute}
+                    style={{
+                      padding: '11px 20px',
+                      borderRadius: '10px',
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontSize: '13.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 2px 4px rgba(37,99,235,0.25)',
+                    }}
+                  >
+                    <Plus size={16} /> Thêm Tuyến
+                  </button>
+                </div>
+
+                {errors.routes && (
+                  <div style={{ color: '#ef4444', fontSize: '12.5px', fontWeight: 700, marginBottom: '10px', padding: '8px 12px', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <AlertCircle size={15} /> {errors.routes}
+                  </div>
+                )}
+                {/* Danh sách các tuyến đã thêm (Tags) */}
+                <div style={{ marginBottom: '14px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b', marginBottom: '8px' }}>
+                    DANH SÁCH TUYẾN ĐÃ ĐĂNG KÝ ({routeList.length} tuyến):
+                  </div>
+
+                  {routeList.length === 0 ? (
+                    <div style={{ fontSize: '13px', color: '#94a3b8', fontStyle: 'italic', padding: '6px 0' }}>
+                      Chưa có tuyến đường nào. Vui lòng nhập điểm đi - điểm đến hoặc bấm chọn gợi ý bên dưới.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {routeList.map((route, idx) => (
+                        <span
+                          key={idx}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            backgroundColor: isDark ? '#1e3a8a44' : '#eff6ff',
+                            color: isDark ? '#93c5fd' : '#1d4ed8',
+                            border: `1px solid ${isDark ? '#3b82f644' : '#bfdbfe'}`,
+                            fontSize: '13px',
+                            fontWeight: 700,
+                          }}
+                        >
+                          <Bus size={14} />
+                          {route}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveRoute(route)}
+                            title="Xóa tuyến này"
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: isDark ? '#93c5fd' : '#2563eb',
+                              cursor: 'pointer',
+                              padding: '2px',
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Gợi ý nhanh các tuyến phổ biến */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', paddingTop: '10px', borderTop: `1px dashed ${isDark ? '#334155' : '#cbd5e1'}` }}>
+                  <span style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b', fontWeight: 600 }}>Gợi ý nhanh (1-Click thêm):</span>
                   {POPULAR_ROUTES.map((route, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => handleQuickAddRoute(route)}
                       style={{
-                        backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
-                        color: isDark ? '#38bdf8' : '#2563eb',
+                        backgroundColor: routeList.includes(route) ? (isDark ? '#1e3a8a' : '#dbeafe') : (isDark ? '#0f172a' : '#ffffff'),
+                        color: routeList.includes(route) ? '#2563eb' : (isDark ? '#94a3b8' : '#475569'),
                         border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
                         borderRadius: '6px',
-                        padding: '2px 8px',
-                        fontSize: '11.5px',
-                        fontWeight: 600,
+                        padding: '4px 10px',
+                        fontSize: '12px',
+                        fontWeight: routeList.includes(route) ? 700 : 500,
                         cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
                       }}
                     >
-                      + {route}
+                      {routeList.includes(route) ? '✓ ' : '+ '}
+                      {route}
                     </button>
                   ))}
                 </div>
@@ -1982,6 +2504,513 @@ export const PartnerCooperationPage: React.FC = () => {
                       {size}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* ================= HỒ SƠ PHÁP LÝ & ĐỊNH DANH (KYB VERIFICATION) ================= */}
+              <div
+                style={{
+                  padding: '18px 20px',
+                  borderRadius: '14px',
+                  backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+                  border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, paddingBottom: '10px' }}>
+                  <ShieldCheck size={18} style={{ color: '#10b981' }} />
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '14.5px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>
+                      Hồ Sơ Pháp Lý &amp; Căn Cước Người Đại Diện (KYB)
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b' }}>
+                      Phục vụ Ban Quản Trị thẩm định hồ sơ, đối chiếu căn cước công dân và xác thực giấy phép vận tải
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: isDark ? '#e2e8f0' : '#334155' }}>
+                      Người Đại Diện Theo Pháp Luật
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ví dụ: Nguyễn Văn Hoàng"
+                      value={formData.legalRepresentative}
+                      onChange={(e) => setFormData({ ...formData, legalRepresentative: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px',
+                        borderRadius: '10px',
+                        border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#f8fafc' : '#0f172a',
+                        fontSize: '13.5px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: isDark ? '#e2e8f0' : '#334155' }}>
+                      Số CCCD / Định Danh (12 Chữ Số)
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={12}
+                      placeholder="Ví dụ: 031088012345"
+                      value={formData.identityCardNumber}
+                      onChange={(e) => {
+                        setFormData({ ...formData, identityCardNumber: e.target.value });
+                        clearError('identityCardNumber');
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px',
+                        borderRadius: '10px',
+                        border: errors.identityCardNumber ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#f8fafc' : '#0f172a',
+                        fontSize: '13.5px',
+                        outline: 'none',
+                      }}
+                    />
+                    {errors.identityCardNumber && (
+                      <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertCircle size={13} /> {errors.identityCardNumber}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Khung tải lên tệp giấy tờ trực tiếp (Ảnh hoặc PDF) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                  {errors.identityCardFrontUrl && (
+                    <div style={{ gridColumn: '1 / -1', color: '#ef4444', fontSize: '12.5px', fontWeight: 700, padding: '8px 12px', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <AlertCircle size={15} /> {errors.identityCardFrontUrl}
+                    </div>
+                  )}
+                  {errors.identityCardBackUrl && (
+                    <div style={{ gridColumn: '1 / -1', color: '#ef4444', fontSize: '12.5px', fontWeight: 700, padding: '8px 12px', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <AlertCircle size={15} /> {errors.identityCardBackUrl}
+                    </div>
+                  )}
+                  {errors.businessLicenseUrl && (
+                    <div style={{ gridColumn: '1 / -1', color: '#ef4444', fontSize: '12.5px', fontWeight: 700, padding: '8px 12px', backgroundColor: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <AlertCircle size={15} /> {errors.businessLicenseUrl}
+                    </div>
+                  )}
+                  {/* TẬP TIN 1: CCCD MẶT TRƯỚC */}
+                  <div
+                    style={{
+                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      borderRadius: '12px',
+                      padding: '14px',
+                      backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                    }}
+                  >
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: isDark ? '#e2e8f0' : '#334155' }}>
+                      1. File Ảnh CCCD Mặt Trước <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '11.5px', color: isDark ? '#94a3b8' : '#64748b' }}>
+                      Ảnh chụp rõ nét 4 góc, đủ thông tin số định danh
+                    </p>
+
+                    {formData.identityCardFrontUrl ? (
+                      <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                        <img
+                          src={formData.identityCardFrontUrl}
+                          alt="CCCD Mặt trước"
+                          style={{ width: '100%', height: '120px', objectFit: 'cover', display: 'block' }}
+                        />
+                        <div style={{ padding: '8px 10px', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#059669', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <CheckCircle2 size={13} /> {uploadedFilesInfo.idFront?.name || 'Đã tải lên tệp ảnh'}
+                          </span>
+                          <label
+                            style={{
+                              fontSize: '11.5px',
+                              color: '#2563eb',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <FileUp size={13} /> Đổi file
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleUploadFile(e, 'identityCardFrontUrl')}
+                              style={{ display: 'none' }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <label
+                        style={{
+                          border: `2px dashed ${isDark ? '#334155' : '#cbd5e1'}`,
+                          borderRadius: '10px',
+                          padding: '24px 16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          cursor: 'pointer',
+                          backgroundColor: isDark ? '#1e293b' : '#fafafa',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <UploadCloud size={28} style={{ color: '#2563eb' }} />
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
+                          {uploadingField === 'identityCardFrontUrl' ? 'Đang tải tệp lên...' : 'Chọn file ảnh CCCD mặt trước'}
+                        </span>
+                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>Hỗ trợ JPG, PNG, WEBP (tối đa 10MB)</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleUploadFile(e, 'identityCardFrontUrl')}
+                          style={{ display: 'none' }}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* TẬP TIN 2: CCCD MẶT SAU */}
+                  <div
+                    style={{
+                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                      borderRadius: '12px',
+                      padding: '14px',
+                      backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                    }}
+                  >
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: isDark ? '#e2e8f0' : '#334155' }}>
+                      2. File Ảnh CCCD Mặt Sau <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '11.5px', color: isDark ? '#94a3b8' : '#64748b' }}>
+                      Mặt sau có vân tay và chip điện tử rõ ràng
+                    </p>
+
+                    {formData.identityCardBackUrl ? (
+                      <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                        <img
+                          src={formData.identityCardBackUrl}
+                          alt="CCCD Mặt sau"
+                          style={{ width: '100%', height: '120px', objectFit: 'cover', display: 'block' }}
+                        />
+                        <div style={{ padding: '8px 10px', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#059669', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <CheckCircle2 size={13} /> {uploadedFilesInfo.idBack?.name || 'Đã tải lên tệp ảnh'}
+                          </span>
+                          <label
+                            style={{
+                              fontSize: '11.5px',
+                              color: '#2563eb',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <FileUp size={13} /> Đổi file
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleUploadFile(e, 'identityCardBackUrl')}
+                              style={{ display: 'none' }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <label
+                        style={{
+                          border: `2px dashed ${isDark ? '#334155' : '#cbd5e1'}`,
+                          borderRadius: '10px',
+                          padding: '24px 16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          cursor: 'pointer',
+                          backgroundColor: isDark ? '#1e293b' : '#fafafa',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <UploadCloud size={28} style={{ color: '#2563eb' }} />
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
+                          {uploadingField === 'identityCardBackUrl' ? 'Đang tải tệp lên...' : 'Chọn file ảnh CCCD mặt sau'}
+                        </span>
+                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>Hỗ trợ JPG, PNG, WEBP (tối đa 10MB)</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleUploadFile(e, 'identityCardBackUrl')}
+                          style={{ display: 'none' }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* TẬP TIN 3: GIẤY PHÉP KINH DOANH VẬN TẢI (FILE ẢNH HOẶC FILE PDF) */}
+                <div
+                  style={{
+                    border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                    borderRadius: '12px',
+                    padding: '16px',
+                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                  }}
+                >
+                  <label style={{ display: 'block', fontSize: '13.5px', fontWeight: 700, marginBottom: '4px', color: isDark ? '#e2e8f0' : '#334155' }}>
+                    3. File Scan Giấy Phép Kinh Doanh / Giấy Phép Tuyến Cố Định (Ảnh hoặc PDF) <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b' }}>
+                    Bản scan màu có dấu mộc đỏ của Sở Giao Thông Vận Tải. Có thể nộp file tài liệu <strong>.PDF</strong> hoặc file ảnh <strong>.PNG / .JPG</strong>.
+                  </p>
+
+                  {formData.businessLicenseUrl ? (
+                    <div
+                      style={{
+                        padding: '14px 18px',
+                        borderRadius: '10px',
+                        backgroundColor: isDark ? '#1e293b' : '#f0fdf4',
+                        border: '1px solid #a7f3d0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '10px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div
+                          style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '8px',
+                            backgroundColor: '#fee2e2',
+                            color: '#dc2626',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 800,
+                            fontSize: '12px',
+                          }}
+                        >
+                          {formData.businessLicenseUrl.toLowerCase().includes('.pdf') ? 'PDF' : 'DOC'}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>
+                            {uploadedFilesInfo.bizLicense?.name || 'Giay_Phep_Kinh_Doanh_Van_Tai.pdf'}
+                          </div>
+                          <div style={{ fontSize: '11.5px', color: '#059669', fontWeight: 600, marginTop: '2px' }}>
+                            ✓ Đã sẵn sàng thẩm định ({uploadedFilesInfo.bizLicense?.size || 'Bản scan màu'})
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <a
+                          href={formData.businessLicenseUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            backgroundColor: '#ffffff',
+                            color: '#2563eb',
+                            border: '1px solid #bfdbfe',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <Eye size={13} /> Xem tệp
+                        </a>
+
+                        <label
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            backgroundColor: '#2563eb',
+                            color: '#ffffff',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <FileUp size={13} /> Chọn tệp khác
+                          <input
+                            type="file"
+                            accept="image/*,application/pdf"
+                            onChange={(e) => handleUploadFile(e, 'businessLicenseUrl')}
+                            style={{ display: 'none' }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <label
+                      style={{
+                        border: `2px dashed ${isDark ? '#334155' : '#cbd5e1'}`,
+                        borderRadius: '10px',
+                        padding: '28px 20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        backgroundColor: isDark ? '#1e293b' : '#fafafa',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <UploadCloud size={32} style={{ color: '#2563eb' }} />
+                      <span style={{ fontSize: '14px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
+                        {uploadingField === 'businessLicenseUrl' ? 'Đang tải tệp lên máy chủ...' : 'Tải lên Giấy Phép Kinh Doanh / Vận Tải (Ảnh hoặc File PDF)'}
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#64748b' }}>
+                        Bấm để chọn file từ máy tính hoặc kéo thả file vào đây (PDF, PNG, JPG tối đa 10MB)
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={(e) => handleUploadFile(e, 'businessLicenseUrl')}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* ================= TÀI KHOẢN NGÂN HÀNG QUYẾT TOÁN ESCROW ================= */}
+              <div
+                style={{
+                  padding: '18px 20px',
+                  borderRadius: '14px',
+                  backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+                  border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, paddingBottom: '10px' }}>
+                  <Wallet size={18} style={{ color: '#2563eb' }} />
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '14.5px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>
+                      Tài Khoản Ngân Hàng Nhận Quyết Toán Ký Quỹ (Escrow)
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '12px', color: isDark ? '#94a3b8' : '#64748b' }}>
+                      TravelEasy sẽ chuyển khoản doanh thu vé đối soát trực tiếp vào tài khoản ngân hàng này
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: isDark ? '#e2e8f0' : '#334155' }}>
+                      Ngân Hàng Thụ Hưởng
+                    </label>
+                    <select
+                      value={formData.bankName}
+                      onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px',
+                        borderRadius: '10px',
+                        border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#f8fafc' : '#0f172a',
+                        fontSize: '13.5px',
+                        outline: 'none',
+                      }}
+                    >
+                      <option value="MB Bank (Ngân hàng TMCP Quân Đội)">MB Bank (Ngân hàng TMCP Quân Đội)</option>
+                      <option value="Vietcombank (Ngân hàng Ngoại Thương)">Vietcombank (Ngân hàng Ngoại Thương)</option>
+                      <option value="Techcombank (Ngân hàng Kỹ Thương)">Techcombank (Ngân hàng Kỹ Thương)</option>
+                      <option value="BIDV (Ngân hàng Đầu Tư & Phát Triển)">BIDV (Ngân hàng Đầu Tư & Phát Triển)</option>
+                      <option value="VietinBank (Ngân hàng Công Thương)">VietinBank (Ngân hàng Công Thương)</option>
+                      <option value="ACB (Ngân hàng Á Châu)">ACB (Ngân hàng Á Châu)</option>
+                      <option value="VPBank (Ngân hàng Việt Nam Thịnh Vượng)">VPBank (Ngân hàng Việt Nam Thịnh Vượng)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: isDark ? '#e2e8f0' : '#334155' }}>
+                      Số Tài Khoản Ngân Hàng
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ví dụ: 091288899999"
+                      value={formData.bankAccountNumber}
+                      onChange={(e) => {
+                        setFormData({ ...formData, bankAccountNumber: e.target.value });
+                        clearError('bankAccountNumber');
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px',
+                        borderRadius: '10px',
+                        border: errors.bankAccountNumber ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#f8fafc' : '#0f172a',
+                        fontSize: '13.5px',
+                        outline: 'none',
+                      }}
+                    />
+                    {errors.bankAccountNumber && (
+                      <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertCircle size={13} /> {errors.bankAccountNumber}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: isDark ? '#e2e8f0' : '#334155' }}>
+                      Tên Chủ Tài Khoản (In Hoa Không Dấu)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ví dụ: CONG TY TNHH VAN TAI HOANG LONG"
+                      value={formData.bankAccountOwner}
+                      onChange={(e) => {
+                        setFormData({ ...formData, bankAccountOwner: e.target.value.toUpperCase() });
+                        clearError('bankAccountOwner');
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px',
+                        borderRadius: '10px',
+                        border: errors.bankAccountOwner ? '1.5px solid #ef4444' : `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#f8fafc' : '#0f172a',
+                        fontSize: '13.5px',
+                        outline: 'none',
+                      }}
+                    />
+                    {errors.bankAccountOwner && (
+                      <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 600, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertCircle size={13} /> {errors.bankAccountOwner}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

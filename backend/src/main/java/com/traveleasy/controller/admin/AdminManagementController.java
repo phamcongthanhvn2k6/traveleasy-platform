@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.math.BigDecimal;
 import java.util.Map;
 
 @RestController
@@ -108,6 +109,25 @@ public class AdminManagementController {
             @PathVariable Long id,
             @RequestParam String status) {
         return ApiResponse.success("Cập nhật trạng thái nhà xe thành công", adminManagementService.updateCompanyStatus(id, status));
+    }
+
+    @CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)
+    @PostMapping("/bus-companies/{id}/approve")
+    @Operation(summary = "Phê duyệt hồ sơ đối tác nhà xe kèm tỷ lệ hoa hồng chiết khấu sàn")
+    public ApiResponse<BusCompanyAdminResponse> approveCompany(
+            @PathVariable Long id,
+            @RequestParam(required = false) BigDecimal commissionRate,
+            @RequestParam(required = false) String note) {
+        return ApiResponse.success("Phê duyệt đối tác nhà xe thành công!", adminManagementService.approveCompanyWithCommission(id, commissionRate, note));
+    }
+
+    @CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)
+    @PostMapping("/bus-companies/{id}/request-supplement")
+    @Operation(summary = "Yêu cầu đối tác nhà xe bổ sung giấy tờ pháp lý / CCCD")
+    public ApiResponse<BusCompanyAdminResponse> requestSupplement(
+            @PathVariable Long id,
+            @RequestParam String reason) {
+        return ApiResponse.success("Đã gửi yêu cầu bổ sung hồ sơ tới nhà xe", adminManagementService.requestCompanySupplement(id, reason));
     }
 
     @CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)

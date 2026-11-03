@@ -185,7 +185,75 @@
 
 ---
 
-## 3. PHÂN HỆ ĐIỀU HÀNH NHÀ XE ĐỐI TÁC (PARTNER OPERATOR PORTAL)
+## 3. PHÂN HỆ ĐĂNG KÝ ĐỐI TÁC MỞ BÁN VÉ (PARTNER ONBOARDING & KYB SUBMISSION)
+
+Nhóm API công khai (Public) dành cho doanh nghiệp / hợp tác xã vận tải mới đăng ký gia nhập sàn:
+
+### 3.1 Nộp Đơn Đăng Ký Hợp Tác Trực Tuyến
+* **Endpoint**: `POST /api/v1/partners/register`
+* **Quyền truy cập**: Public (Không yêu cầu đăng nhập)
+* **Request Body (JSON / Multipart Form)**:
+```json
+{
+  "companyName": "Công ty TNHH Vận Tải Hành Khách TravelEasy Express",
+  "brandName": "TravelEasy Express",
+  "taxCode": "0316888999",
+  "headquartersAddress": "Số 123 Đường Điện Biên Phủ, Phường 25, Quận Bình Thạnh, TP.HCM",
+  "transportLicenseNumber": "GPVT-79/2024/SGTVT",
+  "transportLicenseIssueDate": "2024-01-15",
+  "transportLicenseExpiryDate": "2029-01-15",
+  "transportLicenseIssuingAuthority": "Sở Giao thông Vận tải TP. Hồ Chí Minh",
+  "businessLicenseUrl": "https://res.cloudinary.com/traveleasy/docs/gpkd_0316888999.pdf",
+  "transportLicenseUrl": "https://res.cloudinary.com/traveleasy/docs/gpvt_sgtvt.pdf",
+  "legalRepresentativeName": "Nguyễn Văn Tuấn",
+  "legalRepresentativeTitle": "Tổng Giám Đốc",
+  "identityCardNumber": "079090012345",
+  "identityCardFrontUrl": "https://res.cloudinary.com/traveleasy/docs/cccd_front_079.jpg",
+  "identityCardBackUrl": "https://res.cloudinary.com/traveleasy/docs/cccd_back_079.jpg",
+  "hotline": "1900888999",
+  "contactEmail": "dieuhanh@traveleasyexpress.vn",
+  "bankName": "Ngân hàng TMCP Ngoại Thương Việt Nam (Vietcombank)",
+  "bankBranch": "Chi nhánh Tân Định, TP.HCM",
+  "bankAccountNumber": "0071001234567",
+  "bankAccountOwner": "CONG TY TNHH VAN TAI TRAVEL EASY EXPRESS",
+  "acceptedTerms": true
+}
+```
+* **Response 201 Created**:
+```json
+{
+  "success": true,
+  "message": "Nộp đơn đăng ký đối tác thành công! Hồ sơ đã được chuyển vào hàng đợi thẩm định của Quản trị viên sàn.",
+  "data": {
+    "companyId": 15,
+    "registrationTicketCode": "PARTNER-REG-20261103-088",
+    "status": "PENDING_APPROVAL",
+    "kycStatus": "PENDING_APPROVAL",
+    "submittedAt": "2026-11-03T16:00:00Z",
+    "estimatedReviewHours": 24
+  }
+}
+```
+
+### 3.2 Tra Cứu Tiến Độ Thẩm Định Hồ Sơ Đối Tác
+* **Endpoint**: `GET /api/v1/partners/status/{registrationTicketCode}`
+* **Response 200 OK**:
+```json
+{
+  "success": true,
+  "data": {
+    "registrationTicketCode": "PARTNER-REG-20261103-088",
+    "companyName": "TravelEasy Express",
+    "status": "PENDING_APPROVAL",
+    "kycStatus": "UNDER_REVIEW",
+    "reviewerNote": "Đang đối chiếu dữ liệu Tổng cục Thuế và gọi kiểm chứng hotline",
+    "updatedAt": "2026-11-03T16:05:00Z"
+  }
+}
+```
+
+---
+## 4. PHÂN HỆ ĐIỀU HÀNH NHÀ XE ĐỐI TÁC (PARTNER OPERATOR PORTAL)
 
 Toàn bộ các API trong nhóm này yêu cầu Header `Authorization: Bearer <token>` có vai trò `ROLE_OPERATOR` hoặc `ROLE_ADMIN`:
 
@@ -201,10 +269,12 @@ Toàn bộ các API trong nhóm này yêu cầu Header `Authorization: Bearer <t
 | `POST` | `/api/v1/company/routes` | Thêm tuyến đường và cấu hình trạm dừng |
 | `GET` | `/api/v1/company/bookings` | Danh sách hành khách đã đặt vé trên các chuyến của nhà xe |
 | `GET` | `/api/v1/company/reviews` | Xem đánh giá của khách hàng và gửi phản hồi trả lời |
+| `GET` | `/api/v1/bookings/verify-ticket/{ticketCode}` | Xác thực tính hợp lệ của vé điện tử qua camera quét QR code |
+| `POST`| `/api/v1/bookings/check-in/{ticketCode}` | Đổi trạng thái vé sang `USED` (Đã lên xe) và chống quét trùng lặp |
 
 ---
 
-## 4. PHÂN HỆ QUẢN TRỊ TỔNG THỂ HỆ THỐNG (SYSTEM ADMIN PORTAL)
+## 5. PHÂN HỆ QUẢN TRỊ TỔNG THỂ HỆ THỐNG (SYSTEM ADMIN PORTAL)
 
 Toàn bộ các API yêu cầu Header `Authorization: Bearer <token>` có vai trò `ROLE_ADMIN`:
 
@@ -243,7 +313,29 @@ Toàn bộ các API yêu cầu Header `Authorization: Bearer <token>` có vai tr
 
 ---
 
-## 5. BẢNG MÃ LỖI CHUẨN HỆ THỐNG (ERROR CODES & HTTP STATUS)
+
+### 5.3 Quy Trình Thẩm Định Pháp Lý & Phê Duyệt Đối Tác Nhà Xe (Admin KYB APIs)
+* **Lấy danh sách hồ sơ nhà xe chờ thẩm định**:
+  - `GET /api/v1/admin/bus-companies?status=PENDING_APPROVAL` (Header: `ROLE_ADMIN`)
+* **Phê duyệt hồ sơ đối tác (Kích hoạt nhà xe & Tạo tài khoản OPERATOR)**:
+  - `POST /api/v1/admin/bus-companies/{id}/approve`
+  - Request Body:
+  ```json
+  {
+    "commissionRate": 8.0,
+    "settlementCycle": "WEEKLY",
+    "adminNote": "Đã đối chiếu MST và kiểm tra bản gốc GPKD, CCCD hợp lệ 100%"
+  }
+  ```
+  - Response: Chuyển `status = 'ACTIVE'`, `kyc_status = 'VERIFIED'`, tự động phát sinh tài khoản `ROLE_OPERATOR`, gửi email bàn giao cho nhà xe.
+* **Yêu cầu bổ sung tài liệu**:
+  - `POST /api/v1/admin/bus-companies/{id}/request-supplement`
+  - Request Body: `{ "reason": "Bản chụp CCCD mặt sau bị mờ góc, yêu cầu chụp lại rõ nét", "deadlineDays": 7 }`
+* **Từ chối / Bác bỏ hồ sơ**:
+  - `POST /api/v1/admin/bus-companies/{id}/reject`
+  - Request Body: `{ "rejectionReason": "Mã số thuế không tồn tại hoặc đã bị đóng mã số thuế trên cổng Tổng cục Thuế" }`
+
+## 6. BẢNG MÃ LỖI CHUẨN HỆ THỐNG (ERROR CODES & HTTP STATUS)
 
 | HTTP Code | Error Code | Ý nghĩa & Nguyên nhân |
 |:---:|:---|:---|

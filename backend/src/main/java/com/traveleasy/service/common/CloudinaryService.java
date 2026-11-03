@@ -44,7 +44,7 @@ public class CloudinaryService {
 
         Map<String, Object> uploadParams = ObjectUtils.asMap(
                 "folder", targetFolder,
-                "resource_type", "image",
+                "resource_type", "auto",
                 "use_filename", true,
                 "unique_filename", true,
                 "overwrite", false

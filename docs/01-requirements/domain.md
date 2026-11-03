@@ -27,6 +27,7 @@ Lý do là Core Domain:
 | **Payment & Refund Orchestration** | Có logic nghiệp vụ riêng (idempotency, pessimistic lock, signature verification, chính sách hủy theo mốc %) nhưng bản thân việc "thanh toán" được ủy quyền cho VNPay/MoMo/ZaloPay — hệ thống chỉ điều phối. |
 | **Cancellation Policy Management** | Quy tắc hoàn tiền theo tầng thời gian là đặc thù nghiệp vụ nhà xe, hỗ trợ trực tiếp cho Refund nhưng không phải trung tâm cạnh tranh. |
 | **Review & Reputation Management** | Có quy trình hậu kiểm + report + SLA 48h đặc thù, hỗ trợ uy tín nhà xe nhưng không phải giá trị lõi giao dịch. |
+| **Partner Onboarding & KYB Verification** (Đơn đăng ký đối tác, thẩm định CCCD 2 mặt, MST, GPKD vận tải, Admin phê duyệt) | Là cửa ngõ pháp lý bảo vệ sàn khỏi rủi ro nhà xe chui, xe dù bến cóc, rửa tiền và lừa đảo. Logic nghiệp vụ đặc thù gắn liền với quy chế sàn TMĐT, Nghị định 10/2020/NĐ-CP và Luật Giao thông đường bộ. |
 | **Notification Dispatch** (Email/SMS xác nhận, nhắc lịch trình, ETA động) | Có luật nghiệp vụ về thời điểm gửi (2 phút sau đặt vé, quét trước giờ chạy 2 tiếng) nhưng cơ chế gửi bản thân là generic (SMS/Email gateway). |
 
 ### 1.3 Generic Domain
@@ -48,6 +49,24 @@ Lý do là Core Domain:
 - **Business Responsibility:** Đăng ký (UC-1.1), đăng nhập OTP/Google (UC-1.2), phát hành/thu hồi Access-Refresh Token, gán role tĩnh (CUSTOMER/BUS_COMPANY/ADMIN), khóa/mở khóa tài khoản (UC-3.1), quản lý tài khoản cá nhân & right-to-be-forgotten (UC-1.12, mục 3.3.4).
 - **Entities:** User, RefreshToken.
 - **Giao tiếp:** Phát hành `userId` + `role` dùng làm tham chiếu (reference-by-id) cho mọi Context khác (Booking, Trip, Review...) — không Context nào giữ bản sao dữ liệu cá nhân đầy đủ ngoài Identity. Booking Context gọi Identity (qua Access Token claims) để xác thực trước khi cho phép "Tiếp tục" (UC-1.6 bước 2).
+
+### 2.1.B Partner Onboarding & KYB Context
+- **Purpose:** Tiếp nhận đơn đăng ký hợp tác, quản lý hồ sơ tài liệu số hóa pháp lý, kiểm soát luồng thẩm định đa tầng và phê duyệt đối tác của Admin.
+- **Business Responsibility:**
+  - Tiếp nhận hồ sơ đăng ký hợp tác mở bán vé trực tuyến của nhà xe mới (UC-2.0).
+  - Thu thập và chuẩn hóa bộ hồ sơ pháp lý: Mã số thuế (MST 10/13 số), Giấy phép kinh doanh vận tải bằng ô tô do Sở GTVT cấp, **bắt buộc tải lên bản chụp 2 mặt Căn cước công dân (CCCD) gắn chip** của Người đại diện theo pháp luật, Tài khoản ngân hàng quyết toán Escrow (chống rửa tiền).
+  - Cung cấp giao diện thẩm định hồ sơ đa tầng cho Quản trị viên (UC-3.2): Đối chiếu CSDL Thuế Quốc gia, kiểm tra tính hợp lệ của giấy tờ, gọi điện kiểm chứng hotline.
+  - Xử lý các quyết định thẩm định: Phê duyệt (`APPROVED / ACTIVE`), Yêu cầu bổ sung (`REQUIRES_SUPPLEMENT`), hoặc Bác bỏ (`REJECTED`).
+  - Tự động kích hoạt: Khởi tạo tài khoản Quản trị nhà xe (`ROLE_OPERATOR`), phát hành Hợp đồng hợp tác điện tử (`Partner e-Contract`) gắn mã băm SHA-256 bảo vệ tính toàn vẹn và gửi thông tin bàn giao Cổng điều hành qua Email.
+- **Entities & Value Objects:**
+  - `BusCompany` (Aggregate Root): Đóng vai trò vừa là đối tác kinh doanh, vừa là chủ thể hồ sơ KYB với các trường trạng thái `status` (`PENDING_APPROVAL`, `UNDER_REVIEW`, `ACTIVE`, `REJECTED`, `SUSPENDED`) và `kyc_status` (`PENDING_APPROVAL`, `UNDER_REVIEW`, `PENDING_SUPPLEMENT`, `VERIFIED`, `REJECTED`).
+  - `KYCDocuments` (Value Object): Tập hợp các liên kết tài liệu số hóa bất biến (`businessLicenseUrl`, `identityCardFrontUrl`, `identityCardBackUrl`, `transportLicenseUrl`, `vehicleSamplePhotoUrl`).
+  - `SettlementBankAccount` (Value Object): Thông tin tài khoản ngân hàng thụ hưởng (`bankName`, `accountNumber`, `accountOwner`) bắt buộc phải trùng khớp với tên pháp nhân hoặc người đại diện.
+- **Invariants & Domain Rules:**
+  - [Rule KYB-01]: Mã số thuế (MST) và Tên thương mại nhà xe phải là duy nhất (`UNIQUE`) trên toàn hệ thống.
+  - [Rule KYB-02]: Hồ sơ bắt buộc phải có đầy đủ 2 mặt CCCD của người đại diện; nếu thiếu, hệ thống chặn không cho nộp đơn.
+  - [Rule KYB-03]: Chỉ tài khoản có quyền Quản trị viên sàn (`ROLE_ADMIN`) mới có thẩm quyền chuyển trạng thái từ `PENDING_APPROVAL` sang `ACTIVE`.
+  - [Rule KYB-04]: Mỗi lần Admin ra quyết định (Duyệt/Từ chối/Yêu cầu bổ sung), hệ thống bắt buộc phải ghi nhận bản ghi kiểm toán (`AuditLog`) kèm ID Admin, thời điểm, địa chỉ IP và lý do giải trình.
 
 ### 2.2 Location Context (Master Data Catalog)
 - **Purpose:** Quản lý danh mục địa điểm/bến xe dùng chung toàn hệ thống (Shared Master Data Catalog).
@@ -98,10 +117,10 @@ Lý do là Core Domain:
 - **Giao tiếp:** Đọc `PaymentTransaction` gốc từ Payment Context (theo `txnRef`); publish `RefundCompleted` để Booking Context giải phóng ghế và Notification Context gửi thông báo.
 
 ### 2.9 Ticketing Context
-- **Purpose:** Đại diện vé điện tử — bằng chứng hợp lệ hóa chỗ ngồi.
-- **Business Responsibility:** Sinh vé điện tử kèm QR Code (UC-1.9), tra cứu lịch sử vé (UC-1.15), cập nhật trạng thái lên xe/hủy (UC-2.7).
-- **Entities:** Ticket (có thể coi Ticket là Entity con trong Booking Aggregate — xem Phần 5).
-- **Giao tiếp:** Được tạo khi nhận `PaymentSucceeded`; là gốc tham chiếu cho Review Context ("một vé chỉ review một lần").
+- **Purpose:** Đại diện vé điện tử — bằng chứng hợp lệ hóa chỗ ngồi và công cụ kiểm soát hành khách lên xe.
+- **Business Responsibility:** Sinh vé điện tử kèm QR Code (UC-1.9), tra cứu lịch sử vé (UC-1.15), quét mã QR và soát vé trực tiếp thời gian thực chống quét trùng lặp qua giao diện di động `/scanner` và tra cứu `/lookup` (UC-2.12), cập nhật trạng thái lên xe/hủy (UC-2.7), xuất vé điện tử định dạng PDF.
+- **Entities:** Ticket (Entity con trong Booking Aggregate kèm `checkedInAt`, `checkedInBy`).
+- **Giao tiếp:** Được tạo khi nhận `PaymentSucceeded`; là gốc tham chiếu cho Review Context ("một vé chỉ review một lần"); cung cấp API soát vé trực tiếp cho Cổng Điều Hành Nhà Xe.
 
 ### 2.10 Review Context
 - **Purpose:** Thu thập & kiểm duyệt đánh giá dịch vụ nhà xe.
@@ -126,6 +145,24 @@ Lý do là Core Domain:
 - **Business Responsibility:** Ghi log đăng nhập, thay đổi cấu hình, CRUD chuyến đi, hủy vé (mục 3.3.2); hiển thị Read-Only cho Admin (UC-3.11).
 - **Entities:** AuditLog.
 - **Giao tiếp:** Là **subscriber thụ động** của gần như mọi Domain Event nhạy cảm phát ra từ các Context khác; không publish event, không bị Context nào phụ thuộc ngược.
+
+### 2.14 Promotion Context
+- **Purpose:** Quản lý các chiến dịch khuyến mại toàn sàn hoặc liên kết nhà xe, phát hành và áp dụng mã ưu đãi/voucher giảm giá.
+- **Business Responsibility:** Quản trị danh mục khuyến mại, thiết lập mã voucher, quy định loại giảm giá (phần trăm có trần / số tiền cố định), hạn mức tối thiểu đơn vé, thời hạn và số lượt sử dụng (UC-3.12); Kiểm tra điều kiện và áp dụng mã giảm giá thời gian thực tại bước thanh toán của khách hàng (UC-1.18).
+- **Entities:** Promotion, Voucher, VoucherUsageHistory.
+- **Giao tiếp:** Booking Context gọi Promotion Context để tính toán `discountAmount` và ghi nhận `finalAmount` trước khi khởi tạo thanh toán; Admin Context cung cấp giao diện quản lý.
+
+### 2.15 Settlement Context (Escrow Management)
+- **Purpose:** Quản lý dòng tiền ký quỹ trung gian (Escrow) và thực hiện đối soát chi trả doanh thu vé xe cho đối tác vận tải.
+- **Business Responsibility:** Lưu trữ doanh thu bán vé an toàn trong tài khoản ký quỹ sàn; Tự động tính toán khấu trừ tỷ lệ hoa hồng sàn (5-15% theo Hợp đồng hợp tác điện tử); Lập bảng kê đối soát định kỳ 2 lần/tháng (ngày 15 & cuối tháng) cho các chuyến đi đã hoàn tất (`COMPLETED`); Khởi tạo lệnh chi trả chuyển khoản ngân hàng về tài khoản đã thẩm định KYB của nhà xe (UC-3.13); Cung cấp cổng tra cứu sao kê doanh thu trực tuyến cho Nhà xe (`/company/settlements`).
+- **Entities:** SettlementBatch, SettlementRecord, BusCompanyEscrowBalance.
+- **Giao tiếp:** Nhận thông báo chuyến đi hoàn thành từ Trip Context; đối chiếu doanh thu từ Booking & Payment Context; xác thực tài khoản ngân hàng thụ hưởng qua BusCompany Context.
+
+### 2.16 AI Assistant Context
+- **Purpose:** Cung cấp trợ lý ảo thông minh tương tác bằng ngôn ngữ tự nhiên hỗ trợ hành khách tìm kiếm hành trình và giải đáp thông tin vé 24/7.
+- **Business Responsibility:** Tiếp nhận câu hỏi tự nhiên của khách hàng qua Widget Chatbot nổi (`AiController`); Tích hợp mô hình ngôn ngữ lớn (Google Gemini LLM) kết hợp dữ liệu ngữ cảnh hệ thống (tuyến đường, khung giá, chính sách vé, FAQs); Phản hồi câu trả lời súc tích kèm thẻ điều hướng nhanh vào luồng đặt vé (UC-1.17).
+- **Entities:** (Domain Service thuần túy `AiAssistantService` kết nối External LLM API qua Anti-Corruption Layer).
+- **Giao tiếp:** Đọc dữ liệu công khai từ Location Context, Trip Context và Policy Context để nạp vào prompt context; không can thiệp ghi dữ liệu giao dịch.
 
 ---
 
@@ -1433,7 +1470,7 @@ Ban đầu có thể gộp `BusCompany` với toàn bộ `Vehicle + Location + C
 Đã bổ sung ở Phần 11 các rule dễ bị bỏ sót khi đọc lướt: giới hạn report/tháng của Nhà xe (UC-2.10), yêu cầu chạy gửi thử nghiệm trước khi lưu cấu hình thông báo (UC-3.8), và ràng buộc PDPD về retention 5 năm + xóa trong 72h (mục 3.3.4) — đây là các rule phi chức năng nhưng có tác động trực tiếp đến vòng đời Entity (`User`, `PassengerInfo`, `PaymentTransaction`).
 
 **6. Có Use Case nào chưa được cover không?**
-Đã rà soát đối chiếu toàn bộ 15 UC Khách hàng (UC-1.1 → UC-1.15), 11 UC Nhà xe (UC-2.1 → UC-2.11), 11 UC Admin (UC-3.1 → UC-3.11), và mục đặc tả IPN (3.2.1.X). Toàn bộ đã được ánh xạ vào Bounded Context / Entity / Domain Service / Event tương ứng. Riêng UC-1.3 (Xem trang chủ) không sinh Entity/Aggregate mới — chỉ là truy vấn tổng hợp (read-model) từ `Banner` (Admin Context) và `Trip` nổi bật (Trip Context), nên không cần mô hình hóa riêng ở tầng Domain.
+Đã rà soát đối chiếu toàn bộ 18 UC Khách hàng (UC-1.1 → UC-1.18, bổ sung UC-1.16 Đổi chuyến, UC-1.17 Trợ lý ảo AI và UC-1.18 Voucher giảm giá), 13 UC Nhà xe (UC-2.0 → UC-2.12, bổ sung UC-2.0 Nộp hồ sơ đối tác trực tuyến và UC-2.12 Quét mã QR soát vé), 13 UC Admin (UC-3.1 → UC-3.13, bổ sung UC-3.12 Quản trị Voucher và UC-3.13 Quyết toán Escrow), và mục đặc tả IPN (3.2.1.X). Toàn bộ 44 Use Cases đã được ánh xạ vào Bounded Context / Entity / Domain Service / Event tương ứng. Riêng UC-1.3 (Xem trang chủ) không sinh Entity/Aggregate mới — chỉ là truy vấn tổng hợp (read-model) từ `Banner` (Admin Context) và `Trip` nổi bật (Trip Context), nên không cần mô hình hóa riêng ở tầng Domain.
 
 **Kết luận:** Domain Model đáp ứng đầy đủ yêu cầu SRS v2.0, tách biệt rõ Core/Supporting/Generic Domain, các Aggregate được giữ ở kích thước hợp lý theo transactional consistency thực sự cần thiết, và mọi giả định (Assumption) đều được đánh dấu tường minh để đội phát triển xác nhận lại với Product Owner trước khi hiện thực hóa.
 
@@ -1454,7 +1491,7 @@ Ban đầu có thể gộp `BusCompany` với toàn bộ `Vehicle + Location + C
    - Bắt buộc có `referenceStop` do **Nhà xe tự chọn thủ công** từ danh sách `RouteTemplateStop` thuộc tuyến (NOT NULL).
    - Cấu hình Đón (`PICKUP`) và Trả (`DROPOFF`) độc lập.
    - Scope coverage là văn bản mô tả `coverageAreaDescription`, không sinh `Location` entity.
-   - Giá dịch vụ hỗ trợ `FREE` ở V1, sẵn sàng mở rộng `PAID`/`feeAmount` ở V2. Không xây dựng hệ thống Voucher/Discount.
+   - Giá dịch vụ hỗ trợ `FREE` ở V1, sẵn sàng mở rộng `PAID`/`feeAmount` ở V2. Hệ thống Khuyến mại & Voucher Giảm giá được triển khai độc lập tại Promotion Context (UC-1.18, UC-3.12).
    - Thêm Entity snapshot `TripShuttleService` trong Aggregate `Trip`. `displayTime` được tính snapshot: `TripPoint(referenceStop).eta +/- shuttleOffsetMinutes`.
 
 3. **Trip & TripSchedule & TripPoint:**

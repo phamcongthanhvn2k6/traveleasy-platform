@@ -91,6 +91,7 @@
    - 4.4 23 Canonical Enums
    - 4.5 5 State Machines (Sơ đồ trạng thái nghiệp vụ)
    - 4.6 Tổng hợp 40 Business Rules cốt lõi & Quyết định nghiệp vụ PBD
+    - 4.7 Quy Trình Nộp Đơn Đối Tác & Trung Tâm Thẩm Định Pháp Lý KYB (Partner Onboarding & KYB Center)
 5. [THIẾT KẾ LỚP CHI TIẾT (CLASS DIAGRAM CANONICAL)](#5-thiết-kế-lớp-chi-tiết-class-diagram-canonical)
    - 5.1 Identity & Access Context
    - 5.2 Fleet & Seat Catalog Context
@@ -816,6 +817,95 @@ stateDiagram-v2
     * **PBD-02**: Phí đổi vé V1 bằng **0 VNĐ** (Miễn phí đổi vé, chỉ tính chênh lệch giá ghế).
     * **PBD-03**: Chỉ được đổi chuyến trong **cùng Tuyến mẫu và cùng Nhà xe**.
     * **PBD-04**: Mỗi vé chỉ được đổi thành công **tối đa 1 lần**.
+
+---
+
+
+### 4.7 Quy Trình Nộp Đơn Đối Tác & Trung Tâm Thẩm Định Pháp Lý KYB (Partner Onboarding & KYB Center)
+
+Quy trình gia nhập đối tác nhà xe được thiết kế theo tiêu chuẩn thẩm định doanh nghiệp **KYB (Know Your Business)** chặt chẽ, đảm bảo 100% đối tác mở bán vé trên TravelEasy đều là đơn vị vận tải hành khách hợp pháp, sở hữu giấy phép của Sở GTVT và tài khoản ngân hàng chính chủ phục vụ thanh toán ký quỹ Escrow.
+
+#### A. Sơ đồ Luồng Nghiệp Vụ End-to-End (Sequence Diagram)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Partner as Doanh Nghiệp Nhà Xe
+    participant FE as Frontend Portal
+    participant BE as Backend Spring Boot
+    participant Cloud as Cloudinary CDN Storage
+    participant DB as Supabase PostgreSQL
+    actor Admin as Ban Quản Trị Sàn (Admin)
+
+    Note over Partner, FE: BƯỚC 1: KHAI BÁO THÔNG TIN & TẢI TỆP TRỰC TIẾP
+    Partner->>FE: Nhập Tên nhà xe, MST, Người đại diện, Hotline
+    Partner->>FE: Tạo tuyến đường (Route Builder: Điểm đi - Điểm đến, 1 chiều/khứ hồi)
+    Partner->>FE: Kéo thả file Ảnh CCCD 2 mặt & File Scan GPKD (Ảnh hoặc PDF)
+    FE->>BE: POST /api/v1/upload/image (Tải file MultipartFile)
+    BE->>Cloud: Lưu trữ an toàn tại traveleasy/kyb_documents (resource_type: auto)
+    Cloud-->>BE: Trả về Secure HTTPS URL
+    BE-->>FE: Trả về link file Cloudinary
+    Partner->>FE: Nhập tài khoản ngân hàng thụ hưởng (Ngân hàng, STK, Tên chủ TK)
+
+    Note over FE, BE: BƯỚC 2: CLIENT & SERVER VALIDATION (13 QUY TẮC)
+    Partner->>FE: Bấm "Gửi Yêu Cầu Hợp Tác Ngay"
+    FE->>FE: Thẩm định 13 trường dữ liệu (Inline error alerts nếu sai)
+    FE->>BE: POST /api/v1/partners/register
+    BE->>BE: Kiểm tra tính duy nhất (Unique TaxCode & CompanyName)
+    BE->>DB: Lưu hồ sơ trạng thái PENDING và kyc_status = PENDING
+    BE-->>FE: HTTP 200 Đăng ký thành công
+
+    Note over Admin, DB: BƯỚC 3: QUY TRÌNH THẨM ĐỊNH KYB 5 BƯỚC TẠI ADMIN PORTAL
+    Admin->>FE: Mở Trung Tâm Thẩm Định KYB (/admin/bus-companies)
+    FE->>DB: Truy vấn hồ sơ nhà xe & tài liệu pháp lý
+    Admin->>FE: 1. Bấm 1-Click tra cứu MST trên Cổng Tổng Cục Thuế / MaSoThue.com
+    Admin->>FE: 2. Soi ảnh 2 mặt CCCD gắn chip (Lightbox phóng to Full HD)
+    Admin->>FE: 3. Xem trực tiếp văn bản PDF Giấy phép vận tải Sở GTVT (Embedded PDF Reader)
+    Admin->>FE: 4. Kiểm tra đối soát AML tự động: So khớp Tên chủ tài khoản với Tên pháp nhân
+    Admin->>FE: 5. Kênh Tele-Check: Bấm gọi hotline kiểm chứng
+
+    Note over Admin, BE: BƯỚC 4: RA QUYẾT ĐỊNH THẨM ĐỊNH (3 NHÁNH)
+    alt Nhánh 1: Phê Duyệt Hồ Sơ (APPROVE)
+        Admin->>FE: Thiết lập % hoa hồng sàn (6% - 12%) & Ghi chú
+        FE->>BE: POST /admin/bus-companies/{id}/approve
+        BE->>DB: Cập nhật status = ACTIVE, kyc_status = VERIFIED
+        BE->>DB: Tự động khởi tạo tài khoản ROLE_OPERATOR
+        BE-->>Partner: Gửi thông báo & tài khoản điều hành qua Email
+    else Nhánh 2: Yêu Cầu Bổ Sung (REQUEST_SUPPLEMENT)
+        Admin->>FE: Chọn lý do yêu cầu chụp lại CCCD hoặc gửi bổ sung GPKD (Hạn 7 ngày)
+        FE->>BE: POST /admin/bus-companies/{id}/request-supplement
+        BE->>DB: Cập nhật status = PENDING_SUPPLEMENT
+    else Nhánh 3: Từ Chối Hồ Sơ (REJECT)
+        Admin->>FE: Nhập lý do từ chối (Không đủ điều kiện kinh doanh vận tải)
+        FE->>BE: POST /admin/bus-companies/{id}/reject
+        BE->>DB: Cập nhật status = REJECTED
+    end
+```
+
+#### B. Các Cải Tiến Trải Nghiệm Đột Phá Đã Triển Khai
+
+1. **Bộ Công Cụ Tải Tệp Trực Tiếp (File Upload & Drag-and-Drop Dropzone):**
+   * Loại bỏ hoàn toàn việc bắt người dùng dán URL thủ công.
+   * Chấp nhận tệp ảnh (`.png`, `.jpg`, `.webp`) cho 2 mặt CCCD và file tài liệu **`.PDF`** hoặc ảnh cho Giấy phép kinh doanh / vận tải.
+   * File được lưu trữ vĩnh viễn trên Cloudinary CDN phân loại theo thư mục `traveleasy/kyb_documents`, có preview trực tiếp ngay trên form.
+
+2. **Hệ Thống Tạo Tuyến Đường Điểm Đầu - Điểm Cuối (Interactive Route Builder):**
+   * Người dùng không cần tìm hay gõ ký tự đặc biệt `⇄`.
+   * Giao diện cho phép chọn **Điểm khởi hành**, chọn **Chiều di chuyển** (2 Chiều khứ hồi `⇄` hoặc 1 Chiều `➔`), và chọn **Điểm đến**.
+   * Bấm `+ Thêm Tuyến` để quản lý các tuyến xe dưới dạng các thẻ (Tags) linh hoạt, có nút `✕` để xóa từng tuyến và thanh gợi ý nhanh các tuyến phổ biến.
+
+3. **Hệ Thống Thẩm Định 13 Quy Tắc (Real-time Validation System):**
+   * Kiểm tra định dạng số điện thoại Việt Nam (10 số, đầu 03/05/07/08/09).
+   * Kiểm tra mã số thuế hợp lệ (10 hoặc 13 số).
+   * Kiểm tra số CCCD đúng 12 chữ số theo quy chuẩn Bộ Công An.
+   * Bắt buộc đính kèm đủ 3 tệp giấy tờ (CCCD trước, CCCD sau, GPKD).
+   * Tự động chuẩn hóa Tên chủ tài khoản ngân hàng thành In Hoa Không Dấu.
+   * Hiển thị cảnh báo lỗi viền đỏ tức thì (Inline Errors) và tự động xóa lỗi khi người dùng chỉnh sửa.
+
+4. **Trình Đọc Văn Bản PDF Trực Tiếp (Embedded Full Screen PDF Reader) Dành Cho Admin:**
+   * Khi nhà xe tải lên Giấy phép kinh doanh dạng PDF, Admin có thể bấm **"Đọc Trực Tiếp PDF"** để mở trình duyệt xem toàn bộ các trang tài liệu PDF nhiều trang, dấu mộc đỏ của Sở GTVT ngay trong cửa sổ Admin mà không cần tải file về máy.
+   * Tính năng đối chiếu chống rửa tiền (AML Check) tự động so khớp tên chủ tài khoản ngân hàng với tên pháp nhân để cảnh báo rủi ro gian lận dòng tiền.
+
 
 ---
 
