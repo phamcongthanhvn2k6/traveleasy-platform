@@ -427,9 +427,10 @@ Nhằm đảm bảo tính tin cậy tuyệt đối cho các giao dịch tài ch�
         - Bản scan Giấy phép Kinh doanh Vận tải bằng ô tô do Sở GTVT cấp (có dấu mộc đỏ hợp lệ).
         - Ảnh chụp mẫu phương tiện tiêu biểu (xe Limousine, xe giường nằm) có thể hiện rõ biển kiểm soát và phù hiệu xe do cơ quan nhà nước cấp.
         - Logo thương hiệu chính thức (ảnh vector hoặc PNG nền trong suốt).
-    4.  **Bước 4: Khai báo Người đại diện theo pháp luật & Tài khoản Ngân hàng Quyết toán:**
+    4.  **Bước 4: Khai báo Người đại diện theo pháp luật, Tải lên CCCD 2 mặt & Tài khoản Ngân hàng Quyết toán:**
         - Họ và tên người đại diện pháp luật, Chức vụ (Giám đốc, Tổng Giám đốc, Chủ tịch HĐQT).
         - Số CCCD/Hộ chiếu người đại diện, Ngày cấp, Nơi cấp.
+        - **Bắt buộc tải lên file ảnh chụp/scan 2 mặt Căn cước công dân (CCCD) gắn chip** của Người đại diện theo pháp luật (`identity_card_front_url`, `identity_card_back_url`): Ảnh chụp bản gốc rõ nét 4 góc, không lóa sáng, không bị chỉnh sửa, đảm bảo thấy rõ khuôn mặt và số định danh cá nhân để đối chiếu với thông tin đại diện trên Giấy chứng nhận ĐKKD.
         - Số điện thoại Hotline tổng đài đặt vé và Email chính thức nhận đối soát doanh thu.
         - **Thông tin Tài khoản Quyết toán Ký quỹ (Escrow Settlement Account):** Số tài khoản ngân hàng, Tên chủ tài khoản (**Bắt buộc phải trùng khớp với Tên doanh nghiệp hoặc Tên người đại diện pháp luật trên GPKD**, chống hành vi rửa tiền / gian lận tài chính), Tên Ngân hàng và Chi nhánh mở tài khoản.
     5.  **Bước 5: Ký cam kết Quy chế Sàn TMĐT & Gửi duyệt:**
@@ -448,10 +449,23 @@ Nhằm đảm bảo tính tin cậy tuyệt đối cho các giao dịch tài ch�
 *   **Luồng sự kiện chính:** Xem, cập nhật thông tin giới thiệu, địa chỉ, số hotline và album ảnh của nhà xe.
 *   **Hậu điều kiện:** Thông tin được cập nhật và lưu trữ.
 
-##### UC-2.2: Quản lý danh sách xe
-*   **Tiền điều kiện:** Nhà xe đăng nhập hệ thống quản lý.
-*   **Luồng sự kiện chính:** CRUD danh sách các xe thuộc nhà xe (biển số, số lượng ghế, loại xe VIP/Thường) và album ảnh xe.
-*   **Hậu điều kiện:** Danh sách xe được cập nhật.
+##### UC-2.2: Quản lý Danh Sách Xe & Thẩm Định Giấy Tờ Lưu Hành Phương Tiện (Vehicle Registration & Mandatory Document Verification)
+*   **Tiền điều kiện:** Nhà xe đăng nhập Cổng điều hành với quyền `ROLE_OPERATOR` (Nhà xe đã ở trạng thái `ACTIVE`).
+*   **Luồng sự kiện chính:**
+    1.  **Khai báo thông số kỹ thuật xe:** Nhà xe nhập Biển kiểm soát (ví dụ: `51B-123.45`, `29B-999.88` — tự động chuẩn hóa chữ hoa và dấu gạch), Loại xe (`SEATED` - Ghế ngồi, `SLEEPER` - Giường nằm, `LIMOUSINE` - Phòng nằm VIP), Hãng sản xuất, Năm sản xuất và Tải lên album ảnh xe thực tế.
+    2.  **Bắt buộc Tải Lên Bộ Hồ Sơ 4 Giấy Tờ Xe Bắt Buộc (Mandatory Vehicle Compliance Documents):**
+        - **(1) Giấy chứng nhận Đăng ký xe ô tô (Cà vẹt xe):** Tải lên bản chụp/scan 2 mặt (`registration_certificate_url`). Biển số và số khung/số máy phải khớp 100% với thông tin khai báo.
+        - **(2) Giấy chứng nhận Kiểm định An toàn Kỹ thuật & Bảo vệ Môi trường (Sổ Đăng kiểm):** Tải lên bản chụp giấy đăng kiểm (`inspection_certificate_url`) và Khai báo Ngày hết hạn đăng kiểm (`inspection_expiry_date`). Ngày hết hạn phải còn hiệu lực **tối thiểu 30 ngày** tại thời điểm đăng ký.
+        - **(3) Bảo hiểm Bắt buộc TNDS & Bảo hiểm Tai nạn Hành khách:** Tải lên Giấy chứng nhận bảo hiểm điện tử hoặc ảnh chụp bản cứng (`insurance_certificate_url`), Khai báo Số hợp đồng bảo hiểm và Ngày hết hạn bảo hiểm (`insurance_expiry_date`).
+        - **(4) Phù hiệu Xe Khách do Sở Giao thông Vận tải cấp:** Khai báo Số phù hiệu (`badge_number` - loại "XE TUYẾN CỐ ĐỊNH" hoặc "XE HỢP ĐỒNG"), Ngày hết hạn phù hiệu (`badge_expiry_date`) và Tải lên ảnh chụp phù hiệu xe dán trên kính trước (`badge_url`).
+    3.  **Kiểm tra tính hợp lệ và Điều kiện hoàn tất đăng ký:**
+        - Hệ thống kiểm tra tính đầy đủ: **Nếu thiếu bất kỳ 1 trong 4 loại giấy tờ trên, hoặc ngày hết hạn Đăng kiểm/Bảo hiểm đã quá hạn, hệ thống LẬP TỨC CHẶN và từ chối lưu xe vào hệ thống**.
+        - Xe sau khi nộp đủ hồ sơ được cấp mã định danh `vehicleId` và ghi nhận trạng thái tuân thủ ban đầu: `compliance_status = 'PENDING'` (Chờ thẩm định giấy tờ) hoặc tự động chuyển sang `VERIFIED` nếu tài liệu đầy đủ và nhà xe thuộc nhóm uy tín cấp cao (Auto-Verified Tier).
+    4.  **Điều kiện mở bán & Cơ chế Cảnh báo An toàn tự động:**
+        - **Chỉ xe có `compliance_status = 'VERIFIED'` mới được phép gán vào Chuyến đi (`Trip`)** để xuất vé cho hành khách.
+        - **Cảnh báo trước 15 ngày:** Hệ thống tự động gửi thông báo đỏ lên Cổng điều hành nhà xe khi Đăng kiểm hoặc Bảo hiểm xe còn 15 ngày hết hạn.
+        - **Khóa tự động khi hết hạn (Auto-Lock on Expiry):** Vào đúng 00:00 của ngày hết hạn đăng kiểm/bảo hiểm, nếu nhà xe chưa tải lên giấy tờ gia hạn mới, hệ thống tự động chuyển trạng thái xe sang `compliance_status = 'EXPIRED'` và **chặn không cho gán xe vào bất kỳ chuyến đi nào trong tương lai**, bảo đảm 100% xe chở khách trên sàn đều đạt chuẩn an toàn của Cục Đăng kiểm Việt Nam.
+*   **Hậu điều kiện:** Phương tiện được lưu trữ trong CSDL kèm đầy đủ 4 liên kết hồ sơ giấy tờ lưu hành hợp pháp.
 
 ##### UC-2.3: Quản lý Cấu hình Địa điểm Nhà xe (`BusCompanyLocationConfig`)
 *   **Tiền điều kiện:** Nhà xe đăng nhập hệ thống quản lý.
@@ -665,6 +679,7 @@ Lưu ý kiến trúc: Hệ thống KHÔNG triển khai RBAC động (Admin tự 
 *   **BR-PARTNER-03 (Tiêu chuẩn Giấy Phép Con Kinh Doanh Vận Tải):** Giấy phép kinh doanh vận tải bằng xe ô tô phải do Sở Giao thông Vận tải cấp tỉnh/thành phố cấp, phải còn hiệu lực ít nhất 06 tháng tại thời điểm phê duyệt. Khi giấy phép còn dưới 30 ngày hết hạn, hệ thống tự động kích hoạt cảnh báo vàng trên Cổng điều hành nhà xe; khi giấy phép hết hạn mà chưa cập nhật bản gia hạn mới, hệ thống tự động hạ toàn bộ chuyến xe tương lai về trạng thái SUSPENDED để bảo vệ an toàn pháp lý cho hành khách.
 *   **BR-PARTNER-04 (Nguyên tắc Ký Quỹ & Tài Khoản Thụ Hưởng Khép Kín):** Tài khoản ngân hàng nhận tiền quyết toán doanh thu vé xe (Escrow Settlement Account) bắt buộc phải đứng tên chính Doanh nghiệp / Hợp tác xã vận tải hoặc Người đại diện theo pháp luật đã thẩm định. Hệ thống chặn chuyển tiền tới tài khoản của bên thứ ba không có tên trong hồ sơ pháp nhân.
 *   **BR-PARTNER-05 (Tính Bất Biến Của Nhật Ký Thẩm Định - Immutable KYB Audit Trail):** Mọi thao tác phê duyệt, từ chối, yêu cầu bổ sung của Admin đều phải lưu vết: Admin ID, Timestamp, IP Address, Trước/Sau trạng thái, và Lý do thẩm định. Dữ liệu này không thể chỉnh sửa hay xóa bỏ, phục vụ công tác thanh tra của Cơ quan Nhà nước có thẩm quyền.
+*   **BR-VEHICLE-01 (Điều Kiện Đủ Giấy Tờ Lưu Hành Của Phương Tiện):** Mỗi xe khách đăng ký trên hệ thống bắt buộc phải sở hữu đầy đủ 4 chứng chỉ pháp lý còn hiệu lực: Cà vẹt xe, Sổ đăng kiểm, Bảo hiểm TNDS & tai nạn hành khách, và Phù hiệu xe do Sở GTVT cấp. Thiếu bất kỳ giấy tờ nào, hệ thống từ chối tạo xe (`400 Bad Request`). Nếu giấy tờ hết hạn trong quá trình vận hành, hệ thống lập tức thu hồi quyền gán chuyến (`compliance_status = 'EXPIRED'`), bảo vệ hành khách khỏi rủi ro đi xe quá niên hạn hoặc không bảo hiểm. Mọi thao tác phê duyệt, từ chối, yêu cầu bổ sung của Admin đều phải lưu vết: Admin ID, Timestamp, IP Address, Trước/Sau trạng thái, và Lý do thẩm định. Dữ liệu này không thể chỉnh sửa hay xóa bỏ, phục vụ công tác thanh tra của Cơ quan Nhà nước có thẩm quyền.
 
 
 ---

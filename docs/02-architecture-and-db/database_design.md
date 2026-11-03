@@ -113,6 +113,8 @@ ALTER TABLE users
 | business_license_url | TEXT | Yes | — | NULL | URL ảnh scan/PDF Giấy phép ĐKKD & Giấy phép con vận tải |
 | legal_representative | VARCHAR(100) | Yes | — | NULL | Họ tên người đại diện theo pháp luật |
 | identity_card_number | VARCHAR(20) | Yes | — | NULL | Số CCCD/Hộ chiếu của người đại diện |
+| identity_card_front_url | TEXT | Yes | — | NULL | URL ảnh chụp mặt trước Căn cước công dân gắn chip |
+| identity_card_back_url | TEXT | Yes | — | NULL | URL ảnh chụp mặt sau Căn cước công dân gắn chip |
 | bank_name | VARCHAR(100) | Yes | — | NULL | Tên ngân hàng nhận thanh toán đối soát vé định kỳ |
 | bank_account_number | VARCHAR(50) | Yes | — | NULL | Số tài khoản ngân hàng thụ hưởng (Escrow Account) |
 | bank_account_owner | VARCHAR(100) | Yes | — | NULL | Tên chủ tài khoản (bắt buộc trùng pháp nhân/người đại diện) |
@@ -128,16 +130,27 @@ ALTER TABLE users
 
 **FK:** `default_cancellation_policy_id -> cancellation_policies.id ON DELETE RESTRICT`.
 
-#### B2. `vehicles` — Bảng chính (Aggregate Root độc lập — đã tách khỏi BusCompany theo Class Diagram)
+#### B2. ehicles — Bảng chính (Aggregate Root độc lập kèm Hồ Sơ Giấy Tờ Xe Bắt Buộc)
 | Column | Type | Nullable | Unique | Default | Business meaning |
 |---|---|---|---|---|---|
-| id (PK) | UUID | No | — | gen_random_uuid() | |
-| bus_company_id (FK) | UUID | No | — | — | FK → bus_companies.id |
-| plate_number (UK, NK) | VARCHAR(20) | No | Yes | — | Biển số — Natural Key ứng viên, không chọn làm PK vì có thể cần đổi biển |
-| vehicle_type | VARCHAR(20) | No | — | — | SEATED / SLEEPER / LIMOUSINE |
-| status | VARCHAR(20) | No | — | 'ACTIVE' | ACTIVE / INACTIVE — **`[FIX 4]`** ánh xạ enum canonical `VehicleStatus`. `Vehicle.retire()` chuyển `ACTIVE → INACTIVE`; xe INACTIVE không được chọn cho `Trip` mới, `Trip` đã tạo giữ nguyên |
-| created_at, updated_at | TIMESTAMPTZ | No | — | now() | |
-| version | INT | No | — | 0 | |
+| id (PK) | UUID | No | — | gen_random_uuid() | Định danh duy nhất của phương tiện |
+| bus_company_id (FK) | UUID | No | — | — | FK → bus_companies.id (Nhà xe sở hữu, bất biến) |
+| plate_number (UK, NK) | VARCHAR(20) | No | Yes | — | Biển số xe (chuẩn hóa VD: 51B-123.45) |
+| vehicle_type | VARCHAR(20) | No | — | — | SEATED (Ghế ngồi) / SLEEPER (Giường nằm) / LIMOUSINE (Phòng VIP) |
+| registration_certificate_url | TEXT | Yes | — | NULL | URL ảnh chụp Giấy đăng ký xe ô tô (Cà vẹt xe 2 mặt) |
+| inspection_certificate_url | TEXT | Yes | — | NULL | URL ảnh chụp Sổ / Giấy chứng nhận Đăng kiểm an toàn kỹ thuật |
+| inspection_expiry_date | DATE | Yes | — | NULL | Ngày hết hạn đăng kiểm (phải còn hạn >= 30 ngày khi đăng ký) |
+| insurance_certificate_url | TEXT | Yes | — | NULL | URL ảnh Giấy chứng nhận Bảo hiểm TNDS & Tai nạn hành khách |
+| insurance_expiry_date | DATE | Yes | — | NULL | Ngày hết hạn hợp đồng bảo hiểm xe cơ giới |
+| badge_number | VARCHAR(50) | Yes | — | NULL | Số phù hiệu xe tuyến cố định / xe hợp đồng do Sở GTVT cấp |
+| badge_expiry_date | DATE | Yes | — | NULL | Ngày hết hạn phù hiệu vận tải |
+| badge_url | TEXT | Yes | — | NULL | URL ảnh chụp phù hiệu xe gắn trên kính trước |
+| compliance_status | VARCHAR(20) | No | — | 'PENDING' | PENDING (Chờ duyệt) / VERIFIED (Hợp lệ) / REJECTED / EXPIRED (Hết hạn) |
+| verified_by | VARCHAR(100) | Yes | — | NULL | Email Admin/Chuyên viên thẩm định giấy tờ xe |
+| verified_at | TIMESTAMPTZ | Yes | — | NULL | Thời điểm hoàn tất thẩm định giấy tờ xe |
+| status | VARCHAR(20) | No | — | 'ACTIVE' | ACTIVE / INACTIVE — Xe INACTIVE hoặc chưa VERIFIED không được gán vào Trip |
+| created_at, updated_at | TIMESTAMPTZ | No | — | now() | Timestamp khởi tạo và cập nhật |
+| version | INT | No | — | 0 | Optimistic Lock |
 
 **FK:** `bus_company_id -> bus_companies.id ON DELETE RESTRICT` (không xóa nhà xe khi còn xe).
 

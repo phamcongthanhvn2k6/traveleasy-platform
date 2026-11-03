@@ -90,6 +90,8 @@ CREATE TABLE bus_companies (
   business_license_url            TEXT         NULL,
   legal_representative            VARCHAR(100) NULL,
   identity_card_number            VARCHAR(20)  NULL,
+  identity_card_front_url         TEXT         NULL,
+  identity_card_back_url          TEXT         NULL,
   bank_name                       VARCHAR(100) NULL,
   bank_account_number             VARCHAR(50)  NULL,
   bank_account_owner              VARCHAR(100) NULL,
@@ -114,25 +116,37 @@ CREATE TABLE bus_companies (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
   COMMENT='Aggregate Root: BusCompany kèm hồ sơ pháp lý thẩm định KYB.';
 
--- B2. vehicles (Aggregate Root độc lập)
+-- B2. vehicles (Aggregate Root độc lập kèm Hồ sơ 4 Giấy tờ xe bắt buộc)
 CREATE TABLE vehicles (
-  id              CHAR(36)     NOT NULL DEFAULT (UUID()),
-  bus_company_id  CHAR(36)     NOT NULL,
-  plate_number    VARCHAR(20)  NOT NULL,
-  vehicle_type    VARCHAR(20)  NOT NULL,
-  status          VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
-  created_at      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  updated_at      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-  version         INT          NOT NULL DEFAULT 0,
+  id                            CHAR(36)     NOT NULL DEFAULT (UUID()),
+  bus_company_id                CHAR(36)     NOT NULL,
+  plate_number                  VARCHAR(20)  NOT NULL,
+  vehicle_type                  VARCHAR(20)  NOT NULL,
+  registration_certificate_url  TEXT         NULL,
+  inspection_certificate_url    TEXT         NULL,
+  inspection_expiry_date        DATE         NULL,
+  insurance_certificate_url     TEXT         NULL,
+  insurance_expiry_date         DATE         NULL,
+  badge_number                  VARCHAR(50)  NULL,
+  badge_expiry_date             DATE         NULL,
+  badge_url                     TEXT         NULL,
+  compliance_status             VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+  verified_by                   VARCHAR(100) NULL,
+  verified_at                   DATETIME(3)  NULL,
+  status                        VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+  created_at                    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at                    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  version                       INT          NOT NULL DEFAULT 0,
   PRIMARY KEY (id),
   UNIQUE KEY uq_vehicles_plate (plate_number),
   KEY idx_vehicles_bus_company (bus_company_id),
   CONSTRAINT ck_vehicles_type CHECK (vehicle_type IN ('SEATED','SLEEPER','LIMOUSINE')),
   CONSTRAINT ck_vehicles_status CHECK (status IN ('ACTIVE','INACTIVE')),
+  CONSTRAINT ck_vehicles_compliance CHECK (compliance_status IN ('PENDING','VERIFIED','REJECTED','EXPIRED')),
   CONSTRAINT fk_vehicles_bus_company
     FOREIGN KEY (bus_company_id) REFERENCES bus_companies (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-  COMMENT='Aggregate Root: Vehicle — độc lập khỏi BusCompany (Fix 8).';
+  COMMENT='Aggregate Root: Vehicle kèm 4 chứng chỉ giấy tờ lưu hành bắt buộc.';
 
 -- B2a. vehicle_images (Entity con của Vehicle — Gallery / Photo support)
 -- Stores multiple gallery images for one Vehicle. `display_order` controls

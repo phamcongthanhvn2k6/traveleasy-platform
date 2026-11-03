@@ -155,6 +155,8 @@ Lý do là Core Domain:
   * `businessLicenseUrl`: Đường dẫn lưu trữ tài liệu số hóa bản scan ĐKKD và GPKD vận tải.
   * `legalRepresentative`: Họ tên người đại diện theo pháp luật.
   * `identityCardNumber`: Số CCCD/Hộ chiếu người đại diện.
+  * `identityCardFrontUrl`: URL ảnh chụp/scan mặt trước Căn cước công dân gắn chip của người đại diện.
+  * `identityCardBackUrl`: URL ảnh chụp/scan mặt sau Căn cước công dân gắn chip của người đại diện.
   * `escrowBankAccount`: Thông tin tài khoản ngân hàng thụ hưởng nhận tiền quyết toán (Số TK, Chủ TK, Ngân hàng, Chi nhánh). Bắt buộc phải trùng tên với pháp nhân hoặc người đại diện.
   * `commissionRate`: Tỷ lệ hoa hồng chiết khấu sàn (5% - 10%).
   * `rejectionReason`: Lý do giải trình bắt buộc khi Admin từ chối phê duyệt.
@@ -170,11 +172,30 @@ Lý do là Core Domain:
 - **Quan hệ:** **`[FIX 8]`** Sở hữu **về mặt nghiệp vụ** (reference-by-id, **không** phải Aggregate containment) nhiều `Vehicle`, nhiều `BusCompanyLocationConfig` (cấu hình địa điểm đón/trả), nhiều `RouteTemplate` (tuyến mẫu), nhiều `Trip`, và nhiều `CancellationPolicy` — trong đó có 1 policy mặc định cấp công ty. Mỗi lớp kể trên là Aggregate Root độc lập, giữ `busCompanyId`/`ownerBusCompanyId` để trỏ về chủ sở hữu. **`[FIX 1]`** Ngoài ra, 1 BusCompany được đại diện bởi 0..N `User` có `role = BUS_COMPANY` (`users.busCompanyId`).
 
 ### Vehicle (Xe)
-- **Business meaning:** Phương tiện vật lý cụ thể (biển số, loại xe).
-- **Identity:** `vehicleId` (nội bộ) — biển số là thuộc tính nghiệp vụ, không nhất thiết là khóa định danh vì có thể thay biển.
-- **Lifecycle:** Created → Active → Retired/Inactive.
-- **Business Rules:** `Vehicle` là Aggregate Root độc lập, không phải Entity con của `BusCompany`; thuộc về đúng 1 BusCompany (tham chiếu `busCompanyId` là immutable sau khi tạo); quan hệ sở hữu nghiệp vụ chỉ là reference-by-id; có **tối đa 1** `VehicleSeatLayout` (xe mới tạo chưa có layout cho đến khi Nhà xe cấu hình). Các invariant nội tại của xe được xử lý tại Vehicle Aggregate; các điều kiện phụ thuộc BusCompany do Application Layer kiểm tra; Database enforce FK/ownership constraints.
-- **State:** `VehicleStatus` {ACTIVE, INACTIVE}.
+- **Business meaning:** Phương tiện vật lý cụ thể (biển số, loại xe) có đầy đủ giấy phép lưu hành an toàn giao thông theo quy định của Bộ Giao thông Vận tải.
+- **Identity:** `vehicleId` (nội bộ) — biển số là thuộc tính nghiệp vụ duy nhất (`UNIQUE(plateNumber)`).
+- **Hồ sơ Pháp lý & Giấy tờ xe bắt buộc (Mandatory Vehicle Papers):**
+  * `registrationCertificateUrl`: URL ảnh chụp Giấy đăng ký xe ô tô (Cà vẹt xe 2 mặt).
+  * `inspectionCertificateUrl`: URL ảnh chụp Sổ / Giấy chứng nhận Đăng kiểm an toàn kỹ thuật.
+  * `inspectionExpiryDate`: Ngày hết hạn đăng kiểm (phải còn hạn >= 30 ngày khi đăng ký).
+  * `insuranceCertificateUrl`: URL ảnh Giấy chứng nhận Bảo hiểm TNDS & Tai nạn hành khách.
+  * `insuranceExpiryDate`: Ngày hết hạn hợp đồng bảo hiểm.
+  * `badgeNumber`: Số phù hiệu xe tuyến cố định / xe hợp đồng do Sở GTVT cấp.
+  * `badgeExpiryDate`: Ngày hết hạn phù hiệu xe.
+  * `badgeUrl`: URL ảnh chụp phù hiệu xe dán kính trước.
+- **Lifecycle & State Machine:**
+  * Created (kèm đủ 4 loại giấy tờ) → `complianceStatus = PENDING` (Chờ thẩm định).
+  * Admin / Hệ thống xác thực giấy tờ hợp lệ → `complianceStatus = VERIFIED` (Đủ điều kiện xếp tài).
+  * Đến ngày hết hạn Đăng kiểm / Bảo hiểm → `complianceStatus = EXPIRED` (Tự động khóa gán chuyến).
+  * Tạm ngừng kinh doanh / Sửa chữa lớn → `VehicleStatus = INACTIVE`.
+- **Business Rules:** 
+  * `Vehicle` là Aggregate Root độc lập, thuộc về đúng 1 BusCompany (tham chiếu `busCompanyId` là bất biến sau khi tạo).
+  * **Chỉ xe có `complianceStatus = 'VERIFIED'` và `status = 'ACTIVE'` mới được phép gán vào Chuyến đi (`Trip`)** để mở bán vé công khai (BR-VEHICLE-01).
+  * Khi thêm mới xe, nếu thiếu bất kỳ 1 trong 4 loại giấy tờ bắt buộc hoặc giấy tờ đã quá hạn, hệ thống lập tức từ chối (`400 Bad Request`).
+  * Có **tối đa 1** `VehicleSeatLayout` (xe mới tạo chưa có layout cho đến khi Nhà xe gán từ mẫu layout chuẩn của Admin).
+- **State:**
+  * `VehicleStatus`: {ACTIVE, INACTIVE}
+  * `ComplianceStatus`: {PENDING, VERIFIED, REJECTED, EXPIRED}
 - **Quan hệ:** **`[D2]`** `Vehicle 1 — 0..1 VehicleSeatLayout`. Quan hệ được biểu diễn **một chiều**: `VehicleSeatLayout.vehicleId` (NOT NULL, UNIQUE) trỏ về `Vehicle`. `Vehicle` **không** giữ `vehicleSeatLayoutId` — tránh hai nguồn sự thật và FK cycle. Tham chiếu BusCompany sở hữu qua `busCompanyId` (reference-by-id, `Vehicle 0..* --> 1 BusCompany`). 1 Vehicle được gán cho nhiều Trip theo thời gian (không đồng thời hai chuyến trùng giờ [Assumption: ràng buộc lịch trình không trùng không được SRS nêu rõ, giả định hợp lý theo nghiệp vụ vận tải]).
 
 ### Location (Điểm đón/trả — Shared Master Data Catalog)
