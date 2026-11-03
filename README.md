@@ -21,12 +21,12 @@
 
 > **TÀI LIỆU DUY NHẤT & CHUẨN MỰC TỐI CAO (SINGLE SOURCE OF TRUTH):**  
 > Tài liệu này là bản **tổng hợp toàn diện, chuẩn hóa và hợp nhất 100%** từ toàn bộ kho tài liệu kỹ thuật trong thư mục `docs/`:
-> 1. `docs/SRS_Vexere.md` (Đặc tả yêu cầu phần mềm chuẩn IEEE Std 830-1998, 37 Use Cases, 40 Business Rules)
-> 2. `docs/domain.md` (Domain Model DDD: 13 Bounded Contexts, 19 Aggregate Roots, 13 Entities, 13 Value Objects, 14 Services, 23 Enums, 5 State Machines)
-> 3. `docs/class_diagram.md` (Class Diagram v2 Canonical với 6 Mermaid Context Diagrams & Ownership Rules O1-O5)
-> 4. `docs/database_design.md` & `docs/schema.sql` (Thiết kế CSDL Production 36 bảng MySQL 8.0, Triggers, Invariants)
-> 5. `docs/PROJECT_ARCHITECTURE.md` (Kiến trúc Modular Monolith Spring Boot 3 + Clean Architecture + React Vite TS)
-> 6. `docs/GIT_WORKFLOW.md` (Quy chuẩn phân nhánh Git, Conventional Commits, Pull Request & Branch Protection)
+> 1. `docs/01-requirements/SRS_Vexere.md` (Đặc tả yêu cầu phần mềm chuẩn IEEE Std 830-1998, 37 Use Cases, 40 Business Rules)
+> 2. `docs/01-requirements/domain.md` (Domain Model DDD: 13 Bounded Contexts, 19 Aggregate Roots, 13 Entities, 13 Value Objects, 14 Services, 23 Enums, 5 State Machines)
+> 3. `docs/02-architecture-and-db/class_diagram.md` (Class Diagram v2 Canonical với 6 Mermaid Context Diagrams & Ownership Rules O1-O5)
+> 4. `docs/02-architecture-and-db/database_design.md` & `docs/schema.sql` (Thiết kế CSDL Production 36 bảng MySQL 8.0, Triggers, Invariants)
+> 5. `docs/02-architecture-and-db/PROJECT_ARCHITECTURE.md` (Kiến trúc Modular Monolith Spring Boot 3 + Clean Architecture + React Vite TS)
+> 6. `docs/03-api-and-deployment/GIT_WORKFLOW.md` (Quy chuẩn phân nhánh Git, Conventional Commits, Pull Request & Branch Protection)
 > 7. `docs/ĐẶC TẢ YÊU CẦU DỰ ÁN (SRS) Rikkei ECommerce QuickShop (MVP).docx` (Sprint 7 ngày, Tiêu chí đánh giá 100 điểm: 60 FR + 40 NFR)
 
 ---
@@ -412,13 +412,13 @@ flowchart TD
 #### Lộ Trình Phân Chia Sprint & Trạng Thái Đồng Bộ Bảng Trello Trực Tuyến:
 > 📄 **Bảng Trello Live**: [https://trello.com/b/AA5BYoe1/traveleasyplatform](https://trello.com/b/AA5BYoe1/traveleasyplatform)  
 > 📄 **Bộ tài liệu 4 Sprint chi tiết**: 
-> - [docs/SPRINT_1_README.md](docs/SPRINT_1_README.md) — Sprint 1: Nền tảng Kiến trúc, CSDL & Master Data
-> - [docs/SPRINT_2_README.md](docs/SPRINT_2_README.md) — Sprint 2: Core Booking Engine & Hai Cổng Quản Trị
-> - [docs/SPRINT_3_README.md](docs/SPRINT_3_README.md) — Sprint 3: Kiểm Thử Tích Hợp, Soát Vé Di Động & Vận Hành
-> - [docs/SPRINT_4_README.md](docs/SPRINT_4_README.md) — Sprint 4: Vận Hành Sẵn Sàng Sản Xuất & Lộ Trình Mở Rộng
-> - [docs/THIET_KE_LUONG_NGHIEP_VU_VA_DIEU_HUONG_SPRINT_4.md](docs/THIET_KE_LUONG_NGHIEP_VU_VA_DIEU_HUONG_SPRINT_4.md) — Thiết Kế Luồng Đi Logic & Điểm Chạm 1-Click
-> - [docs/HUONG_DAN_PHAN_CHIA_THU_MUC_CODE_NHOM_7.md](docs/HUONG_DAN_PHAN_CHIA_THU_MUC_CODE_NHOM_7.md) — Hướng Dẫn Phân Chia Thư Mục Code Cho Từng Thành Viên
-> - [docs/MIGRATION_SPRINT_4_EXTENSIONS.sql](docs/MIGRATION_SPRINT_4_EXTENSIONS.sql) — Script CSDL 8 Bảng Mới & Cột Bổ Sung
+> - [docs/04-agile-and-sprints/SPRINT_1_README.md](docs/04-agile-and-sprints/SPRINT_1_README.md) — Sprint 1: Nền tảng Kiến trúc, CSDL & Master Data
+> - [docs/04-agile-and-sprints/SPRINT_2_README.md](docs/04-agile-and-sprints/SPRINT_2_README.md) — Sprint 2: Core Booking Engine & Hai Cổng Quản Trị
+> - [docs/04-agile-and-sprints/SPRINT_3_README.md](docs/04-agile-and-sprints/SPRINT_3_README.md) — Sprint 3: Kiểm Thử Tích Hợp, Soát Vé Di Động & Vận Hành
+> - [docs/04-agile-and-sprints/SPRINT_4_README.md](docs/04-agile-and-sprints/SPRINT_4_README.md) — Sprint 4: Vận Hành Sẵn Sàng Sản Xuất & Lộ Trình Mở Rộng
+> - [docs/04-agile-and-sprints/THIET_KE_LUONG_NGHIEP_VU_VA_DIEU_HUONG_SPRINT_4.md](docs/04-agile-and-sprints/THIET_KE_LUONG_NGHIEP_VU_VA_DIEU_HUONG_SPRINT_4.md) — Thiết Kế Luồng Đi Logic & Điểm Chạm 1-Click
+> - [docs/03-api-and-deployment/HUONG_DAN_PHAN_CHIA_THU_MUC_CODE_NHOM_7.md](docs/03-api-and-deployment/HUONG_DAN_PHAN_CHIA_THU_MUC_CODE_NHOM_7.md) — Hướng Dẫn Phân Chia Thư Mục Code Cho Từng Thành Viên
+> - [docs/02-architecture-and-db/MIGRATION_SPRINT_4_EXTENSIONS.sql](docs/02-architecture-and-db/MIGRATION_SPRINT_4_EXTENSIONS.sql) — Script CSDL 8 Bảng Mới & Cột Bổ Sung
 
 | Sprint | Thời gian & Trọng tâm | Thẻ Trello | Story Points | Deliverables then chốt | Trạng thái Live |
 |:---:|---|:---:|:---:|---|:---:|
@@ -436,7 +436,7 @@ flowchart TD
 > 2. **Nhân viên Quầy Bến Xe của Nhà Xe**: Vào Cổng Nhà xe (`/company`) có ngay nút mở chế độ POS (`/company/pos`) bán vé trong 3 click chuột, in vé nhiệt bill 80mm có mã QR và đóng/kết ca tiền mặt chống thất thoát.
 > 3. **Ban Quản Trị Sàn**: Đứng giữa giữ 30% tiền cọc hợp đồng thuê xe (`/admin/charters`), chỉ giải ngân cho nhà xe khi chuyến đi hoàn tất an toàn.
 >
-> 👉 *Xem đặc tả chi tiết tại [docs/THIET_KE_LUONG_NGHIEP_VU_VA_DIEU_HUONG_SPRINT_4.md](docs/THIET_KE_LUONG_NGHIEP_VU_VA_DIEU_HUONG_SPRINT_4.md)*.
+> 👉 *Xem đặc tả chi tiết tại [docs/04-agile-and-sprints/THIET_KE_LUONG_NGHIEP_VU_VA_DIEU_HUONG_SPRINT_4.md](docs/04-agile-and-sprints/THIET_KE_LUONG_NGHIEP_VU_VA_DIEU_HUONG_SPRINT_4.md)*.
 
 
 #### 👑 PHÂN HỆ QUẢN TRỊ (ADMIN PORTAL) — NGUYỄN ĐẠI PHÁT (7 USER STORIES)
@@ -640,7 +640,7 @@ flowchart TD
 ## 3. KIẾN TRÚC HỆ THỐNG & CÔNG NGHỆ (TECH STACK)
 
 ### 3.1 Mô hình kiến trúc Modular Monolith & Clean Architecture
-Hệ thống TravelEasy áp dụng kiến trúc **Modular Monolith** kết hợp **Clean / Hexagonal Architecture** (theo tài liệu `docs/PROJECT_ARCHITECTURE.md`).
+Hệ thống TravelEasy áp dụng kiến trúc **Modular Monolith** kết hợp **Clean / Hexagonal Architecture** (theo tài liệu `docs/02-architecture-and-db/PROJECT_ARCHITECTURE.md`).
 * **Độc lập vật lý giữa các module**: Tách bạch rõ ràng `identity`, `fleet`, `scheduling`, `booking`, `payment`, `review`, `analytics`.
 * **Luật phụ thuộc (Dependency Rule)**: Phụ thuộc luôn hướng vào trong (`presentation` ➔ `infrastructure` ➔ `application` ➔ `domain`). Lớp `domain` hoàn toàn thuần túy, không phụ thuộc framework bên ngoài.
 * **Snapshot Immutability**: Áp dụng triệt để nguyên tắc bất biến cho các bản ghi lịch sử vận hành (`trip_seat_prices`, `trip_points`, `tickets.seat_price_amount`, `cancellation_policies.locked_at`).
@@ -716,7 +716,7 @@ graph TD
 ## 4. ĐẶC TẢ MIỀN NGHIỆP VỤ (DOMAIN-DRIVEN DESIGN - DDD)
 
 ### 4.1 Phân loại Core, Supporting & Generic Domains
-Dựa trên tài liệu chuẩn `docs/domain.md`:
+Dựa trên tài liệu chuẩn `docs/01-requirements/domain.md`:
 * **Core Domain**: **Booking & Seat Inventory Domain** (Khóa ghế 2 lớp Soft Hold 180s / Hard Hold 600s, Pessimistic Lock, Chống Double-Booking, Ghép ghế bán tự động khi đổi xe khẩn cấp).
 * **Supporting Domain**: **Trip & Fleet Operations**, **Payment & Refund Orchestration**, **Cancellation Policy Management**, **Review & Reputation Management**, **Notification Dispatch**.
 * **Generic Domain**: **Identity & Access Management (IAM)**, **Location Catalog Geocoding**, **Payment/Notification Gateway Configs**, **Audit Logging**, **Banner Management**.
@@ -821,7 +821,7 @@ stateDiagram-v2
 
 ## 5. THIẾT KẾ LỚP CHI TIẾT (CLASS DIAGRAM CANONICAL)
 
-Dưới đây là 6 sơ đồ Class Diagram Mermaid chuẩn hóa theo `docs/class_diagram.md`:
+Dưới đây là 6 sơ đồ Class Diagram Mermaid chuẩn hóa theo `docs/02-architecture-and-db/class_diagram.md`:
 
 ### 5.1 Identity & Access Context
 
@@ -2852,13 +2852,13 @@ Truy cập ứng dụng trên trình duyệt: `http://localhost:5173`
 
 #### 🔹 Bước 6: Cập nhật kết quả vào Biên bản nghiệm thu dự án
 Mở file tài liệu nghiệm thu chính:
-[`docs/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md`](docs/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md)
+[`docs/05-qa-and-testing/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md`](docs/05-qa-and-testing/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md)
 Tìm đến bảng phân công của mình, cập nhật cột **Trạng thái thực tế** (`PASS`), đường dẫn ảnh screenshot và viết 2-3 câu nhận xét đánh giá trải nghiệm thực tế.
 
 #### 🔹 Bước 7: Commit, Push lên GitHub và Mở Pull Request
 ```powershell
 # Thêm file ảnh và file biên bản vào staging:
-git add docs/screenshots/ docs/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md
+git add docs/screenshots/ docs/05-qa-and-testing/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md
 
 # Tạo commit chuẩn Conventional Commits:
 git commit -m "test(acceptance): hoàn thành kiểm thử tính năng và bổ sung minh chứng nghiệm thu [Tên Bạn]"
