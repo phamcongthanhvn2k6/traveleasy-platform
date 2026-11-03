@@ -58,7 +58,7 @@ export const ClientRoutes: React.FC = () => {
       <Route path="/routes" element={<SchedulePage />} />
       <Route path="/promotions" element={<PromotionsPage />} />
       <Route path="/reviews" element={<ReviewsPage />} />
-      <Route path="/scanner" element={<TicketScannerPage />} />
+      <Route path="/scanner" element={<Navigate to="/lookup?mode=camera" replace />} />
       <Route path="/demo" element={<DemoPage />} />
 
       {/* Hợp tác mở bán vé cùng TravelEasy (Chuẩn hóa URL tiếng Anh) */}

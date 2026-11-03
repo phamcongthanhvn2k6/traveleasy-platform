@@ -240,3 +240,4 @@ CREATE TABLE financial_ledger_entries (
 
 ---
 *Tài liệu này là căn cứ tối cao phục vụ kiểm toán tài chính, thiết kế chức năng Sprint Đối soát & Báo cáo tốt nghiệp OJT của Nhóm 7.*
+
