@@ -63,30 +63,42 @@ $$\text{Loại nhánh} / \text{Mã thành viên hoặc Tên} - \text{Tên tính 
 
 ---
 
-## 3. QUY CHUẨN ĐẶT TÊN COMMIT (CONVENTIONAL COMMITS)
+## 3. QUY CHUẨN ĐẶT TÊN COMMIT (CONVENTIONAL COMMITS & TIẾNG VIỆT CÓ DẤU)
 
-Để lịch sử Git của nhóm chuyên nghiệp, đẹp mắt và dễ truy vết, toàn bộ commit phải tuân thủ chuẩn **Conventional Commits**:
+> [!IMPORTANT]
+> ### 🏆 NGUYÊN TẮC VÀNG BẮT BUỘC (THE GOLDEN RULE)
+> **100% COMMIT MESSAGE TRONG TOÀN BỘ DỰ ÁN BẮT BUỘC PHẢI VIẾT BẰNG TIẾNG VIỆT CÓ DẤU!**  
+> • **Lý do:** Đây là dự án thực tế phục vụ báo cáo tốt nghiệp OJT và chuyển giao vận hành thương mại. Lịch sử Git commit bằng Tiếng Việt có dấu chuẩn ngữ pháp giúp Hội đồng chấm thi, Giảng viên và toàn bộ thành viên trong nhóm hiểu rõ chính xác 100% nội dung thay đổi mà không gây hiểu lầm.  
+> • ❌ **CẤM:** Viết commit tiếng Anh (ví dụ: `fix bug`, `update code`, `refactor service`).  
+> • ❌ **CẤM:** Viết tiếng Việt không dấu (ví dụ: `sua loi dat ve`, `them tinh nang huy ve`).  
+> • ❌ **CẤM:** Commit chung chung không rõ ý nghĩa (ví dụ: `update`, `fix`, `done`, `test`).  
+> • ✅ **BẮT BUỘC:** Viết đúng cấu trúc Conventional Commits với phần mô tả bằng **Tiếng Việt có dấu đầy đủ**.
 
-$$\text{type}(\text{scope}): \text{mô tả ngắn gọn bằng tiếng Việt hoặc tiếng Anh}$$
+$$\text{type}(\text{scope}): \text{mô tả hành động ngắn gọn bằng Tiếng Việt có dấu (dưới 72 ký tự)}$$
 
 ### 3.1 Danh sách các tiền tố (Types):
 *   `feat`: Thêm mới một tính năng hoặc API mới.
-*   `fix`: Sửa lỗi (bug) trong mã nguồn.
-*   `docs`: Cập nhật tài liệu (README, API spec, tài liệu thiết kế).
-*   `style`: Chỉnh sửa giao diện, format code, css (không thay đổi logic nghiệp vụ).
-*   `refactor`: Tái cấu trúc mã nguồn (tối ưu hàm, không thêm tính năng mới).
-*   `test`: Viết thêm hoặc chỉnh sửa Unit Test, Integration Test.
-*   `chore`: Cập nhật dependencies, cấu hình build Gradle, Vite, Docker.
-*   `ci`: Cập nhật pipeline GitHub Actions.
+*   `fix`: Sửa lỗi (bug) trong mã nguồn hoặc logic nghiệp vụ.
+*   `docs`: Cập nhật tài liệu (README, SRS, thiết kế CSDL, cẩm nang vận hành).
+*   `style`: Chỉnh sửa giao diện CSS, căn lề, định dạng code (không thay đổi logic nghiệp vụ).
+*   `refactor`: Tái cấu trúc mã nguồn (tối ưu hóa thuật toán, không thêm tính năng mới).
+*   `test`: Bổ sung hoặc cập nhật Unit Test, Integration Test.
+*   `chore`: Cập nhật thư viện phụ thuộc, cấu hình Gradle, Vite, Docker.
+*   `ci`: Cập nhật luồng tự động hóa CI/CD GitHub Actions.
 
-### 3.2 Ví dụ mẫu commit chuẩn:
-*   `feat(auth): thêm API đăng ký và đăng nhập trả về JWT token`
-*   `feat(trips): xây dựng API tìm kiếm chuyến xe theo lộ trình và ngày đi`
-*   `feat(seat): hoàn thiện component sơ đồ ghế xe khách 2 tầng trực quan`
-*   `fix(booking): sửa lỗi race condition trừ số ghế trống khi đặt cùng lúc`
-*   `docs(api): cập nhật danh sách endpoint Swagger và Postman collection`
-*   `test(order): bổ sung 5 test case kiểm thử đặt vé thành công và hết ghế`
-*   `ci(actions): cấu hình build tự động Gradle và Vite trên nhánh dev`
+### 3.2 Bảng ví dụ mẫu commit chuẩn Tiếng Việt có dấu:
+| Loại commit | Ví dụ mẫu chuẩn Tiếng Việt có dấu |
+| :--- | :--- |
+| **`feat`** | `feat(auth): thêm API đăng ký và đăng nhập trả về mã xác thực JWT token` |
+| **`feat`** | `feat(seat): hoàn thiện component sơ đồ ghế xe khách 2 tầng trực quan` |
+| **`feat`** | `feat(trip): bổ sung bộ lọc chuyến xe theo khoảng giá và giờ khởi hành` |
+| **`fix`** | `fix(booking): sửa lỗi cướp ghế đang được giữ chỗ thanh toán trong 10 phút` |
+| **`fix`** | `fix(auth): sửa lỗi đăng nhập tài khoản khách hàng demo trên giao diện` |
+| **`docs`** | `docs(srs): bổ sung quy trình đăng ký nhà xe và hồ sơ giấy tờ xe bắt buộc` |
+| **`docs`** | `docs(audit): tạo bảng rà soát 13 lỗ hổng nghiệp vụ thực tế và kế hoạch khắc phục` |
+| **`test`** | `test(order): bổ sung 5 ca kiểm thử đặt vé thành công và chặn đặt trùng ghế` |
+| **`refactor`** | `refactor(payment): tối ưu hàm xử lý callback từ cổng thanh toán VNPAY` |
+| **`ci`** | `ci(actions): cấu hình build tự động Gradle và Vite trên nhánh dev` |
 
 ---
 

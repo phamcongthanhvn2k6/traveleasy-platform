@@ -133,7 +133,8 @@ public class TripService {
 
     @Transactional(readOnly = true)
     public TripDetailResponse getTripDetail(Long tripId) {
-        Trip trip = tripRepository.findById(tripId)
+        long t0 = System.currentTimeMillis();
+        Trip trip = tripRepository.findByIdWithDetails(tripId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe ID: " + tripId));
 
         List<TripSeat> seats = tripSeatRepository.findByTripIdOrderByFloorAscSeatCodeAsc(tripId);
@@ -156,6 +157,9 @@ public class TripService {
                 .filter(p -> p.getPointType() == PointType.DROPOFF)
                 .map(this::mapToPointResponse)
                 .collect(Collectors.toList());
+
+        long t1 = System.currentTimeMillis();
+        log.info("⚡ [PERF getTripDetail] tripId: {}, seats: {}, elapsed: {}ms", tripId, seats.size(), (t1 - t0));
 
         return TripDetailResponse.builder()
                 .trip(mapToTripResponse(trip))

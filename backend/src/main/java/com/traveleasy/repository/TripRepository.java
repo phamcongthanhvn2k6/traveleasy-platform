@@ -9,9 +9,13 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TripRepository extends JpaRepository<Trip, Long> {
+    @Query("SELECT t FROM Trip t JOIN FETCH t.route r JOIN FETCH t.busCompany bc WHERE t.id = :id")
+    Optional<Trip> findByIdWithDetails(@Param("id") Long id);
+
     @Query("""
         SELECT t FROM Trip t
         JOIN FETCH t.route r

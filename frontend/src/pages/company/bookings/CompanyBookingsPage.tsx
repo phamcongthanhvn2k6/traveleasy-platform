@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, CheckCircle, XCircle, Printer, X, User, Phone, Mail, MapPin, Calendar, CreditCard } from 'lucide-react';
+import { Search, Eye, CheckCircle, XCircle, Printer, X, User, Phone, Mail, MapPin, Calendar, CreditCard, QrCode } from 'lucide-react';
+import { TicketScannerModal } from '../../../components/TicketScannerModal';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { getStoredCompany } from '../../../utils/companyHelper';
@@ -31,6 +32,7 @@ export const CompanyBookingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [bookings, setBookings] = useState<CompanyBookingItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showScannerModal, setShowScannerModal] = useState(false);
 
   const fetchBookingsFromDb = async () => {
     setLoading(true);
@@ -176,6 +178,70 @@ export const CompanyBookingsPage: React.FC = () => {
         <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
           Tổng cộng {bookings.length} đơn đặt vé — <strong>{currentCompany.name}</strong>
         </div>
+      </div>
+
+      {/* QR Check-in Quick Action Banner */}
+      <div
+        style={{
+          backgroundColor: '#ecfdf5',
+          border: '1px solid #a7f3d0',
+          borderRadius: '12px',
+          padding: '12px 18px',
+          marginBottom: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              backgroundColor: '#059669',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <QrCode size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: 800, color: '#065f46' }}>
+              Công Cụ Soát Vé & Quét Mã QR Lên Xe Trực Tiếp
+            </div>
+            <div style={{ fontSize: '12.5px', color: '#047857' }}>
+              Dành riêng cho nhân viên nhà xe & phụ xe: Quét mã QR trên vé của hành khách bằng camera để check-in tức thì
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowScannerModal(true)}
+          style={{
+            backgroundColor: '#059669',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '9px 18px',
+            fontSize: '13.5px',
+            fontWeight: 800,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 2px 6px rgba(5, 150, 105, 0.25)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <QrCode size={16} /> Mở Máy Quét QR Soát Vé
+        </button>
       </div>
 
       {/* Filter Row & Tabs */}
@@ -590,6 +656,14 @@ export const CompanyBookingsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* QR Ticket Scanner Modal for Operator */}
+      <TicketScannerModal
+        isOpen={showScannerModal}
+        onClose={() => setShowScannerModal(false)}
+        companyName={currentCompany.name}
+        onSuccess={() => fetchBookingsFromDb()}
+      />
     </div>
   );
 };

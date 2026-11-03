@@ -95,27 +95,7 @@ export const Navbar: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '13px' }}>
-            <Link
-              to="/demo"
-              style={{
-                color: '#fef08a',
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '12.5px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                backgroundColor: 'rgba(254, 240, 138, 0.18)',
-                border: '1px solid rgba(254, 240, 138, 0.35)',
-                padding: '3px 10px',
-                borderRadius: '6px',
-                transition: 'all 0.15s ease'
-              }}
-              title="Kịch bản trình bày 15 phút và trung tâm kiểm thử demo Sprint 4"
-            >
-              <Sparkles size={13} style={{ color: '#fde047' }} />
-              <span>Demo 15'</span>
-            </Link>
+
 
             <Link
               to="/company/login"
@@ -403,24 +383,7 @@ export const Navbar: React.FC = () => {
               <FileText size={15} /> <span>Chính Sách & FAQ</span>
             </Link>
 
-            {/* 8. Chức năng Quét Mã Soát Vé */}
-            <Link 
-              to="/scanner" 
-              style={{ 
-                textDecoration: 'none', 
-                color: location.pathname === '/scanner' ? '#34d399' : (isDark ? '#cbd5e1' : '#475569'), 
-                fontWeight: location.pathname === '/scanner' ? 700 : 600, 
-                fontSize: '13.5px',
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '5px',
-                borderBottom: location.pathname === '/scanner' ? '2px solid #10b981' : '2px solid transparent',
-                padding: '8px 0',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <QrCode size={15} color="#10b981" /> <span style={{ color: location.pathname === '/scanner' ? '#10b981' : 'inherit' }}>Quét Vé QR</span>
-            </Link>
+
           </nav>
         </div>
 
@@ -834,7 +797,6 @@ export const Navbar: React.FC = () => {
                 { label: 'Lịch Trình Tuyến Đường', path: '/schedule', icon: Clock },
                 { label: 'Đánh Giá Từ Khách Hàng', path: '/reviews', icon: Star },
                 { label: 'Khuyến Mại & Voucher Hot', path: '/promotions', icon: Tag },
-                { label: 'Quét Mã Vé QR Scanner', path: '/scanner', icon: QrCode },
               ].map((item) => {
                 const Icon = item.icon;
                 const active = location.pathname === item.path;

@@ -7,7 +7,12 @@
 
 ---
 
-## 🧭 CẤU TRÚC PHÂN LOẠI TÀI LIỆU (5 PHÂN HỆ CHÍNH)
+
+> [!IMPORTANT]
+> ### 🏆 NGUYÊN TẮC VÀNG: BẮT BUỘC COMMIT BẰNG TIẾNG VIỆT CÓ DẤU
+> Toàn bộ thành viên nhóm 7 khi làm việc với Git bắt buộc phải tuân thủ quy định: **100% commit message phải viết bằng Tiếng Việt có dấu đầy đủ** theo chuẩn `type(scope): mô tả hành động bằng Tiếng Việt có dấu`. Chi tiết xem tại [GIT_WORKFLOW.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/03-api-and-deployment/GIT_WORKFLOW.md).
+
+## 🧭 CẤU TRÚC PHÂN LOẠI TÀI LIỆU (6 PHÂN HỆ CHÍNH)
 
 Toàn bộ tài liệu kỹ thuật, nghiệp vụ, kiến trúc và quy trình quản trị dự án được cấu trúc tinh gọn thành **5 phân hệ chuyên biệt**:
 
@@ -20,6 +25,7 @@ docs/
 ├── 03-api-and-deployment/                       # 3️⃣ Phân hệ API, Triển Khai & Vận Hành
 ├── 04-agile-and-sprints/                        # 4️⃣ Phân hệ Quản Trị Agile, Trello & Sprints
 ├── 05-qa-and-testing/                           # 5️⃣ Phân hệ Đảm Bảo Chất Lượng (QA) & Kiểm Thử
+├── 06-business-logic-audits/                    # 6️⃣ Phân hệ Kiểm Toán Nghiệp Vụ & Báo Cáo Lỗ Hổng
 ├── test-reports/                                # 🧪 Báo cáo kiểm thử cá nhân từng thành viên
 └── screenshots/                                 # 📸 Hình ảnh minh chứng nghiệm thu thực tế
 ```
@@ -60,6 +66,10 @@ Tập trung vào mô hình kỹ thuật, sơ đồ quan hệ và hạ tầng d�
 
 * 📄 [schema.sql](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/docs/schema.sql) *(File chuẩn SSOT)*  
   * **Nội dung**: Toàn bộ câu lệnh DDL khởi tạo 44 bảng CSDL và toàn bộ tập dữ liệu mẫu sinh động (Seed data chuẩn cho Chuyến xe, Tuyến đường, Nhà xe, Vé xe, Người dùng).
+
+* 📄 [FINANCIAL_AND_SETTLEMENT_SPECIFICATION.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/02-architecture-and-db/FINANCIAL_AND_SETTLEMENT_SPECIFICATION.md)  
+  * **Nội dung**: Đặc tả nghiệp vụ tài chính, đối soát và kết toán tiền nhà xe chuẩn ngân hàng (Bank-Grade Financial Architecture).
+  * **Trọng tâm**: Công thức kết toán Net Payout, mô hình kế toán kép (Double-entry Ledger), thuật toán đối soát 3 chiều tự động (Three-Way Reconciliation) và cơ chế khóa tài khoản Escrow chống gian lận.
 
 * 📄 [MIGRATION_SPRINT_4_EXTENSIONS.sql](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/docs/02-architecture-and-db/MIGRATION_SPRINT_4_EXTENSIONS.sql)  
   * **Nội dung**: Kịch bản SQL migration bổ sung 8 bảng và các trường mở rộng phục vụ nghiệp vụ nâng cao Sprint 4 (Gửi hàng xe khách, Thuê xe chuyến, Ví tích điểm, GPS Tracking, Bảo hiểm, Bán vé POS tại quầy).
