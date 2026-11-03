@@ -22,11 +22,13 @@ import {
   Clock,
   Camera,
   CameraOff,
+  Lock,
+  HelpCircle,
+  Sparkles,
   Upload,
   RotateCcw,
   AlertTriangle,
-  XCircle,
-  Sparkles
+  XCircle
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import { BoardingPassModal } from '../../../components/BoardingPassModal';
@@ -57,7 +59,7 @@ export const TicketLookupPage: React.FC = () => {
 
   // Camera & Scanner refs
   const [isScanning, setIsScanning] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState<{ title: string; desc: string; type: string } | null>(null);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -231,20 +233,72 @@ export const TicketLookupPage: React.FC = () => {
   };
 
   // Start Camera
+  // Demo QR Simulator
+  const handleUseDemoQr = () => {
+    stopCamera();
+    const demoCode = 'BK-20261025-001';
+    setCode(demoCode);
+    setActiveTab('MANUAL');
+    toast.success('Đã áp dụng mã vé mẫu để kiểm tra hệ thống: ' + demoCode, 'Quét Mẫu QR');
+    lookupByCode(demoCode);
+  };
+
   const startCamera = useCallback(async () => {
     stopCamera();
     setCameraError(null);
 
-    try {
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-      };
+    // Multi-level fallback stream getter
+    const getMediaStream = async (targetFacing: 'environment' | 'user'): Promise<MediaStream> => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('NOT_SUPPORTED');
+      }
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      // Level 1: Soft ideal constraint (works on mobile back camera)
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: targetFacing },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        });
+      } catch (e1) {
+        console.warn('Camera Level 1 failed, trying opposite facing mode:', e1);
+      }
+
+      // Level 2: Inverted facing mode (essential for laptops where only front webcam exists)
+      try {
+        const altFacing = targetFacing === 'environment' ? 'user' : 'environment';
+        return await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: altFacing } },
+        });
+      } catch (e2) {
+        console.warn('Camera Level 2 failed, trying generic video=true:', e2);
+      }
+
+      // Level 3: Any video device without constraints
+      try {
+        return await navigator.mediaDevices.getUserMedia({ video: true });
+      } catch (e3) {
+        console.warn('Camera Level 3 failed, trying enumerateDevices:', e3);
+      }
+
+      // Level 4: Explicit deviceId lookup
+      if (navigator.mediaDevices.enumerateDevices) {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter((d) => d.kind === 'videoinput');
+        if (videoDevices.length > 0) {
+          return await navigator.mediaDevices.getUserMedia({
+            video: { deviceId: { exact: videoDevices[0].deviceId } },
+          });
+        }
+      }
+
+      throw new Error('NO_CAMERA_FOUND');
+    };
+
+    try {
+      const stream = await getMediaStream(facingMode);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.setAttribute('playsinline', 'true');
@@ -254,7 +308,30 @@ export const TicketLookupPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Camera access error:', err);
-      setCameraError('Không thể mở camera. Vui lòng cấp quyền camera trong trình duyệt hoặc dùng chế độ Tải Ảnh QR!');
+      let title = 'Không thể mở Camera';
+      let desc = 'Vui lòng kiểm tra quyền truy cập camera trong cài đặt trình duyệt hoặc dùng chế độ Tải Ảnh QR / Nhập Mã.';
+      let type = 'general';
+
+      const errName = err?.name || '';
+      if (errName === 'NotAllowedError' || errName === 'PermissionDeniedError') {
+        title = 'Trình duyệt đang chặn quyền Camera';
+        desc = 'Hãy bấm vào biểu tượng 🔒 hoặc icon Camera trên thanh địa chỉ trình duyệt (cạnh URL) -> Chọn Cho Phép (Allow) Camera -> Bấm Thử Lại.';
+        type = 'permission';
+      } else if (errName === 'NotReadableError' || errName === 'TrackStartError') {
+        title = 'Camera đang bị ứng dụng khác chiếm dụng';
+        desc = 'Webcam có thể đang được mở trong phần mềm Camera Windows, Zoom, Teams, Zalo hoặc OBS. Vui lòng đóng phần mềm đó rồi thử lại.';
+        type = 'busy';
+      } else if (errName === 'NotFoundError' || errName === 'DevicesNotFoundError' || err?.message === 'NO_CAMERA_FOUND') {
+        title = 'Không tìm thấy thiết bị Camera / Webcam';
+        desc = 'Máy tính chưa gắn webcam hoặc camera đã bị tắt trong Device Manager / Cài đặt quyền riêng tư của Windows.';
+        type = 'notfound';
+      } else if (err?.message === 'NOT_SUPPORTED') {
+        title = 'Trình duyệt không hỗ trợ Camera ở giao thức này';
+        desc = 'Tính năng Camera yêu cầu kết nối an toàn (HTTPS hoặc localhost).';
+        type = 'general';
+      }
+
+      setCameraError({ title, desc, type });
       setIsScanning(false);
     }
   }, [facingMode, stopCamera]);
@@ -518,24 +595,117 @@ export const TicketLookupPage: React.FC = () => {
 
               {/* Error Warning */}
               {cameraError && (
-                <div style={{ padding: '24px', textAlign: 'center', color: '#f87171' }}>
-                  <CameraOff size={36} style={{ margin: '0 auto 10px auto' }} />
-                  <p style={{ margin: 0, fontSize: '13.5px', fontWeight: 600 }}>{cameraError}</p>
+                <div style={{ padding: '28px 20px', textAlign: 'center', color: '#ffffff', maxWidth: '440px', margin: '0 auto' }}>
+                  <div style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    border: '2px solid rgba(239, 68, 68, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 14px auto',
+                    color: '#f87171'
+                  }}>
+                    {cameraError.type === 'permission' ? <Lock size={26} /> : <CameraOff size={26} />}
+                  </div>
+
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 700, color: '#fca5a5' }}>
+                    {cameraError.title}
+                  </h4>
+
+                  <p style={{ margin: '0 0 18px 0', fontSize: '13px', lineHeight: 1.5, color: '#cbd5e1' }}>
+                    {cameraError.desc}
+                  </p>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={startCamera}
+                      style={{
+                        backgroundColor: '#ef4444',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '10px 18px',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 6px rgba(239, 68, 68, 0.3)'
+                      }}
+                    >
+                      <RotateCcw size={14} /> Thử Lại Camera
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleUseDemoQr}
+                      style={{
+                        backgroundColor: '#10b981',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '10px 18px',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
+                      }}
+                    >
+                      <Sparkles size={14} /> Quét Thử Vé Mẫu (Demo)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('UPLOAD')}
+                      style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        color: '#ffffff',
+                        border: '1px solid rgba(255, 255, 255, 0.25)',
+                        padding: '10px 16px',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Upload size={14} /> Tải Ảnh QR
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick actions while camera is active */}
+              {isScanning && (
+                <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '8px', zIndex: 10 }}>
                   <button
-                    onClick={startCamera}
+                    type="button"
+                    onClick={handleUseDemoQr}
                     style={{
-                      marginTop: '12px',
-                      backgroundColor: '#ef4444',
+                      backgroundColor: 'rgba(16, 185, 129, 0.85)',
                       color: '#ffffff',
                       border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      fontSize: '13px',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
                       fontWeight: 700,
                       cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
                     }}
                   >
-                    Thử Lại Camera
+                    <Sparkles size={13} /> Thử Vé Mẫu
                   </button>
                 </div>
               )}
