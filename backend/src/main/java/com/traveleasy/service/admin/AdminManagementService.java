@@ -313,7 +313,7 @@ public class AdminManagementService {
     @Transactional
     public SeatType createSeatType(SeatTypeRequest request) {
         if (request.getCode() == null || request.getCode().trim().isEmpty()) {
-            throw new AppException(ErrorCode.BAD_REQUEST, "Mã loại ghế không được để trống");
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Mã loại ghế không được để trống");
         }
         SeatType st = SeatType.builder()
                 .code(request.getCode().trim().toUpperCase())
