@@ -134,6 +134,12 @@ public class AdminManagementController {
         return ApiResponse.success("Tạo loại ghế thành công", adminManagementService.createSeatType(request));
     }
 
+    @PutMapping("/seat-types/{code}")
+    @Operation(summary = "Cập nhật thông tin loại ghế")
+    public ApiResponse<SeatType> updateSeatType(@PathVariable String code, @Valid @RequestBody SeatTypeRequest request) {
+        return ApiResponse.success("Cập nhật loại ghế thành công", adminManagementService.updateSeatType(code, request));
+    }
+
     @PatchMapping("/seat-types/{code}/status")
     @Operation(summary = "Cập nhật trạng thái loại ghế (ACTIVE, DEPRECATED)")
     public ApiResponse<SeatType> updateSeatTypeStatus(@PathVariable String code, @RequestParam String status) {
