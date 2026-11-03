@@ -26,5 +26,17 @@ public class PartnerRegisterRequest {
     private String routes;
     private String fleetSize;
     private String notes;
-}
 
+    // Hồ sơ pháp lý & Căn cước công dân
+    private String legalRepresentative;
+    private String identityCardNumber;
+    private String identityCardFrontUrl;
+    private String identityCardBackUrl;
+    private String businessLicenseUrl;
+    private String transportLicenseUrl;
+
+    // Tài khoản ngân hàng quyết toán Escrow
+    private String bankName;
+    private String bankAccountNumber;
+    private String bankAccountOwner;
+}

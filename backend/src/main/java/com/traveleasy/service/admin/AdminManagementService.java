@@ -189,7 +189,7 @@ public class AdminManagementService {
         BusCompany company = busCompanyRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
 
-        String before = "{\"status\": \"" + company.getStatus() + "\"}";
+        String before = "{status: " + company.getStatus() + "}";
         String normalizedStatus = status.equalsIgnoreCase("ACTIVE") ? "ACTIVE" :
                                  (status.equalsIgnoreCase("PENDING") || status.equalsIgnoreCase("PENDING_APPROVAL")) ? "PENDING_APPROVAL" :
                                  status.equalsIgnoreCase("REJECTED") ? "REJECTED" : "SUSPENDED";
@@ -226,7 +226,7 @@ public class AdminManagementService {
         BusCompany company = busCompanyRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
 
-        String before = "{\"status\": \"" + company.getStatus() + "\"}";
+        String before = "{status: " + company.getStatus() + "}";
         company.setStatus("REJECTED");
         BusCompany saved = busCompanyRepository.save(company);
 
@@ -236,7 +236,62 @@ public class AdminManagementService {
         return mapToCompanyResponse(saved);
     }
 
+        @Transactional
+    public BusCompanyAdminResponse approveCompanyWithCommission(Long id, BigDecimal commissionRate, String adminNote) {
+        BusCompany company = busCompanyRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
+
+        String before = "{status: " + company.getStatus() + "}";
+        company.setStatus("ACTIVE");
+        company.setKycStatus("VERIFIED");
+        if (commissionRate != null) {
+            company.setCommissionRate(commissionRate);
+        }
+        company.setVerifiedAt(LocalDateTime.now());
+        company.setVerifiedBy("admin@traveleasy.vn");
+
+        BusCompany saved = busCompanyRepository.save(company);
+
+        // Tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác nếu chưa có
+        if (company.getEmail() != null && !company.getEmail().isBlank()) {
+            String opEmail = company.getEmail().trim().toLowerCase();
+            if (!userRepository.existsByEmail(opEmail)) {
+                User operator = User.builder()
+                        .email(opEmail)
+                        .password(passwordEncoder.encode("123456789@"))
+                        .fullName("Điều Hành " + company.getName())
+                        .phone(company.getHotline())
+                        .role(Role.OPERATOR)
+                        .status("ACTIVE")
+                        .build();
+                userRepository.save(operator);
+                log.info("✅ Đã tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác: {} ({})", company.getName(), opEmail);
+            }
+        }
+
+        logAction("admin@traveleasy.vn", "APPROVE_COMPANY_KYB", "bus_companies #" + id, before, "{status: ACTIVE, commissionRate: " + company.getCommissionRate() + "}");
+        log.info("🎉 Admin đã phê duyệt thành công hồ sơ nhà xe: {} (Commission: {}%)", company.getName(), company.getCommissionRate());
+        return mapToCompanyResponse(saved);
+    }
+
     @Transactional
+    public BusCompanyAdminResponse requestCompanySupplement(Long id, String reason) {
+        BusCompany company = busCompanyRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
+
+        String before = "{status: " + company.getStatus() + "}";
+        company.setStatus("PENDING_SUPPLEMENT");
+        company.setKycStatus("PENDING_SUPPLEMENT");
+        company.setRejectionReason(reason != null ? reason : "Yêu cầu bổ sung hồ sơ giấy tờ pháp lý");
+
+        BusCompany saved = busCompanyRepository.save(company);
+
+        logAction("admin@traveleasy.vn", "REQUEST_COMPANY_SUPPLEMENT", "bus_companies #" + id, before, "{status: PENDING_SUPPLEMENT, reason: " + reason + "}");
+        log.info("⚠️ Admin yêu cầu bổ sung hồ sơ nhà xe: {} (Lý do: {})", company.getName(), reason);
+        return mapToCompanyResponse(saved);
+    }
+
+@Transactional
     public BusCompanyAdminResponse createBusCompany(CreateBusCompanyRequest request) {
         BusCompany company = BusCompany.builder()
                 .name(request.getName())
