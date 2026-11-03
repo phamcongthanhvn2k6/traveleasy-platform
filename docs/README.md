@@ -67,6 +67,10 @@ Tập trung vào mô hình kỹ thuật, sơ đồ quan hệ và hạ tầng d�
 * 📄 [schema.sql](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/docs/schema.sql) *(File chuẩn SSOT)*  
   * **Nội dung**: Toàn bộ câu lệnh DDL khởi tạo 44 bảng CSDL và toàn bộ tập dữ liệu mẫu sinh động (Seed data chuẩn cho Chuyến xe, Tuyến đường, Nhà xe, Vé xe, Người dùng).
 
+* 📄 [FINANCIAL_AND_SETTLEMENT_SPECIFICATION.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/02-architecture-and-db/FINANCIAL_AND_SETTLEMENT_SPECIFICATION.md)  
+  * **Nội dung**: Đặc tả nghiệp vụ tài chính, đối soát và kết toán tiền nhà xe chuẩn ngân hàng (Bank-Grade Financial Architecture).
+  * **Trọng tâm**: Công thức kết toán Net Payout, mô hình kế toán kép (Double-entry Ledger), thuật toán đối soát 3 chiều tự động (Three-Way Reconciliation) và cơ chế khóa tài khoản Escrow chống gian lận.
+
 * 📄 [MIGRATION_SPRINT_4_EXTENSIONS.sql](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/docs/02-architecture-and-db/MIGRATION_SPRINT_4_EXTENSIONS.sql)  
   * **Nội dung**: Kịch bản SQL migration bổ sung 8 bảng và các trường mở rộng phục vụ nghiệp vụ nâng cao Sprint 4 (Gửi hàng xe khách, Thuê xe chuyến, Ví tích điểm, GPS Tracking, Bảo hiểm, Bán vé POS tại quầy).
 
