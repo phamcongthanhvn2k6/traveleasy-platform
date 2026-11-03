@@ -1,7 +1,7 @@
 import React from 'react';
 import { QrCode, CreditCard, Wallet, Banknote, ShieldCheck } from 'lucide-react';
 
-export type PaymentMethodType = 'PAYOS' | 'VIETQR' | 'VNPAY' | 'MOMO' | 'ZALOPAY' | 'COD';
+export type PaymentMethodType = 'PAYOS' | 'VNPAY' | 'COD';
 
 interface Props {
   selectedMethod: PaymentMethodType;
@@ -12,21 +12,12 @@ export const PaymentMethodSelector: React.FC<Props> = ({ selectedMethod, onChang
   const methods = [
     {
       id: 'PAYOS' as PaymentMethodType,
-      name: 'Cổng PayOS — Quét mã VietQR MB Bank (Khuyên dùng)',
-      desc: 'Tự động tạo mã QR VietQR Napas 24/7 liên kết tài khoản MB Bank 0944 3543 98 (PHAM CONG THANH). Tự động duyệt đơn và phát hành vé sau 3 giây.',
-      badge: 'Chính Thức - MB Bank',
+      name: 'Chuyển khoản VietQR Napas 24/7 (Cổng PayOS / MB Bank)',
+      desc: 'Tự động tạo mã QR VietQR Napas 24/7 liên kết tài khoản MB Bank 0944 3543 98 (PHAM CONG THANH). Quét mã từ mọi App ngân hàng, hệ thống tự động xác nhận và phát hành vé sau 3 giây.',
+      badge: 'Khuyên Dùng - Tự Động',
       icon: QrCode,
       iconColor: '#059669',
       iconBg: '#ecfdf5',
-    },
-    {
-      id: 'VIETQR' as PaymentMethodType,
-      name: 'Chuyển khoản VietQR QuickPay (Napas 24/7)',
-      desc: 'Quét mã QR Napas 24/7 tức thì từ 40+ App Ngân hàng (Vietcombank, MB, Techcombank, BIDV...). Hệ thống tự động xác nhận trong 3 giây.',
-      badge: 'Nhanh nhất',
-      icon: QrCode,
-      iconColor: '#2563eb',
-      iconBg: '#eff6ff',
     },
     {
       id: 'VNPAY' as PaymentMethodType,
@@ -38,28 +29,10 @@ export const PaymentMethodSelector: React.FC<Props> = ({ selectedMethod, onChang
       iconBg: '#fef2f2',
     },
     {
-      id: 'MOMO' as PaymentMethodType,
-      name: 'Ví Điện Tử MoMo',
-      desc: 'Thanh toán bảo mật một chạm qua ứng dụng Ví MoMo tiện lợi và nhận điểm tích lũy.',
-      badge: 'Tích điểm',
-      icon: Wallet,
-      iconColor: '#d946ef',
-      iconBg: '#fdf4ff',
-    },
-    {
-      id: 'ZALOPAY' as PaymentMethodType,
-      name: 'Ví Điện Tử ZaloPay',
-      desc: 'Thanh toán tức thì ngay trong ứng dụng Zalo hoặc ZaloPay không cần liên kết phức tạp.',
-      badge: null,
-      icon: Wallet,
-      iconColor: '#0284c7',
-      iconBg: '#f0f9ff',
-    },
-    {
       id: 'COD' as PaymentMethodType,
       name: 'Thanh toán tiền mặt khi lên xe',
-      desc: 'Nhận mã đặt vé trước, xuất trình mã vé và thanh toán trực tiếp cho tài xế hoặc phụ xe khi có mặt tại điểm đón.',
-      badge: null,
+      desc: 'Nhận mã đặt vé trước, xuất trình mã vé điện tử và thanh toán trực tiếp cho tài xế hoặc phụ xe khi có mặt tại điểm đón.',
+      badge: 'Thanh Toán Khi Đi Xe',
       icon: Banknote,
       iconColor: '#d97706',
       iconBg: '#fffbeb',

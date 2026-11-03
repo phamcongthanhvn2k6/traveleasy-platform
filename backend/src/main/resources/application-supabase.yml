@@ -13,7 +13,7 @@ spring:
       max-lifetime: 1200000
       connection-timeout: 10000
       keepalive-time: 30000
-      leak-detection-threshold: 5000
+      leak-detection-threshold: 60000
   jpa:
     hibernate:
       ddl-auto: none
@@ -24,6 +24,8 @@ spring:
         format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
         default_batch_fetch_size: 50
+        temp:
+          use_jdbc_metadata_defaults: false
         jdbc:
           batch_size: 50
           order_inserts: true

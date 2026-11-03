@@ -31,10 +31,11 @@ public class BookingService {
     private final TripSeatRepository tripSeatRepository;
     private final PickupDropoffPointRepository pointRepository;
     private final UserRepository userRepository;
+    @org.springframework.context.annotation.Lazy
     private final TripService tripService;
     private final SeatRealtimeService seatRealtimeService;
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats", "trips_search"}, allEntries = true)
     public BookingResponse createBooking(CreateBookingRequest request, String userEmail) {
         Trip trip = tripRepository.findById(request.getTripId())
@@ -99,6 +100,10 @@ public class BookingService {
         String randomSuffix = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
         String bookingCode = "BK-" + datePrefix + "-" + randomSuffix;
 
+        BookingStatus initialStatus = (request.getPaymentMethod() == PaymentMethod.COD)
+                ? BookingStatus.CONFIRMED
+                : BookingStatus.PENDING;
+
         Booking booking = Booking.builder()
                 .bookingCode(bookingCode)
                 .user(user)
@@ -111,7 +116,7 @@ public class BookingService {
                 .seatNumbers(String.join(", ", request.getSeatNumbers()))
                 .totalAmount(totalAmount)
                 .paymentMethod(request.getPaymentMethod())
-                .status(BookingStatus.CONFIRMED)
+                .status(initialStatus)
                 .build();
 
         Booking savedBooking = bookingRepository.save(booking);

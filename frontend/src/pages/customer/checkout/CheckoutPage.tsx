@@ -167,6 +167,9 @@ export const CheckoutPage: React.FC = () => {
 
       // 1. Tạo đơn đặt vé trong database
       const res = await api.post('/bookings', payload);
+      if (!res.data?.success || !res.data?.data) {
+        throw new Error(res.data?.message || 'Không thể tạo đơn đặt vé. Vui lòng thử lại!');
+      }
       const bookingData: Booking = res.data.data;
       setCreatedBooking(bookingData);
 
@@ -178,25 +181,19 @@ export const CheckoutPage: React.FC = () => {
       setPaymentInitData(initRes);
 
       if (paymentMethod === 'VNPAY') {
-        // Mở Modal VNPAY với nút Demo duyệt ngay và nút chuyển hướng Sandbox
+        // Mo Modal VNPAY voi nut Demo duyet ngay
         setShowVnPayModal(true);
-      } else if (paymentMethod === 'PAYOS' || paymentMethod === 'VIETQR') {
-        // Mở Modal PayOS / VietQR Napas 24/7 (MB Bank - PHAM CONG THANH)
-        setShowQrModal(true);
-      } else if (paymentMethod === 'MOMO' || paymentMethod === 'ZALOPAY') {
-        if (initRes.paymentUrl) {
-          toast.info(`Đang mở cổng thanh toán ${paymentMethod}...`, 'Ví Điện Tử');
-          window.open(initRes.paymentUrl, '_blank');
-        }
+      } else if (paymentMethod === 'PAYOS') {
+        // Mo Modal VietQR Napas 24/7 (Cong PayOS / MB Bank - PHAM CONG THANH)
         setShowQrModal(true);
       } else {
-        // COD - Tiền mặt khi lên xe
+        // COD - Tien mat khi len xe
         toast.success(`Đặt vé thành công! Mã đơn: ${bookingData.bookingCode}`, 'Thành Công');
         sessionStorage.removeItem('traveleasy_checkout_data');
         navigate(`/tickets/${bookingData.bookingCode}`);
       }
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Có lỗi xảy ra trong quá trình đặt vé. Vui lòng thử lại!';
+      const msg = err.response?.data?.message || err.message || 'Có lỗi xảy ra trong quá trình đặt vé. Vui lòng thử lại!';
       toast.error(msg, 'Thất Bại');
     } finally {
       setLoading(false);
