@@ -39,3 +39,4 @@
 * Khi bắt đầu làm: Kéo thẻ từ **`To Do`** ➔ **`In Progress`**.
 * Khi đẩy nhánh lên Git xong và tạo PR: Kéo thẻ từ **`In Progress`** ➔ **`Testing`** hoặc **`Code Review`**.
 * Khi Leader merge code vào `dev`: Kéo thẻ vào **`Done Sprint 3`**!
+
