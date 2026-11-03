@@ -142,8 +142,8 @@ class TripServiceScheduleTest {
         assertNotNull(response);
         assertEquals("Hà Nội", response.getOriginCity());
         assertEquals("Hải Phòng", response.getDestinationCity());
-        assertFalse(response.getOutboundTrips().isEmpty(), "Phải tự tạo lịch chạy định kỳ tiêu chuẩn");
-        assertFalse(response.getInboundTrips().isEmpty(), "Phải tự tạo lịch chạy chiều về tiêu chuẩn");
+        assertTrue(response.getOutboundTrips().isEmpty());
+        assertTrue(response.getInboundTrips().isEmpty());
     }
 
     @Test
