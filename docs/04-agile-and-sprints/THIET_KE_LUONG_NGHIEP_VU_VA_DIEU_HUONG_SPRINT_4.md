@@ -131,3 +131,81 @@ graph TD
 | **Đoàn Nhật Cường** | Bản đồ GPS Live Tracking (`/tracking/:tripId`), Trung tâm hỗ trợ (`/support`) | `frontend/src/pages/customer/tracking/`, `pages/customer/support/` |
 | **Trần Minh Đức** | Thuê xe hợp đồng (`/charter`), Gửi hàng (`/cargo`), Bảo hiểm (`/insurance`), Ví EasyXu (`/rewards`) | `frontend/src/pages/customer/charter/`, `cargo/`, `insurance/`, `rewards/` |
 
+---
+
+## 🏛️ 6. THIẾT KẾ ĐỘT PHÁ: QUY TRÌNH ONBOARDING NHÀ XE & THẨM ĐỊNH PHÁP NHÂN KYB CỦA ADMIN
+
+Đáp ứng trực tiếp yêu cầu thẩm định chất lượng doanh nghiệp vận tải của Hội đồng giám khảo, luồng tiếp nhận đối tác nhà xe được chuẩn hóa toàn diện theo mô hình **KYB (Know Your Business) 4 Tầng**, giải quyết triệt để rủi ro nhà xe "ma", thiếu giấy phép kinh doanh vận tải hoặc gian lận tài khoản ngân hàng.
+
+### 6.1 Sơ Đồ Tuần Tự (Sequence Diagram) Luồng Thẩm Định KYB
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor NX as Đối tác Nhà xe
+    participant Web as Cổng Đăng Ký (/partner-register)
+    participant BE as Backend API Gateway
+    participant DB as Supabase PostgreSQL
+    actor Admin as Admin Sàn TravelEasy
+    participant Gov as Cổng Tra Cứu MST Quốc Gia
+    participant Mail as Notification / Email Service
+
+    NX->>Web: Điền thông tin pháp nhân (MST, Tên công ty, GPKD vận tải)
+    NX->>Web: Tải lên bản scan GPKD, ảnh xe, CCCD & Khai báo STK Escrow
+    Web->>BE: POST /api/v1/partners/register (Kèm hồ sơ số hóa)
+    BE->>DB: INSERT bus_companies (status: PENDING_APPROVAL, kyc_status: PENDING_APPROVAL)
+    BE->>DB: Ghi nhận AuditLog (PARTNER_REGISTRATION)
+    BE->>Mail: Gửi Email xác nhận tiếp nhận hồ sơ + Mã tra cứu
+    Mail-->>NX: Email thông báo "Hồ sơ đang được thẩm định trong 24h"
+
+    Note over Admin, Gov: Giai đoạn Thẩm định & Xác thực Đa tầng
+    Admin->>BE: GET /api/v1/admin/bus-companies?status=PENDING_APPROVAL
+    BE-->>Admin: Danh sách hồ sơ kèm link tài liệu scan & số liệu MST
+    Admin->>Gov: Tra cứu MST 10-13 số trên dangkykinhdoanh.gov.vn
+    Gov-->>Admin: Xác nhận Doanh nghiệp đang hoạt động, có ngành nghề vận tải 4931-4932
+    Admin->>Admin: Đối chiếu GPKD vận tải Sở GTVT & Kiểm tra tên chủ TK Ngân hàng
+    Admin->>NX: Thực hiện cuộc gọi kiểm chứng (Verification Call) qua Hotline
+
+    alt Trường hợp 1: Hồ sơ hợp lệ 100%
+        Admin->>BE: PUT /api/v1/admin/bus-companies/{id}/status (status: ACTIVE, kyc_status: VERIFIED)
+        BE->>DB: UPDATE bus_companies SET status='ACTIVE', kyc_status='VERIFIED'
+        BE->>DB: Tự động INSERT users (role: OPERATOR, email: đại diện)
+        BE->>DB: Tự động sinh Hợp đồng Đối tác Điện tử (Partner e-Contract SHA-256)
+        BE->>Mail: Gửi Email chúc mừng + Cấp thông tin đăng nhập Cổng điều hành (/company)
+        Mail-->>NX: Nhận tài khoản & bắt đầu thiết lập xe, tuyến đường
+    else Trường hợp 2: Thiếu giấy tờ / Bản scan mờ
+        Admin->>BE: PUT /api/v1/admin/bus-companies/{id}/status (status: PENDING_SUPPLEMENT, note: lý do)
+        BE->>DB: UPDATE status='PENDING_SUPPLEMENT', rejection_reason=ghi chú
+        BE->>Mail: Gửi Email kèm One-Time Link yêu cầu bổ sung trong 07 ngày
+        Mail-->>NX: Mở link bổ sung hồ sơ trực tuyến
+    else Trường hợp 3: Giả mạo / Không có giấy phép vận tải / Nợ thuế
+        Admin->>BE: PUT /api/v1/admin/bus-companies/{id}/status (status: REJECTED, reason: lý do chuẩn)
+        BE->>DB: UPDATE status='REJECTED', rejection_reason=lý do
+        BE->>Mail: Gửi Email từ chối lịch sự nêu rõ căn cứ pháp lý
+    end
+```
+
+---
+
+### 6.2 Bốn Tầng Thẩm Định Pháp Lý Của Admin (The 4-Layer KYB Protocol)
+
+| Tầng thẩm định | Tiêu chí kiểm tra | Hành động kỹ thuật & Phương thức xác thực | Tiêu chuẩn Đạt (PASS) |
+|:---|:---|:---|:---|
+| **Tầng 1: Cú pháp & Toàn vẹn dữ liệu** | - Định dạng Mã số thuế<br>- Định dạng CCCD<br>- Số điện thoại Hotline<br>- Kích thước file tài liệu | - Backend Regex Validation: `^[0-9]{10}(-[0-9]{3})?$`<br>- Chặn file vượt quá 10MB hoặc sai định dạng PDF/PNG/JPG<br>- Tự động kiểm tra trùng lặp trên CSDL và Blacklist vi phạm | Không lỗi cú pháp, tài liệu đọc được 100% 4 góc bản scan. |
+| **Tầng 2: Đối chiếu CSDL Quốc Gia** | - Tính hợp pháp doanh nghiệp<br>- Tình trạng nộp thuế<br>- Mã ngành kinh doanh vận tải | - Tích hợp nút **1-Click Tra cứu Cổng Doanh Nghiệp Quốc Gia** (`dangkykinhdoanh.gov.vn`) và Cổng Tổng Cục Thuế (`tracuunnt.gdt.gov.vn`)<br>- Đối chiếu Tên công ty & Địa chỉ trụ sở | - Doanh nghiệp ở trạng thái "Đang hoạt động"<br>- Có mã ngành 4931 (Vận tải hành khách bằng xe buýt) hoặc 4932 (Vận tải hành khách đường bộ khác). |
+| **Tầng 3: Giấy Phép Con Vận Tải** | - Giấy phép kinh doanh vận tải bằng xe ô tô do Sở GTVT cấp<br>- Phù hiệu xe chạy tuyến | - Phóng to xem con dấu đỏ, chức danh người ký và ngày hết hạn<br>- Đối chiếu số giấy phép trên cổng Sở GTVT tỉnh/thành phố | - Giấy phép còn hiệu lực tối thiểu 06 tháng tại thời điểm duyệt<br>- Loại hình cấp phép: Tuyến cố định hoặc Hợp đồng du lịch. |
+| **Tầng 4: Tài Khoản Quyết Toán Escrow** | - Tính chính chủ tài khoản ngân hàng<br>- Phòng chống rửa tiền (AML)<br>- Chống gian lận chuyển tiền | - Đối chiếu Tên chủ tài khoản ngân hàng thụ hưởng (`bank_account_owner`) với Tên Doanh nghiệp hoặc Tên Người đại diện pháp luật trên GPKD | Bắt buộc trùng khớp 100% tên pháp nhân hoặc người đại diện; tuyệt đối từ chối tài khoản cá nhân của bên thứ ba. |
+
+---
+
+### 6.3 Ba Tính Năng Nâng Cấp Đột Phá Được Thiết Kế Mới
+
+1. **Auto-Check Mã Số Thuế & AI OCR Bóc Tách Giấy Phép:**
+   - Khi nhà xe tải lên ảnh chụp Giấy phép ĐKKD, hệ thống tự động bóc tách (OCR) Mã số thuế, Tên doanh nghiệp và Địa chỉ để tự điền form, giảm 90% lỗi gõ nhầm.
+   - Khi Admin duyệt, hệ thống tự động highlight màu xanh các trường thông tin khớp giữa bản scan và dữ liệu khai báo, highlight màu đỏ các trường có dấu hiệu bất thường.
+2. **Onboarding Sandbox Mode (Chế độ Vận Hành Thử Nghiệm):**
+   - Nhà xe sau khi được Admin phê duyệt sẽ được đưa vào chế độ `SANDBOX` trong 3 ngày đầu.
+   - Tại chế độ này, nhà xe được thêm danh sách xe thực tế, cấu hình sơ đồ ghế, thiết lập trạm đón trả và tạo thử chuyến xe nội bộ để đội ngũ vận hành của sàn hỗ trợ kiểm thử chất lượng trước khi bấm nút **"Mở Bán Chính Thức (Go-Live)"**.
+3. **Cơ Chế Phê Duyệt / Bác Bỏ Có Giải Trình Ký Số (Audit-Ready):**
+   - Admin không thể từ chối bằng một thao tác click thông thường; hệ thống bắt buộc Admin chọn Lý do chuẩn mực (ví dụ: *"Giấy phép vận tải hết hiệu lực"*, *"Mã số thuế không tồn tại"*, *"Tài khoản ngân hàng không chính chủ"*) kèm giải trình chi tiết tối thiểu 20 ký tự.
+   - Toàn bộ thao tác thẩm định được lưu vết vĩnh viễn (Admin ID, IP, Checksum, Timestamp), sẵn sàng xuất biên bản phục vụ các đoàn thanh tra giao thông vận tải hoặc kiểm toán độc lập.
