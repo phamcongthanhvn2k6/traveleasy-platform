@@ -64,18 +64,24 @@ Hệ thống hoạt động dưới mô hình Web Application / Mobile Web, kế
 ```
 
 ### 2.2 Chức năng sản phẩm (Product Functions)
-Hệ thống cung cấp các nhóm chức năng chính được phân quyền rõ ràng:
-1.  **Quản lý người dùng:** Đăng ký tài khoản, đăng nhập bằng OTP SĐT hoặc Google, phân quyền truy cập.
-2.  **Tìm kiếm & Đặt vé:** Tìm chuyến xe, hiển thị sơ đồ ghế, thực hiện thanh toán trực tuyến, khóa giữ ghế qua cơ chế hai lớp Soft-Hold và Hard-Hold.
-3.  **Vận hành Nhà xe:** Quản lý thông tin nhà xe, danh sách xe, điểm đón/trả, thiết lập chuyến đi độc lập layout ghế, bán vé tại quầy, ghép ghế bán tự động khi xảy ra đổi phương tiện khẩn cấp.
-4.  **Hệ thống thông báo:** Tự động gửi tin nhắn/Email xác nhận đặt vé, hoàn tiền và nhắc nhở thời gian thực dựa trên cập nhật trễ chuyến thủ công.
-5.  **Quản trị và cấu hình:** Quản lý tài khoản, phân quyền, phê duyệt nhà xe, quản lý địa điểm, sơ đồ ghế mẫu, cấu hình cổng thanh toán và dịch vụ thông báo, kiểm duyệt đánh giá, quản lý banner, ghi Audit Log hệ thống.
+Hệ thống cung cấp 6 nhóm chức năng chính được phân quyền rõ ràng:
+1.  **Quản lý người dùng & Khách hàng:** Đăng ký tài khoản, đăng nhập bằng OTP SĐT hoặc Google OAuth2, quản lý thông tin cá nhân, quyền riêng tư (PDPD - Nghị định 13/2023/NĐ-CP).
+2.  **Tìm kiếm & Đặt vé thông minh:** Tìm kiếm chuyến xe theo nơi đi/nơi đến/ngày đi, bộ lọc đa tiêu chí, hiển thị sơ đồ ghế 2 tầng thời gian thực, cơ chế khóa giữ ghế hai lớp (Soft-Hold 180s & Hard-Hold 600s), thanh toán trực tuyến đa kênh (VietQR, VNPAY, COD).
+3.  **Gia nhập Đối tác & Thẩm định Pháp lý (Partner Onboarding & KYB Verification):** 
+    - Đơn vị kinh doanh vận tải mới nộp đơn đăng ký hợp tác trực tuyến: khai báo pháp nhân, MST, giấy phép con vận tải hành khách của Sở GTVT, thông tin tài khoản ngân hàng thụ hưởng, cam kết quy chế sàn.
+    - **Bắt buộc tải lên file ảnh chụp/scan 2 mặt Căn cước công dân (CCCD) gắn chip** của Người đại diện theo pháp luật để xác minh danh tính.
+    - Quy trình thẩm định đa tầng (KYB Workflow) do Quản trị viên sàn (Admin) thực hiện: tra cứu MST quốc gia, đối chiếu CCCD, thẩm định giấy phép, gọi điện xác minh hotline trước khi ra quyết định Phê duyệt, Yêu cầu bổ sung hoặc Bác bỏ hồ sơ.
+    - Kích hoạt tự động: Khi được duyệt, hệ thống tự động sinh tài khoản Quản trị nhà xe (`ROLE_OPERATOR`), phát hành Hợp đồng hợp tác điện tử và gửi thông tin đăng nhập qua email.
+4.  **Vận hành & Điều hành Nhà xe:** Quản lý đội xe và **bắt buộc thẩm định bộ 4 giấy tờ lưu hành xe** (Cà vẹt xe, Sổ đăng kiểm, Bảo hiểm TNDS/hành khách, Phù hiệu xe Sở GTVT; tự động khóa xe khi hết hạn), cấu hình điểm đón/trả, thiết lập tuyến mẫu, khởi tạo chuyến đi, bán vé tại quầy, ghép ghế bán tự động khi đổi xe khẩn cấp, máy quét mã QR soát vé di động chống quét trùng lặp.
+5.  **Hệ thống thông báo & Dịch vụ khách hàng:** Tự động gửi Email/SMS vé điện tử QR Code, thông báo hoàn hủy, nhắc nhở lịch trình và cập nhật thời gian đến dự kiến (ETA) động; hệ thống đánh giá chuyến đi và báo cáo vi phạm có SLA 48h.
+6.  **Quản trị, Đối soát & Kết toán Tài chính (Admin & Settlement):** Bảng điều khiển tổng quan chỉ số sàn (GMV, doanh thu hoa hồng, occupancy rate), thẩm định nhà xe, đối soát doanh thu tự động, kết toán ví Escrow cho nhà xe sau khi hoàn thành chuyến đi, quản lý dữ liệu gốc (Master Data), cấu hình cổng thanh toán, xem nhật ký kiểm toán (Audit Log) bất biến qua `X-Correlation-Id`.
 
 ### 2.3 Tác nhân & Đặc điểm người dùng (User Classes and Characteristics)
-*   **Khách hàng (User):** Không yêu cầu kỹ năng công nghệ cao, giao diện trực quan, thao tác nhanh gọn trên thiết bị di động/máy tính.
-*   **Nhân viên Nhà xe (Bus Company):** Cần màn hình quản lý rõ ràng, hỗ trợ các tác vụ CRUD nhanh, xử lý tình huống đổi xe/đổi chuyến khẩn cấp, báo cáo trễ chuyến thủ công. Mỗi tài khoản thuộc nhóm này được **gắn với đúng một Nhà xe** tại thời điểm tạo tài khoản; một Nhà xe có thể có nhiều tài khoản nhân viên. Liên kết này là cơ sở để hệ thống phân quyền và bảo đảm tài khoản chỉ thao tác được trên dữ liệu của chính Nhà xe mình (xem quy tắc Quyền sở hữu dữ liệu tại UC-2.3, UC-2.5, UC-2.9). Tài khoản Khách hàng và Quản trị viên **không** có liên kết này.
-*   **Quản trị viên (Admin):** Có chuyên môn kỹ thuật hoặc nghiệp vụ quản trị, sử dụng Admin Dashboard để giám sát toàn bộ hệ thống.
-*   *Lưu ý kiến trúc V1:* Hệ thống **không** có actor "Tài xế". Mọi thông tin hành trình và danh sách hành khách đi xe sẽ được nhà xe kết xuất ra phiếu thông tin giấy hoặc gửi thủ công ngoài hệ thống cho tài xế.
+*   **Khách hàng (Customer / Traveler):** Hành khách có nhu cầu tìm kiếm chuyến xe, chọn vị trí ghế, thanh toán và nhận vé điện tử QR Code. Không yêu cầu kỹ năng công nghệ cao, giao diện trực quan, thao tác nhanh gọn trên thiết bị di động/máy tính.
+*   **Đối tác Nhà xe Đăng ký Mới (Prospective Bus Partner / Applicant):** Doanh nghiệp, Hợp tác xã vận tải có nhu cầu mở bán vé trên sàn. Chưa có tài khoản trên hệ thống, thực hiện nộp đơn đăng ký hợp tác trực tuyến, tải lên hồ sơ pháp lý, ảnh CCCD 2 mặt của người đại diện, thông tin tài khoản ngân hàng và theo dõi tiến độ xét duyệt qua mã hồ sơ.
+*   **Nhân viên / Quản trị viên Nhà xe (Bus Operator):** Đơn vị vận tải đã được Admin thẩm định và phê duyệt (`status = 'ACTIVE'`, `ROLE_OPERATOR`). Có quyền quản lý đội xe, hồ sơ giấy tờ xe, cấu hình tuyến đường, tạo chuyến xe, điều hành giá vé, bán vé quầy, quét mã QR soát vé lên xe và theo dõi báo cáo đối soát doanh thu. Mỗi tài khoản nhà xe được **gắn chặt với đúng một Nhà xe (Multi-Tenancy)**; một Nhà xe có thể có nhiều nhân viên điều hành.
+*   **Quản trị viên Sàn (Super Admin / Compliance Officer):** Bộ phận vận hành và kiểm soát tuân thủ của Sàn TravelEasy (`ROLE_ADMIN`). Có chuyên môn thẩm định pháp lý doanh nghiệp, thực hiện kiểm duyệt hồ sơ đăng ký đối tác (KYB), đối chiếu dữ liệu thuế, phê duyệt/từ chối nhà xe, kiểm soát đối soát và kết toán tiền ký quỹ (Escrow Settlement), cấu hình tham số toàn hệ thống và giám sát nhật ký kiểm toán (`audit_logs`).
+*   *Lưu ý kiến trúc V1:* Hệ thống **không** có actor "Tài xế". Mọi thông tin hành trình và danh sách hành khách đi xe sẽ được nhà xe kết xuất ra phiếu thông tin giấy, danh sách điện tử hoặc gửi qua ứng dụng nội bộ cho tài xế.
 
 ### 2.4 Ràng buộc thiết kế và hiện thực (Design and Implementation Constraints)
 *   Hệ thống backend phải thiết kế phi trạng thái (Stateless API) để dễ dàng scale ngang.
@@ -87,6 +93,94 @@ Hệ thống cung cấp các nhóm chức năng chính được phân quyền r�
 *   Dịch vụ SMS Gateway và SMTP Email hoạt động với uptime > 99%.
 
 ---
+
+
+### 2.6 Sơ Đồ Quy Trình Nghiệp Vụ Chính (Core Business Workflows)
+
+#### 2.6.1 Sơ đồ Use Case Tổng quan Quy trình Đăng ký Đối tác & Quản trị Duyệt (KYB Use Case Diagram)
+
+```mermaid
+flowchart TD
+    subgraph ProspectivePartner["Đối tác Nhà xe Mới"]
+        A1["1. Truy cập Trang Hợp tác Mở bán vé"] --> A2["2. Điền Đơn Đăng ký Đối tác Trực tuyến"]
+        A2 --> A3["3. Tải lên ĐKKD & Giấy phép Vận tải Sở GTVT"]
+        A3 --> A4["4. Tải lên CCCD 2 mặt Người đại diện"]
+        A4 --> A5["5. Khai báo Tài khoản Ngân hàng Quyết toán"]
+        A5 --> A6["6. Ký cam kết Quy chế Sàn & Gửi đơn"]
+        A6 --> A7["7. Nhận Mã hồ sơ theo dõi & Email xác nhận"]
+    end
+
+    subgraph System["Hệ thống Sàn TravelEasy"]
+        S1["Tự động Validate cú pháp MST, CCCD, Email, SĐT"]
+        S2["Tạo bản ghi BusCompany: status = PENDING_APPROVAL"]
+        S3["Gửi Email thông báo tiếp nhận hồ sơ cho đối tác"]
+        S4["Gửi thông báo có hồ sơ mới vào Dashboard Admin"]
+    end
+
+    subgraph AdminPortal["Quản trị viên Sàn (Admin)"]
+        B1["1. Mở Hàng đợi Duyệt Hồ sơ Đối tác"]
+        B2["2. Đối chiếu MST với Cổng CSDL Quốc gia"]
+        B3["3. Kiểm tra Giấy phép Vận tải & CCCD 2 mặt"]
+        B4["4. Đối chiếu Chủ tài khoản Ngân hàng với GPKD"]
+        B5["5. Thực hiện Cuộc gọi Kiểm chứng Hotline (Tele-Check)"]
+        B6{"6. Quyết định Thẩm định"}
+        B7["Phê duyệt (Approved)"]
+        B8["Yêu cầu Bổ sung (Supplement)"]
+        B9["Bác bỏ / Từ chối (Rejected)"]
+    end
+
+    A6 --> S1 --> S2 --> S3 & S4
+    S4 --> B1 --> B2 --> B3 --> B4 --> B5 --> B6
+    B6 -->|Đầy đủ & Hợp lệ| B7
+    B6 -->|Thiếu tài liệu / Cần làm rõ| B8
+    B6 -->|Vi phạm / Giả mạo / Không có GP| B9
+
+    subgraph Activation["Kích hoạt & Bàn giao Hệ thống"]
+        C1["Cập nhật status = ACTIVE, kyc_status = VERIFIED"]
+        C2["Tự động sinh tài khoản Quản trị Nhà xe (ROLE_OPERATOR)"]
+        C3["Phát sinh Hợp đồng Hợp tác Điện tử (SHA-256)"]
+        C4["Gửi Email bàn giao Cổng Điều hành kèm Mật khẩu"]
+        C5["Nhà xe đăng nhập, Đăng ký xe, Tạo chuyến & Bán vé"]
+    end
+
+    B7 --> C1 --> C2 --> C3 --> C4 --> C5
+```
+
+#### 2.6.2 Sơ đồ Chuyển đổi Trạng thái Hồ sơ Đối tác Nhà xe (Partner Lifecycle State Machine)
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING_APPROVAL: Đối tác nộp đơn đăng ký trực tuyến (kèm CCCD 2 mặt, GPKD)
+    
+    PENDING_APPROVAL --> UNDER_REVIEW: Admin mở hồ sơ bắt đầu thẩm định
+    
+    UNDER_REVIEW --> PENDING_SUPPLEMENT: Hồ sơ thiếu giấy tờ / ảnh mờ / thông tin sai lệch
+    PENDING_SUPPLEMENT --> UNDER_REVIEW: Đối tác cập nhật hồ sơ bổ sung qua link an toàn
+    PENDING_SUPPLEMENT --> REJECTED: Quá hạn 7 ngày làm việc không bổ sung
+    
+    UNDER_REVIEW --> REJECTED: Vi phạm pháp luật / Không có GP vận tải / MST đã đóng
+    
+    UNDER_REVIEW --> ACTIVE: Admin Phê duyệt (Cấp tài khoản ROLE_OPERATOR, Ký HĐĐT)
+    
+    ACTIVE --> SUSPENDED: Vi phạm quy chế sàn / Xe quá hạn kiểm định / Nợ công nợ
+    SUSPENDED --> ACTIVE: Khắc phục vi phạm / Admin mở khóa
+    
+    REJECTED --> [*]
+```
+
+#### 2.6.3 Bảng Ma trận Phân quyền & Phân định Trách nhiệm (RACI Matrix)
+
+| Quy trình / Chức năng nghiệp vụ | Khách hàng | Đối tác mới | Nhà xe (Operator) | Quản trị viên (Admin) | Hệ thống tự động |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| **Nộp đơn đăng ký hợp tác trực tuyến (UC-2.0)** | - | **R, A** | - | I | C (Validate) |
+| **Tải lên CCCD 2 mặt & Hồ sơ pháp lý** | - | **R, A** | - | I | C (Verify format) |
+| **Thẩm định MST & CSDL Quốc gia (UC-3.2)** | - | I | - | **R, A** | C (Tra cứu) |
+| **Phê duyệt / Yêu cầu bổ sung / Bác bỏ hồ sơ** | - | I | - | **R, A** | C (Ghi Audit Log) |
+| **Khởi tạo tài khoản Quản trị nhà xe & HĐĐT** | - | I | I | I | **R, A** |
+| **Khai báo phương tiện & 4 giấy tờ xe (UC-2.2)** | - | - | **R, A** | C (Giám sát) | C (Khóa khi hết hạn) |
+| **Tạo chuyến xe & Mở bán vé trực tuyến (UC-2.5)** | - | - | **R, A** | I | C (Đồng bộ) |
+| **Quét mã QR soát vé lên xe (Check-in)** | I | - | **R, A** | I | C (Chống quét trùng) |
+| **Đối soát & Kết toán tài chính Escrow (UC-1.13)** | - | - | C (Đối chiếu) | **R, A** | C (Tính hoa hồng) |
 
 ## 3. YÊU CẦU CHI TIẾT (SPECIFIC REQUIREMENTS)
 

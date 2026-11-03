@@ -102,16 +102,41 @@ Hệ thống hỗ trợ 3 phương thức thanh toán linh hoạt:
 
 ## PHẦN 2: HƯỚNG DẪN DÀNH CHO ĐỐI TÁC NHÀ XE (PARTNER PORTAL)
 
+### 2.0 Quy trình Nộp Đơn Đăng Ký Đối Tác Mở Bán Vé Trực Tuyến (Dành cho Doanh nghiệp Vận tải Mới)
+1. **Truy cập Cổng Đăng Ký Hợp Tác:**
+   - Tại trang chủ TravelEasy, nhấn vào nút **"Hợp tác mở bán vé"** trên thanh điều hướng hoặc truy cập trực tiếp `http://localhost:5173/partner`.
+2. **Khai báo Hồ sơ 5 Bước Chuẩn Pháp Lý:**
+   - **Bước 1 (Thông tin Pháp nhân):** Nhập Tên doanh nghiệp/Hợp tác xã theo ĐKKD, Tên thương mại hiển thị cho hành khách (VD: *Thành Bưởi*, *Phương Trang FUTA*), Mã số thuế (10 hoặc 13 chữ số), Địa chỉ trụ sở và Văn phòng giao dịch.
+   - **Bước 2 (Giấy phép Vận tải):** Khai báo Số Giấy phép Kinh doanh Vận tải bằng ô tô do Sở GTVT cấp, Ngày cấp, Nơi cấp và Ngày hết hạn (phải còn hiệu lực tối thiểu 06 tháng).
+   - **Bước 3 (Tài liệu Số hóa):** Tải lên file ảnh chụp/scan bản gốc Giấy chứng nhận ĐKKD, Giấy phép Kinh doanh Vận tải, Logo thương hiệu và ảnh chụp phương tiện tiêu biểu.
+   - **Bước 4 (Người đại diện, CCCD & Ngân hàng Quyết toán):**
+     - Khai báo Họ tên, Chức vụ và Số CCCD của Người đại diện pháp luật.
+     - **Bắt buộc tải lên file ảnh chụp 2 mặt Căn cước công dân (CCCD) gắn chip** của Người đại diện theo pháp luật: ảnh rõ nét 4 góc, thấy rõ số định danh cá nhân để đối chiếu với ĐKKD.
+     - Số điện thoại Hotline đặt vé và Email chính thức nhận đối soát.
+     - **Tài khoản Ngân hàng Quyết toán Ký quỹ (Escrow):** Nhập Số tài khoản, Ngân hàng, Chi nhánh và Tên chủ tài khoản (**Bắt buộc phải trùng khớp với Tên doanh nghiệp hoặc Tên người đại diện trên GPKD** để chống rửa tiền).
+   - **Bước 5 (Ký cam kết Quy chế & Nộp đơn):** Đọc và tích chọn cam kết chấp thuận *Quy chế Sàn TMĐT TravelEasy*, *Cam kết bồi thường 150% nếu bán trùng vé*, *Tỷ lệ chiết khấu sàn*. Nhấn nút **"Nộp Hồ Sơ Đăng Ký Đối Tác"**.
+3. **Nhận Mã Hồ Sơ & Kết Quả Tiếp Nhận:**
+   - Hệ thống cấp Mã hồ sơ duy nhất (`registrationTicketCode`) và gửi Email tự động xác nhận tiếp nhận hồ sơ.
+   - Hồ sơ được chuyển vào hàng đợi thẩm định của Quản trị viên sàn (`status = 'PENDING_APPROVAL'`). Thời gian xét duyệt tiêu chuẩn: từ 24h đến 48h làm việc.
+
 ### 2.1 Đăng nhập & Cô lập phạm vi dữ liệu nhà xe (Multi-Tenancy)
 - **Truy cập:** `http://localhost:5173/company/login`.
 - **Tài khoản mẫu:** `partner@traveleasy.vn` / `123456789@`.
 - **Bảo mật đa tầng:** Backend tự động trích xuất `companyId` từ JWT Token và áp dụng lọc dữ liệu triệt để. Nhà xe A không bao giờ có thể xem hoặc chỉnh sửa chuyến xe, doanh thu của Nhà xe B.
 
-### 2.2 Quản lý phương tiện, sơ đồ ghế & Đội ngũ tài xế
+### 2.2 Quản lý phương tiện & Thẩm định 4 Giấy tờ xe bắt buộc
 - **Truy cập:** `http://localhost:5173/company/vehicles`.
-- **Thao tác:**
-  - Đăng ký xe mới: Biển số xe, tên nhà sản xuất, năm sản xuất, ngày hạn đăng kiểm.
-  - Gán mẫu layout: Chọn sơ đồ 1 tầng (ghế ngồi/limousine) hoặc 2 tầng (giường nằm A01-A18, B01-B18).
+- **Thao tác Đăng ký xe mới (Tuân thủ Nghị định 10/2020/NĐ-CP):**
+  1. Khai báo thông số kỹ thuật: Biển kiểm soát (VD: `51B-888.99`), Loại xe (Ghế ngồi, Giường nằm, Limousine VIP 34 phòng), Hãng sản xuất, Năm sản xuất.
+  2. **Bắt buộc tải lên Đủ Bộ 4 Loại Giấy Tờ Lưu Hành Xe Hợp Pháp:**
+     - **(1) Giấy chứng nhận Đăng ký xe ô tô (Cà vẹt xe):** Tải lên bản chụp 2 mặt (`registration_certificate_url`).
+     - **(2) Sổ Đăng kiểm (An toàn Kỹ thuật & Bảo vệ Môi trường):** Tải lên ảnh chụp sổ đăng kiểm (`inspection_certificate_url`) và Khai báo Ngày hết hạn đăng kiểm (phải còn hạn **tối thiểu 30 ngày** tại thời điểm đăng ký).
+     - **(3) Bảo hiểm Bắt buộc TNDS & Bảo hiểm Tai nạn Hành khách:** Tải lên chứng nhận bảo hiểm (`insurance_certificate_url`) và Khai báo Ngày hết hạn bảo hiểm.
+     - **(4) Phù hiệu Xe Khách (Sở GTVT cấp):** Tải lên ảnh phù hiệu dán trên kính (`badge_url`), khai báo Số phù hiệu và Ngày hết hạn.
+  3. **Quy tắc Kiểm duyệt & Khóa An Toàn Tự Động:**
+     - Nếu thiếu bất kỳ 1 trong 4 loại giấy tờ trên hoặc giấy tờ đã quá hạn, hệ thống **lập tức chặn** không cho lưu xe.
+     - **Chỉ xe có `compliance_status = 'VERIFIED'` mới được phép gán vào Chuyến đi (`Trip`)** để mở bán vé.
+     - **Khóa tự động khi hết hạn (Auto-Lock on Expiry):** Đúng 00:00 của ngày hết hạn đăng kiểm/bảo hiểm, hệ thống tự động khóa xe (`compliance_status = 'EXPIRED'`) và cấm gán vào các chuyến đi tương lai.
 
 ### 2.3 Điều hành chuyến xe, định cấu hình giá vé & Điểm đón trả
 - **Truy cập:** `http://localhost:5173/company/trips`.
@@ -122,7 +147,7 @@ Hệ thống hỗ trợ 3 phương thức thanh toán linh hoạt:
   - Định cấu hình giá vé cơ sở và phụ thu ngày lễ Tết.
 
 ### 2.4 Ứng dụng Soát vé QR trên di động (Anti-Rescan Protection)
-- **Truy cập:** `http://localhost:5173/scanner` (hoặc `/operator/check-in`).
+- **Truy cập:** nút **"📷 Mở Máy Quét QR Soát Vé (Check-in)"** tại trang Điều hành đặt vé `http://localhost:5173/company/bookings` hoặc trang Tra cứu vé `http://localhost:5173/lookup`.
 - **Thao tác:**
   1. Cấp quyền truy cập camera trên điện thoại thông minh hoặc máy tính bảng.
   2. Đưa camera hướng vào mã QR trên điện thoại của khách hàng.
@@ -147,12 +172,24 @@ Hệ thống hỗ trợ 3 phương thức thanh toán linh hoạt:
   - Tổng GMV (Gross Merchandise Value) và doanh thu hoa hồng sàn.
   - Tỷ lệ lấp đầy ghế bình quân (Seat Occupancy Rate).
 
-### 3.2 Phê duyệt hồ sơ đối tác nhà xe mới
-- **Truy cập:** `http://localhost:5173/admin/partners`.
-- **Thao tác:**
-  - Tiếp nhận hồ sơ đăng ký hợp tác từ form `http://localhost:5173/partner`.
-  - Kiểm tra giấy phép kinh doanh vận tải, số điện thoại hotline, thông tin ngân hàng.
-  - Bấm **"Phê Duyệt"** (Kích hoạt tài khoản OPERATOR) hoặc **"Từ Chối"** kèm lý do cụ thể.
+### 3.2 Thẩm Định Hồ Sơ Pháp Lý & Phê Duyệt Đối Tác Nhà Xe (Admin KYB Workflow)
+- **Truy cập:** `http://localhost:5173/admin/bus-companies` (Tab *Duyệt đối tác chờ thẩm định*).
+- **Quy trình Thẩm định 4 Bước Nghiêm Ngặt:**
+  1. **Bước 1 (Tiếp nhận hàng đợi):** Admin xem danh sách các hồ sơ ở trạng thái `PENDING_APPROVAL`. Hệ thống tự động kiểm tra định dạng MST, định dạng CCCD và kiểm tra blacklist vi phạm.
+  2. **Bước 2 (Đối chiếu CSDL Thuế & Căn cước công dân):**
+     - Bấm nút "Tra cứu MST tự động" để đối chiếu thông tin doanh nghiệp trên Cổng Đăng ký Doanh nghiệp Quốc gia (`dangkykinhdoanh.gov.vn`) và Cổng Thuế (`tracuunnt.gdt.gov.vn`).
+     - Kiểm tra file ảnh chụp 2 mặt Căn cước công dân (CCCD) của Người đại diện: đối chiếu họ tên, số định danh với thông tin trên ĐKKD.
+     - Kiểm tra Giấy phép Kinh doanh Vận tải ô tô: kiểm tra dấu mộc đỏ của Sở GTVT và thời hạn hiệu lực còn tối thiểu 06 tháng.
+     - Đối chiếu Tên chủ tài khoản Ngân hàng thụ hưởng với Tên công ty hoặc Tên người đại diện (Tuyệt đối không duyệt tài khoản cá nhân khác lạ để phòng chống rửa tiền).
+  3. **Bước 3 (Cuộc gọi kiểm chứng Tele-Check):** Gọi điện trực tiếp tới Hotline đặt vé và SĐT Người đại diện để xác nhận tính chính danh của người nộp hồ sơ.
+  4. **Bước 4 (Ra Quyết định Thẩm định):**
+     - **PHÊ DUYỆT (`APPROVED / ACTIVE`):**
+       - Admin thiết lập tỷ lệ chiết khấu sàn (Commission Rate mặc định 5% - 8%), chu kỳ quyết toán Escrow.
+       - Hệ thống tự động chuyển trạng thái `status = 'ACTIVE'`, `kyc_status = 'VERIFIED'`.
+       - Hệ thống **tự động khởi tạo tài khoản Quản trị nhà xe (`ROLE_OPERATOR`)**, mã hóa mật khẩu an toàn và gửi Email thông báo bàn giao Cổng điều hành cho đối tác.
+       - Hệ thống phát hành Hợp đồng hợp tác điện tử (`Partner e-Contract`) có mã băm SHA-256 lưu trữ vĩnh viễn trong CSDL.
+     - **YÊU CẦU BỔ SUNG (`REQUIRES_SUPPLEMENT`):** Nếu ảnh giấy tờ mờ hoặc thiếu tài liệu, Admin nhập lý do hướng dẫn. Hệ thống gửi Email chứa đường link an toàn cho đối tác bổ sung trong vòng 07 ngày làm việc.
+     - **BÁC BỎ / TỪ CHỐI (`REJECTED`):** Khi phát hiện giấy tờ giả mạo hoặc không có giấy phép vận tải, Admin bắt buộc nhập lý do từ chối chuẩn hóa. Hệ thống gửi email từ chối lịch sự và khóa MST vi phạm trong 30 ngày.
 
 ### 3.3 Quản trị danh mục dữ liệu gốc (Master Data)
 - **Truy cập:** `http://localhost:5173/admin/locations` và `http://localhost:5173/admin/cancellation-policies`.

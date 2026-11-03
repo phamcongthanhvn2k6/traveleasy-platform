@@ -27,6 +27,7 @@ Lý do là Core Domain:
 | **Payment & Refund Orchestration** | Có logic nghiệp vụ riêng (idempotency, pessimistic lock, signature verification, chính sách hủy theo mốc %) nhưng bản thân việc "thanh toán" được ủy quyền cho VNPay/MoMo/ZaloPay — hệ thống chỉ điều phối. |
 | **Cancellation Policy Management** | Quy tắc hoàn tiền theo tầng thời gian là đặc thù nghiệp vụ nhà xe, hỗ trợ trực tiếp cho Refund nhưng không phải trung tâm cạnh tranh. |
 | **Review & Reputation Management** | Có quy trình hậu kiểm + report + SLA 48h đặc thù, hỗ trợ uy tín nhà xe nhưng không phải giá trị lõi giao dịch. |
+| **Partner Onboarding & KYB Verification** (Đơn đăng ký đối tác, thẩm định CCCD 2 mặt, MST, GPKD vận tải, Admin phê duyệt) | Là cửa ngõ pháp lý bảo vệ sàn khỏi rủi ro nhà xe chui, xe dù bến cóc, rửa tiền và lừa đảo. Logic nghiệp vụ đặc thù gắn liền với quy chế sàn TMĐT, Nghị định 10/2020/NĐ-CP và Luật Giao thông đường bộ. |
 | **Notification Dispatch** (Email/SMS xác nhận, nhắc lịch trình, ETA động) | Có luật nghiệp vụ về thời điểm gửi (2 phút sau đặt vé, quét trước giờ chạy 2 tiếng) nhưng cơ chế gửi bản thân là generic (SMS/Email gateway). |
 
 ### 1.3 Generic Domain
@@ -48,6 +49,24 @@ Lý do là Core Domain:
 - **Business Responsibility:** Đăng ký (UC-1.1), đăng nhập OTP/Google (UC-1.2), phát hành/thu hồi Access-Refresh Token, gán role tĩnh (CUSTOMER/BUS_COMPANY/ADMIN), khóa/mở khóa tài khoản (UC-3.1), quản lý tài khoản cá nhân & right-to-be-forgotten (UC-1.12, mục 3.3.4).
 - **Entities:** User, RefreshToken.
 - **Giao tiếp:** Phát hành `userId` + `role` dùng làm tham chiếu (reference-by-id) cho mọi Context khác (Booking, Trip, Review...) — không Context nào giữ bản sao dữ liệu cá nhân đầy đủ ngoài Identity. Booking Context gọi Identity (qua Access Token claims) để xác thực trước khi cho phép "Tiếp tục" (UC-1.6 bước 2).
+
+### 2.1.B Partner Onboarding & KYB Context
+- **Purpose:** Tiếp nhận đơn đăng ký hợp tác, quản lý hồ sơ tài liệu số hóa pháp lý, kiểm soát luồng thẩm định đa tầng và phê duyệt đối tác của Admin.
+- **Business Responsibility:**
+  - Tiếp nhận hồ sơ đăng ký hợp tác mở bán vé trực tuyến của nhà xe mới (UC-2.0).
+  - Thu thập và chuẩn hóa bộ hồ sơ pháp lý: Mã số thuế (MST 10/13 số), Giấy phép kinh doanh vận tải bằng ô tô do Sở GTVT cấp, **bắt buộc tải lên bản chụp 2 mặt Căn cước công dân (CCCD) gắn chip** của Người đại diện theo pháp luật, Tài khoản ngân hàng quyết toán Escrow (chống rửa tiền).
+  - Cung cấp giao diện thẩm định hồ sơ đa tầng cho Quản trị viên (UC-3.2): Đối chiếu CSDL Thuế Quốc gia, kiểm tra tính hợp lệ của giấy tờ, gọi điện kiểm chứng hotline.
+  - Xử lý các quyết định thẩm định: Phê duyệt (`APPROVED / ACTIVE`), Yêu cầu bổ sung (`REQUIRES_SUPPLEMENT`), hoặc Bác bỏ (`REJECTED`).
+  - Tự động kích hoạt: Khởi tạo tài khoản Quản trị nhà xe (`ROLE_OPERATOR`), phát hành Hợp đồng hợp tác điện tử (`Partner e-Contract`) gắn mã băm SHA-256 bảo vệ tính toàn vẹn và gửi thông tin bàn giao Cổng điều hành qua Email.
+- **Entities & Value Objects:**
+  - `BusCompany` (Aggregate Root): Đóng vai trò vừa là đối tác kinh doanh, vừa là chủ thể hồ sơ KYB với các trường trạng thái `status` (`PENDING_APPROVAL`, `UNDER_REVIEW`, `ACTIVE`, `REJECTED`, `SUSPENDED`) và `kyc_status` (`PENDING_APPROVAL`, `UNDER_REVIEW`, `PENDING_SUPPLEMENT`, `VERIFIED`, `REJECTED`).
+  - `KYCDocuments` (Value Object): Tập hợp các liên kết tài liệu số hóa bất biến (`businessLicenseUrl`, `identityCardFrontUrl`, `identityCardBackUrl`, `transportLicenseUrl`, `vehicleSamplePhotoUrl`).
+  - `SettlementBankAccount` (Value Object): Thông tin tài khoản ngân hàng thụ hưởng (`bankName`, `accountNumber`, `accountOwner`) bắt buộc phải trùng khớp với tên pháp nhân hoặc người đại diện.
+- **Invariants & Domain Rules:**
+  - [Rule KYB-01]: Mã số thuế (MST) và Tên thương mại nhà xe phải là duy nhất (`UNIQUE`) trên toàn hệ thống.
+  - [Rule KYB-02]: Hồ sơ bắt buộc phải có đầy đủ 2 mặt CCCD của người đại diện; nếu thiếu, hệ thống chặn không cho nộp đơn.
+  - [Rule KYB-03]: Chỉ tài khoản có quyền Quản trị viên sàn (`ROLE_ADMIN`) mới có thẩm quyền chuyển trạng thái từ `PENDING_APPROVAL` sang `ACTIVE`.
+  - [Rule KYB-04]: Mỗi lần Admin ra quyết định (Duyệt/Từ chối/Yêu cầu bổ sung), hệ thống bắt buộc phải ghi nhận bản ghi kiểm toán (`AuditLog`) kèm ID Admin, thời điểm, địa chỉ IP và lý do giải trình.
 
 ### 2.2 Location Context (Master Data Catalog)
 - **Purpose:** Quản lý danh mục địa điểm/bến xe dùng chung toàn hệ thống (Shared Master Data Catalog).
