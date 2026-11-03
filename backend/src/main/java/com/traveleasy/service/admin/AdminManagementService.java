@@ -312,14 +312,36 @@ public class AdminManagementService {
 
     @Transactional
     public SeatType createSeatType(SeatTypeRequest request) {
+        if (request.getCode() == null || request.getCode().trim().isEmpty()) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Mã loại ghế không được để trống");
+        }
         SeatType st = SeatType.builder()
-                .code(request.getCode().toUpperCase())
+                .code(request.getCode().trim().toUpperCase())
                 .label(request.getLabel())
                 .description(request.getDescription())
                 .status(request.getStatus() != null ? request.getStatus().toUpperCase() : "ACTIVE")
                 .build();
         SeatType saved = seatTypeRepository.save(st);
         logAction("admin@traveleasy.vn", "CREATE_SEAT_TYPE", "seat_types #" + saved.getCode(), "-", "{\"label\": \"" + saved.getLabel() + "\"}");
+        return saved;
+    }
+
+    @Transactional
+    public SeatType updateSeatType(String code, SeatTypeRequest request) {
+        SeatType st = seatTypeRepository.findById(code)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy loại ghế"));
+        String before = "{\"label\": \"" + st.getLabel() + "\", \"description\": \"" + (st.getDescription() != null ? st.getDescription() : "") + "\"}";
+        if (request.getLabel() != null && !request.getLabel().isBlank()) {
+            st.setLabel(request.getLabel().trim());
+        }
+        if (request.getDescription() != null) {
+            st.setDescription(request.getDescription().trim());
+        }
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            st.setStatus(request.getStatus().toUpperCase());
+        }
+        SeatType saved = seatTypeRepository.save(st);
+        logAction("admin@traveleasy.vn", "UPDATE_SEAT_TYPE", "seat_types #" + code, before, "{\"label\": \"" + saved.getLabel() + "\"}");
         return saved;
     }
 

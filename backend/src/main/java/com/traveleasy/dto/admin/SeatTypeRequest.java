@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SeatTypeRequest {
-    @NotBlank(message = "Mã loại ghế không được để trống")
     private String code;
 
     @NotBlank(message = "Nhãn loại ghế không được để trống")
@@ -20,4 +19,3 @@ public class SeatTypeRequest {
     private String description;
     private String status;
 }
-

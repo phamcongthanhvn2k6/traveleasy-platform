@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Armchair, Search, Plus, Edit2, Trash2, RefreshCw, X, CheckCircle2 } from 'lucide-react';
+import { Armchair, Search, Plus, Edit2, X, CheckCircle2 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 
@@ -22,8 +22,14 @@ export const AdminSeatTypesPage: React.FC = () => {
   const [newCode, setNewCode] = useState('');
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
-  const [newMultiplier, setNewMultiplier] = useState(1.3);
   const [submitting, setSubmitting] = useState(false);
+
+  // Modal edit
+  const [editingItem, setEditingItem] = useState<SeatTypeItem | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editStatus, setEditStatus] = useState<'ACTIVE' | 'DEPRECATED'>('ACTIVE');
+  const [updating, setUpdating] = useState(false);
 
   const fetchSeatTypes = async () => {
     setLoading(true);
@@ -98,6 +104,40 @@ export const AdminSeatTypesPage: React.FC = () => {
       toast.error(msg, 'Thất Bại');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleOpenEdit = (item: SeatTypeItem) => {
+    setEditingItem(item);
+    setEditName(item.name);
+    setEditDesc(item.description === 'Loại ghế chuẩn hóa hệ thống' ? '' : item.description);
+    setEditStatus(item.status);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    if (!editName.trim()) {
+      toast.warning('Vui lòng nhập tên loại ghế!', 'Thiếu Thông Tin');
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      await api.put(`/admin/seat-types/${editingItem.code}`, {
+        code: editingItem.code,
+        label: editName.trim(),
+        description: editDesc.trim() || 'Loại ghế chuẩn hoá',
+        status: editStatus,
+      });
+      toast.success(`Cập nhật loại ghế "${editName.trim()}" thành công!`, 'Thành Công');
+      setEditingItem(null);
+      fetchSeatTypes();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Không thể cập nhật loại ghế';
+      toast.error(msg, 'Thất Bại');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -214,11 +254,11 @@ export const AdminSeatTypesPage: React.FC = () => {
           <thead>
             <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>MÃ LOẠI</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TÊN LOẠI GHE</th>
+              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TÊN LOẠI GHẾ</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>MÔ TẢ TIỆN ÍCH</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>HỆ SỐ GIÁ</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TRẠNG THÁI</th>
-              <th style={{ padding: '12px 18px', width: '120px', textAlign: 'right' }}>THAO TÁC</th>
+              <th style={{ padding: '12px 18px', width: '190px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
           <tbody>
@@ -278,21 +318,59 @@ export const AdminSeatTypesPage: React.FC = () => {
                     </span>
                   </td>
                   <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                    <button
-                      onClick={() => handleToggleStatus(item)}
-                      style={{
-                        backgroundColor: item.status === 'ACTIVE' ? '#fef2f2' : '#ecfdf5',
-                        color: item.status === 'ACTIVE' ? '#dc2626' : '#059669',
-                        border: `1px solid ${item.status === 'ACTIVE' ? '#fecaca' : '#a7f3d0'}`,
-                        padding: '5px 10px',
-                        borderRadius: '6px',
-                        fontSize: '11.5px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {item.status === 'ACTIVE' ? 'Tạm Ngưng' : 'Kích Hoạt'}
-                    </button>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        onClick={() => handleOpenEdit(item)}
+                        title="Chỉnh sửa thông tin loại ghế"
+                        style={{
+                          backgroundColor: '#eff6ff',
+                          color: '#2563eb',
+                          border: '1px solid #bfdbfe',
+                          padding: '5px 10px',
+                          borderRadius: '6px',
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#dbeafe';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#eff6ff';
+                        }}
+                      >
+                        <Edit2 size={13} />
+                        <span>Sửa</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleStatus(item)}
+                        title={item.status === 'ACTIVE' ? 'Tạm ngưng loại ghế' : 'Kích hoạt loại ghế'}
+                        style={{
+                          backgroundColor: item.status === 'ACTIVE' ? '#fef2f2' : '#ecfdf5',
+                          color: item.status === 'ACTIVE' ? '#dc2626' : '#059669',
+                          border: `1px solid ${item.status === 'ACTIVE' ? '#fecaca' : '#a7f3d0'}`,
+                          padding: '5px 10px',
+                          borderRadius: '6px',
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = item.status === 'ACTIVE' ? '#fee2e2' : '#d1fae5';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = item.status === 'ACTIVE' ? '#fef2f2' : '#ecfdf5';
+                        }}
+                      >
+                        {item.status === 'ACTIVE' ? 'Tạm Ngưng' : 'Kích Hoạt'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -420,6 +498,185 @@ export const AdminSeatTypesPage: React.FC = () => {
                   }}
                 >
                   {submitting ? 'Đang lưu...' : 'Lưu Vào CSDL'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Chỉnh sửa loại ghế */}
+      {editingItem && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: 'min(480px, 94vw)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
+                    backgroundColor: '#eff6ff',
+                    color: '#2563eb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Edit2 size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Chỉnh Sửa Loại Ghế
+                  </h3>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>
+                    Mã chuẩn: <strong style={{ color: '#1e3a8a' }}>{editingItem.code}</strong>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingItem(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '4px' }}
+                title="Đóng"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Mã Loại Ghế (Định danh hệ thống)
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  value={editingItem.code}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    fontSize: '13px',
+                    backgroundColor: '#f8fafc',
+                    color: '#64748b',
+                    cursor: 'not-allowed',
+                    fontWeight: 600,
+                  }}
+                />
+                <span style={{ fontSize: '11px', color: '#94a3b8', marginTop: '3px', display: 'block' }}>
+                  * Mã loại ghế là định danh bất biến được liên kết với cấu hình xe và vé
+                </span>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Tên Loại Ghế *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="VD: Phòng Cabin Đơn Cao Cấp"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Mô Tả Tiện Ích
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Mô tả tiện ích, kích thước đệm, tính năng..."
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  Trạng Thái Áp Dụng
+                </label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as 'ACTIVE' | 'DEPRECATED')}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    backgroundColor: '#fff',
+                    color: '#0f172a',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="ACTIVE">Đang Kích Hoạt (Áp dụng cho sơ đồ xe)</option>
+                  <option value="DEPRECATED">Ngừng Áp Dụng (Tạm ngưng gán mới)</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingItem(null)}
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: '#fff',
+                    color: '#475569',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  style={{
+                    padding: '9px 18px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#2563eb',
+                    color: '#fff',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <CheckCircle2 size={16} />
+                  <span>{updating ? 'Đang lưu...' : 'Lưu Thay Đổi'}</span>
                 </button>
               </div>
             </form>
