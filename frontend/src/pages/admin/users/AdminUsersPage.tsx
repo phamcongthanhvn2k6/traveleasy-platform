@@ -33,6 +33,8 @@ export const AdminUsersPage: React.FC = () => {
   // Modal Edit
   const [editingUser, setEditingUser] = useState<UserItem | null>(null);
   const [editFullName, setEditFullName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPassword, setEditPassword] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editRole, setEditRole] = useState<'CUSTOMER' | 'OPERATOR' | 'ADMIN'>('CUSTOMER');
   const [updating, setUpdating] = useState(false);
@@ -103,6 +105,8 @@ export const AdminUsersPage: React.FC = () => {
   const openEditModal = (u: UserItem) => {
     setEditingUser(u);
     setEditFullName(u.fullName);
+    setEditEmail(u.email);
+    setEditPassword('');
     setEditPhone(u.phone === 'Chưa cập nhật' ? '' : u.phone);
     setEditRole(u.role);
   };
@@ -117,11 +121,18 @@ export const AdminUsersPage: React.FC = () => {
 
     setUpdating(true);
     try {
-      await api.put(`/admin/users/${editingUser.id}`, {
+      const payload: Record<string, string> = {
         fullName: editFullName.trim(),
         phone: editPhone.trim(),
         role: editRole,
-      });
+      };
+      if (editEmail.trim() && editEmail.trim() !== editingUser.email) {
+        payload.email = editEmail.trim();
+      }
+      if (editPassword.trim()) {
+        payload.password = editPassword.trim();
+      }
+      await api.put(`/admin/users/${editingUser.id}`, payload);
 
       toast.success(`Cập nhật thông tin tài khoản "${editingUser.email}" thành công!`, 'Cập Nhật Thành Công');
       setEditingUser(null);
@@ -736,6 +747,50 @@ export const AdminUsersPage: React.FC = () => {
                   />
                 </div>
 
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Email <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    required
+                    placeholder="VD: user@traveleasy.vn"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Mật Khẩu Mới <span style={{ color: '#94a3b8', fontWeight: 500, fontSize: '11px' }}>(để trống nếu không đổi)</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                    autoComplete="new-password"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                     Số Điện Thoại

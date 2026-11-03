@@ -99,11 +99,25 @@ public class AdminManagementService {
     }
 
     @Transactional
-    public UserAdminResponse updateUser(Long id, CreateUserRequest request) {
+    public UserAdminResponse updateUser(Long id, UpdateUserRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy người dùng"));
+        // Email: chi cap nhat khi gui len va khac email hien tai
+        if (request.getEmail() != null && !request.getEmail().isBlank()
+                && !request.getEmail().equalsIgnoreCase(user.getEmail())) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email da duoc su dung");
+            }
+            user.setEmail(request.getEmail().trim());
+        }
+
+        // Mat khau: chi dat lai khi admin nhap mat khau moi
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword().trim()));
+        }
+
         if (request.getFullName() != null && !request.getFullName().isBlank()) user.setFullName(request.getFullName());
-        if (request.getPhone() != null) user.setPhone(request.getPhone());
+        if (request.getPhone() != null && !request.getPhone().isBlank()) user.setPhone(request.getPhone());
         if (request.getRole() != null) {
             try {
                 user.setRole(Role.valueOf(request.getRole().toUpperCase()));

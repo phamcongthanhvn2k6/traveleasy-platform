@@ -47,7 +47,7 @@ public class AdminManagementController {
     @CacheEvict(value = {"admin_users", "system_stats"}, allEntries = true)
     @PutMapping("/users/{id}")
     @Operation(summary = "Cập nhật thông tin người dùng (Họ tên, SĐT, Vai trò)")
-    public ApiResponse<UserAdminResponse> updateUser(@PathVariable Long id, @Valid @RequestBody CreateUserRequest request) {
+    public ApiResponse<UserAdminResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
         return ApiResponse.success("Cập nhật người dùng thành công", adminManagementService.updateUser(id, request));
     }
 
