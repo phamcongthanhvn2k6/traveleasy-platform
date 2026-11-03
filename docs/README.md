@@ -149,3 +149,4 @@ Chứa hơn 40+ ảnh chụp màn hình ghi nhận từng tính năng thực t�
 * Các modal CRUD quản trị xe, chuyến xe, địa điểm, tuyến đường.
 * Giao diện chọn ghế 2 tầng, màn hình thanh toán VietQR & VNPay.
 * Cổng đăng nhập đối tác nhà xe và tra cứu vé điện tử thời gian thực.
+

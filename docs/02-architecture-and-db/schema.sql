@@ -82,17 +82,37 @@ CREATE TABLE bus_companies (
   id                              CHAR(36)     NOT NULL DEFAULT (UUID()),
   name                            VARCHAR(255) NOT NULL,
   hotline                         VARCHAR(20)  NOT NULL,
+  email                           VARCHAR(100) NULL,
+  address                         VARCHAR(255) NULL,
+  logo_url                        TEXT         NULL,
+  tax_code                        VARCHAR(20)  NULL,
+  business_license_number         VARCHAR(50)  NULL,
+  business_license_url            TEXT         NULL,
+  legal_representative            VARCHAR(100) NULL,
+  identity_card_number            VARCHAR(20)  NULL,
+  bank_name                       VARCHAR(100) NULL,
+  bank_account_number             VARCHAR(50)  NULL,
+  bank_account_owner              VARCHAR(100) NULL,
+  kyc_status                      VARCHAR(30)  NOT NULL DEFAULT 'PENDING_APPROVAL',
+  rejection_reason                TEXT         NULL,
+  commission_rate                 DECIMAL(5,2) NOT NULL DEFAULT 8.00,
+  verified_by                     VARCHAR(100) NULL,
+  verified_at                     DATETIME(3)  NULL,
   status                          VARCHAR(20)  NOT NULL DEFAULT 'PENDING_APPROVAL',
   default_cancellation_policy_id  CHAR(36)     NULL,
   created_at                      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at                      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   version                         INT          NOT NULL DEFAULT 0,
   PRIMARY KEY (id),
+  UNIQUE KEY uq_bus_companies_name (name),
+  UNIQUE KEY uq_bus_companies_tax (tax_code),
   KEY idx_bus_companies_default_policy (default_cancellation_policy_id),
   CONSTRAINT ck_bus_companies_status
-    CHECK (status IN ('PENDING_APPROVAL','ACTIVE','SUSPENDED'))
+    CHECK (status IN ('PENDING_APPROVAL','PENDING_SUPPLEMENT','ACTIVE','REJECTED','SUSPENDED')),
+  CONSTRAINT ck_bus_companies_kyc
+    CHECK (kyc_status IN ('PENDING_APPROVAL','UNDER_REVIEW','PENDING_SUPPLEMENT','VERIFIED','REJECTED'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-  COMMENT='Aggregate Root: BusCompany.';
+  COMMENT='Aggregate Root: BusCompany kèm hồ sơ pháp lý thẩm định KYB.';
 
 -- B2. vehicles (Aggregate Root độc lập)
 CREATE TABLE vehicles (

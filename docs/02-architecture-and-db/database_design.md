@@ -102,12 +102,28 @@ ALTER TABLE users
 #### B1. `bus_companies` — Bảng chính (Aggregate Root: BusCompany)
 | Column | Type | Nullable | Unique | Default | Business meaning |
 |---|---|---|---|---|---|
-| id (PK) | UUID | No | — | gen_random_uuid() | |
-| name | VARCHAR(255) | No | — | — | Tên nhà xe |
-| hotline | VARCHAR(20) | No | — | — | SĐT liên hệ |
-| status | VARCHAR(20) | No | — | 'PENDING_APPROVAL' | PENDING_APPROVAL / ACTIVE / SUSPENDED |
+| id (PK) | UUID | No | — | gen_random_uuid() | Định danh duy nhất của nhà xe |
+| name | VARCHAR(255) | No | Yes | — | Tên thương mại hiển thị cho khách |
+| hotline | VARCHAR(20) | No | — | — | Hotline tổng đài đặt vé / hỗ trợ hành khách |
+| email | VARCHAR(100) | No | Yes | — | Email chính thức nhận đối soát & thông báo vận hành |
+| address | VARCHAR(255) | Yes | — | NULL | Địa chỉ trụ sở văn phòng giao dịch |
+| logo_url | TEXT | Yes | — | NULL | Ảnh logo thương hiệu |
+| tax_code | VARCHAR(20) | Yes | Yes | NULL | Mã số thuế doanh nghiệp (10-13 số, bắt buộc khi KYB) |
+| business_license_number | VARCHAR(50) | Yes | — | NULL | Số Giấy phép kinh doanh vận tải bằng ô tô (Sở GTVT cấp) |
+| business_license_url | TEXT | Yes | — | NULL | URL ảnh scan/PDF Giấy phép ĐKKD & Giấy phép con vận tải |
+| legal_representative | VARCHAR(100) | Yes | — | NULL | Họ tên người đại diện theo pháp luật |
+| identity_card_number | VARCHAR(20) | Yes | — | NULL | Số CCCD/Hộ chiếu của người đại diện |
+| bank_name | VARCHAR(100) | Yes | — | NULL | Tên ngân hàng nhận thanh toán đối soát vé định kỳ |
+| bank_account_number | VARCHAR(50) | Yes | — | NULL | Số tài khoản ngân hàng thụ hưởng (Escrow Account) |
+| bank_account_owner | VARCHAR(100) | Yes | — | NULL | Tên chủ tài khoản (bắt buộc trùng pháp nhân/người đại diện) |
+| kyc_status | VARCHAR(30) | No | — | 'PENDING_APPROVAL' | PENDING_APPROVAL / UNDER_REVIEW / REQUIRES_SUPPLEMENT / APPROVED / REJECTED |
+| rejection_reason | TEXT | Yes | — | NULL | Lý do Admin từ chối hoặc yêu cầu bổ sung hồ sơ |
+| commission_rate | DECIMAL(5,2) | No | — | 8.00 | Tỷ lệ hoa hồng sàn thu trên mỗi vé (mặc định 8.00%) |
+| verified_by | VARCHAR(100) | Yes | — | NULL | Email Admin thực hiện thẩm định hồ sơ pháp lý |
+| verified_at | TIMESTAMPTZ | Yes | — | NULL | Thời điểm hoàn tất thẩm định và kích hoạt |
+| status | VARCHAR(20) | No | — | 'PENDING_APPROVAL' | PENDING_APPROVAL / PENDING_SUPPLEMENT / ACTIVE / REJECTED / SUSPENDED |
 | default_cancellation_policy_id (FK) | UUID | Yes | — | NULL | FK → cancellation_policies.id |
-| created_at, updated_at | TIMESTAMPTZ | No | — | now() | |
+| created_at, updated_at | TIMESTAMPTZ | No | — | now() | Timestamp khởi tạo và cập nhật |
 | version | INT | No | — | 0 | Optimistic Lock |
 
 **FK:** `default_cancellation_policy_id -> cancellation_policies.id ON DELETE RESTRICT`.

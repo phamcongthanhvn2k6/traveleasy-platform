@@ -28,6 +28,10 @@ Hệ thống Vexere Clone là nền tảng thương mại điện tử và quả
 *   **Trip Points (Điểm dừng/đón trả trên chuyến đi):** Runtime snapshot được clone từ `RouteTemplateStop` khi chuyến đi (`Trip`) được khởi tạo với giờ xuất phát gốc `TripSchedule.baseDepartureTime`. Hệ thống tự động tính `TripPoint.eta` bằng cách cộng dồn tuần tự từng đoạn theo sequence (`TripPoint[1].eta = baseDepartureTime`, `TripPoint[i].eta = TripPoint[i-1].eta + duration[i]`), phục vụ theo dõi ETA real-time và vận hành (không tham gia Search). Ngoài lịch trình, Trip Point còn **sao chép và lưu lại thông tin vận hành** của điểm dừng tại thời điểm tạo chuyến (tên hiển thị, cho đón/trả trực tiếp hay không, hotline, hướng dẫn gặp tài xế, cổng, nền đỗ, mốc nhận biết) — nhờ vậy thông tin hiển thị cho khách của chuyến cũ không bị thay đổi khi Nhà xe cập nhật cấu hình địa điểm về sau.
 *   **Shuttle Service (Dịch vụ Xe trung chuyển):** Dịch vụ đón/trả khách từ khu vực bên ngoài điểm dừng cố định bằng xe trung chuyển. Đón (`PICKUP`) và Trả (`DROPOFF`) được cấu hình độc lập trên Tuyến mẫu (`RouteTemplateShuttleService`). **`[MEDIUM-4]`** Mỗi Tuyến mẫu có tối đa **0..1 PICKUP** và tối đa **0..1 DROPOFF** Shuttle Service (`UNIQUE(routeTemplateId, shuttleType)`) — các điểm/ lựa chọn mà khách nhìn thấy trong UI thuộc về service đó và **KHÔNG** được hiểu thành nhiều Shuttle Service độc lập. Bắt buộc sở hữu `referenceStop` là mốc thời gian do **Nhà xe tự chọn thủ công** từ các `RouteTemplateStop` của tuyến (NOT NULL). Phạm vi phục vụ (`coverageAreaDescription`) là văn bản mô tả (không tạo Location entity riêng). Được snapshot thành `TripShuttleService` trên từng chuyến đi.
 *   **Reschedule (Đổi chuyến / Đổi ngày — Phương án A):** Nghiệp vụ cho phép Khách hàng đổi 1 hoặc nhiều `Ticket` sang `Trip` mới. Canonical model: hệ thống tạo **`Booking` mới (`newBooking`)** thuộc `newTrip` và **`Ticket` mới (`newTicket`)** thuộc `newBooking`; Old Ticket (`oldTicket`) chuyển sang `CANCELLED` với `cancellationReason = RESCHEDULED` — Old Ticket **không** đổi `booking_id`, **không** đổi `trip_id`, **không** được tái sử dụng. Lịch sử được lưu trong `RescheduleRecord` với `oldTicketId`/`newTicketId` rõ ràng. **`[D1]` Reschedule Operation:** một lần đổi vé (dù đổi bao nhiêu vé) là **một operation duy nhất**, định danh bằng `rescheduleOperationId`; mọi `RescheduleRecord` của lần đổi đó mang cùng giá trị này. **`[PBD-02 CLOSED V1]`** Chênh lệch tài chính tính theo **tổng operation**: `totalNetAdjustment = Σ (newSeatPrice - oldSeatPrice)` — `rescheduleFee = 0` trong V1 (nếu field `rescheduleFee` vẫn giữ để mở rộng tương lai thì giá trị V1 luôn bằng 0). dương → nộp thêm **1** giao dịch (`RESCHEDULE_SURCHARGE`), âm → **1** giao dịch hoàn tiền, bằng 0 → không phát sinh giao dịch.
+*   **KYB (Know Your Business / Thẩm định Pháp nhân Doanh nghiệp Vận tải):** Quy trình thẩm định, xác minh tính hợp pháp của Mã số thuế, Giấy phép kinh doanh vận tải hành khách bằng ô tô, Người đại diện pháp luật và Tài khoản ngân hàng nhận tiền quyết toán của Nhà xe trước khi cấp phép mở bán vé chính thức trên Sàn.
+*   **Partner Onboarding (Quy trình Tiếp nhận & Hòa mạng Đối tác):** Quy trình đăng ký trực tuyến 5 bước cho phép các doanh nghiệp vận tải nộp hồ sơ, tài liệu số hóa, ký kết hợp đồng hợp tác điện tử và nhận bàn giao Cổng Điều Hành Nhà Xe.
+*   **Escrow Settlement Account (Tài khoản Quyết toán Ký quỹ):** Tài khoản ngân hàng chính thức của doanh nghiệp vận tải dùng để nhận đối soát doanh thu vé sau chuyến đi (sau khi Sàn TravelEasy đã trừ phí hoa hồng kết nối 5-10%). Bắt buộc phải trùng tên với pháp nhân hoặc người đại diện trên Giấy phép kinh doanh.
+*   **Partner e-Contract (Hợp đồng Hợp tác Điện tử):** Hợp đồng dịch vụ sàn TMĐT được thiết lập số giữa Sàn TravelEasy và Nhà xe đối tác, có gắn mã định danh giao dịch, chữ ký số và mã băm SHA-256 bảo vệ tính toàn vẹn.
 *   **Partial Cancellation (Hủy vé từng phần — Phương án A):** Luồng cho phép Khách hàng chọn và hủy từng vé cụ thể trong một đơn đặt vé (`Booking`) chứa nhiều vé. Chỉ vé bị hủy chuyển sang `CANCELLED` và giải phóng ghế tương ứng; các vé còn lại tiếp tục giữ trạng thái `ISSUED`. `Booking` duy trì trạng thái `CONFIRMED` nếu vẫn còn ít nhất 1 vé active.
 
 ### 1.4 Tài liệu tham khảo (References)
@@ -405,6 +409,40 @@ Nhằm đảm bảo tính tin cậy tuyệt đối cho các giao dịch tài ch�
 
 #### 3.2.2 Phân hệ Nhà xe (Bus Company)
 
+##### UC-2.0: Đăng ký Đối Tác Mở Bán Vé & Nộp Hồ Sơ Pháp Nhân Trực Tuyến (Partner Onboarding & KYB Submission)
+*   **Tác nhân:** Đơn vị kinh doanh vận tải / Doanh nghiệp / Hợp tác xã vận tải mới (chưa có tài khoản trên hệ thống).
+*   **Tiền điều kiện:** Đối tác truy cập Cổng Đăng ký Đối tác trên giao diện Web (`/partner-register` hoặc modal "Hợp tác mở bán vé").
+*   **Luồng sự kiện chính:**
+    1.  **Bước 1: Khai báo thông tin pháp nhân & thương hiệu vận tải:**
+        - Tên pháp lý đầy đủ của Doanh nghiệp / Hợp tác xã vận tải (theo Giấy chứng nhận ĐKKD).
+        - Tên thương mại hiển thị cho hành khách (ví dụ: "Phương Trang FUTA Bus Lines", "Hoa Mai Vũng Tàu").
+        - Mã số thuế (MST): Bắt buộc 10 chữ số (đối với Doanh nghiệp) hoặc 13 chữ số (đối với Chi nhánh / Địa điểm kinh doanh). Hệ thống tự động kiểm tra định dạng và chuẩn hóa ký tự.
+        - Địa chỉ trụ sở chính đăng ký kinh doanh và Địa chỉ văn phòng đại diện giao dịch.
+    2.  **Bước 2: Khai báo thông tin Giấy phép con Vận tải hành khách:**
+        - Số Giấy phép kinh doanh vận tải bằng xe ô tô do Sở Giao thông Vận tải cấp.
+        - Ngày cấp, Nơi cấp (Tỉnh/Thành phố trực thuộc Trung ương) và Ngày hết hạn giấy phép (phải còn hiệu lực tối thiểu 06 tháng tại thời điểm đăng ký).
+        - Loại hình vận tải đăng ký mở bán: Vận tải hành khách theo tuyến cố định, Vận tải hành khách hợp đồng du lịch, hoặc Vận chuyển hàng hóa ký gửi.
+    3.  **Bước 3: Tải lên bộ tài liệu số hóa minh chứng (KYB Document Attachments):**
+        - Bản chụp / Scan Giấy chứng nhận Đăng ký Doanh nghiệp (ĐKKD) (định dạng PDF, JPG, PNG; độ phân giải cao, rõ nét 4 góc).
+        - Bản scan Giấy phép Kinh doanh Vận tải bằng ô tô do Sở GTVT cấp (có dấu mộc đỏ hợp lệ).
+        - Ảnh chụp mẫu phương tiện tiêu biểu (xe Limousine, xe giường nằm) có thể hiện rõ biển kiểm soát và phù hiệu xe do cơ quan nhà nước cấp.
+        - Logo thương hiệu chính thức (ảnh vector hoặc PNG nền trong suốt).
+    4.  **Bước 4: Khai báo Người đại diện theo pháp luật & Tài khoản Ngân hàng Quyết toán:**
+        - Họ và tên người đại diện pháp luật, Chức vụ (Giám đốc, Tổng Giám đốc, Chủ tịch HĐQT).
+        - Số CCCD/Hộ chiếu người đại diện, Ngày cấp, Nơi cấp.
+        - Số điện thoại Hotline tổng đài đặt vé và Email chính thức nhận đối soát doanh thu.
+        - **Thông tin Tài khoản Quyết toán Ký quỹ (Escrow Settlement Account):** Số tài khoản ngân hàng, Tên chủ tài khoản (**Bắt buộc phải trùng khớp với Tên doanh nghiệp hoặc Tên người đại diện pháp luật trên GPKD**, chống hành vi rửa tiền / gian lận tài chính), Tên Ngân hàng và Chi nhánh mở tài khoản.
+    5.  **Bước 5: Ký cam kết Quy chế Sàn TMĐT & Gửi duyệt:**
+        - Đối tác đọc toàn văn và tích chọn cam kết: Chấp thuận *Quy chế Hoạt động Sàn TMĐT TravelEasy*, *Quy định Bảo vệ Dữ liệu Cá nhân*, *Cam kết Bồi thường 150% khi bán trùng vé hoặc hủy chuyến bất khả kháng*, và *Thỏa thuận Chiết khấu Sàn*.
+        - Nhấn "Nộp Hồ Sơ Đăng Ký Đối Tác".
+        - Hệ thống kiểm tra hợp lệ dữ liệu toàn diện (Front-end & Back-end Validation).
+        - Hệ thống lưu trữ bản ghi nhà xe với trạng thái `status = 'PENDING_APPROVAL'`, `kyc_status = 'PENDING_APPROVAL'`, sinh Mã hồ sơ đối tác duy nhất (`registrationTicketCode`), tạo bản ghi `AuditLog` và gửi Email thông báo tự động xác nhận đã tiếp nhận hồ sơ thành công tới đối tác kèm mã theo dõi.
+*   **Các luồng phụ / Ngoại lệ:**
+    - *Ngoại lệ 1 (Trùng lặp Mã số thuế / Tên nhà xe):* Nếu Mã số thuế hoặc Tên nhà xe đã tồn tại trong CSDL, hệ thống lập tức từ chối và hiển thị thông báo: "Mã số thuế hoặc Tên đơn vị vận tải đã tồn tại trong hệ thống. Vui lòng liên hệ Hotline 1900 8888 để được hỗ trợ tra cứu hồ sơ!".
+    - *Ngoại lệ 2 (Tệp đính kèm không hợp lệ):* File dung lượng > 10MB hoặc sai định dạng cho phép -> Hệ thống thông báo lỗi chi tiết và chặn không cho nộp hồ sơ.
+    - *Ngoại lệ 3 (Tên chủ tài khoản không khớp pháp nhân):* Nếu tên chủ tài khoản ngân hàng không chứa các từ khóa tương ứng với tên công ty hoặc tên người đại diện, hệ thống cảnh báo màu vàng yêu cầu đối tác xác nhận lý do ủy quyền.
+*   **Hậu điều kiện:** Hồ sơ đăng ký được chuyển vào hàng đợi Thẩm định của Quản trị viên sàn (UC-3.2).
+
 ##### UC-2.1: Quản lý thông tin nhà xe
 *   **Tiền điều kiện:** Nhà xe đăng nhập hệ thống quản lý.
 *   **Luồng sự kiện chính:** Xem, cập nhật thông tin giới thiệu, địa chỉ, số hotline và album ảnh của nhà xe.
@@ -528,10 +566,41 @@ Lưu ý kiến trúc: Hệ thống KHÔNG triển khai RBAC động (Admin tự 
 *   **Luồng sự kiện chính:** CRUD tài khoản khách hàng, nhà xe; Khóa/mở khóa tài khoản vi phạm.
 *   **Hậu điều kiện:** Trạng thái tài khoản được cập nhật trong DB.
 
-##### UC-3.2: Quản lý nhà xe hệ thống
-*   **Tiền điều kiện:** Admin đăng nhập.
-*   **Luồng sự kiện chính:** CRUD thông tin nhà xe, phê duyệt hồ sơ nhà xe mới tham gia hệ thống.
-*   **Hậu điều kiện:** Nhà xe được kích hoạt trạng thái hoạt động.
+##### UC-3.2: Thẩm Định Hồ Sơ Pháp Lý, Xác Thực Đa Tầng & Phê Duyệt Nhà Xe (KYB Auditing & Partner Approval Workflow)
+*   **Tác nhân:** Quản trị viên Sàn (Admin) / Bộ phận Pháp chế & Kiểm soát Tuân thủ (Compliance Officer).
+*   **Tiền điều kiện:** Admin đăng nhập Cổng Quản trị Sàn với quyền `ROLE_ADMIN`, truy cập màn hình Thẩm định Nhà xe (`/admin/bus-companies` hoặc tab *Duyệt đối tác*).
+*   **Luồng sự kiện chính:**
+    1.  **Bước 1: Tiếp nhận hàng đợi Thẩm định & Kiểm tra Cú pháp Tự động (Layer 1 - Sanity & Format Check):**
+        - Admin mở danh sách các hồ sơ ở trạng thái `PENDING_APPROVAL` (hoặc `PENDING_SUPPLEMENT`).
+        - Hệ thống hiển thị huy hiệu cảnh báo (Pending Badge), thời gian nộp đơn và điểm tín nhiệm sơ bộ.
+        - Hệ thống tự động kiểm tra định dạng Mã số thuế (MST), định dạng CCCD người đại diện, kiểm tra trùng lặp trên Blacklist vi phạm của sàn.
+    2.  **Bước 2: Thẩm định Tính Pháp Lý Đa Tầng (Layer 2 - Cross-Verification & Legal Compliance):**
+        - **Đối chiếu CSDL Quốc gia về Đăng ký Doanh nghiệp:** Admin bấm nút "Tra cứu MST tự động" (kết nối API hoặc điều hướng sang `dangkykinhdoanh.gov.vn` / Cổng Tổng cục Thuế `tracuunnt.gdt.gov.vn`) để kiểm tra: Doanh nghiệp đang hoạt động hợp pháp (không bị đóng mã số thuế, không bị giải thể hay tạm ngừng hoạt động); Tên công ty và địa chỉ trên hồ sơ khớp 100% với CSDL Quốc gia.
+        - **Kiểm tra Giấy phép Kinh doanh Vận tải bằng ô tô (Sở GTVT cấp):** Admin xem tài liệu scan, phóng to kiểm tra dấu mộc đỏ, thẩm quyền ký, ngày hết hạn (còn hạn tối thiểu 06 tháng) và phạm vi cấp phép có đúng luồng "Vận tải hành khách tuyến cố định / Hợp đồng" hay không.
+        - **Kiểm tra Tài khoản Ngân hàng Thụ hưởng (Escrow Account Verification):** Đối chiếu tên chủ tài khoản thụ hưởng với Tên công ty hoặc Tên người đại diện theo pháp luật trên GPKD (Tuyệt đối không duyệt tài khoản thụ hưởng của cá nhân lạ để phòng chống rửa tiền và gian lận thanh toán).
+    3.  **Bước 3: Xác minh Thực địa & Hotline Điều Hành (Layer 3 - Tele-Verification Call):**
+        - Admin thực hiện cuộc gọi kiểm chứng (Verification Call) tới Hotline đặt vé và SĐT Người đại diện để xác nhận tính chính danh của người nộp hồ sơ.
+        - Đánh giá sơ bộ thái độ phục vụ và quy mô phục vụ của nhà xe, ghi chú biên bản cuộc gọi vào hệ thống.
+    4.  **Bước 4: Ra Quyết Định Thẩm Định (Admin Decision Matrix):**
+        - **Nhánh A — PHÊ DUYỆT ĐỐI TÁC (`APPROVED / ACTIVE`):**
+            * Admin nhấn "Phê Duyệt Nhà Xe", thiết lập tỷ lệ hoa hồng sàn (`commissionRate` mặc định từ 5% đến 10% tùy thỏa thuận), hạn mức công nợ và chu kỳ quyết toán Escrow (hàng tuần / 2 lần mỗi tháng).
+            * Hệ thống chuyển trạng thái nhà xe `status = 'ACTIVE'`, `kyc_status = 'VERIFIED'`.
+            * Hệ thống **tự động khởi tạo tài khoản Quản trị nhà xe (`Role.OPERATOR`)** với email đăng ký của người đại diện, sinh mật khẩu ngẫu nhiên an toàn mã hóa BCrypt.
+            * Hệ thống sinh **Hợp đồng Hợp tác Điện tử (Partner e-Contract)** kèm mã băm SHA-256 lưu trữ vĩnh viễn trong CSDL.
+            * Hệ thống tự động gửi Email thông báo chúc mừng kèm thông tin đăng nhập Cổng điều hành (`/company/login`) và tài liệu hướng dẫn cấu hình xe, tuyến đường, giá vé.
+        - **Nhánh B — YÊU CẦU BỔ SUNG HỒ SƠ (`REQUIRES_SUPPLEMENT`):**
+            * Khi hồ sơ thiếu thông tin (ví dụ: ảnh GPKD mờ, giấy phép vận tải thiếu trang 2, cần bổ sung ảnh chụp trạm đón trả).
+            * Admin chọn nhóm lý do cần bổ sung và nhập hướng dẫn chi tiết.
+            * Trạng thái hồ sơ chuyển sang `PENDING_SUPPLEMENT`.
+            * Hệ thống gửi Email chứa đường dẫn bổ sung an toàn (One-Time Token Link) cho đối tác, ấn định thời hạn hoàn tất trong vòng 07 ngày làm việc (quá hạn hồ sơ tự động hủy).
+        - **Nhánh C — BÁC BỎ / TỪ CHỐI HỒ SƠ (`REJECTED`):**
+            * Áp dụng khi: Doanh nghiệp không có giấy phép kinh doanh vận tải, MST đã bị đóng, giả mạo thông tin nhà xe khác, hoặc nằm trong Blacklist cấm vận tải.
+            * Admin bắt buộc chọn Lý do từ chối chuẩn hóa từ danh mục hệ thống + Nhập giải trình chi tiết (tối thiểu 20 ký tự).
+            * Trạng thái hồ sơ chuyển sang `REJECTED`, khóa email và MST không cho nộp đơn lặp lại trong 30 ngày.
+            * Hệ thống gửi Email từ chối lịch sự nêu rõ căn cứ pháp lý và lý do cụ thể.
+*   **Hậu điều kiện:**
+    - Toàn bộ quyết định, ID Admin thực hiện, thời điểm duyệt, địa chỉ IP, ảnh chụp bằng chứng đối chiếu và lý do giải trình được ghi nhận bất biến vào bảng `audit_logs` (xem UC-3.11).
+    - Nhà xe được phê duyệt xuất hiện công khai trên sàn và được phép cấu hình xe/tuyến đường để mở bán vé.
 
 ##### UC-3.3: Quản lý Danh mục Địa điểm Dùng chung (`Location Master Data`)
 *   **Tiền điều kiện:** Admin đăng nhập.
@@ -586,6 +655,17 @@ Lưu ý kiến trúc: Hệ thống KHÔNG triển khai RBAC động (Admin tự 
 *   **Tiền điều kiện:** Admin đăng nhập.
 *   **Luồng sự kiện chính:** Xem nhật ký hoạt động hệ thống bao gồm: lịch sử đăng nhập, lịch sử thay đổi cấu hình tiền tệ, API thanh toán, thao tác CRUD chuyến đi của nhà xe và admin.
 *   **Hậu điều kiện:** Giao diện audit log được hiển thị đầy đủ (dữ liệu này là Read-Only).
+
+---
+
+#### 3.2.4 Quy Tắc Nghiệp Vụ Quản Trị & Thẩm Định Đối Tác Nhà Xe (KYB Business Rules)
+
+*   **BR-PARTNER-01 (Điều kiện Mở Bán Vé Tiên Quyết):** Một Nhà xe chỉ được phép tạo chuyến đi (Trip) và phát hành vé mở bán công khai trên sàn khi thỏa mãn đồng thời 2 điều kiện: status = 'ACTIVE' và kyc_status = 'VERIFIED'. Bất kỳ nhà xe nào ở trạng thái PENDING_APPROVAL, PENDING_SUPPLEMENT, REJECTED hoặc SUSPENDED đều bị hệ thống chặn triệt để tại tầng API Gateway / Security Filter, không cho phép mở bán vé.
+*   **BR-PARTNER-02 (Ràng buộc Tính Duy Nhất Pháp Nhân & Chống Mạo Danh):** Mã số thuế (MST) và Tên thương mại của nhà xe là duy nhất trên toàn hệ thống (UNIQUE(tax_code), UNIQUE(name)). Hệ thống nghiêm cấm 2 tài khoản đăng ký cùng một pháp nhân vận tải. Trong trường hợp xảy ra tranh chấp quyền sở hữu thương hiệu giữa hai bên, Admin có quyền chuyển trạng thái sang SUSPENDED để yêu cầu nộp Giấy chứng nhận Đăng ký Nhãn hiệu do Cục Sở hữu Trí tuệ cấp.
+*   **BR-PARTNER-03 (Tiêu chuẩn Giấy Phép Con Kinh Doanh Vận Tải):** Giấy phép kinh doanh vận tải bằng xe ô tô phải do Sở Giao thông Vận tải cấp tỉnh/thành phố cấp, phải còn hiệu lực ít nhất 06 tháng tại thời điểm phê duyệt. Khi giấy phép còn dưới 30 ngày hết hạn, hệ thống tự động kích hoạt cảnh báo vàng trên Cổng điều hành nhà xe; khi giấy phép hết hạn mà chưa cập nhật bản gia hạn mới, hệ thống tự động hạ toàn bộ chuyến xe tương lai về trạng thái SUSPENDED để bảo vệ an toàn pháp lý cho hành khách.
+*   **BR-PARTNER-04 (Nguyên tắc Ký Quỹ & Tài Khoản Thụ Hưởng Khép Kín):** Tài khoản ngân hàng nhận tiền quyết toán doanh thu vé xe (Escrow Settlement Account) bắt buộc phải đứng tên chính Doanh nghiệp / Hợp tác xã vận tải hoặc Người đại diện theo pháp luật đã thẩm định. Hệ thống chặn chuyển tiền tới tài khoản của bên thứ ba không có tên trong hồ sơ pháp nhân.
+*   **BR-PARTNER-05 (Tính Bất Biến Của Nhật Ký Thẩm Định - Immutable KYB Audit Trail):** Mọi thao tác phê duyệt, từ chối, yêu cầu bổ sung của Admin đều phải lưu vết: Admin ID, Timestamp, IP Address, Trước/Sau trạng thái, và Lý do thẩm định. Dữ liệu này không thể chỉnh sửa hay xóa bỏ, phục vụ công tác thanh tra của Cơ quan Nhà nước có thẩm quyền.
+
 
 ---
 

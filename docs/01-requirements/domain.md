@@ -147,11 +147,26 @@ Lý do là Core Domain:
 - **Quan hệ:** Thuộc về đúng 1 User.
 
 ### BusCompany
-- **Business meaning:** Đại diện pháp nhân/nhà xe vận hành đội xe.
+- **Business meaning:** Đại diện pháp nhân doanh nghiệp/hợp tác xã vận tải được cấp phép kinh doanh vận tải hành khách bằng xe ô tô và mở bán vé trên Sàn TravelEasy.
 - **Identity:** `busCompanyId`.
-- **Lifecycle:** Đăng ký/tạo bởi Admin → Pending Approval → Approved (Active) → có thể bị khóa.
-- **Business Rules:** Phải được Admin phê duyệt mới hoạt động (UC-3.2).
-- **State:** `BusCompanyStatus` {PENDING, ACTIVE, SUSPENDED}.
+- **Pháp nhân & Hồ sơ KYB:**
+  * `taxCode`: Mã số thuế 10-13 số (Unique, bất biến sau khi xác thực).
+  * `businessLicenseNumber`: Số Giấy phép kinh doanh vận tải hành khách do Sở GTVT cấp.
+  * `businessLicenseUrl`: Đường dẫn lưu trữ tài liệu số hóa bản scan ĐKKD và GPKD vận tải.
+  * `legalRepresentative`: Họ tên người đại diện theo pháp luật.
+  * `identityCardNumber`: Số CCCD/Hộ chiếu người đại diện.
+  * `escrowBankAccount`: Thông tin tài khoản ngân hàng thụ hưởng nhận tiền quyết toán (Số TK, Chủ TK, Ngân hàng, Chi nhánh). Bắt buộc phải trùng tên với pháp nhân hoặc người đại diện.
+  * `commissionRate`: Tỷ lệ hoa hồng chiết khấu sàn (5% - 10%).
+  * `rejectionReason`: Lý do giải trình bắt buộc khi Admin từ chối phê duyệt.
+- **Lifecycle & State Machine:**
+  * Nộp đơn trực tuyến (UC-2.0) → `PENDING_APPROVAL` (Chờ thẩm định).
+  * Admin rà soát đối chiếu hồ sơ (UC-3.2) → `UNDER_REVIEW` (Đang thẩm định 4 tầng).
+  * Nếu thiếu hồ sơ → `PENDING_SUPPLEMENT` (Chờ bổ sung trong 07 ngày) → Nộp lại `PENDING_APPROVAL`.
+  * Nếu hồ sơ giả mạo / không đủ điều kiện → `REJECTED` (Bác bỏ hồ sơ).
+  * Nếu đạt tiêu chuẩn thẩm định → `ACTIVE` (Đã phê duyệt, kích hoạt tài khoản `OPERATOR`, sinh hợp đồng điện tử e-Contract).
+  * Vi phạm quy chế sàn / Giấy phép hết hạn → `SUSPENDED` (Tạm ngưng mở bán).
+- **Business Rules:** Phải được Admin phê duyệt và đạt `kyc_status = 'VERIFIED'` mới được phép khởi tạo tuyến đường và mở bán vé (BR-PARTNER-01 đến BR-PARTNER-05).
+- **State:** `BusCompanyStatus` {PENDING_APPROVAL, PENDING_SUPPLEMENT, ACTIVE, REJECTED, SUSPENDED}.
 - **Quan hệ:** **`[FIX 8]`** Sở hữu **về mặt nghiệp vụ** (reference-by-id, **không** phải Aggregate containment) nhiều `Vehicle`, nhiều `BusCompanyLocationConfig` (cấu hình địa điểm đón/trả), nhiều `RouteTemplate` (tuyến mẫu), nhiều `Trip`, và nhiều `CancellationPolicy` — trong đó có 1 policy mặc định cấp công ty. Mỗi lớp kể trên là Aggregate Root độc lập, giữ `busCompanyId`/`ownerBusCompanyId` để trỏ về chủ sở hữu. **`[FIX 1]`** Ngoài ra, 1 BusCompany được đại diện bởi 0..N `User` có `role = BUS_COMPANY` (`users.busCompanyId`).
 
 ### Vehicle (Xe)
