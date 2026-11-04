@@ -68,12 +68,35 @@ public class BookingService {
         }
 
         // Tính tổng tiền & Cập nhật trạng thái ghế
-        BigDecimal totalAmount = BigDecimal.ZERO;
+        BigDecimal baseSeatTotal = BigDecimal.ZERO;
         for (TripSeat seat : requestedSeats) {
             seat.setStatus(SeatStatus.BOOKED);
-            totalAmount = totalAmount.add(trip.getPrice());
+            baseSeatTotal = baseSeatTotal.add(trip.getPrice());
         }
         tripSeatRepository.saveAll(requestedSeats);
+
+        // Tính bảo hiểm chuyến đi nếu có (25.000 đ/vé)
+        BigDecimal insuranceAmount = BigDecimal.ZERO;
+        if (Boolean.TRUE.equals(request.getHasInsurance())) {
+            insuranceAmount = BigDecimal.valueOf(25000L * requestedSeats.size());
+        }
+
+        // Tính mức giảm giá Voucher nếu có
+        BigDecimal discount = BigDecimal.ZERO;
+        if (request.getDiscountAmount() != null && request.getDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
+            discount = request.getDiscountAmount();
+        }
+
+        // Ưu tiên finalAmount từ request hợp lệ, hoặc tự động tính theo công thức
+        BigDecimal totalAmount;
+        if (request.getFinalAmount() != null && request.getFinalAmount().compareTo(BigDecimal.ZERO) >= 0) {
+            totalAmount = request.getFinalAmount();
+        } else {
+            totalAmount = baseSeatTotal.add(insuranceAmount).subtract(discount);
+            if (totalAmount.compareTo(BigDecimal.ZERO) < 0) {
+                totalAmount = BigDecimal.ZERO;
+            }
+        }
 
         // Trừ ghế trống trên chuyến xe
         trip.setAvailableSeats(trip.getAvailableSeats() - requestedSeats.size());
@@ -115,6 +138,10 @@ public class BookingService {
                 .dropoffPoint(dropoffName)
                 .seatNumbers(String.join(", ", request.getSeatNumbers()))
                 .totalAmount(totalAmount)
+                .originalAmount(baseSeatTotal)
+                .discountAmount(discount)
+                .insuranceAmount(insuranceAmount)
+                .voucherCode(request.getVoucherCode())
                 .paymentMethod(request.getPaymentMethod())
                 .status(initialStatus)
                 .build();
@@ -372,6 +399,9 @@ public class BookingService {
                 .pickupPoint(oldBooking.getPickupPoint())
                 .dropoffPoint(oldBooking.getDropoffPoint())
                 .totalAmount(newTrip.getPrice())
+                .originalAmount(newTrip.getPrice())
+                .discountAmount(BigDecimal.ZERO)
+                .insuranceAmount(BigDecimal.ZERO)
                 .paymentMethod(oldBooking.getPaymentMethod())
                 .seatNumbers(newSeatNumber)
                 .status(BookingStatus.CONFIRMED)
@@ -553,6 +583,10 @@ public class BookingService {
                 .pickupPointName(b.getPickupPoint())
                 .dropoffPointName(b.getDropoffPoint())
                 .totalAmount(b.getTotalAmount())
+                .originalAmount(b.getOriginalAmount() != null ? b.getOriginalAmount() : b.getTotalAmount())
+                .discountAmount(b.getDiscountAmount() != null ? b.getDiscountAmount() : BigDecimal.ZERO)
+                .insuranceAmount(b.getInsuranceAmount() != null ? b.getInsuranceAmount() : BigDecimal.ZERO)
+                .voucherCode(b.getVoucherCode())
                 .paymentMethod(b.getPaymentMethod())
                 .status(b.getStatus())
                 .createdAt(b.getCreatedAt())
