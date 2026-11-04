@@ -27,9 +27,12 @@ interface PartnerSettlementRecord {
   endDate: string;
   ticketCount: number;
   grossAmount: number;
+  customerPaid?: number;
+  platformSubsidy?: number;
   platformFeeRate: number;
   platformFeeAmount: number;
   netReceived: number;
+  guaranteeNote?: string;
   status: 'PENDING' | 'RECONCILED' | 'PAID';
   reconciledAt?: string;
   paidAt?: string;
@@ -624,9 +627,19 @@ export const CompanySettlementsPage: React.FC = () => {
               </div>
 
               <div style={{ padding: '10px 14px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Tổng tiền vé thu hộ:</span>
+                <span style={{ color: '#64748b' }}>Doanh thu giá vé niêm yết (Gross 100%):</span>
                 <strong>{selectedRecord.grossAmount.toLocaleString('vi-VN')} đ</strong>
               </div>
+
+              {selectedRecord.platformSubsidy ? (
+                <div style={{ padding: '10px 14px', backgroundColor: '#fdf4ff', borderRadius: '8px', border: '1px solid #f0abfc', display: 'flex', justifyContent: 'space-between', color: '#a21caf' }}>
+                  <div>
+                    <span style={{ fontWeight: 700 }}>🎁 Sàn TravelEasy tài trợ Voucher:</span>
+                    <div style={{ fontSize: '11px', color: '#86198f' }}>Hành khách hưởng ưu đãi, Sàn bù 100% cho nhà xe</div>
+                  </div>
+                  <strong style={{ fontSize: '14px' }}>+{selectedRecord.platformSubsidy.toLocaleString('vi-VN')} đ</strong>
+                </div>
+              ) : null}
 
               <div style={{ padding: '10px 14px', backgroundColor: '#ecfdf5', borderRadius: '8px', border: '1px solid #a7f3d0', display: 'flex', justifyContent: 'space-between', color: '#059669' }}>
                 <span>Phí dịch vụ sàn ({selectedRecord.platformFeeRate}%):</span>

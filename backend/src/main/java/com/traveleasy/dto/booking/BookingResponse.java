@@ -27,6 +27,10 @@ public class BookingResponse {
     private String pickupPointName;
     private String dropoffPointName;
     private BigDecimal totalAmount;
+    private BigDecimal originalAmount;
+    private BigDecimal discountAmount;
+    private BigDecimal insuranceAmount;
+    private String voucherCode;
     private PaymentMethod paymentMethod;
     private BookingStatus status;
     private String note;
