@@ -53,7 +53,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/demo/**").permitAll()
                         .requestMatchers("/api/v1/trips/**").permitAll()
                         .requestMatchers("/api/v1/routes/**").permitAll()
-                        .requestMatchers("/api/v1/bookings/code/**", "/api/v1/bookings/verify-ticket/**", "/api/v1/bookings/check-in/**").permitAll()
+                        .requestMatchers("/api/v1/bookings/code/**", "/api/v1/bookings/verify-ticket/**", "/api/v1/bookings/phone/**").permitAll()
+                        .requestMatchers("/api/v1/bookings/check-in/**").hasAnyRole("COMPANY", "ADMIN", "STAFF", "DRIVER")
                         .requestMatchers("/api/v1/bookings", "/api/v1/bookings/*/cancel", "/api/v1/bookings/*/cancel-partial", "/api/v1/bookings/*/reschedule").permitAll()
                         .requestMatchers("/api/v1/payments/**").permitAll() // Cổng thanh toán, callback VNPAY & VietQR
                         .requestMatchers("/api/v1/banners/**").permitAll()
