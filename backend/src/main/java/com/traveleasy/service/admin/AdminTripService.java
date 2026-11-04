@@ -161,12 +161,10 @@ public class AdminTripService {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe"));
 
-        if (bookingRepository.existsByTripId(tripId)) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR, "Không thể xóa chuyến xe đã có hành khách đặt vé. Vui lòng chuyển trạng thái sang CANCELLED thay vì xóa.");
-        }
-
-        tripSeatRepository.deleteAll(tripSeatRepository.findByTripIdOrderByFloorAscSeatCodeAsc(tripId));
-        tripRepository.delete(trip);
+        // XÓA MỀM (Soft Delete): Vô hiệu hóa chuyến xe và chuyển sang CANCELLED, bảo toàn 100% sơ đồ ghế và lịch sử đơn vé
+        trip.setIsActive(false);
+        trip.setStatus(TripStatus.CANCELLED);
+        tripRepository.save(trip);
     }
 
     @Transactional(readOnly = true)

@@ -92,6 +92,10 @@ public class AuthService {
             throw new AppException(ErrorCode.ACCOUNT_LOCKED, "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
         }
 
+        if ("DELETED".equalsIgnoreCase(user.getStatus())) {
+            throw new AppException(ErrorCode.ACCOUNT_LOCKED, "Tài khoản của bạn đã bị vô hiệu hóa hoặc xóa khỏi hệ thống. Vui lòng liên hệ quản trị viên.");
+        }
+
         String token = jwtTokenProvider.generateToken(user.getEmail(), user.getRole().name(), user.getId());
 
         return AuthResponse.builder()

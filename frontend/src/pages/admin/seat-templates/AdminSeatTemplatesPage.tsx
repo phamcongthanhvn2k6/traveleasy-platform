@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Armchair, Search, Plus, Eye, Edit2, Grid, Trash2, X } from 'lucide-react';
+import { Armchair, Search, Plus, Eye, Edit2, Grid, Trash2, X, RotateCcw } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 
@@ -10,7 +10,7 @@ interface SeatTemplateItem {
   rows: number;
   columns: number;
   totalSeats: number;
-  status: 'PUBLISHED' | 'DRAFT';
+  status: 'PUBLISHED' | 'DRAFT' | 'DEPRECATED';
   statusLabel: string;
 }
 
@@ -42,8 +42,8 @@ export const AdminSeatTemplatesPage: React.FC = () => {
             rows: t.maxRows || 6,
             columns: t.maxColumns || 3,
             totalSeats: t.totalSeats || 34,
-            status: t.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED',
-            statusLabel: t.status === 'DRAFT' ? 'Bản nháp' : 'Đã xuất bản',
+            status: t.status === 'DEPRECATED' ? 'DEPRECATED' : t.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED',
+            statusLabel: t.status === 'DEPRECATED' ? 'Ngưng dùng (Xóa mềm)' : t.status === 'DRAFT' ? 'Bản nháp' : 'Đã xuất bản',
           }))
         );
       }
@@ -60,13 +60,37 @@ export const AdminSeatTemplatesPage: React.FC = () => {
   }, []);
 
   const handleDelete = async (id: number, name: string) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa mẫu sơ đồ "${name}"?`)) return;
+    if (
+      !window.confirm(
+        `XÁC NHẬN NGƯNG ÁP DỤNG (BẢO TOÀN DỮ LIỆU SƠ ĐỒ GHẾ):\n\nBạn có chắc chắn muốn ngưng sử dụng mẫu sơ đồ "${name}"?\n\n• Các xe và chuyến xe đã gắn sơ đồ này vẫn hoạt động bình thường, không bị ảnh hưởng.\n• Mẫu sơ đồ sẽ chuyển sang trạng thái Ngưng dùng (Xóa mềm) và không hiển thị cho các xe mới.\n• Bạn có thể bấm [Khôi phục] bất cứ lúc nào.`
+      )
+    )
+      return;
     try {
       await api.delete(`/admin/seat-templates/${id}`);
-      setTemplates((prev) => prev.filter((t) => t.id !== id));
-      toast.success(`Đã xóa mẫu sơ đồ "${name}" thành công!`, 'Đồng Bộ CSDL');
+      setTemplates((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, status: 'DEPRECATED', statusLabel: 'Ngưng dùng (Xóa mềm)' } : t
+        )
+      );
+      toast.success(`Đã chuyển mẫu sơ đồ "${name}" sang trạng thái Ngưng dùng an toàn!`, 'Xóa Mềm Thành Công');
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Không thể xóa mẫu sơ đồ này';
+      toast.error(msg, 'Thất Bại');
+    }
+  };
+
+  const handleRestore = async (id: number, name: string) => {
+    try {
+      await api.patch(`/admin/seat-templates/${id}/restore`);
+      setTemplates((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, status: 'PUBLISHED', statusLabel: 'Đã xuất bản' } : t
+        )
+      );
+      toast.success(`Đã khôi phục mẫu sơ đồ "${name}" hoạt động trở lại!`, 'Khôi Phục Thành Công');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Không thể khôi phục mẫu sơ đồ này';
       toast.error(msg, 'Thất Bại');
     }
   };
@@ -193,6 +217,7 @@ export const AdminSeatTemplatesPage: React.FC = () => {
           <option value="ALL">Tất cả trạng thái</option>
           <option value="PUBLISHED">Đã xuất bản</option>
           <option value="DRAFT">Bản nháp</option>
+          <option value="DEPRECATED">Ngưng dùng (Xóa mềm)</option>
         </select>
       </div>
 
@@ -270,30 +295,74 @@ export const AdminSeatTemplatesPage: React.FC = () => {
                         borderRadius: '6px',
                         fontSize: '11px',
                         fontWeight: 700,
-                        backgroundColor: item.status === 'PUBLISHED' ? '#ecfdf5' : '#f1f5f9',
-                        color: item.status === 'PUBLISHED' ? '#059669' : '#64748b',
-                        border: `1px solid ${item.status === 'PUBLISHED' ? '#a7f3d0' : '#cbd5e1'}`,
+                        backgroundColor:
+                          item.status === 'PUBLISHED'
+                            ? '#ecfdf5'
+                            : item.status === 'DEPRECATED'
+                            ? '#fef2f2'
+                            : '#f1f5f9',
+                        color:
+                          item.status === 'PUBLISHED'
+                            ? '#059669'
+                            : item.status === 'DEPRECATED'
+                            ? '#dc2626'
+                            : '#64748b',
+                        border: `1px solid ${
+                          item.status === 'PUBLISHED'
+                            ? '#a7f3d0'
+                            : item.status === 'DEPRECATED'
+                            ? '#fecaca'
+                            : '#cbd5e1'
+                        }`,
                       }}
                     >
                       {item.statusLabel}
                     </span>
                   </td>
                   <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                    <button
-                      onClick={() => handleDelete(item.id, item.name)}
-                      title="Xóa mẫu"
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        color: '#dc2626',
-                        display: 'flex',
-                        borderRadius: '4px',
-                      }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      {item.status === 'DEPRECATED' ? (
+                        <button
+                          onClick={() => handleRestore(item.id, item.name)}
+                          title="Khôi phục mẫu sơ đồ hoạt động"
+                          style={{
+                            backgroundColor: '#ecfdf5',
+                            border: '1px solid #a7f3d0',
+                            color: '#059669',
+                            cursor: 'pointer',
+                            padding: '5px 10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                          }}
+                        >
+                          <RotateCcw size={13} /> Khôi phục
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleDelete(item.id, item.name)}
+                          title="Ngưng dùng mẫu sơ đồ (Xóa mềm an toàn)"
+                          style={{
+                            backgroundColor: '#fef2f2',
+                            border: '1px solid #fecaca',
+                            cursor: 'pointer',
+                            padding: '5px 8px',
+                            color: '#dc2626',
+                            display: 'flex',
+                            alignItems: 'center',
+                            borderRadius: '6px',
+                            gap: '4px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          <Trash2 size={13} /> Ngưng dùng
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))

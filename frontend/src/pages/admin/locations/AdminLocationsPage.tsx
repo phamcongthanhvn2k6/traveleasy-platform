@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Search, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { MapPin, Search, Plus, Edit2, Trash2, X, RotateCcw } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 
@@ -11,6 +11,7 @@ interface LocationItem {
   province: string;
   address: string;
   routesCount: number;
+  status?: string;
 }
 
 export const AdminLocationsPage: React.FC = () => {
@@ -50,6 +51,7 @@ export const AdminLocationsPage: React.FC = () => {
             province: l.province || 'Toàn quốc',
             address: l.address || 'Chưa cập nhật địa chỉ chi tiết',
             routesCount: l.routesCount ?? 0,
+            status: l.status || 'ACTIVE',
           }))
         );
       }
@@ -66,13 +68,33 @@ export const AdminLocationsPage: React.FC = () => {
   }, []);
 
   const handleDelete = async (id: number, name: string) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa địa điểm "${name}" khỏi hệ thống?`)) return;
+    if (
+      !window.confirm(
+        `XÁC NHẬN XÓA MỀM (BẢO TOÀN DỮ LIỆU AN TOÀN):\n\nBạn có chắc chắn muốn chuyển địa điểm "${name}" sang trạng thái ĐÃ XÓA MỀM?\n\n• Toàn bộ dữ liệu tuyến đường, chặng đón trả và vé xe đã đặt được BẢO TOÀN NGUYÊN VẸN 100% trong CSDL.\n• Địa điểm sẽ ẩn khỏi danh mục tạo chuyến mới.\n• Quản trị viên có thể bấm [Khôi phục] bất cứ lúc nào.`
+      )
+    )
+      return;
     try {
       await api.delete(`/admin/locations/${id}`);
-      setLocations((prev) => prev.filter((l) => l.id !== id));
-      toast.success(`Đã xóa địa điểm "${name}" thành công!`, 'Đồng Bộ CSDL');
+      setLocations((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, status: 'DELETED' } : l))
+      );
+      toast.success(`Đã chuyển địa điểm "${name}" sang trạng thái XÓA MỀM an toàn!`, 'Xóa Mềm Thành Công');
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Không thể xóa địa điểm này';
+      toast.error(msg, 'Thất Bại');
+    }
+  };
+
+  const handleRestore = async (id: number, name: string) => {
+    try {
+      await api.patch(`/admin/locations/${id}/restore`);
+      setLocations((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, status: 'ACTIVE' } : l))
+      );
+      toast.success(`Đã khôi phục địa điểm "${name}" hoạt động trở lại!`, 'Khôi Phục Thành Công');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Không thể khôi phục địa điểm này';
       toast.error(msg, 'Thất Bại');
     }
   };
@@ -298,7 +320,24 @@ export const AdminLocationsPage: React.FC = () => {
                       >
                         <MapPin size={17} />
                       </div>
-                      <span style={{ fontWeight: 800, color: '#0f172a' }}>{loc.name}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontWeight: 800, color: '#0f172a' }}>{loc.name}</span>
+                        {loc.status === 'DELETED' && (
+                          <span
+                            style={{
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              backgroundColor: '#f1f5f9',
+                              color: '#64748b',
+                              border: '1px solid #cbd5e1',
+                            }}
+                          >
+                            Đã xóa mềm
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td style={{ padding: '14px 18px' }}>
@@ -322,44 +361,68 @@ export const AdminLocationsPage: React.FC = () => {
                   </td>
                   <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      <button
-                        onClick={() => openEditModal(loc)}
-                        title="Chỉnh sửa địa điểm"
-                        style={{
-                          background: '#f1f5f9',
-                          border: '1px solid #cbd5e1',
-                          cursor: 'pointer',
-                          padding: '6px 8px',
-                          color: '#2563eb',
-                          display: 'flex',
-                          alignItems: 'center',
-                          borderRadius: '6px',
-                          gap: '4px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        <Edit2 size={13} /> Sửa
-                      </button>
-                      <button
-                        onClick={() => handleDelete(loc.id, loc.name)}
-                        title="Xóa địa điểm"
-                        style={{
-                          background: '#fef2f2',
-                          border: '1px solid #fecaca',
-                          cursor: 'pointer',
-                          padding: '6px 8px',
-                          color: '#dc2626',
-                          display: 'flex',
-                          alignItems: 'center',
-                          borderRadius: '6px',
-                          gap: '4px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        <Trash2 size={13} /> Xóa
-                      </button>
+                      {loc.status === 'DELETED' ? (
+                        <button
+                          onClick={() => handleRestore(loc.id, loc.name)}
+                          title="Khôi phục địa điểm hoạt động"
+                          style={{
+                            background: '#ecfdf5',
+                            border: '1px solid #a7f3d0',
+                            cursor: 'pointer',
+                            padding: '6px 10px',
+                            color: '#059669',
+                            display: 'flex',
+                            alignItems: 'center',
+                            borderRadius: '6px',
+                            gap: '4px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                          }}
+                        >
+                          <RotateCcw size={13} /> Khôi phục
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => openEditModal(loc)}
+                            title="Chỉnh sửa địa điểm"
+                            style={{
+                              background: '#f1f5f9',
+                              border: '1px solid #cbd5e1',
+                              cursor: 'pointer',
+                              padding: '6px 8px',
+                              color: '#2563eb',
+                              display: 'flex',
+                              alignItems: 'center',
+                              borderRadius: '6px',
+                              gap: '4px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            <Edit2 size={13} /> Sửa
+                          </button>
+                          <button
+                            onClick={() => handleDelete(loc.id, loc.name)}
+                            title="Xóa mềm địa điểm (Bảo toàn tuyến & chặng)"
+                            style={{
+                              background: '#fef2f2',
+                              border: '1px solid #fecaca',
+                              cursor: 'pointer',
+                              padding: '6px 8px',
+                              color: '#dc2626',
+                              display: 'flex',
+                              alignItems: 'center',
+                              borderRadius: '6px',
+                              gap: '4px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            <Trash2 size={13} /> Xóa
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
