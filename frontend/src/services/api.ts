@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import { toast } from '../context/ToastContext';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080/api/v1' : '/api/v1'),
+  baseURL: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || (typeof import.meta !== 'undefined' && import.meta.env?.DEV ? 'http://localhost:8080/api/v1' : '/api/v1'),
   headers: {
     'Content-Type': 'application/json',
   },

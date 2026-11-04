@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../../../context/ThemeContext';
 import { ArrowLeftRight, Calendar, ChevronLeft, ChevronRight, Search, MapPin } from 'lucide-react';
+import { POPULAR_CITIES } from '../../../../constants/popularCities';
+import { getLocalTodayDateString } from '../../../../utils/dateUtils';
 
 interface Props {
   origin: string;
   destination: string;
   departureDate: string;
+  returnDate?: string;
   totalTrips: number;
-  onSearchChange: (origin: string, destination: string, date: string) => void;
+  onSearchChange: (origin: string, destination: string, date: string, returnDate?: string) => void;
 }
 
 export const TripSearchHeader: React.FC<Props> = ({
   origin,
   destination,
   departureDate,
+  returnDate,
   totalTrips,
   onSearchChange,
 }) => {
@@ -30,20 +34,7 @@ export const TripSearchHeader: React.FC<Props> = ({
     setTempDate(departureDate);
   }, [origin, destination, departureDate]);
 
-  const popularCities = [
-    'TP. Hồ Chí Minh',
-    'Hà Nội',
-    'Đà Lạt',
-    'Sa Pa',
-    'Nha Trang',
-    'Đà Nẵng',
-    'Vũng Tàu',
-    'Hải Phòng',
-    'Cần Thơ',
-    'Quy Nhơn',
-    'Huế',
-    'Phan Thiết',
-  ];
+  const popularCities = POPULAR_CITIES;
 
   const handleSwap = () => {
     const swap = tempOrigin;
@@ -63,7 +54,7 @@ export const TripSearchHeader: React.FC<Props> = ({
     onSearchChange('', '', '');
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalTodayDateString();
 
   const changeDateByDays = (days: number) => {
     const today = new Date();
@@ -147,6 +138,33 @@ export const TripSearchHeader: React.FC<Props> = ({
                 {totalTrips} chuyến
               </span>
             </h1>
+            {returnDate && (
+              <div style={{
+                marginTop: '10px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: isDark ? 'rgba(37, 99, 235, 0.2)' : '#eff6ff',
+                border: `1px solid ${isDark ? '#1e3a8a' : '#bfdbfe'}`,
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                color: isDark ? '#93c5fd' : '#1d4ed8',
+                fontWeight: 700
+              }}>
+                <Calendar size={15} />
+                <span>Lộ trình khứ hồi: Chiều đi <strong>{departureDate}</strong> ➔ Chiều về dự kiến: <strong>{returnDate}</strong></span>
+                <span style={{
+                  fontSize: '11px',
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  padding: '2px 8px',
+                  borderRadius: '6px'
+                }}>
+                  Vé Khứ Hồi
+                </span>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -452,7 +470,7 @@ export const TripSearchHeader: React.FC<Props> = ({
               </div>
               <button
                 type="button"
-                onClick={() => onSearchChange(origin, destination, new Date().toISOString().split('T')[0])}
+                onClick={() => onSearchChange(origin, destination, getLocalTodayDateString())}
                 style={{
                   backgroundColor: '#f1f5f9',
                   border: '1px solid #cbd5e1',

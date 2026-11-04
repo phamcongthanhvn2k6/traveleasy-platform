@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 
-interface SampleFixture {
+export interface SampleFixture {
   id: string;
   category: 'TRIP' | 'TICKET' | 'CARGO' | 'ERROR_BOUNDARY';
   title: string;
@@ -24,7 +24,7 @@ interface SampleFixture {
   payload: Record<string, any>;
 }
 
-const SAMPLE_FIXTURES: SampleFixture[] = [
+export const SAMPLE_FIXTURES: SampleFixture[] = [
   {
     id: 'FIX-TRIP-01',
     category: 'TRIP',
@@ -131,11 +131,18 @@ export const TestFixturesPage: React.FC = () => {
 
   const handleResetData = () => {
     setIsResetting(true);
-    setTimeout(() => {
-      setIsResetting(false);
+    try {
+      // ponytail: actually clean test residual keys from localStorage & sessionStorage
+      const testKeys = ['traveleasy_test_fixtures', 'traveleasy_simulation_mode', 'traveleasy_checkout_data'];
+      testKeys.forEach(k => {
+        try { localStorage.removeItem(k); } catch {}
+        try { sessionStorage.removeItem(k); } catch {}
+      });
       setSimulatedState('IDLE');
-      toast.success('Đã dọn sạch dữ liệu thử nghiệm cục bộ an toàn (Zero Residue)');
-    }, 600);
+      toast.success('Đã dọn sạch toàn bộ dữ liệu thử nghiệm trong localStorage & sessionStorage (Zero Residue)!');
+    } finally {
+      setTimeout(() => setIsResetting(false), 200);
+    }
   };
 
   return (
@@ -280,10 +287,12 @@ export const TestFixturesPage: React.FC = () => {
             {filtered.map(fixture => {
               const isSelected = activeFixture.id === fixture.id;
               return (
-                <div
+                <button
+                  type="button"
                   key={fixture.id}
                   onClick={() => setActiveFixture(fixture)}
-                  className={`p-4 rounded-xl border cursor-pointer transition duration-150 ${
+                  aria-label={`Xem fixture: ${fixture.title}`}
+                  className={`p-4 rounded-xl border cursor-pointer transition duration-150 text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 ${
                     isSelected
                       ? 'bg-white border-indigo-600 ring-2 ring-indigo-600/20 shadow-md'
                       : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50 shadow-sm'
@@ -297,7 +306,7 @@ export const TestFixturesPage: React.FC = () => {
                   </div>
                   <h4 className="text-sm font-bold text-slate-900 leading-snug">{fixture.title}</h4>
                   <p className="text-xs text-slate-500 mt-1 line-clamp-2">{fixture.description}</p>
-                </div>
+                </button>
               );
             })}
           </div>

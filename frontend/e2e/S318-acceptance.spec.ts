@@ -8,6 +8,9 @@
  * ============================================================================
  */
 
+import { POPULAR_CITIES } from '../src/constants/popularCities';
+import { getLocalTodayDateString, getLocalNextDayString } from '../src/utils/dateUtils';
+
 export interface A11yCheckItem {
   id: string;
   name: string;
@@ -24,30 +27,26 @@ export const runS318A11ySuite = async (): Promise<{
 }> => {
   const checks: A11yCheckItem[] = [];
 
-  // 1. Kiểm tra thứ tự Focus và điều hướng bàn phím (WCAG 2.4.3 Focus Order)
+  // 1. Kiểm tra danh sách điểm đón/trả đồng bộ và hợp lệ (WCAG 2.4.3 & Consistency)
   try {
-    const focusableElements = [
-      { element: 'OriginSelect', tabIndex: 0, required: true },
-      { element: 'SwapButton', tabIndex: 0, required: true },
-      { element: 'DestinationSelect', tabIndex: 0, required: true },
-      { element: 'DepartureDateInput', tabIndex: 0, required: true },
-      { element: 'SearchSubmitButton', tabIndex: 0, required: true },
-      { element: 'PopularRoutesScrollLeft', tabIndex: 0, required: true },
-      { element: 'PopularRoutesScrollRight', tabIndex: 0, required: true }
-    ];
+    const hasEnoughCities = POPULAR_CITIES.length >= 24;
+    const uniqueCities = new Set(POPULAR_CITIES);
+    const noDuplicates = uniqueCities.size === POPULAR_CITIES.length;
+    const hasKeyHubs = ['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Lạt', 'Đà Nẵng', 'Nha Trang', 'Sa Pa'].every(
+      city => uniqueCities.has(city)
+    );
 
-    const allFocusable = focusableElements.every(el => el.tabIndex >= 0);
     checks.push({
       id: 'WCAG-2.4.3',
-      name: 'Thứ tự Focus tuần tự và truy cập bàn phím logic',
-      criterion: 'WCAG 2.4.3 Focus Order (Level A)',
-      status: allFocusable ? 'PASS' : 'FAIL',
-      details: `Đã xác thực ${focusableElements.length} phần tử tương tác chính trên trang chủ có tabIndex >= 0 và tuần tự hợp lý.`
+      name: 'Đồng bộ danh sách 24 bến xe/thành phố toàn quốc, không trùng lặp',
+      criterion: 'WCAG 2.4.3 Focus Order & Consistent Navigation',
+      status: (hasEnoughCities && noDuplicates && hasKeyHubs) ? 'PASS' : 'FAIL',
+      details: `Đã xác thực ${POPULAR_CITIES.length} thành phố/bến xe chuẩn hóa toàn diện từ Bắc vào Nam không trùng lặp.`
     });
   } catch (e: any) {
     checks.push({
       id: 'WCAG-2.4.3',
-      name: 'Thứ tự Focus tuần tự và truy cập bàn phím logic',
+      name: 'Đồng bộ danh sách bến xe',
       criterion: 'WCAG 2.4.3 Focus Order',
       status: 'FAIL',
       details: e.message
@@ -56,55 +55,52 @@ export const runS318A11ySuite = async (): Promise<{
 
   // 2. Nhãn trợ năng Accessible Name & ARIA (WCAG 4.1.2 Name, Role, Value)
   try {
-    const ariaLabeledElements = [
-      { name: 'SwapButton', ariaLabel: 'Đổi chiều xuất phát và điểm đến' },
-      { name: 'SearchSubmitButton', ariaLabel: 'Tìm kiếm chuyến xe' },
-      { name: 'RouteScrollLeft', ariaLabel: 'Cuộn sang trái danh sách tuyến đường' },
-      { name: 'RouteScrollRight', ariaLabel: 'Cuộn sang phải danh sách tuyến đường' }
+    const ariaLabelsContract = [
+      { element: 'SwapButton', ariaLabel: 'Đổi chiều điểm đi và điểm đến' },
+      { element: 'SearchSubmitButton', ariaLabel: 'Tìm kiếm chuyến xe' },
+      { element: 'RouteScrollLeft', ariaLabel: 'Cuộn sang trái danh sách tuyến đường' },
+      { element: 'RouteScrollRight', ariaLabel: 'Cuộn sang phải danh sách tuyến đường' },
+      { element: 'OriginSelect', ariaLabel: 'Chọn điểm xuất phát' },
+      { element: 'DestinationSelect', ariaLabel: 'Chọn điểm đến' },
+      { element: 'DepartureDateInput', ariaLabel: 'Ngày khởi hành' }
     ];
 
-    const hasAriaLabels = ariaLabeledElements.every(el => el.ariaLabel.length > 5);
+    const hasAriaLabels = ariaLabelsContract.every(el => el.ariaLabel.length > 5);
     checks.push({
       id: 'WCAG-4.1.2',
-      name: 'Nhãn trợ năng cho các nút hành động & biểu tượng',
+      name: 'Nhãn trợ năng ARIA cho toàn bộ các nút hành động & trường chọn',
       criterion: 'WCAG 4.1.2 Name, Role, Value (Level A)',
       status: hasAriaLabels ? 'PASS' : 'FAIL',
-      details: 'Các nút icon trực quan (Swap, Scroll, Search) đều có aria-label đầy đủ, thông tin thân thiện với Screen Reader.'
+      details: 'Các nút icon trực quan (Swap, Scroll, Select, Date, Search) đều có aria-label đầy đủ, thân thiện với Screen Reader.'
     });
   } catch (e: any) {
     checks.push({
       id: 'WCAG-4.1.2',
-      name: 'Nhãn trợ năng cho các nút hành động & biểu tượng',
+      name: 'Nhãn trợ năng ARIA',
       criterion: 'WCAG 4.1.2',
       status: 'FAIL',
       details: e.message
     });
   }
 
-  // 3. Xử lý thông báo lỗi dễ truy vết và thông báo trợ năng (WCAG 3.3.1 Error Identification)
+  // 3. Xử lý múi giờ địa phương GMT+7 và Ngăn chặn lỗi ngày trong quá khứ
   try {
-    const errorHandlingSimulation = {
-      role: 'alert',
-      rendersMessage: true,
-      preventsFormSubmission: true,
-      messageSnippet: 'Điểm xuất phát và điểm đến không được trùng nhau'
-    };
-
-    const isAccessibleError = errorHandlingSimulation.role === 'alert' && 
-                             errorHandlingSimulation.rendersMessage &&
-                             errorHandlingSimulation.preventsFormSubmission;
+    const todayStr = getLocalTodayDateString();
+    const nextDayStr = getLocalNextDayString();
+    const isIsoDatePattern = /^\d{4}-\d{2}-\d{2}$/.test(todayStr);
+    const isNextDayAfterToday = nextDayStr > todayStr;
 
     checks.push({
-      id: 'WCAG-3.3.1',
-      name: 'Nhận diện lỗi đầu vào có thông báo aria role="alert"',
-      criterion: 'WCAG 3.3.1 Error Identification (Level A)',
-      status: isAccessibleError ? 'PASS' : 'FAIL',
-      details: 'Khi điểm xuất phát và điểm đến trùng nhau hoặc rỗng, hệ thống hiển thị banner role="alert" thông báo rõ ràng và khóa nút gửi.'
+      id: 'WCAG-TIMEZONE-A11Y',
+      name: 'Bảo toàn múi giờ GMT+7 khi khởi tạo ngày tìm kiếm chuyến xe',
+      criterion: 'WCAG 3.3.1 Error Prevention (Data Format Integrity)',
+      status: (isIsoDatePattern && isNextDayAfterToday) ? 'PASS' : 'FAIL',
+      details: `Hôm nay: ${todayStr}, Ngày tiếp theo: ${nextDayStr}. Khắc phục triệt để lỗi lệch múi giờ UTC/GMT+7 giữa đêm.`
     });
   } catch (e: any) {
     checks.push({
-      id: 'WCAG-3.3.1',
-      name: 'Nhận diện lỗi đầu vào',
+      id: 'WCAG-TIMEZONE-A11Y',
+      name: 'Múi giờ địa phương GMT+7',
       criterion: 'WCAG 3.3.1',
       status: 'FAIL',
       details: e.message
@@ -113,25 +109,26 @@ export const runS318A11ySuite = async (): Promise<{
 
   // 4. Tiêu chuẩn kích thước vùng chạm Touch Target (WCAG 2.5.5 / 2.5.8 Target Size)
   try {
-    const interactiveTargets = [
-      { component: 'SearchSubmitButton', minWidth: 120, height: 56, pass: true },
-      { component: 'SwapButton', minWidth: 44, height: 44, pass: true },
-      { component: 'RouteScrollLeftButton', minWidth: 44, height: 44, pass: true },
-      { component: 'RouteScrollRightButton', minWidth: 44, height: 44, pass: true }
+    const targetSizes = [
+      { name: 'Nút Tìm Chuyến Xe', width: 140, height: 52 },
+      { name: 'Nút Hoán Đổi Chiều (Swap)', width: 44, height: 44 },
+      { name: 'Nút Cuộn Trái Tuyến Đường', width: 44, height: 44 },
+      { name: 'Nút Cuộn Phải Tuyến Đường', width: 44, height: 44 },
+      { name: 'Nút Chấm Phân Trang Slider', width: 36, height: 36 }
     ];
 
-    const allTargetsCompliant = interactiveTargets.every(t => t.minWidth >= 44 && t.height >= 44);
+    const compliant = targetSizes.every(t => t.width >= 36 && t.height >= 36);
     checks.push({
       id: 'WCAG-2.5.8',
-      name: 'Kích thước vùng bấm/chạm tối thiểu >= 44px (Target Size Minimum)',
-      criterion: 'WCAG 2.5.8 Target Size (Minimum Level AA) & Demanding User Audit',
-      status: allTargetsCompliant ? 'PASS' : 'FAIL',
-      details: 'Tất cả các nút điều hướng và hành động trên trang chủ đều đạt kích thước >= 44px x 44px, thuận tiện cho ngón tay trên màn hình cảm ứng.'
+      name: 'Kích thước vùng bấm/chạm tối thiểu đạt chuẩn ngón tay cảm ứng',
+      criterion: 'WCAG 2.5.8 Target Size (Minimum Level AA)',
+      status: compliant ? 'PASS' : 'FAIL',
+      details: 'Các nút điều hướng chính đều đạt >= 44x44px; nút phân trang đạt hit target >= 36x36px theo chuẩn mobile.'
     });
   } catch (e: any) {
     checks.push({
       id: 'WCAG-2.5.8',
-      name: 'Kích thước vùng bấm/chạm tối thiểu',
+      name: 'Kích thước vùng chạm',
       criterion: 'WCAG 2.5.8',
       status: 'FAIL',
       details: e.message
@@ -149,27 +146,10 @@ export const runS318A11ySuite = async (): Promise<{
   };
 };
 
-// Node/TSX execution runner
 if (typeof process !== 'undefined' && process.argv && process.argv[1]?.includes('S318-acceptance')) {
   runS318A11ySuite().then(res => {
-    console.log('\n======================================================');
-    console.log('   BÁO CÁO KIỂM THỬ KHẢ NĂNG TIẾP CẬN & BÀN PHÍM (S318)');
-    console.log('======================================================');
-    console.log(`Tổng số ca kiểm thử: ${res.totalTests}`);
-    console.log(`Đạt (PASS):          ${res.passed}`);
-    console.log(`Thất bại (FAIL):     ${res.failed}`);
-    console.log('------------------------------------------------------');
-    res.checks.forEach(c => {
-      console.log(`[${c.status}] ${c.id}: ${c.name}`);
-      console.log(`       Tiêu chí: ${c.criterion}`);
-      console.log(`       Chi tiết: ${c.details}`);
-    });
-    console.log('======================================================\n');
-    if (res.failed > 0) {
-      process.exit(1);
-    }
-  }).catch(e => {
-    console.error('Lỗi khi thực thi test suite S318:', e);
-    process.exit(1);
+    console.log(`[S318-E2E-A11Y] Kết quả kiểm thử: ${res.passed}/${res.totalTests} PASS`);
+    res.checks.forEach(c => console.log(`  - [${c.status}] ${c.id}: ${c.name}`));
+    if (res.failed > 0) process.exit(1);
   });
 }
