@@ -192,24 +192,31 @@ git push -u origin feature/phong-customer-pessimistic-lock
 
 ---
 
-## 7. QUY CHUẨN TẠO NHÁNH KIỂM THỬ NGHIỆM THU (ACCEPTANCE TESTING ROADMAP)
+## 7. QUY CHUẨN TẠO NHÁNH KIỂM THỬ & BẮT BUỘC (MỖI TASK 1 NHÁNH RIÊNG)
 
-Để phục vụ công tác kiểm thử tính năng toàn diện và lập biên bản nghiệm thu trước khi bảo vệ đồ án:
-* **Quy chuẩn đặt tên nhánh kiểm thử**:
-  ```bash
-  test/<tên-thành-viên>-acceptance-testing
-  ```
-  * Thành: `test/thanh-company-acceptance`
-  * Phát: `test/phat-admin-acceptance`
-  * Phong: `test/phong-booking-acceptance`
-  * Đức: `test/duc-customer-acceptance`
-  * Cường: `test/cuong-mobile-acceptance`
+Để đảm bảo kỷ luật quản trị mã nguồn, tính minh bạch của Sprint và bảo vệ điểm số 100/100 OJT:
+* **QUY TẮC BẮT BUỘC:**
+  1. **Mỗi task là 1 nhánh riêng biệt (Nghiêm cấm gom nhiều task vào 1 branch / Mega-PR).**
+  2. **Tiền tố bắt buộc cho nhánh kiểm thử là `testing/`** và phải gắn mã số task rõ ràng:
+     ```bash
+     testing/<mã-task>-<mô-tả-ngắn-gọn>
+     ```
+  3. **Tiêu đề commit BẮT BUỘC viết bằng Tiếng Việt có dấu**, tuân thủ định dạng Conventional Commits:
+     ```bash
+     test(<mã-task>): <mô tả chi tiết nội dung kiểm thử bằng tiếng Việt có dấu>
+     ```
+* **Ví dụ danh sách nhánh kiểm thử chuẩn hóa:**
+  * `testing/S320-kiem-thu-du-lieu-mau-fixture-va-don-dep-db`
+  * `testing/S312-kiem-thu-nghiem-thu-trang-chu-banner-lich-chay`
+  * `testing/S313-kiem-thu-tich-hop-api-tra-cuu-ve-va-bao-mat`
+  * `testing/S317-kiem-thu-hoi-quy-tuong-thich-hop-dong-api`
+  * `testing/S318-kiem-thu-kha-nang-tiep-can-ban-phim-wcag`
 * **Quy chuẩn lưu ảnh minh chứng**:
   * Chụp ảnh màn hình các trang web hoạt động bình thường và lưu vào thư mục `docs/screenshots/`.
   * Đặt tên ảnh theo cú pháp: `docs/screenshots/test_<phân-hệ>_<tên-trang>.png`.
 * **Cập nhật Biên bản nghiệm thu**:
   * Điền kết quả kiểm thử vào file [`docs/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md`](BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md).
-* **Commit chuẩn Conventional Commits**:
+* **Commit chuẩn Conventional Commits Tiếng Việt có dấu**:
   ```bash
   git add docs/screenshots/ docs/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md
   git commit -m "test(acceptance): hoàn thành kiểm thử và bổ sung minh chứng nghiệm thu [Tên Bạn]"
