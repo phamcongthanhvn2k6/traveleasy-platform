@@ -8,7 +8,6 @@ import { Trip, Booking } from '../../../types';
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
 import { CLOUDINARY_IMAGES } from '../../../constants/cloudinaryImages';
-import { getLocalTodayDateString } from '../../../utils/dateUtils';
 import { 
   ShieldCheck, 
   Headphones, 
@@ -36,49 +35,13 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 
-export const DEFAULT_FEATURED_PROMOS = [
-  {
-    id: 'promo-def-1',
-    tag: 'KHÁCH MỚI',
-    title: 'Chào bạn mới: Giảm ngay 20% cho chuyến xe liên tỉnh đầu tiên trên TravelEasy',
-    badge: 'GIẢM 20%',
-    accent: '#2563eb',
-    image: CLOUDINARY_IMAGES.banners.heroSapa,
-    code: 'NEW20'
-  },
-  {
-    id: 'promo-def-2',
-    tag: 'HOT DEAL',
-    title: 'Flash Sale đêm Sài Gòn - Đà Lạt: Giảm trực tiếp 50.000đ khi thanh toán',
-    badge: 'GIẢM 50K',
-    accent: '#d97706',
-    image: CLOUDINARY_IMAGES.banners.flashSale,
-    code: 'DALAT50'
-  },
-  {
-    id: 'promo-def-3',
-    tag: 'ƯU ĐÃI SÀN',
-    title: 'Đồng hành cùng gia đình: Đặt vé khứ hồi Limousine nhận hoàn tiền 10%',
-    badge: 'HOÀN TIỀN 10%',
-    accent: '#16a34a',
-    image: CLOUDINARY_IMAGES.destinations.daNang,
-    code: 'COMBO10'
-  },
-  {
-    id: 'promo-def-4',
-    tag: 'CUỐI TUẦN',
-    title: 'Vi vu cuối tuần Nha Trang, Vũng Tàu: Giảm 30.000đ cho nhóm từ 2 vé',
-    badge: 'TIẾT KIỆM 30K',
-    accent: '#7c3aed',
-    image: CLOUDINARY_IMAGES.destinations.sapa,
-    code: 'WEEKEND30'
-  }
-];
-
 export const HomePage: React.FC = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
-// ponytail: search navigates directly to /search
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [searchParams, setSearchParams] = useState({ origin: 'TP. Hồ Chí Minh', destination: 'Đà Lạt' });
 
   // Dynamic Banners, Popular Routes & Promos from Database (Supabase)
   const [activeBanners, setActiveBanners] = useState<any[]>([]);
@@ -86,20 +49,6 @@ export const HomePage: React.FC = () => {
   const [featuredPromos, setFeaturedPromos] = useState<any[]>([]);
   const [routeCategory, setRouteCategory] = useState<'ALL' | 'TPHCM' | 'HANOI' | 'MIENTRUNG' | 'MIENTAY'>('ALL');
   const routesSliderRef = useRef<HTMLDivElement>(null);
-  const [sliderIndex, setSliderIndex] = useState(0);
-  const [showBackToTop, setShowBackToTop] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 400);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   const handleScrollRoutes = (direction: 'left' | 'right') => {
     if (routesSliderRef.current) {
@@ -107,10 +56,6 @@ export const HomePage: React.FC = () => {
       routesSliderRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
-      });
-      setSliderIndex(prev => {
-        if (direction === 'left') return Math.max(0, prev - 1);
-        return Math.min(3, prev + 1);
       });
     }
   };
@@ -174,16 +119,31 @@ export const HomePage: React.FC = () => {
   const [bookingPoints, setBookingPoints] = useState<any>({});
   const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
 
+  // Ref to scroll to results smoothly
+  const resultsRef = useRef<HTMLDivElement>(null);
 
+  const fetchTrips = async (origin = 'TP. Hồ Chí Minh', destination = 'Đà Lạt') => {
+    setLoading(true);
+    try {
+      const res = await api.get('/trips/search', {
+        params: { origin, destination }
+      });
+      const data = res.data.data || [];
+      setTrips(data);
+    } catch (err) {
+      console.error('Error fetching trips:', err);
+      setTrips([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleSearch = (origin: string, destination: string, date: string, returnDate?: string) => {
-    // ponytail: forward optional returnDate as query param
-    const returnParam = returnDate ? `&returnDate=${encodeURIComponent(returnDate)}` : '';
-    navigate(`/search?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&date=${encodeURIComponent(date)}${returnParam}`);
+  const handleSearch = (origin: string, destination: string, date: string) => {
+    navigate(`/search?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&date=${encodeURIComponent(date)}`);
   };
 
   const handleQuickRouteClick = (origin: string, destination: string) => {
-    const today = getLocalTodayDateString();
+    const today = new Date().toISOString().split('T')[0];
     navigate(`/search?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&date=${today}`);
   };
 
@@ -206,9 +166,6 @@ export const HomePage: React.FC = () => {
     setBookingSeats(seats);
     setBookingPoints(points);
   };
-
-  // Fallback featured promos nếu API chưa nạp hoặc rỗng
-  const defaultFeaturedPromos = DEFAULT_FEATURED_PROMOS;
 
   // 3. Du lịch Sapa (Screenshot 3)
   const sapaGuides = [
@@ -415,14 +372,15 @@ export const HomePage: React.FC = () => {
             </div>
 
             <h1 style={{
-              fontSize: '38px',
-              fontWeight: 800,
-              letterSpacing: '-0.5px',
-              lineHeight: 1.25,
-              marginBottom: '10px',
-              textShadow: '0 2px 8px rgba(0,0,0,0.2)'
+              fontSize: '44px',
+              fontWeight: 900,
+              letterSpacing: '-1px',
+              lineHeight: 1.15,
+              textTransform: 'uppercase',
+              marginBottom: '8px',
+              textShadow: '0 4px 12px rgba(0,0,0,0.2)'
             }}>
-              Đại tiệc Flash Sale — Vé Xe Khách Giảm Đến 50%
+              ĐẠI TIỆC FLASH SALE — VÉ RẺ ĐẾN 50%
             </h1>
 
             <p style={{
@@ -439,8 +397,8 @@ export const HomePage: React.FC = () => {
           {/* Overlaid Search Trip Bar */}
           <SearchTripBar 
             onSearch={handleSearch}
-            defaultOrigin="TP. Hồ Chí Minh"
-            defaultDestination="Đà Lạt"
+            defaultOrigin={searchParams.origin}
+            defaultDestination={searchParams.destination}
           />
         </div>
       </section>
@@ -489,7 +447,70 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-{/* ponytail: dead search results block removed; search queries route directly to /search */}
+      {/* =========================================================================
+          LIVE SEARCH RESULTS (NẾU ĐÃ TÌM KIẾM HOẶC CLICK VÀO TUYẾN ĐƯỜNG)
+          ========================================================================= */}
+      <div ref={resultsRef} className="container" style={{ paddingTop: hasSearched ? '36px' : '0' }}>
+        {hasSearched && (
+          <div style={{
+            backgroundColor: isDark ? '#111827' : '#ffffff',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '40px',
+            boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.06)',
+            border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 style={{ fontSize: '22px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Bus size={22} color={isDark ? '#38bdf8' : '#2563eb'} />
+                  Kết Quả Chuyến Xe: <span style={{ color: isDark ? '#38bdf8' : '#2563eb' }}>{searchParams.origin}</span> ➔ <span style={{ color: '#ef4444' }}>{searchParams.destination}</span>
+                </h2>
+                <p style={{ fontSize: '14px', color: isDark ? '#94a3b8' : '#64748b', marginTop: '4px' }}>
+                  Tìm thấy <strong>{trips.length}</strong> chuyến xe chất lượng cao từ các nhà xe đối tác uy tín
+                </p>
+              </div>
+
+              <button
+                onClick={() => setHasSearched(false)}
+                style={{
+                  backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+                  border: isDark ? '1px solid #334155' : 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: isDark ? '#cbd5e1' : '#475569',
+                  cursor: 'pointer'
+                }}
+              >
+                Ẩn kết quả
+              </button>
+            </div>
+
+            {loading && (
+              <div style={{ textAlign: 'center', padding: '40px', color: isDark ? '#94a3b8' : '#64748b' }}>
+                <div style={{ display: 'inline-block', width: '32px', height: '32px', border: `3px solid ${isDark ? '#334155' : '#e2e8f0'}`, borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                <div style={{ marginTop: '12px', fontWeight: 600 }}>Đang cập nhật lịch trình chuyến xe...</div>
+              </div>
+            )}
+
+            {!loading && trips.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '40px 20px', backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderRadius: '12px' }}>
+                <Compass size={40} color="#94a3b8" style={{ margin: '0 auto 12px' }} />
+                <h4 style={{ fontSize: '16px', fontWeight: 700, color: isDark ? '#f8fafc' : '#334155' }}>Chưa tìm thấy chuyến xe phù hợp cho lộ trình này</h4>
+                <p style={{ fontSize: '13.5px', color: isDark ? '#94a3b8' : '#64748b', marginTop: '6px' }}>
+                  Vui lòng thử tìm các tuyến liên tỉnh phổ biến: TP. Hồ Chí Minh - Đà Lạt, Hà Nội - Sa Pa, hoặc Sài Gòn - Nha Trang!
+                </p>
+              </div>
+            )}
+
+            {!loading && trips.map(t => (
+              <TripCard key={t.id} trip={t} onBook={handleOpenBooking} />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* =========================================================================
           SECTION 1: TUYẾN ĐƯỜNG PHỔ BIẾN (POPULAR ROUTES - REDESIGNED PRO SLIDER)
@@ -514,10 +535,9 @@ export const HomePage: React.FC = () => {
             <button 
               onClick={() => handleScrollRoutes('left')}
               title="Xem các tuyến trước"
-              aria-label="Cuộn sang trái danh sách tuyến đường"
               style={{ 
-                width: '44px', 
-                height: '44px', 
+                width: '40px', 
+                height: '40px', 
                 borderRadius: '50%', 
                 border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, 
                 backgroundColor: isDark ? '#1e293b' : '#ffffff', 
@@ -542,10 +562,9 @@ export const HomePage: React.FC = () => {
             <button 
               onClick={() => handleScrollRoutes('right')}
               title="Xem các tuyến tiếp theo"
-              aria-label="Cuộn sang phải danh sách tuyến đường"
               style={{ 
-                width: '44px', 
-                height: '44px', 
+                width: '40px', 
+                height: '40px', 
                 borderRadius: '50%', 
                 border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, 
                 backgroundColor: isDark ? '#1e293b' : '#ffffff', 
@@ -789,16 +808,7 @@ export const HomePage: React.FC = () => {
             return filtered.map((r: any) => (
               <div
                 key={r.id}
-                role="button"
-                tabIndex={0}
-                aria-label={`Đặt vé xe từ ${r.origin} đi ${r.destination}, giá từ ${r.price ? r.price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ'}`}
                 onClick={() => handleQuickRouteClick(r.origin, r.destination)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleQuickRouteClick(r.origin, r.destination);
-                  }
-                }}
                 style={{
                   flex: '0 0 295px',
                   scrollSnapAlign: 'start',
@@ -986,42 +996,6 @@ export const HomePage: React.FC = () => {
               </div>
             ));
           })()}
-        </div>
-
-        {/* ponytail: Slider Pagination Dots (WCAG 2.5.8 Min Target Size Compliant) */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginTop: '14px' }}>
-          {[0, 1, 2, 3].map((idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => {
-                setSliderIndex(idx);
-                if (routesSliderRef.current) {
-                  routesSliderRef.current.scrollTo({ left: idx * 320 * 2, behavior: 'smooth' });
-                }
-              }}
-              aria-label={`Chuyển đến trang danh sách tuyến xe ${idx + 1}`}
-              style={{
-                minWidth: '36px',
-                minHeight: '36px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'transparent',
-                border: 'none',
-                padding: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              <span style={{
-                width: sliderIndex === idx ? '24px' : '8px',
-                height: '8px',
-                borderRadius: '4px',
-                backgroundColor: sliderIndex === idx ? '#2563eb' : (isDark ? '#334155' : '#cbd5e1'),
-                transition: 'all 0.25s ease'
-              }} />
-            </button>
-          ))}
         </div>
       </section>
 
@@ -1274,16 +1248,7 @@ export const HomePage: React.FC = () => {
         }}>
           {/* Card 1: Máy Quét Mã QR Soát Vé */}
           <div 
-            role="button"
-            tabIndex={0}
-            aria-label="Mở máy quét mã QR soát vé"
             onClick={() => navigate('/scanner')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                navigate('/scanner');
-              }
-            }}
             style={{
               background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
               borderRadius: '20px',
@@ -1326,16 +1291,7 @@ export const HomePage: React.FC = () => {
 
           {/* Card 2: Trợ Lý AI Du Lịch 24/7 */}
           <div 
-            role="button"
-            tabIndex={0}
-            aria-label="Khám phá Trợ lý AI Du lịch"
             onClick={() => navigate('/search')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                navigate('/search');
-              }
-            }}
             style={{
               background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
               borderRadius: '20px',
@@ -1392,7 +1348,7 @@ export const HomePage: React.FC = () => {
           gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
           gap: '20px'
         }}>
-          {(activeBanners.length > 0 ? activeBanners : (featuredPromos.length > 0 ? featuredPromos : defaultFeaturedPromos)).map(p => (
+          {(activeBanners.length > 0 ? activeBanners : featuredPromos).map(p => (
             <div
               key={p.id}
               style={{
@@ -1436,30 +1392,6 @@ export const HomePage: React.FC = () => {
                 <h4 style={{ fontSize: '14.5px', fontWeight: 700, color: isDark ? '#f8fafc' : '#1e293b', lineHeight: 1.45, marginBottom: '12px' }}>
                   {p.title}
                 </h4>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }}>Hạn dùng: 30/11/2026</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const couponCode = p.badge?.includes('MÃ:') ? p.badge.replace('MÃ:', '').trim() : 'HELLOTRAVEL';
-                      navigator.clipboard.writeText(couponCode);
-                      toast.success(`Đã sao chép mã ưu đãi ${couponCode}!`);
-                    }}
-                    style={{
-                      backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
-                      border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
-                      borderRadius: '6px',
-                      padding: '3px 8px',
-                      fontSize: '11.5px',
-                      fontWeight: 700,
-                      color: isDark ? '#38bdf8' : '#2563eb',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    📋 Chép Mã
-                  </button>
-                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: isDark ? '#38bdf8' : p.accent, fontSize: '13px', fontWeight: 700 }}>
                   Xem chi tiết ưu đãi <ArrowRight size={14} />
                 </div>
@@ -1860,36 +1792,6 @@ export const HomePage: React.FC = () => {
             </button>
           </div>
         </div>
-      )}
-
-      {/* ponytail: Floating Back to Top button */}
-      {showBackToTop && (
-        <button
-          type="button"
-          onClick={scrollToTop}
-          aria-label="Cuộn lên đầu trang"
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '46px',
-            height: '46px',
-            borderRadius: '50%',
-            backgroundColor: '#2563eb',
-            color: '#ffffff',
-            border: 'none',
-            boxShadow: '0 4px 16px rgba(37, 99, 235, 0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            zIndex: 9995,
-            transition: 'all 0.25s ease'
-          }}
-        >
-          <ChevronRight size={22} style={{ transform: 'rotate(-90deg)' }} />
-        </button>
       )}
     </div>
   );
