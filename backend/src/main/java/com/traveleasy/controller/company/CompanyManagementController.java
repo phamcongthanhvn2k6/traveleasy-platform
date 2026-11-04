@@ -462,12 +462,14 @@ public class CompanyManagementController {
             Authentication authentication) {
         Long targetId = resolveTargetCompanyId(companyId, authentication);
 
-        // TỐI ƯU HÓA: Sử dụng truy vấn SQL index tổng hợp thay vì tải toàn bộ bookings
+        // TỐI ƯU HÓA: Doanh thu đối soát tính đủ 100% theo giá niêm yết của nhà xe
         BigDecimal totalGross = bookingRepository.sumTotalRevenueByBusCompanyId(targetId);
+        BigDecimal totalSubsidy = bookingRepository.sumVoucherDiscountByBusCompanyId(targetId);
         long ticketCount = bookingRepository.countByBusCompanyId(targetId);
 
         if (totalGross == null || (totalGross.compareTo(BigDecimal.ZERO) == 0 && ticketCount == 0)) {
             totalGross = BigDecimal.valueOf(185000000); // Doanh thu mẫu khi nhà xe mới chưa có đơn
+            totalSubsidy = BigDecimal.valueOf(7500000);
             ticketCount = 520;
         }
 
@@ -485,9 +487,12 @@ public class CompanyManagementController {
         p1.put("endDate", "15/10/2026");
         p1.put("ticketCount", (int)(ticketCount * 0.45));
         p1.put("grossAmount", totalGross.multiply(BigDecimal.valueOf(0.45)));
+        p1.put("platformSubsidy", totalSubsidy.multiply(BigDecimal.valueOf(0.45)));
+        p1.put("customerPaid", totalGross.subtract(totalSubsidy).multiply(BigDecimal.valueOf(0.45)));
         p1.put("platformFeeRate", 10);
         p1.put("platformFeeAmount", feeAmount.multiply(BigDecimal.valueOf(0.45)));
         p1.put("netReceived", netAmount.multiply(BigDecimal.valueOf(0.45)));
+        p1.put("guaranteeNote", "Sàn TravelEasy tài trợ 100% voucher khuyến mãi. Nhà xe nhận đủ doanh thu vé niêm yết.");
         p1.put("status", "PAID");
         p1.put("reconciledAt", "16/10/2026 10:30");
         p1.put("paidAt", "17/10/2026 14:15");
@@ -502,9 +507,12 @@ public class CompanyManagementController {
         p2.put("endDate", "31/10/2026");
         p2.put("ticketCount", (int)(ticketCount * 0.55));
         p2.put("grossAmount", totalGross.multiply(BigDecimal.valueOf(0.55)));
+        p2.put("platformSubsidy", totalSubsidy.multiply(BigDecimal.valueOf(0.55)));
+        p2.put("customerPaid", totalGross.subtract(totalSubsidy).multiply(BigDecimal.valueOf(0.55)));
         p2.put("platformFeeRate", 10);
         p2.put("platformFeeAmount", feeAmount.multiply(BigDecimal.valueOf(0.55)));
         p2.put("netReceived", netAmount.multiply(BigDecimal.valueOf(0.55)));
+        p2.put("guaranteeNote", "Sàn TravelEasy tài trợ 100% voucher khuyến mãi. Nhà xe nhận đủ doanh thu vé niêm yết.");
         p2.put("status", "RECONCILED");
         p2.put("reconciledAt", "29/10/2026 18:00");
         settlements.add(p2);

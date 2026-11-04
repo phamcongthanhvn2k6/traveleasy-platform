@@ -51,6 +51,20 @@ public class Booking {
     @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalAmount;
 
+    @Column(name = "original_amount", precision = 12, scale = 2)
+    private BigDecimal originalAmount;
+
+    @Column(name = "discount_amount", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "insurance_amount", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal insuranceAmount = BigDecimal.ZERO;
+
+    @Column(name = "voucher_code", length = 50)
+    private String voucherCode;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 20)
     @Builder.Default

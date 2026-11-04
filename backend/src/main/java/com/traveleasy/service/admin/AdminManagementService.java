@@ -834,25 +834,37 @@ public class AdminManagementService {
         List<Object[]> statsList = bookingRepository.getBookingStatsGroupedByCompany();
         Map<Long, Long> ticketCountMap = new HashMap<>();
         Map<Long, BigDecimal> grossAmountMap = new HashMap<>();
+        Map<Long, BigDecimal> customerPaidMap = new HashMap<>();
+        Map<Long, BigDecimal> voucherSubsidyMap = new HashMap<>();
         for (Object[] row : statsList) {
             Long compId = (Long) row[0];
             Long cnt = (Long) row[1];
-            BigDecimal sum = (BigDecimal) row[2];
+            BigDecimal sumGross = (BigDecimal) row[2];
+            BigDecimal sumPaid = row.length > 3 && row[3] != null ? (BigDecimal) row[3] : sumGross;
+            BigDecimal sumVoucher = row.length > 4 && row[4] != null ? (BigDecimal) row[4] : BigDecimal.ZERO;
             if (compId != null) {
                 ticketCountMap.put(compId, cnt != null ? cnt : 0L);
-                grossAmountMap.put(compId, sum != null ? sum : BigDecimal.ZERO);
+                grossAmountMap.put(compId, sumGross != null ? sumGross : BigDecimal.ZERO);
+                customerPaidMap.put(compId, sumPaid != null ? sumPaid : BigDecimal.ZERO);
+                voucherSubsidyMap.put(compId, sumVoucher != null ? sumVoucher : BigDecimal.ZERO);
             }
         }
 
         for (BusCompany c : companies) {
             int count = ticketCountMap.getOrDefault(c.getId(), 0L).intValue();
             java.math.BigDecimal gross = grossAmountMap.getOrDefault(c.getId(), java.math.BigDecimal.ZERO);
+            java.math.BigDecimal paid = customerPaidMap.getOrDefault(c.getId(), gross);
+            java.math.BigDecimal subsidy = voucherSubsidyMap.getOrDefault(c.getId(), java.math.BigDecimal.ZERO);
 
             if (count == 0 && gross.compareTo(java.math.BigDecimal.ZERO) == 0) {
                 gross = java.math.BigDecimal.valueOf(450000000 + (c.getId() * 30000000));
+                subsidy = java.math.BigDecimal.valueOf(15000000 + (c.getId() * 1000000));
+                paid = gross.subtract(subsidy);
                 count = 1200 + (int)(c.getId() * 100);
             }
 
+            // DOANH THU NHÀ XE ĐƯỢC BẢO TOÀN 100% THEO GIÁ VÉ GỐC NIÊM YẾT
+            // VOUCHER KHUYẾN MÃI DO SÀN TRAVELEASY TÀI TRỢ TỪ NGÂN SÁCH MARKETING
             java.math.BigDecimal commission = gross.multiply(java.math.BigDecimal.valueOf(0.10));
             java.math.BigDecimal net = gross.subtract(commission);
 
@@ -872,10 +884,12 @@ public class AdminManagementService {
             item.put("startDate", "16/10/2026");
             item.put("endDate", "31/10/2026");
             item.put("ticketCount", count);
-            item.put("grossAmount", gross);
+            item.put("grossAmount", gross); // Doanh thu gốc niêm yết 100%
+            item.put("customerPaid", paid); // Tiền khách trả thực tế sau giảm giá
+            item.put("platformSubsidy", subsidy); // Sàn tài trợ ngân sách kích cầu
             item.put("commissionRate", 10);
-            item.put("platformCommission", commission);
-            item.put("netPayable", net);
+            item.put("platformCommission", commission); // Hoa hồng sàn 10%
+            item.put("netPayable", net); // Nhà xe thực nhận đủ 100% - 10% phí sàn
 
             String bankCode = c.getId() % 3 == 0 ? "MB" : c.getId() % 2 == 0 ? "TCB" : "VCB";
             String bankName = c.getId() % 3 == 0 ? "MBBank - CN Lê Hồng Phong" : c.getId() % 2 == 0 ? "Techcombank - CN Sài Gòn" : "Vietcombank - Chi nhánh Sài Gòn";

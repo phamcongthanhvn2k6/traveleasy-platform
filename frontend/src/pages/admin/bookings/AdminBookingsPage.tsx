@@ -57,6 +57,10 @@ interface BookingItem {
   pickupPointName?: string;
   dropoffPointName?: string;
   totalAmount: number;
+  originalAmount?: number;
+  discountAmount?: number;
+  insuranceAmount?: number;
+  voucherCode?: string;
   paymentMethod: string;
   status: 'CONFIRMED' | 'CANCELLED' | 'PENDING';
   note?: string;
@@ -1081,8 +1085,18 @@ export const AdminBookingsPage: React.FC = () => {
                   <div style={{ fontSize: '12px', color: '#64748b', marginTop: '8px', borderTop: '1px dashed #cbd5e1', paddingTop: '6px' }}>
                     <strong>Phương thức thanh toán:</strong> {detailBooking.paymentMethod}
                   </div>
+                  {detailBooking.voucherCode && (
+                    <div style={{ fontSize: '12px', color: '#c026d3', marginTop: '4px', fontWeight: 700 }}>
+                      🎁 Voucher ({detailBooking.voucherCode}): -{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(detailBooking.discountAmount || 0)} (Sàn tài trợ Marketing)
+                    </div>
+                  )}
+                  {detailBooking.originalAmount && detailBooking.discountAmount ? (
+                    <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }}>
+                      Giá vé gốc niêm yết: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(detailBooking.originalAmount)}
+                    </div>
+                  ) : null}
                   <div style={{ fontSize: '12px', color: '#16a34a', marginTop: '2px', fontWeight: 700 }}>
-                    <strong>Tổng thanh toán:</strong>{' '}
+                    <strong>Hành khách thực trả:</strong>{' '}
                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(detailBooking.totalAmount)}
                   </div>
                 </div>

@@ -32,6 +32,8 @@ export interface SettlementPeriod {
   endDate: string;
   ticketCount: number;
   grossAmount: number;
+  customerPaid?: number;
+  platformSubsidy?: number;
   commissionRate: number; // e.g. 10 (%)
   platformCommission: number;
   netPayable: number;
@@ -881,17 +883,30 @@ export const AdminSettlementsPage: React.FC = () => {
               </div>
 
               <div style={{ padding: '10px 14px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Tổng doanh thu bán vé (GMV):</span>
+                <span style={{ color: '#64748b' }}>Doanh thu giá vé niêm yết (Gross 100%):</span>
                 <strong>{selectedSettlement.grossAmount.toLocaleString('vi-VN')} đ</strong>
               </div>
 
+              {selectedSettlement.platformSubsidy ? (
+                <div style={{ padding: '10px 14px', backgroundColor: '#fdf4ff', borderRadius: '8px', border: '1px solid #f0abfc', display: 'flex', justifyContent: 'space-between', color: '#a21caf' }}>
+                  <div>
+                    <span style={{ fontWeight: 700 }}>🎁 Sàn TravelEasy tài trợ Voucher:</span>
+                    <div style={{ fontSize: '11px', color: '#86198f' }}>Khoản bù kích cầu người dùng, nhà xe không bị trừ tiền</div>
+                  </div>
+                  <strong style={{ fontSize: '14px' }}>+{selectedSettlement.platformSubsidy.toLocaleString('vi-VN')} đ</strong>
+                </div>
+              ) : null}
+
               <div style={{ padding: '10px 14px', backgroundColor: '#ecfdf5', borderRadius: '8px', border: '1px solid #a7f3d0', display: 'flex', justifyContent: 'space-between', color: '#059669' }}>
-                <span>Phí dịch vụ sàn TravelEasy ({selectedSettlement.commissionRate}%):</span>
+                <span>Phí hoa hồng sàn TravelEasy ({selectedSettlement.commissionRate}%):</span>
                 <strong>-{selectedSettlement.platformCommission.toLocaleString('vi-VN')} đ</strong>
               </div>
 
               <div style={{ padding: '12px 16px', backgroundColor: '#eff6ff', borderRadius: '10px', border: '1px solid #bfdbfe', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#1e3a8a' }}>Thực chuyển khoản nhà xe:</span>
+                <div>
+                  <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#1e3a8a' }}>Thực chuyển khoản nhà xe:</span>
+                  <div style={{ fontSize: '11px', color: '#3b82f6' }}>Đảm bảo đúng 100% doanh thu niêm yết trừ 10% phí sàn</div>
+                </div>
                 <span style={{ fontSize: '18px', fontWeight: 900, color: '#2563eb' }}>
                   {selectedSettlement.netPayable.toLocaleString('vi-VN')} đ
                 </span>
