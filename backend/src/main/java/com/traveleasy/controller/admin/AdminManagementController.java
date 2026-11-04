@@ -61,6 +61,13 @@ public class AdminManagementController {
     }
 
     @CacheEvict(value = {"admin_users", "system_stats"}, allEntries = true)
+    @PatchMapping("/users/{id}/restore")
+    @Operation(summary = "Khôi phục tài khoản người dùng đã xóa mềm (status -> ACTIVE)")
+    public ApiResponse<UserAdminResponse> restoreUser(@PathVariable Long id) {
+        return ApiResponse.success("Khôi phục tài khoản người dùng thành công", adminManagementService.restoreUser(id));
+    }
+
+    @CacheEvict(value = {"admin_users", "system_stats"}, allEntries = true)
     @PatchMapping("/users/{id}/status")
     @Operation(summary = "Khoá hoặc mở khoá tài khoản người dùng (ACTIVE <-> LOCKED)")
     public ApiResponse<UserAdminResponse> toggleUserStatus(@PathVariable Long id) {
@@ -100,6 +107,13 @@ public class AdminManagementController {
     public ApiResponse<Void> deleteBusCompany(@PathVariable Long id) {
         adminManagementService.deleteBusCompany(id);
         return ApiResponse.success("Xoá nhà xe thành công", null);
+    }
+
+    @CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)
+    @PatchMapping("/bus-companies/{id}/restore")
+    @Operation(summary = "Khôi phục nhà xe đối tác đã xóa mềm (status -> ACTIVE)")
+    public ApiResponse<BusCompanyAdminResponse> restoreBusCompany(@PathVariable Long id) {
+        return ApiResponse.success("Khôi phục nhà xe thành công", adminManagementService.restoreBusCompany(id));
     }
 
     @CacheEvict(value = {"admin_bus_companies", "bus_companies", "system_stats"}, allEntries = true)
@@ -187,6 +201,12 @@ public class AdminManagementController {
         return ApiResponse.success("Xoá mẫu sơ đồ ghế thành công", null);
     }
 
+    @PatchMapping("/seat-templates/{id}/restore")
+    @Operation(summary = "Khôi phục mẫu sơ đồ ghế (status -> PUBLISHED)")
+    public ApiResponse<SeatLayoutTemplate> restoreSeatTemplate(@PathVariable Long id) {
+        return ApiResponse.success("Khôi phục mẫu sơ đồ ghế thành công", adminManagementService.restoreSeatTemplate(id));
+    }
+
     // ==========================================
     // 4. DANH MỤC ĐỊA ĐIỂM MASTER (/admin/locations)
     // ==========================================
@@ -218,6 +238,12 @@ public class AdminManagementController {
         return ApiResponse.success("Xoá địa điểm thành công", null);
     }
 
+    @PatchMapping("/locations/{id}/restore")
+    @Operation(summary = "Khôi phục địa điểm master (status -> ACTIVE)")
+    public ApiResponse<Location> restoreLocation(@PathVariable Long id) {
+        return ApiResponse.success("Khôi phục địa điểm thành công", adminManagementService.restoreLocation(id));
+    }
+
     // ==========================================
     // 5. BANNER & QUẢNG CÁO (/admin/banners)
     // ==========================================
@@ -247,6 +273,12 @@ public class AdminManagementController {
     public ApiResponse<Void> deleteBanner(@PathVariable Long id) {
         adminManagementService.deleteBanner(id);
         return ApiResponse.success("Xoá banner thành công", null);
+    }
+
+    @PatchMapping("/banners/{id}/restore")
+    @Operation(summary = "Khôi phục banner chiến dịch (status -> ACTIVE)")
+    public ApiResponse<Banner> restoreBanner(@PathVariable Long id) {
+        return ApiResponse.success("Khôi phục banner thành công", adminManagementService.restoreBanner(id));
     }
 
     // ==========================================

@@ -135,11 +135,20 @@ public class AdminManagementService {
         if ("admin@traveleasy.vn".equalsIgnoreCase(user.getEmail())) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Không thể xoá tài khoản Quản trị viên tối cao!");
         }
-        if (bookingRepository.existsByUserId(id)) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR, "Không thể xoá tài khoản này vì đã có lịch sử đơn đặt vé. Vui lòng sử dụng tính năng KHÓA TÀI KHOẢN (LOCKED).");
-        }
-        userRepository.delete(user);
-        logAction("admin@traveleasy.vn", "DELETE_USER", "users #" + id, "{\"email\": \"" + user.getEmail() + "\"}", "-");
+        // XÓA MỀM (Soft Delete): Chuyển trạng thái sang DELETED, bảo lưu 100% dữ liệu lịch sử đặt vé và audit logs
+        user.setStatus("DELETED");
+        userRepository.save(user);
+        logAction("admin@traveleasy.vn", "SOFT_DELETE_USER", "users #" + id, "{\"email\": \"" + user.getEmail() + "\"}", "{\"status\": \"DELETED\"}");
+    }
+
+    @Transactional
+    public UserAdminResponse restoreUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy người dùng"));
+        user.setStatus("ACTIVE");
+        User saved = userRepository.save(user);
+        logAction("admin@traveleasy.vn", "RESTORE_USER", "users #" + id, "{\"status\": \"DELETED\"}", "{\"status\": \"ACTIVE\"}");
+        return mapToUserResponse(saved);
     }
 
     private UserAdminResponse mapToUserResponse(User user) {
@@ -327,11 +336,20 @@ public class AdminManagementService {
     public void deleteBusCompany(Long id) {
         BusCompany company = busCompanyRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
-        if (tripRepository.existsByBusCompanyId(id)) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR, "Không thể xoá nhà xe này vì đang có các chuyến xe trên hệ thống. Vui lòng chuyển trạng thái sang TẠM NGƯNG (SUSPENDED).");
-        }
-        busCompanyRepository.delete(company);
-        logAction("admin@traveleasy.vn", "DELETE_COMPANY", "bus_companies #" + id, "{\"name\": \"" + company.getName() + "\"}", "-");
+        // XÓA MỀM (Soft Delete): Chuyển trạng thái sang DELETED, bảo lưu toàn bộ dữ liệu xe, chuyến và doanh thu đối soát
+        company.setStatus("DELETED");
+        busCompanyRepository.save(company);
+        logAction("admin@traveleasy.vn", "SOFT_DELETE_COMPANY", "bus_companies #" + id, "{\"name\": \"" + company.getName() + "\"}", "{\"status\": \"DELETED\"}");
+    }
+
+    @Transactional
+    public BusCompanyAdminResponse restoreBusCompany(Long id) {
+        BusCompany company = busCompanyRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
+        company.setStatus("ACTIVE");
+        BusCompany saved = busCompanyRepository.save(company);
+        logAction("admin@traveleasy.vn", "RESTORE_COMPANY", "bus_companies #" + id, "{\"status\": \"DELETED\"}", "{\"status\": \"ACTIVE\"}");
+        return mapToCompanyResponse(saved);
     }
 
     private BusCompanyAdminResponse mapToCompanyResponse(BusCompany c) {
@@ -434,8 +452,22 @@ public class AdminManagementService {
 
     @Transactional
     public void deleteSeatTemplate(Long id) {
-        seatLayoutTemplateRepository.deleteById(id);
-        logAction("admin@traveleasy.vn", "DELETE_SEAT_TEMPLATE", "seat_layout_templates #" + id, "-", "{\"deleted\": true}");
+        SeatLayoutTemplate tpl = seatLayoutTemplateRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy mẫu sơ đồ ghế"));
+        // XÓA MỀM (Soft Delete): Đổi sang DEPRECATED
+        tpl.setStatus("DEPRECATED");
+        seatLayoutTemplateRepository.save(tpl);
+        logAction("admin@traveleasy.vn", "SOFT_DELETE_SEAT_TEMPLATE", "seat_layout_templates #" + id, "-", "{\"status\": \"DEPRECATED\"}");
+    }
+
+    @Transactional
+    public SeatLayoutTemplate restoreSeatTemplate(Long id) {
+        SeatLayoutTemplate tpl = seatLayoutTemplateRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy mẫu sơ đồ ghế"));
+        tpl.setStatus("PUBLISHED");
+        SeatLayoutTemplate saved = seatLayoutTemplateRepository.save(tpl);
+        logAction("admin@traveleasy.vn", "RESTORE_SEAT_TEMPLATE", "seat_layout_templates #" + id, "{\"status\": \"DEPRECATED\"}", "{\"status\": \"PUBLISHED\"}");
+        return saved;
     }
 
     // ==========================================
@@ -482,8 +514,22 @@ public class AdminManagementService {
 
     @Transactional
     public void deleteLocation(Long id) {
-        locationRepository.deleteById(id);
-        logAction("admin@traveleasy.vn", "DELETE_LOCATION", "locations #" + id, "-", "{\"deleted\": true}");
+        Location loc = locationRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy địa điểm"));
+        // XÓA MỀM (Soft Delete): Đổi sang DELETED
+        loc.setStatus("DELETED");
+        locationRepository.save(loc);
+        logAction("admin@traveleasy.vn", "SOFT_DELETE_LOCATION", "locations #" + id, "-", "{\"status\": \"DELETED\"}");
+    }
+
+    @Transactional
+    public Location restoreLocation(Long id) {
+        Location loc = locationRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy địa điểm"));
+        loc.setStatus("ACTIVE");
+        Location saved = locationRepository.save(loc);
+        logAction("admin@traveleasy.vn", "RESTORE_LOCATION", "locations #" + id, "{\"status\": \"DELETED\"}", "{\"status\": \"ACTIVE\"}");
+        return saved;
     }
 
     // ==========================================
@@ -527,8 +573,22 @@ public class AdminManagementService {
 
     @Transactional
     public void deleteBanner(Long id) {
-        bannerRepository.deleteById(id);
-        logAction("admin@traveleasy.vn", "DELETE_BANNER", "banners #" + id, "-", "{\"deleted\": true}");
+        Banner banner = bannerRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy banner"));
+        // XÓA MỀM (Soft Delete): Đổi sang DELETED
+        banner.setStatus("DELETED");
+        bannerRepository.save(banner);
+        logAction("admin@traveleasy.vn", "SOFT_DELETE_BANNER", "banners #" + id, "-", "{\"status\": \"DELETED\"}");
+    }
+
+    @Transactional
+    public Banner restoreBanner(Long id) {
+        Banner banner = bannerRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy banner"));
+        banner.setStatus("ACTIVE");
+        Banner saved = bannerRepository.save(banner);
+        logAction("admin@traveleasy.vn", "RESTORE_BANNER", "banners #" + id, "{\"status\": \"DELETED\"}", "{\"status\": \"ACTIVE\"}");
+        return saved;
     }
 
     // ==========================================
