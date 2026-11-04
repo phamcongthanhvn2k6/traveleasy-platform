@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Unlock, Search, Plus, RefreshCw, X, User, Edit2, Trash2 } from 'lucide-react';
+import { Lock, Unlock, Search, Plus, RefreshCw, X, User, Edit2, Trash2, RotateCcw } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 
@@ -10,7 +10,7 @@ interface UserItem {
   email: string;
   role: 'ADMIN' | 'OPERATOR' | 'CUSTOMER';
   roleLabel: string;
-  status: 'ACTIVE' | 'LOCKED';
+  status: 'ACTIVE' | 'LOCKED' | 'DELETED';
   createdAt: string;
 }
 
@@ -151,17 +151,28 @@ export const AdminUsersPage: React.FC = () => {
       return;
     }
 
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa tài khoản "${u.email}" (${u.fullName}) khỏi hệ thống?`)) {
+    if (!window.confirm(`XÁC NHẬN XÓA MỀM (LƯU TRỮ AN TOÀN):\n\nBạn có chắc chắn muốn chuyển tài khoản "${u.email}" (${u.fullName}) sang trạng thái ĐÃ XÓA MỀM?\n\n• Tài khoản sẽ bị vô hiệu hóa đăng nhập.\n• Toàn bộ lịch sử đặt vé, giao dịch và audit logs được BẢO TOÀN 100% trong CSDL.\n• Bạn có thể bấm [Khôi phục] bất cứ lúc nào để mở lại tài khoản.`)) {
       return;
     }
 
     try {
       await api.delete(`/admin/users/${u.id}`);
-      setUsers((prev) => prev.filter((item) => item.id !== u.id));
-      toast.success(`Đã xóa người dùng "${u.email}" khỏi cơ sở dữ liệu!`, 'Đã Xóa');
+      setUsers((prev) => prev.map((item) => item.id === u.id ? { ...item, status: 'DELETED' } : item));
+      toast.success(`Đã chuyển tài khoản "${u.email}" sang trạng thái XÓA MỀM (Lưu trữ an toàn)!`, 'Xóa Mềm Thành Công');
     } catch (err: any) {
       console.error('Delete user error:', err);
       toast.error(err.response?.data?.message || 'Không thể xóa người dùng này', 'Thất Bại');
+    }
+  };
+
+  const handleRestoreUser = async (u: UserItem) => {
+    try {
+      await api.patch(`/admin/users/${u.id}/restore`);
+      setUsers((prev) => prev.map((item) => item.id === u.id ? { ...item, status: 'ACTIVE' } : item));
+      toast.success(`Đã khôi phục tài khoản "${u.email}" hoạt động trở lại!`, 'Khôi Phục Thành Công');
+    } catch (err: any) {
+      console.error('Restore user error:', err);
+      toast.error(err.response?.data?.message || 'Khôi phục tài khoản thất bại!', 'Lỗi');
     }
   };
 
@@ -313,6 +324,7 @@ export const AdminUsersPage: React.FC = () => {
           <option value="ALL">Tất cả trạng thái</option>
           <option value="ACTIVE">Hoạt động (ACTIVE)</option>
           <option value="LOCKED">Bị khóa (LOCKED)</option>
+          <option value="DELETED">Đã xóa mềm (DELETED)</option>
         </select>
       </div>
 
@@ -353,6 +365,7 @@ export const AdminUsersPage: React.FC = () => {
               </tr>
             ) : (
               filteredUsers.map((u) => {
+                const isDeleted = u.status === 'DELETED';
                 const isLocked = u.status === 'LOCKED';
                 const roleStyles = {
                   ADMIN: { bg: '#fee2e2', text: '#991b1b', border: '#fecaca' },
@@ -398,77 +411,101 @@ export const AdminUsersPage: React.FC = () => {
                           borderRadius: '6px',
                           fontSize: '11px',
                           fontWeight: 600,
-                          backgroundColor: isLocked ? '#fee2e2' : '#ecfdf5',
-                          color: isLocked ? '#dc2626' : '#059669',
-                          border: `1px solid ${isLocked ? '#fecaca' : '#a7f3d0'}`,
+                          backgroundColor: isDeleted ? '#f1f5f9' : isLocked ? '#fee2e2' : '#ecfdf5',
+                          color: isDeleted ? '#64748b' : isLocked ? '#dc2626' : '#059669',
+                          border: `1px solid ${isDeleted ? '#cbd5e1' : isLocked ? '#fecaca' : '#a7f3d0'}`,
                         }}
                       >
-                        {isLocked ? 'Bị khóa' : 'Hoạt động'}
+                        {isDeleted ? 'Đã xóa mềm' : isLocked ? 'Bị khóa' : 'Hoạt động'}
                       </span>
                     </td>
                     <td style={{ padding: '14px 18px', color: '#64748b' }}>{u.createdAt}</td>
                     <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                        <button
-                          onClick={() => toggleUserLock(u.id)}
-                          title={isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
-                          style={{
-                            backgroundColor: isLocked ? '#ecfdf5' : '#fee2e2',
-                            color: isLocked ? '#059669' : '#dc2626',
-                            border: `1px solid ${isLocked ? '#a7f3d0' : '#fecaca'}`,
-                            borderRadius: '6px',
-                            padding: '5px 10px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
-                          {isLocked ? <Unlock size={12} /> : <Lock size={12} />}
-                          {isLocked ? 'Mở khóa' : 'Khóa'}
-                        </button>
+                        {isDeleted ? (
+                          <button
+                            onClick={() => handleRestoreUser(u)}
+                            title="Khôi phục tài khoản hoạt động"
+                            style={{
+                              backgroundColor: '#ecfdf5',
+                              color: '#059669',
+                              border: '1px solid #a7f3d0',
+                              borderRadius: '6px',
+                              padding: '5px 10px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <RotateCcw size={12} /> Khôi phục
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => toggleUserLock(u.id)}
+                              title={isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
+                              style={{
+                                backgroundColor: isLocked ? '#ecfdf5' : '#fee2e2',
+                                color: isLocked ? '#059669' : '#dc2626',
+                                border: `1px solid ${isLocked ? '#a7f3d0' : '#fecaca'}`,
+                                borderRadius: '6px',
+                                padding: '5px 10px',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              {isLocked ? <Unlock size={12} /> : <Lock size={12} />}
+                              {isLocked ? 'Mở khóa' : 'Khóa'}
+                            </button>
 
-                        <button
-                          onClick={() => openEditModal(u)}
-                          title="Sửa thông tin"
-                          style={{
-                            backgroundColor: '#f1f5f9',
-                            color: '#2563eb',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: '6px',
-                            padding: '5px 10px',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
-                          <Edit2 size={12} /> Sửa
-                        </button>
+                            <button
+                              onClick={() => openEditModal(u)}
+                              title="Sửa thông tin"
+                              style={{
+                                backgroundColor: '#f1f5f9',
+                                color: '#2563eb',
+                                border: '1px solid #cbd5e1',
+                                borderRadius: '6px',
+                                padding: '5px 10px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              <Edit2 size={12} /> Sửa
+                            </button>
 
-                        <button
-                          onClick={() => handleDeleteUser(u)}
-                          title="Xóa tài khoản"
-                          style={{
-                            backgroundColor: '#fef2f2',
-                            color: '#dc2626',
-                            border: '1px solid #fecaca',
-                            borderRadius: '6px',
-                            padding: '5px 8px',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                            <button
+                              onClick={() => handleDeleteUser(u)}
+                              title="Xóa mềm tài khoản (Bảo toàn lịch sử)"
+                              style={{
+                                backgroundColor: '#fef2f2',
+                                color: '#dc2626',
+                                border: '1px solid #fecaca',
+                                borderRadius: '6px',
+                                padding: '5px 8px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
