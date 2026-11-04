@@ -27,6 +27,18 @@ Kiểm thử tích hợp toàn diện (E2E Integration Testing) xuyên suốt 3 
 
 ## 📋 3. PHẠM VI & HẠNG MỤC CÔNG VIỆC CHÍNH (SPRINT BACKLOG)
 
+### 3.0. Hạng mục Ưu tiên 1 (Tiếp thu ý kiến Thầy) & Tồn đọng chuyển tiếp từ Sprint 2
+- **[Ưu tiên: 1] [5 SP] [S322] Tái cấu trúc Đăng ký Đối tác Nhà xe KYB & Thẩm định Cổng Admin (Phạm Công Thành):**
+  - Form thẩm định doanh nghiệp 3 khối (Pháp nhân MST 10-13 số, Hồ sơ số hóa PDF/CCCD 2 mặt <= 10MB, Tài khoản ngân hàng Escrow đối soát).
+  - Modal xem trước tài liệu PDF/CCCD trực quan tại /admin/bus-companies và cơ chế tự động cấp tài khoản /company/login khi duyệt.
+  - Chi tiết đặc tả: [DAC_TA_TASK_PHAT_SINH_SPRINT_3.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/DAC_TA_TASK_PHAT_SINH_SPRINT_3.md).
+- **[Ưu tiên: 1] [5 SP] [S321] Tích hợp Đăng nhập Google OAuth2 & Xác thực OTP (Nguyễn Đại Phát):**
+  - Nút đăng nhập Google Identity Services, xác thực Token Backend và sinh JWT phiên làm việc.
+  - Service cấp phát OTP 6 chữ số qua Email/SMS với thời gian sống 5 phút (TTL).
+- **[Ưu tiên: 2] [8 SP] Xử lý dứt điểm 2 task tồn đọng Sprint 2 (Trần Minh Đức):**
+  - [BE-S320] (3 SP): Bộ Fixtures dữ liệu mẫu và scripts dọn CSDL kiểm thử tự động.
+  - [FE-S320] (5 SP): Kiểm thử nghiệm thu giao diện Acceptance Testing /test/fixtures.
+
 ### 3.1. Kiểm thử Tích hợp Liên Cổng (E2E Integration Testing)
 - Kiểm thử luồng thông suốt từ đầu đến cuối:
   1. Admin duyệt nhà xe mới và kích hoạt tuyến đường.
