@@ -1,226 +1,227 @@
 # 🌿 QUY CHUẨN LÀM VIỆC VỚI GIT & QUY TRÌNH PHÂN NHÁNH (GIT WORKFLOW)
-## DỰ ÁN: TRAVELEASY PLATFORM (SPRINT 7 NGÀY - NHÓM 6 THÀNH VIÊN)
-### TÀI LIỆU HƯỚNG DẪN DÀNH CHO TOÀN BỘ THÀNH VIÊN DỰ ÁN
+## DỰ ÁN: TRAVELEASY PLATFORM — HỆ THỐNG ĐẶT VÉ XE KHÁCH LIÊN TỈNH
+### ĐƠN VỊ: OJT ĐỒ ÁN NHÓM 7 | MÃ DỰ ÁN: `PRJ-TRAVELEASY-MVP-01`
+### TRƯỞNG NHÓM & QUẢN TRỊ KHO MÃ NGUỒN (REPO OWNER): PHẠM CÔNG THÀNH
 
 ---
 
-> **MỤC TIÊU:**  
-> • Đảm bảo 100% thành viên tuân thủ quy tắc làm việc nhóm chuyên nghiệp với Git.  
-> • Đạt điểm tối đa tiêu chí: *"Có lịch sử hoạt động nhóm với git rõ ràng, commit có ý nghĩa và triển khai thành công CI/CD Pipeline"*.  
-> • Ngăn chặn triệt để xung đột mã nguồn (Merge Conflicts) và không bao giờ làm hỏng nhánh `main`.
+> **MỤC TIÊU & TÍNH PHÁP QUY:**  
+> • **Kỷ luật là sức mạnh:** Đảm bảo 100% thành viên (5/5) tuân thủ quy trình Git chuyên nghiệp chuẩn Enterprise.  
+> • **Bảo vệ điểm số 100/100 OJT:** Lịch sử Git sạch, phân nhánh mạch lạc, commit tiếng Việt có dấu chuẩn ngữ pháp, minh bạch tiến độ Sprint Backlog.  
+> • **Ngăn chặn rủi ro:** Chấm dứt hoàn toàn tình trạng "Mega-PR" (ôm nhiều task vào 1 nhánh), làm nhảy Sprint, xung đột mã nguồn (Merge Conflicts) hoặc đẩy code hỏng lên nhánh `dev` / `main`.
 
 ---
 
 ## 1. MÔ HÌNH PHÂN NHÁNH CHUẨN (BRANCHING STRATEGY)
 
-Hệ thống Git của dự án **TravelEasy Platform** áp dụng mô hình phân nhánh rút gọn tối ưu cho Sprint 7 ngày:
+Hệ thống Git của dự án **TravelEasy Platform** vận hành theo mô hình phân nhánh chặt chẽ:
 
 ```
-[main] --------------------------------------------- (Production / Sẵn sàng chấm thi)
-          \                                     /
-[dev]      \---- [Sprint Integration] ---------/---- (Nhánh tích hợp chính của cả nhóm)
-                  \                 /    \
-[feature/*]        \-- feature/... /      \-- feature/...
+[main] --------------------------------------------------------------------> (Production / Sẵn sàng chấm thi)
+          \                                                            /
+[dev]      \---- [Sprint 1] ---- [Sprint 2] ---- [Sprint 3] ----------/-----> (Nhánh tích hợp chính của nhóm)
+                  \                 \                 \
+[branches]         \-- feature/...   \-- testing/...   \-- fix/...
 ```
 
-### 1.1 Hai nhánh chính cố định (Protected Branches)
-1.  **Nhánh `main` (Production):**
-    *   Chứa mã nguồn ổn định nhất, đã được kiểm thử kỹ lưỡng và sẵn sàng đem đi bảo vệ, chấm điểm.
-    *   **BẬT BRANCH PROTECTION:** Cấm commit hoặc push trực tiếp lên `main`.
-    *   Mọi thay đổi đưa vào `main` bắt buộc phải thông qua **Pull Request (PR)** từ nhánh `dev` và phải được **Team Lead review & duyệt (Approve)**.
-2.  **Nhánh `dev` (hoặc `develop` — Tích hợp):**
-    *   Nhánh làm việc chung của cả nhóm 6 người.
-    *   Các thành viên sau khi hoàn thành tính năng trên nhánh cá nhân sẽ tạo Pull Request merge vào `dev`.
-    *   GitHub Actions tự động chạy kiểm thử Unit Test và build thử nghiệm trên nhánh này.
-
-### 1.2 Các nhánh làm việc ngắn hạn (Temporary Branches)
-*   **`feature/*`:** Nhánh phát triển tính năng mới của từng thành viên. Nhánh này được tách ra từ `dev` và sau khi hoàn thiện sẽ tạo PR merge ngược lại vào `dev`.
-*   **`bugfix/*`:** Nhánh sửa lỗi phát sinh trong quá trình kiểm thử tích hợp trên `dev`.
-*   **`hotfix/*`:** Nhánh sửa lỗi khẩn cấp trực tiếp từ `main` nếu phát hiện lỗi nghiêm trọng sát giờ chấm thi.
+### 1.1 Hai nhánh chính được bảo vệ tối cao (Protected Branches)
+1. **Nhánh `main` (Production):**
+   - Chứa mã nguồn phiên bản phát hành chính thức, đã nghiệm thu toàn bộ 25 Test Cases và không còn lỗi.
+   - **BẢO VỆ TUYỆT ĐỐI:** Cấm mọi hành vi commit hoặc push trực tiếp lên `main`.
+   - Mọi thay đổi đưa vào `main` bắt buộc phải thông qua **Pull Request (PR)** từ nhánh `dev` và phải do **Team Lead (Phạm Công Thành)** duyệt và merge.
+2. **Nhánh `dev` (Sprint Integration Branch):**
+   - Nhánh tích hợp làm việc hàng ngày của cả 5 thành viên trong nhóm.
+   - Mọi tính năng, ca kiểm thử hay sửa lỗi đều phải tách nhánh riêng và tạo Pull Request merge vào `dev`.
+   - Bắt buộc kiểm tra biên dịch (`npm run build` và `gradlew testClasses`) pass 100% trước khi tạo PR vào `dev`.
 
 ---
 
-## 2. QUY CHUẨN ĐẶT TÊN NHÁNH (BRANCH NAMING CONVENTION)
-
-Tất cả các thành viên bắt buộc phải đặt tên nhánh theo cấu trúc chuẩn:
-
-$$\text{Loại nhánh} / \text{Mã thành viên hoặc Tên} - \text{Tên tính năng ngắn gọn}$$
-
-### Cú pháp chi tiết:
-*   Tính năng mới: `feature/<tên-thành-viên>-<tên-chức-năng>`
-*   Sửa lỗi: `bugfix/<tên-thành-viên>-<tên-lỗi>`
-
-### Bảng ví dụ phân bổ nhánh cho 6 thành viên trong Sprint 7 ngày:
-
-| Thành viên | Nhiệm vụ phân công | Tên nhánh chuẩn |
-|---|---|---|
-| **Member 1 (Lead / AI)** | Tích hợp Spring AI Chatbot & SEO Generator | `feature/m1-spring-ai-chatbot`<br/>`feature/m1-ai-seo-generator` |
-| **Member 2 (Auth & User)** | Xác thực JWT, BCrypt, Trang Đăng ký/Đăng nhập | `feature/m2-auth-jwt-security`<br/>`feature/m2-user-profile-page` |
-| **Member 3 (Trips Catalog)** | Tuyến xe, Chuyến xe, Tìm kiếm Nơi đi - Nơi đến | `feature/m3-trip-catalog-api`<br/>`feature/m3-search-filter-ui` |
-| **Member 4 (Seat & Booking)**| Sơ đồ ghế 2 tầng, Đặt vé COD, Trừ ghế nguyên tử | `feature/m4-bus-seat-map`<br/>`feature/phong-customer-pessimistic-lock` |
-| **Member 5 (Admin & Order)** | Admin Dashboard, Quản lý chuyến xe, Duyệt vé | `feature/m5-admin-trip-crud`<br/>`feature/m5-admin-booking-status` |
-| **Member 6 (DevOps & QA)** | Dockerfile, Docker Compose, CI/CD, Test Cases | `feature/m6-docker-containerize`<br/>`feature/m6-github-actions-cicd` |
-
----
-
-## 3. QUY CHUẨN ĐẶT TÊN COMMIT (CONVENTIONAL COMMITS & TIẾNG VIỆT CÓ DẤU)
+## 2. HỆ THỐNG TIỀN TỐ BẮT BUỘC & CÚ PHÁP ĐẶT TÊN NHÁNH
 
 > [!IMPORTANT]
-> ### 🏆 NGUYÊN TẮC VÀNG BẮT BUỘC (THE GOLDEN RULE)
-> **100% COMMIT MESSAGE TRONG TOÀN BỘ DỰ ÁN BẮT BUỘC PHẢI VIẾT BẰNG TIẾNG VIỆT CÓ DẤU!**  
-> • **Lý do:** Đây là dự án thực tế phục vụ báo cáo tốt nghiệp OJT và chuyển giao vận hành thương mại. Lịch sử Git commit bằng Tiếng Việt có dấu chuẩn ngữ pháp giúp Hội đồng chấm thi, Giảng viên và toàn bộ thành viên trong nhóm hiểu rõ chính xác 100% nội dung thay đổi mà không gây hiểu lầm.  
-> • ❌ **CẤM:** Viết commit tiếng Anh (ví dụ: `fix bug`, `update code`, `refactor service`).  
-> • ❌ **CẤM:** Viết tiếng Việt không dấu (ví dụ: `sua loi dat ve`, `them tinh nang huy ve`).  
-> • ❌ **CẤM:** Commit chung chung không rõ ý nghĩa (ví dụ: `update`, `fix`, `done`, `test`).  
-> • ✅ **BẮT BUỘC:** Viết đúng cấu trúc Conventional Commits với phần mô tả bằng **Tiếng Việt có dấu đầy đủ**.
+> ### 🏆 NGUYÊN TẮC VÀNG BẤT BIẾN (THE GOLDEN RULE)
+> **1 TASK = 1 NHÁNH = 1 PULL REQUEST DUY NHẤT (1T-1B-1PR)**  
+> • **Nghiêm cấm "Mega-PR":** Tuyệt đối cấm gộp từ 2 task trở lên vào cùng một nhánh.  
+> • **Nghiêm cấm nhảy Sprint:** Sprint hiện tại là Sprint 3, cấm tuyệt đối nộp code hay mở PR chứa các task `S4xx` của Sprint 4.  
+> • **Chế tài xử lý:** Team Lead có toàn quyền **CLOSE / REJECT NGAY LẬP TỨC** bất kỳ PR nào vi phạm quy tắc này mà không cần xem xét nội dung code!
 
-$$\text{type}(\text{scope}): \text{mô tả hành động ngắn gọn bằng Tiếng Việt có dấu (dưới 72 ký tự)}$$
+### 2.1 Bảng hệ thống tiền tố bắt buộc (Mandatory Prefixes)
 
-### 3.1 Danh sách các tiền tố (Types):
-*   `feat`: Thêm mới một tính năng hoặc API mới.
-*   `fix`: Sửa lỗi (bug) trong mã nguồn hoặc logic nghiệp vụ.
-*   `docs`: Cập nhật tài liệu (README, SRS, thiết kế CSDL, cẩm nang vận hành).
-*   `style`: Chỉnh sửa giao diện CSS, căn lề, định dạng code (không thay đổi logic nghiệp vụ).
-*   `refactor`: Tái cấu trúc mã nguồn (tối ưu hóa thuật toán, không thêm tính năng mới).
-*   `test`: Bổ sung hoặc cập nhật Unit Test, Integration Test.
-*   `chore`: Cập nhật thư viện phụ thuộc, cấu hình Gradle, Vite, Docker.
-*   `ci`: Cập nhật luồng tự động hóa CI/CD GitHub Actions.
+Mọi nhánh được tạo ra đều **BẮT BUỘC** phải bắt đầu bằng một trong các tiền tố sau:
 
-### 3.2 Bảng ví dụ mẫu commit chuẩn Tiếng Việt có dấu:
-| Loại commit | Ví dụ mẫu chuẩn Tiếng Việt có dấu |
-| :--- | :--- |
-| **`feat`** | `feat(auth): thêm API đăng ký và đăng nhập trả về mã xác thực JWT token` |
-| **`feat`** | `feat(seat): hoàn thiện component sơ đồ ghế xe khách 2 tầng trực quan` |
-| **`feat`** | `feat(trip): bổ sung bộ lọc chuyến xe theo khoảng giá và giờ khởi hành` |
-| **`fix`** | `fix(booking): sửa lỗi cướp ghế đang được giữ chỗ thanh toán trong 10 phút` |
-| **`fix`** | `fix(auth): sửa lỗi đăng nhập tài khoản khách hàng demo trên giao diện` |
-| **`docs`** | `docs(srs): bổ sung quy trình đăng ký nhà xe và hồ sơ giấy tờ xe bắt buộc` |
-| **`docs`** | `docs(audit): tạo bảng rà soát 13 lỗ hổng nghiệp vụ thực tế và kế hoạch khắc phục` |
-| **`test`** | `test(order): bổ sung 5 ca kiểm thử đặt vé thành công và chặn đặt trùng ghế` |
-| **`refactor`** | `refactor(payment): tối ưu hàm xử lý callback từ cổng thanh toán VNPAY` |
-| **`ci`** | `ci(actions): cấu hình build tự động Gradle và Vite trên nhánh dev` |
+| Tiền tố nhánh | Mục đích sử dụng | Phạm vi áp dụng |
+|:---|:---|:---|
+| **`feature/`** | Phát triển User Story / Tính năng mới | Toàn bộ các task phát triển chức năng FE & BE trong Sprint hiện tại |
+| **`testing/`** | Toàn bộ công việc kiểm thử phần mềm | Unit test, Integration test, E2E Acceptance test, Mock Fixtures, DB Test |
+| **`fix/`** | Sửa lỗi (Bug fix) trong Sprint | Khắc phục các lỗi phát sinh trong quá trình kiểm thử hoặc sau review |
+| **`docs/`** | Soạn thảo & Cập nhật tài liệu | Báo cáo Sprint, cập nhật SRS, Architecture docs, Git Workflow, Hướng dẫn |
+| **`refactor/`** | Tái cấu trúc & Dọn dẹp mã nguồn | Tối ưu hóa code, chuẩn hóa Clean Architecture mà không đổi logic nghiệp vụ |
+| **`perf/`** | Tối ưu hóa hiệu năng hệ thống | Cải thiện thời gian phản hồi SQL, SWR In-Memory cache, Concurrency lock |
+| **`hotfix/`** | Bản vá sự cố khẩn cấp | Xử lý lỗi nghiêm trọng ảnh hưởng trực tiếp đến luồng thanh toán / demo |
+
+### 2.2 Cú pháp đặt tên nhánh chuẩn 100%
+
+$$\Large \mathbf{\text{<tiền-tố>} / \text{<MÃ-TASK>} - \text{<tên-thành-viên>} - \text{<mô-tả-kebab-case>}}$$
+
+Trong đó:
+* **`<tiền-tố>`**: Chọn chính xác từ bảng mục 2.1 (`feature/`, `testing/`, `fix/`, `docs/`, `refactor/`, `perf/`, `hotfix/`).
+* **`<MÃ-TASK>`**: Bắt buộc là mã thẻ trên Trello (ví dụ: `S320`, `S321`, `S322`, `S312`, `S313`, `S317`, `S318`...).
+* **`<tên-thành-viên>`**: Tên không dấu của người thực hiện (`thanh`, `phat`, `phong`, `cuong`, `duc`).
+* **`<mô-tả-kebab-case>`**: Mô tả ngắn gọn nội dung công việc từ 2 - 5 từ, viết thường, ngăn cách bởi dấu gạch ngang `-`.
+
+### 2.3 Bảng danh mục mẫu nhánh chuẩn cho từng thành viên:
+
+| Thành viên | Mã Task | Tiền tố | Tên nhánh chuẩn 100% |
+|:---|:---:|:---:|:---|
+| **Phạm Công Thành** | S322 | `feature/` | `feature/S322-thanh-tai-cau-truc-dang-ky-doi-tac-kyb` |
+| **Phạm Công Thành** | S300 | `docs/` | `docs/S300-thanh-dong-bo-bao-cao-sprint-2-va-3` |
+| **Nguyễn Đại Phát** | S321 | `feature/` | `feature/S321-phat-tich-hop-google-oauth2-otp` |
+| **Trần Thanh Phong** | S310 | `perf/` | `perf/S310-phong-toi-uu-concurrency-pessimistic-lock` |
+| **Trần Thanh Phong** | S315 | `fix/` | `fix/S315-phong-sua-loi-countdown-timer-giu-ghe` |
+| **Huỳnh Nhật Cường** | S316 | `feature/` | `feature/S316-cuong-soat-ve-qr-camera-di-dong` |
+| **Trần Minh Đức** | S320 | `testing/` | `testing/S320-duc-kiem-thu-du-lieu-mau-fixture-don-db` |
+| **Trần Minh Đức** | S312 | `testing/` | `testing/S312-duc-kiem-thu-trang-chu-banner-lich-chay` |
+| **Trần Minh Đức** | S313 | `testing/` | `testing/S313-duc-kiem-thu-api-tra-cuu-ve-va-bao-mat` |
+| **Trần Minh Đức** | S317 | `testing/` | `testing/S317-duc-kiem-thu-tuong-thich-hop-dong-api` |
+| **Trần Minh Đức** | S318 | `testing/` | `testing/S318-duc-kiem-thu-wcag-accessibility-ban-phim` |
 
 ---
 
-## 4. QUY TRÌNH LÀM VIỆC HÀNG NGÀY CỦA TỪNG THÀNH VIÊN (7 BƯỚC CHUẨN)
+## 3. TIÊU CHUẨN COMMIT MESSAGE (100% TIẾNG VIỆT CÓ DẤU)
 
-Mỗi ngày khi bắt đầu làm task, thành viên thực hiện đúng 7 bước sau:
+> [!CAUTION]
+> ### 🛑 QUY TẮC COMMIT MESSAGE BẮT BUỘC
+> **100% COMMIT MESSAGE PHẢI VIẾT BẰNG TIẾNG VIỆT CÓ DẤU ĐẦY ĐỦ VÀ GẮN KÈM MÃ TASK!**  
+> ❌ **CẤM:** Viết tiếng Anh (ví dụ: `fix bug`, `update test`, `done task`).  
+> ❌ **CẤM:** Viết tiếng Việt không dấu (ví dụ: `sua giao dien dat ve`, `kiem thu tra cuu ve`).  
+> ❌ **CẤM:** Commit cụt ngủn hoặc vô nghĩa (ví dụ: `wip`, `update`, `test`, `done`, `fix`).  
+> ✅ **BẮT BUỘC:** Tuân thủ chuẩn Conventional Commits Tiếng Việt có dấu theo cú pháp dưới đây.
 
-### Bước 1: Đồng bộ mã nguồn mới nhất từ nhánh `dev`
+$$\Large \mathbf{\text{<loại>}(\text{<mã-task>}): \text{mô tả nội dung công việc bằng Tiếng Việt có dấu}}$$
+
+### 3.1 Bảng phân loại Commit Types chuẩn hóa:
+
+| Loại | Ý nghĩa | Ví dụ mẫu chuẩn Tiếng Việt có dấu |
+|:---|:---|:---|
+| **`feat`** | Tính năng mới | `feat(S321): tích hợp nút đăng nhập Google OAuth2 trên giao diện khách hàng` |
+| **`feat`** | Tính năng mới | `feat(S322): xây dựng form thẩm định doanh nghiệp nhà xe KYB 3 khối` |
+| **`test`** | Kiểm thử phần mềm | `test(S320): kiểm thử tích hợp dữ liệu mẫu fixture và quy trình dọn CSDL an toàn` |
+| **`test`** | Kiểm thử phần mềm | `test(S313): kiểm thử tích hợp API tra cứu vé và bảo mật dữ liệu hành khách` |
+| **`fix`** | Sửa lỗi mã nguồn | `fix(S315): sửa lỗi đếm ngược giải phóng ghế quá hạn 10 phút trên CSDL` |
+| **`docs`** | Cập nhật tài liệu | `docs(S300): cập nhật biên bản tổng kết Sprint 2 và kế hoạch nước rút Sprint 3` |
+| **`refactor`**| Tái cấu trúc code | `refactor(S322): chuẩn hóa service upload giấy phép vận tải lên Cloudinary` |
+| **`perf`** | Tối ưu hiệu năng | `perf(S310): tối ưu câu truy vấn kiểm tra khóa bi quan dưới 30ms` |
+| **`chore`** | Cấu hình & Thư viện| `chore(deps): nâng cấp thư viện quét mã QR html5-qrcode lên phiên bản mới` |
+
+---
+
+## 4. QUY TRÌNH LÀM VIỆC 7 BƯỚC BẮT BUỘC CỦA MỖI THÀNH VIÊN
+
+Mỗi khi bắt đầu một task mới từ Trello, thành viên thực hiện nghiêm ngặt 7 bước sau:
+
+### Bước 1: Kéo mã nguồn mới nhất từ nhánh `dev`
 ```bash
 git checkout dev
 git pull origin dev
 ```
 
-### Bước 2: Tạo nhánh tính năng mới từ `dev`
+### Bước 2: Tạo nhánh riêng cho task theo đúng cú pháp chuẩn
 ```bash
-git checkout -b feature/phong-customer-pessimistic-lock
+# Ví dụ Minh Đức làm task S320:
+git checkout -b testing/S320-duc-kiem-thu-du-lieu-mau-fixture-don-db
 ```
 
-### Bước 3: Viết code và commit thường xuyên
-Chia nhỏ công việc thành các commit có ý nghĩa:
+### Bước 3: Viết code / test và commit đều đặn bằng tiếng Việt có dấu
 ```bash
 git add .
-git commit -m "feat(booking): tạo form thông tin hành khách đặt vé COD"
+git commit -m "test(S320): kiểm thử tích hợp dữ liệu mẫu fixture và quy trình dọn CSDL an toàn"
 ```
 
-### Bước 4: Luôn kéo cập nhật mới nhất từ `dev` về nhánh của mình trước khi đẩy lên
-Tránh xung đột mã nguồn với đồng đội:
+### Bước 4: Kiểm tra điều kiện chất lượng kỹ thuật tại máy cá nhân (Pre-flight Check)
+Trước khi đẩy code lên GitHub, thành viên **BẮT BUỘC** phải tự chạy 2 lệnh sau:
+1. **Kiểm tra Frontend:**
+   ```bash
+   cd frontend
+   npm run build
+   ```
+   *(Bắt buộc: 0 lỗi TypeScript, build ra thư mục dist/ thành công).*
+2. **Kiểm tra Backend:**
+   ```bash
+   cd backend
+   gradlew.bat testClasses
+   ```
+   *(Bắt buộc: BUILD SUCCESSFUL, không có lỗi biên dịch class).*
+
+### Bước 5: Kéo cập nhật từ `dev` về để triệt tiêu mọi xung đột (Zero Conflict)
 ```bash
 git checkout dev
 git pull origin dev
-git checkout feature/phong-customer-pessimistic-lock
+git checkout testing/S320-duc-kiem-thu-du-lieu-mau-fixture-don-db
 git merge dev
 ```
-*(Nếu có xung đột, giải quyết conflict ngay trên IDE, sau đó commit lại)*.
+*(Nếu có conflict, tự giải quyết trên IDE, test lại cho pass rồi mới tiếp tục).*
 
-### Bước 5: Đẩy nhánh tính năng lên GitHub
+### Bước 6: Đẩy nhánh lên GitHub
 ```bash
-git push -u origin feature/phong-customer-pessimistic-lock
+git push -u origin testing/S320-duc-kiem-thu-du-lieu-mau-fixture-don-db
 ```
 
-### Bước 6: Tạo Pull Request (PR) trên giao diện GitHub
-1.  Truy cập vào Repository trên GitHub.
-2.  Bấm nút **"Compare & pull request"**.
-3.  Chọn:
-    *   **base branch (nhánh đích):** `dev`
-    *   **compare branch (nhánh nguồn):** `feature/phong-customer-pessimistic-lock`
-4.  Điền tiêu đề PR rõ ràng: `[FEATURE] Hoàn thiện giao diện đặt vé COD và trừ ghế trống`.
-5.  Gắn tag Reviewer (chọn Team Lead hoặc đồng đội phụ trách cùng module).
-
-### Bước 7: Review code & Merge vào `dev`
-*   Người được gán Review kiểm tra code trên tab **Files changed**.
-*   Nếu đạt yêu cầu ➔ Bấm **Approve** và tiến hành **Merge pull request**.
-*   Sau khi merge thành công, xóa nhánh feature trên GitHub để giữ repo gọn gàng.
+### Bước 7: Mở Pull Request (PR) theo mẫu quy định
+1. Truy cập Repository GitHub: [https://github.com/phamcongthanhvn2k6/traveleasy-platform](https://github.com/phamcongthanhvn2k6/traveleasy-platform)
+2. Bấm nút **"New pull request"**.
+3. Chọn:
+   - **Base branch (nhánh đích):** `dev`
+   - **Compare branch (nhánh nguồn):** `testing/S320-duc-kiem-thu-du-lieu-mau-fixture-don-db`
+4. Điền tiêu đề và nội dung PR theo mẫu quy định tại **Mục 5**.
+5. Gán Reviewer: **`phamcongthanhvn2k6` (Phạm Công Thành)**.
 
 ---
 
-## 5. HƯỚNG DẪN BẬT "BRANCH PROTECTION RULES" TRÊN GITHUB CHO NHÁNH `main`
+## 5. TIÊU CHUẨN TẠO VÀ KIỂM DUYỆT PULL REQUEST (PR GATEKEEPING)
 
-Để đảm bảo không ai vô tình push code lỗi thẳng lên `main`, Team Lead thực hiện thiết lập như sau:
+### 5.1 Cú pháp tiêu đề Pull Request
+$$\Large \mathbf{\text{[<MÃ-TASK>]} \ \text{[<TIỀN-TỐ>]} \ \text{<Tên nghiệp vụ bằng Tiếng Việt có dấu>}}$$
 
-1.  Vào Repository trên GitHub: `https://github.com/phamcongthanhvn2k6/traveleasy-platform`.
-2.  Bấm vào tab **Settings** (ở thanh menu phía trên).
-3.  Ở cột menu bên trái, chọn mục **Branches** (nằm dưới mục *Code and automation*).
-4.  Tại mục **Branch protection rules**, bấm nút **Add branch ruleset** (hoặc **Add rule**).
-5.  Thiết lập các thông số sau:
-    *   **Branch name pattern:** Điền `main`.
-    *   Tích chọn: **Require a pull request before merging** (Bắt buộc phải tạo PR, không cho push thẳng).
-    *   Tích chọn: **Require approvals** ➔ Chọn số lượng là **1** (Yêu cầu ít nhất 1 thành viên hoặc Lead duyệt).
-    *   Tích chọn: **Dismiss stale pull request approvals when new commits are pushed** (Hủy duyệt cũ nếu có commit mới).
-    *   Tích chọn: **Do not allow bypassing the above settings** (Áp dụng cho cả Admin/Owner).
-6.  Bấm nút **Create** (hoặc **Save changes**) ở cuối trang để kích hoạt!
+*Ví dụ:*  
+- `[S320] [TESTING] Kiểm thử tích hợp dữ liệu mẫu Fixture và dọn dẹp CSDL an toàn`
+- `[S321] [FEATURE] Tích hợp Đăng nhập Google OAuth2 và Xác thực mã OTP`
+- `[S322] [FEATURE] Tái cấu trúc phân hệ Đăng ký Đối tác Nhà xe KYB và Thẩm định Admin`
+
+### 5.2 Mẫu mô tả Pull Request (PR Template) bắt buộc:
+
+```markdown
+### 📌 THÔNG TIN TASK
+- **Mã Task trên Trello:** [S320]
+- **Thành viên phụ trách:** Trần Minh Đức
+- **Sprint:** Sprint 3 (Nhiệm vụ tồn đọng Sprint 2 dứt điểm)
+
+### 🛠️ NỘI DUNG THAY ĐỔI
+- Bổ sung class kiểm thử `S320ApiIntegrationTest.java` kiểm tra dọn sạch DB.
+- Thêm trang giao diện nạp dữ liệu mẫu `TestFixturesPage.tsx` tại `/test/fixtures`.
+- Viết kịch bản kiểm thử E2E tự động `S320-acceptance.spec.ts`.
+
+### ✅ BẰNG CHỨNG KIỂM THỬ (TEST RESULTS)
+- [x] Frontend `npm run build`: PASS (0 lỗi TypeScript)
+- [x] Backend `gradlew testClasses`: BUILD SUCCESSFUL
+- [x] Đã merge nhánh `dev` mới nhất: 0 Merge Conflict
+- [x] Ảnh chụp màn hình / Log kết quả test: (Đính kèm ảnh minh chứng vào đây)
+```
+
+### 5.3 Quy định giới hạn quy mô PR (PR Size Limits)
+- Mỗi PR chỉ giải quyết **duy nhất 1 mã Task**.
+- Khuyến nghị: Thay đổi **dưới 15 files** và **dưới 500 dòng code** (trừ file sinh tự động hoặc file dữ liệu mẫu fixture).
+- PR vượt quá ngưỡng phải có giải trình cụ thể trong phần mô tả.
 
 ---
 
-## 6. QUY TẮC BẢO MẬT & QUẢN LÝ BIẾN MÔI TRƯỜNG
+## 6. QUY TẮC BẢO MẬT BIẾN MÔI TRƯỜNG & AN TOÀN KHO CODE
 
-*   **TUYỆT ĐỐI KHÔNG COMMIT FILE `.env` LÊN GITHUB:**  
-    File `.env` chứa mật khẩu database thật, khóa bí mật JWT, API Key của OpenAI. Nếu commit lên sẽ bị GitHub quét cảnh báo rò rỉ bảo mật và bị trừ điểm nặng!
-*   **Sử dụng file `.env.example`:**  
-    Mọi biến môi trường mới khi thêm vào dự án phải được khai báo mẫu vào file `.env.example` với giá trị giả lập để các thành viên khác biết cách cấu hình trên máy cục bộ của họ.
-*   **Khi clone dự án về máy:**  
-    Mỗi thành viên tự sao chép file mẫu thành file cấu hình thực tế:
-    ```bash
-    cp .env.example .env
-    ```
+1. **TUYỆT ĐỐI CẤM COMMIT FILE `.env` LÊN GITHUB:**  
+   File `.env` chứa URL kết nối Supabase thật, khóa bí mật JWT, khóa PayOS, VNPAY, Cloudinary. Commit lộ bí mật sẽ bị GitHub Secret Scanning gắn cờ và bị trừ toàn bộ điểm chuyên cần OJT!
+2. **Khai báo biến mẫu tại `.env.example`:**  
+   Mọi biến môi trường mới phải khai báo giá trị mẫu tại `.env.example` để đồng đội tự copy cấu hình khi kéo code về.
+3. **Thẩm quyền Merge:**  
+   Chỉ duy nhất **Team Lead (Phạm Công Thành)** hoặc thành viên được Lead ủy quyền bằng văn bản mới có quyền bấm nút **Merge Pull Request** vào nhánh `dev` và `main`.
 
 ---
-*Tài liệu được ban hành bởi Team Lead — Dự án TravelEasy Platform.*  
-*Chúc toàn đội làm việc ăn ý, mượt mà và giành trọn điểm số tối đa!*
-
-
----
-
-## 7. QUY CHUẨN TẠO NHÁNH KIỂM THỬ & BẮT BUỘC (MỖI TASK 1 NHÁNH RIÊNG)
-
-Để đảm bảo kỷ luật quản trị mã nguồn, tính minh bạch của Sprint và bảo vệ điểm số 100/100 OJT:
-* **QUY TẮC BẮT BUỘC:**
-  1. **Mỗi task là 1 nhánh riêng biệt (Nghiêm cấm gom nhiều task vào 1 branch / Mega-PR).**
-  2. **Tiền tố bắt buộc cho nhánh kiểm thử là `testing/`** và phải gắn mã số task rõ ràng:
-     ```bash
-     testing/<mã-task>-<mô-tả-ngắn-gọn>
-     ```
-  3. **Tiêu đề commit BẮT BUỘC viết bằng Tiếng Việt có dấu**, tuân thủ định dạng Conventional Commits:
-     ```bash
-     test(<mã-task>): <mô tả chi tiết nội dung kiểm thử bằng tiếng Việt có dấu>
-     ```
-* **Ví dụ danh sách nhánh kiểm thử chuẩn hóa:**
-  * `testing/S320-kiem-thu-du-lieu-mau-fixture-va-don-dep-db`
-  * `testing/S312-kiem-thu-nghiem-thu-trang-chu-banner-lich-chay`
-  * `testing/S313-kiem-thu-tich-hop-api-tra-cuu-ve-va-bao-mat`
-  * `testing/S317-kiem-thu-hoi-quy-tuong-thich-hop-dong-api`
-  * `testing/S318-kiem-thu-kha-nang-tiep-can-ban-phim-wcag`
-* **Quy chuẩn lưu ảnh minh chứng**:
-  * Chụp ảnh màn hình các trang web hoạt động bình thường và lưu vào thư mục `docs/screenshots/`.
-  * Đặt tên ảnh theo cú pháp: `docs/screenshots/test_<phân-hệ>_<tên-trang>.png`.
-* **Cập nhật Biên bản nghiệm thu**:
-  * Điền kết quả kiểm thử vào file [`docs/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md`](BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md).
-* **Commit chuẩn Conventional Commits Tiếng Việt có dấu**:
-  ```bash
-  git add docs/screenshots/ docs/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md
-  git commit -m "test(acceptance): hoàn thành kiểm thử và bổ sung minh chứng nghiệm thu [Tên Bạn]"
-  git push -u origin <tên-nhánh-kiểm-thử>
-  ```
-* **Thời hạn chót (Deadline)**: **Hết ngày mai (23:59:00)**.
-* **Hỗ trợ kỹ thuật**: Nhắn tin riêng trực tiếp cho Nhóm trưởng Phạm Công Thành nếu gặp bất kỳ lỗi nào!
+*Quy chuẩn này có hiệu lực ngay lập tức kể từ ngày ban hành. Toàn bộ 5 thành viên Nhóm 7 có nghĩa vụ tuân thủ 100% để bảo đảm đồ án đạt điểm số tối đa 100/100!*
