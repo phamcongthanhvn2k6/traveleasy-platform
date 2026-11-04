@@ -25,7 +25,8 @@ import {
   DollarSign,
   Calendar,
   Send,
-  HelpCircle
+  HelpCircle,
+  RotateCcw
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
@@ -50,7 +51,7 @@ interface BusCompanyItem {
   email: string;
   phone: string;
   address?: string;
-  status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'SUSPENDED' | 'PENDING_SUPPLEMENT';
+  status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'SUSPENDED' | 'PENDING_SUPPLEMENT' | 'DELETED';
   statusLabel: string;
   createdAt: string;
 
@@ -77,7 +78,7 @@ interface BusCompanyItem {
 }
 
 export const AdminBusCompaniesPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'ALL' | 'PENDING' | 'PENDING_SUPPLEMENT' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED'>('ALL');
+  const [activeTab, setActiveTab] = useState<'ALL' | 'PENDING' | 'PENDING_SUPPLEMENT' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED' | 'DELETED'>('ALL');
   const [companies, setCompanies] = useState<BusCompanyItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -234,7 +235,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
   const handleDeleteCompany = async (c: BusCompanyItem) => {
     if (
       !window.confirm(
-        `Bạn có chắc muốn XOÁ đối tác nhà xe "${c.name}"? Thao tác này chỉ thực hiện được khi nhà xe chưa có chuyến xe hay đơn vé nào!`
+        `XÁC NHẬN XÓA MỀM (BẢO TOÀN LƯU TRỮ AN TOÀN):\n\nBạn có chắc muốn chuyển đối tác nhà xe "${c.name}" sang trạng thái ĐÃ XÓA MỀM?\n\n• Toàn bộ dữ liệu tuyến đường, chuyến đi, hợp đồng và hóa đơn đối soát được BẢO TOÀN NGUYÊN VẸN 100% trong CSDL.\n• Nhà xe sẽ ngừng mở bán trên sàn.\n• Quản trị viên có thể bấm [Khôi phục] bất cứ lúc nào.`
       )
     ) {
       return;
@@ -242,11 +243,34 @@ export const AdminBusCompaniesPage: React.FC = () => {
 
     try {
       await api.delete(`/admin/bus-companies/${c.id}`);
-      setCompanies((prev) => prev.filter((item) => item.id !== c.id));
-      toast.info(`Đã xoá nhà xe "${c.name}" thành công!`, 'Xoá Nhà Xe');
+      setCompanies((prev) =>
+        prev.map((item) =>
+          item.id === c.id
+            ? { ...item, status: 'DELETED', statusLabel: 'Đã xóa mềm' }
+            : item
+        )
+      );
+      toast.info(`Đã chuyển nhà xe "${c.name}" sang trạng thái XÓA MỀM an toàn!`, 'Xóa Mềm Thành Công');
     } catch (err: any) {
       console.error('Delete company error:', err);
-      toast.error(err.response?.data?.message || 'Xoá nhà xe thất bại! Nhà xe đang có dữ liệu liên quan.', 'Lỗi');
+      toast.error(err.response?.data?.message || 'Xóa nhà xe thất bại!', 'Lỗi');
+    }
+  };
+
+  const handleRestoreCompany = async (c: BusCompanyItem) => {
+    try {
+      await api.patch(`/admin/bus-companies/${c.id}/restore`);
+      setCompanies((prev) =>
+        prev.map((item) =>
+          item.id === c.id
+            ? { ...item, status: 'ACTIVE', statusLabel: 'Đang hoạt động' }
+            : item
+        )
+      );
+      toast.success(`Đã khôi phục đối tác nhà xe "${c.name}" hoạt động trở lại!`, 'Khôi Phục Thành Công');
+    } catch (err: any) {
+      console.error('Restore company error:', err);
+      toast.error(err.response?.data?.message || 'Khôi phục nhà xe thất bại!', 'Lỗi');
     }
   };
 
@@ -440,6 +464,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
           { key: 'ACTIVE', label: '✅ Đang hoạt động' },
           { key: 'REJECTED', label: '❌ Bị từ chối' },
           { key: 'SUSPENDED', label: '⏸️ Tạm ngưng' },
+          { key: 'DELETED', label: '🗑️ Đã xóa mềm' },
         ].map((tab: any) => {
           const isActive = activeTab === tab.key;
           return (
@@ -522,6 +547,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
                     PENDING_SUPPLEMENT: { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa' },
                     REJECTED: { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' },
                     SUSPENDED: { bg: '#f1f5f9', text: '#64748b', border: '#cbd5e1' },
+                    DELETED: { bg: '#f1f5f9', text: '#64748b', border: '#cbd5e1' },
                   }[c.status] || { bg: '#f1f5f9', text: '#64748b', border: '#cbd5e1' };
 
                   // Kiểm tra so khớp AML tên chủ tài khoản
@@ -660,101 +686,125 @@ export const AdminBusCompaniesPage: React.FC = () => {
                       {/* Thao tác */}
                       <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                          {/* Nút Thẩm Định / Xem Hồ Sơ KYB */}
-                          <button
-                            onClick={() => {
-                              setViewingCompany(c);
-                              setCommissionInput(c.commissionRate || 8.0);
-                              setDecisionTab('APPROVE');
-                            }}
-                            title="Mở Trung Tâm Thẩm Định Pháp Lý KYB"
-                            style={{
-                              backgroundColor: c.status === 'PENDING' || c.status === 'PENDING_SUPPLEMENT' ? '#2563eb' : '#f8fafc',
-                              color: c.status === 'PENDING' || c.status === 'PENDING_SUPPLEMENT' ? '#ffffff' : '#334155',
-                              border: c.status === 'PENDING' || c.status === 'PENDING_SUPPLEMENT' ? '1px solid #1d4ed8' : '1px solid #cbd5e1',
-                              borderRadius: '6px',
-                              padding: '6px 12px',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              boxShadow: c.status === 'PENDING' ? '0 2px 4px rgba(37,99,235,0.25)' : 'none',
-                            }}
-                          >
-                            <ShieldCheck size={14} />
-                            {c.status === 'PENDING' || c.status === 'PENDING_SUPPLEMENT' ? 'Thẩm Định KYB' : 'Hồ Sơ Pháp Lý'}
-                          </button>
-
-                          {/* Sửa thông tin */}
-                          <button
-                            onClick={() => openEditModal(c)}
-                            title="Sửa thông tin nhanh"
-                            style={{
-                              backgroundColor: '#eff6ff',
-                              color: '#2563eb',
-                              border: '1px solid #bfdbfe',
-                              borderRadius: '6px',
-                              padding: '6px 9px',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <Edit2 size={13} />
-                          </button>
-
-                          {/* Ngưng hoặc mở lại */}
-                          {c.status === 'ACTIVE' ? (
+                          {c.status === 'DELETED' ? (
                             <button
-                              onClick={() => toggleCompanyStatus(c.id)}
-                              title="Tạm ngưng mở bán"
-                              style={{
-                                backgroundColor: '#fffbeb',
-                                color: '#d97706',
-                                border: '1px solid #fde68a',
-                                borderRadius: '6px',
-                                padding: '6px 9px',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              <Ban size={13} />
-                            </button>
-                          ) : c.status === 'SUSPENDED' ? (
-                            <button
-                              onClick={() => toggleCompanyStatus(c.id)}
-                              title="Mở bán trở lại"
+                              onClick={() => handleRestoreCompany(c)}
+                              title="Khôi phục đối tác nhà xe hoạt động trở lại"
                               style={{
                                 backgroundColor: '#ecfdf5',
                                 color: '#059669',
                                 border: '1px solid #a7f3d0',
                                 borderRadius: '6px',
-                                padding: '6px 9px',
+                                padding: '6px 12px',
                                 fontSize: '12px',
+                                fontWeight: 700,
                                 cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
                               }}
                             >
-                              <Check size={13} />
+                              <RotateCcw size={13} /> Khôi phục
                             </button>
-                          ) : null}
+                          ) : (
+                            <>
+                              {/* Nút Thẩm Định / Xem Hồ Sơ KYB */}
+                              <button
+                                onClick={() => {
+                                  setViewingCompany(c);
+                                  setCommissionInput(c.commissionRate || 8.0);
+                                  setDecisionTab('APPROVE');
+                                }}
+                                title="Mở Trung Tâm Thẩm Định Pháp Lý KYB"
+                                style={{
+                                  backgroundColor: c.status === 'PENDING' || c.status === 'PENDING_SUPPLEMENT' ? '#2563eb' : '#f8fafc',
+                                  color: c.status === 'PENDING' || c.status === 'PENDING_SUPPLEMENT' ? '#ffffff' : '#334155',
+                                  border: c.status === 'PENDING' || c.status === 'PENDING_SUPPLEMENT' ? '1px solid #1d4ed8' : '1px solid #cbd5e1',
+                                  borderRadius: '6px',
+                                  padding: '6px 12px',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  boxShadow: c.status === 'PENDING' ? '0 2px 4px rgba(37,99,235,0.25)' : 'none',
+                                }}
+                              >
+                                <ShieldCheck size={14} />
+                                {c.status === 'PENDING' || c.status === 'PENDING_SUPPLEMENT' ? 'Thẩm Định KYB' : 'Hồ Sơ Pháp Lý'}
+                              </button>
 
-                          {/* Xóa */}
-                          <button
-                            onClick={() => handleDeleteCompany(c)}
-                            title="Xoá nhà xe"
-                            style={{
-                              backgroundColor: '#fee2e2',
-                              color: '#dc2626',
-                              border: '1px solid #fecaca',
-                              borderRadius: '6px',
-                              padding: '6px 9px',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                              {/* Sửa thông tin */}
+                              <button
+                                onClick={() => openEditModal(c)}
+                                title="Sửa thông tin nhanh"
+                                style={{
+                                  backgroundColor: '#eff6ff',
+                                  color: '#2563eb',
+                                  border: '1px solid #bfdbfe',
+                                  borderRadius: '6px',
+                                  padding: '6px 9px',
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <Edit2 size={13} />
+                              </button>
+
+                              {/* Ngưng hoặc mở lại */}
+                              {c.status === 'ACTIVE' ? (
+                                <button
+                                  onClick={() => toggleCompanyStatus(c.id)}
+                                  title="Tạm ngưng mở bán"
+                                  style={{
+                                    backgroundColor: '#fffbeb',
+                                    color: '#d97706',
+                                    border: '1px solid #fde68a',
+                                    borderRadius: '6px',
+                                    padding: '6px 9px',
+                                    fontSize: '12px',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  <Ban size={13} />
+                                </button>
+                              ) : c.status === 'SUSPENDED' ? (
+                                <button
+                                  onClick={() => toggleCompanyStatus(c.id)}
+                                  title="Mở bán trở lại"
+                                  style={{
+                                    backgroundColor: '#ecfdf5',
+                                    color: '#059669',
+                                    border: '1px solid #a7f3d0',
+                                    borderRadius: '6px',
+                                    padding: '6px 9px',
+                                    fontSize: '12px',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  <Check size={13} />
+                                </button>
+                              ) : null}
+
+                              {/* Xóa mềm */}
+                              <button
+                                onClick={() => handleDeleteCompany(c)}
+                                title="Xóa mềm đối tác nhà xe (Bảo toàn lịch sử)"
+                                style={{
+                                  backgroundColor: '#fee2e2',
+                                  color: '#dc2626',
+                                  border: '1px solid #fecaca',
+                                  borderRadius: '6px',
+                                  padding: '6px 9px',
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
