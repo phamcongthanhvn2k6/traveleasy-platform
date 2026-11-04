@@ -202,6 +202,7 @@ export const TestFixturesPage: React.FC = () => {
 
   // Sample Booking / QR State
   const [sampleBooking, setSampleBooking] = useState<SampleBookingData | null>(null);
+  const [qrImgFailed, setQrImgFailed] = useState<boolean>(false);
 
   const selectedTrip = trips.find(t => t.id === selectedTripId) || trips[0];
 
@@ -264,7 +265,7 @@ export const TestFixturesPage: React.FC = () => {
     setCustomTripInput('');
   };
 
-  const handleApplyCustomTripId = () => {
+  const handleApplyCustomTripId = async () => {
     const parsed = parseInt(customTripInput.trim(), 10);
     if (isNaN(parsed) || parsed <= 0) {
       toast.warning('Vui lòng nhập mã chuyến xe (Trip ID) là số nguyên dương hợp lệ!');
@@ -274,26 +275,55 @@ export const TestFixturesPage: React.FC = () => {
     if (existing) {
       setSelectedTripId(parsed);
       toast.info(`Đã chuyển sang chuyến xe #${parsed}!`);
-    } else {
-      // Thêm chuyến xe giả định vào danh sách nếu chưa có
-      const newCustomTrip: DemoTrip = {
-        id: parsed,
-        route: 'Hà Nội - Đà Nẵng',
-        departureLocation: 'Hà Nội',
-        arrivalLocation: 'Đà Nẵng',
-        busCompany: 'Phương Trang VIP',
-        licensePlate: '29B-12345',
-        departureTime: '18:30:00',
-        totalSeats: 34,
-        availableSeats: 32,
-        price: 450000,
-        status: 'SCHEDULED',
-        busType: 'LIMOUSINE'
-      };
-      setTrips(prev => [newCustomTrip, ...prev]);
-      setSelectedTripId(parsed);
-      toast.success(`Đã nạp thành công chuyến xe #${parsed} vào bộ điều khiển!`);
+      return;
     }
+
+    try {
+      const res = await api.get(`/trips/${parsed}`);
+      const tripData = res.data?.data?.trip || res.data?.data;
+      if (tripData) {
+        const originCity = tripData.originCity || tripData.departureLocation || 'Hà Nội';
+        const destCity = tripData.destinationCity || tripData.arrivalLocation || 'Đà Nẵng';
+        const loadedTrip: DemoTrip = {
+          id: parsed,
+          route: tripData.route || `${originCity} - ${destCity}`,
+          departureLocation: originCity,
+          arrivalLocation: destCity,
+          busCompany: tripData.busCompanyName || tripData.busCompany || 'Phương Trang VIP',
+          licensePlate: tripData.licensePlate || '29B-12345',
+          departureTime: tripData.departureTime || '18:30:00',
+          totalSeats: tripData.totalSeats || 34,
+          availableSeats: tripData.availableSeats !== undefined ? tripData.availableSeats : 32,
+          price: tripData.price || 450000,
+          status: tripData.status || 'SCHEDULED',
+          busType: tripData.busType || 'LIMOUSINE'
+        };
+        setTrips(prev => [loadedTrip, ...prev]);
+        setSelectedTripId(parsed);
+        toast.success(`Đã nạp chuyến xe #${parsed} từ hệ thống thành công!`);
+        return;
+      }
+    } catch {
+      // Fallback khi offline hoặc mã chuyến xe chưa có trong CSDL
+    }
+
+    const newCustomTrip: DemoTrip = {
+      id: parsed,
+      route: 'Hà Nội - Đà Nẵng',
+      departureLocation: 'Hà Nội',
+      arrivalLocation: 'Đà Nẵng',
+      busCompany: 'Phương Trang VIP',
+      licensePlate: '29B-12345',
+      departureTime: '18:30:00',
+      totalSeats: 34,
+      availableSeats: 32,
+      price: 450000,
+      status: 'SCHEDULED',
+      busType: 'LIMOUSINE'
+    };
+    setTrips(prev => [newCustomTrip, ...prev]);
+    setSelectedTripId(parsed);
+    toast.success(`Đã nạp thành công chuyến xe #${parsed} vào bộ điều khiển!`);
   };
 
   const handleSetSoldOut = async () => {
@@ -378,6 +408,7 @@ export const TestFixturesPage: React.FC = () => {
 
   const handleSeedSampleBooking = async () => {
     setIsActionLoading('seed-booking');
+    setQrImgFailed(false);
     try {
       const res = await api.post('/demo/seed-sample-booking');
       if (res.data?.data) {
@@ -695,12 +726,21 @@ export const TestFixturesPage: React.FC = () => {
               <div className="bg-slate-950/80 border border-amber-500/30 rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-6">
                 
                 <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
-                  <div className="p-2 bg-white rounded-xl shadow-md border border-slate-300">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(sampleBooking.qrCodeHash || 'TE-DEMO-001-VALID')}`}
-                      alt="Mã QR Vé Mẫu"
-                      className="w-28 h-28 block"
-                    />
+                  <div className="p-2 bg-white rounded-xl shadow-md border border-slate-300 flex items-center justify-center min-w-[124px] min-h-[124px]">
+                    {!qrImgFailed ? (
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(sampleBooking.qrCodeHash || 'TE-DEMO-001-VALID')}`}
+                        alt="Mã QR Vé Mẫu"
+                        onError={() => setQrImgFailed(true)}
+                        className="w-28 h-28 block"
+                      />
+                    ) : (
+                      <div className="w-28 h-28 bg-slate-100 rounded-lg border border-dashed border-slate-300 flex flex-col items-center justify-center p-2 text-center">
+                        <QrCode className="w-10 h-10 text-slate-800" />
+                        <span className="text-[10px] text-slate-700 font-bold mt-1">Mã QR Ngoại Tuyến</span>
+                        <span className="text-[8px] font-mono text-indigo-700 break-all">{sampleBooking.qrCodeHash}</span>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="space-y-1.5 text-xs">

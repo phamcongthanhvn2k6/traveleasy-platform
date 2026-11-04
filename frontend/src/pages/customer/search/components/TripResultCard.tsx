@@ -456,33 +456,43 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
               {formatCurrency(trip.price)}
             </div>
 
-            <div style={{ fontSize: '12px', color: trip.availableSeats < 10 ? '#ea580c' : '#16a34a', fontWeight: 700, margin: '4px 0 10px 0' }}>
+            <div style={{
+              fontSize: '12px',
+              color: trip.availableSeats === 0 ? '#ef4444' : (trip.availableSeats < 10 ? '#ea580c' : '#16a34a'),
+              fontWeight: 700,
+              margin: '4px 0 10px 0'
+            }}>
               {trip.availableSeats > 0 ? `Còn ${trip.availableSeats} chỗ trống` : 'Hết vé'}
             </div>
 
             <button
-              onClick={toggleExpand}
+              onClick={trip.availableSeats === 0 ? undefined : toggleExpand}
+              disabled={trip.availableSeats === 0}
               style={{
-                backgroundColor: expanded
-                  ? (isDark ? '#1e293b' : '#f1f5f9')
-                  : '#2563eb',
-                color: expanded
-                  ? (isDark ? '#f8fafc' : '#1e293b')
-                  : '#ffffff',
+                backgroundColor: trip.availableSeats === 0
+                  ? (isDark ? '#334155' : '#cbd5e1')
+                  : (expanded
+                    ? (isDark ? '#1e293b' : '#f1f5f9')
+                    : '#2563eb'),
+                color: trip.availableSeats === 0
+                  ? (isDark ? '#94a3b8' : '#64748b')
+                  : (expanded
+                    ? (isDark ? '#f8fafc' : '#1e293b')
+                    : '#ffffff'),
                 border: expanded ? `1px solid ${isDark ? '#334155' : '#cbd5e1'}` : 'none',
                 padding: '9px 20px',
                 borderRadius: '8px',
                 fontWeight: 700,
                 fontSize: '14px',
-                cursor: 'pointer',
+                cursor: trip.availableSeats === 0 ? 'not-allowed' : 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
                 transition: 'all 0.15s ease',
               }}
             >
-              {expanded ? 'Đóng' : 'Chọn chuyến'}
-              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              {trip.availableSeats === 0 ? 'Hết vé' : (expanded ? 'Đóng' : 'Chọn chuyến')}
+              {trip.availableSeats === 0 ? null : (expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
             </button>
           </div>
         </div>

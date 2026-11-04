@@ -106,14 +106,24 @@ export const TripCard: React.FC<Props> = ({ trip, onBook }) => {
           <div style={{ fontSize: '20px', fontWeight: 800, color: isDark ? '#38bdf8' : '#2563eb' }}>
             {trip.price.toLocaleString('vi-VN')} đ
           </div>
-          <div style={{ fontSize: '12px', color: '#10b981', fontWeight: 600, marginBottom: '8px' }}>
-            Còn {trip.availableSeats} chỗ trống
+          <div style={{
+            fontSize: '12px',
+            color: trip.availableSeats === 0 ? '#ef4444' : '#10b981',
+            fontWeight: 600,
+            marginBottom: '8px'
+          }}>
+            {trip.availableSeats > 0 ? `Còn ${trip.availableSeats} chỗ trống` : 'Hết vé'}
           </div>
           <button
-            onClick={toggleExpand}
+            onClick={trip.availableSeats === 0 ? undefined : toggleExpand}
+            disabled={trip.availableSeats === 0}
             style={{
-              backgroundColor: expanded ? (isDark ? '#1e293b' : '#f1f5f9') : '#2563eb',
-              color: expanded ? (isDark ? '#f8fafc' : '#334155') : '#ffffff',
+              backgroundColor: trip.availableSeats === 0
+                ? (isDark ? '#334155' : '#cbd5e1')
+                : (expanded ? (isDark ? '#1e293b' : '#f1f5f9') : '#2563eb'),
+              color: trip.availableSeats === 0
+                ? (isDark ? '#94a3b8' : '#64748b')
+                : (expanded ? (isDark ? '#f8fafc' : '#334155') : '#ffffff'),
               border: expanded ? `1px solid ${isDark ? '#334155' : '#cbd5e1'}` : 'none',
               padding: '8px 16px',
               borderRadius: '6px',
@@ -122,10 +132,10 @@ export const TripCard: React.FC<Props> = ({ trip, onBook }) => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
-              cursor: 'pointer'
+              cursor: trip.availableSeats === 0 ? 'not-allowed' : 'pointer'
             }}
           >
-            {expanded ? <>Đóng sơ đồ <ChevronUp size={16} /></> : <>Chọn chuyến <ChevronDown size={16} /></>}
+            {trip.availableSeats === 0 ? 'Hết vé' : (expanded ? <>Đóng sơ đồ <ChevronUp size={16} /></> : <>Chọn chuyến <ChevronDown size={16} /></>)}
           </button>
         </div>
       </div>

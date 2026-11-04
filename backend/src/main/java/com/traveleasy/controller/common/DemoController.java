@@ -98,6 +98,7 @@ public class DemoController {
         List<Trip> trips = tripRepository.findAllByOrderByDepartureTimeDesc();
 
         List<Map<String, Object>> result = trips.stream()
+                .filter(t -> (t.getIsActive() == null || t.getIsActive()) && t.getStatus() != TripStatus.CANCELLED)
                 .limit(maxLimit)
                 .map(t -> {
                     Map<String, Object> map = new LinkedHashMap<>();
@@ -135,15 +136,7 @@ public class DemoController {
     @CacheEvict(value = {"trips_search", "popular_routes", "admin_all_trips", "company_trips"}, allEntries = true)
     @Operation(summary = "Khôi phục mở bán lại toàn bộ ghế của chuyến xe về AVAILABLE")
     public ResponseEntity<ApiResponse<Map<String, Object>>> resetTripSeats(@PathVariable Long tripId) {
-        Trip trip = tripRepository.findByIdWithDetails(tripId)
-                .or(() -> tripRepository.findById(tripId))
-                .orElse(null);
-        if (trip == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Không tìm thấy chuyến xe với mã " + tripId));
-        }
-        int total = trip.getTotalSeats() != null ? trip.getTotalSeats() : 34;
-        return applySeatCount(tripId, total, String.format("Đã khôi phục toàn bộ %d ghế trống mở bán thành công", total));
+        return applySeatCount(tripId, null, "Đã khôi phục toàn bộ ghế trống mở bán thành công");
     }
 
     @PostMapping("/trips/{tripId}/set-seats")
@@ -159,7 +152,7 @@ public class DemoController {
         return applySeatCount(tripId, count, String.format("Đã thiết lập số ghế trống của chuyến xe về %d ghế thành công", count));
     }
 
-    private ResponseEntity<ApiResponse<Map<String, Object>>> applySeatCount(Long tripId, int requestedCount, String successMessage) {
+    private ResponseEntity<ApiResponse<Map<String, Object>>> applySeatCount(Long tripId, Integer requestedCount, String successMessage) {
         Trip trip = tripRepository.findByIdWithDetails(tripId)
                 .or(() -> tripRepository.findById(tripId))
                 .orElse(null);
@@ -169,9 +162,7 @@ public class DemoController {
         }
 
         int totalSeats = trip.getTotalSeats() != null ? trip.getTotalSeats() : 34;
-        int targetAvailable = Math.max(0, Math.min(requestedCount, totalSeats));
-        trip.setAvailableSeats(targetAvailable);
-        tripRepository.save(trip);
+        int targetAvailable = (requestedCount == null) ? totalSeats : Math.max(0, Math.min(requestedCount, totalSeats));
 
         List<TripSeat> seats = tripSeatRepository.findByTripIdOrderByFloorAscSeatCodeAsc(tripId);
         if (seats == null || seats.isEmpty()) {
@@ -215,6 +206,9 @@ public class DemoController {
         }
         tripSeatRepository.saveAll(seats);
 
+        trip.setAvailableSeats(updatedAvailable);
+        tripRepository.save(trip);
+
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("tripId", trip.getId());
         data.put("route", trip.getRoute() != null
@@ -226,7 +220,7 @@ public class DemoController {
         data.put("licensePlate", trip.getLicensePlate() != null ? trip.getLicensePlate() : "");
         data.put("departureTime", trip.getDepartureTime());
         data.put("totalSeats", totalSeats);
-        data.put("availableSeats", targetAvailable);
+        data.put("availableSeats", updatedAvailable);
         data.put("price", trip.getPrice());
         data.put("seatsAvailableCount", updatedAvailable);
         data.put("seatsBookedCount", updatedBooked);
@@ -234,7 +228,11 @@ public class DemoController {
         log.info("Demo control: tripId={}, targetAvailable={}, updatedAvailable={}, updatedBooked={}",
                 tripId, targetAvailable, updatedAvailable, updatedBooked);
 
-        return ResponseEntity.ok(ApiResponse.success(successMessage, data));
+        String finalMessage = (requestedCount == null)
+                ? String.format("Đã khôi phục toàn bộ %d ghế trống mở bán thành công", updatedAvailable)
+                : successMessage;
+
+        return ResponseEntity.ok(ApiResponse.success(finalMessage, data));
     }
 
     @PostMapping("/seed-sample-booking")
@@ -248,7 +246,8 @@ public class DemoController {
         Ticket ticket;
         if (existing.isPresent()) {
             booking = existing.get();
-            ticket = booking.getTickets().isEmpty() ? null : booking.getTickets().get(0);
+            List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
+            ticket = (tickets != null && !tickets.isEmpty()) ? tickets.get(0) : null;
         } else {
             List<Trip> trips = tripRepository.findAll();
             if (trips.isEmpty()) {
@@ -288,16 +287,30 @@ public class DemoController {
             booking.getTickets().add(ticket);
         }
 
+        String departure = "Hà Nội";
+        String arrival = "Đà Nẵng";
+        String companyName = "Phương Trang VIP";
+        if (booking.getTrip() != null) {
+            if (booking.getTrip().getRoute() != null) {
+                departure = booking.getTrip().getRoute().getDepartureLocation();
+                arrival = booking.getTrip().getRoute().getArrivalLocation();
+            }
+            if (booking.getTrip().getBusCompany() != null) {
+                companyName = booking.getTrip().getBusCompany().getName();
+            }
+        }
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("bookingCode", booking.getBookingCode());
         result.put("ticketCode", ticket != null ? ticket.getTicketCode() : "DEMO-TK-001");
         result.put("passengerName", booking.getPassengerName());
         result.put("passengerPhone", booking.getPassengerPhone());
         result.put("qrCodeHash", ticket != null ? ticket.getQrCodeHash() : "TE-DEMO-001-VALID");
-        result.put("tripRoute", booking.getTrip().getRoute().getDepartureLocation() + " -> " + booking.getTrip().getRoute().getArrivalLocation());
-        result.put("busCompany", booking.getTrip().getBusCompany().getName());
+        result.put("tripRoute", departure + " -> " + arrival);
+        result.put("busCompany", companyName);
         result.put("instructions", "Sử dụng mã vé 'DEMO-TICKET-2026' để tra cứu tại /lookup hoặc quét mã hash 'TE-DEMO-001-VALID' tại /scanner");
 
         return ResponseEntity.ok(ApiResponse.success("Đã khởi tạo vé mẫu demo thành công", result));
     }
 }
+
