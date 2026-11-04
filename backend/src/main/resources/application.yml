@@ -4,6 +4,8 @@ server:
     context-path: /
 
 spring:
+  main:
+    allow-circular-references: true
   application:
     name: traveleasy-backend
   profiles:
@@ -33,6 +35,8 @@ spring:
         format_sql: false
         dialect: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}
         default_batch_fetch_size: 50
+        temp:
+          use_jdbc_metadata_defaults: false
         jdbc:
           batch_size: 50
           order_inserts: true

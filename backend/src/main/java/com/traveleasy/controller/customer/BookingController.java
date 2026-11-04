@@ -30,7 +30,10 @@ public class BookingController {
             @Valid @RequestBody CreateBookingRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
-            return ApiResponse.error("Vui lòng đăng nhập tài khoản để tiến hành đặt vé và thanh toán");
+            throw new com.traveleasy.common.exception.AppException(
+                    com.traveleasy.common.exception.ErrorCode.UNAUTHORIZED,
+                    "Vui lòng đăng nhập tài khoản để tiến hành đặt vé và thanh toán"
+            );
         }
         String email = userDetails.getUsername();
         return ApiResponse.success("Đặt vé thành công", bookingService.createBooking(request, email));

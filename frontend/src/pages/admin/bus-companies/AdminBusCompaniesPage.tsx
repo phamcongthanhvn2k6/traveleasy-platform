@@ -295,6 +295,7 @@ export const AdminBusCompaniesPage: React.FC = () => {
         params: {
           commissionRate: rateDecimal,
           adminNote: adminNoteInput.trim(),
+          note: adminNoteInput.trim(),
         },
       });
 

@@ -52,7 +52,8 @@ public class AuthService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole().name())
-                .build();
+.busCompanyId(user.getBusCompanyId())
+.build();
     }
 
     @Transactional
@@ -101,7 +102,8 @@ public class AuthService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole().name())
-                .build();
+.busCompanyId(user.getBusCompanyId())
+.build();
     }
 
     @Transactional(readOnly = true)
@@ -115,7 +117,8 @@ public class AuthService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole().name())
-                .build();
+.busCompanyId(user.getBusCompanyId())
+.build();
     }
 
     @Transactional
@@ -142,7 +145,8 @@ public class AuthService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole().name())
-                .build();
+.busCompanyId(user.getBusCompanyId())
+.build();
     }
 
     @Transactional

@@ -48,7 +48,8 @@ Lý do là Core Domain:
 - **Purpose:** Quản lý danh tính, xác thực, phiên làm việc.
 - **Business Responsibility:** Đăng ký (UC-1.1), đăng nhập OTP/Google (UC-1.2), phát hành/thu hồi Access-Refresh Token, gán role tĩnh (CUSTOMER/BUS_COMPANY/ADMIN), khóa/mở khóa tài khoản (UC-3.1), quản lý tài khoản cá nhân & right-to-be-forgotten (UC-1.12, mục 3.3.4).
 - **Entities:** User, RefreshToken.
-- **Giao tiếp:** Phát hành `userId` + `role` dùng làm tham chiếu (reference-by-id) cho mọi Context khác (Booking, Trip, Review...) — không Context nào giữ bản sao dữ liệu cá nhân đầy đủ ngoài Identity. Booking Context gọi Identity (qua Access Token claims) để xác thực trước khi cho phép "Tiếp tục" (UC-1.6 bước 2).
+- **Ràng buộc Đa đối tác (Tenant Isolation):** Entity `User` lưu trữ trường `busCompanyId` (Long, nullable). Khi tài khoản mang vai trò `ROLE_OPERATOR` / `BUS_COMPANY`, `busCompanyId` bắt buộc mang ID của pháp nhân nhà xe được phân quyền quản lý. Toàn bộ các thao tác điều hành chuyến, quản lý xe, soát vé và báo cáo doanh thu được cô lập tuyệt đối theo `busCompanyId`, ngăn ngừa triệt để nguy cơ truy cập chéo dữ liệu giữa các đối tác.
+- **Giao tiếp:** Phát hành `userId` + `role` + `busCompanyId` dùng làm tham chiếu (reference-by-id) cho mọi Context khác (Booking, Trip, Review...) — không Context nào giữ bản sao dữ liệu cá nhân đầy đủ ngoài Identity. Booking Context gọi Identity (qua Access Token claims) để xác thực trước khi cho phép "Tiếp tục" (UC-1.6 bước 2).
 
 ### 2.1.B Partner Onboarding & KYB Context
 - **Purpose:** Tiếp nhận đơn đăng ký hợp tác, quản lý hồ sơ tài liệu số hóa pháp lý, kiểm soát luồng thẩm định đa tầng và phê duyệt đối tác của Admin.
@@ -57,7 +58,7 @@ Lý do là Core Domain:
   - Thu thập và chuẩn hóa bộ hồ sơ pháp lý: Mã số thuế (MST 10/13 số), Giấy phép kinh doanh vận tải bằng ô tô do Sở GTVT cấp, **bắt buộc tải lên bản chụp 2 mặt Căn cước công dân (CCCD) gắn chip** của Người đại diện theo pháp luật, Tài khoản ngân hàng quyết toán Escrow (chống rửa tiền).
   - Cung cấp giao diện thẩm định hồ sơ đa tầng cho Quản trị viên (UC-3.2): Đối chiếu CSDL Thuế Quốc gia, kiểm tra tính hợp lệ của giấy tờ, gọi điện kiểm chứng hotline.
   - Xử lý các quyết định thẩm định: Phê duyệt (`APPROVED / ACTIVE`), Yêu cầu bổ sung (`REQUIRES_SUPPLEMENT`), hoặc Bác bỏ (`REJECTED`).
-  - Tự động kích hoạt: Khởi tạo tài khoản Quản trị nhà xe (`ROLE_OPERATOR`), phát hành Hợp đồng hợp tác điện tử (`Partner e-Contract`) gắn mã băm SHA-256 bảo vệ tính toàn vẹn và gửi thông tin bàn giao Cổng điều hành qua Email.
+  - Tự động kích hoạt: Khởi tạo tài khoản Quản trị nhà xe (`ROLE_OPERATOR`), tự động liên kết `user.busCompanyId = company.getId()`, phát hành Hợp đồng hợp tác điện tử (`Partner e-Contract`) gắn mã băm SHA-256 bảo vệ tính toàn vẹn và gửi thông tin bàn giao Cổng điều hành qua Email.
 - **Entities & Value Objects:**
   - `BusCompany` (Aggregate Root): Đóng vai trò vừa là đối tác kinh doanh, vừa là chủ thể hồ sơ KYB với các trường trạng thái `status` (`PENDING_APPROVAL`, `UNDER_REVIEW`, `ACTIVE`, `REJECTED`, `SUSPENDED`) và `kyc_status` (`PENDING_APPROVAL`, `UNDER_REVIEW`, `PENDING_SUPPLEMENT`, `VERIFIED`, `REJECTED`).
   - `KYCDocuments` (Value Object): Tập hợp các liên kết tài liệu số hóa bất biến (`businessLicenseUrl`, `identityCardFrontUrl`, `identityCardBackUrl`, `transportLicenseUrl`, `vehicleSamplePhotoUrl`).
@@ -67,6 +68,7 @@ Lý do là Core Domain:
   - [Rule KYB-02]: Hồ sơ bắt buộc phải có đầy đủ 2 mặt CCCD của người đại diện; nếu thiếu, hệ thống chặn không cho nộp đơn.
   - [Rule KYB-03]: Chỉ tài khoản có quyền Quản trị viên sàn (`ROLE_ADMIN`) mới có thẩm quyền chuyển trạng thái từ `PENDING_APPROVAL` sang `ACTIVE`.
   - [Rule KYB-04]: Mỗi lần Admin ra quyết định (Duyệt/Từ chối/Yêu cầu bổ sung), hệ thống bắt buộc phải ghi nhận bản ghi kiểm toán (`AuditLog`) kèm ID Admin, thời điểm, địa chỉ IP và lý do giải trình.
+  - [Rule KYB-05]: Khi Admin phê duyệt đơn đăng ký hợp tác (UC-3.2), hệ thống tự động khởi tạo tài khoản Quản trị nhà xe (`ROLE_OPERATOR`) và gán trực tiếp companyId vào user (`user.busCompanyId = company.getId()`). Đồng thời, phản hồi xác thực `AuthResponse` trả về `busCompanyId` để Frontend cô lập không gian làm việc của nhà xe.
 
 ### 2.2 Location Context (Master Data Catalog)
 - **Purpose:** Quản lý danh mục địa điểm/bến xe dùng chung toàn hệ thống (Shared Master Data Catalog).
@@ -102,6 +104,11 @@ Lý do là Core Domain:
 - **Purpose:** Điều phối vòng đời đặt chỗ từ chọn ghế đến khi có vé — đây là Core Domain.
 - **Business Responsibility:** Soft Hold/Hard Hold (UC-1.6), tạo Booking, đặt vé thủ công tại quầy (UC-2.6), phối hợp với Payment để xác nhận, quản lý vé & hành khách (UC-2.7).
 - **Entities:** Booking, PassengerInfo (thực chất là Value Object gắn trong Ticket), Ticket.
+- **Quy tắc Giải phóng Ghế Hard-Hold Quá Hạn (Automated Booking Expiration Cleanup):**
+  - Tác vụ nền định kỳ 60 giây (`@Scheduled(fixedDelay = 60000)` trong `TripAutomationService`) kích hoạt phương thức `bookingService.cleanupExpiredPendingBookings(10)`.
+  - Mọi đơn đặt vé `Booking` ở trạng thái `PENDING` quá thời hạn 10 phút (`createdAt < now() - 10 minutes`) tự động chuyển thành `CANCELLED`.
+  - Toàn bộ vé con (`Ticket`) chuyển thành `CANCELLED`.
+  - Trạng thái ghế `TripSeat.status` được đồng bộ về `AVAILABLE`, tăng lại số ghế khả dụng `Trip.availableSeats` và phát tín hiệu Realtime qua WebSocket/STOMP tới toàn bộ khách hàng.
 - **Giao tiếp:** Gọi Payment Context để khởi tạo giao dịch; nhận sự kiện `PaymentSucceeded/Failed` để chuyển trạng thái; publish `BookingCreated`, `TicketIssued` cho Notification Context; publish `SeatSoftHeld/SeatHardHeld` (qua WebSocket) cho mọi client đang xem chuyến.
 
 ### 2.7 Payment Context
@@ -119,7 +126,10 @@ Lý do là Core Domain:
 ### 2.9 Ticketing Context
 - **Purpose:** Đại diện vé điện tử — bằng chứng hợp lệ hóa chỗ ngồi và công cụ kiểm soát hành khách lên xe.
 - **Business Responsibility:** Sinh vé điện tử kèm QR Code (UC-1.9), tra cứu lịch sử vé (UC-1.15), quét mã QR và soát vé trực tiếp thời gian thực chống quét trùng lặp qua giao diện di động `/scanner` và tra cứu `/lookup` (UC-2.12), cập nhật trạng thái lên xe/hủy (UC-2.7), xuất vé điện tử định dạng PDF.
-- **Entities:** Ticket (Entity con trong Booking Aggregate kèm `checkedInAt`, `checkedInBy`).
+- **Entities:** Ticket (Entity con trong Booking Aggregate kèm `checkedInAt`, `checkedInBy`, `boardedAt`).
+- **Quy tắc Kiểm soát Soát vé Chống Quét Trùng (Anti-Duplication Invariant):**
+  - **Xác nhận soát vé lần đầu:** Chuyển trạng thái vé `Ticket.status = USED`, lưu `boarded_at = CURRENT_TIMESTAMP`, API phản hồi `validationStatus = "VALID"` với thông báo `"✓ VÉ HỢP LỆ — ĐÃ XÁC NHẬN LÊN XE THÀNH CÔNG"`, cờ `checkInAllowed = false` (chốt vé đã hoàn thành check-in).
+  - **Chặn quét trùng & Gian lận:** Khi quét lại vé đã ở trạng thái `USED`, hệ thống lập tức ném ngoại lệ `AppException(VALIDATION_ERROR, "CẢNH BÁO: Vé này đã được soát lên xe trước đó rồi!")` (HTTP 400 Bad Request kèm mốc giờ lên xe). Giao diện hiển thị cảnh báo đỏ toàn màn hình kèm âm thanh còi hú, chặn tuyệt đối việc hành khách lên xe lần thứ 2.
 - **Giao tiếp:** Được tạo khi nhận `PaymentSucceeded`; là gốc tham chiếu cho Review Context ("một vé chỉ review một lần"); cung cấp API soát vé trực tiếp cho Cổng Điều Hành Nhà Xe.
 
 ### 2.10 Review Context

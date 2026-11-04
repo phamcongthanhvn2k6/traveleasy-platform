@@ -9,6 +9,7 @@ import com.traveleasy.entity.*;
 import com.traveleasy.repository.*;
 import com.traveleasy.service.realtime.SeatRealtimeService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingService {
@@ -29,10 +31,11 @@ public class BookingService {
     private final TripSeatRepository tripSeatRepository;
     private final PickupDropoffPointRepository pointRepository;
     private final UserRepository userRepository;
+    @org.springframework.context.annotation.Lazy
     private final TripService tripService;
     private final SeatRealtimeService seatRealtimeService;
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats", "trips_search"}, allEntries = true)
     public BookingResponse createBooking(CreateBookingRequest request, String userEmail) {
         Trip trip = tripRepository.findById(request.getTripId())
@@ -97,6 +100,10 @@ public class BookingService {
         String randomSuffix = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
         String bookingCode = "BK-" + datePrefix + "-" + randomSuffix;
 
+        BookingStatus initialStatus = (request.getPaymentMethod() == PaymentMethod.COD)
+                ? BookingStatus.CONFIRMED
+                : BookingStatus.PENDING;
+
         Booking booking = Booking.builder()
                 .bookingCode(bookingCode)
                 .user(user)
@@ -109,7 +116,7 @@ public class BookingService {
                 .seatNumbers(String.join(", ", request.getSeatNumbers()))
                 .totalAmount(totalAmount)
                 .paymentMethod(request.getPaymentMethod())
-                .status(BookingStatus.CONFIRMED)
+                .status(initialStatus)
                 .build();
 
         Booking savedBooking = bookingRepository.save(booking);
@@ -564,18 +571,73 @@ public class BookingService {
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy mã vé " + ticketCode));
 
         if (ticket.getStatus() == TicketStatus.CANCELLED) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR, "Vé đã bị hủy, không thể xác nhận lên xe");
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Vé đã bị hủy trên hệ thống, không thể xác nhận lên xe");
+        }
+        if (ticket.getStatus() == TicketStatus.USED) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "CẢNH BÁO: Vé này đã được soát lên xe trước đó rồi!");
         }
 
         ticket.setStatus(TicketStatus.USED);
         ticketRepository.save(ticket);
-        return buildVerifiedResponse(ticket, ticket.getBooking());
+        
+        com.traveleasy.dto.booking.VerifiedTicketResponse response = buildVerifiedResponse(ticket, ticket.getBooking());
+        response.setValidationStatus("VALID");
+        response.setValidationMessage("✓ VÉ HỢP LỆ — ĐÃ XÁC NHẬN LÊN XE THÀNH CÔNG");
+        response.setCheckInAllowed(false);
+        return response;
+    }
+
+    /**
+     * Tự động hủy đơn hàng quá hạn 10 phút (Hard-Hold Expired) và giải phóng ghế trống
+     */
+    @Transactional
+    public int cleanupExpiredPendingBookings(int timeoutMinutes) {
+        java.time.LocalDateTime threshold = java.time.LocalDateTime.now().minusMinutes(timeoutMinutes);
+        List<Booking> expiredBookings = bookingRepository.findByStatusAndCreatedAtBefore(BookingStatus.PENDING, threshold);
+        if (expiredBookings == null || expiredBookings.isEmpty()) {
+            return 0;
+        }
+
+        int count = 0;
+        for (Booking booking : expiredBookings) {
+            try {
+                booking.setStatus(BookingStatus.CANCELLED);
+                bookingRepository.save(booking);
+
+                List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
+                List<String> seatCodes = new ArrayList<>();
+                for (Ticket ticket : tickets) {
+                    ticket.setStatus(TicketStatus.CANCELLED);
+                    seatCodes.add(ticket.getSeatNumber());
+                }
+                ticketRepository.saveAll(tickets);
+
+                if (booking.getTrip() != null && !seatCodes.isEmpty()) {
+                    List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(booking.getTrip().getId(), seatCodes);
+                    for (TripSeat seat : seats) {
+                        seat.setStatus(SeatStatus.AVAILABLE);
+                    }
+                    tripSeatRepository.saveAll(seats);
+
+                    Trip trip = booking.getTrip();
+                    trip.setAvailableSeats(trip.getAvailableSeats() + tickets.size());
+                    tripRepository.save(trip);
+
+                    seatRealtimeService.broadcastReleased(trip.getId(), seatCodes);
+                }
+                count++;
+                log.info("⏰ [Hard-Hold Cleanup] Đã tự động hủy đơn quá hạn và giải phóng ghế: {} (Ghế: {})", booking.getBookingCode(), seatCodes);
+            } catch (Exception ex) {
+                log.warn("Lỗi khi hủy đơn quá hạn {}: {}", booking.getBookingCode(), ex.getMessage());
+            }
+        }
+        return count;
     }
 
     private com.traveleasy.dto.booking.VerifiedTicketResponse buildVerifiedResponse(Ticket ticket, Booking booking) {
         Trip trip = booking != null ? booking.getTrip() : null;
         String valStatus = "VALID";
-        String valMessage = "✓ VÉ HỢP LỆ — ĐÃ XÁC THỰC LÊN XE THÀNH CÔNG";
+        String valMessage = "✓ VÉ HỢP LỆ — SẴN SÀNG LÊN XE";
         boolean allowed = true;
 
         if (booking != null && booking.getStatus() == BookingStatus.CANCELLED) {

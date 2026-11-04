@@ -33,6 +33,9 @@ public class User {
     @Builder.Default
     private Role role = Role.CUSTOMER;
 
+    @Column(name = "bus_company_id")
+    private Long busCompanyId;
+
     @Column(name = "status", length = 20)
     @Builder.Default
     private String status = "ACTIVE";

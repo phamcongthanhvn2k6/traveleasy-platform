@@ -63,6 +63,7 @@ export const ClientRoutes: React.FC = () => {
 
       {/* Hợp tác mở bán vé cùng TravelEasy (Chuẩn hóa URL tiếng Anh) */}
       <Route path="/partner" element={<PartnerCooperationPage />} />
+      <Route path="/partner/register" element={<PartnerCooperationPage />} />
       <Route path="/partner-with-us" element={<PartnerCooperationPage />} />
       <Route path="/hop-tac-nha-xe" element={<Navigate to="/partner" replace />} />
       <Route path="/mo-ban-ve" element={<Navigate to="/partner" replace />} />

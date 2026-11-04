@@ -111,6 +111,18 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Đường dẫn API hoặc tài nguyên không tồn tại: " + ex.getResourcePath()));
     }
 
+    @ExceptionHandler({
+            org.springframework.dao.CannotAcquireLockException.class,
+            org.springframework.dao.PessimisticLockingFailureException.class,
+            org.springframework.transaction.TransactionSystemException.class,
+            org.springframework.orm.ObjectOptimisticLockingFailureException.class
+    })
+    public ResponseEntity<ApiResponse<Void>> handleLockingConflict(Exception ex) {
+        log.warn("Database lock or concurrency collision: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("Ghế này đang được người khác giữ chỗ hoặc hệ thống đang xử lý, vui lòng chọn ghế khác!"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception ex) {
         log.error("Unhandled Exception: ", ex);
