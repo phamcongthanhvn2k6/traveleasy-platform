@@ -147,12 +147,49 @@ public class BookingService {
         return mapToBookingResponse(savedBooking, tickets);
     }
 
+    // ponytail: mask PII helper methods
+    public static String maskPhone(String phone) {
+        if (phone == null || phone.trim().isEmpty()) return phone;
+        String clean = phone.trim();
+        if (clean.length() <= 6) return clean;
+        return clean.substring(0, 3) + "****" + clean.substring(clean.length() - 3);
+    }
+
+    // ponytail: safe email masking preventing IndexOutOfBoundsException
+    public static String maskEmail(String email) {
+        if (email == null || !email.contains("@")) return email;
+        String[] parts = email.split("@", -1);
+        if (parts.length < 2 || parts[0].isEmpty() || parts[1].isEmpty()) return email;
+        String name = parts[0];
+        String domain = parts[1];
+        if (name.length() <= 2) return name.charAt(0) + "***@" + domain;
+        return name.substring(0, 2) + "***@" + domain;
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getBookingsByPhone(String phone) {
+        List<Booking> bookings = bookingRepository.findByPassengerPhoneOrderByCreatedAtDesc(phone);
+        if (bookings == null || bookings.isEmpty()) {
+            throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé nào với số điện thoại: " + phone);
+        }
+        return bookings.stream().map(b -> {
+            List<Ticket> tickets = ticketRepository.findByBookingId(b.getId());
+            BookingResponse res = mapToBookingResponse(b, tickets);
+            res.setCustomerPhone(maskPhone(res.getCustomerPhone()));
+            res.setCustomerEmail(maskEmail(res.getCustomerEmail()));
+            return res;
+        }).collect(Collectors.toList());
+    }
+
     @Transactional(readOnly = true)
     public BookingResponse getBookingByCode(String bookingCode) {
         Booking booking = bookingRepository.findByBookingCode(bookingCode)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy mã đơn vé: " + bookingCode));
         List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
-        return mapToBookingResponse(booking, tickets);
+        BookingResponse res = mapToBookingResponse(booking, tickets);
+        res.setCustomerPhone(maskPhone(res.getCustomerPhone()));
+        res.setCustomerEmail(maskEmail(res.getCustomerEmail()));
+        return res;
     }
 
     @Transactional(readOnly = true)
@@ -567,7 +604,8 @@ public class BookingService {
 
     @Transactional
     public com.traveleasy.dto.booking.VerifiedTicketResponse checkInTicket(String ticketCode) {
-        Ticket ticket = ticketRepository.findByTicketCode(ticketCode)
+        // ponytail: pessimistic lock prevents concurrent double check-in
+        Ticket ticket = ticketRepository.findByTicketCodeForUpdate(ticketCode)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy mã vé " + ticketCode));
 
         if (ticket.getStatus() == TicketStatus.CANCELLED) {
@@ -658,8 +696,8 @@ public class BookingService {
                 .bookingCode(booking != null ? booking.getBookingCode() : null)
                 .ticketCode(ticket != null ? ticket.getTicketCode() : null)
                 .passengerName(booking != null ? booking.getPassengerName() : null)
-                .passengerPhone(booking != null ? booking.getPassengerPhone() : null)
-                .passengerEmail(booking != null ? booking.getPassengerEmail() : null)
+                .passengerPhone(booking != null ? maskPhone(booking.getPassengerPhone()) : null)
+                .passengerEmail(booking != null ? maskEmail(booking.getPassengerEmail()) : null)
                 .busCompanyName(trip != null && trip.getBusCompany() != null ? trip.getBusCompany().getName() : "TravelEasy Express")
                 .busType(trip != null && trip.getBusType() != null ? trip.getBusType().name() : "Limousine VIP")
                 .licensePlate(trip != null && trip.getLicensePlate() != null ? trip.getLicensePlate() : "51B-888.88")

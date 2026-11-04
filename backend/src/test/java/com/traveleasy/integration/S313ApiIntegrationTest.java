@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -165,7 +166,7 @@ public class S313ApiIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.bookingCode").value(TEST_BOOKING_CODE))
                 .andExpect(jsonPath("$.data.customerName").value("Nguyễn Văn An"))
-                .andExpect(jsonPath("$.data.customerPhone").value("0912345678"))
+                .andExpect(jsonPath("$.data.customerPhone").value("091****678"))
                 .andExpect(jsonPath("$.data.pickupPointName").value("Bến xe Miền Đông Mới"))
                 .andExpect(jsonPath("$.data.dropoffPointName").value("Bến xe Liên tỉnh Đà Lạt"))
                 .andExpect(jsonPath("$.data.status").value("CONFIRMED"))
@@ -245,8 +246,9 @@ public class S313ApiIntegrationTest {
     @Order(6)
     @DisplayName("DoD 6: Soát vé hành khách Check-in và bảo vệ chống Check-in trùng lặp")
     void testCheckInTicket_AndDuplicatePrevention() throws Exception {
-        // Lần 1: Check-in hợp lệ
+        // Lần 1: Check-in hợp lệ với quyền COMPANY / STAFF
         mockMvc.perform(post("/api/v1/bookings/check-in/{ticketCode}", TEST_TICKET_CODE)
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("driver_staff").roles("COMPANY"))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -258,5 +260,21 @@ public class S313ApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.validationStatus").value("ALREADY_CHECKED_IN"))
                 .andExpect(jsonPath("$.data.checkInAllowed").value(false));
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("DoD 7: Chặn check-in khi người dùng không có quyền (Anonymous hoặc CUSTOMER)")
+    void testCheckInTicket_ForbiddenForUnauthorized() throws Exception {
+        // 1. Thử check-in khi chưa đăng nhập (Anonymous) -> 401 Unauthorized
+        mockMvc.perform(post("/api/v1/bookings/check-in/{ticketCode}", TEST_TICKET_CODE)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+
+        // 2. Thử check-in với vai trò CUSTOMER -> Bị cấm (403 Forbidden)
+        mockMvc.perform(post("/api/v1/bookings/check-in/{ticketCode}", TEST_TICKET_CODE)
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("normal_user").roles("CUSTOMER"))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 }

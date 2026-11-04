@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { Bus, Plane, Train, Car, Calendar, ArrowRightLeft, Search, Plus, Check } from 'lucide-react';
+import { getLocalTodayDateString, getLocalNextDayString } from '../utils/dateUtils';
+import { POPULAR_CITIES } from '../constants/popularCities';
 
 interface Props {
   onSearch: (origin: string, destination: string, date: string, returnDate?: string) => void;
@@ -17,37 +19,43 @@ export const SearchTripBar: React.FC<Props> = ({
   const [activeTab, setActiveTab] = useState<'bus' | 'plane' | 'train' | 'car'>('bus');
   const [origin, setOrigin] = useState(defaultOrigin);
   const [destination, setDestination] = useState(defaultDestination);
-  const [departureDate, setDepartureDate] = useState(new Date().toISOString().split('T')[0]);
+  const [departureDate, setDepartureDate] = useState(() => getLocalTodayDateString());
   const [hasReturnDate, setHasReturnDate] = useState(false);
-  const [returnDate, setReturnDate] = useState(
-    new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0]
-  );
+  const [returnDate, setReturnDate] = useState(() => getLocalNextDayString(undefined, 2));
   const [isNewAddress, setIsNewAddress] = useState(true);
 
-  // Danh sách các điểm xuất phát & điểm đến phổ biến
-  const popularCities = [
-    'TP. Hồ Chí Minh',
-    'Hà Nội',
-    'Đà Lạt',
-    'Nha Trang',
-    'Đà Nẵng',
-    'Vũng Tàu',
-    'Sa Pa',
-    'Hải Phòng',
-    'Cần Thơ',
-    'Huế',
-    'Quy Nhơn',
-    'Phan Thiết'
-  ];
+  // Danh sách 24 điểm xuất phát & điểm đến phổ biến toàn quốc (Đạt chuẩn trải nghiệm du lịch liên tỉnh)
+  const popularCities = POPULAR_CITIES;
 
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [swapRotation, setSwapRotation] = useState(0);
+  const [tabNotice, setTabNotice] = useState<string | null>(null);
 
   const handleSwap = () => {
     setValidationError(null);
+    setSwapRotation(prev => prev + 180);
     const temp = origin;
     setOrigin(destination);
     setDestination(temp);
+  };
+
+  const handleDepartureDateChange = (val: string) => {
+    setDepartureDate(val);
+    setValidationError(null);
+    if (hasReturnDate && returnDate && returnDate < val) {
+      setReturnDate(getLocalNextDayString(val, 1));
+    }
+  };
+
+  const handleTabChange = (tab: 'bus' | 'plane' | 'train' | 'car') => {
+    setActiveTab(tab);
+    if (tab !== 'bus') {
+      setTabNotice(`Dịch vụ ${tab === 'plane' ? 'Vé Máy Bay' : tab === 'train' ? 'Tàu Hỏa' : 'Thuê Xe'} đang liên kết mở rộng cùng đối tác hàng không/đường sắt. Hiện tại hệ thống đang ưu tiên tìm kiếm chuyến Xe Khách toàn quốc.`);
+      setTimeout(() => setTabNotice(null), 4000);
+    } else {
+      setTabNotice(null);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,14 +72,34 @@ export const SearchTripBar: React.FC<Props> = ({
       return;
     }
 
+    if (!departureDate || !departureDate.trim()) {
+      setValidationError('Vui lòng chọn ngày khởi hành.');
+      return;
+    }
+
+    const today = getLocalTodayDateString();
+    if (departureDate < today) {
+      setValidationError('Ngày khởi hành không thể ở trong quá khứ. Vui lòng chọn từ ngày hôm nay trở đi.');
+      return;
+    }
+
+    if (hasReturnDate) {
+      if (!returnDate || !returnDate.trim()) {
+        setValidationError('Vui lòng chọn ngày về cho chuyến xe khứ hồi.');
+        return;
+      }
+      if (returnDate < departureDate) {
+        setValidationError('Ngày về phải diễn ra sau hoặc cùng ngày với ngày khởi hành.');
+        return;
+      }
+    }
+
     setValidationError(null);
     setIsSubmitting(true);
     try {
       onSearch(origin.trim(), destination.trim(), departureDate, hasReturnDate ? returnDate : undefined);
     } finally {
-      setTimeout(() => {
-        setIsSubmitting(false);
-      }, 1200);
+      setIsSubmitting(false);
     }
   };
 
@@ -118,7 +146,7 @@ export const SearchTripBar: React.FC<Props> = ({
               <div style={{
                 width: '16px',
                 height: '16px',
-                backgroundColor: '#ffffff',
+                backgroundColor: isDark ? '#1e293b' : '#ffffff', border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                 borderRadius: '50%',
                 position: 'absolute',
                 top: '3px',
@@ -136,7 +164,7 @@ export const SearchTripBar: React.FC<Props> = ({
           {/* Tab Xe Khách */}
           <button
             type="button"
-            onClick={() => setActiveTab('bus')}
+            onClick={() => handleTabChange('bus')}
             style={{
               background: 'none',
               border: 'none',
@@ -159,7 +187,7 @@ export const SearchTripBar: React.FC<Props> = ({
           {/* Tab Máy Bay */}
           <button
             type="button"
-            onClick={() => setActiveTab('plane')}
+            onClick={() => handleTabChange('plane')}
             style={{
               background: 'none',
               border: 'none',
@@ -193,7 +221,7 @@ export const SearchTripBar: React.FC<Props> = ({
           {/* Tab Tàu Hỏa */}
           <button
             type="button"
-            onClick={() => setActiveTab('train')}
+            onClick={() => handleTabChange('train')}
             style={{
               background: 'none',
               border: 'none',
@@ -226,7 +254,7 @@ export const SearchTripBar: React.FC<Props> = ({
           {/* Tab Thuê Xe */}
           <button
             type="button"
-            onClick={() => setActiveTab('car')}
+            onClick={() => handleTabChange('car')}
             style={{
               background: 'none',
               border: 'none',
@@ -260,6 +288,38 @@ export const SearchTripBar: React.FC<Props> = ({
 
       {/* 2. Unified Search Inputs Container with Golden Search CTA Button */}
       <form onSubmit={handleSubmit}>
+        <style>{`
+          @media (max-width: 900px) {
+            .search-bar-grid {
+              grid-template-columns: 1fr !important;
+            }
+            .search-swap-btn {
+              margin: 4px auto !important;
+            }
+          }
+        `}</style>
+
+        {tabNotice && (
+          <div
+            role="status"
+            style={{
+              backgroundColor: '#eff6ff',
+              color: '#1d4ed8',
+              border: '1px solid #bfdbfe',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              fontSize: '13.5px',
+              fontWeight: 600,
+              marginBottom: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <span>ℹ️</span> {tabNotice}
+          </div>
+        )}
+
         {validationError && (
           <div 
             role="alert"
@@ -293,10 +353,10 @@ export const SearchTripBar: React.FC<Props> = ({
         >
           {/* Nơi xuất phát */}
           <div style={{
-            border: '1px solid #cbd5e1',
             borderRadius: '12px',
             padding: '10px 14px',
-            backgroundColor: '#ffffff',
+            backgroundColor: isDark ? '#1e293b' : '#ffffff',
+            border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
             position: 'relative'
           }}>
             <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
@@ -305,6 +365,7 @@ export const SearchTripBar: React.FC<Props> = ({
             </div>
             <select
               value={origin}
+              aria-label="Chọn điểm xuất phát"
               onChange={(e) => setOrigin(e.target.value)}
               style={{
                 width: '100%',
@@ -312,12 +373,12 @@ export const SearchTripBar: React.FC<Props> = ({
                 outline: 'none',
                 fontSize: '15.5px',
                 fontWeight: 700,
-                color: '#1e293b',
+                color: isDark ? '#f8fafc' : '#1e293b',
                 backgroundColor: 'transparent',
                 cursor: 'pointer'
               }}
             >
-              <option value="">Tất cả điểm xuất phát (Toàn quốc)</option>
+              <option value="" disabled>-- Chọn điểm xuất phát --</option>
               {popularCities.map(city => (
                 <option key={city} value={city}>{city}</option>
               ))}
@@ -330,9 +391,11 @@ export const SearchTripBar: React.FC<Props> = ({
             onClick={handleSwap}
             title="Đổi chiều xuất phát / điểm đến"
             aria-label="Đổi chiều xuất phát và điểm đến"
+            className="search-swap-btn"
             style={{
               width: '44px',
               height: '44px',
+              minWidth: '44px',
               borderRadius: '50%',
               border: '1px solid #e2e8f0',
               backgroundColor: '#f8fafc',
@@ -342,7 +405,8 @@ export const SearchTripBar: React.FC<Props> = ({
               cursor: 'pointer',
               color: '#3b82f6',
               boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
-              transition: 'transform 0.2s'
+              transform: `rotate(${swapRotation}deg)`,
+              transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
           >
             <ArrowRightLeft size={16} />
@@ -350,10 +414,10 @@ export const SearchTripBar: React.FC<Props> = ({
 
           {/* Nơi đến */}
           <div style={{
-            border: '1px solid #cbd5e1',
             borderRadius: '12px',
             padding: '10px 14px',
-            backgroundColor: '#ffffff'
+            backgroundColor: isDark ? '#1e293b' : '#ffffff',
+            border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`
           }}>
             <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444', display: 'inline-block' }} />
@@ -361,6 +425,7 @@ export const SearchTripBar: React.FC<Props> = ({
             </div>
             <select
               value={destination}
+              aria-label="Chọn điểm đến"
               onChange={(e) => setDestination(e.target.value)}
               style={{
                 width: '100%',
@@ -368,12 +433,12 @@ export const SearchTripBar: React.FC<Props> = ({
                 outline: 'none',
                 fontSize: '15.5px',
                 fontWeight: 700,
-                color: '#1e293b',
+                color: isDark ? '#f8fafc' : '#1e293b',
                 backgroundColor: 'transparent',
                 cursor: 'pointer'
               }}
             >
-              <option value="">Tất cả điểm đến (Toàn quốc)</option>
+              <option value="" disabled>-- Chọn điểm đến --</option>
               {popularCities.map(city => (
                 <option key={city} value={city}>{city}</option>
               ))}
@@ -382,10 +447,10 @@ export const SearchTripBar: React.FC<Props> = ({
 
           {/* Ngày đi */}
           <div style={{
-            border: '1px solid #cbd5e1',
             borderRadius: '12px',
             padding: '10px 14px',
-            backgroundColor: '#ffffff'
+            backgroundColor: isDark ? '#1e293b' : '#ffffff',
+            border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`
           }}>
             <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
               <Calendar size={12} color="#10b981" />
@@ -393,16 +458,17 @@ export const SearchTripBar: React.FC<Props> = ({
             </div>
             <input
               type="date"
+              aria-label="Ngày khởi hành"
               value={departureDate}
-              min={new Date().toISOString().split('T')[0]}
-              onChange={(e) => setDepartureDate(e.target.value)}
+              min={getLocalTodayDateString()}
+              onChange={(e) => handleDepartureDateChange(e.target.value)}
               style={{
                 width: '100%',
                 border: 'none',
                 outline: 'none',
                 fontSize: '14.5px',
                 fontWeight: 700,
-                color: '#1e293b',
+                color: isDark ? '#f8fafc' : '#1e293b',
                 backgroundColor: 'transparent',
                 cursor: 'pointer'
               }}
@@ -412,26 +478,41 @@ export const SearchTripBar: React.FC<Props> = ({
           {/* Ngày về (nếu bật khứ hồi) hoặc Nút + Thêm ngày về */}
           {hasReturnDate ? (
             <div style={{
-              border: '1px solid #cbd5e1',
               borderRadius: '12px',
               padding: '10px 14px',
-              backgroundColor: '#ffffff',
+              backgroundColor: isDark ? '#1e293b' : '#ffffff',
+              border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
               position: 'relative'
             }}>
               <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
                 <Calendar size={12} color="#f59e0b" />
                 Ngày về
-                <span 
+                <button 
+                  type="button"
                   onClick={() => setHasReturnDate(false)}
-                  style={{ marginLeft: 'auto', color: '#ef4444', cursor: 'pointer', fontSize: '10px', fontWeight: 800 }}
+                  aria-label="Xóa ngày về khứ hồi"
+                  style={{
+                    marginLeft: 'auto',
+                    color: '#ef4444',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    background: 'none',
+                    border: 'none',
+                    padding: '4px 8px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px'
+                  }}
                 >
-                  Xóa
-                </span>
+                  ✕ Xóa
+                </button>
               </div>
               <input
                 type="date"
+                aria-label="Ngày về khứ hồi"
                 value={returnDate}
-                min={departureDate || new Date().toISOString().split('T')[0]}
+                min={departureDate || getLocalTodayDateString()}
                 onChange={(e) => setReturnDate(e.target.value)}
                 style={{
                   width: '100%',
@@ -439,7 +520,7 @@ export const SearchTripBar: React.FC<Props> = ({
                   outline: 'none',
                   fontSize: '14.5px',
                   fontWeight: 700,
-                  color: '#1e293b',
+                  color: isDark ? '#f8fafc' : '#1e293b',
                   backgroundColor: 'transparent',
                   cursor: 'pointer'
                 }}
@@ -448,7 +529,13 @@ export const SearchTripBar: React.FC<Props> = ({
           ) : (
             <button
               type="button"
-              onClick={() => setHasReturnDate(true)}
+              onClick={() => {
+                setHasReturnDate(true);
+                setValidationError(null);
+                if (!returnDate || returnDate < departureDate) {
+                  setReturnDate(getLocalNextDayString(departureDate, 2));
+                }
+              }}
               style={{
                 background: 'none',
                 border: '1px dashed #cbd5e1',
