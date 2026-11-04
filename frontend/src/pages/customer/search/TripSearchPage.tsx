@@ -37,6 +37,7 @@ export const TripSearchPage: React.FC = () => {
   const origin = searchParams.get('origin') || '';
   const destination = searchParams.get('destination') || '';
   const date = searchParams.get('date') || '';
+  const returnDate = searchParams.get('returnDate') || '';
   const companyParam = searchParams.get('company') || '';
 
   // Khởi tạo ngay lập tức từ RAM hoặc SessionStorage để tải trang 0ms không bao giờ chớp màn hình
@@ -142,11 +143,13 @@ export const TripSearchPage: React.FC = () => {
     fetchTrips(origin, destination, date);
   }, [origin, destination, date]);
 
-  const handleSearchChange = (newOrigin: string, newDestination: string, newDate: string) => {
+  const handleSearchChange = (newOrigin: string, newDestination: string, newDate: string, newReturnDate?: string) => {
     const nextParams: Record<string, string> = {};
     if (newOrigin && newOrigin.trim() !== '') nextParams.origin = newOrigin.trim();
     if (newDestination && newDestination.trim() !== '') nextParams.destination = newDestination.trim();
     if (newDate && newDate.trim() !== '') nextParams.date = newDate.trim();
+    const rDate = newReturnDate !== undefined ? newReturnDate : returnDate;
+    if (rDate && rDate.trim() !== '') nextParams.returnDate = rDate.trim();
     if (companyParam && companyParam.trim() !== '') nextParams.company = companyParam.trim();
     setSearchParams(nextParams);
   };
@@ -530,6 +533,7 @@ export const TripSearchPage: React.FC = () => {
         origin={origin}
         destination={destination}
         departureDate={date}
+        returnDate={returnDate}
         totalTrips={filteredAndSortedTrips.length}
         onSearchChange={handleSearchChange}
       />
