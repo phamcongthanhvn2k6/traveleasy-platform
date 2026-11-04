@@ -71,8 +71,12 @@ public class AdminManagementService {
         return mapToUserResponse(saved);
     }
 
-    @Transactional
     public UserAdminResponse createUser(CreateUserRequest request) {
+        return createUser(request, "admin@traveleasy.vn");
+    }
+
+    @Transactional
+    public UserAdminResponse createUser(CreateUserRequest request, String currentEmail) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS, "Email đã được sử dụng");
         }
@@ -82,6 +86,14 @@ public class AdminManagementService {
             try {
                 userRole = Role.valueOf(request.getRole().toUpperCase());
             } catch (Exception ignored) {}
+        }
+
+        // BẢO MẬT PHÂN CẤP ADMIN: Chỉ Admin Hệ Thống (admin@traveleasy.vn) mới có quyền tạo trực tiếp tài khoản ADMIN
+        if (Role.ADMIN.equals(userRole)) {
+            if (!"admin@traveleasy.vn".equalsIgnoreCase(currentEmail)) {
+                throw new AppException(ErrorCode.FORBIDDEN,
+                        "Chỉ Admin Hệ Thống (admin@traveleasy.vn) mới có quyền tạo trực tiếp tài khoản Quản trị viên! Vui lòng lập phiếu đề xuất gửi duyệt.");
+            }
         }
 
         User user = User.builder()
@@ -94,12 +106,16 @@ public class AdminManagementService {
                 .build();
 
         User saved = userRepository.save(user);
-        logAction("admin@traveleasy.vn", "CREATE_USER", "users #" + saved.getId(), "-", "{\"email\": \"" + saved.getEmail() + "\"}");
+        logAction(currentEmail != null ? currentEmail : "admin@traveleasy.vn", "CREATE_USER", "users #" + saved.getId(), "-", "{\"email\": \"" + saved.getEmail() + "\", \"role\": \"" + userRole + "\"}");
         return mapToUserResponse(saved);
     }
 
-    @Transactional
     public UserAdminResponse updateUser(Long id, UpdateUserRequest request) {
+        return updateUser(id, request, "admin@traveleasy.vn");
+    }
+
+    @Transactional
+    public UserAdminResponse updateUser(Long id, UpdateUserRequest request, String currentEmail) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy người dùng"));
         // Email: chi cap nhat khi gui len va khac email hien tai
@@ -120,14 +136,23 @@ public class AdminManagementService {
         if (request.getPhone() != null && !request.getPhone().isBlank()) user.setPhone(request.getPhone());
         if (request.getRole() != null) {
             try {
-                user.setRole(Role.valueOf(request.getRole().toUpperCase()));
+                Role targetRole = Role.valueOf(request.getRole().toUpperCase());
+                // Chặn nâng cấp lên ADMIN nếu không phải Admin Hệ Thống
+                if (Role.ADMIN.equals(targetRole) && !Role.ADMIN.equals(user.getRole())) {
+                    if (!"admin@traveleasy.vn".equalsIgnoreCase(currentEmail)) {
+                        throw new AppException(ErrorCode.FORBIDDEN,
+                                "Chỉ Admin Hệ Thống (admin@traveleasy.vn) mới có quyền thăng cấp tài khoản thành Quản trị viên!");
+                    }
+                }
+                user.setRole(targetRole);
+            } catch (AppException e) {
+                throw e;
             } catch (Exception ignored) {}
         }
         User saved = userRepository.save(user);
-        logAction("admin@traveleasy.vn", "UPDATE_USER", "users #" + id, "-", "{\"email\": \"" + saved.getEmail() + "\"}");
+        logAction(currentEmail != null ? currentEmail : "admin@traveleasy.vn", "UPDATE_USER", "users #" + id, "-", "{\"email\": \"" + saved.getEmail() + "\"}");
         return mapToUserResponse(saved);
     }
-
     @Transactional
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)

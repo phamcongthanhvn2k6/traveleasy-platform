@@ -4,6 +4,7 @@ import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.dto.admin.*;
 import com.traveleasy.entity.*;
 import com.traveleasy.service.admin.AdminManagementService;
+import com.traveleasy.service.admin.AdminApprovalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,6 +26,7 @@ import java.util.Map;
 public class AdminManagementController {
 
     private final AdminManagementService adminManagementService;
+    private final AdminApprovalService adminApprovalService;
 
     // ==========================================
     // 1. QUẢN LÝ NGƯỜI DÙNG (/admin/users)
@@ -41,15 +43,61 @@ public class AdminManagementController {
     @CacheEvict(value = {"admin_users", "system_stats"}, allEntries = true)
     @PostMapping("/users")
     @Operation(summary = "Tạo mới tài khoản người dùng bởi Admin")
-    public ApiResponse<UserAdminResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
-        return ApiResponse.success("Tạo người dùng thành công", adminManagementService.createUser(request));
+    public ApiResponse<UserAdminResponse> createUser(
+            @Valid @RequestBody CreateUserRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String actor = userDetails != null ? userDetails.getUsername() : "admin@traveleasy.vn";
+        return ApiResponse.success("Tạo người dùng thành công", adminManagementService.createUser(request, actor));
     }
 
     @CacheEvict(value = {"admin_users", "system_stats"}, allEntries = true)
     @PutMapping("/users/{id}")
     @Operation(summary = "Cập nhật thông tin người dùng (Họ tên, SĐT, Vai trò)")
-    public ApiResponse<UserAdminResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
-        return ApiResponse.success("Cập nhật người dùng thành công", adminManagementService.updateUser(id, request));
+    public ApiResponse<UserAdminResponse> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String actor = userDetails != null ? userDetails.getUsername() : "admin@traveleasy.vn";
+        return ApiResponse.success("Cập nhật người dùng thành công", adminManagementService.updateUser(id, request, actor));
+    }
+
+    // ==========================================
+    // 1.1. PHÊ DUYỆT ĐỀ XUẤT ADMIN (/admin/admin-requests)
+    // ==========================================
+    @GetMapping("/admin-requests")
+    @Operation(summary = "Danh sách phiếu đề xuất cấp quyền Admin")
+    public ApiResponse<List<AdminCreationRequestResponse>> getAdminProposals(
+            @RequestParam(required = false) String status) {
+        return ApiResponse.success(adminApprovalService.getProposals(status));
+    }
+
+    @PostMapping("/admin-requests")
+    @Operation(summary = "Lập phiếu đề xuất cấp quyền Admin mới (Dành cho Admin vận hành)")
+    public ApiResponse<AdminCreationRequestResponse> submitAdminProposal(
+            @Valid @RequestBody CreateAdminProposalRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String actor = userDetails != null ? userDetails.getUsername() : "operator.admin@traveleasy.vn";
+        return ApiResponse.success("Đã gửi phiếu đề xuất cấp quyền Admin thành công!", adminApprovalService.createProposal(request, actor));
+    }
+
+    @CacheEvict(value = {"admin_users", "system_stats"}, allEntries = true)
+    @PostMapping("/admin-requests/{id}/approve")
+    @Operation(summary = "Phê duyệt phiếu đề xuất Admin (Chỉ Admin Hệ Thống admin@traveleasy.vn)")
+    public ApiResponse<AdminCreationRequestResponse> approveAdminProposal(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String actor = userDetails != null ? userDetails.getUsername() : "admin@traveleasy.vn";
+        return ApiResponse.success("Đã phê duyệt và kích hoạt tài khoản Quản trị viên mới!", adminApprovalService.approveProposal(id, actor));
+    }
+
+    @PostMapping("/admin-requests/{id}/reject")
+    @Operation(summary = "Từ chối phiếu đề xuất Admin (Chỉ Admin Hệ Thống admin@traveleasy.vn)")
+    public ApiResponse<AdminCreationRequestResponse> rejectAdminProposal(
+            @PathVariable Long id,
+            @Valid @RequestBody RejectAdminProposalRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String actor = userDetails != null ? userDetails.getUsername() : "admin@traveleasy.vn";
+        return ApiResponse.success("Đã từ chối phiếu đề xuất cấp quyền Admin!", adminApprovalService.rejectProposal(id, request, actor));
     }
 
     @CacheEvict(value = {"admin_users", "system_stats"}, allEntries = true)
