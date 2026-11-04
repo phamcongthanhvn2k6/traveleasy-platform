@@ -15,7 +15,8 @@ import {
   Calendar,
   Link as LinkIcon,
   Layers,
-  Sparkles
+  Sparkles,
+  RotateCcw
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
@@ -27,7 +28,7 @@ interface BannerItem {
   title: string;
   imagePath: string;
   position: string;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: 'ACTIVE' | 'INACTIVE' | 'DELETED';
   statusLabel: string;
   duration: string;
   link?: string;
@@ -69,7 +70,7 @@ export const AdminBannersPage: React.FC = () => {
           imagePath: b.imagePath || CLOUDINARY_IMAGES.banners.heroSapa,
           position: b.position || 'Trang chu - Top',
           status: b.status,
-          statusLabel: b.status === 'ACTIVE' ? 'Đang hiện' : 'Đang ẩn',
+          statusLabel: b.status === 'DELETED' ? 'Đã xóa mềm' : b.status === 'ACTIVE' ? 'Đang hiện' : 'Đang ẩn',
           duration: b.duration || '07:00 01/01/2026 - 23:59 31/12/2026',
           link: b.link,
         })));
@@ -123,13 +124,36 @@ export const AdminBannersPage: React.FC = () => {
   };
 
   const handleDeleteBanner = async (id: string, title: string) => {
-    if (!window.confirm(`Bạn có chắc muốn xóa vĩnh viễn banner "${title}" khỏi hệ thống?`)) return;
+    if (
+      !window.confirm(
+        `XÁC NHẬN XÓA MỀM (BẢO TOÀN LƯU TRỮ AN TOÀN):\n\nBạn có chắc muốn chuyển banner "${title}" sang trạng thái ĐÃ XÓA MỀM?\n\n• Banner sẽ lập tức ẩn khỏi trang chủ người dùng.\n• Dữ liệu ảnh và lịch sử chiến dịch được BẢO TOÀN 100% trong CSDL.\n• Quản trị viên có thể bấm [Khôi phục] bất cứ lúc nào.`
+      )
+    )
+      return;
     try {
       await api.delete(`/admin/banners/${id}`);
-      setBanners(prev => prev.filter(b => b.id !== id));
-      toast.success(`Đã xóa banner "${title}" thành công!`, 'Đồng Bộ CSDL');
+      setBanners((prev) =>
+        prev.map((b) =>
+          b.id === id ? { ...b, status: 'DELETED', statusLabel: 'Đã xóa mềm' } : b
+        )
+      );
+      toast.success(`Đã chuyển banner "${title}" sang trạng thái XÓA MỀM an toàn!`, 'Xóa Mềm Thành Công');
     } catch (err) {
       toast.error('Lỗi khi xóa banner', 'Thất Bại');
+    }
+  };
+
+  const handleRestoreBanner = async (id: string, title: string) => {
+    try {
+      await api.patch(`/admin/banners/${id}/restore`);
+      setBanners((prev) =>
+        prev.map((b) =>
+          b.id === id ? { ...b, status: 'INACTIVE', statusLabel: 'Đang ẩn' } : b
+        )
+      );
+      toast.success(`Đã khôi phục banner "${title}" thành công!`, 'Khôi Phục Thành Công');
+    } catch (err) {
+      toast.error('Lỗi khi khôi phục banner', 'Thất Bại');
     }
   };
 
@@ -289,6 +313,7 @@ export const AdminBannersPage: React.FC = () => {
           <option value="ALL">Tất cả trạng thái</option>
           <option value="ACTIVE">Đang hiện trên Web</option>
           <option value="INACTIVE">Đang ẩn</option>
+          <option value="DELETED">Đã xóa mềm</option>
         </select>
       </div>
 
@@ -406,41 +431,70 @@ export const AdminBannersPage: React.FC = () => {
                   </td>
                   <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                      <button
-                        onClick={() => handleToggleStatus(b)}
-                        title={b.status === 'ACTIVE' ? 'Ẩn khỏi web' : 'Hiển thị lên web'}
-                        style={{
-                          backgroundColor: b.status === 'ACTIVE' ? '#fff1f2' : '#f0fdf4',
-                          border: `1px solid ${b.status === 'ACTIVE' ? '#fecdd3' : '#bbf7d0'}`,
-                          color: b.status === 'ACTIVE' ? '#e11d48' : '#16a34a',
-                          cursor: 'pointer',
-                          padding: '5px 10px',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                      >
-                        {b.status === 'ACTIVE' ? <EyeOff size={13} /> : <Eye size={13} />}
-                        <span>{b.status === 'ACTIVE' ? 'Ẩn' : 'Hiện'}</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteBanner(b.id, b.title)}
-                        title="Xóa banner"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: '4px',
-                          color: '#94a3b8',
-                          display: 'flex',
-                          borderRadius: '4px'
-                        }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {b.status === 'DELETED' ? (
+                        <button
+                          onClick={() => handleRestoreBanner(b.id, b.title)}
+                          title="Khôi phục banner"
+                          style={{
+                            backgroundColor: '#ecfdf5',
+                            border: '1px solid #a7f3d0',
+                            color: '#059669',
+                            cursor: 'pointer',
+                            padding: '5px 10px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <RotateCcw size={13} />
+                          <span>Khôi phục</span>
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleToggleStatus(b)}
+                            title={b.status === 'ACTIVE' ? 'Ẩn khỏi web' : 'Hiển thị lên web'}
+                            style={{
+                              backgroundColor: b.status === 'ACTIVE' ? '#fff1f2' : '#f0fdf4',
+                              border: `1px solid ${b.status === 'ACTIVE' ? '#fecdd3' : '#bbf7d0'}`,
+                              color: b.status === 'ACTIVE' ? '#e11d48' : '#16a34a',
+                              cursor: 'pointer',
+                              padding: '5px 10px',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            {b.status === 'ACTIVE' ? <EyeOff size={13} /> : <Eye size={13} />}
+                            <span>{b.status === 'ACTIVE' ? 'Ẩn' : 'Hiện'}</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBanner(b.id, b.title)}
+                            title="Xóa mềm banner (Bảo toàn lịch sử chiến dịch)"
+                            style={{
+                              backgroundColor: '#fee2e2',
+                              border: '1px solid #fecaca',
+                              cursor: 'pointer',
+                              padding: '5px 8px',
+                              color: '#dc2626',
+                              display: 'flex',
+                              alignItems: 'center',
+                              borderRadius: '6px',
+                              gap: '4px',
+                              fontSize: '12px',
+                              fontWeight: 600
+                            }}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
