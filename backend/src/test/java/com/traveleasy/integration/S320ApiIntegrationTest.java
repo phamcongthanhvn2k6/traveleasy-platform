@@ -10,8 +10,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.sql.DataSource;
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class S320ApiIntegrationTest {
 
@@ -33,6 +38,9 @@ public class S320ApiIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private DataSource dataSource;
 
     @Autowired
     private BusCompanyRepository busCompanyRepository;
@@ -68,18 +76,34 @@ public class S320ApiIntegrationTest {
     private Route sampleRoute;
     private Trip sampleTrip;
 
+    @BeforeAll
+    static void verifyDatabaseSafety(@Autowired DataSource ds) throws SQLException {
+        try (Connection conn = ds.getConnection()) {
+            String url = conn.getMetaData().getURL();
+            if (!url.contains("h2:mem") && !url.contains("testdb")) {
+                throw new IllegalStateException("CẢNH BÁO NGUY HIỂM: S320ApiIntegrationTest chỉ được phép chạy trên H2! Database hiện tại: " + url);
+            }
+        }
+    }
+
+    private void verifySafety() {
+        try (Connection conn = dataSource.getConnection()) {
+            String url = conn.getMetaData().getURL();
+            if (!url.contains("h2:mem") && !url.contains("testdb")) {
+                throw new IllegalStateException("CẢNH BÁO NGUY HIỂM: cleanDatabase chỉ được phép chạy trên H2! Database hiện tại: " + url);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể kiểm tra an toàn kết nối DataSource", e);
+        }
+    }
+
     @BeforeEach
     void setUp() {
-        cleanDatabase();
         initSampleFixtures();
     }
 
-    @AfterEach
-    void tearDown() {
-        cleanDatabase();
-    }
-
     private void cleanDatabase() {
+        verifySafety();
         paymentTransactionRepository.deleteAllInBatch();
         ticketRepository.deleteAllInBatch();
         reviewRepository.deleteAllInBatch();
