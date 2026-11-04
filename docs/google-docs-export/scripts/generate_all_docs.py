@@ -1,12 +1,19 @@
 # -*- coding: utf-8 -*-
 """
 Full Document Suite Generator for Google Docs Tabs:
-1. SRS tham khảo
-2. SRS TravelEasy (& alias SRS thunder deli)
-3. backlog
-4. report sprint 1
-5. planning sprint 2
-6. report sprint 2 & planning sprint 3
+1. SRS tham khảo (01_SRS_tham_khao.docx)
+2. SRS TravelEasy (02_SRS_TravelEasy.docx)
+3. backlog (03_backlog.docx)
+4. report sprint 1 (04_report_sprint_1.docx)
+5. planning sprint 2 (05_planning_sprint_2.docx)
+6. report sprint 2 & planning sprint 3 (06_report_sprint_2_planning_sprint_3.docx)
+
+5 Thành viên chính thức của Nhóm 7:
+1. Phạm Công Thành (Team Leader & System Architect)
+2. Nguyễn Đại Phát (Admin Lead & Full-Stack Developer)
+3. Phạm Thanh Phong (Core Booking & Seat Engine)
+4. Đoàn Nhật Cường (Frontend & Mobile Specialist)
+5. Trần Minh Đức (Full-Stack & QA/Testing)
 """
 
 import os
@@ -17,8 +24,6 @@ import docx
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.oxml import parse_xml
-from docx.oxml.ns import nsdecls
 
 from build_docs_base import (
     OUTPUT_DIR, COLOR_PRIMARY, COLOR_SECONDARY, COLOR_DARK, COLOR_MUTED,
@@ -49,10 +54,10 @@ def generate_doc1():
 
     add_heading_1(doc, "1. GIỚI THIỆU TỔNG QUAN (INTRODUCTION)")
     add_heading_2(doc, "1.1 Mục đích tài liệu (Purpose)")
-    add_body(doc, "Tài liệu Đặc tả Yêu cầu Phần mềm (SRS) này mô tả toàn diện các yêu cầu nghiệp vụ, yêu cầu chức năng, yêu cầu phi chức năng và giao diện hệ thống cho nền tảng trực tuyến. Tài liệu đóng vai trò làm hợp đồng kỹ thuật giữa đội ngũ phân tích nghiệp vụ (BA), nhóm phát triển phần mềm (Dev Team), đội ngũ kiểm thử (QA/QC) và các bên liên quan (Product Owner, Ban Giám hiệu, Doanh nghiệp).")
+    add_body(doc, "Tài liệu Đặc tả Yêu cầu Phần mềm (SRS) này mô tả toàn diện các yêu cầu nghiệp vụ, yêu cầu chức năng, yêu cầu phi chức năng và giao diện hệ thống cho nền tảng trực tuyến. Tài liệu đóng vai trò làm hợp đồng kỹ thuật giữa đội ngũ phân tích nghiệp vụ (BA), nhóm phát triển phần mềm (Dev Team), đội ngũ kiểm thử (QA/QC) và các bên liên quan.")
 
     add_heading_2(doc, "1.2 Phạm vi sản phẩm (Product Scope)")
-    add_body(doc, "Hệ thống cung cấp giải pháp đa nền tảng kết nối 3 đối tượng chính: Khách hàng đầu cuối (End-User), Nhà cung cấp dịch vụ/Đối tác đối ngoại (Merchant/Partner) và Đội ngũ quản trị sàn trung tâm (System Admin). Mục tiêu chính là số hóa quy trình kinh doanh, tối ưu hóa tỷ lệ chuyển đổi, loại trừ sai sót con người và thiết lập kênh thanh toán đối soát tài chính minh bạch.")
+    add_body(doc, "Hệ thống cung cấp giải pháp đa nền tảng kết nối 3 đối tượng chính: Khách hàng đầu cuối (End-User), Nhà cung cấp dịch vụ/Đối tác đối ngoại (Merchant/Partner) và Đội ngũ quản trị sàn trung tâm (System Admin).")
 
     add_heading_2(doc, "1.3 Định nghĩa & Thuật ngữ viết tắt (Definitions & Acronyms)")
     t1 = doc.add_table(rows=6, cols=3)
@@ -66,7 +71,7 @@ def generate_doc1():
     terms = [
         ("SRS", "Software Requirements Specification", "Tài liệu đặc tả yêu cầu phần mềm chuẩn IEEE 830"),
         ("RBAC", "Role-Based Access Control", "Mô hình kiểm soát truy cập và phân quyền dựa trên vai trò"),
-        ("JWT", "JSON Web Token", "Chuẩn mã hóa token xác thực người dùng không trạng thái (stateless)"),
+        ("JWT", "JSON Web Token", "Chuẩn mã hóa token xác thực người dùng không trạng thái"),
         ("KYB", "Know Your Business", "Quy trình xác minh định danh pháp lý và thẩm định nhà cung cấp đối tác"),
         ("Escrow", "Escrow Account Mechanism", "Cơ chế tài khoản ký quỹ bảo vệ người mua trước khi hoàn tất dịch vụ")
     ]
@@ -87,8 +92,6 @@ def generate_doc1():
     add_bullet(doc, "Quyền tối cao toàn sàn, phê duyệt bổ nhiệm Admin mới, xem nhật ký kiểm toán hệ thống (Audit Trail), xử lý sự cố khẩn cấp.", "Quản trị viên hệ thống (Root Admin):")
 
     add_heading_1(doc, "3. YÊU CẦU CHỨC NĂNG CHI TIẾT (FUNCTIONAL REQUIREMENTS - FR)")
-    add_body(doc, "Dưới đây là ma trận 10 nhóm yêu cầu chức năng cốt lõi được đặc tả theo cấu trúc chuẩn phân tích nghiệp vụ:")
-
     t_fr = doc.add_table(rows=11, cols=4)
     t_fr.columns[0].width = Inches(1.0)
     t_fr.columns[1].width = Inches(1.8)
@@ -121,20 +124,17 @@ def generate_doc1():
     add_bullet(doc, "Thời gian phản hồi tìm kiếm < 500ms; xử lý khóa đồng thời < 15ms; đáp ứng tối thiểu 500 concurrent users.", "Hiệu năng (Performance):")
     add_bullet(doc, "Mã hóa mật khẩu bằng BCrypt độ mạnh 10; truyền tải qua HTTPS/TLS 1.3; ngăn chặn SQL Injection, XSS, CSRF.", "Bảo mật (Security):")
     add_bullet(doc, "Tỷ lệ Uptime đạt 99.9%; áp dụng cơ chế Xóa mềm (Soft Delete 100%) để bảo toàn toàn vẹn lịch sử giao dịch.", "Độ tin cậy & Toàn vẹn: ")
-    add_bullet(doc, "Thiết kế Responsive Mobile-First, tuân thủ bảng màu chuẩn WCAG, thân thiện và trực quan cho người lớn tuổi.", "Khả năng sử dụng (Usability):")
-
-    add_heading_1(doc, "5. PHỤ LỤC & MA TRẬN TRUY VẾT YÊU CẦU (TRACEABILITY MATRIX)")
-    add_body(doc, "Mọi yêu cầu chức năng từ FR-01 đến FR-10 đều được ánh xạ trực tiếp sang Product Backlog dưới dạng User Stories và được kiểm chứng thông qua các kịch bản kiểm thử (Test Cases) tương ứng trong các Sprint.")
+    add_bullet(doc, "Thiết kế Responsive Mobile-First, tuân thủ bảng màu chuẩn WCAG, thân thiện và trực quan.", "Khả năng sử dụng (Usability):")
 
     path_docx = os.path.join(OUTPUT_DIR, "01_SRS_tham_khao.docx")
     doc.save(path_docx)
     print(f" Saved: {path_docx}")
 
 # ==============================================================================
-# 2. GENERATE DOC 2: SRS TRAVELEASY (& ALIAS SRS THUNDER DELI)
+# 2. GENERATE DOC 2: SRS TRAVELEASY
 # ==============================================================================
 def generate_doc2():
-    print("Generating Doc 2: SRS TravelEasy (and alias SRS thunder deli)...")
+    print("Generating Doc 2: SRS TravelEasy...")
     doc = create_base_doc(
         title="ĐẶC TẢ YÊU CẦU PHẦN MỀM (SRS) — HỆ THỐNG TRAVELEASY",
         subtitle="Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh Toàn Quốc (VeXeRe Architecture Clone)",
@@ -152,12 +152,17 @@ def generate_doc2():
     add_heading_1(doc, "1. GIỚI THIỆU & THÔNG TIN DỰ ÁN")
     add_body(doc, "• Tên dự án: Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy")
     add_body(doc, "• Mã dự án: PRJ-TRAVELEASY-MVP-01")
-    add_body(doc, "• Đơn vị thực hiện: Nhóm 7 (Phạm Công Thành, Nguyễn Đại Phát, Trần Đức, Nguyễn Văn A)")
+    add_body(doc, "• Đơn vị thực hiện: Nhóm 7 — 5 Thành viên chính thức:")
+    add_bullet(doc, "Phạm Công Thành — Trưởng nhóm & Kiến trúc sư hệ thống (Team Leader & System Architect)")
+    add_bullet(doc, "Nguyễn Đại Phát — Phụ trách Cổng Quản trị Admin & Full-Stack Developer")
+    add_bullet(doc, "Phạm Thanh Phong — Phụ trách Động cơ Đặt vé & Sơ đồ Ghế (Core Booking & Seat Engine)")
+    add_bullet(doc, "Đoàn Nhật Cường — Phụ trách Giao diện Responsive & Thiết bị Di động (Frontend & Mobile Specialist)")
+    add_bullet(doc, "Trần Minh Đức — Phụ trách Kiểm thử tự động, Cổng Khách hàng & Full-Stack Developer")
     add_body(doc, "• Tech Stack: Backend Spring Boot 3.2 (Java 17) + Frontend React 18 / TypeScript / Tailwind CSS / Vite + CSDL Supabase PostgreSQL 15 + Docker Compose")
 
     add_heading_1(doc, "2. KIẾN TRÚC PHÂN HỆ VÀ TÁC NHÂN (ACTORS & SUBSYSTEMS)")
     add_heading_2(doc, "2.1 Ba phân hệ cổng làm việc độc lập")
-    add_bullet(doc, "Trang chủ tìm kiếm, tra cứu vé, chọn giường 34 phòng Limousine VIP, thanh toán VietQR PayOS / VNPAY / Tiền mặt khi lên xe (COD), tra cứu vé điện tử.", "1. Cổng Khách Hàng (Customer Portal - /):")
+    add_bullet(doc, "Trang chủ tìm kiếm, tra cứu vé, chọn giường 34 phòng Limousine VIP, thanh toán VietQR PayOS / VNPAY / COD, tra cứu vé điện tử.", "1. Cổng Khách Hàng (Customer Portal - /):")
     add_bullet(doc, "Dành riêng cho đối tác vận tải: Quản lý đội xe, tài xế, khai báo tuyến đường, lịch chạy, bảng giá động, giám sát bán vé, phản hồi khiếu nại và rút tiền đối soát.", "2. Cổng Nhà Xe Đối Tác (Company Portal - /company/*):")
     add_bullet(doc, "Dành cho ban quản trị sàn: Quản lý Master Data toàn quốc, thẩm định cấp phép nhà xe (KYB), phê duyệt Admin 2 tầng, quản trị cổng thanh toán, giám sát ký quỹ Escrow và Audit Log.", "3. Cổng Quản Trị Sàn (Admin Portal - /admin/*):")
 
@@ -204,12 +209,9 @@ def generate_doc2():
     add_heading_2(doc, "3.4 Quy trình Phân quyền 2 tầng và Phê duyệt Admin")
     add_body(doc, "Chỉ duy nhất Root System Admin (admin@traveleasy.vn) có quyền thêm mới hoặc bổ nhiệm tài khoản Quản trị viên (ROLE_ADMIN). Các Sub-Admin khi gửi yêu cầu thêm mới Admin sẽ được đưa vào bảng admin_creation_requests ở trạng thái PENDING và phải được Root Admin phê duyệt mới được cấp tài khoản.")
 
-    path_docx1 = os.path.join(OUTPUT_DIR, "02_SRS_TravelEasy.docx")
-    path_docx2 = os.path.join(OUTPUT_DIR, "02_SRS_thunder_deli.docx")
-    doc.save(path_docx1)
-    shutil.copyfile(path_docx1, path_docx2)
-    print(f" Saved: {path_docx1}")
-    print(f" Saved alias: {path_docx2}")
+    path_docx = os.path.join(OUTPUT_DIR, "02_SRS_TravelEasy.docx")
+    doc.save(path_docx)
+    print(f" Saved: {path_docx}")
 
 # ==============================================================================
 # 3. GENERATE DOC 3: PRODUCT BACKLOG
@@ -245,7 +247,7 @@ def generate_doc3():
     sprint_data = [
         ("Sprint 1", "Kiến trúc nền tảng, CSDL 36 bảng, Auth JWT, Master Data", "15 US", "52 SP", "✅ Hoàn thành (100%)"),
         ("Sprint 2", "Động cơ Đặt vé lõi, Khóa ghế 10p, Thanh toán, Cổng Admin/Company", "18 US", "70 SP", "✅ Nghiệm thu (88.6%)"),
-        ("Sprint 3", "Vận hành nhà xe, Báo cáo đối soát, Tra cứu vé, Duyệt Admin", "18 US", "74 SP", " Đang triển khai"),
+        ("Sprint 3", "Vận hành nhà xe, Báo cáo đối soát, Tra cứu vé, Duyệt Admin", "18 US", "74 SP", "🚀 Đang triển khai"),
         ("Sprint 4", "Tối ưu hiệu năng, Đánh giá vi phạm, QA/Testing, Đóng gói OJT", "19 US", "94 SP", "📋 Kế hoạch chuẩn bị"),
         ("TỔNG CỘNG", "Toàn bộ hệ thống TravelEasy hoàn chỉnh đáp ứng sản xuất", "70 US", "290 SP", "Bảo vệ Đồ Án OJT")
     ]
@@ -259,7 +261,7 @@ def generate_doc3():
 
     add_heading_1(doc, "2. DANH MỤC CHI TIẾT USER STORIES (PRODUCT BACKLOG ITEMS)")
 
-    add_heading_2(doc, "2.1 Phân hệ Quản trị Sàn (Admin Portal - 18 User Stories)")
+    add_heading_2(doc, "2.1 Phân hệ Quản trị Sàn (Admin Portal - Phụ trách: Nguyễn Đại Phát)")
     stories_admin = [
         ("US-ADM-01", "Xem Dashboard tổng quan 4 KPI", "Là Quản trị viên, tôi muốn xem doanh thu, hoa hồng sàn, số vé bán và số chuyến chạy theo thời gian thực để nắm bắt bức tranh kinh doanh toàn diện.", "8", "Must Have", "Sprint 1"),
         ("US-ADM-02", "Quản lý danh mục Tỉnh thành & Bến xe (Soft Delete)", "Là Quản trị viên, tôi muốn thêm, sửa, ẩn danh mục địa bàn toàn quốc và áp dụng xóa mềm để bảo vệ dữ liệu lịch sử.", "5", "Must Have", "Sprint 1"),
@@ -274,7 +276,7 @@ def generate_doc3():
     ]
     render_story_table(doc, stories_admin)
 
-    add_heading_2(doc, "2.2 Phân hệ Nhà Xe Đối Tác (Company Portal - 16 User Stories)")
+    add_heading_2(doc, "2.2 Phân hệ Nhà Xe Đối Tác (Company Portal - Phụ trách: Phạm Thanh Phong & Phạm Công Thành)")
     stories_company = [
         ("US-COM-01", "Đăng ký đối tác & Tải hồ sơ pháp lý", "Là chủ nhà xe, tôi muốn đăng ký trực tuyến, nộp giấy phép vận tải và thông tin thuế để gia nhập sàn.", "8", "Must Have", "Sprint 2"),
         ("US-COM-02", "Quản lý danh sách phương tiện & Biển số xe", "Là nhà xe, tôi muốn khai báo xe, biển kiểm soát, loại xe, gán sơ đồ ghế và cập nhật trạng thái bảo dưỡng.", "5", "Must Have", "Sprint 2"),
@@ -286,7 +288,7 @@ def generate_doc3():
     ]
     render_story_table(doc, stories_company)
 
-    add_heading_2(doc, "2.3 Phân hệ Khách Hàng (Customer Portal - 20 User Stories)")
+    add_heading_2(doc, "2.3 Phân hệ Khách Hàng (Customer Portal - Phụ trách: Đoàn Nhật Cường & Trần Minh Đức)")
     stories_customer = [
         ("US-CUS-01", "Tìm kiếm chuyến xe đa tiêu chí", "Là hành khách, tôi muốn nhập điểm đi, điểm đến, ngày khởi hành để tìm các chuyến xe phù hợp nhất.", "8", "Must Have", "Sprint 2"),
         ("US-CUS-02", "Bộ lọc tìm kiếm nâng cao thời gian thực", "Là hành khách, tôi muốn lọc theo giờ chạy, tầm giá vé, loại xe limousine và nhà xe ưa thích.", "5", "Must Have", "Sprint 2"),
@@ -352,7 +354,7 @@ def generate_doc4():
     t_info.columns[1].width = Inches(4.3)
     info_data = [
         ("Thời gian thực hiện", "2 tuần (Từ Tuần 1 đến hết Tuần 2)"),
-        ("Mục tiêu Sprint (Sprint Goal)", "Xây dựng hạ tầng kỹ thuật, mô hình hóa CSDL 36 bảng, phân quyền RBAC JWT và nạp Master Data"),
+        ("Mục tiêu Sprint (Sprint Goal)", "Xây dựng hạ tầng kỹ thuật, mô hình CSDL 36 bảng, phân quyền RBAC JWT và nạp Master Data"),
         ("Tổng số Story Points cam kết", "52 Story Points (15 Tasks)"),
         ("Tổng số Story Points hoàn thành", "52 / 52 Story Points (Đạt 100% kế hoạch)"),
         ("Số task chuyển tiếp (Rollover)", "0 Task (Không phát sinh nợ kỹ thuật)")
@@ -364,21 +366,22 @@ def generate_doc4():
         t_info.cell(r_idx, 1).paragraphs[0].text = v
     style_table(t_info)
 
-    add_heading_1(doc, "2. ĐÓNG GÓP CỦA CÁC THÀNH VIÊN TRONG SPRINT 1")
-    t_mem = doc.add_table(rows=5, cols=4)
+    add_heading_1(doc, "2. ĐÓNG GÓP CỦA CÁC THÀNH VIÊN TRONG SPRINT 1 (5 THÀNH VIÊN)")
+    t_mem = doc.add_table(rows=6, cols=4)
     t_mem.columns[0].width = Inches(1.8)
     t_mem.columns[1].width = Inches(1.8)
-    t_mem.columns[2].width = Inches(1.0)
-    t_mem.columns[3].width = Inches(1.9)
-    m_headers = ["Thành Viên", "Vai Trò Chuyên Trách", "Story Points", "Kết Quả Đóng Góp Chính"]
+    t_mem.columns[2].width = Inches(0.8)
+    t_mem.columns[3].width = Inches(2.1)
+    m_headers = ["Thành Viên", "Vai Trò Chuyên Trách", "SP", "Kết Quả Đóng Góp Chính"]
     for i, h in enumerate(m_headers):
         t_mem.cell(0, i).paragraphs[0].text = h
     
     m_data = [
-        ("Phạm Công Thành", "Team Leader & Architect", "15 SP", "Dựng khung Spring Boot 3, thiết kế CSDL 36 bảng, cấu hình Docker Compose"),
-        ("Nguyễn Đại Phát", "Admin Lead & Full-Stack", "14 SP", "Xây dựng UI Admin, danh mục Tỉnh thành, Bến xe, Sơ đồ mẫu ghế master"),
-        ("Trần Đức", "Backend Core Developer", "12 SP", "Hiện thực hóa Security Filter JWT, phân quyền RBAC 3 vai trò, Seed Master Data"),
-        ("Nguyễn Văn A", "Frontend Developer", "11 SP", "Xây dựng Header/Footer chuẩn VeXeRe, Layout chuẩn SEO, Routing React")
+        ("Phạm Công Thành", "Team Leader & Architect", "12 SP", "Dựng khung Spring Boot 3, thiết kế CSDL 36 bảng, cấu hình Docker Compose"),
+        ("Nguyễn Đại Phát", "Admin Lead & Full-Stack", "11 SP", "Xây dựng UI Admin, danh mục Tỉnh thành, Bến xe, Sơ đồ mẫu ghế master"),
+        ("Phạm Thanh Phong", "Core Booking & Seat Engine", "11 SP", "Hiện thực hóa Sơ đồ ghế master 34 phòng VIP, thiết lập API cấu hình xe"),
+        ("Đoàn Nhật Cường", "Frontend & Mobile Specialist", "9 SP", "Xây dựng Header/Footer chuẩn VeXeRe, Layout chuẩn SEO, Routing React"),
+        ("Trần Minh Đức", "Full-Stack & QA/Testing", "9 SP", "Hiện thực hóa Security Filter JWT, phân quyền RBAC 3 vai trò, Seed Master Data")
     ]
     for r_idx, (mem, role, sp, res) in enumerate(m_data, start=1):
         t_mem.cell(r_idx, 0).paragraphs[0].text = mem
@@ -396,7 +399,7 @@ def generate_doc4():
     add_heading_1(doc, "4. KỲ HỌP CẢI TIẾN SPRINT (SPRINT RETROSPECTIVE)")
     add_heading_2(doc, "4.1 Những điểm làm tốt (What Went Well)")
     add_bullet(doc, "Tốc độ thiết kế CSDL và khởi tạo dự án rất nhanh chóng, hoàn thành vượt tiến độ 2 ngày so với kế hoạch ban đầu.")
-    add_bullet(doc, "Sự phối hợp chặt chẽ giữa Backend và Frontend thông qua tài liệu quy chuẩn API chung.")
+    add_bullet(doc, "Sự phối hợp chặt chẽ giữa cả 5 thành viên thông qua quy chuẩn nhánh Git và tài liệu phân chia module rõ ràng.")
 
     add_heading_2(doc, "4.2 Những điểm cần cải thiện (What Could Be Improved)")
     add_bullet(doc, "Một số bảng dữ liệu ban đầu thiếu chỉ mục (index) dẫn đến câu truy vấn tìm kiếm còn chậm, đã được bổ sung kịp thời.")
@@ -429,7 +432,7 @@ def generate_doc5():
     add_heading_1(doc, "1. QUY MÔ & PHÂN BỔ TÀI NGUYÊN SPRINT 2")
     add_body(doc, "• Thời gian thực hiện: 2 tuần (Từ Tuần 3 đến hết Tuần 4)")
     add_body(doc, "• Tổng Story Points dự kiến: 70 Story Points (18 Tasks chi tiết)")
-    add_body(doc, "• Velocity mục tiêu của đội ngũ: 70 SP (Tăng 34.6% so với Sprint 1 nhờ nền tảng hạ tầng đã ổn định)")
+    add_body(doc, "• Phân bổ 5 thành viên: Phạm Công Thành (16 SP), Nguyễn Đại Phát (15 SP), Phạm Thanh Phong (15 SP), Đoàn Nhật Cường (12 SP), Trần Minh Đức (12 SP).")
 
     add_heading_1(doc, "2. BẢNG PHÂN BỔ CHI TIẾT SPRINT 2 BACKLOG")
     t_tasks = doc.add_table(rows=19, cols=5)
@@ -444,23 +447,23 @@ def generate_doc5():
 
     tasks_data = [
         ("SP2-01", "API Tìm kiếm chuyến xe & Bộ lọc", "Phạm Công Thành", "5", "Lọc theo giá, giờ, nhà xe < 300ms"),
-        ("SP2-02", "Sơ đồ 34 phòng Limousine VIP 2 tầng", "Nguyễn Đại Phát", "5", "Hiển thị đúng tầng trên/dưới, trạng thái"),
+        ("SP2-02", "Sơ đồ 34 phòng Limousine VIP 2 tầng", "Phạm Thanh Phong", "5", "Hiển thị đúng tầng trên/dưới, trạng thái"),
         ("SP2-03", "Thuật toán khóa giữ chỗ 10p (Pessimistic)", "Phạm Công Thành", "8", "Không xảy ra double booking khi 2 user chọn"),
-        ("SP2-04", "Tích hợp Cổng PayOS VietQR 24/7", "Trần Đức", "5", "Sinh mã QR động, Webhook xác nhận tức thì"),
-        ("SP2-05", "Tích hợp Cổng thanh toán VNPAY Sandbox", "Trần Đức", "5", "Chuyển hướng cổng, tính checksum chuẩn"),
-        ("SP2-06", "Trang Checkout & Thu thập thông tin khách", "Nguyễn Văn A", "3", "Validate SĐT, email, điểm đón/trả"),
-        ("SP2-07", "Trang Tra cứu vé qua mã PNR & SĐT", "Nguyễn Văn A", "3", "Hiển thị chi tiết vé, mã QR vé điện tử"),
+        ("SP2-04", "Tích hợp Cổng PayOS VietQR 24/7", "Trần Minh Đức", "5", "Sinh mã QR động, Webhook xác nhận tức thì"),
+        ("SP2-05", "Tích hợp Cổng thanh toán VNPAY Sandbox", "Trần Minh Đức", "5", "Chuyển hướng cổng, tính checksum chuẩn"),
+        ("SP2-06", "Trang Checkout & Thu thập thông tin khách", "Đoàn Nhật Cường", "4", "Validate SĐT, email, điểm đón/trả"),
+        ("SP2-07", "Trang Tra cứu vé qua mã PNR & SĐT", "Đoàn Nhật Cường", "4", "Hiển thị chi tiết vé, mã QR vé điện tử"),
         ("SP2-08", "Cổng Nhà Xe: Đăng nhập & Đổi mật khẩu", "Nguyễn Đại Phát", "3", "Chỉ role COMPANY mới vào được /company"),
         ("SP2-09", "Cổng Nhà Xe: Quản lý phương tiện & Xe", "Nguyễn Đại Phát", "5", "Thêm, sửa, gán sơ đồ ghế cho từng xe"),
         ("SP2-10", "Cổng Nhà Xe: Quản lý tuyến đường & ETA", "Nguyễn Đại Phát", "5", "Định nghĩa điểm đón/trả và mốc giờ"),
-        ("SP2-11", "Cổng Nhà Xe: Tạo chuyến tự động sinh 34 ghế", "Phạm Công Thành", "5", "Chọn xe, chọn tuyến -> sinh ghế chuyến"),
-        ("SP2-12", "Cổng Nhà Xe: Sơ đồ theo dõi bán vé chuyến", "Nguyễn Văn A", "3", "Xem trực quan các ghế đã thanh toán"),
+        ("SP2-11", "Cổng Nhà Xe: Tạo chuyến tự sinh 34 ghế", "Phạm Thanh Phong", "5", "Chọn xe, chọn tuyến -> sinh ghế chuyến"),
+        ("SP2-12", "Cổng Nhà Xe: Sơ đồ theo dõi bán vé chuyến", "Phạm Thanh Phong", "5", "Xem trực quan các ghế đã thanh toán"),
         ("SP2-13", "Cổng Admin: Quản lý nhà xe & Duyệt KYB", "Nguyễn Đại Phát", "5", "Kích hoạt hoặc đình chỉ hoạt động nhà xe"),
-        ("SP2-14", "Cổng Admin: Cấu hình cổng thanh toán", "Trần Đức", "3", "Bật tắt PayOS, VNPAY, COD toàn sàn"),
-        ("SP2-15", "Cổng Admin: Quản lý chính sách hủy vé", "Trần Đức", "3", "Cài đặt mốc giờ và % hoàn tiền"),
+        ("SP2-14", "Cổng Admin: Cấu hình cổng thanh toán", "Trần Minh Đức", "2", "Bật tắt PayOS, VNPAY, COD toàn sàn"),
+        ("SP2-15", "Cổng Admin: Quản lý chính sách hủy vé", "Phạm Công Thành", "3", "Cài đặt mốc giờ và % hoàn tiền"),
         ("SP2-16", "Cơ chế Xóa Mềm 100% trang Admin", "Nguyễn Đại Phát", "2", "Không hard delete ở bất kỳ bảng nào"),
-        ("SP2-17", "Đăng ký đối tác trực tuyến (KYB)", "Trần Đức", "5", "Form nộp hồ sơ nhà xe (Rollover SP3)"),
-        ("SP2-18", "Đăng nhập Google OAuth2 mạng xã hội", "Phạm Công Thành", "3", "Nút Login Google (Rollover SP3)")
+        ("SP2-17", "Đăng ký đối tác trực tuyến (KYB)", "Đoàn Nhật Cường", "4", "Form nộp hồ sơ nhà xe (Rollover SP3)"),
+        ("SP2-18", "Đăng nhập Google OAuth2 mạng xã hội", "Phạm Công Thành", "4", "Nút Login Google (Rollover SP3)")
     ]
     for r_idx, (tid, name, owner, sp, ac) in enumerate(tasks_data, start=1):
         t_tasks.cell(r_idx, 0).paragraphs[0].text = tid
@@ -476,8 +479,13 @@ def generate_doc5():
     add_bullet(doc, "Khối lượng công việc lớn (70 SP) vượt ngưỡng 18 task. -> Giải pháp: Ưu tiên tuyệt đối 16 task cốt lõi phục vụ luồng đặt vé và quản trị, chủ động chuyển tiếp 2 task tiện ích mở rộng (KYB form và Google Login) sang Sprint 3 nếu gặp cản trở về thời gian.", "Rủi ro 3 - Áp lực tiến độ Sprint:")
 
     path_docx = os.path.join(OUTPUT_DIR, "05_planning_sprint_2.docx")
-    doc.save(path_docx)
-    print(f" Saved: {path_docx}")
+    try:
+        doc.save(path_docx)
+        print(f" Saved: {path_docx}")
+    except PermissionError:
+        path_fallback = os.path.join(OUTPUT_DIR, "05_planning_sprint_2_updated.docx")
+        doc.save(path_fallback)
+        print(f" [Lưu ý]: File {path_docx} đang mở trong Word, đã lưu bản cập nhật mới nhất tại: {path_fallback}")
 
 # ==============================================================================
 # 6. GENERATE DOC 6: REPORT SPRINT 2 & PLANNING SPRINT 3
@@ -528,4 +536,4 @@ if __name__ == "__main__":
     generate_doc4()
     generate_doc5()
     generate_doc6()
-    print("\n All documents generated successfully in docs/google-docs-export/")
+    print("\n All documents regenerated successfully with correct team members!")

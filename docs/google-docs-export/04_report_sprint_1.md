@@ -1,5 +1,5 @@
 # BÁO CÁO TỔNG KẾT & NGHIỆM THU SPRINT 1
-> **Đơn vị:** Nhóm 7 — Dự Án TravelEasy  
+> **Đơn vị:** Nhóm 7 — Dự Án TravelEasy (5 Thành viên)  
 > **Thời gian:** 2 tuần (Tuần 1 - Tuần 2)  
 > **Trạng thái:** ✅ Hoàn thành 100% (52/52 Story Points)  
 
@@ -16,13 +16,14 @@
 
 ---
 
-## 2. ĐÓNG GÓP CỦA CÁC THÀNH VIÊN
-| Thành Viên | Vai Trò Chuyên Trách | Story Points | Kết Quả Đóng Góp Chính |
+## 2. ĐÓNG GÓP CỦA 5 THÀNH VIÊN TRONG SPRINT 1
+| Thành Viên | Vai Trò Chuyên Trách | SP | Kết Quả Đóng Góp Chính |
 | :--- | :--- | :---: | :--- |
-| **Phạm Công Thành** | Team Leader & Architect | 15 SP | Dựng khung Spring Boot 3, thiết kế CSDL 36 bảng, cấu hình Docker Compose |
-| **Nguyễn Đại Phát** | Admin Lead & Full-Stack | 14 SP | Xây dựng UI Admin, danh mục Tỉnh thành, Bến xe, Sơ đồ mẫu ghế master |
-| **Trần Đức** | Backend Core Developer | 12 SP | Hiện thực hóa Security Filter JWT, phân quyền RBAC 3 vai trò, Seed Master Data |
-| **Nguyễn Văn A** | Frontend Developer | 11 SP | Xây dựng Header/Footer chuẩn VeXeRe, Layout chuẩn SEO, Routing React |
+| **Phạm Công Thành** | Team Leader & Architect | 12 SP | Dựng khung Spring Boot 3, thiết kế CSDL 36 bảng, cấu hình Docker Compose |
+| **Nguyễn Đại Phát** | Admin Lead & Full-Stack | 11 SP | Xây dựng UI Admin, danh mục Tỉnh thành, Bến xe, Sơ đồ mẫu ghế master |
+| **Phạm Thanh Phong** | Core Booking & Seat Engine | 11 SP | Hiện thực hóa Sơ đồ ghế master 34 phòng VIP, thiết lập API cấu hình xe |
+| **Đoàn Nhật Cường** | Frontend & Mobile Specialist | 9 SP | Xây dựng Header/Footer chuẩn VeXeRe, Layout chuẩn SEO, Routing React |
+| **Trần Minh Đức** | Full-Stack & QA/Testing | 9 SP | Hiện thực hóa Security Filter JWT, phân quyền RBAC 3 vai trò, Seed Master Data |
 
 ---
 
@@ -35,5 +36,5 @@
 ---
 
 ## 4. KỲ HỌP CẢI TIẾN SPRINT (SPRINT RETROSPECTIVE)
-* **What Went Well:** Tốc độ thiết kế CSDL và khởi tạo dự án nhanh, hoàn thành trước 2 ngày; phối hợp Backend - Frontend ăn ý.
+* **What Went Well:** Tốc độ thiết kế CSDL và khởi tạo dự án nhanh, hoàn thành trước 2 ngày; cả 5 thành viên phối hợp ăn ý.
 * **What Could Be Improved:** Bổ sung thêm chỉ mục (index) cho các bảng giao dịch để tăng tốc độ tìm kiếm trong Sprint 2.

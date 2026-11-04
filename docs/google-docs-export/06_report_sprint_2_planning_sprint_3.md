@@ -1,5 +1,5 @@
 # BÁO CÁO TỔNG KẾT SPRINT 2 & KẾ HOẠCH SPRINT 3
-> **Đơn vị:** Nhóm 7 — Dự Án TravelEasy  
+> **Đơn vị:** Nhóm 7 — Dự Án TravelEasy (5 Thành viên)  
 > **Nghiệm thu Sprint 2:** 62/70 Story Points (88.6%)  
 > **Kế hoạch Sprint 3:** 74 Story Points (Đối soát tài chính & Vận hành toàn diện)  
 

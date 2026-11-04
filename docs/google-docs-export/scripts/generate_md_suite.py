@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 Generate markdown counterparts (.md) in docs/google-docs-export/
-for instant copy-pasting or viewing.
+with the correct 5 team members of Nhóm 7:
+1. Phạm Công Thành (Team Leader & System Architect)
+2. Nguyễn Đại Phát (Admin Lead & Full-Stack Developer)
+3. Phạm Thanh Phong (Core Booking & Seat Engine)
+4. Đoàn Nhật Cường (Frontend & Mobile Specialist)
+5. Trần Minh Đức (Full-Stack & QA/Testing)
 """
 
 import os
 import sys
-import shutil
 sys.stdout.reconfigure(encoding='utf-8')
 
 OUTPUT_DIR = os.path.join(os.getcwd(), "docs", "google-docs-export")
@@ -79,7 +83,7 @@ Hệ thống hoạt động dưới mô hình Web Application hiện đại, áp
 md2 = """# ĐẶC TẢ YÊU CẦU PHẦN MỀM (SRS) — HỆ THỐNG TRAVELEASY
 > **Đề tài:** Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh Toàn Quốc (VeXeRe Architecture Clone)  
 > **Mã dự án:** PRJ-TRAVELEASY-MVP-01  
-> **Đơn vị thực hiện:** Nhóm 7 — OJT Capstone Project  
+> **Đơn vị thực hiện:** Nhóm 7 — 5 Thành viên chính thức  
 > **Trạng thái:** Hoàn thiện (Verified)  
 
 ---
@@ -89,7 +93,12 @@ md2 = """# ĐẶC TẢ YÊU CẦU PHẦN MỀM (SRS) — HỆ THỐNG TRAVELEASY
 
 ## 1. GIỚI THIỆU & THÔNG TIN DỰ ÁN
 * **Tên hệ thống:** TravelEasy Enterprise Transport Platform
-* **Thành viên thực hiện:** Phạm Công Thành (Leader), Nguyễn Đại Phát, Trần Đức, Nguyễn Văn A
+* **5 Thành viên thực hiện:**
+  1. **Phạm Công Thành** — Trưởng nhóm & Kiến trúc sư hệ thống (Team Leader & System Architect)
+  2. **Nguyễn Đại Phát** — Phụ trách Cổng Quản trị Admin & Full-Stack Developer
+  3. **Phạm Thanh Phong** — Phụ trách Động cơ Đặt vé & Sơ đồ Ghế (Core Booking & Seat Engine)
+  4. **Đoàn Nhật Cường** — Phụ trách Giao diện Responsive & Thiết bị Di động (Frontend & Mobile Specialist)
+  5. **Trần Minh Đức** — Phụ trách Kiểm thử tự động, Cổng Khách hàng & Full-Stack Developer
 * **Tech Stack:** Spring Boot 3.2 (Java 17) + React 18 / TypeScript / Tailwind CSS / Vite + CSDL Supabase PostgreSQL 15 + Docker Compose
 
 ---
@@ -128,7 +137,7 @@ Chỉ Root System Admin (`admin@traveleasy.vn`) có quyền bổ nhiệm Admin. 
 # 3. 03_backlog.md
 md3 = """# PRODUCT BACKLOG CHUẨN AGILE/SCRUM — DỰ ÁN TRAVELEASY
 > **Quy mô:** 70 User Stories | 4 Sprints | 290 Story Points  
-> **Đơn vị quản lý:** Nhóm 7 — TravelEasy Platform  
+> **Đơn vị quản lý:** Nhóm 7 — 5 Thành viên chính thức  
 > **Trạng thái:** Active & Sprint Tracking  
 
 ---
@@ -146,7 +155,7 @@ md3 = """# PRODUCT BACKLOG CHUẨN AGILE/SCRUM — DỰ ÁN TRAVELEASY
 
 ## 2. DANH MỤC CHI TIẾT USER STORIES (PRODUCT BACKLOG ITEMS)
 
-### 2.1 Phân hệ Quản trị Sàn (Admin Portal)
+### 2.1 Phân hệ Quản trị Sàn (Admin Portal - Phụ trách: Nguyễn Đại Phát)
 | Mã US | Tên Tính Năng | Mô Tả User Story | SP | Độ Ưu Tiên | Sprint |
 | :--- | :--- | :--- | :---: | :---: | :---: |
 | **US-ADM-01** | Xem Dashboard tổng quan 4 KPI | Là Quản trị viên, tôi muốn xem doanh thu, hoa hồng, vé bán, chuyến chạy thời gian thực. | 8 | Must Have | Sprint 1 |
@@ -160,7 +169,7 @@ md3 = """# PRODUCT BACKLOG CHUẨN AGILE/SCRUM — DỰ ÁN TRAVELEASY
 | **US-ADM-09** | Cấu hình chính sách hủy vé & hoàn tiền | Cài đặt mốc thời gian và % tiền vé được hoàn khi hủy vé. | 5 | Should Have | Sprint 2 |
 | **US-ADM-10** | Kiểm duyệt báo cáo vi phạm & đánh giá xấu | Ẩn đánh giá bôi nhọ, xử lý tranh chấp vé hoặc phạt nhà xe vi phạm. | 5 | Should Have | Sprint 3 |
 
-### 2.2 Phân hệ Nhà Xe Đối Tác (Company Portal)
+### 2.2 Phân hệ Nhà Xe Đối Tác (Company Portal - Phụ trách: Phạm Thanh Phong & Phạm Công Thành)
 | Mã US | Tên Tính Năng | Mô Tả User Story | SP | Độ Ưu Tiên | Sprint |
 | :--- | :--- | :--- | :---: | :---: | :---: |
 | **US-COM-01** | Đăng ký đối tác & Tải hồ sơ pháp lý | Chủ nhà xe đăng ký trực tuyến, nộp giấy phép vận tải gia nhập sàn. | 8 | Must Have | Sprint 2 |
@@ -171,7 +180,7 @@ md3 = """# PRODUCT BACKLOG CHUẨN AGILE/SCRUM — DỰ ÁN TRAVELEASY
 | **US-COM-06** | Sơ đồ bán vé & Quản lý đơn vé chuyến | Quan sát trực quan trạng thái ghế đã bán, giữ chỗ hoặc còn trống. | 8 | Must Have | Sprint 2 |
 | **US-COM-07** | Báo cáo doanh thu & Rút tiền đối soát | Theo dõi doanh thu thực nhận sau trừ hoa hồng và gửi lệnh rút tiền. | 8 | Must Have | Sprint 3 |
 
-### 2.3 Phân hệ Khách Hàng (Customer Portal)
+### 2.3 Phân hệ Khách Hàng (Customer Portal - Phụ trách: Đoàn Nhật Cường & Trần Minh Đức)
 | Mã US | Tên Tính Năng | Mô Tả User Story | SP | Độ Ưu Tiên | Sprint |
 | :--- | :--- | :--- | :---: | :---: | :---: |
 | **US-CUS-01** | Tìm kiếm chuyến xe đa tiêu chí | Nhập điểm đi, điểm đến, ngày khởi hành để tìm các chuyến xe. | 8 | Must Have | Sprint 2 |
@@ -186,7 +195,7 @@ md3 = """# PRODUCT BACKLOG CHUẨN AGILE/SCRUM — DỰ ÁN TRAVELEASY
 
 # 4. 04_report_sprint_1.md
 md4 = """# BÁO CÁO TỔNG KẾT & NGHIỆM THU SPRINT 1
-> **Đơn vị:** Nhóm 7 — Dự Án TravelEasy  
+> **Đơn vị:** Nhóm 7 — Dự Án TravelEasy (5 Thành viên)  
 > **Thời gian:** 2 tuần (Tuần 1 - Tuần 2)  
 > **Trạng thái:** ✅ Hoàn thành 100% (52/52 Story Points)  
 
@@ -203,13 +212,14 @@ md4 = """# BÁO CÁO TỔNG KẾT & NGHIỆM THU SPRINT 1
 
 ---
 
-## 2. ĐÓNG GÓP CỦA CÁC THÀNH VIÊN
-| Thành Viên | Vai Trò Chuyên Trách | Story Points | Kết Quả Đóng Góp Chính |
+## 2. ĐÓNG GÓP CỦA 5 THÀNH VIÊN TRONG SPRINT 1
+| Thành Viên | Vai Trò Chuyên Trách | SP | Kết Quả Đóng Góp Chính |
 | :--- | :--- | :---: | :--- |
-| **Phạm Công Thành** | Team Leader & Architect | 15 SP | Dựng khung Spring Boot 3, thiết kế CSDL 36 bảng, cấu hình Docker Compose |
-| **Nguyễn Đại Phát** | Admin Lead & Full-Stack | 14 SP | Xây dựng UI Admin, danh mục Tỉnh thành, Bến xe, Sơ đồ mẫu ghế master |
-| **Trần Đức** | Backend Core Developer | 12 SP | Hiện thực hóa Security Filter JWT, phân quyền RBAC 3 vai trò, Seed Master Data |
-| **Nguyễn Văn A** | Frontend Developer | 11 SP | Xây dựng Header/Footer chuẩn VeXeRe, Layout chuẩn SEO, Routing React |
+| **Phạm Công Thành** | Team Leader & Architect | 12 SP | Dựng khung Spring Boot 3, thiết kế CSDL 36 bảng, cấu hình Docker Compose |
+| **Nguyễn Đại Phát** | Admin Lead & Full-Stack | 11 SP | Xây dựng UI Admin, danh mục Tỉnh thành, Bến xe, Sơ đồ mẫu ghế master |
+| **Phạm Thanh Phong** | Core Booking & Seat Engine | 11 SP | Hiện thực hóa Sơ đồ ghế master 34 phòng VIP, thiết lập API cấu hình xe |
+| **Đoàn Nhật Cường** | Frontend & Mobile Specialist | 9 SP | Xây dựng Header/Footer chuẩn VeXeRe, Layout chuẩn SEO, Routing React |
+| **Trần Minh Đức** | Full-Stack & QA/Testing | 9 SP | Hiện thực hóa Security Filter JWT, phân quyền RBAC 3 vai trò, Seed Master Data |
 
 ---
 
@@ -222,13 +232,13 @@ md4 = """# BÁO CÁO TỔNG KẾT & NGHIỆM THU SPRINT 1
 ---
 
 ## 4. KỲ HỌP CẢI TIẾN SPRINT (SPRINT RETROSPECTIVE)
-* **What Went Well:** Tốc độ thiết kế CSDL và khởi tạo dự án nhanh, hoàn thành trước 2 ngày; phối hợp Backend - Frontend ăn ý.
+* **What Went Well:** Tốc độ thiết kế CSDL và khởi tạo dự án nhanh, hoàn thành trước 2 ngày; cả 5 thành viên phối hợp ăn ý.
 * **What Could Be Improved:** Bổ sung thêm chỉ mục (index) cho các bảng giao dịch để tăng tốc độ tìm kiếm trong Sprint 2.
 """
 
 # 5. 05_planning_sprint_2.md
 md5 = """# KẾ HOẠCH THỰC HIỆN SPRINT 2 (SPRINT 2 PLANNING)
-> **Đơn vị:** Nhóm 7 — Dự Án TravelEasy  
+> **Đơn vị:** Nhóm 7 — Dự Án TravelEasy (5 Thành viên)  
 > **Thời gian:** 2 tuần (Tuần 3 - Tuần 4)  
 > **Quy mô:** 70 Story Points (18 Tasks chi tiết)  
 > **Mục tiêu:** Động Cơ Đặt Vé Lõi & Hai Cổng Quản Trị  
@@ -238,7 +248,12 @@ md5 = """# KẾ HOẠCH THỰC HIỆN SPRINT 2 (SPRINT 2 PLANNING)
 ## 1. QUY MÔ & PHÂN BỔ TÀI NGUYÊN
 * **Thời gian thực hiện:** 2 tuần (Từ Tuần 3 đến hết Tuần 4)
 * **Tổng Story Points dự kiến:** 70 Story Points (18 Tasks chi tiết)
-* **Velocity mục tiêu:** 70 SP (Tăng 34.6% so với Sprint 1 nhờ nền tảng hạ tầng đã ổn định)
+* **Phân bổ 5 thành viên:**
+  - Phạm Công Thành: 16 SP
+  - Nguyễn Đại Phát: 15 SP
+  - Phạm Thanh Phong: 15 SP
+  - Đoàn Nhật Cường: 12 SP
+  - Trần Minh Đức: 12 SP
 
 ---
 
@@ -246,23 +261,23 @@ md5 = """# KẾ HOẠCH THỰC HIỆN SPRINT 2 (SPRINT 2 PLANNING)
 | Mã Task | Nội Dung Công Việc | Phụ Trách | SP | Tiêu Chí Nghiệm Thu |
 | :--- | :--- | :--- | :---: | :--- |
 | **SP2-01** | API Tìm kiếm chuyến xe & Bộ lọc | Phạm Công Thành | 5 | Lọc theo giá, giờ, nhà xe < 300ms |
-| **SP2-02** | Sơ đồ 34 phòng Limousine VIP 2 tầng | Nguyễn Đại Phát | 5 | Hiển thị đúng tầng trên/dưới, trạng thái |
+| **SP2-02** | Sơ đồ 34 phòng Limousine VIP 2 tầng | Phạm Thanh Phong | 5 | Hiển thị đúng tầng trên/dưới, trạng thái |
 | **SP2-03** | Thuật toán khóa giữ chỗ 10p (Pessimistic) | Phạm Công Thành | 8 | Không xảy ra double booking khi 2 user chọn |
-| **SP2-04** | Tích hợp Cổng PayOS VietQR 24/7 | Trần Đức | 5 | Sinh mã QR động, Webhook xác nhận tức thì |
-| **SP2-05** | Tích hợp Cổng thanh toán VNPAY Sandbox | Trần Đức | 5 | Chuyển hướng cổng, tính checksum chuẩn |
-| **SP2-06** | Trang Checkout & Thu thập thông tin khách | Nguyễn Văn A | 3 | Validate SĐT, email, điểm đón/trả |
-| **SP2-07** | Trang Tra cứu vé qua mã PNR & SĐT | Nguyễn Văn A | 3 | Hiển thị chi tiết vé, mã QR vé điện tử |
+| **SP2-04** | Tích hợp Cổng PayOS VietQR 24/7 | Trần Minh Đức | 5 | Sinh mã QR động, Webhook xác nhận tức thì |
+| **SP2-05** | Tích hợp Cổng thanh toán VNPAY Sandbox | Trần Minh Đức | 5 | Chuyển hướng cổng, tính checksum chuẩn |
+| **SP2-06** | Trang Checkout & Thu thập thông tin khách | Đoàn Nhật Cường | 4 | Validate SĐT, email, điểm đón/trả |
+| **SP2-07** | Trang Tra cứu vé qua mã PNR & SĐT | Đoàn Nhật Cường | 4 | Hiển thị chi tiết vé, mã QR vé điện tử |
 | **SP2-08** | Cổng Nhà Xe: Đăng nhập & Đổi mật khẩu | Nguyễn Đại Phát | 3 | Chỉ role COMPANY mới vào được /company |
 | **SP2-09** | Cổng Nhà Xe: Quản lý phương tiện & Xe | Nguyễn Đại Phát | 5 | Thêm, sửa, gán sơ đồ ghế cho từng xe |
 | **SP2-10** | Cổng Nhà Xe: Quản lý tuyến đường & ETA | Nguyễn Đại Phát | 5 | Định nghĩa điểm đón/trả và mốc giờ |
-| **SP2-11** | Cổng Nhà Xe: Tạo chuyến tự sinh 34 ghế | Phạm Công Thành | 5 | Chọn xe, chọn tuyến -> sinh ghế chuyến |
-| **SP2-12** | Cổng Nhà Xe: Sơ đồ theo dõi bán vé chuyến | Nguyễn Văn A | 3 | Xem trực quan các ghế đã thanh toán |
+| **SP2-11** | Cổng Nhà Xe: Tạo chuyến tự sinh 34 ghế | Phạm Thanh Phong | 5 | Chọn xe, chọn tuyến -> sinh ghế chuyến |
+| **SP2-12** | Cổng Nhà Xe: Sơ đồ theo dõi bán vé chuyến | Phạm Thanh Phong | 5 | Xem trực quan các ghế đã thanh toán |
 | **SP2-13** | Cổng Admin: Quản lý nhà xe & Duyệt KYB | Nguyễn Đại Phát | 5 | Kích hoạt hoặc đình chỉ hoạt động nhà xe |
-| **SP2-14** | Cổng Admin: Cấu hình cổng thanh toán | Trần Đức | 3 | Bật tắt PayOS, VNPAY, COD toàn sàn |
-| **SP2-15** | Cổng Admin: Quản lý chính sách hủy vé | Trần Đức | 3 | Cài đặt mốc giờ và % hoàn tiền |
+| **SP2-14** | Cổng Admin: Cấu hình cổng thanh toán | Trần Minh Đức | 2 | Bật tắt PayOS, VNPAY, COD toàn sàn |
+| **SP2-15** | Cổng Admin: Quản lý chính sách hủy vé | Phạm Công Thành | 3 | Cài đặt mốc giờ và % hoàn tiền |
 | **SP2-16** | Cơ chế Xóa Mềm 100% trang Admin | Nguyễn Đại Phát | 2 | Không hard delete ở bất kỳ bảng nào |
-| **SP2-17** | Đăng ký đối tác trực tuyến (KYB) | Trần Đức | 5 | Form nộp hồ sơ nhà xe (Rollover SP3) |
-| **SP2-18** | Đăng nhập Google OAuth2 mạng xã hội | Phạm Công Thành | 3 | Nút Login Google (Rollover SP3) |
+| **SP2-17** | Đăng ký đối tác trực tuyến (KYB) | Đoàn Nhật Cường | 4 | Form nộp hồ sơ nhà xe (Rollover SP3) |
+| **SP2-18** | Đăng nhập Google OAuth2 mạng xã hội | Phạm Công Thành | 4 | Nút Login Google (Rollover SP3) |
 
 ---
 
@@ -274,7 +289,7 @@ md5 = """# KẾ HOẠCH THỰC HIỆN SPRINT 2 (SPRINT 2 PLANNING)
 
 # 6. 06_report_sprint_2_planning_sprint_3.md
 md6 = """# BÁO CÁO TỔNG KẾT SPRINT 2 & KẾ HOẠCH SPRINT 3
-> **Đơn vị:** Nhóm 7 — Dự Án TravelEasy  
+> **Đơn vị:** Nhóm 7 — Dự Án TravelEasy (5 Thành viên)  
 > **Nghiệm thu Sprint 2:** 62/70 Story Points (88.6%)  
 > **Kế hoạch Sprint 3:** 74 Story Points (Đối soát tài chính & Vận hành toàn diện)  
 
@@ -302,7 +317,6 @@ md6 = """# BÁO CÁO TỔNG KẾT SPRINT 2 & KẾ HOẠCH SPRINT 3
 files = [
     ("01_SRS_tham_khao.md", md1),
     ("02_SRS_TravelEasy.md", md2),
-    ("02_SRS_thunder_deli.md", md2), # alias
     ("03_backlog.md", md3),
     ("04_report_sprint_1.md", md4),
     ("05_planning_sprint_2.md", md5),
@@ -315,4 +329,4 @@ for filename, content in files:
         f.write(content.strip() + "\n")
     print(f" Saved: {path}")
 
-print("\n All markdown files saved in docs/google-docs-export/")
+print("\n All markdown files regenerated with correct 5 members!")

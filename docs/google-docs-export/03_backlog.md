@@ -1,6 +1,6 @@
 # PRODUCT BACKLOG CHUẨN AGILE/SCRUM — DỰ ÁN TRAVELEASY
 > **Quy mô:** 70 User Stories | 4 Sprints | 290 Story Points  
-> **Đơn vị quản lý:** Nhóm 7 — TravelEasy Platform  
+> **Đơn vị quản lý:** Nhóm 7 — 5 Thành viên chính thức  
 > **Trạng thái:** Active & Sprint Tracking  
 
 ---
@@ -18,7 +18,7 @@
 
 ## 2. DANH MỤC CHI TIẾT USER STORIES (PRODUCT BACKLOG ITEMS)
 
-### 2.1 Phân hệ Quản trị Sàn (Admin Portal)
+### 2.1 Phân hệ Quản trị Sàn (Admin Portal - Phụ trách: Nguyễn Đại Phát)
 | Mã US | Tên Tính Năng | Mô Tả User Story | SP | Độ Ưu Tiên | Sprint |
 | :--- | :--- | :--- | :---: | :---: | :---: |
 | **US-ADM-01** | Xem Dashboard tổng quan 4 KPI | Là Quản trị viên, tôi muốn xem doanh thu, hoa hồng, vé bán, chuyến chạy thời gian thực. | 8 | Must Have | Sprint 1 |
@@ -32,7 +32,7 @@
 | **US-ADM-09** | Cấu hình chính sách hủy vé & hoàn tiền | Cài đặt mốc thời gian và % tiền vé được hoàn khi hủy vé. | 5 | Should Have | Sprint 2 |
 | **US-ADM-10** | Kiểm duyệt báo cáo vi phạm & đánh giá xấu | Ẩn đánh giá bôi nhọ, xử lý tranh chấp vé hoặc phạt nhà xe vi phạm. | 5 | Should Have | Sprint 3 |
 
-### 2.2 Phân hệ Nhà Xe Đối Tác (Company Portal)
+### 2.2 Phân hệ Nhà Xe Đối Tác (Company Portal - Phụ trách: Phạm Thanh Phong & Phạm Công Thành)
 | Mã US | Tên Tính Năng | Mô Tả User Story | SP | Độ Ưu Tiên | Sprint |
 | :--- | :--- | :--- | :---: | :---: | :---: |
 | **US-COM-01** | Đăng ký đối tác & Tải hồ sơ pháp lý | Chủ nhà xe đăng ký trực tuyến, nộp giấy phép vận tải gia nhập sàn. | 8 | Must Have | Sprint 2 |
@@ -43,7 +43,7 @@
 | **US-COM-06** | Sơ đồ bán vé & Quản lý đơn vé chuyến | Quan sát trực quan trạng thái ghế đã bán, giữ chỗ hoặc còn trống. | 8 | Must Have | Sprint 2 |
 | **US-COM-07** | Báo cáo doanh thu & Rút tiền đối soát | Theo dõi doanh thu thực nhận sau trừ hoa hồng và gửi lệnh rút tiền. | 8 | Must Have | Sprint 3 |
 
-### 2.3 Phân hệ Khách Hàng (Customer Portal)
+### 2.3 Phân hệ Khách Hàng (Customer Portal - Phụ trách: Đoàn Nhật Cường & Trần Minh Đức)
 | Mã US | Tên Tính Năng | Mô Tả User Story | SP | Độ Ưu Tiên | Sprint |
 | :--- | :--- | :--- | :---: | :---: | :---: |
 | **US-CUS-01** | Tìm kiếm chuyến xe đa tiêu chí | Nhập điểm đi, điểm đến, ngày khởi hành để tìm các chuyến xe. | 8 | Must Have | Sprint 2 |

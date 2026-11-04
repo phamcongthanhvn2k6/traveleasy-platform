@@ -1,7 +1,7 @@
 # ĐẶC TẢ YÊU CẦU PHẦN MỀM (SRS) — HỆ THỐNG TRAVELEASY
 > **Đề tài:** Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh Toàn Quốc (VeXeRe Architecture Clone)  
 > **Mã dự án:** PRJ-TRAVELEASY-MVP-01  
-> **Đơn vị thực hiện:** Nhóm 7 — OJT Capstone Project  
+> **Đơn vị thực hiện:** Nhóm 7 — 5 Thành viên chính thức  
 > **Trạng thái:** Hoàn thiện (Verified)  
 
 ---
@@ -11,7 +11,12 @@
 
 ## 1. GIỚI THIỆU & THÔNG TIN DỰ ÁN
 * **Tên hệ thống:** TravelEasy Enterprise Transport Platform
-* **Thành viên thực hiện:** Phạm Công Thành (Leader), Nguyễn Đại Phát, Trần Đức, Nguyễn Văn A
+* **5 Thành viên thực hiện:**
+  1. **Phạm Công Thành** — Trưởng nhóm & Kiến trúc sư hệ thống (Team Leader & System Architect)
+  2. **Nguyễn Đại Phát** — Phụ trách Cổng Quản trị Admin & Full-Stack Developer
+  3. **Phạm Thanh Phong** — Phụ trách Động cơ Đặt vé & Sơ đồ Ghế (Core Booking & Seat Engine)
+  4. **Đoàn Nhật Cường** — Phụ trách Giao diện Responsive & Thiết bị Di động (Frontend & Mobile Specialist)
+  5. **Trần Minh Đức** — Phụ trách Kiểm thử tự động, Cổng Khách hàng & Full-Stack Developer
 * **Tech Stack:** Spring Boot 3.2 (Java 17) + React 18 / TypeScript / Tailwind CSS / Vite + CSDL Supabase PostgreSQL 15 + Docker Compose
 
 ---
