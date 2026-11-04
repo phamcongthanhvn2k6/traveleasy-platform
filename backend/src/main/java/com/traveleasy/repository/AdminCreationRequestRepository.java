@@ -12,3 +12,4 @@ public interface AdminCreationRequestRepository extends JpaRepository<AdminCreat
     List<AdminCreationRequest> findByStatusOrderByCreatedAtDesc(String status);
     boolean existsByProposedEmailAndStatus(String proposedEmail, String status);
 }
+

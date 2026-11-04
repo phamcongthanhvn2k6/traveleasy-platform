@@ -25,3 +25,4 @@ public class CreateAdminProposalRequest {
     @NotBlank(message = "Vui lòng nhập lý do đề xuất cấp quyền Admin")
     private String reason;
 }
+

@@ -24,3 +24,4 @@ public class AdminCreationRequestResponse {
     private Long createdUserId;
     private LocalDateTime createdAt;
 }
+

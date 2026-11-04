@@ -55,3 +55,4 @@ public class AdminCreationRequest {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }
+
