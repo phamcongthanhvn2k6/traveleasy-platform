@@ -68,12 +68,35 @@ public class BookingService {
         }
 
         // Tính tổng tiền & Cập nhật trạng thái ghế
-        BigDecimal totalAmount = BigDecimal.ZERO;
+        BigDecimal baseSeatTotal = BigDecimal.ZERO;
         for (TripSeat seat : requestedSeats) {
             seat.setStatus(SeatStatus.BOOKED);
-            totalAmount = totalAmount.add(trip.getPrice());
+            baseSeatTotal = baseSeatTotal.add(trip.getPrice());
         }
         tripSeatRepository.saveAll(requestedSeats);
+
+        // Tính bảo hiểm chuyến đi nếu có (25.000 đ/vé)
+        BigDecimal insuranceAmount = BigDecimal.ZERO;
+        if (Boolean.TRUE.equals(request.getHasInsurance())) {
+            insuranceAmount = BigDecimal.valueOf(25000L * requestedSeats.size());
+        }
+
+        // Tính mức giảm giá Voucher nếu có
+        BigDecimal discount = BigDecimal.ZERO;
+        if (request.getDiscountAmount() != null && request.getDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
+            discount = request.getDiscountAmount();
+        }
+
+        // Ưu tiên finalAmount từ request hợp lệ, hoặc tự động tính theo công thức
+        BigDecimal totalAmount;
+        if (request.getFinalAmount() != null && request.getFinalAmount().compareTo(BigDecimal.ZERO) >= 0) {
+            totalAmount = request.getFinalAmount();
+        } else {
+            totalAmount = baseSeatTotal.add(insuranceAmount).subtract(discount);
+            if (totalAmount.compareTo(BigDecimal.ZERO) < 0) {
+                totalAmount = BigDecimal.ZERO;
+            }
+        }
 
         // Trừ ghế trống trên chuyến xe
         trip.setAvailableSeats(trip.getAvailableSeats() - requestedSeats.size());

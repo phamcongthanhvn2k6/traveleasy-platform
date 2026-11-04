@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -34,4 +35,9 @@ public class CreateBookingRequest {
 
     @NotNull(message = "Phương thức thanh toán không được để trống")
     private PaymentMethod paymentMethod;
+
+    private String voucherCode;
+    private BigDecimal discountAmount;
+    private Boolean hasInsurance;
+    private BigDecimal finalAmount;
 }

@@ -92,6 +92,7 @@ export const CheckoutPage: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('PAYOS');
   const [loading, setLoading] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [appliedVoucherCode, setAppliedVoucherCode] = useState('');
 
   // QR Modal & Payment State
   const [showQrModal, setShowQrModal] = useState(false);
@@ -119,6 +120,7 @@ export const CheckoutPage: React.FC = () => {
 
   const handleApplyVoucher = (amount: number, code: string) => {
     setDiscountAmount(amount);
+    setAppliedVoucherCode(code);
   };
 
   const validateForm = () => {
@@ -153,6 +155,10 @@ export const CheckoutPage: React.FC = () => {
 
     setLoading(true);
     try {
+      const baseTicketPrice = selectedSeats.length * (trip.price || 0);
+      const insurancePrice = passengerInfo.hasInsurance ? selectedSeats.length * 25000 : 0;
+      const finalTotal = Math.max(0, baseTicketPrice + insurancePrice - discountAmount);
+
       const payload = {
         tripId: trip.id,
         seatNumbers: selectedSeats,
@@ -163,6 +169,10 @@ export const CheckoutPage: React.FC = () => {
         dropoffPointId: points.dropoff,
         paymentMethod: paymentMethod,
         note: passengerInfo.note,
+        voucherCode: appliedVoucherCode || null,
+        discountAmount: discountAmount || 0,
+        hasInsurance: passengerInfo.hasInsurance,
+        finalAmount: finalTotal,
       };
 
       // 1. Tạo đơn đặt vé trong database
