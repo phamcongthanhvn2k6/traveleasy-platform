@@ -1870,20 +1870,21 @@ export const HomePage: React.FC = () => {
           aria-label="Cuộn lên đầu trang"
           style={{
             position: 'fixed',
-            bottom: '28px',
-            right: '28px',
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
             width: '46px',
             height: '46px',
             borderRadius: '50%',
             backgroundColor: '#2563eb',
             color: '#ffffff',
             border: 'none',
-            boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+            boxShadow: '0 4px 16px rgba(37, 99, 235, 0.45)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            zIndex: 99,
+            zIndex: 9995,
             transition: 'all 0.25s ease'
           }}
         >

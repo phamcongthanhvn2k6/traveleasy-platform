@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../../../context/ThemeContext';
-import { ArrowLeftRight, Calendar, ChevronLeft, ChevronRight, Search, MapPin } from 'lucide-react';
+import { ArrowLeftRight, Calendar, Plus, ChevronLeft, ChevronRight, Search, MapPin } from 'lucide-react';
 import { POPULAR_CITIES } from '../../../../constants/popularCities';
-import { getLocalTodayDateString } from '../../../../utils/dateUtils';
+import { getLocalTodayDateString, getLocalNextDayString } from '../../../../utils/dateUtils';
 
 interface Props {
   origin: string;
@@ -26,13 +26,17 @@ export const TripSearchHeader: React.FC<Props> = ({
   const [tempOrigin, setTempOrigin] = useState(origin);
   const [tempDestination, setTempDestination] = useState(destination);
   const [tempDate, setTempDate] = useState(departureDate);
+  const [tempReturnDate, setTempReturnDate] = useState(returnDate || '');
+  const [hasReturnDate, setHasReturnDate] = useState(Boolean(returnDate));
 
   // Synchronize internal state with incoming props
   React.useEffect(() => {
     setTempOrigin(origin);
     setTempDestination(destination);
     setTempDate(departureDate);
-  }, [origin, destination, departureDate]);
+    setTempReturnDate(returnDate || '');
+    setHasReturnDate(Boolean(returnDate));
+  }, [origin, destination, departureDate, returnDate]);
 
   const popularCities = POPULAR_CITIES;
 
@@ -44,14 +48,21 @@ export const TripSearchHeader: React.FC<Props> = ({
 
   const handleApplyEdit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearchChange(tempOrigin, tempDestination, tempDate);
+    onSearchChange(
+      tempOrigin,
+      tempDestination,
+      tempDate,
+      hasReturnDate && tempReturnDate ? tempReturnDate : undefined
+    );
   };
 
   const handleShowAll = () => {
     setTempOrigin('');
     setTempDestination('');
     setTempDate('');
-    onSearchChange('', '', '');
+    setTempReturnDate('');
+    setHasReturnDate(false);
+    onSearchChange('', '', '', undefined);
   };
 
   const todayStr = getLocalTodayDateString();
@@ -227,7 +238,7 @@ export const TripSearchHeader: React.FC<Props> = ({
               padding: '16px',
               marginTop: '16px',
               display: 'grid',
-              gridTemplateColumns: '1.2fr auto 1.2fr 1fr auto',
+              gridTemplateColumns: '1.2fr auto 1.2fr 1fr 1fr auto',
               gap: '10px',
               alignItems: 'center',
             }}
@@ -320,7 +331,14 @@ export const TripSearchHeader: React.FC<Props> = ({
               <input
                 type="date"
                 value={tempDate}
-                onChange={(e) => setTempDate(e.target.value)}
+                min={todayStr}
+                onChange={(e) => {
+                  const newD = e.target.value;
+                  setTempDate(newD);
+                  if (hasReturnDate && tempReturnDate && tempReturnDate < newD) {
+                    setTempReturnDate(getLocalNextDayString(newD, 2));
+                  }
+                }}
                 style={{
                   width: '100%',
                   padding: '9px 12px',
@@ -332,6 +350,85 @@ export const TripSearchHeader: React.FC<Props> = ({
                   color: isDark ? '#f8fafc' : '#0f172a',
                 }}
               />
+            </div>
+
+            {/* Return Date (Khứ hồi) hoặc Nút + Thêm ngày về */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: hasReturnDate ? '#f59e0b' : (isDark ? '#94a3b8' : '#64748b'), textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Calendar size={12} color={hasReturnDate ? '#f59e0b' : '#64748b'} />
+                  Ngày về {hasReturnDate ? '(Khứ hồi)' : ''}
+                </label>
+                {hasReturnDate && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHasReturnDate(false);
+                      setTempReturnDate('');
+                    }}
+                    title="Xóa ngày về (trở lại vé một chiều)"
+                    aria-label="Xóa ngày về khứ hồi"
+                    style={{
+                      color: '#ef4444',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      background: 'none',
+                      border: 'none',
+                      padding: '0 4px',
+                      display: 'inline-flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              {hasReturnDate ? (
+                <input
+                  type="date"
+                  value={tempReturnDate}
+                  min={tempDate || todayStr}
+                  onChange={(e) => setTempReturnDate(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '6px',
+                    border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                    color: isDark ? '#f8fafc' : '#0f172a',
+                  }}
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHasReturnDate(true);
+                    if (!tempReturnDate || (tempDate && tempReturnDate < tempDate)) {
+                      setTempReturnDate(tempDate ? getLocalNextDayString(tempDate, 2) : getLocalNextDayString(todayStr, 2));
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    border: '1px dashed #cbd5e1',
+                    backgroundColor: isDark ? 'rgba(37,99,235,0.1)' : 'transparent',
+                    color: '#2563eb',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <Plus size={14} /> Thêm ngày về
+                </button>
+              )}
             </div>
 
             {/* Submit Button */}

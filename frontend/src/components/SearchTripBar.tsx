@@ -495,17 +495,16 @@ export const SearchTripBar: React.FC<Props> = ({
                     marginLeft: 'auto',
                     color: '#ef4444',
                     cursor: 'pointer',
-                    fontSize: '11px',
+                    fontSize: '13px',
                     fontWeight: 800,
                     background: 'none',
                     border: 'none',
-                    padding: '4px 8px',
+                    padding: '2px 6px',
                     display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '2px'
+                    alignItems: 'center'
                   }}
                 >
-                  ✕ Xóa
+                  ✕
                 </button>
               </div>
               <input
