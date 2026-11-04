@@ -14,6 +14,7 @@ import { ReviewsPage } from '../pages/customer/reviews/ReviewsPage';
 import { TicketScannerPage } from '../pages/customer/scanner/TicketScannerPage';
 import { PartnerCooperationPage } from '../pages/customer/partner-cooperation/PartnerCooperationPage';
 import { DemoPage } from '../pages/customer/demo/DemoPage';
+import { TestFixturesPage } from '../pages/customer/test-fixtures/TestFixturesPage';
 import { NotFoundPage } from '../pages/common/NotFoundPage';
 
 /**
@@ -60,10 +61,13 @@ export const ClientRoutes: React.FC = () => {
       <Route path="/reviews" element={<ReviewsPage />} />
       <Route path="/scanner" element={<Navigate to="/lookup?mode=camera" replace />} />
       <Route path="/demo" element={<DemoPage />} />
+      {/* Test Fixtures: Chỉ hiển thị trong môi trường development / test */}
+      {import.meta.env.DEV && (
+        <Route path="/test/fixtures" element={<TestFixturesPage />} />
+      )}
 
       {/* Hợp tác mở bán vé cùng TravelEasy (Chuẩn hóa URL tiếng Anh) */}
       <Route path="/partner" element={<PartnerCooperationPage />} />
-      <Route path="/partner/register" element={<PartnerCooperationPage />} />
       <Route path="/partner-with-us" element={<PartnerCooperationPage />} />
       <Route path="/hop-tac-nha-xe" element={<Navigate to="/partner" replace />} />
       <Route path="/mo-ban-ve" element={<Navigate to="/partner" replace />} />
