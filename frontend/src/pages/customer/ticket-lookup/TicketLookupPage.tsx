@@ -34,6 +34,14 @@ import { toast } from '../../../context/ToastContext';
 import { BoardingPassModal } from '../../../components/BoardingPassModal';
 import { EmailTicketModal } from '../../../components/EmailTicketModal';
 
+// ponytail: helper to mask customer phone on public ticket view
+const maskDisplayPhone = (p?: string) => {
+  if (!p) return '';
+  if (p.includes('*')) return p;
+  if (p.length <= 6) return p;
+  return p.substring(0, 3) + '****' + p.substring(p.length - 3);
+};
+
 export const TicketLookupPage: React.FC = () => {
   const { code: routeCode } = useParams<{ code?: string }>();
   const navigate = useNavigate();
@@ -120,6 +128,23 @@ export const TicketLookupPage: React.FC = () => {
     setIsOfflineData(false);
 
     try {
+      // ponytail: Real phone number lookup integration if input is 9-11 digits
+      if (/^[0-9]{9,11}$/.test(rawClean)) {
+        try {
+          const phoneRes = await api.get(`/bookings/phone/${encodeURIComponent(rawClean)}`);
+          const bookingsList = phoneRes.data?.data;
+          if (bookingsList && bookingsList.length > 0) {
+            setBooking(bookingsList[0]);
+            saveBookingToOfflineCache(bookingsList[0]);
+            toast.success(`Tìm thấy ${bookingsList.length} đơn đặt vé cho SĐT ${rawClean}!`, 'Tra Cứu Vé');
+            setLoading(false);
+            return;
+          }
+        } catch (phoneErr: any) {
+          // If not found by phone, continue to fallback
+        }
+      }
+
       // 1. Try finding booking by booking code first
       let res: any = null;
       try {
@@ -517,7 +542,7 @@ export const TicketLookupPage: React.FC = () => {
             <input
               type="text"
               required
-              placeholder="Nhập mã đặt vé (VD: BK-20261025-001 hoặc TK-01)..."
+              placeholder="Nhập mã đặt vé (BK-..., TK-...) hoặc Số điện thoại người đặt vé..."
               value={code}
               onChange={e => setCode(e.target.value)}
               style={{ flex: 1, padding: '12px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '15px', outline: 'none' }}
@@ -641,26 +666,29 @@ export const TicketLookupPage: React.FC = () => {
                       <RotateCcw size={14} /> Thử Lại Camera
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={handleUseDemoQr}
-                      style={{
-                        backgroundColor: '#10b981',
-                        color: '#ffffff',
-                        border: 'none',
-                        padding: '10px 18px',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
-                      }}
-                    >
-                      <Sparkles size={14} /> Quét Thử Vé Mẫu (Demo)
-                    </button>
+                    {/* ponytail: only show demo simulator in DEV */}
+                    {import.meta.env.DEV && (
+                      <button
+                        type="button"
+                        onClick={handleUseDemoQr}
+                        style={{
+                          backgroundColor: '#10b981',
+                          color: '#ffffff',
+                          border: 'none',
+                          padding: '10px 18px',
+                          borderRadius: '8px',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
+                        }}
+                      >
+                        <Sparkles size={14} /> Quét Thử Vé Mẫu (Demo)
+                      </button>
+                    )}
 
                     <button
                       type="button"
@@ -685,8 +713,8 @@ export const TicketLookupPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Quick actions while camera is active */}
-              {isScanning && (
+              {/* Quick actions while camera is active - DEV only */}
+              {isScanning && import.meta.env.DEV && (
                 <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '8px', zIndex: 10 }}>
                   <button
                     type="button"
@@ -784,10 +812,31 @@ export const TicketLookupPage: React.FC = () => {
           </div>
         )}
 
-        {/* Error message banner */}
+        {/* Error message banner with Emergency Hotline */}
         {error && (
-          <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '14px', borderRadius: '8px', fontSize: '14px', textAlign: 'center', marginBottom: '20px' }}>
-            {error}
+          <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '16px', borderRadius: '10px', fontSize: '14px', textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ fontWeight: 700, marginBottom: '6px' }}>⚠️ {error}</div>
+            <div style={{ fontSize: '12.5px', color: '#64748b', marginBottom: '12px' }}>
+              Quý khách đang ở bến xe hoặc cần xác nhận vé gấp để kịp giờ khởi hành?
+            </div>
+            <a
+              href="tel:19008888"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: '#dc2626',
+                color: '#ffffff',
+                padding: '8px 18px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '13px',
+                textDecoration: 'none',
+                boxShadow: '0 2px 6px rgba(220, 38, 38, 0.3)'
+              }}
+            >
+              📞 Hotline Hỗ Trợ Tại Bến: 1900 8888 (24/7)
+            </a>
           </div>
         )}
 
@@ -932,7 +981,7 @@ export const TicketLookupPage: React.FC = () => {
               <div>
                 <div style={{ fontSize: '12px', color: '#64748b' }}>Hành khách:</div>
                 <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{booking.customerName}</div>
-                <div style={{ fontSize: '13px', color: '#64748b' }}>{booking.customerPhone}</div>
+                <div style={{ fontSize: '13px', color: '#64748b' }}>{maskDisplayPhone(booking.customerPhone)}</div>
               </div>
 
               <div>
