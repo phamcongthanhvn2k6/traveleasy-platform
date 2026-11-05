@@ -32,6 +32,7 @@ public class CreateBookingRequest {
     private Long pickupPointId;
     private Long dropoffPointId;
     private String note;
+    private String sessionId;
 
     @NotNull(message = "Phương thức thanh toán không được để trống")
     private PaymentMethod paymentMethod;

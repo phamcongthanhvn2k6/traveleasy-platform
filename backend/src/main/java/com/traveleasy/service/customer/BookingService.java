@@ -66,6 +66,9 @@ public class BookingService {
                 throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED, "Ghế " + seat.getSeatCode() + " vừa được người khác đặt. Vui lòng chọn ghế khác!");
             }
         }
+        if (seatRealtimeService != null) {
+            seatRealtimeService.validateAndConsumeLocksForBooking(trip.getId(), requestedSeats, request.getSessionId());
+        }
 
         // Tính tổng tiền & Cập nhật trạng thái ghế
         BigDecimal baseSeatTotal = BigDecimal.ZERO;
