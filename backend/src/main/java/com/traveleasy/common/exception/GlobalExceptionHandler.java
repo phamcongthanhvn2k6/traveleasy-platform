@@ -4,12 +4,15 @@ import com.traveleasy.common.dto.ApiResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -25,10 +28,14 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final int MAX_SAFE_VALUE_PREVIEW = 64;
+
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ApiResponse<Void>> handleAppException(AppException ex) {
         log.warn("AppException: [{}] {}", ex.getErrorCode().getCode(), ex.getMessage());
-        return ResponseEntity.status(ex.getErrorCode().getHttpStatus()).body(ApiResponse.error(ex.getMessage()));
+        Map<String, String> errorMeta = Map.of("errorCode", ex.getErrorCode().getCode());
+        return ResponseEntity.status(ex.getErrorCode().getHttpStatus())
+                .body(ApiResponse.error(ex.getMessage(), errorMeta));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -56,15 +63,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleNotReadable(HttpMessageNotReadableException ex) {
         log.warn("HTTP message not readable: {}", ex.getMessage());
-        return ResponseEntity.badRequest().body(ApiResponse.error("Dữ liệu gửi lên không đúng định dạng JSON hoặc giá trị trường/enum không hợp lệ"));
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error("Dữ liệu gửi lên không đúng định dạng JSON hoặc giá trị trường/enum không hợp lệ"));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String paramName = ex.getName();
-        String value = ex.getValue() != null ? ex.getValue().toString() : "null";
+        String rawValue = ex.getValue() != null ? ex.getValue().toString() : "null";
+        String safeValue = rawValue.length() > MAX_SAFE_VALUE_PREVIEW
+                ? rawValue.substring(0, MAX_SAFE_VALUE_PREVIEW) + "..."
+                : rawValue;
         String requiredType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "hợp lệ";
-        String msg = String.format("Tham số '%s' nhận giá trị '%s' không đúng kiểu dữ liệu (%s)", paramName, value, requiredType);
+        String msg = String.format("Tham số '%s' nhận giá trị '%s' không đúng kiểu dữ liệu (%s)", paramName, safeValue, requiredType);
         log.warn("Method argument type mismatch: {}", msg);
         return ResponseEntity.badRequest().body(ApiResponse.error(msg));
     }
@@ -80,6 +91,13 @@ public class GlobalExceptionHandler {
         log.warn("Method not supported: {}", ex.getMethod());
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
                 .body(ApiResponse.error("Phương thức HTTP " + ex.getMethod() + " không được hỗ trợ cho đường dẫn này"));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
+        log.warn("Media type not supported: {}", ex.getContentType());
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(ApiResponse.error("Định dạng dữ liệu (Content-Type) không được hỗ trợ, vui lòng sử dụng application/json"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -102,7 +120,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgs(RuntimeException ex) {
         log.warn("Illegal argument/state: {}", ex.getMessage());
-        return ResponseEntity.badRequest().body(ApiResponse.error(ex.getMessage()));
+        String msg = (ex.getMessage() != null && !ex.getMessage().isBlank())
+                ? ex.getMessage()
+                : "Tham số hoặc trạng thái yêu cầu không hợp lệ";
+        return ResponseEntity.badRequest().body(ApiResponse.error(msg));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
@@ -123,9 +144,20 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Ghế này đang được người khác giữ chỗ hoặc hệ thống đang xử lý, vui lòng chọn ghế khác!"));
     }
 
+    @ExceptionHandler({
+            DataAccessResourceFailureException.class,
+            QueryTimeoutException.class
+    })
+    public ResponseEntity<ApiResponse<Void>> handleDatabaseUnavailable(Exception ex) {
+        log.error("Database connectivity or timeout failure: ", ex);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponse.error("Dịch vụ dữ liệu tạm thời gián đoạn hoặc quá thời gian phản hồi, vui lòng thử lại sau."));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception ex) {
         log.error("Unhandled Exception: ", ex);
-        return ResponseEntity.internalServerError().body(ApiResponse.error("Hệ thống phát sinh sự cố, vui lòng thử lại sau hoặc liên hệ hỗ trợ kỹ thuật."));
+        return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("Hệ thống phát sinh sự cố, vui lòng thử lại sau hoặc liên hệ hỗ trợ kỹ thuật."));
     }
 }

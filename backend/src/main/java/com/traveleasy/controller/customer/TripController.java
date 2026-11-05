@@ -1,6 +1,8 @@
 package com.traveleasy.controller.customer;
 
 import com.traveleasy.common.dto.ApiResponse;
+import com.traveleasy.common.exception.AppException;
+import com.traveleasy.common.exception.ErrorCode;
 import com.traveleasy.dto.trip.RouteOptionResponse;
 import com.traveleasy.dto.trip.RouteScheduleResponse;
 import com.traveleasy.dto.trip.TripDetailResponse;
@@ -16,10 +18,12 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/trips")
+@RequestMapping({"/api/v1/trips", "/api/trips"})
 @RequiredArgsConstructor
 @Tag(name = "Trip Management", description = "Tìm kiếm chuyến xe, Sơ đồ ghế và Lịch trình tuyến đường")
 public class TripController {
+
+    private static final int MAX_LOCATION_LENGTH = 100;
 
     private final TripService tripService;
 
@@ -29,6 +33,8 @@ public class TripController {
             @RequestParam(required = false) String origin,
             @RequestParam(required = false) String destination,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate) {
+        validateLocationBoundary(origin, "Nơi đi (origin)");
+        validateLocationBoundary(destination, "Nơi đến (destination)");
         return ApiResponse.success(tripService.searchTrips(origin, destination, departureDate));
     }
 
@@ -37,6 +43,8 @@ public class TripController {
     public ApiResponse<RouteScheduleResponse> getSchedule(
             @RequestParam(required = false) String origin,
             @RequestParam(required = false) String destination) {
+        validateLocationBoundary(origin, "Nơi đi (origin)");
+        validateLocationBoundary(destination, "Nơi đến (destination)");
         return ApiResponse.success(tripService.getSchedule(origin, destination));
     }
 
@@ -49,6 +57,18 @@ public class TripController {
     @GetMapping("/{id}")
     @Operation(summary = "Xem chi tiết chuyến xe kèm Sơ đồ ghế 2 tầng và Điểm đón/trả")
     public ApiResponse<TripDetailResponse> getTripDetail(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe ID: " + id);
+        }
         return ApiResponse.success(tripService.getTripDetail(id));
+    }
+
+    private void validateLocationBoundary(String location, String fieldLabel) {
+        if (location != null && location.length() > MAX_LOCATION_LENGTH) {
+            throw new AppException(
+                    ErrorCode.VALIDATION_ERROR,
+                    fieldLabel + " vượt quá độ dài tối đa cho phép (" + MAX_LOCATION_LENGTH + " ký tự)"
+            );
+        }
     }
 }
