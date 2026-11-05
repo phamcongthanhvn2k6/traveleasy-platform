@@ -14,7 +14,7 @@ import { test, expect, type Page } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const SHOT_DIR = path.resolve(process.cwd(), '..', 'docs', 'screenshots');
+const SHOT_DIR = path.resolve(process.cwd(), '..', 'docs', 'test-reports', 'cuong', 'screenshots');
 fs.mkdirSync(SHOT_DIR, { recursive: true });
 
 const VIEWPORTS = [
@@ -41,6 +41,12 @@ test.describe('S317 Responsive layout', () => {
       await page.goto('/', { waitUntil: 'networkidle' });
 
       await expect(page.locator('body')).toBeVisible();
+
+      await page.screenshot({
+        path: path.join(SHOT_DIR, `S317-${info.project.name}-${vp.name}.png`),
+        fullPage: true,
+      });
+
       expect(await hasHorizontalOverflow(page), 'Trang bị tràn chiều ngang').toBe(false);
 
       await page.screenshot({

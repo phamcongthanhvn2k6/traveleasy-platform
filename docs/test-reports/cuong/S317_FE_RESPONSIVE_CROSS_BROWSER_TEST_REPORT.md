@@ -1,122 +1,159 @@
-# 📋 BÁO CÁO KẾT QUẢ KIỂM THỬ HỒI QUY GIAO DIỆN (TEST REPORT)
+# BÁO CÁO KẾT QUẢ KIỂM THỬ HỒI QUY GIAO DIỆN — S317
 
-> **Dự án:** TravelEasy Platform — Nền tảng Đặt vé xe khách trực tuyến & Quản lý vận tải đa cổng  
-> **Thẻ Trello:** `[FE][S317]` (ID: `6ae81140`) — Kiểm thử hồi quy giao diện — Bố cục thích ứng và tương thích trình duyệt (`/`)  
-> **Người thực hiện:** Kiểm thử viên Frontend / Tester (Đoàn Nhật Cường - `CuongLiam`)  
-> **Leader Review & Phê duyệt:** Phạm Công Thành (`thanhphmcong1`)  
-> **Thời điểm kiểm thử:** 2026-11-04  
-> **Môi trường kiểm thử:** Localhost (Vite Dev Server 5173 / Node.js v22.18.0 / Supabase Database)
-
----
-
-## 📌 1. MỤC TIÊU & PHẠM VI KIỂM THỬ (TEST OBJECTIVES & SCOPE)
-
-* **Mục tiêu:** Kiểm thử toàn diện kiểm thử hồi quy giao diện — bố cục thích ứng (Responsive Layout) và tương thích các trình duyệt web hiện đại (Cross-Browser Compatibility) trên trang chủ (`/`) và các module kết nối; đảm bảo chức năng an toàn, ổn định, nhất quán dữ liệu và có bằng chứng xác minh đầy đủ theo Tiêu chí nghiệm thu (DoD).
-* **Phạm vi kiểm thử:**
-  1. Bố cục thích ứng đa màn hình: Mobile (< 640px), Tablet (768px - 1024px), Desktop (>= 1280px).
-  2. Tương thích trình duyệt: Google Chrome, Mozilla Firefox, Apple Safari (WebKit), Microsoft Edge.
-  3. Đồng bộ trạng thái: Theme (Light/Dark mode), Toast thông báo, lưu trữ bộ nhớ đệm (localStorage/sessionStorage).
-  4. Phân quyền và an toàn (RBAC): Điều hướng ngăn chặn truy cập trái phép của khách vãng lai tới trang quản trị hoặc portal đối tác.
-  5. Xử lý ngoại lệ và trường hợp biên (Edge Cases): Trùng điểm đi/đến, API trễ, không có chuyến xe, dữ liệu rỗng.
+> **Dự án:** TravelEasy Platform — Nền tảng đặt vé xe khách trực tuyến & quản lý vận tải đa cổng
+> **Thẻ Trello:** `[FE][S317]` (ID: `6ae81140`) — Kiểm thử hồi quy giao diện — Bố cục thích ứng và tương thích trình duyệt (`/`)
+> **Người thực hiện:** Đoàn Nhật Cường (`CuongLiam`)
+> **Leader review:** Phạm Công Thành (`thanhphmcong1`)
+> **Thời điểm chạy kiểm thử:** `<điền ngày giờ>`
+> **Môi trường:** Localhost — Vite Dev Server `http://localhost:5173` / Node.js `<điền: node -v>` / Playwright `<điền: npx playwright --version>` / OS Windows
+> **Công cụ:** Playwright chạy trình duyệt thật (Chromium, Firefox, WebKit, Microsoft Edge)
 
 ---
 
-## 🔍 2. CHI TIẾT KỊCH BẢN KIỂM THỬ (TEST SCENARIOS & RESULTS)
+## 1. KẾT LUẬN NHANH
 
-| STT | Mã TC | Phân loại | Kịch bản kiểm thử (Test Case) | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected) | Kết quả thực tế (Actual) | Đánh giá |
-|:---:|:---:|:---|:---|:---|:---|:---|:---:|
-| 1 | S317-TC-01 | Responsive | Bố cục thích ứng trên Mobile Viewport | Viewport: 375x667, 390x844, 412x915 (Touch screen) | Co giãn chuẩn mobile, không tràn ngang (`overflow-x: hidden`), touch target $\ge 44\text{px}$ | Layout hiển thị 1 cột hoàn hảo, thanh tìm kiếm full-width, MobileBottomNav cố định chân trang | **PASS** |
-| 2 | S317-TC-02 | Responsive | Bố cục thích ứng trên Tablet Viewport | Viewport: 768x1024, 820x1180 (Dọc & Ngang) | Lưới 2 cột hài hòa, banner co giãn tỷ lệ chuẩn, thanh tìm kiếm inline-grid | Các thẻ chuyến xe và banner khuyến mãi căn đều 2 cột, không bị dồn ứ văn bản | **PASS** |
-| 3 | S317-TC-03 | Responsive | Bố cục tối ưu trên Desktop màn hình rộng | Viewport: 1366x768, 1440x900, 1920x1080 | Container `max-w-7xl` căn giữa cân đối, thanh tìm kiếm nằm ngang 1 dòng chuyên nghiệp | Bố cục hiển thị đầy đủ chi tiết, hiệu ứng hover, shadow và animation mượt mà 60fps | **PASS** |
-| 4 | S317-TC-04 | Trình duyệt | Tương thích trên Google Chrome | Chromium Engine v120+ | Render sắc nét, gradient CSS3, backdrop blur mượt mà | Giao diện hiển thị sắc nét, backdrop blur chuẩn xác, hiệu ứng chuyển màu gradient hoàn hảo | **PASS** |
-| 5 | S317-TC-05 | Trình duyệt | Tương thích trên Mozilla Firefox | Gecko Engine v122+ | CSS Scrollbar mượt mà, layout không lệch padding | Cuộn trang mượt mà (smooth scrolling), thanh scrollbar thu gọn hiển thị đúng chuẩn | **PASS** |
-| 6 | S317-TC-06 | Trình duyệt | Tương thích trên Apple Safari / iOS WebKit | WebKit Engine 17+ | Khắc phục triệt để lỗi 100vh trên mobile, shadow chuẩn | Hỗ trợ chuẩn viewport dynamic trên Safari iOS, bóng đổ shadow hiển thị đồng nhất | **PASS** |
-| 7 | S317-TC-07 | Trình duyệt | Tương thích trên Microsoft Edge | Chromium Engine v120+ | Đồng bộ tài nguyên, điểm số hiệu năng cao | Tương thích 100% với các API hiện đại, hiệu năng render trang chủ đạt chuẩn Lighthouse > 90 | **PASS** |
-| 8 | S317-TC-08 | Đồng bộ dữ liệu | Đồng bộ trạng thái Theme và Toast thông báo | Chuyển đổi giao diện Sáng/Tối tại Navbar & trigger Toast | Màu nền đổi tức thì, lưu trữ `localStorage`, Toast hiển thị nổi bật | Mọi thành phần component (Navbar, SearchBar, Card, Footer) đổi tone màu mượt mà | **PASS** |
-| 9 | S317-TC-09 | Bảo mật RBAC | Phân quyền truy cập các tuyến bảo vệ | Khách vãng lai cố truy cập `/admin/*`, `/company/*` | Chặn truy cập ngay lập tức, điều hướng về trang login tương ứng | AuthGuard bắt giữ phiên, điều hướng chuẩn xác về `/admin/login` và `/company/login` | **PASS** |
-| 10 | S317-TC-10 | Xử lý lỗi | Xử lý ngoại lệ, mất kết nối và biên dữ liệu | Trùng điểm đi/đến hoặc API Backend không phản hồi | Không vỡ giao diện (No unhandled crash), hiển thị fallback dữ liệu | Hệ thống hiển thị Empty State lịch sự kèm hướng dẫn, kích hoạt fallback tĩnh trơn tru | **PASS** |
+| Hạng mục | Kết quả |
+|:---|:---|
+| Tổng số lượt chạy | 52 (13 test × 4 trình duyệt) |
+| Đạt (passed) | **44** |
+| Không đạt (failed) | **8** |
+| Thời gian chạy | 58.8 giây |
+| **Kết luận** | ❌ **KHÔNG ĐẠT** — phát hiện lỗi giao diện mobile (1 bug, xem mục 5) |
+
+Bộ test hoạt động đúng: nó phát hiện **trang chủ bị tràn chiều ngang ở viewport mobile** trên cả 4 trình duyệt. Tablet và desktop đạt toàn bộ.
 
 ---
 
-## 📸 3. BẰNG CHỨNG KIỂM THỬ XÁC MINH (EVIDENCE & LOGS)
+## 2. MỤC TIÊU & PHẠM VI
 
-### 3.1. Kết quả chạy bộ kịch bản tự động (Automated Test Execution)
+**Mục tiêu:** Xác minh trang chủ (`/`) hiển thị đúng ở nhiều kích thước màn hình và nhiều engine trình duyệt, đồng thời kiểm tra chặn truy cập trái phép và khả năng chịu lỗi khi API không phản hồi.
 
-```bash
-$ npm --prefix frontend run test:regression:s317
+**Trong phạm vi:**
+1. Bố cục thích ứng tại 6 viewport: mobile (375×667, 412×915), tablet (768×1024, 1024×768), desktop (1440×900, 1920×1080).
+2. Tương thích trình duyệt: Chromium (Chrome), Firefox, WebKit (Safari), Edge.
+3. Kiểm soát truy cập: khách chưa đăng nhập vào `/admin/dashboard` và `/company/trips`.
+4. Trường hợp biên: API backend lỗi/ngắt kết nối.
 
-> traveleasy-frontend@0.1.0 test:regression:s317
-> node e2e/S317-responsive-cross-browser.mjs
+**Ngoài phạm vi:** hiệu năng (Lighthouse, FPS), kiểm thử trên thiết bị thật, đồng bộ Light/Dark theme và Toast.
 
-========================================================================
-[S317-REGRESSION-SUITE] KẾT QUẢ KIỂM THỬ: 10/10 KỊCH BẢN ĐẠT (PASS)
-========================================================================
-[PASS] [S317-TC-01] Bố cục thích ứng trên Mobile Viewport (< 640px)
-       * Phân loại: RESPONSIVE_LAYOUT
-       * Thực tế:   Layout hiển thị 1 cột hoàn hảo, thanh tìm kiếm hiển thị full-width trực quan, MobileBottomNav cố định chân trang
-[PASS] [S317-TC-02] Bố cục thích ứng trên Tablet Viewport (768px - 1024px)
-       * Phân loại: RESPONSIVE_LAYOUT
-       * Thực tế:   Các thẻ chuyến xe và banner khuyến mãi căn đều 2 cột, không bị dồn ứ văn bản
-[PASS] [S317-TC-03] Bố cục tối ưu trên Desktop màn hình rộng (>= 1280px)
-       * Phân loại: RESPONSIVE_LAYOUT
-       * Thực tế:   Bố cục hiển thị đầy đủ chi tiết, hiệu ứng hover, shadow và animation mượt mà 60fps
-[PASS] [S317-TC-04] Khả năng tương thích trên trình duyệt: Google Chrome (Chromium Engine v120+)
-       * Phân loại: CROSS_BROWSER
-       * Thực tế:   Giao diện hiển thị sắc nét, backdrop blur chuẩn xác, hiệu ứng chuyển màu gradient hoàn hảo
-[PASS] [S317-TC-05] Khả năng tương thích trên trình duyệt: Mozilla Firefox (Gecko Engine v122+)
-       * Phân loại: CROSS_BROWSER
-       * Thực tế:   Cuộn trang mượt mà (smooth scrolling), thanh scrollbar thu gọn hiển thị đúng chuẩn
-[PASS] [S317-TC-06] Khả năng tương thích trên trình duyệt: Apple Safari / iOS WebKit (WebKit Engine 17+)
-       * Phân loại: CROSS_BROWSER
-       * Thực tế:   Hỗ trợ chuẩn 100vh trên Safari iOS (tránh bị che bởi thanh công cụ URL), bóng đổ shadow hiển thị đồng nhất
-[PASS] [S317-TC-07] Khả năng tương thích trên trình duyệt: Microsoft Edge (Chromium Engine v120+)
-       * Phân loại: CROSS_BROWSER
-       * Thực tế:   Tương thích 100% với các API hiện đại, hiệu năng render trang chủ đạt chuẩn Lighthouse > 90
-[PASS] [S317-TC-08] Đồng bộ trạng thái Theme (Light/Dark Mode) và Toast thông báo toàn cục
-       * Phân loại: STATE_DATA_SYNC
-       * Thực tế:   Mọi thành phần component (Navbar, SearchBar, Card, Footer) đổi tone màu mượt mà, không giật hình
-[PASS] [S317-TC-09] Kiểm soát phân quyền truy cập người dùng (RBAC Auth Guards)
-       * Phân loại: RBAC_SECURITY
-       * Thực tế:   AdminAuthGuard & CompanyAuthGuard bắt giữ phiên, điều hướng chuẩn xác về /admin/login và /company/login
-[PASS] [S317-TC-10] Xử lý các tình huống lỗi, dữ liệu rỗng và trường hợp biên (Edge Cases)
-       * Phân loại: ERROR_EDGE_CASES
-       * Thực tế:   Hệ thống hiển thị component Compass rỗng kèm hướng dẫn tìm tuyến liên tỉnh phổ biến, fallback dữ liệu hoạt động trơn tru
-========================================================================
-```
+**Phạm vi mã nguồn:** task này chỉ thêm file kiểm thử, cấu hình Playwright, ảnh chụp và báo cáo. Không sửa mã nguồn ứng dụng (`src/`). Lỗi phát hiện được ghi nhận để nhóm Frontend xử lý.
 
-### 3.2. Bằng chứng kiểm tra tính toàn vẹn Build Frontend (Production Build)
+---
 
-```bash
-$ npm --prefix frontend run build
+## 3. CÁCH TÁI HIỆN
 
-> traveleasy-frontend@0.1.0 build
-> tsc && vite build
-
-vite v5.4.21 building for production...
-transforming...
-✓ 1723 modules transformed.
-rendering chunks...
-computing gzip size...
-dist/index.html                     1.22 kB │ gzip:   0.71 kB
-dist/assets/index-DPkKnN6p.css     53.42 kB │ gzip:   8.86 kB
-dist/assets/index-DtuAo7QQ.js   1,680.79 kB │ gzip: 406.69 kB
-✓ built in 7.98s (0 errors, 0 warnings)
+```powershell
+cd frontend
+npm install
+npx playwright install chromium firefox webkit
+npm run test:regression:s317
 ```
 
 ---
 
-## 🎯 4. ĐÁNH GIÁ TIÊU CHÍ NGHIỆM THU (DoD COMPLIANCE CHECKLIST)
+## 4. KẾT QUẢ CHI TIẾT TỪNG KỊCH BẢN
 
-- [x] **Tiêu chí 1:** Các luồng bố cục thích ứng và tương thích trên các trình duyệt hỗ trợ hoàn tất đúng thứ tự và cập nhật trạng thái nhất quán.
-- [x] **Tiêu chí 2:** Dữ liệu, quyền truy cập và thông báo giữa các màn hình/dịch vụ đồng bộ chính xác.
-- [x] **Tiêu chí 3:** Có kiểm tra đầy đủ luồng thành công, lỗi, phân quyền và trường hợp trạng thái không hợp lệ.
-- [x] **Tiêu chí 4:** Không còn lỗi nghiêm trọng (Blocker/Critical = 0); kết quả kiểm thử và bằng chứng được ghi nhận đầy đủ trong báo cáo và PR.
-- [x] **Tiêu chí 5:** Sẵn sàng trình Leader review: **Phạm Công Thành (`thanhphmcong1`)** xác nhận checklist và bằng chứng trước khi chuyển thẻ sang **`Done Sprint 3`**.
+Mỗi kịch bản chạy trên 4 project: chromium, firefox, webkit, edge.
+
+| Mã | Nhóm | Kịch bản | Cách kiểm tra (đo từ DOM thật) | Kết quả (4 trình duyệt) |
+|:---|:---|:---|:---|:---:|
+| S317-RS-01 | Responsive | Mobile 375×667 | `scrollWidth` ≤ `clientWidth`; chụp ảnh | ❌ **FAIL 4/4** |
+| S317-RS-02 | Responsive | Mobile 412×915 | như trên | ❌ **FAIL 4/4** |
+| S317-RS-03 | Responsive | Tablet 768×1024 | như trên | ✅ PASS 4/4 |
+| S317-RS-04 | Responsive | Tablet 1024×768 | như trên | ✅ PASS 4/4 |
+| S317-RS-05 | Responsive | Desktop 1440×900 | như trên | ✅ PASS 4/4 |
+| S317-RS-06 | Responsive | Desktop 1920×1080 | như trên | ✅ PASS 4/4 |
+| S317-RS-07 | Responsive | Touch target mobile 375×667 | Chiều cao nút `button[type="submit"]` ≥ 44px | ✅ PASS 4/4 |
+| S317-RS-08 | Responsive | Lưới đổi số cột theo breakpoint | Số cột `gridTemplateColumns` desktop > mobile | ✅ PASS 4/4 |
+| S317-CB-01 | Cross-browser | Engine hỗ trợ CSS | `CSS.supports`: flexbox, grid, sticky, backdrop-filter | ✅ PASS 4/4 |
+| S317-CB-02 | Cross-browser | Không có lỗi JS chưa bắt | 0 sự kiện `pageerror` khi tải trang | ✅ PASS 4/4 |
+| S317-RBAC-01 | Phân quyền | Guest vào `/admin/dashboard` | URL cuối khớp `/admin/login` | ✅ PASS 4/4 |
+| S317-RBAC-02 | Phân quyền | Guest vào `/company/trips` | URL cuối khớp `/company/login` | ✅ PASS 4/4 |
+| S317-EC-01 | Biên | API lỗi (`**/api/**` bị abort) | Trang có nội dung, không có `pageerror` | ✅ PASS 4/4 |
+
+Kết quả `CSS.supports` ghi nhận trên cả 3 engine được log: `{ flexbox: true, grid: true, sticky: true, backdrop: true }`.
+
+### Tổng hợp theo trình duyệt
+
+| Project | Passed | Failed |
+|:---|:---:|:---:|
+| chromium | 11 | 2 |
+| firefox | 11 | 2 |
+| webkit | 11 | 2 |
+| edge | 11 | 2 |
+| **Tổng** | **44** | **8** |
+
+### Output terminal (tóm tắt)
+
+```text
+> playwright test e2e/S317-responsive-cross-browser.spec.ts
+Running 52 tests using 4 workers
+...
+  8 failed
+    [chromium] › S317 Responsive layout › [S317-RS] mobile-375x667: không tràn ngang, render được trang chủ
+    [chromium] › S317 Responsive layout › [S317-RS] mobile-412x915: không tràn ngang, render được trang chủ
+    [firefox]  › (2 test tương tự)
+    [webkit]   › (2 test tương tự)
+    [edge]     › (2 test tương tự)
+  44 passed (58.8s)
+
+Lỗi: Trang bị tràn chiều ngang
+  Expected: false
+  Received: true
+```
 
 ---
 
-## 🚀 5. KẾT LUẬN & ĐỀ XUẤT
+## 5. LỖI PHÁT HIỆN
 
-* **Trạng thái:** ✅ **ĐẠT (PASS) 10/10 KỊCH BẢN**
-* **Đề xuất:** Sẵn sàng mở Pull Request (PR) và chuyển thẻ Trello `[FE][S317]` sang trạng thái **Done Sprint 3**.
+| Mã bug | Mức độ đề xuất | Mô tả |
+|:---|:---|:---|
+| BUG-S317-01 | Major *(Leader xác nhận mức độ)* | Trang chủ `/` bị tràn chiều ngang (`document.documentElement.scrollWidth > clientWidth`) ở viewport mobile 375×667 và 412×915, trên cả Chromium, Firefox, WebKit và Edge. Người dùng mobile có thể phải cuộn ngang. |
 
+**Các bước tái hiện:**
+1. Chạy `npm run dev` trong `frontend`.
+2. Mở `http://localhost:5173/` với viewport rộng 375px hoặc 412px (DevTools → Device Toolbar).
+3. Quan sát: trang có thể cuộn ngang / nội dung vượt khỏi chiều rộng màn hình.
+
+**Kết quả mong đợi:** không có cuộn ngang ở mọi viewport mobile.
+**Kết quả thực tế:** có tràn ngang. Lỗi xuất hiện đồng nhất ở 4 trình duyệt, nên nhiều khả năng do CSS/layout của ứng dụng chứ không phải đặc thù một engine.
+
+**Nguyên nhân gốc:** chưa xác định phần tử gây tràn. Cần nhóm Frontend điều tra (đề xuất kiểm tra phần tử có chiều rộng cố định, banner, hoặc `100vw` kèm scrollbar).
+
+**Ảnh minh chứng:** `<tên file ảnh mobile sau khi chạy lại với bản spec đã chụp ảnh trước khi assert>`.
+
+---
+
+## 6. ẢNH CHỤP MINH CHỨNG
+
+Thư mục: `docs/screenshots/`, quy ước tên `S317-<project>-<viewport>.png`.
+
+* **Đã có (20 ảnh):** tablet và desktop (4 viewport × 4 trình duyệt = 16 ảnh) và `S317-<project>-api-offline.png` (4 ảnh).
+* **Chưa có (8 ảnh):** mobile 375×667 và 412×915 của 4 trình duyệt, vì test fail ở bước kiểm tra tràn ngang trước khi kịp chụp. Cần bổ sung bằng cách chụp trước khi assert (xem hướng dẫn cập nhật spec) rồi chạy lại để có ảnh minh chứng cho BUG-S317-01.
+
+---
+
+## 7. TIÊU CHÍ NGHIỆM THU (DoD)
+
+- [x] Test responsive chạy bằng trình duyệt thật trên đủ 6 viewport.
+- [x] Test chạy trên Chromium, Firefox, WebKit và Edge.
+- [x] Guest bị chuyển hướng đúng khi vào tuyến admin và company.
+- [x] Trang chủ không trắng và không có lỗi JS khi API lỗi.
+- [x] Lỗi phát hiện được ghi nhận kèm bước tái hiện (BUG-S317-01).
+- [ ] Ảnh chụp mobile minh chứng lỗi đã commit trong `docs/screenshots/`.
+- [ ] Không còn lỗi Blocker/Critical: **chưa xác định**, chờ Leader đánh giá mức độ BUG-S317-01.
+- [x] Không có thay đổi ngoài phạm vi task (`AdminLoginPage.tsx` đã hoàn nguyên).
+
+---
+
+## 8. KẾT LUẬN & ĐỀ XUẤT
+
+* **Trạng thái:** ❌ **KHÔNG ĐẠT** — 44/52 lượt chạy đạt, 8 lượt fail do cùng một lỗi tràn ngang trên mobile.
+* **Đề xuất:**
+  1. Báo BUG-S317-01 cho Leader (`thanhphmcong1`) và nhóm Frontend để sửa phần layout trang chủ ở mobile.
+  2. Sau khi bản sửa được merge, chạy lại `npm run test:regression:s317` để xác nhận 52/52 và cập nhật báo cáo.
+  3. Chuyển thẻ `[FE][S317]` sang `Done Sprint 3` khi có kết quả đạt, hoặc theo quyết định của Leader nếu chấp nhận ghi nhận lỗi làm kết quả của task kiểm thử.
+* **Hạn chế đã biết:**
+  * WebKit và Chromium của Playwright không phải Safari hoặc Edge cài thật trên thiết bị Apple/Windows.
+  * Viewport mobile là mô phỏng kích thước trong trình duyệt desktop, chưa phải thiết bị thật.
+  * Chưa đo hiệu năng.
