@@ -303,7 +303,6 @@ export const AdminLoginPage: React.FC = () => {
                 { label: 'Admin Hệ Thống', email: 'admin@traveleasy.vn' },
                 { label: 'Admin Đại Phát', email: 'daiphat.admin@traveleasy.vn' },
                 { label: 'Admin Thanh Phong', email: 'phanthanhphong.admin@traveleasy.vn' },
-                { label: 'Admin Đoàn Cường', email: 'cuongclasspurpose@gmail.com' },
               ].map((acc, idx) => (
                 <button
                   key={idx}
