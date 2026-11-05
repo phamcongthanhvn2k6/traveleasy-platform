@@ -92,6 +92,21 @@ $$\Large \mathbf{	ext{<tiền-tố>} / 	ext{<MÃ-TASK>} - 	ext{<tên-thành-viê
 
 ---
 
+
+### 2.3 Liên kết trạng thái Git Pull Request với Bảng Trello Kanban
+
+Mỗi giai đoạn trong quy trình Git gắn liền với một bước chuyển dịch trên bảng Trello:
+
+`
+[Bắt đầu task]    ---> Kéo thẻ từ 'To Do' sang 'In Progress'
+[Mở Pull Request]  ---> Kéo thẻ từ 'In Progress' sang 'Code Review' (Dán link PR)
+[Lead Test]        ---> Nhóm trưởng kéo sang 'Testing'
+[Phát hiện lỗi]   ---> Nhóm trưởng chuyển sang 'Bug' (Thành viên kéo về 'In Progress' sửa)
+[Merge dev thành công] ---> Nhóm trưởng kéo sang 'Done'
+`
+
+---
+
 ## CHƯƠNG 3: QUY CHUẨN COMMIT MESSAGE (TIẾNG VIỆT CÓ DẤU & RÕ NGHĨA)
 
 ### 3.1 Cú pháp Commit chuẩn Conventional Commits

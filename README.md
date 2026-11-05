@@ -386,6 +386,32 @@ flowchart TD
 
 ---
 
+### 2.7 Quy Trình Luân Chuyển Task Chuẩn Giữa Nhóm Trưởng & Thành Viên (Trello Workflow)
+
+Toàn bộ các thẻ nhiệm vụ trên Trello tuân thủ cơ chế phân quyền nghiêm ngặt:
+
+```
+[Sprint Backlog] (Lead soạn) 
+       ↓ 
+    [To Do] (Lead mở quyền làm)
+       ↓ 
+ [In Progress] (Member nhận task & làm) 
+       ↓ 
+ [Code Review] (Member mở PR trên GitHub) 
+       ↓ 
+   [Testing] (Lead kiểm thử thực tế)
+     ↙     ↘
+  [Bug]   [Done] (Lead merge dev & hoàn tất)
+(Member sửa)
+```
+
+* **Thẩm quyền Nhóm trưởng**: Duy nhất Lead có quyền chuyển thẻ vào `To Do`, `Testing`, `Bug` và `Done`.
+* **Thẩm quyền Thành viên**: Nhận task từ `To Do` -> `In Progress`; Mở PR xong chuyển sang `Code Review`; Bị `Bug` thì kéo về `In Progress` để sửa.
+* Xem chi tiết tại: [`docs/04-agile-and-sprints/TRELLO_BOARD_MANAGEMENT.md`](docs/04-agile-and-sprints/TRELLO_BOARD_MANAGEMENT.md).
+
+---
+
+
 #### 📊 Bảng Tổng Hợp Phân Bổ 17 User Stories Chuẩn Theo Trang Chức Năng:
 
 | Mã US | Phân hệ / Trang Phụ Trách | Tiêu đề User Story | Story Points | Thành viên phụ trách | Mức độ kỹ thuật |
