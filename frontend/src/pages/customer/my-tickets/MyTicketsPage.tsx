@@ -23,10 +23,56 @@ import { RescheduleModal } from './components/RescheduleModal';
 import { BoardingPassModal } from '../../../components/BoardingPassModal';
 import { EmailTicketModal } from '../../../components/EmailTicketModal';
 
+const TicketSkeleton: React.FC = () => (
+  <div
+    style={{
+      backgroundColor: '#ffffff',
+      border: '1px solid #e2e8f0',
+      borderRadius: '14px',
+      padding: '22px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+      marginBottom: '16px',
+      animation: 'pulse 1.5s ease-in-out infinite',
+    }}
+  >
+    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '14px', marginBottom: '16px' }}>
+      <div style={{ height: '18px', width: '220px', backgroundColor: '#e2e8f0', borderRadius: '4px' }} />
+      <div style={{ height: '24px', width: '100px', backgroundColor: '#e2e8f0', borderRadius: '12px' }} />
+    </div>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+      <div style={{ height: '50px', backgroundColor: '#f1f5f9', borderRadius: '8px' }} />
+      <div style={{ height: '50px', backgroundColor: '#f1f5f9', borderRadius: '8px' }} />
+      <div style={{ height: '50px', backgroundColor: '#f1f5f9', borderRadius: '8px' }} />
+    </div>
+    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+      <div style={{ height: '36px', width: '120px', backgroundColor: '#e2e8f0', borderRadius: '8px' }} />
+      <div style={{ height: '36px', width: '140px', backgroundColor: '#e2e8f0', borderRadius: '8px' }} />
+    </div>
+  </div>
+);
+
 export const MyTicketsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Khởi tạo ngay từ SessionStorage để hiển thị tức thì 0ms (SWR Cache)
+  const [bookings, setBookings] = useState<Booking[]>(() => {
+    try {
+      const cached = sessionStorage.getItem('traveleasy_my_bookings_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [loading, setLoading] = useState<boolean>(() => {
+    try {
+      const cached = sessionStorage.getItem('traveleasy_my_bookings_cache');
+      return !cached;
+    } catch {
+      return true;
+    }
+  });
+
   const [activeTab, setActiveTab] = useState<'ALL' | 'UPCOMING' | 'COMPLETED' | 'CANCELLED'>('ALL');
 
   // Cancel & Reschedule Modals State
@@ -52,17 +98,21 @@ export const MyTicketsPage: React.FC = () => {
       return;
     }
 
-    setLoading(true);
+    if (bookings.length === 0) {
+      setLoading(true);
+    }
+
     try {
       const res = await api.get('/bookings/my-bookings');
       if (res.data?.data && Array.isArray(res.data.data)) {
         setBookings(res.data.data);
+        sessionStorage.setItem('traveleasy_my_bookings_cache', JSON.stringify(res.data.data));
       } else {
         setBookings([]);
       }
     } catch (err: any) {
       console.warn('Could not fetch user bookings:', err);
-      setBookings([]);
+      if (bookings.length === 0) setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -284,9 +334,11 @@ export const MyTicketsPage: React.FC = () => {
         </div>
 
         {/* Bookings List */}
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
-            Đang tải danh sách vé...
+        {loading && bookings.length === 0 ? (
+          <div>
+            <TicketSkeleton />
+            <TicketSkeleton />
+            <TicketSkeleton />
           </div>
         ) : filteredBookings.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

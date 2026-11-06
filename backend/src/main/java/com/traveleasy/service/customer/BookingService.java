@@ -5,6 +5,7 @@ import com.traveleasy.common.exception.ErrorCode;
 import com.traveleasy.dto.booking.BookingResponse;
 import com.traveleasy.dto.booking.CreateBookingRequest;
 import com.traveleasy.dto.booking.TicketResponse;
+import com.traveleasy.dto.trip.TripResponse;
 import com.traveleasy.entity.*;
 import com.traveleasy.repository.*;
 import com.traveleasy.service.realtime.SeatRealtimeService;
@@ -226,14 +227,46 @@ public class BookingService {
 
     @Transactional(readOnly = true)
     public List<BookingResponse> getUserBookings(String userEmail) {
+        long t0 = System.currentTimeMillis();
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "User không tồn tại"));
         List<Booking> bookings = bookingRepository.findByUserIdOrPassengerEmailOrderByCreatedAtDesc(user.getId(), userEmail.trim());
 
-        return bookings.stream().map(b -> {
-            List<Ticket> tickets = ticketRepository.findByBookingId(b.getId());
-            return mapToBookingResponse(b, tickets);
+        if (bookings.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // BATCH QUERY 1: Gom toàn bộ tickets trong 1 query duy nhất
+        List<Long> bookingIds = bookings.stream().map(Booking::getId).collect(Collectors.toList());
+        List<Ticket> allTickets = ticketRepository.findByBookingIdIn(bookingIds);
+        Map<Long, List<Ticket>> ticketsByBooking = new HashMap<>();
+        for (Ticket t : allTickets) {
+            if (t.getBooking() != null && t.getBooking().getId() != null) {
+                ticketsByBooking.computeIfAbsent(t.getBooking().getId(), k -> new ArrayList<>()).add(t);
+            }
+        }
+
+        // BATCH QUERY 2: Gom toàn bộ điểm đón/trả trong 1 query duy nhất
+        Set<Long> routeIds = bookings.stream()
+                .map(b -> (b.getTrip() != null && b.getTrip().getRoute() != null) ? b.getTrip().getRoute().getId() : null)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, List<PickupDropoffPoint>> pointsByRoute = routeIds.isEmpty()
+                ? Collections.emptyMap()
+                : pointRepository.findByRouteIdInOrderByDisplayOrderAsc(routeIds).stream()
+                .collect(Collectors.groupingBy(p -> p.getRoute().getId()));
+
+        List<BookingResponse> responses = bookings.stream().map(b -> {
+            List<Ticket> tickets = ticketsByBooking.getOrDefault(b.getId(), Collections.emptyList());
+            Long rId = (b.getTrip() != null && b.getTrip().getRoute() != null) ? b.getTrip().getRoute().getId() : null;
+            List<PickupDropoffPoint> routePoints = pointsByRoute.getOrDefault(rId, Collections.emptyList());
+            return mapToBookingResponse(b, tickets, routePoints);
         }).collect(Collectors.toList());
+
+        long t1 = System.currentTimeMillis();
+        log.info("⚡ [PERF getUserBookings] user: {}, bookings: {}, elapsed: {}ms", userEmail, responses.size(), (t1 - t0));
+        return responses;
     }
 
     @Transactional
@@ -567,6 +600,10 @@ public class BookingService {
     }
 
     public BookingResponse mapToBookingResponse(Booking b, List<Ticket> tickets) {
+        return mapToBookingResponse(b, tickets, null);
+    }
+
+    public BookingResponse mapToBookingResponse(Booking b, List<Ticket> tickets, List<PickupDropoffPoint> routePoints) {
         List<TicketResponse> ticketResponses = tickets.stream().map(t -> TicketResponse.builder()
                 .id(t.getId())
                 .ticketCode(t.getTicketCode())
@@ -577,6 +614,10 @@ public class BookingService {
                 .createdAt(t.getCreatedAt())
                 .build()).collect(Collectors.toList());
 
+        TripResponse tripResponse = (routePoints != null && !routePoints.isEmpty())
+                ? tripService.mapToTripResponse(b.getTrip(), routePoints)
+                : tripService.mapToTripResponse(b.getTrip());
+
         return BookingResponse.builder()
                 .id(b.getId())
                 .bookingCode(b.getBookingCode())
@@ -584,7 +625,7 @@ public class BookingService {
                 .customerName(b.getPassengerName())
                 .customerPhone(b.getPassengerPhone())
                 .customerEmail(b.getPassengerEmail())
-                .trip(tripService.mapToTripResponse(b.getTrip()))
+                .trip(tripResponse)
                 .pickupPointName(b.getPickupPoint())
                 .dropoffPointName(b.getDropoffPoint())
                 .totalAmount(b.getTotalAmount())
