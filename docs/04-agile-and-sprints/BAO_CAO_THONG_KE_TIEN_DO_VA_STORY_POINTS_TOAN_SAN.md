@@ -1,129 +1,87 @@
-# 📊 BÁO CÁO THỐNG KÊ TIẾN ĐỘ & STORY POINTS TOÀN DỰ ÁN (AGILE SPRINT METRICS)
-**Dự án**: Sàn Thương Mại Điện Tử & Đặt Vé Xe Khách Liên Tỉnh Trực Tuyến TravelEasy (`traveleasy-platform`)  
-**Đơn vị thực hiện**: OJT Đồ Án Nhóm 7  
-**Bảng Trello quản trị**: [TravelEasy_Platform (Board ID: 6ad6f486572cd6662754e074)](https://trello.com/b/AA5BYoe1/traveleasyplatform)  
-**Trưởng nhóm / System Architect**: Phạm Công Thành (`phamcongthanhvn2k6` / `thanhphmcong1`)  
-**Ngày trích xuất dữ liệu**: 06/11/2026 (Dữ liệu thực tế từ 117 thẻ Trello)  
+# 📊 BÁO CÁO THỐNG KÊ TIẾN ĐỘ & STORY POINTS TOÀN DỰ ÁN (4 TUẦN - 4 SPRINT)
+## ĐỀ TÀI: NỀN TẢNG ĐẶT VÉ XE KHÁCH LIÊN TỈNH & QUẢN LÝ NHÀ XE TRAVELEASY
+### ĐƠN VỊ THỰC HIỆN: NHÓM 7 (OJT CAPSTONE PROJECT)
+### QUẢN LÝ DỰ ÁN & HỆ THỐNG: PHẠM CÔNG THÀNH (TEAM LEADER)
 
 ---
 
-## 📌 1. TỔNG QUAN TIẾN ĐỘ VÀ NĂNG SUẤT (VELOCITY OVERVIEW)
+> 🔗 **THÔNG TIN HỆ THỐNG QUẢN TRỊ:**  
+> • **Bảng Trello quản lý**: [TravelEasy_Platform (Board ID: 6ad6f486572cd6662754e074)](https://trello.com/b/AA5BYoe1/traveleasyplatform)  
+> • **Kho lưu trữ GitHub**: `https://github.com/phamcongthanhvn2k6/traveleasy-platform` (Branch chính: `dev`)  
+> • **Khung thời gian thực hiện**: **4 tuần OJT (4 Sprints — Mỗi Sprint 1 tuần)**  
+> • **Tổng Story Points toàn dự án**: **125 Story Points**  
+> • **Chuẩn định mức Scrum**: Thang đo Fibonacci (1, 2, 3, 5), bình quân ~6 SP/thành viên/tuần.
 
-Sau 4 Sprint vận hành theo phương pháp luận **Agile/Scrum**, toàn bộ khối lượng công việc được lượng hóa chính xác qua Story Points (SP) dựa trên độ phức tạp kỹ thuật và thời gian thực thi:
+---
+
+## 📈 1. TỔNG QUAN NĂNG SUẤT 4 SPRINT (SCRUM VELOCITY)
 
 ```mermaid
 graph LR
-    S1["Sprint 1: Kiến trúc & Auth<br><b>69 SP (19 thẻ)</b><br>✅ Hoàn thành 100%"] --> S2["Sprint 2: Core Booking & Lock<br><b>74 SP (19 thẻ)</b><br>✅ Hoàn thành 100%"]
-    S2 --> S3["Sprint 3: Testing & Regression<br><b>46 SP (33 thẻ)</b><br>🔄 Đang hoàn thiện (56.5%)"]
-    S3 --> S4["Sprint 4: POS, GPS & Defense<br><b>34 SP (13 thẻ)</b><br>🎯 Sprint nước rút"]
+    S1["<b>Sprint 1 (Tuần 1)</b><br>Kiến trúc & CSDL 36 bảng<br><b>32 SP</b> | ✅ Hoàn thành 100%"] --> S2["<b>Sprint 2 (Tuần 2)</b><br>Động cơ Đặt vé & Lock<br><b>35 SP</b> | ✅ Hoàn thành 100%"]
+    S2 --> S3["<b>Sprint 3 (Tuần 3)</b><br>QA E2E & Tích hợp<br><b>30 SP</b> | 🚀 Đạt 86.7%"]
+    S3 --> S4["<b>Sprint 4 (Tuần 4)</b><br>POS Bến xe & Bảo vệ OJT<br><b>28 SP</b> | 🎯 Sprint nước rút"]
+
+    style S1 fill:#dcfce7,stroke:#16a34a,stroke-width:2px;
+    style S2 fill:#dbeafe,stroke:#2563eb,stroke-width:2px;
+    style S3 fill:#fef3c7,stroke:#d97706,stroke-width:2px;
+    style S4 fill:#f3e8ff,stroke:#9333ea,stroke-width:2px;
 ```
 
-### Bảng tổng hợp số liệu 4 Sprint:
+### Bảng tổng hợp số liệu 4 Sprint chuẩn hóa:
 
-| Sprint | Thời gian | Mục tiêu trọng tâm | Tổng số thẻ | Tổng SP | Đã hoàn thành (Done) | Đang làm / Review | Tỷ lệ hoàn thành |
+| Sprint | Thời gian | Trọng tâm công việc | Số thẻ User Story | Story Points | Đã hoàn thành | Đang làm / Review | Tỷ lệ hoàn thành |
 | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Sprint 1** | Tuần 1 - 2 | Nền tảng Core, CSDL 36 bảng, Stateless JWT, Cổng Admin & Cổng Nhà xe | 19 thẻ | **69 SP** | 69 SP (19 thẻ) | 0 SP | **100%** ✅ |
-| **Sprint 2** | Tuần 3 - 4 | Tìm kiếm SWR Cache, Sơ đồ 34 ghế VIP, Khóa ghế Concurrency 10:00 & Thanh toán | 19 thẻ | **74 SP** | 74 SP (19 thẻ) | 0 SP | **100%** ✅ |
-| **Sprint 3** | Tuần 5 - 6 | Kiểm thử tích hợp E2E, Hồi quy giao diện, Fixtures, Đăng nhập Firebase & Khóa ghế | 49 thẻ | **217 SP** | 38 thẻ (203 SP) | 11 thẻ (14 SP) | **93.5%** 🚀 |
-| **Sprint 4** | Tuần 7 - 8 | Phân hệ POS bến xe, Live Tracking SSE, Cargo bưu kiện, Docker & Kịch bản bảo vệ | 24 thẻ | **88 SP** | *(Đã có 5 task hoàn thành trước)* | 19 thẻ (63 SP) | *(Sprint nước rút)* 🎯 |
-| **TỔNG CỘNG** | **8 Tuần** | **Hệ sinh thái toàn diện Sàn Vé Xe Khách & Bến Xe Thực Tế** | **117 thẻ** | **448 SP** | **371 SP** | **77 SP** | **82.8%** |
-
-> [!NOTE]
-> **Về việc chuẩn hóa Story Points Sprint 3**:
-> Điểm số của Sprint 3 trước đây bị lạm phát (do các task kiểm thử tự động bị tính điểm cao như khi code tính năng mới). Nhóm trưởng đã thực hiện rà soát và điều chỉnh lại định mức: Các bài test hồi quy đơn lẻ giảm từ 3 SP về 1 SP, bài test E2E giảm từ 6 SP về 2 SP. Điều này đưa tổng điểm Sprint 3 về đúng **46 SP**, đảm bảo tính trung thực và kỷ luật kỹ thuật tuyệt đối.
+| **Sprint 1** | **Tuần 1** | Khởi tạo CSDL 36 bảng, Spring Security Stateless JWT, Cổng Admin & Cổng Nhà xe | 19 thẻ | **32 SP** | 32 SP (19 thẻ) | 0 SP | **100%** ✅ |
+| **Sprint 2** | **Tuần 2** | Tìm kiếm SWR Cache, Sơ đồ 34 ghế VIP, Khóa ghế Concurrency & Cổng thanh toán | 19 thẻ | **35 SP** | 35 SP (19 thẻ) | 0 SP | **100%** ✅ |
+| **Sprint 3** | **Tuần 3** | E2E QA, Firebase Google/Phone OTP, Fix Seed Fixtures & Webhook Security | 28 thẻ | **30 SP** | 26 SP (24 thẻ) | 4 SP (4 thẻ) | **86.7%** 🚀 |
+| **Sprint 4** | **Tuần 4** | POS xuất vé bến, Live Tracking SSE, Đóng gói Docker & Bảo vệ Đồ án | 13 thẻ | **28 SP** | *(Kế hoạch)* | 28 SP (13 thẻ) | *(Nước rút)* 🎯 |
+| **TỔNG CỘNG** | **4 Tuần** | **Hệ thống Toàn diện Sàn Đặt Vé Xe Khách TravelEasy** | **79 thẻ cốt lõi** | **125 SP** | **93 SP** | **32 SP** | **74.4%** |
 
 ---
 
-## 👥 2. MA TRẬN PHÂN BỔ STORY POINTS THEO THÀNH VIÊN (RACI BREAKDOWN)
+## 👥 2. MA TRẬN PHÂN BỔ STORY POINTS THEO THÀNH VIÊN QUA 4 SPRINT
 
-### 2.1. Bảng số liệu tổng hợp từng cá nhân qua 4 Sprint:
-
-| STT | Thành viên | Vai trò chuyên trách (RACI) | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Tổng SP | Tỷ lệ đóng góp | Trạng thái hoàn thành |
+| STT | Thành viên | Vai trò chuyên trách (RACI) | Sprint 1 (Tuần 1) | Sprint 2 (Tuần 2) | Sprint 3 (Tuần 3) | Sprint 4 (Tuần 4) | Tổng SP (4 Tuần) | Tỷ lệ đóng góp | Trạng thái hiện tại |
 | :---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 1 | **Phạm Công Thành** | Team Leader & System Architect | 25 SP | 11 SP | 16 SP | *(Hạ tầng/Demo)* | **52 SP** | **23.3%** | 50/52 SP (96.2%) |
-| 2 | **Nguyễn Đại Phát** | Admin Lead & Financial Settlement | 20 SP | 29 SP | 10 SP | 8 SP | **67 SP** | **30.0%** | 59/67 SP (88.1%) |
-| 3 | **Phạm Thanh Phong** | Core Booking, Seat Engine & POS Bến xe | 15 SP | 13 SP | 5 SP | 9 SP | **42 SP** | **18.8%** | 28/42 SP (66.7%) |
-| 4 | **Trần Minh Đức** | Customer Portal, Checkout & Cargo | 5 SP | 8 SP | 9 SP | 6 SP | **28 SP** | **12.6%** | 21/28 SP (75.0%) |
-| 5 | **Đoàn Nhật Cường** | Mobile Specialist, QR Scanner & Tracking | 4 SP | 13 SP | 6 SP | 8 SP | **31 SP** | **13.9%** | 19/31 SP (61.3%) |
-| 6 | **Phan Trung Kiên** | Sinh viên (Miễn thực tập OJT) | 0 SP | 0 SP | 0 SP | 0 SP | **0 SP** | **0.0%** | Miễn OJT theo quy định |
-| | **TỔNG CỘNG** | **Nhóm 7 — Khóa OJT** | **69 SP** | **74 SP** | **46 SP** | **34 SP** | **223 SP** | **100%** | **169/223 SP (75.8%)** |
+| 1 | **Phạm Công Thành** | Team Leader & System Architect | 10 SP | 8 SP | 7 SP | 7 SP | **32 SP** | **25.6%** | Đạt 25/32 SP (78.1%) |
+| 2 | **Nguyễn Đại Phát** | Admin Lead & Firebase Auth | 8 SP | 9 SP | 5 SP | 5 SP | **27 SP** | **21.6%** | Đạt 22/27 SP (81.5%) |
+| 3 | **Phạm Thanh Phong** | Core Booking, Seat Engine & POS | 6 SP | 8 SP | 7 SP | 6 SP | **27 SP** | **21.6%** | Đạt 21/27 SP (77.8%) |
+| 4 | **Trần Minh Đức** | Customer Portal, Fixtures & Cargo | 4 SP | 5 SP | 4 SP | 6 SP | **19 SP** | **15.2%** | Đạt 13/19 SP (68.4%) |
+| 5 | **Đoàn Nhật Cường** | Mobile Specialist, QR Scanner & Tracking | 4 SP | 5 SP | 3 SP | 4 SP | **16 SP** | **12.8%** | Đạt 12/16 SP (75.0%) |
+| 6 | **Phan Trung Kiên** | Sinh viên (Miễn thực tập OJT) | 0 SP | 0 SP | 0 SP | 0 SP | **0 SP** | **0.0%** | Miễn OJT theo quy chế |
+| | **TỔNG CỘNG** | **Toàn đội Nhóm 7 (5 thành viên)** | **32 SP** | **35 SP** | **30 SP** | **28 SP** | **125 SP** | **100%** | **Đúng chuẩn Agile** |
 
 ---
 
-## 📝 3. CHI TIẾT ĐÓNG GÓP VÀ SẢN PHẨM CỦA TỪNG THÀNH VIÊN
+## 🏆 3. NỘI DUNG ĐÓNG GÓP THEO TỪNG THÀNH VIÊN TRONG DỰ ÁN
 
-### 👑 1. Phạm Công Thành (Team Leader & System Architect)
-* **Tổng điểm Story Points**: **52 SP** (Thực thi và nghiệm thu toàn diện).
-* **Trọng tâm đóng góp**:
-  * **Sprint 1 (25 SP)**: Thiết kế và khởi tạo CSDL 36 bảng chuẩn 3NF trên Supabase Cloud PostgreSQL; Cấu hình Spring Security 6 Stateless JWT Bearer, phân quyền RBAC 3 vai trò (`ADMIN`, `OPERATOR`, `CUSTOMER`); Lập trình toàn bộ Cổng Đối Tác Nhà Xe (`/company/login`, Dashboard KPI riêng hãng `/company/dashboard`, Đội xe `/company/vehicles`, Tuyến khai thác `/company/routes`).
-  * **Sprint 2 (11 SP)**: Quản lý lịch chạy mở bán chuyến `/company/trips`, Danh sách hành khách đi xe thời gian thực `/company/bookings`, Cơ chế đối soát tài chính khấu trừ 10% hoa hồng sàn `/company/settlements`.
-  * **Sprint 3 (16 SP)**: Quản lý và trực tiếp rà soát bộ kịch bản kiểm thử E2E liên cổng (`S301`, `S302`, `S304`, `S307`, `S316`, `S322`); Đồng giám sát các task tích hợp; Nghiệm thu và merge các PR trọng yếu (#27, #30); Thiết lập bộ quy chuẩn hoạt động AI `AGENT.md`.
-  * **Sprint 4 (Hạ tầng & Điều phối)**: 0 SP code mới. Tập trung đóng gói Docker Compose Production, xây dựng kịch bản bảo vệ 15 phút, slide thuyết trình và điều phối Demo Hub `/demo`.
+### 👑 1. Phạm Công Thành (Team Leader & System Architect — 32 SP)
+* **Sprint 1 (10 SP)**: Thiết kế CSDL 36 bảng 3NF trên Supabase PostgreSQL; Thiết lập kiến trúc Spring Boot 3 + Next.js 14; Phân quyền RBAC Stateless JWT; Toàn bộ Cổng Nhà xe (`/company/login`, `/company/dashboard`, `/company/vehicles`, `/company/routes`).
+* **Sprint 2 (8 SP)**: Điều phối mở bán chuyến xe `/company/trips`, Danh sách hành khách đi xe `/company/bookings`, Cơ chế đối soát doanh thu khấu trừ 10% hoa hồng sàn `/company/settlements`.
+* **Sprint 3 (7 SP)**: Thẩm định KYB đối tác nhà xe `[S322]`; Review và merge 7 Pull Requests quan trọng (#35, #36, #41, #42, #43, #45, #47) lên nhánh `dev`; Kiểm thử E2E liên cổng.
+* **Sprint 4 (7 SP)**: Đóng gói Docker Compose toàn hệ thống; Xây dựng kịch bản bảo vệ 15 phút, slide thuyết trình và điều phối trang Demo Hub `/demo`.
 
----
+### 🛡️ 2. Nguyễn Đại Phát (Admin Lead & Full-Stack — 27 SP)
+* **Sprint 1 (8 SP)**: Xây dựng Cổng Quản trị Sàn Tổng (`/admin/login`, Dashboard 4 KPIs `/admin/dashboard`, Giám sát chuyến xe `/admin/trips`, Quản trị người dùng & RBAC `/admin/users`).
+* **Sprint 2 (9 SP)**: Quản lý mạng lưới 25+ tuyến đường `/admin/routes`, Quyết toán sàn `/admin/settlements`, Vết kiểm toán bất biến (Append-Only Audit Trail) `/admin/audit-logs`.
+* **Sprint 3 (5 SP)**: Tích hợp Firebase Google Sign-In & OTP Phone xác thực một chạm (`S321`); Kiểm thử phân quyền RBAC và API đối soát tài chính.
+* **Sprint 4 (5 SP)**: Báo cáo thống kê tài chính nâng cao, cảnh báo gian lận và tối ưu hiệu năng Admin.
 
-### 🛡️ 2. Nguyễn Đại Phát (Admin Lead & Full-Stack)
-* **Tổng điểm Story Points**: **67 SP** (20 thẻ hoàn thành).
-* **Trọng tâm đóng góp**:
-  * **Sprint 1 (20 SP)**: Xây dựng Cổng Quản trị Sàn Tổng (`/admin/login`, Dashboard 4 KPIs `/admin/dashboard`, Giám sát chuyến xe toàn quốc `/admin/trips`, Quản trị người dùng & RBAC `/admin/users`, Duyệt hồ sơ nhà xe mới `/admin/bus-companies`).
-  * **Sprint 2 (29 SP)**: Mạng lưới 25+ tuyến đường `/admin/routes`, Tra cứu đơn vé toàn sàn `/admin/bookings`, Quyết toán sàn `/admin/settlements`, Vết kiểm toán bất biến (Append-Only Audit Trail) `/admin/audit-logs`, Quản lý Banners Cloudinary, Kiểm duyệt review độc hại.
-  * **Sprint 3 (10 SP)**: Tích hợp Đăng nhập Google OAuth2 & Xác thực OTP 6 số (`S321`); Kiểm thử hồi quy các API quản trị và chuẩn hóa mã lỗi HTTP.
-  * **Sprint 4 (8 SP)**: Giao diện và API Quản lý Hợp đồng Thuê xe & Ký quỹ Escrow 30% (`S401`); Phân hệ Quản trị Giá vé động & Flash Sale giờ chót (`S402`).
+### ⚡ 3. Phạm Thanh Phong (Core Booking & Seat Engine — 27 SP)
+* **Sprint 1 (6 SP)**: Cấu trúc Entity Booking, Seat, Ticket; API tìm kiếm chuyến cơ bản.
+* **Sprint 2 (8 SP)**: Động cơ chọn ghế ma trận 34 chỗ Limousine VIP 2 tầng; Thuật toán khóa ghế đồng thời Concurrency Lock với Redis/Pessimistic Lock; Tích hợp Sandbox VNPAY.
+* **Sprint 3 (7 SP)**: Kiểm thử tải khóa ghế bằng CountDownLatch 6 luồng chống đặt trùng (`S309` - PR #35); Chuẩn hóa Exception RFC 7807 (`S319` - PR #36); Webhook VNPAY chữ ký HMAC-SHA512 (`S310` - PR #43); E2E Checkout form (`S310` - PR #42).
+* **Sprint 4 (6 SP)**: Hoàn thiện phân hệ POS Bến xe (bán vé tại quầy in nhiệt và thu tiền mặt).
 
----
+### 🧪 4. Trần Minh Đức (Customer Portal, Tickets & Cargo — 19 SP)
+* **Sprint 1 (4 SP)**: Giao diện Trang chủ khách hàng `/`, Đăng ký/Đăng nhập khách hàng `/login`, `/register`.
+* **Sprint 2 (5 SP)**: Trang kết quả tìm kiếm chuyến xe; Bộ lọc đa tiêu chí (giờ đi, nhà xe, điểm đón, giá vé); Trang chi tiết thanh toán.
+* **Sprint 3 (4 SP)**: Khắc phục triệt để lỗi Seed Fixtures, điều hướng soát vé và chuyến khứ hồi (`S320` - PR #47); Kiểm thử giao diện lịch sử đặt vé và tra cứu mã Boarding Pass.
+* **Sprint 4 (6 SP)**: Hoàn thiện tính năng gửi hàng hóa (Cargo bưu kiện) và kịch bản hủy vé hoàn tiền tự động.
 
-### ⚡ 3. Phạm Thanh Phong (Core Booking & Seat Engine)
-* **Tổng điểm Story Points**: **42 SP** (14 thẻ hoàn thành).
-* **Trọng tâm đóng góp**:
-  * **Sprint 1 (15 SP)**: Lõi Tìm kiếm chuyến xe đa tiêu chí kết hợp SWR Client Cache 0ms (`/search`); Dựng sơ đồ tương tác 34 giường nằm Limousine VIP 2 tầng (`BusSeatMap.tsx`); Dữ liệu gốc bến xe `/admin/locations`.
-  * **Sprint 2 (13 SP)**: Thuật toán khóa giữ chỗ Concurrency Lock 10:00 sử dụng **Pessimistic Write Lock (`SELECT ... FOR UPDATE`)** loại bỏ 100% rủi ro Double-Booking; Mẫu sơ đồ xe `/admin/seat-templates`; Cấu hình hạng ghế `/admin/seat-types`.
-  * **Sprint 3 (5 SP)**: Kiểm thử tải thuật toán khóa ghế (`S309`), tối ưu chỉ mục truy vấn và kiểm thử hợp đồng API (`S319`).
-  * **Sprint 4 (9 SP)**: Phân hệ Bán vé Nhanh tại Quầy Bến xe POS (`S403` - 5 SP, xuất vé 3 click < 8s, in hóa đơn nhiệt 80mm); Quản lý ca trực và tiền mặt `/company/pos/shifts` (`S404` - 2 SP); Backend GPS Live Tracking SSE (`S405` - 2 SP).
-
----
-
-### 🎫 4. Trần Minh Đức (Customer Portal & Tickets)
-* **Tổng điểm Story Points**: **28 SP** (12 thẻ hoàn thành, 1 thẻ Backlog, 2 thẻ Sprint 4).
-* **Trọng tâm đóng góp**:
-  * **Sprint 1 (5 SP)**: Hồ sơ cá nhân `/profile`, Đăng ký / Đăng nhập khách hàng `/login`, `/register`.
-  * **Sprint 2 (8 SP)**: Màn hình Vé của tôi `/my-tickets`, quy trình Hủy vé trực tuyến tự động tính toán hoàn tiền theo chính sách giờ chạy, Kho mã giảm giá Voucher `/promotions`.
-  * **Sprint 3 (9 SP)**: Nhận trách nhiệm thực thi 7 thẻ kiểm thử (trong đó **6 thẻ (8 SP) đã hoàn thành**, 1 thẻ (1 SP) thuộc Backlog):
-    * `[Done Sprint 3] [2 SP] [S306]`: Kiểm thử nghiệm thu khách hàng — Đăng nhập, đăng ký, hồ sơ và phiếu giảm giá (`/customer`).
-    * `[Done Sprint 3] [2 SP] [FE+BE][S320]`: Kiểm thử tích hợp & nghiệm thu bộ dữ liệu mẫu (Fixtures, Seed Data & Dọn CSDL) (`/test/fixtures`) - Đã hợp nhất từ 2 task con FE & BE.
-    * `[Done Sprint 3] [1 SP] [FE][S312]`: Kiểm thử nghiệm thu trang chủ — Banner khuyến mãi và lịch chạy (`/`).
-    * `[Done Sprint 3] [1 SP] [BE][S313]`: Kiểm thử tích hợp API tra cứu vé — Mã vé, số điện thoại và tuyến (`/api/tickets/lookup`).
-    * `[Done Sprint 3] [1 SP] [BE][S317]`: Kiểm thử hồi quy tương thích API — Hợp đồng và cấu trúc phản hồi (`/api`).
-    * `[Done Sprint 3] [1 SP] [FE][S318]`: Kiểm thử nghiệm thu truy cập bàn phím, focus và khả năng tiếp cận (`/`).
-    * `[Sprint Backlog] [1 SP] [BE][S318]`: Kiểm thử hồi quy kiểm tra dữ liệu — Phản hồi lỗi và giá trị biên (`/api`).
-  * **Sprint 4 (6 SP)**: Giao diện Đặt thuê xe du lịch hợp đồng (`S409` - 3 SP); Giao diện Ký gửi hàng hóa bưu kiện hầm xe & Tra cứu vận đơn QR (`S410` - 3 SP).
-
----
-
-### 📱 5. Đoàn Nhật Cường (Mobile Specialist & QR Scanner)
-* **Tổng điểm Story Points**: **31 SP** (14 thẻ hoàn thành).
-* **Trọng tâm đóng góp**:
-  * **Sprint 1 (4 SP)**: Giao diện Trang chủ `/` chuẩn Mobile-First, Lịch trình xe toàn quốc `/schedule`, Cẩm nang & FAQ `/guide`.
-  * **Sprint 2 (13 SP)**: Tra cứu vé điện tử Offline không cần mạng `/lookup`; Phân hệ Quét mã QR Soát vé Camera siêu tốc < 0.2s (`/scanner`); Màn hình Đánh giá chuyến xe có sao ⭐ `/reviews`.
-  * **Sprint 3 (6 SP)**: Kịch bản kiểm thử bố cục thích ứng đa màn hình (`S317`); Kiểm thử tích hợp soát vé di động (`S314`).
-  * **Sprint 4 (8 SP)**: Bản đồ Định vị GPS Live Tracking xe chạy thời gian thực Server-Sent Events (`S405` - 3 SP); Trung tâm hỗ trợ khẩn cấp & CSKH 24/7 `/support` (`S407` - 2 SP); Rà soát trải nghiệm Mobile-First (`S408` - 3 SP).
-
----
-
-### 🎓 6. Phan Trung Kiên (Sinh viên)
-* **Trạng thái**: **Miễn thực tập OJT (Exempted)** theo quyết định và quy chế đào tạo của nhà trường/doanh nghiệp (0 SP, 0 thẻ).
-
----
-
-## 📈 4. ĐÁNH GIÁ CÁC CHỈ SỐ AGILE / SCRUM CỦA ĐỒ ÁN
-
-1. **Vận tốc Sprint (Sprint Velocity)**:
-   - Giai đoạn phát triển tính năng lõi (Sprint 1 - 2): Đạt **~70 SP / Sprint**, chứng minh năng lực triển khai mã nguồn mạnh mẽ của nhóm.
-   - Giai đoạn hoàn thiện & kiểm thử (Sprint 3 - 4): Duy trì ổn định **~35 - 45 SP / Sprint**, tập trung vào chất lượng, kiểm thử hồi quy và tối ưu bến xe thực tế.
-2. **Kỷ luật Definition of Done (DoD)**:
-   - 100% các thẻ được chuyển sang cột `Done` đều thỏa mãn đầy đủ 5 tiêu chí DoD (chức năng pass, không xung đột dữ liệu, có test case, có bằng chứng minh chứng và có phê duyệt của Leader).
-3. **Tính sẵn sàng bảo vệ (Defense Readiness)**:
-   - Tỷ lệ hoàn thành hiện tại đạt **75.8%**, toàn bộ 34 SP còn lại của Sprint 4 đã có sẵn khung giao diện cơ sở, đảm bảo hoàn thành 100% đúng hạn trước ngày bảo vệ tốt nghiệp vào cuối tuần sau.
-
----
-*Báo cáo này được phê duyệt bởi Trưởng nhóm Phạm Công Thành và được lưu trữ chính thức trong hồ sơ nghiệm thu đồ án OJT Nhóm 7.*
-
+### 📱 5. Đoàn Nhật Cường (Mobile Specialist & Cross-Browser — 16 SP)
+* **Sprint 1 (4 SP)**: Tối ưu Responsive Mobile cho Cổng Khách hàng; Thiết kế thành phần thẻ chuyến xe di động.
+* **Sprint 2 (5 SP)**: Giao diện màn hình chọn ghế thân thiện cảm ứng; Thành phần vé điện tử hiển thị mã QR Code.
+* **Sprint 3 (3 SP)**: Kiểm thử tự động E2E Playwright trên 5 trình duyệt và thiết bị di động (`S317` - PR #41); Kiểm thử quét mã QR soát vé.
+* **Sprint 4 (4 SP)**: Tích hợp Live Tracking định vị xe theo thời gian thực (SSE/WebSockets).

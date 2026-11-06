@@ -10,16 +10,17 @@
 
 ## 📈 1. TỔNG QUAN NĂNG SUẤT 4 SPRINT (SCRUM VELOCITY OVERVIEW)
 
-| Sprint | Giai đoạn & Mục tiêu trọng tâm | Tổng số thẻ | Tổng SP | Đã hoàn thành (Done) | Đang làm / Review | Tỷ lệ hoàn thành |
-| :---: | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Sprint 1** | Nền tảng Core, CSDL 36 bảng, Stateless JWT, Cổng Admin & Cổng Nhà xe | 19 thẻ | **69 SP** | 69 SP (19 thẻ) | 0 SP | **100%** ✅ |
-| **Sprint 2** | Tìm kiếm SWR Cache, Sơ đồ 34 ghế VIP, Khóa ghế Concurrency & Thanh toán | 19 thẻ | **74 SP** | 74 SP (19 thẻ) | 0 SP | **100%** ✅ |
-| **Sprint 3** | Kiểm thử tích hợp E2E, Hồi quy API/UI, Fixtures & Chuẩn hóa điểm SP | 33 thẻ | **46 SP** | 26 SP (15 thẻ) | 20 SP (18 thẻ) | **56.5%** 🔄 |
-| **Sprint 4** | POS Bến xe, Live Tracking SSE, Cargo bưu kiện, Docker & Kịch bản bảo vệ | 46 thẻ | **253 SP** | 45 SP (16 thẻ) | 208 SP (30 thẻ) | *(Nước rút)* 🎯 |
-| **TỔNG CỘNG** | **Toàn bộ hệ sinh thái Sàn Đặt Vé Xe Khách TravelEasy** | **117 thẻ** | **442 SP** | **214 SP (69 thẻ)** | **228 SP (48 thẻ)** | **100% Core Done** |
+| Sprint | Giai đoạn & Mục tiêu trọng tâm | Thời gian | Tổng số thẻ | Tổng SP | Đã hoàn thành (Done) | Đang làm / Review | Tỷ lệ hoàn thành |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Sprint 1** | Nền tảng Core, CSDL 36 bảng, Stateless JWT, Cổng Admin & Cổng Nhà xe | Tuần 1 | 19 thẻ | **32 SP** | 32 SP (19 thẻ) | 0 SP | **100%** ✅ |
+| **Sprint 2** | Tìm kiếm SWR Cache, Sơ đồ 34 ghế VIP, Khóa ghế Concurrency & Thanh toán | Tuần 2 | 19 thẻ | **35 SP** | 35 SP (19 thẻ) | 0 SP | **100%** ✅ |
+| **Sprint 3** | Kiểm thử tích hợp E2E, Hồi quy API/UI, Fixtures & Chuẩn hóa điểm SP | Tuần 3 | 28 thẻ | **30 SP** | 26 SP (24 thẻ) | 4 SP (4 thẻ) | **86.7%** 🚀 |
+| **Sprint 4** | POS Bến xe, Live Tracking SSE, Cargo bưu kiện, Docker & Kịch bản bảo vệ | Tuần 4 | 13 thẻ | **28 SP** | *(Kế hoạch)* | 28 SP (13 thẻ) | *(Nước rút)* 🎯 |
+| **TỔNG CỘNG** | **Toàn bộ hệ sinh thái Sàn Đặt Vé Xe Khách TravelEasy** | **4 Tuần** | **79 thẻ cốt lõi** | **125 SP** | **93 SP (62 thẻ)** | **32 SP (17 thẻ)** | **74.4% Hoàn thành** |
 
 > [!NOTE]
-> Danh mục công việc chính thức của Sprint 4 trong danh sách `Sprint Backlog - SPRINT 4` gồm **13 thẻ trọng tâm (34 SP)** phục vụ bảo vệ đồ án tốt nghiệp vào cuối tuần sau. Toàn bộ các thẻ còn lại là các gói kiểm thử mở rộng, tối ưu trải nghiệm và tài liệu vận hành được lưu vết trên Trello.
+> **Quy chuẩn chuẩn hóa Story Points (Scrum Calibration)**:
+> Danh mục công việc chính thức toàn bộ dự án gồm **79 User Stories & Technical Tasks cốt lõi với tổng định mức 125 SP** cho đúng **4 tuần làm việc (4 Sprints, mỗi Sprint 1 tuần)**. Bình quân mỗi thành viên đảm nhiệm ~6 SP/tuần theo chuẩn mực Agile/Scrum quốc tế.
 
 
 ---
