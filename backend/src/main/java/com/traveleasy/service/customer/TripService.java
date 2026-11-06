@@ -161,8 +161,14 @@ public class TripService {
         long t1 = System.currentTimeMillis();
         log.info("⚡ [PERF getTripDetail] tripId: {}, seats: {}, elapsed: {}ms", tripId, seats.size(), (t1 - t0));
 
+        int realAvailable = (int) seatResponses.stream()
+                .filter(s -> s.getStatus() == SeatStatus.AVAILABLE)
+                .count();
+        TripResponse tripResponse = mapToTripResponse(trip);
+        tripResponse.setAvailableSeats(realAvailable);
+
         return TripDetailResponse.builder()
-                .trip(mapToTripResponse(trip))
+                .trip(tripResponse)
                 .seats(seatResponses)
                 .pickupPoints(pickupPoints)
                 .dropoffPoints(dropoffPoints)

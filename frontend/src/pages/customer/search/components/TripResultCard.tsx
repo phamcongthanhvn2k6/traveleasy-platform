@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '../../../../context/ThemeContext';
 import { Trip, TripDetail } from '../../../../types';
 import { BusSeatMap } from '../../../../components/BusSeatMap';
@@ -172,6 +172,14 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
   const [simSeatNumber, setSimSeatNumber] = useState('A02');
   const [simulating, setSimulating] = useState(false);
   const [showSimPanel, setShowSimPanel] = useState(false);
+
+  // Số chỗ trống theo thời gian thực (tự động cập nhật khi ghế được chọn/giữ/đặt hoặc qua SSE)
+  const displayAvailableSeats = useMemo(() => {
+    if (tripDetail?.seats && tripDetail.seats.length > 0) {
+      return tripDetail.seats.filter((s) => s.status === 'AVAILABLE').length;
+    }
+    return trip.availableSeats;
+  }, [tripDetail, trip.availableSeats]);
 
   // Lắng nghe luồng SSE cập nhật ghế theo thời gian thực
   useEffect(() => {
@@ -460,23 +468,23 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
             <div style={{
               fontSize: '12px',
-              color: trip.availableSeats === 0 ? '#ef4444' : (trip.availableSeats < 10 ? '#ea580c' : '#16a34a'),
+              color: displayAvailableSeats === 0 ? '#ef4444' : (displayAvailableSeats < 10 ? '#ea580c' : '#16a34a'),
               fontWeight: 700,
               margin: '4px 0 10px 0'
             }}>
-              {trip.availableSeats > 0 ? `Còn ${trip.availableSeats} chỗ trống` : 'Hết vé'}
+              {displayAvailableSeats > 0 ? `Còn ${displayAvailableSeats} chỗ trống` : 'Hết vé'}
             </div>
 
             <button
-              onClick={trip.availableSeats === 0 ? undefined : toggleExpand}
-              disabled={trip.availableSeats === 0}
+              onClick={displayAvailableSeats === 0 ? undefined : toggleExpand}
+              disabled={displayAvailableSeats === 0}
               style={{
-                backgroundColor: trip.availableSeats === 0
+                backgroundColor: displayAvailableSeats === 0
                   ? (isDark ? '#334155' : '#cbd5e1')
                   : (expanded
                     ? (isDark ? '#1e293b' : '#f1f5f9')
                     : '#2563eb'),
-                color: trip.availableSeats === 0
+                color: displayAvailableSeats === 0
                   ? (isDark ? '#94a3b8' : '#64748b')
                   : (expanded
                     ? (isDark ? '#f8fafc' : '#1e293b')
@@ -486,15 +494,15 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                 borderRadius: '8px',
                 fontWeight: 700,
                 fontSize: '14px',
-                cursor: trip.availableSeats === 0 ? 'not-allowed' : 'pointer',
+                cursor: displayAvailableSeats === 0 ? 'not-allowed' : 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
                 transition: 'all 0.15s ease',
               }}
             >
-              {trip.availableSeats === 0 ? 'Hết vé' : (expanded ? 'Đóng' : 'Chọn chuyến')}
-              {trip.availableSeats === 0 ? null : (expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
+              {displayAvailableSeats === 0 ? 'Hết vé' : (expanded ? 'Đóng' : 'Chọn chuyến')}
+              {displayAvailableSeats === 0 ? null : (expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
             </button>
           </div>
         </div>
@@ -520,7 +528,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
             }}
             style={{ cursor: 'pointer', color: activeTab === 'SEATS' && expanded ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b') }}
           >
-            Chỗ trống ({trip.availableSeats})
+            Chỗ trống ({displayAvailableSeats})
           </span>
           <span>•</span>
           <span
