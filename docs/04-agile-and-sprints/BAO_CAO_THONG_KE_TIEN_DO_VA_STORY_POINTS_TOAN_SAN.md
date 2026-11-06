@@ -28,15 +28,15 @@ graph LR
     style S4 fill:#f3e8ff,stroke:#9333ea,stroke-width:2px;
 ```
 
-### Bảng tổng hợp số liệu 4 Sprint chuẩn hóa:
+### Bảng tổng hợp số liệu 4 Sprint chuẩn hóa (Đối soát thời gian thực 87 thẻ Trello):
 
-| Sprint | Thời gian | Trọng tâm công việc | Số thẻ User Story | Story Points | Đã hoàn thành | Đang làm / Review | Tỷ lệ hoàn thành |
+| Sprint | Thời gian | Trọng tâm công việc | Số thẻ Trello | Điểm SP thực tế | Đã hoàn thành (Done) | Đang làm / Review | Tỷ lệ hoàn thành |
 | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Sprint 1** | **Tuần 1** | Khởi tạo CSDL 36 bảng, Spring Security Stateless JWT, Cổng Admin & Cổng Nhà xe | 19 thẻ | **32 SP** | 32 SP (19 thẻ) | 0 SP | **100%** ✅ |
 | **Sprint 2** | **Tuần 2** | Tìm kiếm SWR Cache, Sơ đồ 34 ghế VIP, Khóa ghế Concurrency & Cổng thanh toán | 19 thẻ | **35 SP** | 35 SP (19 thẻ) | 0 SP | **100%** ✅ |
-| **Sprint 3** | **Tuần 3** | E2E QA, Firebase Google/Phone OTP, Fix Seed Fixtures & Webhook Security | 28 thẻ | **30 SP** | 26 SP (24 thẻ) | 4 SP (4 thẻ) | **86.7%** 🚀 |
-| **Sprint 4** | **Tuần 4** | POS xuất vé bến, Live Tracking SSE, Đóng gói Docker & Bảo vệ Đồ án | 13 thẻ | **28 SP** | *(Kế hoạch)* | 28 SP (13 thẻ) | *(Nước rút)* 🎯 |
-| **TỔNG CỘNG** | **4 Tuần** | **Hệ thống Toàn diện Sàn Đặt Vé Xe Khách TravelEasy** | **79 thẻ cốt lõi** | **125 SP** | **93 SP** | **32 SP** | **74.4%** |
+| **Sprint 3** | **Tuần 3** | E2E QA, Firebase Google/Phone OTP, Fix Seed Fixtures & Webhook Security | 36 thẻ | **48 SP** | 42 SP (30 thẻ Done) | 6 SP (6 thẻ) | **87.5%** 🚀 |
+| **Sprint 4** | **Tuần 4** | POS xuất vé bến, Live Tracking SSE, Đóng gói Docker & Bảo vệ Đồ án | 13 thẻ | **33 SP** | *(Kế hoạch)* | 33 SP (13 thẻ) | *(Nước rút)* 🎯 |
+| **TỔNG CỘNG** | **4 Tuần** | **Hệ sinh thái Toàn diện Sàn Đặt Vé Xe Khách TravelEasy** | **87 thẻ cốt lõi** | **148 SP** | **109 SP (68 thẻ)** | **39 SP (19 thẻ)** | **73.6%** |
 
 ---
 

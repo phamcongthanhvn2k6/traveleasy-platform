@@ -6,8 +6,9 @@
 
 > **BẢNG TRELLO TRỰC TUYẾN DỰ ÁN:** [https://trello.com/b/AA5BYoe1/traveleasyplatform](https://trello.com/b/AA5BYoe1/traveleasyplatform)  
 > **BOARD ID:** `6ad6f486572cd6662754e074`  
-> **CÔNG CỤ TỰ ĐỘNG HÓA:** `scripts/sync_trello.py`  
-> **TRẠNG THÁI NGHIỆM THU SPRINT 1:** **17/17 USER STORIES HOÀN THÀNH (95 STORY POINTS - CỘT 'DONE SPRINT')**.
+> **CÔNG CỤ ĐỒNG BỘ REST API:** `scripts/sync_trello.py`  
+> **HIỆN TRẠNG QUẢN TRỊ DỰ ÁN:** **87 THẺ CỐT LÕI — 125 STORY POINTS (CHUẨN HOÁ 4 TUẦN - 4 SPRINTS)**.  
+> **TIẾN ĐỘ NGHIỆM THU HIỆN TẠI:** Sprint 1 (19/19 Thẻ Done), Sprint 2 (19/19 Thẻ Done), Sprint 3 (30/36 Thẻ Done - Đạt 87.5%), Sprint 4 (13 Thẻ chuẩn bị nước rút).
 
 ---
 

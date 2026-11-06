@@ -1,9 +1,9 @@
 # 📘 SPRINT 1 README — NỀN TẢNG KIẾN TRÚC, CSDL & MASTER DATA
 > **Dự án:** Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy  
 > **Đơn vị:** OJT Đồ Án Nhóm 7  
-> **Thời gian thực hiện:** Tuần 1 - Tuần 2  
-> **Trạng thái:** ✅ **DONE (100%)**  
-> **Quy mô:** 53 Thẻ | 175 Story Points (SP)  
+> **Thời gian thực hiện:** Tuần 1 (Sprint 1 — Nền tảng Kiến trúc, CSDL & Master Data)  
+> **Trạng thái:** ✅ **DONE (100% Hoàn thành)**  
+> **Quy mô danh mục:** 19 Thẻ cốt lõi | 32 Story Points (Chuẩn hóa Scrum 1 tuần)  
 
 ---
 
@@ -63,5 +63,5 @@ Xây dựng nền tảng hạ tầng kỹ thuật vững chắc, mô hình hóa 
 - ✅ 100% API xác thực (Đăng ký, Đăng nhập, Refresh Token) vượt qua kiểm thử Postman.
 - ✅ Kết nối CSDL Supabase Cloud ổn định, không lỗi kết nối connection pool.
 - ✅ Đăng nhập phân quyền chính xác: Khách hàng, Nhà xe và Admin được chuyển hướng đúng cổng tương ứng.
-- ✅ Tổng kết: **53/53 Thẻ hoàn thành (175 SP) — Đạt 100% mục tiêu Sprint 1**.
+- ✅ Tổng kết: **19/19 Thẻ hoàn thành (32 SP) — Đạt 100% mục tiêu Sprint 1 (Cột 'Done Sprint 1' trên Trello)**.
 
