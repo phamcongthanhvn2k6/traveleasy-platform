@@ -3,6 +3,11 @@
 ### ĐƠN VỊ: NHÓM 7 | TRƯỞNG NHÓM (TEAM LEADER & SYSTEM ARCHITECT): PHẠM CÔNG THÀNH
 ### ⏰ THỜI HẠN HOÀN TẤT KIỂM THỬ & NỘP BIÊN BẢN: TRƯỚC 23:59:00 HẾT NGÀY MAI
 
+> 🔗 **TÀI LIỆU LIÊN QUAN TRONG BỘ HỒ SƠ QA & TESTING:**  
+> • 📘 **Quy trình chuẩn**: [Quy trình kiểm thử an toàn & nghiệm thu chuẩn đồ án](./QUY_TRINH_KIEM_THU_VA_NGHIEM_THU_CHUAN_DO_AN.md)  
+> • 📊 **Kế hoạch & Báo cáo NFR**: [Kế hoạch & Kết quả kiểm thử toàn diện NFR & 25 Test Cases](./TEST_PLAN_AND_REPORT.md)  
+> • 📂 **Thư mục báo cáo thành viên**: [docs/test-reports/](../test-reports/README.md)  
+
 ---
 
 > 📢 **THÔNG BÁO CHỈ ĐẠO TỪ NHÓM TRƯỞNG (PHẠM CÔNG THÀNH):**  
@@ -76,23 +81,26 @@ Truy cập ứng dụng trên trình duyệt: `http://localhost:5173`
 
 #### 🔹 Bước 5: Chụp ảnh màn hình minh chứng & Lưu vào `docs/screenshots/`
 * Chụp ảnh màn hình rõ nét thể hiện giao diện trang đang hoạt động bình thường hoặc kết quả sau khi thao tác thành công.
-* **Quy chuẩn đặt tên file ảnh bắt buộc** (Lưu trực tiếp vào thư mục `docs/screenshots/`):
+* **Quy chuẩn đặt tên file ảnh bắt buộc** (Lưu trực tiếp vào thư mục `docs/screenshots/` hoặc `docs/test-reports/<tên-bạn>/screenshots/`):
   * Cổng Company (Thành): `test_company_<tên-trang>.png` (ví dụ: `test_company_dashboard.png`)
   * Cổng Admin (Phát): `test_admin_<tên-trang>.png` (ví dụ: `test_admin_trips.png`)
   * Cổng Đặt vé & Master Data (Phong): `test_core_<tên-trang>.png` (ví dụ: `test_core_search_seatmap.png`)
   * Cổng Khách hàng (Đức): `test_customer_<tên-trang>.png` (ví dụ: `test_customer_my_tickets.png`)
   * Cổng Di động & Media (Cường): `test_mobile_<tên-trang>.png` (ví dụ: `test_mobile_qr_scanner.png`)
 
-#### 🔹 Bước 6: Điền bảng nghiệm thu và viết nhận xét đánh giá
-* Mở file `docs/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md`.
-* Tìm đến phần Bảng kiểm thử của mình (Mục 3.1 đến 3.5), cập nhật cột **Trạng thái thực tế** (`PASS` / `FAIL`), chèn link ảnh screenshot tương ứng và viết 2-3 câu nhận xét đánh giá trải nghiệm thực tế.
+#### 🔹 Bước 6: Lập Báo cáo Nghiệm thu và Cập nhật Kết quả
+> [!IMPORTANT]
+> **LƯU Ý TRÁNH XUNG ĐỘT GIT (ZERO MERGE CONFLICT):**
+> * File `docs/05-qa-and-testing/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md` là **Hồ sơ nghiệm thu tổng hợp toàn dự án (Master Acceptance Document)** do Nhóm trưởng Phạm Công Thành quản lý và chốt duyệt.
+> * Đối với các task kiểm thử theo Sprint / Thẻ Trello, thành viên **lập file báo cáo riêng trong thư mục của mình**: `docs/test-reports/<tên-bạn>/<MÃ_THẺ>_TEST_REPORT.md` (tham khảo `docs/test-reports/TEMPLATE_TEST_REPORT.md`).
+> * Khi nghiệm thu đợt tổng thể 34 trang, thành viên điền kết quả vào báo cáo cá nhân hoặc gửi xác nhận để Leader tổng hợp vào Biên bản tổng này, **không sửa đè đồng thời trên cùng một file để tránh Conflict**.
 
 #### 🔹 Bước 7: Commit, Push lên GitHub và Mở Pull Request
 ```powershell
-# Thêm file ảnh và file biên bản vào staging:
-git add docs/screenshots/ docs/BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md
+# Thêm file ảnh và file báo cáo của bạn vào staging (TUYỆT ĐỐI KHÔNG commit test-results/):
+git add docs/screenshots/ docs/test-reports/<tên-bạn>/
 
-# Tạo commit chuẩn Conventional Commits:
+# Tạo commit chuẩn Conventional Commits Tiếng Việt:
 git commit -m "test(acceptance): hoàn thành kiểm thử tính năng và bổ sung minh chứng nghiệm thu [Tên Bạn]"
 
 # Đẩy nhánh lên GitHub:
@@ -114,7 +122,7 @@ Truy cập GitHub Repository và bấm **"Compare & pull request"** trỏ vào n
 |:---|:---|:---:|:---|
 | **1. Phạm Công Thành**<br/>*(Team Leader & Architect)* | **Toàn bộ Cổng Đối Tác Nhà Xe (`/company/*`)** + Nền tảng Core System Architecture | **10 Trang** | `operator@futa.vn`<br/>`dieuhanh@xesaoviet.com.vn`<br/>Mật khẩu: `123456789@` |
 | **2. Nguyễn Đại Phát**<br/>*(Admin Lead & Full-Stack)* | **Toàn bộ 10 Trang Cốt lõi Quản trị Sàn Tổng (`/admin/*`)** | **10 Trang** | `daiphat.admin@traveleasy.vn`<br/>`admin@traveleasy.vn`<br/>Mật khẩu: `123456789@` |
-| **3. Phạm Thanh Phong**<br/>*(Core Booking & Seat Engine)* | **6 Trang Lõi Nghiệp vụ Đặt chỗ, Thuật toán Concurrency & Master Data Xe** | **6 Trang** | Khách vãng lai & `customer@gmail.com`<br/>(Test đồng thời 2 tab ẩn danh) |
+| **3. Phạm Thanh Phong**<br/>*(Core Booking & Seat Engine)* | **6 Trang Lõi Nghiệp vụ Đặt chỗ, Thuật toán Concurrency & Master Data Xe** | **6 Trang** | Khách vãng lai & `customer@gmail.com`<br/>Mật khẩu: `123456789@`<br/>(Test đồng thời 2 tab ẩn danh) |
 | **4. Trần Minh Đức**<br/>*(Full-Stack Developer)* | **4 Trang Khách Hàng, Quản lý Vé của tôi & Tài khoản cá nhân** | **4 Trang** | `customer@gmail.com`<br/>`minhduc@gmail.com`<br/>Mật khẩu: `123456789@` |
 | **5. Đoàn Nhật Cường**<br/>*(Frontend & Mobile Specialist)* | **5 Trang Truyền Thông, Tra cứu vé Offline & 📷 Quét mã QR Soát vé** | **5 Trang** | Khách công cộng & Thiết bị Di động (Mobile / Camera) |
 | *(Phan Trung Kiên)* | *(Miễn thực tập OJT theo quy định đào tạo)* | *(0 Trang)* | *(N/A)* |
@@ -173,7 +181,7 @@ Truy cập GitHub Repository và bấm **"Compare & pull request"** trỏ vào n
 
 ---
 
-### 3.3 TRẦN NAM PHONG — NGHIỆM THU ĐẶT VÉ, CONCURRENCY LOCK & MASTER DATA XE (6 TRANG)
+### 3.3 PHẠM THANH PHONG — NGHIỆM THU ĐẶT VÉ, CONCURRENCY LOCK & MASTER DATA XE (6 TRANG)
 
 * **Họ và tên**: **Phạm Thanh Phong** (Full-Stack Developer — Core Booking & Seat Engine)
 * **Nhánh kiểm thử**: `test/phong-booking-acceptance`
@@ -193,7 +201,7 @@ Truy cập GitHub Repository và bấm **"Compare & pull request"** trỏ vào n
 
 ---
 
-### 3.4 TRẦN HỮU ĐỨC — NGHIỆM THU KHÁCH HÀNG & QUẢN LÝ VÉ CÁ NHÂN (4 TRANG)
+### 3.4 TRẦN MINH ĐỨC — NGHIỆM THU KHÁCH HÀNG & QUẢN LÝ VÉ CÁ NHÂN (4 TRANG)
 
 * **Họ và tên**: **Trần Minh Đức** (Full-Stack Developer)
 * **Nhánh kiểm thử**: `test/duc-customer-acceptance`
@@ -211,7 +219,7 @@ Truy cập GitHub Repository và bấm **"Compare & pull request"** trỏ vào n
 
 ---
 
-### 3.5 NGUYỄN TRỌNG CƯỜNG — NGHIỆM THU DI ĐỘNG, TRA CỨU OFFLINE & QUÉT MÃ QR (5 TRANG)
+### 3.5 ĐOÀN NHẬT CƯỜNG — NGHIỆM THU DI ĐỘNG, TRA CỨU OFFLINE & QUÉT MÃ QR (5 TRANG)
 
 * **Họ và tên**: **Đoàn Nhật Cường** (Frontend & Mobile Specialist)
 * **Nhánh kiểm thử**: `test/cuong-mobile-acceptance`

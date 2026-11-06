@@ -1,6 +1,12 @@
 # 🧪 QUY CHUẨN BÁO CÁO KIỂM THỬ SPRINT 3 (ZERO MERGE CONFLICT)
 
-Để đảm bảo cả 4 thành viên kiểm thử và đẩy báo cáo lên Git **không bao giờ bị xung đột (conflict)**:
+> [!IMPORTANT]
+> **TÀI LIỆU QUY TRÌNH BẮT BUỘC:** Mọi thành viên trước khi thực hiện task kiểm thử và mở PR nghiệm thu **BẮT BUỘC** phải đọc kỹ và tuân thủ:
+> 👉 **[Quy trình kiểm thử an toàn & nghiệm thu chuẩn đồ án](../05-qa-and-testing/QUY_TRINH_KIEM_THU_VA_NGHIEM_THU_CHUAN_DO_AN.md)**
+>
+> **2 NGUYÊN TẮC BẤT DI BẤT DỊCH:**
+> 1. **KHÔNG XÂM LẤN PRODUCTION CODE:** Tuyệt đối KHÔNG sửa code trong `backend/src/main/` hoặc `frontend/src/` khi làm task test. Test là Hộp đen (Black-box), phát hiện lỗi thì ghi nhận BUG report, không được tự ý sửa logic hệ thống làm gãy tính năng khác.
+> 2. **KHÔNG COMMIT RÁC HỆ THỐNG:** Tuyệt đối KHÔNG commit thư mục tạm như `test-results/`, `playwright-report/`, `.cache/` làm phình to repo Git.
 
 ## 📂 1. Phân chia thư mục độc lập
 * `docs/test-reports/phat/` 👉 **Nguyễn Đại Phát** chỉ tạo file báo cáo trong thư mục này.
