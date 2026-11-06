@@ -24,9 +24,9 @@ graph LR
 | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Sprint 1** | Tuần 1 - 2 | Nền tảng Core, CSDL 36 bảng, Stateless JWT, Cổng Admin & Cổng Nhà xe | 19 thẻ | **69 SP** | 69 SP (19 thẻ) | 0 SP | **100%** ✅ |
 | **Sprint 2** | Tuần 3 - 4 | Tìm kiếm SWR Cache, Sơ đồ 34 ghế VIP, Khóa ghế Concurrency 10:00 & Thanh toán | 19 thẻ | **74 SP** | 74 SP (19 thẻ) | 0 SP | **100%** ✅ |
-| **Sprint 3** | Tuần 5 - 6 | Kiểm thử tích hợp E2E, Hồi quy giao diện, Fixtures & Chuẩn hóa điểm SP | 33 thẻ | **46 SP** | 26 SP (15 thẻ) | 20 SP (18 thẻ) | **56.5%** 🔄 |
-| **Sprint 4** | Tuần 7 - 8 | Phân hệ POS bến xe, Live Tracking SSE, Cargo bưu kiện, Docker & Kịch bản bảo vệ | 13 thẻ | **34 SP** | 0 SP | 34 SP (13 thẻ) | *(Nước rút)* 🎯 |
-| **TỔNG CỘNG** | **8 Tuần** | **Hệ sinh thái toàn diện Sàn Vé Xe Khách & Bến Xe Thực Tế** | **84 thẻ US** | **223 SP** | **169 SP** | **54 SP** | **75.8%** |
+| **Sprint 3** | Tuần 5 - 6 | Kiểm thử tích hợp E2E, Hồi quy giao diện, Fixtures, Đăng nhập Firebase & Khóa ghế | 49 thẻ | **217 SP** | 38 thẻ (203 SP) | 11 thẻ (14 SP) | **93.5%** 🚀 |
+| **Sprint 4** | Tuần 7 - 8 | Phân hệ POS bến xe, Live Tracking SSE, Cargo bưu kiện, Docker & Kịch bản bảo vệ | 24 thẻ | **88 SP** | *(Đã có 5 task hoàn thành trước)* | 19 thẻ (63 SP) | *(Sprint nước rút)* 🎯 |
+| **TỔNG CỘNG** | **8 Tuần** | **Hệ sinh thái toàn diện Sàn Vé Xe Khách & Bến Xe Thực Tế** | **117 thẻ** | **448 SP** | **371 SP** | **77 SP** | **82.8%** |
 
 > [!NOTE]
 > **Về việc chuẩn hóa Story Points Sprint 3**:
