@@ -30,8 +30,23 @@ public class SeatRealtimeService {
     // Map theo dõi thông tin người/phiên đang giữ ghế (key: "tripId:SEAT_CODE", value: userEmail hoặc sessionId)
     private final ConcurrentHashMap<String, String> seatHolders = new ConcurrentHashMap<>();
 
+    // Map theo dõi thời điểm khóa ghế (timestamp tính bằng ms) để tự động nhận diện hết hạn 10 phút
+    private final ConcurrentHashMap<String, Long> seatHoldTimes = new ConcurrentHashMap<>();
+
     // Scheduler cho tự động nhả ghế sau thời gian giữ chỗ (10 phút)
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+    @jakarta.annotation.PostConstruct
+    public void resetOrphanLocksOnStartup() {
+        try {
+            int resetCount = tripSeatRepository.resetAllLockedSeatsToAvailable();
+            if (resetCount > 0) {
+                log.info("⚡ Khởi động hệ thống: Đã tự động giải phóng {} ghế LOCKED tồn đọng về AVAILABLE", resetCount);
+            }
+        } catch (Exception e) {
+            log.warn("Không thể reset ghế LOCKED khi khởi động: {}", e.getMessage());
+        }
+    }
 
     private String getHolderKey(Long tripId, String seatCode) {
         return tripId + ":" + (seatCode != null ? seatCode.trim().toUpperCase() : "");
@@ -142,9 +157,17 @@ public class SeatRealtimeService {
                 throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED, "Ghế " + seat.getSeatCode() + " đã có người mua vé!");
             }
             if (seat.getStatus() == SeatStatus.LOCKED) {
-                String existingHolder = seatHolders.get(getHolderKey(tripId, seat.getSeatCode()));
-                // Nếu đang bị giữ bởi một tài khoản/phiên khác -> Chặn
-                if (existingHolder != null && !existingHolder.equalsIgnoreCase(currentHolder)) {
+                String key = getHolderKey(tripId, seat.getSeatCode());
+                Long holdTime = seatHoldTimes.get(key);
+                String existingHolder = seatHolders.get(key);
+                // Kiểm tra xem khóa giữ chỗ có còn hiệu lực không (tối đa 10 phút = 600,000ms)
+                boolean isExpired = (holdTime == null) || (System.currentTimeMillis() - holdTime > 600_000L);
+                if (isExpired) {
+                    // Đã hết hạn hoặc mất phiên -> tự động mở lại ghế và cho phép phiên mới tiếp quản
+                    seat.setStatus(SeatStatus.AVAILABLE);
+                    seatHolders.remove(key);
+                    seatHoldTimes.remove(key);
+                } else if (existingHolder != null && !existingHolder.equalsIgnoreCase(currentHolder)) {
                     throw new AppException(ErrorCode.VALIDATION_ERROR, "Ghế " + seat.getSeatCode() + " đang được một khách hàng khác giữ chỗ thanh toán (thời hạn 10 phút)!");
                 }
             }
@@ -153,7 +176,9 @@ public class SeatRealtimeService {
         List<SeatUpdateEvent> events = new ArrayList<>();
         for (TripSeat seat : seats) {
             seat.setStatus(SeatStatus.LOCKED);
-            seatHolders.put(getHolderKey(tripId, seat.getSeatCode()), currentHolder);
+            String key = getHolderKey(tripId, seat.getSeatCode());
+            seatHolders.put(key, currentHolder);
+            seatHoldTimes.put(key, System.currentTimeMillis());
             events.add(SeatUpdateEvent.builder()
                     .tripId(tripId)
                     .seatNumber(seat.getSeatCode())
@@ -180,9 +205,14 @@ public class SeatRealtimeService {
      * Kiểm tra xem ghế có đang được giữ bởi chính user này hay không
      */
     public boolean isSeatHeldBy(Long tripId, String seatCode, String userEmail, String sessionId) {
-        String existingHolder = seatHolders.get(getHolderKey(tripId, seatCode));
+        String key = getHolderKey(tripId, seatCode);
+        Long holdTime = seatHoldTimes.get(key);
+        if (holdTime == null || (System.currentTimeMillis() - holdTime > 600_000L)) {
+            return true; // Khóa đã hết hạn hoặc không có phiên trong bộ nhớ -> Cho phép tiến hành
+        }
+        String existingHolder = seatHolders.get(key);
         if (existingHolder == null) {
-            return true; // Không có ai giữ trong bộ nhớ -> Cho phép tiến hành
+            return true;
         }
         if (userEmail != null && !userEmail.isBlank() && existingHolder.equalsIgnoreCase(userEmail.trim())) {
             return true;
@@ -199,7 +229,9 @@ public class SeatRealtimeService {
     public void removeSeatHolders(Long tripId, List<String> seatCodes) {
         if (seatCodes == null) return;
         for (String seatCode : seatCodes) {
-            seatHolders.remove(getHolderKey(tripId, seatCode));
+            String key = getHolderKey(tripId, seatCode);
+            seatHolders.remove(key);
+            seatHoldTimes.remove(key);
         }
     }
 
@@ -216,7 +248,9 @@ public class SeatRealtimeService {
         for (TripSeat seat : seats) {
             if (seat.getStatus() == SeatStatus.LOCKED) {
                 seat.setStatus(SeatStatus.AVAILABLE);
-                seatHolders.remove(getHolderKey(tripId, seat.getSeatCode()));
+                String key = getHolderKey(tripId, seat.getSeatCode());
+                seatHolders.remove(key);
+                seatHoldTimes.remove(key);
                 broadcastSeatUpdate(tripId, seat.getSeatCode(), SeatStatus.AVAILABLE,
                         "Ghế " + seat.getSeatCode() + " đã được mở lại cho khách khác đặt", null);
             }
@@ -294,7 +328,9 @@ public class SeatRealtimeService {
             for (TripSeat seat : seats) {
                 if (seat.getStatus() == SeatStatus.LOCKED) {
                     seat.setStatus(SeatStatus.AVAILABLE);
-                    seatHolders.remove(getHolderKey(tripId, seat.getSeatCode()));
+                    String key = getHolderKey(tripId, seat.getSeatCode());
+                    seatHolders.remove(key);
+                    seatHoldTimes.remove(key);
                     seatsToSave.add(seat);
                     broadcastSeatUpdate(tripId, seat.getSeatCode(), SeatStatus.AVAILABLE,
                             "Ghế " + seat.getSeatCode() + " đã hết hạn giữ chỗ 10 phút và tự động mở lại", null);

@@ -228,7 +228,7 @@ public class BookingService {
     public List<BookingResponse> getUserBookings(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "User không tồn tại"));
-        List<Booking> bookings = bookingRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+        List<Booking> bookings = bookingRepository.findByUserIdOrPassengerEmailOrderByCreatedAtDesc(user.getId(), userEmail.trim());
 
         return bookings.stream().map(b -> {
             List<Ticket> tickets = ticketRepository.findByBookingId(b.getId());

@@ -112,6 +112,8 @@ export const CheckoutPage: React.FC = () => {
     })()
   );
 
+  const selectedSeatsKey = selectedSeats.join(',');
+
   // Tự động gửi lệnh giữ chỗ ghế lên server (đổi màu vàng LOCKED trên toàn hệ thống)
   useEffect(() => {
     let isMounted = true;
@@ -145,7 +147,7 @@ export const CheckoutPage: React.FC = () => {
         }).catch(() => {});
       }
     };
-  }, [trip?.id, selectedSeats]);
+  }, [trip?.id, selectedSeatsKey]);
 
   // Check if returning from VNPAY with failure
   useEffect(() => {

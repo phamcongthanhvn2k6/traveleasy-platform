@@ -30,6 +30,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Optional<Booking> findByBookingCode(String bookingCode);
     List<Booking> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.trip t LEFT JOIN FETCH t.busCompany bc LEFT JOIN FETCH t.route r WHERE (b.user IS NOT NULL AND b.user.id = :userId) OR (b.passengerEmail IS NOT NULL AND LOWER(b.passengerEmail) = LOWER(:email)) ORDER BY b.createdAt DESC")
+    List<Booking> findByUserIdOrPassengerEmailOrderByCreatedAtDesc(@Param("userId") Long userId, @Param("email") String email);
+
     List<Booking> findByPassengerPhoneOrderByCreatedAtDesc(String passengerPhone);
     long countByStatus(BookingStatus status);
     List<Booking> findByStatusAndCreatedAtBefore(BookingStatus status, java.time.LocalDateTime threshold);
