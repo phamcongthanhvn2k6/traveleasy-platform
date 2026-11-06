@@ -42,13 +42,13 @@ Sức khỏe hệ thống       Khóa ghế Concurrency    POS bán vé, In bill
 #### 🗣️ Lời thoại mở đầu:
 > *"Kính chào quý Thầy Cô trong Hội đồng chấm thi tốt nghiệp OJT. Em là Phạm Công Thành, đại diện cho Nhóm 7 báo cáo đồ án **TravelEasy Platform** — Nền tảng đặt vé xe khách trực tuyến và quản trị điều hành vận tải liên tỉnh toàn diện.*  
 > *Khác biệt với các ứng dụng đặt vé thông thường, TravelEasy giải quyết triệt để 3 bài toán lớn của ngành vận tải hành khách tại Việt Nam: **Thứ nhất**, xử lý tranh chấp khóa ghế đồng thời giờ cao điểm; **Thứ hai**, đồng bộ hiện trường bến xe qua máy POS và camera soát vé QR dưới 0.2 giây; **Thứ ba**, tích hợp hệ sinh thái mở rộng gồm gửi hàng bưu kiện, xe hợp đồng và bản đồ GPS Live Tracking thời gian thực.*  
-> *Toàn bộ hệ thống được xây dựng theo kiến trúc **Modular Monolith + Clean Architecture**, Backend Spring Boot 3.3 Java 21, Frontend React 18 TypeScript, và CSDL 36 bảng chuẩn hóa 3NF trên Supabase Cloud."*
+> *Toàn bộ hệ thống được xây dựng theo kiến trúc **Modular Monolith + Clean Architecture**, Backend Spring Boot 3.3 Java 21, Frontend React 18 TypeScript, và CSDL 44 bảng chuẩn hóa 3NF trên Supabase Cloud (gồm 36 bảng cốt lõi và 8 bảng mở rộng hệ sinh thái)."*
 
 #### 🖥️ Thao tác trực quan trên màn hình chiếu:
 1. Mở trang **Demo Hub** tại `http://localhost:5173/demo`.
 2. Bấm nút xanh **`Kiểm tra Sức Khỏe Hệ Thống`**:
    - Màn hình hiện Toast thông báo xanh: *`Trạng thái UP - Cơ sở dữ liệu KẾT NỐI TỐT`*.
-   - Khối thống kê nhảy số: Uptime, Memory Used < 256MB, 36 bảng CSDL hoạt động hoàn hảo.
+   - Khối thống kê nhảy số: Uptime, Memory Used < 256MB, 44 bảng CSDL hoạt động hoàn hảo.
 3. Thành chỉ tay vào màn hình:
    > *"Như Hội đồng có thể thấy trên màn hình trung tâm Demo Hub, toàn bộ dịch vụ Backend và CSDL Supabase đang kết nối trực tiếp, độ trễ mạng dưới 50ms, bộ nhớ RAM được tối ưu hóa ở mức an toàn. Sau đây, em xin nhường lại phần trình diễn cho bạn Trần Minh Đức để biểu diễn luồng đặt vé và giải thuật khóa ghế Concurrency."*
 

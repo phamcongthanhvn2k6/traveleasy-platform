@@ -3,7 +3,7 @@
 > **Dự án**: Sàn Thương Mại Điện Tử & Đặt Vé Xe Khách Liên Tỉnh Trực Tuyến TravelEasy  
 > **Đơn vị thực hiện**: Nhóm 7 — Khóa OJT  
 > **Trưởng nhóm / Kiến trúc sư hệ thống**: Phạm Công Thành (`phamcongthanhvn2k6` / `thanhphmcong1`)  
-> **Cơ sở dữ liệu**: Supabase Cloud PostgreSQL (44 bảng chuẩn hóa + Realtime RPC)  
+> **Cơ sở dữ liệu**: Supabase Cloud PostgreSQL (44 bảng chuẩn hóa 3NF + Realtime RPC — gồm 36 bảng cốt lõi và 8 bảng mở rộng hệ sinh thái)  
 
 ---
 
@@ -60,7 +60,7 @@ Tập trung vào mô hình kỹ thuật, sơ đồ quan hệ và hạ tầng d�
   * **Nội dung**: Biểu đồ Class Diagram chi tiết toàn bộ các Entity, DTO, Repository, Service và Controller trong Spring Boot.
 
 * 📄 [database_design.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/02-architecture-and-db/database_design.md)  
-  * **Nội dung**: Thiết kế chi tiết 44 bảng dữ liệu, chuẩn hóa 3NF, danh sách khóa chính (PK), khóa ngoại (FK), Trigger tự động và hệ thống Index tăng tốc truy vấn.
+  * **Nội dung**: Thiết kế chi tiết 44 bảng dữ liệu (36 bảng cốt lõi + 8 bảng mở rộng), chuẩn hóa 3NF, danh sách khóa chính (PK), khóa ngoại (FK), Trigger tự động và hệ thống Index tăng tốc truy vấn.
 
 * 📄 [schema.sql](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/02-architecture-and-db/schema.sql) *(File chuẩn SSOT)*  
   * **Nội dung**: Toàn bộ câu lệnh DDL khởi tạo 44 bảng CSDL và toàn bộ tập dữ liệu mẫu sinh động (Seed data chuẩn cho Chuyến xe, Tuyến đường, Nhà xe, Vé xe, Người dùng).
@@ -131,7 +131,7 @@ Tài liệu quản lý tiến độ, ma trận phân bổ công việc và kịc
   * **Nội dung**: Kịch bản chi tiết thiết kế công việc và kịch bản demo phân hệ nâng cao phục vụ bảo vệ đồ án tốt nghiệp OJT.
 
 * 📄 **Chi Tiết Báo Cáo Từng Sprint**:
-  * [SPRINT_1_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_1_README.md): Nền tảng Core, Xác thực JWT, CSDL chuẩn 44 bảng và Quản trị Danh mục (22 thẻ | 32 SP).
+  * [SPRINT_1_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_1_README.md): Nền tảng Core, Xác thực JWT, CSDL chuẩn 36 bảng và Quản trị Danh mục (19 thẻ | 32 SP).
   * [SPRINT_2_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_2_README.md): Tìm kiếm vé xe đa tiêu chí, Chọn sơ đồ ghế 2 tầng, Thanh toán VNPAY & QR (17 thẻ | 35 SP).
   * [SPRINT_3_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_3_README.md): Cổng điều hành nhà xe, Kiểm thử QA E2E, Firebase Auth, Soát vé QR & Fix Fixtures (35 thẻ | 48 SP).
   * [SPRINT_4_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_4_README.md): Vận hành sẵn sàng sản xuất, POS bến xe, GPS Tracking, Ký gửi hàng hóa & Bảo vệ tốt nghiệp (13 thẻ | 33 SP).
