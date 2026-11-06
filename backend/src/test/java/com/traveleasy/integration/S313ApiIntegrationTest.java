@@ -246,9 +246,9 @@ public class S313ApiIntegrationTest {
     @Order(6)
     @DisplayName("DoD 6: Soát vé hành khách Check-in và bảo vệ chống Check-in trùng lặp")
     void testCheckInTicket_AndDuplicatePrevention() throws Exception {
-        // Lần 1: Check-in hợp lệ với quyền COMPANY / STAFF
+        // Lần 1: Check-in hợp lệ với quyền OPERATOR (Nhà xe đối tác điều hành)
         mockMvc.perform(post("/api/v1/bookings/check-in/{ticketCode}", TEST_TICKET_CODE)
-                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("driver_staff").roles("COMPANY"))
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("partner_operator").roles("OPERATOR"))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))

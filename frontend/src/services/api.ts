@@ -1,8 +1,15 @@
 import axios, { AxiosResponse } from 'axios';
 import { toast } from '../context/ToastContext';
 
+const getApiBaseUrl = () => {
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080/api/v1' : '/api/v1');
+  }
+  return 'http://localhost:8080/api/v1';
+};
+
 const api = axios.create({
-  baseURL: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || (typeof import.meta !== 'undefined' && import.meta.env?.DEV ? 'http://localhost:8080/api/v1' : '/api/v1'),
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -58,18 +65,18 @@ api.interceptors.response.use(
 
       if (!isHandling401) {
         isHandling401 = true;
-        const path = window.location.pathname;
+        const path = typeof window !== 'undefined' ? window.location.pathname : '';
         if (path.startsWith('/admin') && !path.includes('/login')) {
           toast.warning('Phiên đăng nhập Quản trị viên đã hết hạn. Vui lòng đăng nhập lại!', 'Hết Hạn Phiên');
           setTimeout(() => {
             isHandling401 = false;
-            window.location.href = '/admin/login';
+            if (typeof window !== 'undefined') window.location.href = '/admin/login';
           }, 600);
         } else if (path.startsWith('/company') && !path.includes('/login')) {
           toast.warning('Phiên đăng nhập Đối tác đã hết hạn. Vui lòng đăng nhập lại!', 'Hết Hạn Phiên');
           setTimeout(() => {
             isHandling401 = false;
-            window.location.href = '/company/login';
+            if (typeof window !== 'undefined') window.location.href = '/company/login';
           }, 600);
         } else {
           setTimeout(() => {

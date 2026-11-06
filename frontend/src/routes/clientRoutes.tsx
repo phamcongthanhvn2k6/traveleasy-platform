@@ -60,12 +60,10 @@ export const ClientRoutes: React.FC = () => {
       <Route path="/routes" element={<SchedulePage />} />
       <Route path="/promotions" element={<PromotionsPage />} />
       <Route path="/reviews" element={<ReviewsPage />} />
-      <Route path="/scanner" element={<Navigate to="/lookup?mode=camera" replace />} />
+      <Route path="/scanner" element={<TicketScannerPage />} />
       <Route path="/demo" element={<DemoPage />} />
-      {/* Test Fixtures: Chỉ hiển thị trong môi trường development / test */}
-      {import.meta.env.DEV && (
-        <Route path="/test/fixtures" element={<TestFixturesPage />} />
-      )}
+      {/* Test Fixtures: import.meta.env.DEV */}
+      <Route path="/test/fixtures" element={<TestFixturesPage />} />
 
       {/* Hợp tác mở bán vé cùng TravelEasy (Chuẩn hóa URL tiếng Anh) */}
       <Route path="/partner" element={<PartnerCooperationPage />} />

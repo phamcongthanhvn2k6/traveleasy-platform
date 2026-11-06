@@ -337,7 +337,7 @@ export const SearchTripBar: React.FC<Props> = ({
               gap: '8px'
             }}
           >
-            <span style={{ fontSize: '16px' }}>⚠️</span> {validationError}
+            <span style={{ fontSize: '13px', fontWeight: 700 }}>[Lưu ý]</span> {validationError}
           </div>
         )}
         <div 
@@ -504,7 +504,7 @@ export const SearchTripBar: React.FC<Props> = ({
                     alignItems: 'center'
                   }}
                 >
-                  ✕
+                  Xóa
                 </button>
               </div>
               <input
