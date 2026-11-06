@@ -18,9 +18,9 @@
 
 ```mermaid
 graph LR
-    S1["<b>Sprint 1 (Tuần 1)</b><br>Kiến trúc & CSDL 36 bảng<br><b>32 SP</b> | ✅ Hoàn thành 100%"] --> S2["<b>Sprint 2 (Tuần 2)</b><br>Động cơ Đặt vé & Lock<br><b>35 SP</b> | ✅ Hoàn thành 100%"]
-    S2 --> S3["<b>Sprint 3 (Tuần 3)</b><br>QA E2E & Tích hợp<br><b>30 SP</b> | 🚀 Đạt 86.7%"]
-    S3 --> S4["<b>Sprint 4 (Tuần 4)</b><br>POS Bến xe & Bảo vệ OJT<br><b>28 SP</b> | 🎯 Sprint nước rút"]
+    S1["<b>Sprint 1 (Tuần 1)</b><br>Kiến trúc & CSDL 44 bảng<br><b>32 SP</b> | ✅ Hoàn thành 100%"] --> S2["<b>Sprint 2 (Tuần 2)</b><br>Động cơ Đặt vé & Lock<br><b>35 SP</b> | ✅ Hoàn thành 100%"]
+    S2 --> S3["<b>Sprint 3 (Tuần 3)</b><br>QA E2E, Auth & Fixtures<br><b>48 SP</b> | 🚀 Đạt 87.5% (42 SP Done)"]
+    S3 --> S4["<b>Sprint 4 (Tuần 4)</b><br>POS Bến xe & Bảo vệ OJT<br><b>33 SP</b> | 🎯 Sprint nước rút"]
 
     style S1 fill:#dcfce7,stroke:#16a34a,stroke-width:2px;
     style S2 fill:#dbeafe,stroke:#2563eb,stroke-width:2px;

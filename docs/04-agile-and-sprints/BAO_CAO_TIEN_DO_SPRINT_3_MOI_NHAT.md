@@ -10,7 +10,7 @@
 > • **Kho lưu trữ GitHub**: `https://github.com/phamcongthanhvn2k6/traveleasy-platform` (Branch chính: `dev`)  
 > • **Khung thời gian thực hiện**: **4 tuần OJT (4 Sprints — Mỗi Sprint đúng 1 tuần)**  
 > • **Thời điểm đồng bộ dữ liệu**: `06/11/2026` *(Dữ liệu khớp 100% sau khi tinh gọn bảng Trello và merge các PR #35, #36, #41, #42, #43, #45, #47)*  
-> • **Tổng số thẻ trên toàn bảng**: **87 thẻ cốt lõi** | **Tổng Story Points toàn dự án**: **125 SP** (Loại bỏ hoàn toàn 33 thẻ rác lạm phát).
+> • **Tổng số thẻ trên toàn bảng**: **87 thẻ cốt lõi** | **Tổng Story Points toàn dự án**: **148 SP** (Sprint 1: 32 SP, Sprint 2: 35 SP, Sprint 3: 48 SP, Sprint 4: 33 SP). Loại bỏ hoàn toàn 33 thẻ rác lạm phát.
 
 ---
 

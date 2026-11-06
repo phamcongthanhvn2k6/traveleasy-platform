@@ -4,7 +4,7 @@
 **Giai đoạn**: Tuần 4 (Sprint 4 — Tuần Nước Rút & Nghiệm thu Bảo vệ OJT)  
 **Thời hạn chốt nộp**: Cuối Tuần 4 (Code Freeze & Defense Ready)  
 **Nhóm trưởng / System Architect**: Phạm Công Thành (`phamcongthanhvn2k6` / `thanhphmcong1`)  
-**Quy mô kế hoạch Sprint 4**: **13 User Stories cốt lõi — 28 Story Points (Trung bình 5.6 SP/người/tuần)**  
+**Quy mô kế hoạch Sprint 4**: **13 User Stories cốt lõi — 33 Story Points (Trung bình 6.6 SP/người/tuần — Chuẩn mực 1 tuần Scrum)**  
 
 ---
 
@@ -39,7 +39,7 @@ Qua rà soát chi tiết trên Bảng Trello và cấu trúc cây thư mục mã
 
 Để **ngăn chặn tuyệt đối tình trạng lạm phát điểm** như ở Sprint 3, toàn bộ 13 User Stories của Sprint 4 được định lượng khắt khe dựa trên khối lượng công việc thực tế còn lại (hầu hết giao diện cốt lõi đã có sẵn khung, chỉ hoàn thiện kết nối và tinh chỉnh):
 
-### 2.1. Bảng phân bổ Story Points chuẩn Scrum (Tổng cộng: 34 SP)
+### 2.1. Bảng phân bổ Story Points chuẩn Scrum (Tổng cộng: 33 SP)
 
 | Mã Task | Phân hệ & Nghiệp vụ | Phụ trách (RACI) | Điểm SP | Trạng thái kỹ thuật |
 | :--- | :--- | :---: | :---: | :--- |

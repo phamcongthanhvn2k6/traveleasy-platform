@@ -31,16 +31,16 @@ Toàn bộ dự án phải được đưa về đúng **khung chuẩn Scrum qu�
 | :--- | :---: | :---: | :--- |
 | **Thời lượng mỗi Sprint** | Chưa rõ ràng | **Đúng 1 tuần / Sprint (4 Tuần)** | Khung thời gian thực tế của đồ án OJT |
 | **Vận tốc toàn đội (Velocity / Sprint)** | ~100 – 218 SP | **28 – 35 SP / Sprint** | 5 dev $\times$ 5–7 SP/tuần (1 tuần làm việc chuẩn) |
-| **Tổng Story Points toàn dự án (4 Sprints)** | **448 SP** | **125 SP** | Định mức chuẩn mực cho 4 tuần làm việc nghiêm túc |
+| **Tổng Story Points toàn dự án (4 Sprints)** | **448 SP** | **148 SP** | Định mức chuẩn mực cho 4 tuần làm việc nghiêm túc (S1: 32, S2: 35, S3: 48, S4: 33) |
 | **Thang điểm áp dụng** | Gán tùy tiện (có 10 SP) | **Dãy Fibonacci (1, 2, 3, 5)** | Loại bỏ hoàn toàn số 10 SP; thẻ nào quá 5 SP phân rã |
 | **Độ chính xác phân bổ Sprint** | Lẫn lộn S3 và S4 | **Bóc tách 100% độc lập** | Thẻ Sprint nào nằm đúng cột và báo cáo của Sprint đó |
 
-### Biểu đồ phân bổ Story Points 4 Sprint lý tưởng (Tổng: 125 SP):
+### Biểu đồ phân bổ Story Points 4 Sprint chuẩn hóa (Tổng: 148 SP):
 ```mermaid
 graph LR
-    S1["<b>Sprint 1 (Tuần 1): Architecture & Core</b><br>19 thẻ | 32 SP<br>✅ Hoàn thành 100%"] --> S2["<b>Sprint 2 (Tuần 2): Booking & Concurrency</b><br>19 thẻ | 35 SP<br>✅ Hoàn thành 100%"]
-    S2 --> S3["<b>Sprint 3 (Tuần 3): Testing E2E & Payments</b><br>28 thẻ | 30 SP<br>🚀 Đạt 86.7% (26 SP Done)"]
-    S3 --> S4["<b>Sprint 4 (Tuần 4): POS & Defense Ready</b><br>13 thẻ cốt lõi | 28 SP<br>🎯 Sprint nước rút"]
+    S1["<b>Sprint 1 (Tuần 1): Architecture & Core</b><br>22 thẻ | 32 SP<br>✅ Hoàn thành 100%"] --> S2["<b>Sprint 2 (Tuần 2): Booking & Concurrency</b><br>17 thẻ | 35 SP<br>✅ Hoàn thành 100%"]
+    S2 --> S3["<b>Sprint 3 (Tuần 3): Testing E2E, Auth & Fixtures</b><br>35 thẻ | 48 SP<br>🚀 Đạt 87.5% (42 SP Done)"]
+    S3 --> S4["<b>Sprint 4 (Tuần 4): POS & Defense Ready</b><br>13 thẻ cốt lõi | 33 SP<br>🎯 Sprint nước rút"]
     
     style S1 fill:#dcfce7,stroke:#16a34a,stroke-width:2px;
     style S2 fill:#dbeafe,stroke:#2563eb,stroke-width:2px;

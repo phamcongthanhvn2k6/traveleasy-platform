@@ -31,7 +31,7 @@ Kiểm thử tích hợp toàn diện (E2E Integration Testing) xuyên suốt 3 
 - **[Ưu tiên: 1] [5 SP] [S322] Tái cấu trúc Đăng ký Đối tác Nhà xe KYB & Thẩm định Cổng Admin (Phạm Công Thành):**
   - Form thẩm định doanh nghiệp 3 khối (Pháp nhân MST 10-13 số, Hồ sơ số hóa PDF/CCCD 2 mặt <= 10MB, Tài khoản ngân hàng Escrow đối soát).
   - Modal xem trước tài liệu PDF/CCCD trực quan tại /admin/bus-companies và cơ chế tự động cấp tài khoản /company/login khi duyệt.
-  - Chi tiết đặc tả: [DAC_TA_TASK_PHAT_SINH_SPRINT_3.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/DAC_TA_TASK_PHAT_SINH_SPRINT_3.md).
+  - Chi tiết đặc tả & quy chế: [HIEP_DINH_QUY_CHE_HOAT_DONG_VA_HOP_DONG_HOP_TAC.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/01-requirements/HIEP_DINH_QUY_CHE_HOAT_DONG_VA_HOP_DONG_HOP_TAC.md).
 - **[Ưu tiên: 1] [5 SP] [S321] Tích hợp Đăng nhập Google & Xác thực OTP (Nguyễn Đại Phát — Đã phân tách 4 thẻ chuẩn Scrum):**
   - `[FE][S321A]` (1 SP): Thiết kế nút Đăng nhập Google chuẩn & Xử lý Callback lấy ID Token.
   - `[BE][S321B]` (2 SP): API Xác thực Google ID Token, Tự động liên kết User & Cấp JWT.
