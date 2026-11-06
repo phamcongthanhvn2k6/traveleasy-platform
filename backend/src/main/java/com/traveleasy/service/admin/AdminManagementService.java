@@ -255,12 +255,11 @@ public class AdminManagementService {
                 log.info("✅ Đã tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác: {} ({})", company.getName(), opEmail);
             } else {
                 userRepository.findByEmail(opEmail).ifPresent(u -> {
-                    if (u.getBusCompanyId() == null || u.getRole() != Role.OPERATOR) {
-                        u.setBusCompanyId(company.getId());
-                        u.setRole(Role.OPERATOR);
-                        userRepository.save(u);
-                        log.info("🔗 Đã liên kết tài khoản {} với nhà xe {}", opEmail, company.getName());
-                    }
+                    u.setBusCompanyId(company.getId());
+                    u.setRole(Role.OPERATOR);
+                    u.setPassword(passwordEncoder.encode(tempPassword));
+                    userRepository.save(u);
+                    log.info("🔗 Đã liên kết tài khoản {} với nhà xe {} và cấp mật khẩu mới", opEmail, company.getName());
                 });
             }
 
@@ -269,7 +268,7 @@ public class AdminManagementService {
                     opEmail,
                     company.getName(),
                     company.getCode() != null ? company.getCode() : ("NX-" + company.getId()),
-                    isNewAccount ? tempPassword : "(Sử dụng mật khẩu tài khoản hiện tại của bạn)",
+                    tempPassword,
                     company.getCommissionRate()
             );
         }
@@ -344,12 +343,11 @@ public class AdminManagementService {
                 log.info("✅ Đã tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác: {} ({})", company.getName(), opEmail);
             } else {
                 userRepository.findByEmail(opEmail).ifPresent(u -> {
-                    if (u.getBusCompanyId() == null || u.getRole() != Role.OPERATOR) {
-                        u.setBusCompanyId(company.getId());
-                        u.setRole(Role.OPERATOR);
-                        userRepository.save(u);
-                        log.info("🔗 Đã liên kết tài khoản {} với nhà xe {}", opEmail, company.getName());
-                    }
+                    u.setBusCompanyId(company.getId());
+                    u.setRole(Role.OPERATOR);
+                    u.setPassword(passwordEncoder.encode(tempPassword));
+                    userRepository.save(u);
+                    log.info("🔗 Đã liên kết tài khoản {} với nhà xe {} và cấp mật khẩu mới", opEmail, company.getName());
                 });
             }
 
@@ -358,7 +356,7 @@ public class AdminManagementService {
                     opEmail,
                     company.getName(),
                     company.getCode() != null ? company.getCode() : ("NX-" + company.getId()),
-                    isNewAccount ? tempPassword : "(Sử dụng mật khẩu tài khoản hiện tại của bạn)",
+                    tempPassword,
                     company.getCommissionRate()
             );
         }
