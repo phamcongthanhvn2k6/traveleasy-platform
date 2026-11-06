@@ -33,9 +33,11 @@ public class SeatRealtimeController {
     @PostMapping("/hold")
     public ResponseEntity<ApiResponse<List<SeatUpdateEvent>>> holdSeats(
             @PathVariable Long tripId,
-            @RequestBody SeatHoldRequest request
+            @RequestBody SeatHoldRequest request,
+            java.security.Principal principal
     ) {
-        List<SeatUpdateEvent> events = seatRealtimeService.holdSeats(tripId, request.getSeatCodes(), request.getSessionId());
+        String userEmail = principal != null ? principal.getName() : null;
+        List<SeatUpdateEvent> events = seatRealtimeService.holdSeats(tripId, request.getSeatCodes(), request.getSessionId(), userEmail);
         return ResponseEntity.ok(ApiResponse.success("Giữ chỗ thành công trong 10 phút", events));
     }
 

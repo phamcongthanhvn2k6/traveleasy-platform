@@ -1457,7 +1457,7 @@ export const HomePage: React.FC = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    📋 Chép Mã
+                    Chép mã
                   </button>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: isDark ? '#38bdf8' : p.accent, fontSize: '13px', fontWeight: 700 }}>
@@ -1835,7 +1835,7 @@ export const HomePage: React.FC = () => {
             <div style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', padding: '20px', borderRadius: '12px', textAlign: 'left', fontSize: '14px', marginBottom: '24px', border: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`, color: isDark ? '#f8fafc' : '#0f172a' }}>
               <div style={{ marginBottom: '8px' }}>Mã đặt vé: <strong style={{ color: isDark ? '#38bdf8' : '#2563eb', fontSize: '16px' }}>{confirmedBooking.bookingCode}</strong></div>
               <div style={{ marginBottom: '8px' }}>Hành khách: <strong>{confirmedBooking.customerName}</strong> ({confirmedBooking.customerPhone})</div>
-              <div style={{ marginBottom: '8px' }}>Tuyến xe: <strong>{confirmedBooking.trip?.originCity} ➔ {confirmedBooking.trip?.destinationCity}</strong></div>
+              <div style={{ marginBottom: '8px' }}>Tuyến xe: <strong>{confirmedBooking.trip?.originCity} {'->'} {confirmedBooking.trip?.destinationCity}</strong></div>
               <div style={{ marginBottom: '8px' }}>Ghế ngồi: <strong style={{ color: isDark ? '#2dd4bf' : '#0d9488' }}>{confirmedBooking.tickets?.map(t => t.seatNumber).join(', ')}</strong></div>
               <div style={{ marginBottom: '8px' }}>Tổng tiền: <strong style={{ color: '#f59e0b', fontSize: '16px' }}>{(confirmedBooking.totalAmount || 0).toLocaleString('vi-VN')} đ</strong></div>
               <div>Hình thức thanh toán: <strong>{confirmedBooking.paymentMethod}</strong></div>

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../../context/ThemeContext';
 import { Trip, TripDetail } from '../../../../types';
 import { BusSeatMap } from '../../../../components/BusSeatMap';
@@ -161,6 +162,7 @@ const SeatMapSkeleton: React.FC<{ isDark?: boolean; totalSeats?: number }> = ({ 
 
 export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
   const { isDark } = useTheme();
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'SEATS' | 'IMAGES' | 'POLICY' | 'REVIEWS'>('SEATS');
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -173,6 +175,111 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
   const [simulating, setSimulating] = useState(false);
   const [showSimPanel, setShowSimPanel] = useState(false);
 
+  // Đọc phiên giữ chỗ còn hiệu lực trong sessionStorage hoặc localStorage
+  const [activeHold, setActiveHold] = useState<{
+    tripId: number;
+    seats: string[];
+    expiry: number;
+  } | null>(() => {
+    try {
+      const raw = sessionStorage.getItem('traveleasy_checkout_data') || localStorage.getItem('traveleasy_checkout_data');
+      const expStr = sessionStorage.getItem('traveleasy_hold_expiry') || localStorage.getItem('traveleasy_hold_expiry');
+      if (!raw || !expStr) return null;
+      const exp = Number(expStr);
+      if (Date.now() >= exp) {
+        sessionStorage.removeItem('traveleasy_checkout_data');
+        sessionStorage.removeItem('traveleasy_hold_expiry');
+        return null;
+      }
+      const data = JSON.parse(raw);
+      if (data.trip?.id === trip.id && data.selectedSeats?.length > 0) {
+        return {
+          tripId: data.trip.id,
+          seats: data.selectedSeats,
+          expiry: exp,
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [remainingHoldSeconds, setRemainingHoldSeconds] = useState<number>(() => {
+    if (!activeHold) return 0;
+    return Math.max(0, Math.floor((activeHold.expiry - Date.now()) / 1000));
+  });
+
+  useEffect(() => {
+    if (!activeHold) return;
+    const interval = setInterval(() => {
+      const rem = Math.max(0, Math.floor((activeHold.expiry - Date.now()) / 1000));
+      setRemainingHoldSeconds(rem);
+      if (rem <= 0) {
+        clearInterval(interval);
+        setActiveHold(null);
+        sessionStorage.removeItem('traveleasy_checkout_data');
+        sessionStorage.removeItem('traveleasy_hold_expiry');
+        toast.warning('Thời gian giữ chỗ 10 phút của bạn đã hết hạn. Ghế đã được hoàn trả lại cho sàn!', 'Hết Hạn Giữ Chỗ');
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [activeHold]);
+
+  const handleResumeCheckout = () => {
+    navigate('/checkout');
+  };
+
+  const handleCancelActiveHold = async () => {
+    if (!activeHold) return;
+    if (window.confirm(`Bạn có chắc chắn muốn hủy giữ chỗ các ghế [${activeHold.seats.join(', ')}] và hoàn trả lại cho sàn?`)) {
+      try {
+        await api.post(`/trips/${trip.id}/seats/release`, {
+          seatCodes: activeHold.seats,
+        });
+        toast.info('Đã hủy giữ chỗ thành công. Ghế đã được mở lại cho khách khác đặt!', 'Đã Hủy');
+      } catch (e) {
+        console.error(e);
+      }
+      sessionStorage.removeItem('traveleasy_checkout_data');
+      sessionStorage.removeItem('traveleasy_hold_expiry');
+      localStorage.removeItem('traveleasy_checkout_data');
+      localStorage.removeItem('traveleasy_hold_expiry');
+      setActiveHold(null);
+      setTripDetail((prev) => {
+        if (!prev) return prev;
+        const updated = prev.seats.map((s) =>
+          activeHold.seats.includes(s.seatNumber) ? { ...s, status: 'AVAILABLE' as const } : s
+        );
+        return { ...prev, seats: updated };
+      });
+    }
+  };
+
+  // Tổng hợp danh sách ghế do người dùng này đang giữ (từ activeHold hoặc từ backend flag isHeldByMe)
+  const myHeldSeatsCombined = useMemo(() => {
+    const list: string[] = activeHold ? [...activeHold.seats] : [];
+    if (tripDetail?.seats) {
+      tripDetail.seats.forEach((s) => {
+        if (s.isHeldByMe && !list.includes(s.seatNumber)) {
+          list.push(s.seatNumber);
+        }
+      });
+    }
+    return list;
+  }, [activeHold, tripDetail]);
+
+  // Số chỗ trống theo thời gian thực (tự động cập nhật khi ghế được chọn/giữ/đặt hoặc qua SSE)
+  const displayAvailableSeats = useMemo(() => {
+    if (tripDetail?.seats && tripDetail.seats.length > 0) {
+      return tripDetail.seats.filter((s) => s.status === 'AVAILABLE').length;
+    }
+    if (activeHold && activeHold.seats.length > 0) {
+      return Math.max(0, trip.availableSeats - activeHold.seats.length);
+    }
+    return trip.availableSeats;
+  }, [tripDetail, trip.availableSeats, activeHold]);
+
   // Lắng nghe luồng SSE cập nhật ghế theo thời gian thực
   useEffect(() => {
     if (!expanded || activeTab !== 'SEATS') {
@@ -180,7 +287,9 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
       return;
     }
 
-    const sseUrl = `/api/v1/trips/${trip.id}/seats/stream`;
+    const rawBase = api.defaults.baseURL || '/api/v1';
+    const cleanBase = rawBase.replace(/\/+$/, '');
+    const sseUrl = `${cleanBase}/trips/${trip.id}/seats/stream`;
     const eventSource = new EventSource(sseUrl);
 
     eventSource.onopen = () => {
@@ -270,11 +379,12 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
       setSelectedDropoff(trip.dropoffPoints[0].id);
     }
 
-    // Tải sơ đồ ghế ngầm (chỉ gọi 1 lần và cache trong state)
-    if (nextExpanded && !tripDetail) {
+    // Tải sơ đồ ghế ngầm và luôn làm mới trạng thái ghế thực tế
+    if (nextExpanded) {
       setLoadingDetail(true);
       try {
-        const res = await api.get(`/trips/${trip.id}`);
+        const sid = sessionStorage.getItem('traveleasy_session_id') || localStorage.getItem('traveleasy_session_id');
+        const res = await api.get(`/trips/${trip.id}`, { params: { sessionId: sid } });
         const data = res.data.data;
         setTripDetail(data);
         if (data.pickupPoints?.length > 0 && !selectedPickup) {
@@ -456,33 +566,43 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
               {formatCurrency(trip.price)}
             </div>
 
-            <div style={{ fontSize: '12px', color: trip.availableSeats < 10 ? '#ea580c' : '#16a34a', fontWeight: 700, margin: '4px 0 10px 0' }}>
-              {trip.availableSeats > 0 ? `Còn ${trip.availableSeats} chỗ trống` : 'Hết vé'}
+            <div style={{
+              fontSize: '12px',
+              color: displayAvailableSeats === 0 ? '#ef4444' : (displayAvailableSeats < 10 ? '#ea580c' : '#16a34a'),
+              fontWeight: 700,
+              margin: '4px 0 10px 0'
+            }}>
+              {displayAvailableSeats > 0 ? `Còn ${displayAvailableSeats} chỗ trống` : 'Hết vé'}
             </div>
 
             <button
-              onClick={toggleExpand}
+              onClick={displayAvailableSeats === 0 ? undefined : toggleExpand}
+              disabled={displayAvailableSeats === 0}
               style={{
-                backgroundColor: expanded
-                  ? (isDark ? '#1e293b' : '#f1f5f9')
-                  : '#2563eb',
-                color: expanded
-                  ? (isDark ? '#f8fafc' : '#1e293b')
-                  : '#ffffff',
+                backgroundColor: displayAvailableSeats === 0
+                  ? (isDark ? '#334155' : '#cbd5e1')
+                  : (expanded
+                    ? (isDark ? '#1e293b' : '#f1f5f9')
+                    : '#2563eb'),
+                color: displayAvailableSeats === 0
+                  ? (isDark ? '#94a3b8' : '#64748b')
+                  : (expanded
+                    ? (isDark ? '#f8fafc' : '#1e293b')
+                    : '#ffffff'),
                 border: expanded ? `1px solid ${isDark ? '#334155' : '#cbd5e1'}` : 'none',
                 padding: '9px 20px',
                 borderRadius: '8px',
                 fontWeight: 700,
                 fontSize: '14px',
-                cursor: 'pointer',
+                cursor: displayAvailableSeats === 0 ? 'not-allowed' : 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
                 transition: 'all 0.15s ease',
               }}
             >
-              {expanded ? 'Đóng' : 'Chọn chuyến'}
-              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              {displayAvailableSeats === 0 ? 'Hết vé' : (expanded ? 'Đóng' : 'Chọn chuyến')}
+              {displayAvailableSeats === 0 ? null : (expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
             </button>
           </div>
         </div>
@@ -508,7 +628,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
             }}
             style={{ cursor: 'pointer', color: activeTab === 'SEATS' && expanded ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#94a3b8' : '#64748b') }}
           >
-            Chỗ trống ({trip.availableSeats})
+            Chỗ trống ({displayAvailableSeats})
           </span>
           <span>•</span>
           <span
@@ -615,6 +735,74 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
               Đánh Giá & Nhận Xét
             </button>
           </div>
+
+          {/* Persistent 10-Minute Active Hold Banner (Chuẩn Vexere) */}
+          {activeHold && remainingHoldSeconds > 0 && (
+            <div
+              style={{
+                backgroundColor: isDark ? '#1e293b' : '#eff6ff',
+                border: `1.5px solid ${isDark ? '#3b82f6' : '#2563eb'}`,
+                borderRadius: '12px',
+                padding: '14px 18px',
+                marginBottom: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                flexWrap: 'wrap',
+                boxShadow: isDark ? '0 4px 14px rgba(0,0,0,0.4)' : '0 4px 12px rgba(37,99,235,0.12)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '22px' }}>⏱️</span>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: isDark ? '#60a5fa' : '#1d4ed8' }}>
+                    Bạn đang có phiên giữ chỗ cho ghế: <span style={{ textDecoration: 'underline' }}>{activeHold.seats.join(', ')}</span> ({activeHold.seats.length} vé)
+                  </div>
+                  <div style={{ fontSize: '12px', color: isDark ? '#cbd5e1' : '#4b5563', marginTop: '2px' }}>
+                    Thời gian giữ chỗ còn lại: <strong style={{ color: '#dc2626', fontFamily: 'monospace', fontSize: '14px' }}>
+                      {Math.floor(remainingHoldSeconds / 60)}:{(remainingHoldSeconds % 60).toString().padStart(2, '0')}
+                    </strong> (Ghế được giữ độc quyền cho bạn)
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={handleResumeCheckout}
+                  style={{
+                    backgroundColor: '#2563eb',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '9px 18px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(37,99,235,0.35)',
+                  }}
+                >
+                  Tiếp Tục Đặt Vé ➔
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelActiveHold}
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: '#ef4444',
+                    border: '1px solid #fca5a5',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Hủy giữ chỗ
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* TAB 1: SEATS & STOPS */}
           {activeTab === 'SEATS' && (
@@ -814,6 +1002,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                         seats={tripDetail.seats}
                         selectedSeatNumbers={selectedSeats}
                         onToggleSeat={handleToggleSeat}
+                        myHeldSeats={myHeldSeatsCombined}
                       />
                     </>
                   )}
@@ -900,6 +1089,72 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Bottom Action Footer for Active Hold Session */}
+                  {activeHold && remainingHoldSeconds > 0 && selectedSeats.length === 0 && (
+                    <div
+                      style={{
+                        backgroundColor: isDark ? '#1e293b' : '#eff6ff',
+                        border: `1.5px solid ${isDark ? '#3b82f6' : '#2563eb'}`,
+                        borderRadius: '12px',
+                        padding: '16px 20px',
+                        marginTop: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        boxShadow: '0 4px 12px rgba(37,99,235,0.15)',
+                        flexWrap: 'wrap',
+                        gap: '12px',
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '13px', color: isDark ? '#93c5fd' : '#1e40af', fontWeight: 700 }}>
+                          ⭐ Bạn đang giữ chỗ các ghế: <strong style={{ color: '#2563eb', fontSize: '15px' }}>{activeHold.seats.join(', ')}</strong> ({activeHold.seats.length} vé)
+                        </div>
+                        <div style={{ fontSize: '13px', color: isDark ? '#cbd5e1' : '#475569', marginTop: '2px' }}>
+                          Thời gian giữ chỗ còn lại: <strong style={{ color: '#dc2626', fontFamily: 'monospace', fontSize: '14px' }}>
+                            {Math.floor(remainingHoldSeconds / 60)}:{(remainingHoldSeconds % 60).toString().padStart(2, '0')}
+                          </strong>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={handleResumeCheckout}
+                          style={{
+                            backgroundColor: '#2563eb',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '12px 24px',
+                            borderRadius: '8px',
+                            fontWeight: 800,
+                            fontSize: '15px',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.4)',
+                          }}
+                        >
+                          Tiếp Tục Đặt Vé ➔
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelActiveHold}
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: '#ef4444',
+                            border: '1px solid #fca5a5',
+                            padding: '10px 16px',
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Hủy giữ chỗ
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Bottom Action Footer for Selected Seats */}
                   {selectedSeats.length > 0 && (

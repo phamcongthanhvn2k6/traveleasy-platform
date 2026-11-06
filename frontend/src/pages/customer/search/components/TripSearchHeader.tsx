@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../../../context/ThemeContext';
-import { ArrowLeftRight, Calendar, Plus, ChevronLeft, ChevronRight, Search, MapPin } from 'lucide-react';
+import { ArrowLeftRight, Calendar, Plus, ChevronLeft, ChevronRight, Search, MapPin, X } from 'lucide-react';
 import { POPULAR_CITIES } from '../../../../constants/popularCities';
 import { getLocalTodayDateString, getLocalNextDayString } from '../../../../utils/dateUtils';
 
@@ -52,7 +52,7 @@ export const TripSearchHeader: React.FC<Props> = ({
       tempOrigin,
       tempDestination,
       tempDate,
-      hasReturnDate && tempReturnDate ? tempReturnDate : undefined
+      hasReturnDate && tempReturnDate ? tempReturnDate : ''
     );
   };
 
@@ -62,28 +62,43 @@ export const TripSearchHeader: React.FC<Props> = ({
     setTempDate('');
     setTempReturnDate('');
     setHasReturnDate(false);
-    onSearchChange('', '', '', undefined);
+    onSearchChange('', '', '', '');
   };
 
   const todayStr = getLocalTodayDateString();
 
   const changeDateByDays = (days: number) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const current = departureDate ? new Date(departureDate) : new Date();
-    current.setDate(current.getDate() + days);
-    if (current < today) {
+    const todayStr = getLocalTodayDateString();
+    const baseDate = departureDate || todayStr;
+    const newDateStr = getLocalNextDayString(baseDate, days);
+    if (newDateStr < todayStr) {
       return;
     }
-    const newDateStr = current.toISOString().split('T')[0];
-    onSearchChange(origin, destination, newDateStr);
+
+    let newReturnDateStr: string | undefined = undefined;
+    if (hasReturnDate && (tempReturnDate || returnDate)) {
+      const currentReturn = tempReturnDate || returnDate || '';
+      const [depY, depM, depD] = baseDate.split('-').map(Number);
+      const [retY, retM, retD] = currentReturn.split('-').map(Number);
+      const depTime = new Date(depY, depM - 1, depD).getTime();
+      const retTime = new Date(retY, retM - 1, retD).getTime();
+      const diffDays = Math.round((retTime - depTime) / (1000 * 60 * 60 * 24));
+      const safeGap = diffDays >= 0 ? diffDays : 2;
+      newReturnDateStr = getLocalNextDayString(newDateStr, safeGap);
+    }
+
+    onSearchChange(origin, destination, newDateStr, newReturnDateStr);
   };
 
   const formatDateVietnamese = (dateStr: string) => {
     try {
-      const d = new Date(dateStr);
-      const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-      return `${days[d.getDay()]}, ${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+      const parts = dateStr.split('-').map(Number);
+      if (parts.length === 3 && !parts.some(isNaN)) {
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+        return `${days[d.getDay()]}, ${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+      }
+      return dateStr;
     } catch {
       return dateStr;
     }
@@ -131,7 +146,7 @@ export const TripSearchHeader: React.FC<Props> = ({
               ) : (
                 <>
                   <span>{origin || 'Tất cả điểm đi'}</span>
-                  <span style={{ color: isDark ? '#38bdf8' : '#2563eb' }}>→</span>
+                  <span style={{ color: isDark ? '#38bdf8' : '#2563eb' }}>{'->'}</span>
                   <span>{destination || 'Tất cả điểm đến'}</span>
                 </>
               )}
@@ -164,7 +179,7 @@ export const TripSearchHeader: React.FC<Props> = ({
                 fontWeight: 700
               }}>
                 <Calendar size={15} />
-                <span>Lộ trình khứ hồi: Chiều đi <strong>{departureDate}</strong> ➔ Chiều về dự kiến: <strong>{returnDate}</strong></span>
+                <span>Lộ trình khứ hồi: Chiều đi <strong>{departureDate}</strong> {'->'} Chiều về dự kiến: <strong>{returnDate}</strong></span>
                 <span style={{
                   fontSize: '11px',
                   backgroundColor: '#2563eb',
@@ -199,7 +214,7 @@ export const TripSearchHeader: React.FC<Props> = ({
                 }}
                 title="Bỏ lọc để xem toàn bộ danh sách chuyến xe trên toàn hệ thống"
               >
-                ✕ Xem toàn bộ tuyến
+                <X size={14} /> Xem toàn bộ tuyến
               </button>
             )}
             <button
@@ -380,7 +395,7 @@ export const TripSearchHeader: React.FC<Props> = ({
                       alignItems: 'center'
                     }}
                   >
-                    ✕
+                    <X size={14} />
                   </button>
                 )}
               </div>
@@ -531,7 +546,7 @@ export const TripSearchHeader: React.FC<Props> = ({
 
               <button
                 type="button"
-                onClick={() => onSearchChange(origin, destination, '')}
+                onClick={() => onSearchChange(origin, destination, '', '')}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -547,7 +562,7 @@ export const TripSearchHeader: React.FC<Props> = ({
                 }}
                 title="Bỏ lọc theo ngày để xem chuyến xe của mọi ngày"
               >
-                ✕ Xem mọi ngày
+                <X size={14} /> Xem mọi ngày
               </button>
             </>
           ) : (

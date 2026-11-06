@@ -7,17 +7,19 @@ interface Props {
   seats: TripSeat[];
   selectedSeatNumbers: string[];
   onToggleSeat: (seatNumber: string) => void;
+  myHeldSeats?: string[];
 }
 
-export const BusSeatMap: React.FC<Props> = ({ seats, selectedSeatNumbers, onToggleSeat }) => {
+export const BusSeatMap: React.FC<Props> = ({ seats, selectedSeatNumbers, onToggleSeat, myHeldSeats = [] }) => {
   const { isDark } = useTheme();
   const deck1Seats = seats.filter((s) => s.deck === 1);
   const deck2Seats = seats.filter((s) => s.deck === 2);
 
   const renderSeat = (seat: TripSeat) => {
+    const isMyHeld = myHeldSeats.includes(seat.seatNumber);
     const isSelected = selectedSeatNumbers.includes(seat.seatNumber);
     const isBooked = seat.status === 'BOOKED';
-    const isLocked = seat.status === 'LOCKED';
+    const isLocked = seat.status === 'LOCKED' && !isMyHeld;
 
     let bg = isDark ? '#1e293b' : '#ffffff';
     let borderColor = isDark ? '#38bdf8' : '#3b82f6';
@@ -31,6 +33,12 @@ export const BusSeatMap: React.FC<Props> = ({ seats, selectedSeatNumbers, onTogg
       textColor = isDark ? '#94a3b8' : '#64748b';
       cursor = 'not-allowed';
       subText = 'Đã bán';
+    } else if (isMyHeld) {
+      bg = isDark ? '#1e3a8a' : '#dbeafe';
+      borderColor = isDark ? '#60a5fa' : '#2563eb';
+      textColor = isDark ? '#93c5fd' : '#1d4ed8';
+      cursor = 'pointer';
+      subText = 'Ghế của bạn';
     } else if (isLocked) {
       bg = isDark ? '#451a03' : '#fef3c7';
       borderColor = isDark ? '#d97706' : '#f59e0b';
@@ -121,6 +129,12 @@ export const BusSeatMap: React.FC<Props> = ({ seats, selectedSeatNumbers, onTogg
           <div style={{ width: '16px', height: '16px', borderRadius: '4px', backgroundColor: '#f97316' }}></div>
           <span style={{ color: '#f97316' }}>Đang chọn</span>
         </div>
+        {myHeldSeats.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid #2563eb`, backgroundColor: isDark ? '#1e3a8a' : '#dbeafe' }}></div>
+            <span style={{ color: isDark ? '#93c5fd' : '#1d4ed8', fontWeight: 700 }}>Ghế của bạn (10p)</span>
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `1px solid ${isDark ? '#d97706' : '#f59e0b'}`, backgroundColor: isDark ? '#451a03' : '#fef3c7' }}></div>
           <span style={{ color: isDark ? '#fbbf24' : '#b45309' }}>Đang giữ chỗ (10p)</span>

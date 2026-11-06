@@ -10,6 +10,8 @@ import { CompanyRoutes } from './routes/companyRoutes';
 import { ClientRoutes } from './routes/clientRoutes';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { LoadingProvider } from './context/LoadingContext';
+import { GlobalPageLoader } from './components/GlobalPageLoader';
 
 const ClientLayout: React.FC = () => {
   const { isDark } = useTheme();
@@ -50,17 +52,20 @@ export const App: React.FC = () => {
     <BrowserRouter>
       <ThemeProvider>
         <ToastProvider>
-          <Routes>
-          {/* 1. Phân hệ Quản trị tối cao (Admin Portal) */}
-          <Route path="/admin/*" element={<AdminRoutes />} />
+          <LoadingProvider>
+            <GlobalPageLoader />
+            <Routes>
+              {/* 1. Phân hệ Quản trị tối cao (Admin Portal) */}
+              <Route path="/admin/*" element={<AdminRoutes />} />
 
-          {/* 2. Phân hệ Đối tác nhà xe (Company Partner Portal) */}
-          <Route path="/company/*" element={<CompanyRoutes />} />
+              {/* 2. Phân hệ Đối tác nhà xe (Company Partner Portal) */}
+              <Route path="/company/*" element={<CompanyRoutes />} />
 
-          {/* 3. Phân hệ Người dùng & Khách hàng đặt vé (Client Portal) */}
-          <Route path="/*" element={<ClientLayout />} />
-        </Routes>
-      </ToastProvider>
+              {/* 3. Phân hệ Người dùng & Khách hàng đặt vé (Client Portal) */}
+              <Route path="/*" element={<ClientLayout />} />
+            </Routes>
+          </LoadingProvider>
+        </ToastProvider>
       </ThemeProvider>
     </BrowserRouter>
   );

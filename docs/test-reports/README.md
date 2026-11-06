@@ -1,4 +1,4 @@
-# 🧪 QUY CHUẨN BÁO CÁO KIỂM THỬ SPRINT 3 (ZERO MERGE CONFLICT)
+# 🧪 QUY CHUẨN BÁO CÁO KIỂM THỬ SPRINT 3 & SPRINT 4 (ZERO MERGE CONFLICT)
 
 > [!IMPORTANT]
 > **TÀI LIỆU QUY TRÌNH BẮT BUỘC:** Mọi thành viên trước khi thực hiện task kiểm thử và mở PR nghiệm thu **BẮT BUỘC** phải đọc kỹ và tuân thủ:
@@ -44,5 +44,5 @@
 ## 🏷️ 3. Quy trình đồng bộ với Trello
 * Khi bắt đầu làm: Kéo thẻ từ **`To Do`** ➔ **`In Progress`**.
 * Khi đẩy nhánh lên Git xong và tạo PR: Kéo thẻ từ **`In Progress`** ➔ **`Testing`** hoặc **`Code Review`**.
-* Khi Leader merge code vào `dev`: Kéo thẻ vào **`Done Sprint 3`**!
+* Khi Leader merge code vào `dev`: Kéo thẻ vào **`Done Sprint 3`** (hoặc **`Done Sprint 4`**)!
 

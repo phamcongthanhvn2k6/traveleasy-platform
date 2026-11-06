@@ -39,6 +39,9 @@ public class SeatLayoutTemplate {
     @Builder.Default
     private String status = "PUBLISHED"; // DRAFT, PUBLISHED, DEPRECATED
 
+    @Column(name = "layout_json", columnDefinition = "TEXT")
+    private String layoutJson;
+
     @Column(name = "created_at", updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

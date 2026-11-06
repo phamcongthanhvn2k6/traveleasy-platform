@@ -22,6 +22,17 @@ import java.util.List;
 public class TripController {
 
     private final TripService tripService;
+    private final com.traveleasy.service.realtime.SeatRealtimeService seatRealtimeService;
+
+    @GetMapping("/active-hold")
+    @Operation(summary = "Lấy phiên giữ chỗ ghế hiện tại của người dùng (nếu có)")
+    public ApiResponse<com.traveleasy.dto.trip.ActiveHoldResponse> getMyActiveHold(
+            @RequestParam(required = false) String sessionId,
+            java.security.Principal principal
+    ) {
+        String userEmail = principal != null ? principal.getName() : null;
+        return ApiResponse.success(seatRealtimeService.getMyActiveHold(userEmail, sessionId));
+    }
 
     @GetMapping("/search")
     @Operation(summary = "Tìm kiếm chuyến xe theo Nơi đi, Nơi đến, Ngày đi")
@@ -48,7 +59,12 @@ public class TripController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Xem chi tiết chuyến xe kèm Sơ đồ ghế 2 tầng và Điểm đón/trả")
-    public ApiResponse<TripDetailResponse> getTripDetail(@PathVariable Long id) {
-        return ApiResponse.success(tripService.getTripDetail(id));
+    public ApiResponse<TripDetailResponse> getTripDetail(
+            @PathVariable Long id,
+            @RequestParam(required = false) String sessionId,
+            java.security.Principal principal
+    ) {
+        String userEmail = principal != null ? principal.getName() : null;
+        return ApiResponse.success(tripService.getTripDetail(id, userEmail, sessionId));
     }
 }

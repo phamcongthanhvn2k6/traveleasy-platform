@@ -26,6 +26,8 @@ export interface TripSeat {
   deck: number;
   status: 'AVAILABLE' | 'BOOKED' | 'LOCKED';
   price: number;
+  isHeldByMe?: boolean;
+  remainingHoldSeconds?: number;
 }
 
 export interface Point {

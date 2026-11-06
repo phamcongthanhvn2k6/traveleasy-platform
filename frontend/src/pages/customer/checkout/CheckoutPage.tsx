@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import { paymentService, PaymentInitResponse } from '../../../services/paymentService';
@@ -26,7 +26,7 @@ export const CheckoutPage: React.FC = () => {
       return location.state;
     }
     try {
-      const saved = sessionStorage.getItem('traveleasy_checkout_data');
+      const saved = sessionStorage.getItem('traveleasy_checkout_data') || localStorage.getItem('traveleasy_checkout_data');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -100,6 +100,79 @@ export const CheckoutPage: React.FC = () => {
   const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
   const [paymentInitData, setPaymentInitData] = useState<PaymentInitResponse | null>(null);
 
+  // Cơ chế Khóa & Giữ chỗ ghế thời gian thực (Hard Lock 10 phút)
+  const isHeldRef = useRef(false);
+  const bookingSuccessRef = useRef(false);
+  const sessionIdRef = useRef<string>(
+    sessionStorage.getItem('traveleasy_session_id') ||
+    localStorage.getItem('traveleasy_session_id') ||
+    (() => {
+      const sid = 'sess_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+      sessionStorage.setItem('traveleasy_session_id', sid);
+      localStorage.setItem('traveleasy_session_id', sid);
+      return sid;
+    })()
+  );
+
+  // Thời gian hết hạn giữ chỗ (10 phút = 600s), tiếp tục đếm nếu quay lại
+  const [initialTimerSeconds] = useState<number>(() => {
+    try {
+      const holdExpiryKey = 'traveleasy_hold_expiry';
+      const savedExpiry = sessionStorage.getItem(holdExpiryKey);
+      let expiryTimestamp = savedExpiry ? Number(savedExpiry) : null;
+      if (!expiryTimestamp || isNaN(expiryTimestamp) || expiryTimestamp <= Date.now()) {
+        expiryTimestamp = Date.now() + 600 * 1000;
+        sessionStorage.setItem(holdExpiryKey, String(expiryTimestamp));
+      }
+      return Math.max(10, Math.floor((expiryTimestamp - Date.now()) / 1000));
+    } catch {
+      return 600;
+    }
+  });
+
+  const selectedSeatsKey = selectedSeats.join(',');
+
+  // Tự động gửi lệnh giữ chỗ ghế lên server (đổi màu vàng LOCKED trên toàn hệ thống)
+  useEffect(() => {
+    let isMounted = true;
+    const holdSeatsOnBackend = async () => {
+      if (!trip?.id || !selectedSeats?.length) return;
+      try {
+        await api.post(`/trips/${trip.id}/seats/hold`, {
+          seatCodes: selectedSeats,
+          sessionId: sessionIdRef.current,
+        });
+        if (isMounted) {
+          isHeldRef.current = true;
+          if (!sessionStorage.getItem('traveleasy_hold_expiry')) {
+            sessionStorage.setItem('traveleasy_hold_expiry', String(Date.now() + 600 * 1000));
+          }
+        }
+      } catch (err: any) {
+        if (!isMounted) return;
+        const msg = err.response?.data?.message || 'Ghế bạn chọn đang được khách hàng khác giữ chỗ hoặc đã có người đặt mua!';
+        if (err.response?.status === 400 || err.response?.status === 409) {
+          toast.error(msg, 'Ghế Đang Được Giữ');
+          sessionStorage.removeItem('traveleasy_checkout_data');
+          sessionStorage.removeItem('traveleasy_hold_expiry');
+          localStorage.removeItem('traveleasy_checkout_data');
+          localStorage.removeItem('traveleasy_hold_expiry');
+          navigate('/search');
+        } else {
+          console.warn('Lỗi kết nối khi gửi holdSeats:', err);
+        }
+      }
+    };
+
+    holdSeatsOnBackend();
+
+    return () => {
+      isMounted = false;
+      // KHÔNG tự động giải phóng ghế khi rời component!
+      // Ghế được giữ độc quyền cho khách hàng trong trọn vẹn 10 phút.
+    };
+  }, [trip?.id, selectedSeatsKey]);
+
   // Check if returning from VNPAY with failure
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -114,8 +187,36 @@ export const CheckoutPage: React.FC = () => {
 
   const handleTimerExpire = () => {
     toast.error('Thời gian giữ chỗ 10 phút đã hết hạn! Ghế đã được giải phóng.', 'Hết Hạn');
+    if (trip?.id && selectedSeats?.length) {
+      api.post(`/trips/${trip.id}/seats/release`, {
+        seatCodes: selectedSeats,
+      }).catch(() => {});
+    }
     sessionStorage.removeItem('traveleasy_checkout_data');
+    sessionStorage.removeItem('traveleasy_hold_expiry');
+    localStorage.removeItem('traveleasy_checkout_data');
+    localStorage.removeItem('traveleasy_hold_expiry');
     navigate('/search');
+  };
+
+  const handleCancelHold = async () => {
+    if (window.confirm('Bạn có chắc chắn muốn hủy phiên giữ chỗ và trả lại các ghế này cho sàn?')) {
+      if (trip?.id && selectedSeats?.length) {
+        try {
+          await api.post(`/trips/${trip.id}/seats/release`, {
+            seatCodes: selectedSeats,
+          });
+          toast.info('Đã hủy giữ chỗ thành công. Ghế đã được mở lại cho khách khác.', 'Đã Hủy');
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      sessionStorage.removeItem('traveleasy_checkout_data');
+      sessionStorage.removeItem('traveleasy_hold_expiry');
+    localStorage.removeItem('traveleasy_checkout_data');
+    localStorage.removeItem('traveleasy_hold_expiry');
+      navigate('/search');
+    }
   };
 
   const handleApplyVoucher = (amount: number, code: string) => {
@@ -173,6 +274,7 @@ export const CheckoutPage: React.FC = () => {
         discountAmount: discountAmount || 0,
         hasInsurance: passengerInfo.hasInsurance,
         finalAmount: finalTotal,
+        sessionId: sessionStorage.getItem('traveleasy_session_id') || undefined,
       };
 
       // 1. Tạo đơn đặt vé trong database
@@ -180,6 +282,11 @@ export const CheckoutPage: React.FC = () => {
       if (!res.data?.success || !res.data?.data) {
         throw new Error(res.data?.message || 'Không thể tạo đơn đặt vé. Vui lòng thử lại!');
       }
+      bookingSuccessRef.current = true;
+      sessionStorage.removeItem('traveleasy_checkout_data');
+      sessionStorage.removeItem('traveleasy_hold_expiry');
+    localStorage.removeItem('traveleasy_checkout_data');
+    localStorage.removeItem('traveleasy_hold_expiry');
       const bookingData: Booking = res.data.data;
       setCreatedBooking(bookingData);
 
@@ -338,22 +445,41 @@ export const CheckoutPage: React.FC = () => {
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Breadcrumb & Navigation */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: '#2563eb',
-              fontWeight: 700,
-              fontSize: '14px',
-              cursor: 'pointer',
-            }}
-          >
-            <ArrowLeft size={16} /> Quay lại danh sách chuyến
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button
+              onClick={() => {
+                toast.info('Ghế của bạn vẫn được giữ chỗ an toàn trong 10 phút! Bạn có thể quay lại tiếp tục đặt vé bất cứ lúc nào.', 'Giữ Chỗ 10 Phút');
+                navigate('/search');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: '#2563eb',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: 'pointer',
+              }}
+            >
+              <ArrowLeft size={16} /> Quay lại danh sách chuyến (Vẫn giữ chỗ)
+            </button>
+            <button
+              onClick={handleCancelHold}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: '#ef4444',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+              }}
+            >
+              Hủy giữ chỗ
+            </button>
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#16a34a', fontWeight: 700 }}>
             <ShieldCheck size={16} /> Giao dịch được mã hóa an toàn 100%
@@ -415,7 +541,7 @@ export const CheckoutPage: React.FC = () => {
         </div>
 
         {/* 10-Minute Hard-Hold Countdown Timer */}
-        <CheckoutTimer initialSeconds={600} onExpire={handleTimerExpire} />
+        <CheckoutTimer initialSeconds={initialTimerSeconds} onExpire={handleTimerExpire} />
 
         {/* Main 2-Column Responsive Layout */}
         <div className="checkout-responsive-grid" style={{ display: 'grid', gap: '24px', alignItems: 'start' }}>

@@ -1,10 +1,9 @@
 # 📗 SPRINT 2 README — ĐỘNG CƠ ĐẶT VÉ LÕI & HAI CỔNG QUẢN TRỊ
 > **Dự án:** Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy  
 > **Đơn vị:** OJT Đồ Án Nhóm 7  
-> **Thời gian thực hiện:** Tuần 3 - Tuần 4  
-> **Trạng thái:** ✅ **NGHIỆM THU (Đạt 88.6% - 62/70 SP, 16/18 Tasks)**  
-> **Tồn đọng chuyển tiếp Sprint 3:** 2 Tasks (8 SP)  
-> **Biên bản báo cáo chi tiết:** [BAO_CAO_TONG_KET_SPRINT_2_VA_KE_HOACH_SPRINT_3.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/BAO_CAO_TONG_KET_SPRINT_2_VA_KE_HOACH_SPRINT_3.md)  
+> **Thời gian thực hiện:** Tuần 2 (Sprint 2 — Động cơ Đặt vé Lõi & Hai Cổng Quản trị)  
+> **Trạng thái:** ✅ **DONE (100% Hoàn thành — Cột 'Done Sprint 2' trên Trello)**  
+> **Quy mô danh mục:** 19 Thẻ cốt lõi | 35 Story Points (Chuẩn hóa Scrum 1 tuần)  
 
 ---
 
@@ -58,7 +57,6 @@ Hiện thực hóa toàn bộ luồng nghiệp vụ kinh doanh cốt lõi (Core 
 ## 🏆 5. KẾT QUẢ NGHIỆM THU & TIÊU CHÍ HOÀN THÀNH (DoD)
 - ✅ Kiểm thử đồng thời: Mô phỏng 2 phiên trình duyệt cùng chọn 1 ghế ➔ Chỉ người bấm trước được giữ ghế, người thứ hai nhận thông báo ghế đã có người giữ.
 - ✅ Thanh toán thực tế: Quét mã VietQR thành công ➔ Trạng thái vé chuyển ngay sang `PAID` và gửi mã vé về giao diện.
-- ✅ Kết quả hoàn thành: **62/70 SP (16/18 Tasks - Đạt 88.6% kế hoạch)**.
-- ⚠️ Tồn đọng chuyển tiếp Sprint 3: **8 SP (2 Tasks kiểm thử tự động & Fixture DB - Trần Minh Đức)**.
-- 💡 Ý kiến chỉ đạo từ Thầy: Tiếp nhận 2 task đột xuất cho Sprint 3 gồm Tích hợp Google OAuth2/OTP (Phát) và Tái cấu trúc thẩm định KYB đối tác Nhà xe (Thành - [S322]).
+- ✅ Kết quả hoàn thành: **19/19 Thẻ hoàn thành (35 SP) — Đạt 100% mục tiêu Sprint 2 (Cột 'Done Sprint 2' trên Trello)**.
+- 💡 Ý kiến chỉ đạo từ Thầy: Tiếp nhận 2 task trọng tâm cho Sprint 3 gồm Tích hợp Google OAuth2/OTP (Phát) và Tái cấu trúc thẩm định KYB đối tác Nhà xe (Thành - [S322]).
 

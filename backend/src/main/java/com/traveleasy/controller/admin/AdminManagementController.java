@@ -242,6 +242,12 @@ public class AdminManagementController {
         return ApiResponse.success("Tạo mẫu sơ đồ ghế thành công", adminManagementService.createSeatTemplate(request));
     }
 
+    @PutMapping("/seat-templates/{id}")
+    @Operation(summary = "Cập nhật mẫu sơ đồ ghế và ma trận vị trí chi tiết")
+    public ApiResponse<SeatLayoutTemplate> updateSeatTemplate(@PathVariable Long id, @Valid @RequestBody SeatTemplateRequest request) {
+        return ApiResponse.success("Cập nhật mẫu sơ đồ ghế thành công", adminManagementService.updateSeatTemplate(id, request));
+    }
+
     @DeleteMapping("/seat-templates/{id}")
     @Operation(summary = "Xoá mẫu sơ đồ ghế")
     public ApiResponse<Void> deleteSeatTemplate(@PathVariable Long id) {

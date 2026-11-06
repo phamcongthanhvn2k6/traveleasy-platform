@@ -6,8 +6,9 @@
 
 > **BẢNG TRELLO TRỰC TUYẾN DỰ ÁN:** [https://trello.com/b/AA5BYoe1/traveleasyplatform](https://trello.com/b/AA5BYoe1/traveleasyplatform)  
 > **BOARD ID:** `6ad6f486572cd6662754e074`  
-> **CÔNG CỤ TỰ ĐỘNG HÓA:** `scripts/sync_trello.py`  
-> **TRẠNG THÁI NGHIỆM THU SPRINT 1:** **17/17 USER STORIES HOÀN THÀNH (95 STORY POINTS - CỘT 'DONE SPRINT')**.
+> **CÔNG CỤ ĐỒNG BỘ REST API:** `scripts/sync_trello.py`  
+> **HIỆN TRẠNG QUẢN TRỊ DỰ ÁN:** **87 THẺ CỐT LÕI — 148 STORY POINTS (CHUẨN HOÁ 4 TUẦN - 4 SPRINTS)**.  
+> **TIẾN ĐỘ NGHIỆM THU HIỆN TẠI:** Sprint 1 (19 Thẻ Done - 32 SP), Sprint 2 (19 Thẻ Done - 35 SP), Sprint 3 (30/36 Thẻ Done - 42 SP, Đạt 87.5%), Sprint 4 (13 Thẻ cốt lõi - 33 SP chuẩn bị nước rút).
 
 ---
 
@@ -15,27 +16,23 @@
 
 Bảng Trello được cấu hình theo đúng quy chuẩn **Multi-Sprint Scrum Board** tiêu chuẩn quốc tế:
 
-`
+```
 +-----------------------------------+-----------------------------------+-----------------------------------+
-| Product Backlog (19 SP)        | Sprint 1: Architecture (23 SP) | Sprint 2: Core Booking (29 SP) |
-| (5 US Lộ trình Phase 2 mở rộng)   | (5 US - CSDL, JWT, Master Data)   | (4 US - Search, Sơ đồ, Lock 10:00)|
+| Sprint 1: Architecture & Core     | Sprint 2: Core Booking & Concurrency| Sprint 3: E2E QA & Payments       |
+| (19 Thẻ | 32 SP - Hoàn thành 100%)| (19 Thẻ | 35 SP - Hoàn thành 100%)| (36 Thẻ | 48 SP - Đạt 87.5% Done) |
 +-----------------------------------+-----------------------------------+-----------------------------------+
-| Sprint 3: Payment (21 SP)      | Sprint 4: Admin Portal (22 SP) | Testing & QA Verification      |
-| (4 US - Checkout, Vé QR, Hủy vé)  | (4 US - Dashboard, Quyết toán)    | (2 Thẻ - Biên bản & 25 Test Cases)|
+| Sprint 4: POS Bến Xe & OJT Defense| Testing & QA Verification         | Bug Tracking (0 Critical Issues)  |
+| (13 Thẻ | 33 SP - Kế hoạch nước rút)| (Báo cáo & Bằng chứng nghiệm thu) | (0 lỗi chặn - Hệ thống ổn định)   |
 +-----------------------------------+-----------------------------------+-----------------------------------+
-| Sprint Retrospective & Defense | Bug Tracking (0 Critical Bugs) |
-| (2 Thẻ - Kịch bản & Bàn giao)     | (0 lỗi chặn - Hệ thống ổn định)   |
-+-----------------------------------+-----------------------------------+
-`
+```
 
-1. **Product Backlog (Phase 2 Roadmap - 19 SP)**: Chứa 5 User Stories mở rộng cho phiên bản tương lai (US-21 đến US-25).
-2. **Sprint 1: Architecture, CSDL & Auth (23 SP) [DONE]**: Nền tảng dự án, CSDL 36 bảng Supabase Cloud, Stateless JWT Bearer, phân quyền RBAC và Master Data (US-06, US-11, US-14, US-03, US-04).
-3. **Sprint 2: Core Booking & Concurrency Lock (29 SP) [DONE]**: Lõi tìm kiếm chuyến xe SWR Cache 0ms, sơ đồ 34 ghế 2 tầng Limousine VIP, Khóa giữ chỗ Concurrency Lock 10:00 (US-08, US-09, US-02, US-15).
-4. **Sprint 3: Payment, Boarding Pass & Tickets (21 SP) [DONE]**: Đặt vé Serializable, Cổng thanh toán đa kênh VietQR/VNPAY/COD, Thẻ vé QR Code Boarding Pass, Quét camera 0.2s và Hủy vé tự động (US-10, US-12, US-13, US-17).
-5. **Sprint 4: Admin Portal, Settlements & Logs (22 SP) [DONE]**: Dashboard 4 KPIs, Cổng điều hành đối tác nhà xe 10 trang, Đối soát quyết toán 10%, Audit Logs bất biến và Tra cứu Offline (US-01, US-05, US-07, US-16).
-6. **Testing & QA Verification (25/25 Pass)**: Biên bản nghiệm thu kiểm thử tính năng nội bộ Nhóm 7 và Báo cáo kiểm thử 25/25 Test Cases.
-7. **Sprint Retrospective & Defense Ready (100/100)**: Kịch bản thuyết trình bảo vệ 15 phút và Hồ sơ bàn giao toàn sàn 100/100 điểm.
-8. **Bug Tracking (0 Critical Issues)**: Theo dõi lỗi hệ thống (0 bug nghiêm trọng, 100% pass).
+1. **Sprint 1: Architecture, CSDL & Auth (32 SP) [DONE]**: Nền tảng dự án, CSDL 44 bảng Supabase Cloud, Stateless JWT Bearer, phân quyền RBAC và Master Data danh mục toàn quốc (19 thẻ | 32 SP).
+2. **Sprint 2: Core Booking & Concurrency Lock (35 SP) [DONE]**: Lõi tìm kiếm chuyến xe SWR Cache 0ms, sơ đồ 34 ghế 2 tầng Limousine VIP, Khóa giữ chỗ Concurrency Lock 10:00, Thanh toán VNPAY & VietQR (19 thẻ | 35 SP).
+3. **Sprint 3: E2E QA, Firebase Auth, Soát Vé & Fixtures (48 SP) [NGHIỆM THU 87.5%]**: 30 thẻ Done (42 SP), 7 PRs trọng yếu đã merge (#35, #36, #41, #42, #43, #45, #47), Firebase Google Sign-In & OTP Phone (`S321`), Sửa lỗi Seed Fixtures & Khứ hồi (`S320`), Quét QR camera 0.2s (`S314`, `S317`).
+4. **Sprint 4: POS Bến Xe, Live Tracking SSE & Bảo Vệ Đồ Án (33 SP) [SPRINT NƯỚC RÚT]**: Phân hệ Bán vé nhanh tại Quầy bến xe POS (`/company/pos`), Quản lý ca trực tiền mặt, Live Tracking xe chạy thời gian thực (Leaflet & SSE), Động cơ tính cước gửi hàng hóa hầm xe (`/cargo`), Thuê xe hợp đồng (`/charter`) và Đóng gói Docker Compose (13 thẻ cốt lõi | 33 SP).
+5. **Testing & QA Verification**: Báo cáo kiểm thử hồi quy độc lập tại `docs/test-reports/` cho từng thành viên (Cường, Đức, Phát, Phong).
+6. **Sprint Retrospective & Defense Ready**: Kịch bản thuyết trình bảo vệ 15 phút chi tiết từng giây và Hồ sơ bàn giao toàn sàn 100/100 điểm.
+7. **Bug Tracking**: Theo dõi lỗi hệ thống (0 bug nghiêm trọng, 100% pass).
 
 ---
 

@@ -7,6 +7,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +26,7 @@ import java.util.*;
 @RequestMapping("/api/v1/demo")
 @RequiredArgsConstructor
 @Tag(name = "Demo & Presentation Hub", description = "Các endpoint hỗ trợ thiết lập dữ liệu minh họa lặp lại, phục hồi ghế và kịch bản thuyết trình bảo vệ đồ án OJT")
+@Profile("!prod")
 public class DemoController {
 
     private final TripRepository tripRepository;
@@ -88,6 +92,151 @@ public class DemoController {
         ));
     }
 
+    @GetMapping("/trips")
+    @Operation(summary = "Lấy danh sách các chuyến xe gần nhất để điều khiển demo trực tiếp")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getDemoTrips(
+            @RequestParam(required = false, defaultValue = "20") int limit) {
+        int maxLimit = Math.max(1, Math.min(limit, 50));
+        List<Trip> trips = tripRepository.findAllByOrderByDepartureTimeDesc();
+
+        List<Map<String, Object>> result = trips.stream()
+                .filter(t -> (t.getIsActive() == null || t.getIsActive()) && t.getStatus() != TripStatus.CANCELLED)
+                .limit(maxLimit)
+                .map(t -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("id", t.getId());
+                    map.put("route", t.getRoute() != null
+                            ? t.getRoute().getDepartureLocation() + " - " + t.getRoute().getArrivalLocation()
+                            : "Chưa xác định");
+                    map.put("departureLocation", t.getRoute() != null ? t.getRoute().getDepartureLocation() : "");
+                    map.put("arrivalLocation", t.getRoute() != null ? t.getRoute().getArrivalLocation() : "");
+                    map.put("busCompany", t.getBusCompany() != null ? t.getBusCompany().getName() : "Chưa xác định");
+                    map.put("licensePlate", t.getLicensePlate() != null ? t.getLicensePlate() : "");
+                    map.put("departureTime", t.getDepartureTime());
+                    map.put("totalSeats", t.getTotalSeats() != null ? t.getTotalSeats() : 34);
+                    map.put("availableSeats", t.getAvailableSeats() != null ? t.getAvailableSeats() : 0);
+                    map.put("price", t.getPrice());
+                    map.put("status", t.getStatus() != null ? t.getStatus().name() : "SCHEDULED");
+                    map.put("busType", t.getBusType() != null ? t.getBusType().name() : "SLEEPER");
+                    return map;
+                })
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách chuyến xe demo thành công", result));
+    }
+
+    @PostMapping("/trips/{tripId}/set-sold-out")
+    @Transactional
+    @CacheEvict(value = {"trips_search", "popular_routes", "admin_all_trips", "company_trips"}, allEntries = true)
+    @Operation(summary = "Cập nhật chuyến xe sang trạng thái cháy vé (0 ghế trống, toàn bộ ghế BOOKED)")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> setSoldOut(@PathVariable Long tripId) {
+        return applySeatCount(tripId, 0, "Đã thiết lập chuyến xe sang trạng thái CHÁY VÉ (0 ghế trống) thành công");
+    }
+
+    @PostMapping("/trips/{tripId}/reset-seats")
+    @Transactional
+    @CacheEvict(value = {"trips_search", "popular_routes", "admin_all_trips", "company_trips"}, allEntries = true)
+    @Operation(summary = "Khôi phục mở bán lại toàn bộ ghế của chuyến xe về AVAILABLE")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> resetTripSeats(@PathVariable Long tripId) {
+        return applySeatCount(tripId, null, "Đã khôi phục toàn bộ ghế trống mở bán thành công");
+    }
+
+    @PostMapping("/trips/{tripId}/set-seats")
+    @Transactional
+    @CacheEvict(value = {"trips_search", "popular_routes", "admin_all_trips", "company_trips"}, allEntries = true)
+    @Operation(summary = "Đặt số ghế trống tùy biến của chuyến xe phục vụ kịch bản kiểm thử")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> setSeatCount(
+            @PathVariable Long tripId,
+            @RequestParam(defaultValue = "1") int count) {
+        if (count < 0) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Số lượng ghế trống không được nhỏ hơn 0"));
+        }
+        return applySeatCount(tripId, count, String.format("Đã thiết lập số ghế trống của chuyến xe về %d ghế thành công", count));
+    }
+
+    private ResponseEntity<ApiResponse<Map<String, Object>>> applySeatCount(Long tripId, Integer requestedCount, String successMessage) {
+        Trip trip = tripRepository.findByIdWithDetails(tripId)
+                .or(() -> tripRepository.findById(tripId))
+                .orElse(null);
+        if (trip == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Không tìm thấy chuyến xe với mã " + tripId));
+        }
+
+        int totalSeats = trip.getTotalSeats() != null ? trip.getTotalSeats() : 34;
+        int targetAvailable = (requestedCount == null) ? totalSeats : Math.max(0, Math.min(requestedCount, totalSeats));
+
+        List<TripSeat> seats = tripSeatRepository.findByTripIdOrderByFloorAscSeatCodeAsc(tripId);
+        if (seats == null || seats.isEmpty()) {
+            seats = new ArrayList<>();
+            int floor1Count = (totalSeats + 1) / 2;
+            for (int i = 1; i <= floor1Count; i++) {
+                seats.add(TripSeat.builder()
+                        .trip(trip)
+                        .seatCode(String.format("A%02d", i))
+                        .floor(1)
+                        .rowNum((i - 1) / 3 + 1)
+                        .colNum((i - 1) % 3 + 1)
+                        .seatType("STANDARD")
+                        .status(SeatStatus.AVAILABLE)
+                        .build());
+            }
+            for (int i = 1; i <= (totalSeats - floor1Count); i++) {
+                seats.add(TripSeat.builder()
+                        .trip(trip)
+                        .seatCode(String.format("B%02d", i))
+                        .floor(2)
+                        .rowNum((i - 1) / 3 + 1)
+                        .colNum((i - 1) % 3 + 1)
+                        .seatType("VIP")
+                        .status(SeatStatus.AVAILABLE)
+                        .build());
+            }
+        }
+
+        int updatedAvailable = 0;
+        int updatedBooked = 0;
+        for (int i = 0; i < seats.size(); i++) {
+            TripSeat seat = seats.get(i);
+            if (i < targetAvailable) {
+                seat.setStatus(SeatStatus.AVAILABLE);
+                updatedAvailable++;
+            } else {
+                seat.setStatus(SeatStatus.BOOKED);
+                updatedBooked++;
+            }
+        }
+        tripSeatRepository.saveAll(seats);
+
+        trip.setAvailableSeats(updatedAvailable);
+        tripRepository.save(trip);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("tripId", trip.getId());
+        data.put("route", trip.getRoute() != null
+                ? trip.getRoute().getDepartureLocation() + " - " + trip.getRoute().getArrivalLocation()
+                : "Chưa xác định");
+        data.put("departureLocation", trip.getRoute() != null ? trip.getRoute().getDepartureLocation() : "");
+        data.put("arrivalLocation", trip.getRoute() != null ? trip.getRoute().getArrivalLocation() : "");
+        data.put("busCompany", trip.getBusCompany() != null ? trip.getBusCompany().getName() : "Chưa xác định");
+        data.put("licensePlate", trip.getLicensePlate() != null ? trip.getLicensePlate() : "");
+        data.put("departureTime", trip.getDepartureTime());
+        data.put("totalSeats", totalSeats);
+        data.put("availableSeats", updatedAvailable);
+        data.put("price", trip.getPrice());
+        data.put("seatsAvailableCount", updatedAvailable);
+        data.put("seatsBookedCount", updatedBooked);
+
+        log.info("Demo control: tripId={}, targetAvailable={}, updatedAvailable={}, updatedBooked={}",
+                tripId, targetAvailable, updatedAvailable, updatedBooked);
+
+        String finalMessage = (requestedCount == null)
+                ? String.format("Đã khôi phục toàn bộ %d ghế trống mở bán thành công", updatedAvailable)
+                : successMessage;
+
+        return ResponseEntity.ok(ApiResponse.success(finalMessage, data));
+    }
+
     @PostMapping("/seed-sample-booking")
     @Transactional
     @Operation(summary = "Tạo một vé xe mẫu đã xác nhận thanh toán kèm mã QR phục vụ quét vé trực tiếp")
@@ -99,7 +248,8 @@ public class DemoController {
         Ticket ticket;
         if (existing.isPresent()) {
             booking = existing.get();
-            ticket = booking.getTickets().isEmpty() ? null : booking.getTickets().get(0);
+            List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
+            ticket = (tickets != null && !tickets.isEmpty()) ? tickets.get(0) : null;
         } else {
             List<Trip> trips = tripRepository.findAll();
             if (trips.isEmpty()) {
@@ -139,16 +289,30 @@ public class DemoController {
             booking.getTickets().add(ticket);
         }
 
+        String departure = "Hà Nội";
+        String arrival = "Đà Nẵng";
+        String companyName = "Phương Trang VIP";
+        if (booking.getTrip() != null) {
+            if (booking.getTrip().getRoute() != null) {
+                departure = booking.getTrip().getRoute().getDepartureLocation();
+                arrival = booking.getTrip().getRoute().getArrivalLocation();
+            }
+            if (booking.getTrip().getBusCompany() != null) {
+                companyName = booking.getTrip().getBusCompany().getName();
+            }
+        }
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("bookingCode", booking.getBookingCode());
         result.put("ticketCode", ticket != null ? ticket.getTicketCode() : "DEMO-TK-001");
         result.put("passengerName", booking.getPassengerName());
         result.put("passengerPhone", booking.getPassengerPhone());
         result.put("qrCodeHash", ticket != null ? ticket.getQrCodeHash() : "TE-DEMO-001-VALID");
-        result.put("tripRoute", booking.getTrip().getRoute().getDepartureLocation() + " -> " + booking.getTrip().getRoute().getArrivalLocation());
-        result.put("busCompany", booking.getTrip().getBusCompany().getName());
+        result.put("tripRoute", departure + " -> " + arrival);
+        result.put("busCompany", companyName);
         result.put("instructions", "Sử dụng mã vé 'DEMO-TICKET-2026' để tra cứu tại /lookup hoặc quét mã hash 'TE-DEMO-001-VALID' tại /scanner");
 
         return ResponseEntity.ok(ApiResponse.success("Đã khởi tạo vé mẫu demo thành công", result));
     }
 }
+

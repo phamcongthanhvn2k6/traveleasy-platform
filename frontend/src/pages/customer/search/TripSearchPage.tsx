@@ -10,7 +10,8 @@ import { Pagination } from '../../../components/Pagination';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { toast } from '../../../context/ToastContext';
 import { useTheme } from '../../../context/ThemeContext';
-import { Bus, AlertCircle, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
+import { Bus, AlertCircle, SlidersHorizontal, ChevronDown, ChevronUp, Gift, Check } from 'lucide-react';
+import { getLocalNextDayString } from '../../../utils/dateUtils';
 
 // Bộ nhớ đệm Client-side SWR: Giữ kết quả tìm kiếm trong RAM và SessionStorage để hiển thị tức thì (0ms)
 const tripSearchClientCache = new Map<string, { data: Trip[]; timestamp: number }>();
@@ -73,6 +74,19 @@ export const TripSearchPage: React.FC = () => {
     }
   }, [companyParam]);
 
+  // Tu dong chua loi ngay ve khu hoi: neu ngay ve nho hon ngay di, dieu chinh ngay ve toi thieu = ngay di + 2 ngay
+  useEffect(() => {
+    if (date && returnDate && returnDate < date) {
+      const nextParams: Record<string, string> = {};
+      if (origin) nextParams.origin = origin;
+      if (destination) nextParams.destination = destination;
+      nextParams.date = date;
+      nextParams.returnDate = getLocalNextDayString(date, 2);
+      if (companyParam) nextParams.company = companyParam;
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [date, returnDate, origin, destination, companyParam, setSearchParams]);
+
   // Booking Modal State
   const [bookingTrip, setBookingTrip] = useState<Trip | null>(null);
   const [bookingSeats, setBookingSeats] = useState<string[]>([]);
@@ -84,17 +98,7 @@ export const TripSearchPage: React.FC = () => {
     const cached = tripSearchClientCache.get(cacheKey) || getSessionSearchCache(cacheKey);
     const now = Date.now();
 
-    // 1. Instant Cache Hit: Hiển thị ngay lập tức (0ms) nếu đã tải trong vòng 10 phút
-    if (cached && (now - cached.timestamp < 600_000)) {
-      setTrips(cached.data);
-      if (!tripSearchClientCache.has(cacheKey)) {
-        tripSearchClientCache.set(cacheKey, cached);
-      }
-      setLoading(false);
-      return;
-    }
-
-    // 2. Optimistic Rendering: Nếu có dữ liệu trong cache cũ, hiển thị trước và không bật loading spinner
+    // Stale-While-Revalidate: Hiển thị ngay nếu có cache, đồng thời luôn gọi API để cập nhật số ghế mới nhất
     if (cached) {
       setTrips(cached.data);
       setLoading(false);
@@ -148,8 +152,13 @@ export const TripSearchPage: React.FC = () => {
     if (newOrigin && newOrigin.trim() !== '') nextParams.origin = newOrigin.trim();
     if (newDestination && newDestination.trim() !== '') nextParams.destination = newDestination.trim();
     if (newDate && newDate.trim() !== '') nextParams.date = newDate.trim();
-    const rDate = newReturnDate !== undefined ? newReturnDate : returnDate;
-    if (rDate && rDate.trim() !== '') nextParams.returnDate = rDate.trim();
+    let rDate = newReturnDate !== undefined ? newReturnDate : returnDate;
+    if (rDate && rDate.trim() !== '') {
+      if (newDate && rDate < newDate) {
+        rDate = getLocalNextDayString(newDate, 2);
+      }
+      nextParams.returnDate = rDate.trim();
+    }
     if (companyParam && companyParam.trim() !== '') nextParams.company = companyParam.trim();
     setSearchParams(nextParams);
   };
@@ -496,11 +505,124 @@ export const TripSearchPage: React.FC = () => {
     toast.info('Đã hoàn tác toàn bộ bộ lọc và sắp xếp!', 'Đặt Lại');
   };
 
+  // Đọc phiên giữ chỗ còn hiệu lực trên toàn sàn
+  const [globalHold, setGlobalHold] = useState<{
+    trip: Trip;
+    seats: string[];
+    expiry: number;
+  } | null>(() => {
+    try {
+      const raw = sessionStorage.getItem('traveleasy_checkout_data') || localStorage.getItem('traveleasy_checkout_data');
+      const expStr = sessionStorage.getItem('traveleasy_hold_expiry') || localStorage.getItem('traveleasy_hold_expiry');
+      if (!raw || !expStr) return null;
+      const exp = Number(expStr);
+      if (Date.now() >= exp) return null;
+      const data = JSON.parse(raw);
+      if (data.trip && data.selectedSeats?.length > 0) {
+        return {
+          trip: data.trip,
+          seats: data.selectedSeats,
+          expiry: exp,
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [globalRemaining, setGlobalRemaining] = useState<number>(() => {
+    if (!globalHold) return 0;
+    return Math.max(0, Math.floor((globalHold.expiry - Date.now()) / 1000));
+  });
+
+  // Tự động đồng bộ phiên giữ chỗ từ Backend API để không bao giờ bị mất phiên dù tải lại trang
+  useEffect(() => {
+    let isSubscribed = true;
+    const fetchActiveHold = async () => {
+      try {
+        const sid = sessionStorage.getItem('traveleasy_session_id') || localStorage.getItem('traveleasy_session_id');
+        const res = await api.get('/trips/active-hold', { params: { sessionId: sid } });
+        const holdData = res.data?.data;
+        if (isSubscribed && holdData && holdData.hasActiveHold && holdData.remainingSeconds > 0) {
+          const payload = {
+            trip: {
+              id: holdData.tripId,
+              busCompanyName: holdData.busCompanyName,
+              busCompanyLogo: holdData.busCompanyLogo,
+              originCity: holdData.originCity,
+              destinationCity: holdData.destinationCity,
+              departureTime: holdData.departureTime,
+              price: holdData.price,
+            } as Trip,
+            selectedSeats: holdData.seatCodes,
+            holdExpiry: holdData.expiryTimestamp,
+          };
+          sessionStorage.setItem('traveleasy_checkout_data', JSON.stringify(payload));
+          sessionStorage.setItem('traveleasy_hold_expiry', String(holdData.expiryTimestamp));
+          localStorage.setItem('traveleasy_checkout_data', JSON.stringify(payload));
+          localStorage.setItem('traveleasy_hold_expiry', String(holdData.expiryTimestamp));
+          setGlobalHold({
+            trip: payload.trip,
+            seats: holdData.seatCodes,
+            expiry: holdData.expiryTimestamp,
+          });
+          setGlobalRemaining(holdData.remainingSeconds);
+        }
+      } catch (err) {
+        // Không có active hold hoặc lỗi mạng
+      }
+    };
+
+    fetchActiveHold();
+    return () => { isSubscribed = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!globalHold) return;
+    const t = setInterval(() => {
+      const rem = Math.max(0, Math.floor((globalHold.expiry - Date.now()) / 1000));
+      setGlobalRemaining(rem);
+      if (rem <= 0) {
+        clearInterval(t);
+        setGlobalHold(null);
+        sessionStorage.removeItem('traveleasy_checkout_data');
+        sessionStorage.removeItem('traveleasy_hold_expiry');
+        localStorage.removeItem('traveleasy_checkout_data');
+        localStorage.removeItem('traveleasy_hold_expiry');
+      }
+    }, 1000);
+    return () => clearInterval(t);
+  }, [globalHold]);
+
+  const handleCancelGlobalHold = async () => {
+    if (!globalHold) return;
+    if (window.confirm(`Bạn có chắc muốn hủy phiên giữ chỗ ghế [${globalHold.seats.join(', ')}] trên chuyến ${globalHold.trip.busCompanyName}?`)) {
+      try {
+        await api.post(`/trips/${globalHold.trip.id}/seats/release`, {
+          seatCodes: globalHold.seats,
+        });
+        toast.info('Đã hủy giữ chỗ thành công.', 'Đã Hủy');
+      } catch (e) {
+        console.error(e);
+      }
+      sessionStorage.removeItem('traveleasy_checkout_data');
+      sessionStorage.removeItem('traveleasy_hold_expiry');
+      localStorage.removeItem('traveleasy_checkout_data');
+      localStorage.removeItem('traveleasy_hold_expiry');
+      setGlobalHold(null);
+    }
+  };
+
   const handleOpenBooking = (trip: Trip, seats: string[], points: any) => {
     const token = localStorage.getItem('traveleasy_token');
-    const checkoutPayload = { trip, selectedSeats: seats, points };
+    const expiryTimestamp = Date.now() + 600 * 1000;
+    const checkoutPayload = { trip, selectedSeats: seats, points, holdExpiry: expiryTimestamp };
     try {
       sessionStorage.setItem('traveleasy_checkout_data', JSON.stringify(checkoutPayload));
+      sessionStorage.setItem('traveleasy_hold_expiry', String(expiryTimestamp));
+      localStorage.setItem('traveleasy_checkout_data', JSON.stringify(checkoutPayload));
+      localStorage.setItem('traveleasy_hold_expiry', String(expiryTimestamp));
     } catch (e) {
       console.warn(e);
     }
@@ -537,6 +659,75 @@ export const TripSearchPage: React.FC = () => {
         totalTrips={filteredAndSortedTrips.length}
         onSearchChange={handleSearchChange}
       />
+
+      {/* 1.1 Sticky / Top Persistent 10-Minute Hold Banner (Chuẩn Vexere) */}
+      {globalHold && globalRemaining > 0 && (
+        <div
+          style={{
+            maxWidth: '1240px',
+            margin: '0 auto 20px auto',
+            padding: '14px 20px',
+            backgroundColor: isDark ? '#1e293b' : '#eff6ff',
+            border: `2px solid ${isDark ? '#3b82f6' : '#2563eb'}`,
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 4px 14px rgba(37,99,235,0.15)',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '24px' }}>⏱️</span>
+            <div>
+              <div style={{ fontSize: '14.5px', fontWeight: 700, color: isDark ? '#60a5fa' : '#1e40af' }}>
+                Bạn đang có phiên giữ chỗ trên chuyến: <strong>{globalHold.trip.busCompanyName}</strong>
+              </div>
+              <div style={{ fontSize: '13px', color: isDark ? '#cbd5e1' : '#475569', marginTop: '2px' }}>
+                Ghế giữ độc quyền: <strong style={{ color: '#2563eb' }}>{globalHold.seats.join(', ')}</strong> ({globalHold.seats.length} vé) • Thời gian giữ chỗ còn lại:{' '}
+                <strong style={{ color: '#dc2626', fontFamily: 'monospace', fontSize: '14px' }}>
+                  {Math.floor(globalRemaining / 60)}:{(globalRemaining % 60).toString().padStart(2, '0')}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => navigate('/checkout')}
+              style={{
+                backgroundColor: '#2563eb',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 22px',
+                fontSize: '14px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 10px rgba(37,99,235,0.3)',
+              }}
+            >
+              Tiếp Tục Đặt Vé ➔
+            </button>
+            <button
+              onClick={handleCancelGlobalHold}
+              style={{
+                backgroundColor: 'transparent',
+                color: '#ef4444',
+                border: '1px solid #fca5a5',
+                borderRadius: '8px',
+                padding: '9px 14px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Hủy giữ chỗ
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 2. Main Body Grid: Left Sidebar & Right Results */}
       <div
@@ -620,7 +811,7 @@ export const TripSearchPage: React.FC = () => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '20px' }}>🎁</span>
+                <Gift size={22} color="#ea580c" />
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 800, color: '#c2410c' }}>
                     Bạn đang săn ưu đãi [ mã: {searchParams.get('voucher')} ]
@@ -775,10 +966,9 @@ export const TripSearchPage: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 margin: '0 auto 16px auto',
-                fontSize: '28px',
               }}
             >
-              ✓
+              <Check size={32} color="#16a34a" />
             </div>
 
             <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>

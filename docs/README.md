@@ -3,7 +3,7 @@
 > **Dự án**: Sàn Thương Mại Điện Tử & Đặt Vé Xe Khách Liên Tỉnh Trực Tuyến TravelEasy  
 > **Đơn vị thực hiện**: Nhóm 7 — Khóa OJT  
 > **Trưởng nhóm / Kiến trúc sư hệ thống**: Phạm Công Thành (`phamcongthanhvn2k6` / `thanhphmcong1`)  
-> **Cơ sở dữ liệu**: Supabase Cloud PostgreSQL (44 bảng chuẩn hóa + Realtime RPC)  
+> **Cơ sở dữ liệu**: Supabase Cloud PostgreSQL (44 bảng chuẩn hóa 3NF + Realtime RPC — gồm 36 bảng cốt lõi và 8 bảng mở rộng hệ sinh thái)  
 
 ---
 
@@ -60,7 +60,7 @@ Tập trung vào mô hình kỹ thuật, sơ đồ quan hệ và hạ tầng d�
   * **Nội dung**: Biểu đồ Class Diagram chi tiết toàn bộ các Entity, DTO, Repository, Service và Controller trong Spring Boot.
 
 * 📄 [database_design.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/02-architecture-and-db/database_design.md)  
-  * **Nội dung**: Thiết kế chi tiết 44 bảng dữ liệu, chuẩn hóa 3NF, danh sách khóa chính (PK), khóa ngoại (FK), Trigger tự động và hệ thống Index tăng tốc truy vấn.
+  * **Nội dung**: Thiết kế chi tiết 44 bảng dữ liệu (36 bảng cốt lõi + 8 bảng mở rộng), chuẩn hóa 3NF, danh sách khóa chính (PK), khóa ngoại (FK), Trigger tự động và hệ thống Index tăng tốc truy vấn.
 
 * 📄 [schema.sql](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/02-architecture-and-db/schema.sql) *(File chuẩn SSOT)*  
   * **Nội dung**: Toàn bộ câu lệnh DDL khởi tạo 44 bảng CSDL và toàn bộ tập dữ liệu mẫu sinh động (Seed data chuẩn cho Chuyến xe, Tuyến đường, Nhà xe, Vé xe, Người dùng).
@@ -102,14 +102,24 @@ Cung cấp tài liệu tích hợp API, đóng gói triển khai và cẩm nang 
 
 Tài liệu quản lý tiến độ, ma trận phân bổ công việc và kịch bản bảo vệ tốt nghiệp OJT:
 
+* 📄 [BAO_CAO_CHI_TIET_TASK_TRELLO_THEO_SPRINT_VA_THANH_VIEN.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/BAO_CAO_CHI_TIET_TASK_TRELLO_THEO_SPRINT_VA_THANH_VIEN.md) *(Bản Chuẩn SSOT - Khuyên đọc)*  
+  *(Đã xuất bản văn bản Word chính thức: [BAO_CAO_CHI_TIET_TASK_TRELLO_THEO_SPRINT_VA_THANH_VIEN.docx](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/BAO_CAO_CHI_TIET_TASK_TRELLO_THEO_SPRINT_VA_THANH_VIEN.docx))*  
+  * **Nội dung**: Báo cáo pháp lý và thẩm định toàn diện 87 thẻ Trello của 4 Sprint (148 SP chuẩn mực), đối soát chi tiết công việc của 5 thành viên (Thành, Phát, Phong, Đức, Cường), danh sách link Trello trực tiếp từng thẻ và checklist nghiệm thu DoD 5 tiêu chí.
+
+* 📄 [BAO_CAO_TIEN_DO_SPRINT_3_MOI_NHAT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/BAO_CAO_TIEN_DO_SPRINT_3_MOI_NHAT.md) *(Báo Cáo Tiến Độ Sprint 3 Thời Gian Thực)*  
+  * **Nội dung**: Báo cáo tổng hợp tiến độ Sprint 3 thời gian thực từ 35 thẻ Trello (48 SP), ghi nhận 30 thẻ hoàn thành trong `Done Sprint 3` (42 SP - Đạt 87.5%), tổng hợp 7 Pull Request đã merge thành công lên `dev` (#35, #36, #41, #42, #43, #45, #47) và kế hoạch đóng gói Sprint 3.
+
 * 📄 [BAO_CAO_THONG_KE_TIEN_DO_VA_STORY_POINTS_TOAN_SAN.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/BAO_CAO_THONG_KE_TIEN_DO_VA_STORY_POINTS_TOAN_SAN.md) *(Agile Metrics Report)*  
-  * **Nội dung**: Báo cáo thống kê toàn diện Story Points từ 117 thẻ Trello theo từng Sprint (Sprint 1 - 4) và ma trận phân bổ năng suất đóng góp của từng thành viên trong nhóm.
+  * **Nội dung**: Báo cáo thống kê toàn diện Story Points từ 87 thẻ Trello chuẩn mực theo từng Sprint (Sprint 1: 32 SP, Sprint 2: 35 SP, Sprint 3: 48 SP, Sprint 4: 33 SP = Tổng 148 SP) và ma trận phân bổ năng suất đóng góp của từng thành viên trong nhóm.
+
+* 📄 [KE_HOACH_XU_LY_LAM_PHAT_STORY_POINTS_TOAN_DU_AN.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/KE_HOACH_XU_LY_LAM_PHAT_STORY_POINTS_TOAN_DU_AN.md) *(Nghị Quyết Tinh Gọn & Chuẩn Hóa Scrum)*  
+  * **Nội dung**: Phương án kỹ thuật xử lý lạm phát điểm (loại bỏ 33 thẻ rác/220 SP ảo), phân rã thẻ 10 SP vi phạm thành 4 thẻ con chuẩn Scrum 1-2 SP và xác lập hạn mức vận tốc velocity chuẩn 28-35 SP/tuần.
 
 * 📄 [KICH_BAN_DEMO_BAO_VE_DO_AN_15_PHUT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/KICH_BAN_DEMO_BAO_VE_DO_AN_15_PHUT.md) *(Live Demo Runbook)*  
   * **Nội dung**: Kịch bản trình diễn bảo vệ đồ án 15 phút chi tiết từng giây, lời thoại mẫu cho 5 thành viên, thao tác trực quan từng màn hình và bộ 5 câu hỏi phản biện hóc búa nhất của Hội đồng kèm câu trả lời chuẩn 10/10.
 
 * 📄 [KE_HOACH_CHI_TIET_SPRINT_4_VA_BAO_VE_OJT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/KE_HOACH_CHI_TIET_SPRINT_4_VA_BAO_VE_OJT.md) *(Master Action Plan)*  
-  * **Nội dung**: Kế hoạch tổng lực nước rút Sprint 4, lộ trình 7 ngày đến ngày bảo vệ, đối soát 13 User Stories Trello với mã nguồn, ma trận RACI và Kịch bản trình diễn Hội đồng 15 phút chi tiết từng phút.
+  * **Nội dung**: Kế hoạch tổng lực nước rút Sprint 4 (13 User Stories - 33 SP), lộ trình 7 ngày đến ngày bảo vệ, đối soát User Stories Trello với mã nguồn, ma trận RACI và kịch bản phối hợp Hội đồng.
 
 * 📄 [TRELLO_BOARD_MANAGEMENT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/TRELLO_BOARD_MANAGEMENT.md)  
   * **Nội dung**: Quy chế quản lý bảng Trello chuẩn công nghiệp, định nghĩa nhãn (Labels), trạng thái cột (To Do, In Progress, Code Review, Testing, Bug, Done), quy chuẩn phân định quyền hạn và Checklist DoD 5 tiêu chí.
@@ -118,13 +128,13 @@ Tài liệu quản lý tiến độ, ma trận phân bổ công việc và kịc
   * **Nội dung**: Thiết kế luồng đi UX/UI logic, sơ đồ điều hướng Menu và đường dẫn URL cho toàn bộ tính năng nâng cao Sprint 4 (POS bến xe, Live Tracking, Cargo bưu kiện, Thuê xe hợp đồng).
 
 * 📄 [KE_HOACH_THIET_KE_CONG_VIEC_VA_KICH_BAN_BAO_VE_OJT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/KE_HOACH_THIET_KE_CONG_VIEC_VA_KICH_BAN_BAO_VE_OJT.md)  
-  * **Nội dung**: Kịch bản thuyết trình bảo vệ đồ án OJT, phân vai trả lời phản biện và điều phối demo thực tế trước Hội đồng.
+  * **Nội dung**: Kịch bản chi tiết thiết kế công việc và kịch bản demo phân hệ nâng cao phục vụ bảo vệ đồ án tốt nghiệp OJT.
 
 * 📄 **Chi Tiết Báo Cáo Từng Sprint**:
-  * [SPRINT_1_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_1_README.md): Nền tảng Core, Xác thực JWT, CSDL chuẩn và Quản trị Danh mục.
-  * [SPRINT_2_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_2_README.md): Tìm kiếm vé xe đa tiêu chí, Chọn sơ đồ ghế 2 tầng, Thanh toán VNPAY & QR.
-  * [SPRINT_3_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_3_README.md): Cổng điều hành đối tác nhà xe, Báo cáo kiểm thử hồi quy & Tối ưu hiệu năng.
-  * [SPRINT_4_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_4_README.md): Vận hành sẵn sàng sản xuất, POS bến xe, GPS Tracking, Ký gửi hàng hóa & Bảo vệ tốt nghiệp.
+  * [SPRINT_1_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_1_README.md): Nền tảng Core, Xác thực JWT, CSDL chuẩn 36 bảng và Quản trị Danh mục (19 thẻ | 32 SP).
+  * [SPRINT_2_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_2_README.md): Tìm kiếm vé xe đa tiêu chí, Chọn sơ đồ ghế 2 tầng, Thanh toán VNPAY & QR (17 thẻ | 35 SP).
+  * [SPRINT_3_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_3_README.md): Cổng điều hành nhà xe, Kiểm thử QA E2E, Firebase Auth, Soát vé QR & Fix Fixtures (35 thẻ | 48 SP).
+  * [SPRINT_4_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_4_README.md): Vận hành sẵn sàng sản xuất, POS bến xe, GPS Tracking, Ký gửi hàng hóa & Bảo vệ tốt nghiệp (13 thẻ | 33 SP).
 
 ---
 
@@ -159,3 +169,47 @@ Chứa hơn 40+ ảnh chụp màn hình ghi nhận từng tính năng thực t�
 * Các modal CRUD quản trị xe, chuyến xe, địa điểm, tuyến đường.
 * Giao diện chọn ghế 2 tầng, màn hình thanh toán VietQR & VNPay.
 * Cổng đăng nhập đối tác nhà xe và tra cứu vé điện tử thời gian thực.
+
+---
+
+## 🧭 7️⃣ HƯỚNG DẪN TRA CỨU NHANH CHO TỪNG THÀNH VIÊN TRONG NHÓM (TEAM MEMBER ROADMAP)
+
+Để các thành viên trong nhóm nắm bắt công việc nhanh nhất, không bị nhầm lẫn hay bỏ sót nhiệm vụ, hãy đối chiếu theo cẩm nang chuyên trách dưới đây:
+
+### 👤 1. Phạm Công Thành (Team Leader & System Architect)
+* **Tài liệu cần nắm vững**:
+  * [PROJECT_ARCHITECTURE.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/02-architecture-and-db/PROJECT_ARCHITECTURE.md) (Kiến trúc Clean Arch & Caching).
+  * [BAO_CAO_CHI_TIET_TASK_TRELLO_THEO_SPRINT_VA_THANH_VIEN.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/BAO_CAO_CHI_TIET_TASK_TRELLO_THEO_SPRINT_VA_THANH_VIEN.md) (Báo cáo Trello SSOT & DoD).
+  * [QUY_TRINH_KIEM_THU_VA_NGHIEM_THU_CHUAN_DO_AN.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/05-qa-and-testing/QUY_TRINH_KIEM_THU_VA_NGHIEM_THU_CHUAN_DO_AN.md) (SOP Nghiệm thu PR & Chống lỗi CI).
+* **Nhiệm vụ trọng tâm**: Quản lý board Trello (87 cards), review và phê duyệt Pull Request, bảo vệ kiến trúc Concurrency & Escrow, điều phối buổi bảo vệ tốt nghiệp OJT.
+
+### 👤 2. Nguyễn Đại Phát (Admin Lead & Financial Settlement)
+* **Tài liệu cần nắm vững**:
+  * [FINANCIAL_AND_SETTLEMENT_SPECIFICATION.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/02-architecture-and-db/FINANCIAL_AND_SETTLEMENT_SPECIFICATION.md) (Nghiệp vụ đối soát & kết toán nhà xe).
+  * [phat/S321_TEST_REPORT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/test-reports/phat/S321_TEST_REPORT.md) (Báo cáo kiểm thử Google Sign-in & OTP).
+* **Nhiệm vụ trọng tâm Sprint 4**: Hoàn thiện tính năng Thuê xe hợp đồng `[S401]` và Quản trị giá vé động / Flash Sale `[S402]`.
+
+### 👤 3. Phạm Thanh Phong (Core Booking & Seat Engine)
+* **Tài liệu cần nắm vững**:
+  * [phong/S309_TEST_REPORT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/test-reports/phong/S309_TEST_REPORT.md) (Kiểm thử khóa ghế Concurrency Lock 6 luồng).
+  * [phong/S310_TEST_REPORT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/test-reports/phong/S310_TEST_REPORT.md) (Thanh toán VNPAY & Webhook).
+* **Nhiệm vụ trọng tâm Sprint 4**: Xây dựng phân hệ Quầy vé Bến xe của Nhà xe POS `[S403]`, Ca trực thu tiền mặt `[S404]`, GPS Stream SSE `[S405][BE]` và Động cơ tính cước Cargo `[S406]`.
+
+### 👤 4. Trần Minh Đức (Customer Portal, Tickets & Cargo)
+* **Tài liệu cần nắm vững**:
+  * [duc/S320_TEST_REPORT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/test-reports/duc/S320_TEST_REPORT.md) (Báo cáo sửa lỗi Fixtures, ngày khứ hồi & soát vé).
+  * [THIET_KE_LUONG_NGHIEP_VU_VA_DIEU_HUONG_SPRINT_4.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/THIET_KE_LUONG_NGHIEP_VU_VA_DIEU_HUONG_SPRINT_4.md).
+* **Nhiệm vụ trọng tâm Sprint 4**: Hoàn thiện giao diện Đặt xe du lịch `[S409]` và Gửi bưu kiện hầm xe `[S410]`.
+
+### 👤 5. Đoàn Nhật Cường (Mobile Specialist & Cross-Browser)
+* **Tài liệu cần nắm vững**:
+  * [cuong/S317_FE_RESPONSIVE_CROSS_BROWSER_TEST_REPORT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/test-reports/cuong/S317_FE_RESPONSIVE_CROSS_BROWSER_TEST_REPORT.md) (Ma trận Playwright 5 trình duyệt).
+* **Nhiệm vụ trọng tâm Sprint 4**: Frontend Bản đồ GPS Live Tracking Leaflet `[S405][FE]`, Trung tâm hỗ trợ CSKH khẩn cấp 24/7 `[S407]` và Tối ưu Mobile-First `[S408]`.
+
+---
+
+> [!TIP]
+> ### 🚨 QUY TẮC BẮT BUỘC TRƯỚC KHI TẠO PULL REQUEST (CHECKLIST 3 BƯỚC)
+> 1. **Kiểm tra biên dịch nội bộ**: Chạy `cd backend ; .\gradlew.bat compileJava` và `cd frontend ; npm run build`. Cả 2 phải pass 100%.
+> 2. **Không commit file rác / đường dẫn máy cá nhân**: Tuyệt đối không commit thư mục `test-results/` hoặc cấu hình `org.gradle.java.home` tuyệt đối.
+> 3. **Viết báo cáo kiểm thử**: Tạo file báo cáo mẫu tại `docs/test-reports/<tên-thành-viên>/S4xx_TEST_REPORT.md` trước khi bàn giao Leader nghiệm thu.

@@ -18,4 +18,7 @@ public class TripSeatResponse {
     private Integer deck;
     private SeatStatus status;
     private BigDecimal price;
+    private Boolean isHeldByMe;
+    private String holderIdentifier;
+    private Long remainingHoldSeconds;
 }

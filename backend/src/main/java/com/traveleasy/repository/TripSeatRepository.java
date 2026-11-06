@@ -25,5 +25,16 @@ public interface TripSeatRepository extends JpaRepository<TripSeat, Long> {
         @Param("seatCodes") List<String> seatCodes
     );
 
+    @Query("SELECT s FROM TripSeat s WHERE s.trip.id = :tripId AND s.seatCode IN :seatCodes")
+    List<TripSeat> findByTripIdAndSeatCodeIn(
+        @Param("tripId") Long tripId,
+        @Param("seatCodes") List<String> seatCodes
+    );
+
     long countByTripIdAndStatus(Long tripId, SeatStatus status);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("UPDATE TripSeat s SET s.status = com.traveleasy.entity.SeatStatus.AVAILABLE WHERE s.status = com.traveleasy.entity.SeatStatus.LOCKED")
+    int resetAllLockedSeatsToAvailable();
 }

@@ -60,11 +60,16 @@ export const ClientRoutes: React.FC = () => {
       <Route path="/routes" element={<SchedulePage />} />
       <Route path="/promotions" element={<PromotionsPage />} />
       <Route path="/reviews" element={<ReviewsPage />} />
-      <Route path="/scanner" element={<Navigate to="/lookup?mode=camera" replace />} />
-      <Route path="/demo" element={<DemoPage />} />
-      {/* Test Fixtures: Chỉ hiển thị trong môi trường development / test */}
-      {import.meta.env.DEV && (
-        <Route path="/test/fixtures" element={<TestFixturesPage />} />
+      <Route path="/scanner" element={<TicketScannerPage />} />
+      {/* Test Fixtures & Demo Hub: Bảo vệ an toàn - Chỉ kích hoạt khi DEV, Localhost hoặc có cờ VITE_ENABLE_DEMO_ROUTES */}
+      {(import.meta.env.DEV || 
+        import.meta.env.VITE_ENABLE_DEMO_ROUTES === 'true' || 
+        (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+      ) && (
+        <>
+          <Route path="/demo" element={<DemoPage />} />
+          <Route path="/test/fixtures" element={<TestFixturesPage />} />
+        </>
       )}
 
       {/* Hợp tác mở bán vé cùng TravelEasy (Chuẩn hóa URL tiếng Anh) */}

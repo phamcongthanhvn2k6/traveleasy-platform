@@ -1,7 +1,8 @@
 # 📕 SPRINT 4 README — VẬN HÀNH SẴN SÀNG SẢN XUẤT, KỊCH BẢN BẢO VỆ OJT & LỘ TRÌNH MỞ RỘNG
 > **Dự án:** Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy  
 > **Đơn vị:** OJT Đồ Án Nhóm 7  
-> **Thời gian thực hiện:** Tuần 7 - Tuần 8 (Sprint Cuối & Nghiệm thu Bảo vệ)  
+> **Thời gian thực hiện:** Tuần 4 (Sprint 4 — Tuần Nước Rút & Nghiệm thu Bảo vệ OJT)  
+> **Quy mô danh mục:** 13 User Stories cốt lõi — 33 Story Points (Đúng chuẩn Sprint 1 tuần)  
 > **Trạng thái:** 🎯 **FINAL SPRINT & ROADMAP (Sẵn sàng nghiệm thu)**  
 > **Trọng tâm:** Bàn giao vận hành, Kịch bản Demo Hội đồng & Hệ sinh thái mở rộng sát thực tế bến xe  
 
