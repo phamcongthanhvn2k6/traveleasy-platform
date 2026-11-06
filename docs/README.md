@@ -132,6 +132,9 @@ Tài liệu quản lý tiến độ, ma trận phân bổ công việc và kịc
 
 Tài liệu chứng minh chất lượng phần mềm thông qua các kịch bản kiểm thử tự động và thủ công:
 
+* 📄 [QUY_TRINH_KIEM_THU_VA_NGHIEM_THU_CHUAN_DO_AN.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/05-qa-and-testing/QUY_TRINH_KIEM_THU_VA_NGHIEM_THU_CHUAN_DO_AN.md) *(Quy Chuẩn Bắt Buộc - SOP)*  
+  * **Nội dung**: Sổ tay quy trình kiểm thử an toàn (Non-invasive Testing), bài học kinh nghiệm từ review PR, quy chuẩn 3 cấp độ (Backend, Frontend, E2E), tiêu chuẩn thu thập bằng chứng hình ảnh/log và bộ tiêu chí Definition of Done (DoD 5 sao).
+
 * 📄 [TEST_PLAN_AND_REPORT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/05-qa-and-testing/TEST_PLAN_AND_REPORT.md)  
   * **Nội dung**: Kế hoạch kiểm thử tổng thể (Test Strategy), ma trận phân loại Test Case (Functional, Security, Concurrency, Regression) và kết quả nghiệm thu.
 
