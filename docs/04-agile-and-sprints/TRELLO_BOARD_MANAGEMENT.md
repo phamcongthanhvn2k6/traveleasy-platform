@@ -39,7 +39,52 @@ Bảng Trello được cấu hình theo đúng quy chuẩn **Multi-Sprint Scrum 
 
 ---
 
-## 2. QUY CHUẨN BẢNG NHÃN MÀU (LABEL SYSTEM)
+## 2. QUY CHUẨN LUÂN CHUYỂN TASK & PHÂN ĐỊNH QUYỀN HẠN TRÊN TRELLO (KANBAN STATE MACHINE)
+
+Nhằm đảm bảo tính minh bạch, kỷ luật và phân định trách nhiệm rõ ràng giữa **Nhóm trưởng (Tech Lead / Product Owner)** và **Thành viên (Developers / QA)**, toàn bộ các thẻ task trên Trello phải tuân thủ nghiêm ngặt theo máy trạng thái dưới đây:
+
+### 2.1 Sơ đồ luồng trạng thái luân chuyển thẻ (State Diagram)
+
+```mermaid
+stateDiagram-v2
+    [*] --> SprintBacklog: [Nhóm trưởng] Soạn task đặc tả
+    SprintBacklog --> ToDo: [Nhóm trưởng] Kéo sang khi sẵn sàng làm
+    
+    ToDo --> InProgress: [Thành viên] Nhận task & kéo sang
+    InProgress --> CodeReview: [Thành viên] Code xong & Mở PR trên GitHub
+    
+    CodeReview --> Testing: [Nhóm trưởng] Review code OK, kéo sang test
+    
+    Testing --> Bug: [Nhóm trưởng] Phát hiện lỗi / Không đạt DoD
+    Bug --> InProgress: [Thành viên] Kéo về để sửa lỗi
+    
+    Testing --> Done: [Nhóm trưởng] Test thành công & Merge dev
+    Done --> [*]
+```
+
+### 2.2 Bảng phân định quyền hạn thao tác trên 7 Cột (Lists)
+
+| STT | Tên Cột trên Trello | Người Có Quyền Kéo Thẻ | Điều Kiện & Hành Động Kích Hoạt |
+|:---:|:---|:---:|:---|
+| **1** | **`Sprint Backlog`** | 👑 **Nhóm trưởng** | Nhóm trưởng trực tiếp soạn thảo đặc tả User Story, tiêu chí chấp thuận (Acceptance Criteria) và danh sách Checklist kỹ thuật. |
+| **2** | **`To Do`** | 👑 **Nhóm trưởng** | Khi task đã sẵn sàng để triển khai (không bị nghẽn phụ thuộc), Nhóm trưởng chuyển thẻ từ `Sprint Backlog` sang `To Do` để mở quyền nhận việc cho thành viên. |
+| **3** | **`In Progress`** | 👨‍💻 **Thành viên** | * Thành viên nhận task từ `To Do` ➔ Gán Avatar cá nhân ➔ Kéo sang `In Progress`.<br>* **Trường hợp bị Bug**: Thành viên thấy thẻ bị đẩy vào cột `Bug` ➔ Đọc nhận xét lỗi và kéo ngược về `In Progress` để sửa. |
+| **4** | **`Code Review`** | 👨‍💻 **Thành viên** | Thành viên hoàn thành mã nguồn trên nhánh cá nhân, chạy test độc lập pass 100%, **mở Pull Request (PR)** trỏ vào `dev` ➔ Dán link PR vào thẻ Trello và kéo sang `Code Review`. |
+| **5** | **`Testing`** | 👑 **Nhóm trưởng** | Nhóm trưởng kiểm tra code trên GitHub (CI xanh, không xung đột, đúng quy chuẩn) ➔ Kéo thẻ Trello sang `Testing` để tiến hành chạy thử và nghiệm thu giao diện. |
+| **6** | **`Bug`** | 👑 **Nhóm trưởng** | Nếu kiểm thử phát hiện lỗi chức năng, giao diện vỡ hoặc rớt test case ➔ Nhóm trưởng **viết comment chỉ rõ lỗi** vào thẻ và chuyển thẻ sang cột `Bug`. |
+| **7** | **`Done`** | 👑 **Nhóm trưởng** | Nếu kiểm thử thực tế đạt 100% yêu cầu ➔ Nhóm trưởng **Approve & Merge PR** vào nhánh `dev`, tích xanh toàn bộ checklist và kéo thẻ sang `Done`. |
+
+### 2.3 Ba Nguyên tắc kỷ luật sống còn khi thao tác Trello
+1. 🚫 **Thành viên TUYỆT ĐỐI KHÔNG được tự ý kéo thẻ sang `Done` hoặc `Testing`:**  
+   Chỉ có **Nhóm trưởng** mới có thẩm quyền chuyển thẻ vào `Testing`, `Bug` hoặc `Done` sau khi đã trực tiếp rà soát mã nguồn và kiểm thử thực tế.
+2. 🔄 **Quy tắc phản hồi lỗi (Bug Feedback Loop):**  
+   Khi task bị đẩy vào cột `Bug`, thành viên phụ trách phải xem kỹ nguyên nhân được ghi trong comment, **kéo ngay thẻ về `In Progress`**, sửa lỗi triệt để trên nhánh cũ, push lại commit và chuyển lại thẻ sang `Code Review`.
+3. 🎯 **Giới hạn số lượng công việc đang làm (WIP Limit = 1):**  
+   Mỗi thành viên tại một thời điểm chỉ được phép có **tối đa 1 thẻ** ở cột `In Progress`. Nghiêm cấm nhận cùng lúc nhiều task gây dàn trải và nghẽn tiến độ nhóm.
+
+---
+
+## 3. QUY CHUẨN BẢNG NHÃN MÀU (LABEL SYSTEM)
 
 | Tên Nhãn | Mã Màu | Ý nghĩa & Phạm vi áp dụng |
 |---|:---:|---|
@@ -52,7 +97,7 @@ Bảng Trello được cấu hình theo đúng quy chuẩn **Multi-Sprint Scrum 
 
 ---
 
-## 3. DANH MỤC 17 USER STORIES TẠI CỘT 'DONE SPRINT' (95 STORY POINTS)
+## 4. DANH MỤC 17 USER STORIES TẠI CỘT 'DONE SPRINT' (95 STORY POINTS)
 
 Mỗi thẻ User Story đều tuân thủ định dạng chuẩn của Scrum:
 * **Tiêu đề**: `({Điểm Fibonacci}) US-{Mã}: Là một {Vai trò}, tôi muốn {Hành động} để {Mục đích}`.
@@ -231,7 +276,7 @@ Mỗi thẻ User Story đều tuân thủ định dạng chuẩn của Scrum:
 
 ---
 
-## 4. DANH MỤC THẺ PRODUCT BACKLOG (TÍNH NĂNG MỞ RỘNG TƯƠNG LAI)
+## 5. DANH MỤC THẺ PRODUCT BACKLOG (TÍNH NĂNG MỞ RỘNG TƯƠNG LAI)
 
 Tại danh sách `Product Backlog`, lưu giữ 5 thẻ mở rộng phục vụ kế hoạch phát triển Phase 2:
 1. `(3) US-21`: Trò chuyện với Trợ lý AI du lịch để tư vấn vị trí giường nằm chống say và quán ăn ngon.
@@ -242,7 +287,7 @@ Tại danh sách `Product Backlog`, lưu giữ 5 thẻ mở rộng phục vụ k
 
 ---
 
-## 5. DANH MỤC THẺ RÁC ĐÃ LƯU TRỮ (ARCHIVED FOREIGN CARDS)
+## 6. DANH MỤC THẺ RÁC ĐÃ LƯU TRỮ (ARCHIVED FOREIGN CARDS)
 
 Toàn bộ 23 thẻ lạ thuộc về dự án thi trắc nghiệm tiếng Anh TOEIC và các thẻ nháp cũ trùng lặp đã được script tự động nhận diện và lưu trữ (Archive) an toàn:
 * **Các thẻ TOEIC bị lưu trữ**: `us-07` (identity service), `us-09` (rabbitmq), `us-13` (lưu bài redis), `us-14` (chấm điểm ets), `us-15` (exam dtos), `us-16` (erd ngân hàng đề), `us-17` (erd phiên thi), `us-18` (ddl v1.0), `us-19` (giám thị proctoring), `us-20` (sổ tay câu sai), `us-22` (json đề thi), `us-23` (postman gateway), `us-26` (uat luồng thi), `us-28` (xử lý sự cố), `us-30` (từ vựng toeic), `us-31` (faq thí sinh), `us-32` (khảo sát thí sinh).
@@ -250,7 +295,7 @@ Toàn bộ 23 thẻ lạ thuộc về dự án thi trắc nghiệm tiếng Anh T
 
 ---
 
-## 6. HƯỚNG DẪN 1-CLICK ĐỒNG BỘ TRELLO LIVE BẰNG SCRIPT PYTHON
+## 7. HƯỚNG DẪN 1-CLICK ĐỒNG BỘ TRELLO LIVE BẰNG SCRIPT PYTHON
 
 Bất kỳ thành viên nào có quyền trên bảng Trello đều có thể chạy script để đồng bộ toàn bộ bảng chỉ trong 5 giây:
 
