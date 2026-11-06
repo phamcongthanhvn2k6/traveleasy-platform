@@ -33,6 +33,7 @@ export const ClientRoutes: React.FC = () => {
 
       {/* Chức năng 3: Điền thông tin hành khách & Thanh toán */}
       <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/booking/checkout" element={<CheckoutPage />} />
 
       {/* Xác thực người dùng (Đăng ký / Đăng nhập JWT) */}
       <Route path="/auth" element={<CustomerAuthPage />} />
