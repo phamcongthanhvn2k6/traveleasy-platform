@@ -226,3 +226,4 @@ export const GlobalPageLoader: React.FC = () => {
     </>
   );
 };
+

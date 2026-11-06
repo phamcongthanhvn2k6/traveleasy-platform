@@ -98,14 +98,10 @@ export const TripSearchPage: React.FC = () => {
     const cached = tripSearchClientCache.get(cacheKey) || getSessionSearchCache(cacheKey);
     const now = Date.now();
 
-    // Stale-While-Revalidate: Hiển thị ngay lập tức (0ms) nếu có cache, sau đó revalidate ngầm để cập nhật số ghế mới nhất
+    // Stale-While-Revalidate: Hiển thị ngay nếu có cache, đồng thời luôn gọi API để cập nhật số ghế mới nhất
     if (cached) {
       setTrips(cached.data);
       setLoading(false);
-      // Nếu vừa mới tải trong vòng 3 giây, không cần gọi lại
-      if (now - cached.timestamp < 3000) {
-        return;
-      }
     } else {
       setLoading(true);
     }
@@ -516,8 +512,8 @@ export const TripSearchPage: React.FC = () => {
     expiry: number;
   } | null>(() => {
     try {
-      const raw = sessionStorage.getItem('traveleasy_checkout_data');
-      const expStr = sessionStorage.getItem('traveleasy_hold_expiry');
+      const raw = sessionStorage.getItem('traveleasy_checkout_data') || localStorage.getItem('traveleasy_checkout_data');
+      const expStr = sessionStorage.getItem('traveleasy_hold_expiry') || localStorage.getItem('traveleasy_hold_expiry');
       if (!raw || !expStr) return null;
       const exp = Number(expStr);
       if (Date.now() >= exp) return null;
@@ -540,6 +536,48 @@ export const TripSearchPage: React.FC = () => {
     return Math.max(0, Math.floor((globalHold.expiry - Date.now()) / 1000));
   });
 
+  // Tự động đồng bộ phiên giữ chỗ từ Backend API để không bao giờ bị mất phiên dù tải lại trang
+  useEffect(() => {
+    let isSubscribed = true;
+    const fetchActiveHold = async () => {
+      try {
+        const sid = sessionStorage.getItem('traveleasy_session_id') || localStorage.getItem('traveleasy_session_id');
+        const res = await api.get('/trips/active-hold', { params: { sessionId: sid } });
+        const holdData = res.data?.data;
+        if (isSubscribed && holdData && holdData.hasActiveHold && holdData.remainingSeconds > 0) {
+          const payload = {
+            trip: {
+              id: holdData.tripId,
+              busCompanyName: holdData.busCompanyName,
+              busCompanyLogo: holdData.busCompanyLogo,
+              originCity: holdData.originCity,
+              destinationCity: holdData.destinationCity,
+              departureTime: holdData.departureTime,
+              price: holdData.price,
+            } as Trip,
+            selectedSeats: holdData.seatCodes,
+            holdExpiry: holdData.expiryTimestamp,
+          };
+          sessionStorage.setItem('traveleasy_checkout_data', JSON.stringify(payload));
+          sessionStorage.setItem('traveleasy_hold_expiry', String(holdData.expiryTimestamp));
+          localStorage.setItem('traveleasy_checkout_data', JSON.stringify(payload));
+          localStorage.setItem('traveleasy_hold_expiry', String(holdData.expiryTimestamp));
+          setGlobalHold({
+            trip: payload.trip,
+            seats: holdData.seatCodes,
+            expiry: holdData.expiryTimestamp,
+          });
+          setGlobalRemaining(holdData.remainingSeconds);
+        }
+      } catch (err) {
+        // Không có active hold hoặc lỗi mạng
+      }
+    };
+
+    fetchActiveHold();
+    return () => { isSubscribed = false; };
+  }, []);
+
   useEffect(() => {
     if (!globalHold) return;
     const t = setInterval(() => {
@@ -550,6 +588,8 @@ export const TripSearchPage: React.FC = () => {
         setGlobalHold(null);
         sessionStorage.removeItem('traveleasy_checkout_data');
         sessionStorage.removeItem('traveleasy_hold_expiry');
+        localStorage.removeItem('traveleasy_checkout_data');
+        localStorage.removeItem('traveleasy_hold_expiry');
       }
     }, 1000);
     return () => clearInterval(t);
@@ -568,15 +608,21 @@ export const TripSearchPage: React.FC = () => {
       }
       sessionStorage.removeItem('traveleasy_checkout_data');
       sessionStorage.removeItem('traveleasy_hold_expiry');
+      localStorage.removeItem('traveleasy_checkout_data');
+      localStorage.removeItem('traveleasy_hold_expiry');
       setGlobalHold(null);
     }
   };
 
   const handleOpenBooking = (trip: Trip, seats: string[], points: any) => {
     const token = localStorage.getItem('traveleasy_token');
-    const checkoutPayload = { trip, selectedSeats: seats, points };
+    const expiryTimestamp = Date.now() + 600 * 1000;
+    const checkoutPayload = { trip, selectedSeats: seats, points, holdExpiry: expiryTimestamp };
     try {
       sessionStorage.setItem('traveleasy_checkout_data', JSON.stringify(checkoutPayload));
+      sessionStorage.setItem('traveleasy_hold_expiry', String(expiryTimestamp));
+      localStorage.setItem('traveleasy_checkout_data', JSON.stringify(checkoutPayload));
+      localStorage.setItem('traveleasy_hold_expiry', String(expiryTimestamp));
     } catch (e) {
       console.warn(e);
     }

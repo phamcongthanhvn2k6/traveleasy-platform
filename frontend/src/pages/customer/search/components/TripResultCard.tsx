@@ -175,15 +175,15 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
   const [simulating, setSimulating] = useState(false);
   const [showSimPanel, setShowSimPanel] = useState(false);
 
-  // Đọc phiên giữ chỗ còn hiệu lực trong sessionStorage
+  // Đọc phiên giữ chỗ còn hiệu lực trong sessionStorage hoặc localStorage
   const [activeHold, setActiveHold] = useState<{
     tripId: number;
     seats: string[];
     expiry: number;
   } | null>(() => {
     try {
-      const raw = sessionStorage.getItem('traveleasy_checkout_data');
-      const expStr = sessionStorage.getItem('traveleasy_hold_expiry');
+      const raw = sessionStorage.getItem('traveleasy_checkout_data') || localStorage.getItem('traveleasy_checkout_data');
+      const expStr = sessionStorage.getItem('traveleasy_hold_expiry') || localStorage.getItem('traveleasy_hold_expiry');
       if (!raw || !expStr) return null;
       const exp = Number(expStr);
       if (Date.now() >= exp) {
@@ -243,6 +243,8 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
       }
       sessionStorage.removeItem('traveleasy_checkout_data');
       sessionStorage.removeItem('traveleasy_hold_expiry');
+      localStorage.removeItem('traveleasy_checkout_data');
+      localStorage.removeItem('traveleasy_hold_expiry');
       setActiveHold(null);
       setTripDetail((prev) => {
         if (!prev) return prev;
@@ -254,13 +256,29 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
     }
   };
 
+  // Tổng hợp danh sách ghế do người dùng này đang giữ (từ activeHold hoặc từ backend flag isHeldByMe)
+  const myHeldSeatsCombined = useMemo(() => {
+    const list: string[] = activeHold ? [...activeHold.seats] : [];
+    if (tripDetail?.seats) {
+      tripDetail.seats.forEach((s) => {
+        if (s.isHeldByMe && !list.includes(s.seatNumber)) {
+          list.push(s.seatNumber);
+        }
+      });
+    }
+    return list;
+  }, [activeHold, tripDetail]);
+
   // Số chỗ trống theo thời gian thực (tự động cập nhật khi ghế được chọn/giữ/đặt hoặc qua SSE)
   const displayAvailableSeats = useMemo(() => {
     if (tripDetail?.seats && tripDetail.seats.length > 0) {
       return tripDetail.seats.filter((s) => s.status === 'AVAILABLE').length;
     }
+    if (activeHold && activeHold.seats.length > 0) {
+      return Math.max(0, trip.availableSeats - activeHold.seats.length);
+    }
     return trip.availableSeats;
-  }, [tripDetail, trip.availableSeats]);
+  }, [tripDetail, trip.availableSeats, activeHold]);
 
   // Lắng nghe luồng SSE cập nhật ghế theo thời gian thực
   useEffect(() => {
@@ -365,7 +383,8 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
     if (nextExpanded) {
       setLoadingDetail(true);
       try {
-        const res = await api.get(`/trips/${trip.id}`);
+        const sid = sessionStorage.getItem('traveleasy_session_id') || localStorage.getItem('traveleasy_session_id');
+        const res = await api.get(`/trips/${trip.id}`, { params: { sessionId: sid } });
         const data = res.data.data;
         setTripDetail(data);
         if (data.pickupPoints?.length > 0 && !selectedPickup) {
@@ -983,7 +1002,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                         seats={tripDetail.seats}
                         selectedSeatNumbers={selectedSeats}
                         onToggleSeat={handleToggleSeat}
-                        myHeldSeats={activeHold ? activeHold.seats : []}
+                        myHeldSeats={myHeldSeatsCombined}
                       />
                     </>
                   )}

@@ -31,14 +31,11 @@ public class TripService {
     private final PickupDropoffPointRepository pointRepository;
     private final RouteRepository routeRepository;
     private final com.traveleasy.service.automation.TripAutomationService tripAutomationService;
+    private final com.traveleasy.service.realtime.SeatRealtimeService seatRealtimeService;
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    @org.springframework.cache.annotation.Cacheable(
-        value = "trips_search",
-        key = "(#origin != null ? #origin : '') + '_' + (#destination != null ? #destination : '') + '_' + (#departureDate != null ? #departureDate.toString() : '')"
-    )
     public List<TripResponse> searchTrips(String origin, String destination, LocalDate departureDate) {
         long t0 = System.currentTimeMillis();
         LocalDateTime now = LocalDateTime.now();
@@ -133,6 +130,11 @@ public class TripService {
 
     @Transactional(readOnly = true)
     public TripDetailResponse getTripDetail(Long tripId) {
+        return getTripDetail(tripId, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public TripDetailResponse getTripDetail(Long tripId, String userEmail, String sessionId) {
         long t0 = System.currentTimeMillis();
         Trip trip = tripRepository.findByIdWithDetails(tripId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chuyến xe ID: " + tripId));
@@ -140,13 +142,34 @@ public class TripService {
         List<TripSeat> seats = tripSeatRepository.findByTripIdOrderByFloorAscSeatCodeAsc(tripId);
         List<PickupDropoffPoint> points = pointRepository.findByRouteIdOrderByDisplayOrderAsc(trip.getRoute().getId());
 
-        List<TripSeatResponse> seatResponses = seats.stream().map(s -> TripSeatResponse.builder()
-                .id(s.getId())
-                .seatNumber(s.getSeatCode())
-                .deck(s.getFloor())
-                .status(s.getStatus())
-                .price(trip.getPrice())
-                .build()).collect(Collectors.toList());
+        List<TripSeatResponse> seatResponses = seats.stream().map(s -> {
+            boolean isHeldByMe = false;
+            Long remainingSecs = null;
+            SeatStatus effectiveStatus = s.getStatus();
+
+            if (effectiveStatus == SeatStatus.LOCKED && seatRealtimeService != null) {
+                com.traveleasy.service.realtime.SeatRealtimeService.SeatHolderInfo holderInfo =
+                        seatRealtimeService.getSeatHolderInfo(tripId, s.getSeatCode(), userEmail, sessionId);
+                if (holderInfo != null) {
+                    if (holderInfo.isExpired()) {
+                        effectiveStatus = SeatStatus.AVAILABLE;
+                    } else {
+                        isHeldByMe = holderInfo.isHeldByMe();
+                        remainingSecs = holderInfo.getRemainingSeconds();
+                    }
+                }
+            }
+
+            return TripSeatResponse.builder()
+                    .id(s.getId())
+                    .seatNumber(s.getSeatCode())
+                    .deck(s.getFloor())
+                    .status(effectiveStatus)
+                    .price(trip.getPrice())
+                    .isHeldByMe(isHeldByMe)
+                    .remainingHoldSeconds(remainingSecs)
+                    .build();
+        }).collect(Collectors.toList());
 
         List<PointResponse> pickupPoints = points.stream()
                 .filter(p -> p.getPointType() == PointType.PICKUP)

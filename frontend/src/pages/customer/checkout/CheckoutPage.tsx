@@ -26,7 +26,7 @@ export const CheckoutPage: React.FC = () => {
       return location.state;
     }
     try {
-      const saved = sessionStorage.getItem('traveleasy_checkout_data');
+      const saved = sessionStorage.getItem('traveleasy_checkout_data') || localStorage.getItem('traveleasy_checkout_data');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -105,9 +105,11 @@ export const CheckoutPage: React.FC = () => {
   const bookingSuccessRef = useRef(false);
   const sessionIdRef = useRef<string>(
     sessionStorage.getItem('traveleasy_session_id') ||
+    localStorage.getItem('traveleasy_session_id') ||
     (() => {
       const sid = 'sess_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
       sessionStorage.setItem('traveleasy_session_id', sid);
+      localStorage.setItem('traveleasy_session_id', sid);
       return sid;
     })()
   );
@@ -149,10 +151,16 @@ export const CheckoutPage: React.FC = () => {
       } catch (err: any) {
         if (!isMounted) return;
         const msg = err.response?.data?.message || 'Ghế bạn chọn đang được khách hàng khác giữ chỗ hoặc đã có người đặt mua!';
-        toast.error(msg, 'Ghế Đang Được Giữ');
-        sessionStorage.removeItem('traveleasy_checkout_data');
-        sessionStorage.removeItem('traveleasy_hold_expiry');
-        navigate('/search');
+        if (err.response?.status === 400 || err.response?.status === 409) {
+          toast.error(msg, 'Ghế Đang Được Giữ');
+          sessionStorage.removeItem('traveleasy_checkout_data');
+          sessionStorage.removeItem('traveleasy_hold_expiry');
+          localStorage.removeItem('traveleasy_checkout_data');
+          localStorage.removeItem('traveleasy_hold_expiry');
+          navigate('/search');
+        } else {
+          console.warn('Lỗi kết nối khi gửi holdSeats:', err);
+        }
       }
     };
 
@@ -186,6 +194,8 @@ export const CheckoutPage: React.FC = () => {
     }
     sessionStorage.removeItem('traveleasy_checkout_data');
     sessionStorage.removeItem('traveleasy_hold_expiry');
+    localStorage.removeItem('traveleasy_checkout_data');
+    localStorage.removeItem('traveleasy_hold_expiry');
     navigate('/search');
   };
 
@@ -203,6 +213,8 @@ export const CheckoutPage: React.FC = () => {
       }
       sessionStorage.removeItem('traveleasy_checkout_data');
       sessionStorage.removeItem('traveleasy_hold_expiry');
+    localStorage.removeItem('traveleasy_checkout_data');
+    localStorage.removeItem('traveleasy_hold_expiry');
       navigate('/search');
     }
   };
@@ -273,6 +285,8 @@ export const CheckoutPage: React.FC = () => {
       bookingSuccessRef.current = true;
       sessionStorage.removeItem('traveleasy_checkout_data');
       sessionStorage.removeItem('traveleasy_hold_expiry');
+    localStorage.removeItem('traveleasy_checkout_data');
+    localStorage.removeItem('traveleasy_hold_expiry');
       const bookingData: Booking = res.data.data;
       setCreatedBooking(bookingData);
 
