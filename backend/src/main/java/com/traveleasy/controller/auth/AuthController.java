@@ -3,10 +3,12 @@ package com.traveleasy.controller.auth;
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.dto.auth.AuthResponse;
 import com.traveleasy.dto.auth.ChangePasswordRequest;
+import com.traveleasy.dto.auth.FirebaseAuthRequest;
 import com.traveleasy.dto.auth.LoginRequest;
 import com.traveleasy.dto.auth.RegisterRequest;
 import com.traveleasy.dto.auth.UpdateProfileRequest;
 import com.traveleasy.service.auth.AuthService;
+import com.traveleasy.service.auth.FirebaseAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final FirebaseAuthService firebaseAuthService;
 
     @PostMapping("/register")
     @Operation(summary = "Đăng ký tài khoản hành khách mới")
@@ -72,5 +75,19 @@ public class AuthController {
         }
         authService.changePassword(userDetails.getUsername(), request.getOldPassword(), request.getNewPassword());
         return ApiResponse.success("Đổi mật khẩu thành công", null);
+    }
+
+    // ==================== FIREBASE SOCIAL AUTH (Google / Phone OTP) ====================
+
+    @PostMapping("/firebase/google")
+    @Operation(summary = "Đăng nhập bằng Google qua Firebase (nhận Firebase ID Token)")
+    public ApiResponse<AuthResponse> firebaseGoogle(@Valid @RequestBody FirebaseAuthRequest request) {
+        return ApiResponse.success("Đăng nhập Google thành công", firebaseAuthService.loginWithGoogle(request));
+    }
+
+    @PostMapping("/firebase/phone")
+    @Operation(summary = "Đăng nhập bằng Số điện thoại OTP qua Firebase (nhận Firebase ID Token)")
+    public ApiResponse<AuthResponse> firebasePhone(@Valid @RequestBody FirebaseAuthRequest request) {
+        return ApiResponse.success("Đăng nhập OTP thành công", firebaseAuthService.loginWithPhone(request));
     }
 }
