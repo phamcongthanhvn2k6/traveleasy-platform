@@ -11,8 +11,8 @@ spring:
   mail:
     host: ${SPRING_MAIL_HOST:smtp.gmail.com}
     port: ${SPRING_MAIL_PORT:587}
-    username: ${SPRING_MAIL_USERNAME:notification@traveleasy.vn}
-    password: ${SPRING_MAIL_PASSWORD:}
+    username: ${SPRING_MAIL_USERNAME:phamcongt56@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:gizlexnljusfhuxd}
     properties:
       mail:
         smtp:
@@ -20,9 +20,9 @@ spring:
           starttls:
             enable: true
             required: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:supabase}
   datasource:
