@@ -6,6 +6,12 @@
 > **Đối tượng áp dụng**: Toàn bộ thành viên nhóm 7 (Phát, Phong, Đức, Cường)  
 > **Hiệu lực**: Áp dụng bắt buộc cho toàn bộ task kiểm thử từ Sprint 3 đến lễ bảo vệ đồ án Sprint 4  
 
+> 🔗 **TÀI LIỆU LIÊN QUAN TRONG BỘ HỒ SƠ QA & TESTING:**  
+> • 📋 **Hồ sơ nghiệm thu 34 trang**: [Biên bản nghiệm thu kiểm thử tính năng nội bộ](./BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md)  
+> • 📊 **Kế hoạch & Báo cáo NFR**: [Kế hoạch & Kết quả kiểm thử toàn diện NFR & 25 Test Cases](./TEST_PLAN_AND_REPORT.md)  
+> • 📂 **Thư mục báo cáo thành viên**: [docs/test-reports/](../test-reports/README.md)  
+> • 💻 **Mã nguồn kiểm thử tự động**: [Backend Integration Tests](../../backend/src/test/java/com/traveleasy/integration/) | [Frontend E2E Specs](../../frontend/e2e/)  
+
 ---
 
 ## 📌 1. BỐI CẢNH THỰC TẾ & BÀI HỌC KINH NGHIỆM TỪ CÁC ĐỢT REVIEW PR
@@ -41,15 +47,20 @@ graph TD
    * ✅ **ĐƯỢC PHÉP TẠO / SỬA**:
      * Thư mục kiểm thử: `backend/src/test/java/com/traveleasy/integration/`
      * Thư mục kịch bản E2E: `frontend/e2e/`
-     * Thư mục báo cáo cá nhân: `docs/test-reports/<tên-bạn>/`
-     * Thư mục ảnh chụp bằng chứng: `docs/screenshots/`
+     * Thư mục báo cáo cá nhân: `docs/test-reports/<tên-bạn>/` (và `docs/test-reports/<tên-bạn>/screenshots/`)
+     * Thư mục ảnh chụp bằng chứng chung: `docs/screenshots/`
    * ❌ **TUYỆT ĐỐI CẤM SỬA (NẾU CHƯA CÓ LỆNH TỪ LEADER)**:
      * Logic nghiệp vụ Backend: `backend/src/main/java/**`
      * Giao diện người dùng: `frontend/src/**`
      * Cấu hình bảo mật & CSDL: `SecurityConfig.java`, `init.sql`, Supabase RPC
    * ⚠️ **Trường hợp phát hiện Bug trong mã nguồn chính**:
-     * Ghi nhận mã lỗi vào báo cáo (Ví dụ: `BUG-S317-01: Trang chủ bị tràn chiều ngang trên mobile`).
+     * Ghi nhận mã lỗi vào báo cáo (Ví dụ: `BUG-S317-01: Trang chủ bị tràn chiều ngang trên mobile 375px`).
      * **Dừng lại, không tự sửa code `src/`**, báo cáo trực tiếp cho Trưởng nhóm Phạm Công Thành trên Trello để Leader phân công thành viên phụ trách module đó khắc phục.
+
+> [!TIP]
+> ### 💡 PHÁT HIỆN RA BUG LÀ ĐÓNG GÓP LỚN, KHÔNG PHẢI THẤT BẠI!
+> **Giải tỏa hiểu lầm phổ biến**: Nhiều bạn lầm tưởng *"Nếu test phát hiện lỗi trong hệ thống thì task kiểm thử của mình bị coi là thất bại/bị phạt nên phải cố sửa code sản phẩm để test xanh"*.  
+> **Sự thật hoàn toàn ngược lại**: Nhiệm vụ cao nhất của QA/Tester là phát hiện lỗ hổng trước khi bàn giao cho Hội đồng chấm đồ án. Việc tìm ra Bug, ghi nhận báo cáo chi tiết kèm ảnh chụp và các bước tái hiện (Steps to Reproduce) **ĐƯỢC CHẤM ĐẠT ĐIỂM TỐI ĐA (DoD = PASS)**. Tuyệt đối không được vì muốn test case xanh mà tự ý sửa đè code `src/main` làm hỏng hệ thống!
 
 ---
 
@@ -75,11 +86,28 @@ graph TD
   1. **Luồng chuẩn (Happy Path)**: Dữ liệu hợp lệ $\rightarrow$ Trả về `HTTP 200 OK`, JSON bọc trong `ApiResponse<T>`.
   2. **Dữ liệu biên & Ngoại lệ (Edge Cases & Validation)**: Dữ liệu âm, chuỗi rỗng, vượt quá ký tự, xung đột dữ liệu $\rightarrow$ Trả về `400 Bad Request` hoặc `409 Conflict` kèm thông điệp tiếng Việt thân thiện, không bao giờ để văng mã lỗi `500 Internal Server Error`.
   3. **Bảo mật & Phân quyền (Security & RBAC)**: Thử gọi API khi không có JWT Token hoặc sai Role $\rightarrow$ Bắt buộc trả về `401 Unauthorized` hoặc `403 Forbidden`.
+* **Lệnh thực thi trên Terminal (PowerShell)**:
+  ```powershell
+  # Chạy riêng 1 test class của bạn (Cực nhanh & Độc lập):
+  .\gradlew.bat test --tests com.traveleasy.integration.S310ApiIntegrationTest
+
+  # Xem báo cáo HTML chi tiết sau khi chạy:
+  start backend/build/reports/tests/test/index.html
+  ```
 
 ---
 
 ### 3.2. Đối với task Kiểm thử Frontend (`[FE][Sxxx]`)
 * **Công nghệ**: Playwright E2E (`@playwright/test`) hoặc Kiểm thử thủ công trên trình duyệt thực tế.
+* **Lệnh thực thi Playwright trên Terminal**:
+  ```powershell
+  cd frontend
+  # Chạy có giao diện trực quan (Headed mode):
+  npx playwright test e2e/S312-acceptance.spec.ts --headed
+
+  # Chạy kiểm thử chế độ tự động ngầm (Headless):
+  npx playwright test e2e/S312-acceptance.spec.ts
+  ```
 * **Ma trận 3 độ phân giải bắt buộc (Cross-Viewport Testing)**:
   | Thiết bị mô phỏng | Độ phân giải (Viewport) | Trọng tâm kiểm tra |
   | :--- | :---: | :--- |
@@ -177,21 +205,32 @@ flowchart LR
   * Đoàn Nhật Cường $\rightarrow$ `docs/test-reports/cuong/Sxxx_TEST_REPORT.md`
 * Điền đầy đủ thông tin: Bảng kịch bản kiểm thử, Bằng chứng thực thi, Bug phát hiện (nếu có).
 
-### Bước 5: Commit chuẩn mực & Đẩy lên GitHub
+### Bước 5: Kiểm tra vệ sinh mã nguồn (Git Hygiene) & Commit
 * **CẢNH BÁO QUAN TRỌNG**: Kiểm tra `git status` trước khi add, tuyệt đối không commit thư mục rác `test-results/` hay `node_modules`.
-* Commit bằng **Tiếng Việt có dấu đầy đủ**:
-  ```bash
-  git add docs/test-reports/<tên-bạn>/ docs/screenshots/
+* Lệnh dọn dẹp và chỉ add các file hợp lệ:
+  ```powershell
+  # 1. Kiểm tra trạng thái các file:
+  git status
+
+  # 2. Nếu lỡ dính thư mục rác test-results, gỡ ngay khỏi git tracking:
+  git rm -r --cached docs/test-reports/*/test-results/ 2>$null
+  git rm -r --cached frontend/test-results/ 2>$null
+
+  # 3. Chỉ add các thư mục thuộc phạm vi kiểm thử được phép:
+  git add backend/src/test/ frontend/e2e/ docs/test-reports/<tên-bạn>/ docs/screenshots/
+
+  # 4. Commit bằng Tiếng Việt có dấu đầy đủ theo chuẩn Conventional Commits:
   git commit -m "test(sprint3): nộp báo cáo kiểm thử thẻ [Sxxx] đạt chuẩn DoD"
   git push origin testing/<mã-thẻ>-<tên-bạn>-<mô-tả-ngắn>
   ```
 
 ### Bước 6: Tạo Pull Request & Chờ Leader nghiệm thu
 * Tạo PR trên GitHub: Base là `dev`, Compare là nhánh của bạn.
+* Đặt tiêu đề PR chuẩn mực: `[TESTING] [Sxxx] Tên thẻ kiểm thử - Tên Bạn`
 * Kéo thẻ Trello từ **`In Progress`** sang **`Code Review`** hoặc **`Testing`**, dán link PR vào thẻ.
 * Trưởng nhóm Phạm Công Thành sẽ rà soát:
-  * Nếu đạt: Leader bấm **Merge Pull Request** và kéo thẻ sang **`Done Sprint 3`**.
-  * Nếu có lỗi: Leader gửi Comment yêu cầu điều chỉnh (Request Changes).
+  * Nếu đạt 5 tiêu chí DoD: Leader bấm **Merge Pull Request** và kéo thẻ sang **`Done Sprint 3`**.
+  * Nếu có lỗi/vi phạm quy chuẩn: Leader gửi Comment yêu cầu điều chỉnh (Request Changes).
 
 ---
 
@@ -201,11 +240,26 @@ Một Pull Request kiểm thử chỉ được Trưởng nhóm phê duyệt khi 
 
 | STT | Tiêu chí DoD | Mô tả chi tiết | Đánh giá |
 | :---: | :--- | :--- | :---: |
-| **1** | **Bảo toàn mã nguồn (No Invasive Changes)** | Tuyệt đối không tự ý sửa đổi code nghiệp vụ trong `src/main` hoặc `frontend/src`. Nếu có sửa route, chỉ bổ sung 1 dòng alias và không xóa route cũ. | Bắt buộc ⭐️ |
+| **1** | **Bảo toàn mã nguồn (No Invasive Changes)** | Tuyệt đối không tự ý sửa đổi code nghiệp vụ trong `src/main` hoặc `frontend/src`. Nếu phát hiện bug, ghi nhận vào Bug Report, không tự sửa. | Bắt buộc ⭐️ |
 | **2** | **Đầy đủ bằng chứng (Proof of Work)** | Có ảnh chụp màn hình thực tế trong `docs/screenshots/` hoặc log terminal JSON response chứng minh tính năng pass. | Bắt buộc ⭐️ |
 | **3** | **Báo cáo đúng thư mục (Zero Conflict)** | File báo cáo Markdown nằm đúng thư mục `docs/test-reports/<tên-bạn>/`, không sửa đè file của thành viên khác. | Bắt buộc ⭐️ |
 | **4** | **Kho mã nguồn sạch (Git Hygiene)** | Nhánh sạch sẽ (`mergeable: true`), không commit file rác `test-results/`, `playwright-report/` hay file log hệ thống. | Bắt buộc ⭐️ |
 | **5** | **Commit Tiếng Việt chuẩn mực** | Commit message viết bằng Tiếng Việt có dấu đầy đủ theo đúng format `type(scope): mô tả hành động`. | Bắt buộc ⭐️ |
+
+---
+
+## 📋 7. BẢNG CHECKLIST 6 BƯỚC TỰ KIỂM TRA TRƯỚC KHI MỞ PR (PRE-PR SELF-CHECK)
+
+Trước khi gõ lệnh `git push` và mở PR, thành viên dành **1 phút** trả lời 6 câu hỏi tự kiểm tra:
+
+| STT | Câu hỏi tự kiểm tra (Self-Check Question) | Cách kiểm tra nhanh | Trạng thái đạt |
+|:---:|:---|:---|:---:|
+| 1 | Tôi có vô tình sửa file nào trong `src/main/` hoặc `frontend/src/` không? | Gõ `git diff --name-only dev` xem danh sách file | Không có file nào thuộc `src/main/` |
+| 2 | Tôi có commit nhầm thư mục rác `test-results/` hay file log nặng không? | Gõ `git status` kiểm tra các file đang staged | Không có file rác |
+| 3 | Tôi đã có ảnh chụp màn hình hoặc trích dẫn JSON minh chứng chưa? | Kiểm tra đường dẫn ảnh trong file báo cáo | Ảnh hiển thị rõ ràng |
+| 4 | Báo cáo của tôi đã đặt đúng thư mục `docs/test-reports/<tên-tôi>/` chưa? | Kiểm tra đường dẫn file `Sxxx_TEST_REPORT.md` | Đúng thư mục cá nhân |
+| 5 | Nhánh của tôi có đang bị xung đột (conflict) với `dev` không? | Gõ `git fetch origin` và `git merge origin/dev` | Báo `Already up to date` hoặc không conflict |
+| 6 | Commit message đã viết bằng Tiếng Việt có dấu chuẩn chưa? | Gõ `git log -1 --oneline` kiểm tra | Tiếng Việt chuẩn mực |
 
 ---
 
