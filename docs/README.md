@@ -102,6 +102,9 @@ Cung cấp tài liệu tích hợp API, đóng gói triển khai và cẩm nang 
 
 Tài liệu quản lý tiến độ, ma trận phân bổ công việc và kịch bản bảo vệ tốt nghiệp OJT:
 
+* 📄 [BAO_CAO_TIEN_DO_SPRINT_3_MOI_NHAT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/BAO_CAO_TIEN_DO_SPRINT_3_MOI_NHAT.md) *(Báo Cáo Tiến Độ Sprint 3 Mới Nhất)*  
+  * **Nội dung**: Báo cáo tổng hợp tiến độ thực tế Sprint 3 thời gian thực từ 55 thẻ Trello, ma trận hoàn thành Story Points chi tiết từng thành viên (Thành 98%, Phong 89%, Đức 93%, Phát 82%), tổng hợp 7 Pull Request đã merge thành công và kế hoạch đóng gói Sprint 3.
+
 * 📄 [BAO_CAO_THONG_KE_TIEN_DO_VA_STORY_POINTS_TOAN_SAN.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/BAO_CAO_THONG_KE_TIEN_DO_VA_STORY_POINTS_TOAN_SAN.md) *(Agile Metrics Report)*  
   * **Nội dung**: Báo cáo thống kê toàn diện Story Points từ 117 thẻ Trello theo từng Sprint (Sprint 1 - 4) và ma trận phân bổ năng suất đóng góp của từng thành viên trong nhóm.
 
