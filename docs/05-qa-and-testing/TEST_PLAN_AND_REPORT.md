@@ -2,6 +2,12 @@
 ## NGHIỆM THU 100% TIÊU CHÍ PHI CHỨC NĂNG (NFR) & ĐẶC TẢ BỘ 25 TEST CASES
 ### DỰ ÁN: TRAVELEASY PLATFORM (`PRJ-TRAVELEASY-MVP-01`) | MÔ HÌNH VEXERE PLATFORM
 
+> 🔗 **TÀI LIỆU LIÊN QUAN TRONG BỘ HỒ SƠ QA & TESTING:**  
+> • 📘 **Quy trình chuẩn**: [Quy trình kiểm thử an toàn & nghiệm thu chuẩn đồ án](./QUY_TRINH_KIEM_THU_VA_NGHIEM_THU_CHUAN_DO_AN.md)  
+> • 📋 **Biên bản nghiệm thu 34 trang**: [Hồ sơ nghiệm thu nội bộ 34 trang chức năng](./BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md)  
+> • 📂 **Thư mục báo cáo thành viên**: [docs/test-reports/](../test-reports/README.md)  
+> • 💻 **Mã nguồn kiểm thử tự động**: [Backend Integration Tests](../../backend/src/test/java/com/traveleasy/integration/) | [Frontend E2E Specs](../../frontend/e2e/)  
+
 ---
 
 > **MỤC TIÊU ĐIỂM SỐ:** Khóa trọn **40/40 ĐIỂM NON-FUNCTIONAL REQUIREMENTS & QA** theo khung Rubric đánh giá tốt nghiệp:  
