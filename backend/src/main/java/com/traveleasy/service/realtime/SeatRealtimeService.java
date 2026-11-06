@@ -286,6 +286,16 @@ public class SeatRealtimeService {
             }
         }
 
+        // Ngoài việc quét activeLocks trong RAM, bổ sung quét các ghế mang status LOCKED trong DB mà không có trong RAM:
+        List<TripSeat> dbSeats = tripSeatRepository.findByTripIdOrderByFloorAscSeatCodeAsc(tripId);
+        for (TripSeat seat : dbSeats) {
+            if (seat.getStatus() == SeatStatus.LOCKED && !activeLocks.containsKey(lockKey(tripId, seat.getSeatCode()))) {
+                if (!expiredSeatCodes.contains(seat.getSeatCode())) {
+                    expiredSeatCodes.add(seat.getSeatCode());
+                }
+            }
+        }
+
         if (expiredSeatCodes.isEmpty()) {
             return Collections.emptyList();
         }
@@ -409,16 +419,14 @@ public class SeatRealtimeService {
                 if (isExpired) {
                     activeLocks.remove(key);
                     seat.setStatus(SeatStatus.AVAILABLE);
-                } else {
-                    boolean isOwner = meta != null
-                            && sessionId != null
-                            && !sessionId.isBlank()
-                            && sessionId.equals(meta.getSessionId());
-                    if (!isOwner) {
+                } else if (meta != null && meta.getSessionId() != null) {
+                    // FALLBACK: Chỉ chặn nếu khách có gửi sessionId và khác với người giữ khóa
+                    if (sessionId != null && !sessionId.isBlank() && !sessionId.equals(meta.getSessionId())) {
                         throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED,
                                 "Ghế " + seat.getSeatCode() + " đang được hành khách khác giữ chỗ thanh toán. Vui lòng chọn ghế khác!");
                     }
                 }
+                // Nếu meta == null (sau khi restart): Cho phép khách đặt vé bình thường để giải phóng ghế kẹt
             }
         }
 

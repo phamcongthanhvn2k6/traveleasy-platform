@@ -16,7 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/trips")
+@RequestMapping({"/api/v1/trips", "/api/trips"})
 @RequiredArgsConstructor
 @Tag(name = "Trip Management", description = "Tìm kiếm chuyến xe, Sơ đồ ghế và Lịch trình tuyến đường")
 public class TripController {

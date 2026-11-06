@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequestMapping({"/api/seat-locks", "/api/v1/seat-locks", "/api/v1/trips/{tripId}/seat-locks"})
 @RequiredArgsConstructor
 @Tag(name = "Seat Lock Management", description = "Quản lý khóa giữ chỗ ghế thời gian thực (/api/seat-locks)")
 public class SeatLockController {
@@ -24,7 +25,7 @@ public class SeatLockController {
     private final TripRepository tripRepository;
     private final SeatRealtimeService seatRealtimeService;
 
-    @GetMapping({"/api/seat-locks", "/api/v1/seat-locks", "/api/v1/trips/{tripId}/seat-locks"})
+    @GetMapping
     @Operation(summary = "Lấy danh sách các ghế đang được khóa giữ chỗ (LOCKED) trên chuyến xe")
     public ApiResponse<List<SeatUpdateEvent>> getActiveSeatLocks(
             @PathVariable(required = false) Long tripId,
@@ -38,7 +39,7 @@ public class SeatLockController {
         return ApiResponse.success("Danh sách ghế đang được khóa giữ chỗ", seatRealtimeService.getActiveLocks(resolvedTripId));
     }
 
-    @PostMapping({"/api/seat-locks", "/api/v1/seat-locks", "/api/v1/trips/{tripId}/seat-locks"})
+    @PostMapping
     @Operation(summary = "Khóa giữ chỗ ghế tạm thời 10 phút chống đặt trùng đồng thời")
     public ApiResponse<List<SeatUpdateEvent>> lockSeats(
             @PathVariable(required = false) Long tripId,
@@ -72,7 +73,7 @@ public class SeatLockController {
         return ApiResponse.success("Giữ chỗ thành công trong 10 phút", events);
     }
 
-    @PostMapping({"/api/seat-locks/release", "/api/v1/seat-locks/release", "/api/v1/trips/{tripId}/seat-locks/release"})
+    @PostMapping("/release")
     @Operation(summary = "Giải phóng ghế đang giữ chỗ về trạng thái mở bán trống (AVAILABLE)")
     public ApiResponse<List<SeatUpdateEvent>> releaseSeatLocks(
             @PathVariable(required = false) Long tripId,
@@ -96,7 +97,7 @@ public class SeatLockController {
         return ApiResponse.success("Đã giải phóng ghế giữ chỗ thành công", events);
     }
 
-    @PostMapping({"/api/seat-locks/expire", "/api/v1/seat-locks/expire", "/api/v1/trips/{tripId}/seat-locks/expire"})
+    @PostMapping("/expire")
     @Operation(summary = "Thu hồi và làm sạch các khóa ghế đã hết hạn thời gian giữ chỗ")
     public ApiResponse<List<SeatUpdateEvent>> expireSeatLocks(
             @PathVariable(required = false) Long tripId,
@@ -114,7 +115,7 @@ public class SeatLockController {
         return ApiResponse.success("Đã thu hồi các khóa ghế hết hạn thành công", released);
     }
 
-    @PostMapping({"/api/seat-locks/force-release", "/api/v1/seat-locks/force-release"})
+    @PostMapping("/force-release")
     @Operation(summary = "Cưỡng chế giải phóng khóa ghế treo dành cho Quản trị viên hoặc Nhà xe sở hữu chuyến")
     public ApiResponse<List<SeatUpdateEvent>> forceReleaseSeatLocks(
             @RequestHeader(value = "X-Company-Id", required = false) Long companyId,
@@ -139,4 +140,3 @@ public class SeatLockController {
         return ApiResponse.success("Đã cưỡng chế giải phóng khóa ghế thành công", released);
     }
 }
-
