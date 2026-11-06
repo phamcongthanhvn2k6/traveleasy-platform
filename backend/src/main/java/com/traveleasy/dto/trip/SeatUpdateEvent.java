@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -19,9 +18,7 @@ public class SeatUpdateEvent {
     private SeatStatus status;
     private String message;
     private String holderSessionId;
-    private BigDecimal price;
-    private Integer ttlSeconds;
-    private LocalDateTime expiresAt;
     @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
 }
+

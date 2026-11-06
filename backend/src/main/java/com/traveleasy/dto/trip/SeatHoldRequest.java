@@ -12,13 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SeatHoldRequest {
-    private Long tripId;
     private List<String> seatCodes;
     private String sessionId;
-    private Integer ttlSeconds;
-
-    public SeatHoldRequest(List<String> seatCodes, String sessionId) {
-        this.seatCodes = seatCodes;
-        this.sessionId = sessionId;
-    }
 }
+
