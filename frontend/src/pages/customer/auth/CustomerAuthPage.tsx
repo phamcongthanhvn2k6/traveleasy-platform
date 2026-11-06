@@ -20,6 +20,13 @@ import {
 } from 'lucide-react';
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
+import { isFirebaseConfigured } from '../../../services/firebase';
+import {
+  loginWithGoogle as firebaseLoginWithGoogle,
+  sendPhoneOtp as firebaseSendPhoneOtp,
+  verifyPhoneOtp as firebaseVerifyPhoneOtp,
+  type AuthResponseData,
+} from '../../../services/firebaseAuthService';
 
 export const CustomerAuthPage: React.FC = () => {
   const navigate = useNavigate();
@@ -105,6 +112,119 @@ export const CustomerAuthPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // ==================== FIREBASE SOCIAL AUTH STATE ====================
+  // Google: đang xử lý popup
+  const [socialLoading, setSocialLoading] = useState<'google' | 'otp' | null>(null);
+  // Phone OTP flow state
+  const [otpStep, setOtpStep] = useState<'idle' | 'awaiting'>('idle'); // 'awaiting' = đã gửi SMS, chờ nhập OTP
+  const [otpPhone, setOtpPhone] = useState('');      // input SĐT (E.164: +84xxxxxxxxx)
+  const [otpCode, setOtpCode] = useState('');        // input mã OTP 6 số
+  // Container id cho RecaptchaVerifier (invisible) của Firebase Phone Auth
+  const RECAPTCHA_CONTAINER_ID = 'firebase-recaptcha-container';
+
+  // Lưu JWT do backend cấp + điều hướng theo role - dùng chung cho mọi luồng đăng nhập
+  const applyAuthSuccess = (authData: AuthResponseData, welcomeName: string) => {
+    localStorage.setItem('traveleasy_token', authData.token);
+    localStorage.setItem('traveleasy_user', JSON.stringify(authData));
+
+    toast.success(`Đăng nhập thành công! Chào mừng ${welcomeName}.`, 'Xác Thực Thành Công');
+    setSuccessMessage(`Đăng nhập thành công! Chào mừng ${welcomeName}.`);
+    setTimeout(() => {
+      const redirectParam = new URLSearchParams(location.search).get('redirect') || (location.state as any)?.from;
+      if (redirectParam) {
+        navigate(redirectParam);
+        return;
+      }
+      if (authData.role === 'ADMIN') {
+        navigate('/admin/dashboard');
+      } else if (authData.role === 'OPERATOR') {
+        navigate('/company/dashboard');
+      } else {
+        navigate('/');
+      }
+    }, 600);
+  };
+
+  // Đăng nhập Google qua Firebase: popup → ID Token → backend verify → JWT
+  const handleGoogleLogin = async () => {
+    if (!isFirebaseConfigured) {
+      toast.warning('Chức năng đăng nhập Google chưa được cấu hình (thiếu biến VITE_FIREBASE_*).', 'Firebase');
+      return;
+    }
+    setErrorMessage(null);
+    setSocialLoading('google');
+    try {
+      const authData = await firebaseLoginWithGoogle();
+      applyAuthSuccess(authData, authData.fullName || authData.email || 'bạn');
+    } catch (err: any) {
+      console.error('Google login error:', err);
+      const msg = err?.code === 'auth/popup-closed-by-user'
+        ? 'Bạn đã đóng cửa sổ đăng nhập Google'
+        : err?.message || 'Đăng nhập Google không thành công';
+      toast.error(msg, 'Đăng Nhập Thất Bại');
+      setErrorMessage(msg);
+    } finally {
+      setSocialLoading(null);
+    }
+  };
+
+  // BƯỚC 1 Phone OTP: gửi SMS (Firebase sẽ render reCAPTCHA invisible vào container)
+  const handleSendPhoneOtp = async () => {
+    if (!isFirebaseConfigured) {
+      toast.warning('Chức năng đăng nhập OTP chưa được cấu hình (thiếu biến VITE_FIREBASE_*).', 'Firebase');
+      return;
+    }
+    const phone = otpPhone.trim();
+    if (!/^\+?\d{9,15}$/.test(phone.replace(/[\s.-]/g, ''))) {
+      const msg = 'Số điện thoại không hợp lệ. Dùng dạng quốc tế, vd: +84912345678';
+      toast.warning(msg, 'Số Điện Thoại');
+      setErrorMessage(msg);
+      return;
+    }
+    const e164 = phone.startsWith('+') ? phone.replace(/[\s.-]/g, '') : `+84${phone.replace(/^0/, '').replace(/[\s.-]/g, '')}`;
+
+    setErrorMessage(null);
+    setSocialLoading('otp');
+    try {
+      await firebaseSendPhoneOtp(e164, RECAPTCHA_CONTAINER_ID);
+      setOtpStep('awaiting');
+      toast.info(`Đã gửi mã OTP tới ${e164}. Kiểm tra tin nhắn SMS của bạn.`, 'Gửi OTP');
+    } catch (err: any) {
+      console.error('Send OTP error:', err);
+      const msg = err?.message || 'Không gửi được mã OTP. Vui lòng thử lại.';
+      toast.error(msg, 'Gửi OTP Thất Bại');
+      setErrorMessage(msg);
+    } finally {
+      setSocialLoading(null);
+    }
+  };
+
+  // BƯỚC 2 Phone OTP: xác minh mã → ID Token → backend verify → JWT
+  const handleVerifyPhoneOtp = async () => {
+    const code = otpCode.trim();
+    if (code.length < 6) {
+      toast.warning('Vui lòng nhập đủ 6 số mã OTP', 'Mã OTP');
+      return;
+    }
+    setErrorMessage(null);
+    setSocialLoading('otp');
+    try {
+      const authData = await firebaseVerifyPhoneOtp(code);
+      setOtpStep('idle');
+      setOtpCode('');
+      applyAuthSuccess(authData, authData.fullName || authData.phone || 'bạn');
+    } catch (err: any) {
+      console.error('Verify OTP error:', err);
+      const msg = err?.code === 'auth/invalid-verification-code'
+        ? 'Mã OTP không đúng. Vui lòng kiểm tra lại SMS.'
+        : err?.message || 'Xác minh OTP không thành công';
+      toast.error(msg, 'Xác Minh OTP Thất Bại');
+      setErrorMessage(msg);
+    } finally {
+      setSocialLoading(null);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -775,11 +895,14 @@ export const CustomerAuthPage: React.FC = () => {
                   <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
                 </div>
 
-                {/* SOCIAL LOGIN BUTTONS */}
+                {/* SOCIAL LOGIN BUTTONS - Firebase Google Sign-in + Phone OTP */}
+                <div id={RECAPTCHA_CONTAINER_ID} />
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <button
                     type="button"
-                    onClick={() => toast.info('Tính năng đăng nhập Google đang được đồng bộ OAuth2.', 'Google ID')}
+                    onClick={handleGoogleLogin}
+                    disabled={socialLoading !== null}
                     style={{
                       border: '1px solid #e2e8f0',
                       backgroundColor: '#ffffff',
@@ -788,19 +911,26 @@ export const CustomerAuthPage: React.FC = () => {
                       fontSize: '12.5px',
                       fontWeight: 700,
                       color: '#334155',
-                      cursor: 'pointer',
+                      cursor: socialLoading ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '8px'
+                      gap: '8px',
+                      opacity: socialLoading && socialLoading !== 'google' ? 0.6 : 1
                     }}
                   >
-                    <span style={{ color: '#ea4335', fontWeight: 900 }}>G</span> Google ID
+                    {socialLoading === 'google' ? (
+                      'Đang mở Google...'
+                    ) : (
+                      <>
+                        <span style={{ color: '#ea4335', fontWeight: 900 }}>G</span> Google ID
+                      </>
+                    )}
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => toast.info('Vui lòng nhập Số điện thoại và Mật khẩu ở trên để đăng nhập.', 'Đăng Nhập')}
+                    onClick={() => toast.info('Nhập số điện thoại dạng quốc tế (vd: +84912345678) vào ô bên dưới rồi bấm "GỬI MÃ OTP".', 'Đăng Nhập OTP')}
                     style={{
                       border: '1px solid #e2e8f0',
                       backgroundColor: '#ffffff',
@@ -818,6 +948,106 @@ export const CustomerAuthPage: React.FC = () => {
                   >
                     <span style={{ color: '#059669' }}>📱</span> Số điện thoại OTP
                   </button>
+                </div>
+
+                {/* PHONE OTP PANEL - Firebase Phone Auth (gửi SMS + xác minh mã) */}
+                <div style={{
+                  marginTop: '12px',
+                  padding: '14px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  backgroundColor: '#f8fafc',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                    • Đăng nhập bằng số điện thoại (Firebase OTP)
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="tel"
+                      placeholder="+84912345678"
+                      value={otpPhone}
+                      onChange={(e) => setOtpPhone(e.target.value)}
+                      disabled={otpStep === 'awaiting'}
+                      style={{
+                        flex: 1,
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '13px',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSendPhoneOtp}
+                      disabled={socialLoading !== null || otpStep === 'awaiting'}
+                      style={{
+                        backgroundColor: '#059669',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '9px 14px',
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        cursor: socialLoading ? 'not-allowed' : 'pointer',
+                        whiteSpace: 'nowrap',
+                        opacity: otpStep === 'awaiting' ? 0.6 : 1
+                      }}
+                    >
+                      {socialLoading === 'otp' && otpStep === 'idle' ? 'Đang gửi...' : 'GỬI MÃ OTP'}
+                    </button>
+                  </div>
+
+                  {otpStep === 'awaiting' && (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        placeholder="Nhập 6 số mã OTP"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                        style={{
+                          flex: 1,
+                          padding: '9px 12px',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '13px',
+                          letterSpacing: '4px',
+                          textAlign: 'center',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyPhoneOtp}
+                        disabled={socialLoading !== null}
+                        style={{
+                          backgroundColor: '#0f172a',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '9px 14px',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          cursor: socialLoading ? 'not-allowed' : 'pointer',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {socialLoading === 'otp' && otpStep === 'awaiting' ? 'Đang xác minh...' : 'XÁC MINH →'}
+                      </button>
+                    </div>
+                  )}
+
+                  <div style={{ fontSize: '10.5px', color: '#94a3b8' }}>
+                    Mã OTP được gửi qua SMS bằng Firebase Phone Auth. Ở chế độ dev (localhost), dùng số test +16505553434 với mã cố định.
+                  </div>
                 </div>
               </form>
             ) : (

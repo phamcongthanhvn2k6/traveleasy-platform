@@ -50,6 +50,9 @@ app:
     expiration-ms: 86400000 # 24h
   cors:
     allowed-origins: "http://localhost:3000,http://localhost:5173,http://localhost:5174"
+  firebase:
+    # Đường dẫn tới tệp Service Account JSON của Firebase project (mặc định lấy file trong classpath resources nếu không đặt env)
+    credentials-path: ${FIREBASE_CREDENTIALS_PATH:classpath:fir-traveleasy-platform-firebase-adminsdk-fbsvc-7e7452d400.json}
   ai:
     openai-api-key: ${SPRING_AI_OPENAI_API_KEY:mock_key}
 
