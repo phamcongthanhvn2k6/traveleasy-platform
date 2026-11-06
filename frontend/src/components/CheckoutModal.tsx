@@ -26,6 +26,8 @@ export const CheckoutModal: React.FC<Props> = ({ trip, selectedSeats, points, on
 
   const bookingSuccessRef = useRef(false);
   const isHeldRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   const totalPrice = selectedSeats.length * trip.price;
 
@@ -33,11 +35,17 @@ export const CheckoutModal: React.FC<Props> = ({ trip, selectedSeats, points, on
   useEffect(() => {
     let active = true;
 
+    let sid = sessionStorage.getItem('traveleasy_session_id');
+    if (!sid) {
+      sid = 'session-' + Date.now();
+      sessionStorage.setItem('traveleasy_session_id', sid);
+    }
+
     const holdSeats = async () => {
       try {
         await api.post(`/trips/${trip.id}/seats/hold`, {
           seatCodes: selectedSeats,
-          sessionId: 'session-' + Date.now(),
+          sessionId: sid,
         });
         if (active) {
           isHeldRef.current = true;
@@ -45,7 +53,7 @@ export const CheckoutModal: React.FC<Props> = ({ trip, selectedSeats, points, on
       } catch (err: any) {
         const msg = err.response?.data?.message || 'Một số ghế bạn chọn vừa được khách khác giữ chỗ!';
         toast.error(msg, 'Ghế Đã Có Người Đặt');
-        onClose();
+        onCloseRef.current();
       }
     };
 
@@ -57,7 +65,7 @@ export const CheckoutModal: React.FC<Props> = ({ trip, selectedSeats, points, on
         if (prev <= 1) {
           clearInterval(timer);
           toast.warning('Thời gian giữ chỗ 10 phút đã hết hạn. Ghế đã được mở lại cho khách khác.', 'Hết Hạn Giữ Ghế');
-          onClose();
+          onCloseRef.current();
           return 0;
         }
         return prev - 1;
@@ -74,7 +82,7 @@ export const CheckoutModal: React.FC<Props> = ({ trip, selectedSeats, points, on
         }).catch(() => {});
       }
     };
-  }, [trip.id, selectedSeats, onClose]);
+  }, [trip.id, selectedSeats]);
 
   const formatCountdown = (secs: number) => {
     const mins = Math.floor(secs / 60);

@@ -98,20 +98,14 @@ export const TripSearchPage: React.FC = () => {
     const cached = tripSearchClientCache.get(cacheKey) || getSessionSearchCache(cacheKey);
     const now = Date.now();
 
-    // 1. Instant Cache Hit: Hiển thị ngay lập tức (0ms) nếu đã tải trong vòng 10 phút
-    if (cached && (now - cached.timestamp < 600_000)) {
-      setTrips(cached.data);
-      if (!tripSearchClientCache.has(cacheKey)) {
-        tripSearchClientCache.set(cacheKey, cached);
-      }
-      setLoading(false);
-      return;
-    }
-
-    // 2. Optimistic Rendering: Nếu có dữ liệu trong cache cũ, hiển thị trước và không bật loading spinner
+    // Stale-While-Revalidate: Hiển thị ngay lập tức (0ms) nếu có cache, sau đó revalidate ngầm để cập nhật số ghế mới nhất
     if (cached) {
       setTrips(cached.data);
       setLoading(false);
+      // Nếu vừa mới tải trong vòng 3 giây, không cần gọi lại
+      if (now - cached.timestamp < 3000) {
+        return;
+      }
     } else {
       setLoading(true);
     }

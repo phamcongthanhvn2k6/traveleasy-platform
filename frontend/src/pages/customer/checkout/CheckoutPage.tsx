@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import { paymentService, PaymentInitResponse } from '../../../services/paymentService';
@@ -100,6 +100,53 @@ export const CheckoutPage: React.FC = () => {
   const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
   const [paymentInitData, setPaymentInitData] = useState<PaymentInitResponse | null>(null);
 
+  // Cơ chế Khóa & Giữ chỗ ghế thời gian thực (Hard Lock 10 phút)
+  const isHeldRef = useRef(false);
+  const bookingSuccessRef = useRef(false);
+  const sessionIdRef = useRef<string>(
+    sessionStorage.getItem('traveleasy_session_id') ||
+    (() => {
+      const sid = 'sess_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+      sessionStorage.setItem('traveleasy_session_id', sid);
+      return sid;
+    })()
+  );
+
+  // Tự động gửi lệnh giữ chỗ ghế lên server (đổi màu vàng LOCKED trên toàn hệ thống)
+  useEffect(() => {
+    let isMounted = true;
+    const holdSeatsOnBackend = async () => {
+      if (!trip?.id || !selectedSeats?.length) return;
+      try {
+        await api.post(`/trips/${trip.id}/seats/hold`, {
+          seatCodes: selectedSeats,
+          sessionId: sessionIdRef.current,
+        });
+        if (isMounted) {
+          isHeldRef.current = true;
+        }
+      } catch (err: any) {
+        if (!isMounted) return;
+        const msg = err.response?.data?.message || 'Ghế bạn chọn đang được khách hàng khác giữ chỗ hoặc đã có người đặt mua!';
+        toast.error(msg, 'Ghế Đang Được Giữ');
+        sessionStorage.removeItem('traveleasy_checkout_data');
+        navigate('/search');
+      }
+    };
+
+    holdSeatsOnBackend();
+
+    return () => {
+      isMounted = false;
+      // Nếu rời khỏi trang thanh toán mà chưa hoàn tất đặt vé, tự động trả ghế về trống (AVAILABLE)
+      if (isHeldRef.current && !bookingSuccessRef.current && trip?.id && selectedSeats?.length) {
+        api.post(`/trips/${trip.id}/seats/release`, {
+          seatCodes: selectedSeats,
+        }).catch(() => {});
+      }
+    };
+  }, [trip?.id, selectedSeats]);
+
   // Check if returning from VNPAY with failure
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -114,6 +161,11 @@ export const CheckoutPage: React.FC = () => {
 
   const handleTimerExpire = () => {
     toast.error('Thời gian giữ chỗ 10 phút đã hết hạn! Ghế đã được giải phóng.', 'Hết Hạn');
+    if (trip?.id && selectedSeats?.length) {
+      api.post(`/trips/${trip.id}/seats/release`, {
+        seatCodes: selectedSeats,
+      }).catch(() => {});
+    }
     sessionStorage.removeItem('traveleasy_checkout_data');
     navigate('/search');
   };
@@ -173,6 +225,7 @@ export const CheckoutPage: React.FC = () => {
         discountAmount: discountAmount || 0,
         hasInsurance: passengerInfo.hasInsurance,
         finalAmount: finalTotal,
+        sessionId: sessionStorage.getItem('traveleasy_session_id') || undefined,
       };
 
       // 1. Tạo đơn đặt vé trong database
@@ -180,6 +233,7 @@ export const CheckoutPage: React.FC = () => {
       if (!res.data?.success || !res.data?.data) {
         throw new Error(res.data?.message || 'Không thể tạo đơn đặt vé. Vui lòng thử lại!');
       }
+      bookingSuccessRef.current = true;
       const bookingData: Booking = res.data.data;
       setCreatedBooking(bookingData);
 

@@ -63,7 +63,12 @@ public class BookingService {
 
         for (TripSeat seat : requestedSeats) {
             if (seat.getStatus() == SeatStatus.BOOKED) {
-                throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED, "Ghế " + seat.getSeatCode() + " vừa được người khác đặt. Vui lòng chọn ghế khác!");
+                throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED, "Ghế " + seat.getSeatCode() + " vừa được người khác đặt mua. Vui lòng chọn ghế khác!");
+            }
+            if (seat.getStatus() == SeatStatus.LOCKED) {
+                if (!seatRealtimeService.isSeatHeldBy(trip.getId(), seat.getSeatCode(), userEmail, request.getSessionId())) {
+                    throw new AppException(ErrorCode.VALIDATION_ERROR, "Ghế " + seat.getSeatCode() + " đang được một khách hàng khác giữ chỗ thanh toán (thời hạn 10 phút). Vui lòng chọn ghế khác!");
+                }
             }
         }
 

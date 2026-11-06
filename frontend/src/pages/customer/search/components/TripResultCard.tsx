@@ -180,7 +180,9 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
       return;
     }
 
-    const sseUrl = `/api/v1/trips/${trip.id}/seats/stream`;
+    const rawBase = api.defaults.baseURL || '/api/v1';
+    const cleanBase = rawBase.replace(/\/+$/, '');
+    const sseUrl = `${cleanBase}/trips/${trip.id}/seats/stream`;
     const eventSource = new EventSource(sseUrl);
 
     eventSource.onopen = () => {
@@ -270,8 +272,8 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
       setSelectedDropoff(trip.dropoffPoints[0].id);
     }
 
-    // Tải sơ đồ ghế ngầm (chỉ gọi 1 lần và cache trong state)
-    if (nextExpanded && !tripDetail) {
+    // Tải sơ đồ ghế ngầm và luôn làm mới trạng thái ghế thực tế
+    if (nextExpanded) {
       setLoadingDetail(true);
       try {
         const res = await api.get(`/trips/${trip.id}`);

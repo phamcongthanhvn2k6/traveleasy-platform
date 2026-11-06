@@ -27,8 +27,15 @@ public class SeatRealtimeService {
     // Map chứa các SseEmitter theo tripId
     private final ConcurrentHashMap<Long, CopyOnWriteArrayList<SseEmitter>> tripEmitters = new ConcurrentHashMap<>();
 
+    // Map theo dõi thông tin người/phiên đang giữ ghế (key: "tripId:SEAT_CODE", value: userEmail hoặc sessionId)
+    private final ConcurrentHashMap<String, String> seatHolders = new ConcurrentHashMap<>();
+
     // Scheduler cho tự động nhả ghế sau thời gian giữ chỗ (10 phút)
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+    private String getHolderKey(Long tripId, String seatCode) {
+        return tripId + ":" + (seatCode != null ? seatCode.trim().toUpperCase() : "");
+    }
 
     /**
      * Đăng ký nhận luồng SSE thời gian thực cho một chuyến xe
@@ -109,9 +116,21 @@ public class SeatRealtimeService {
      */
     @Transactional
     public List<SeatUpdateEvent> holdSeats(Long tripId, List<String> seatCodes, String sessionId) {
+        return holdSeats(tripId, seatCodes, sessionId, null);
+    }
+
+    /**
+     * Khóa giữ chỗ ghế tạm thời với thông tin định danh người dùng (userEmail hoặc sessionId)
+     */
+    @Transactional
+    public List<SeatUpdateEvent> holdSeats(Long tripId, List<String> seatCodes, String sessionId, String userEmail) {
         if (seatCodes == null || seatCodes.isEmpty()) {
             return Collections.emptyList();
         }
+
+        String currentHolder = (userEmail != null && !userEmail.isBlank())
+                ? userEmail.trim().toLowerCase()
+                : (sessionId != null && !sessionId.isBlank() ? sessionId.trim() : "anonymous_" + UUID.randomUUID().toString().substring(0, 8));
 
         List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(tripId, seatCodes);
         if (seats.size() != seatCodes.size()) {
@@ -123,19 +142,24 @@ public class SeatRealtimeService {
                 throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED, "Ghế " + seat.getSeatCode() + " đã có người mua vé!");
             }
             if (seat.getStatus() == SeatStatus.LOCKED) {
-                throw new AppException(ErrorCode.VALIDATION_ERROR, "Ghế " + seat.getSeatCode() + " đang được một khách hàng khác giữ chỗ thanh toán!");
+                String existingHolder = seatHolders.get(getHolderKey(tripId, seat.getSeatCode()));
+                // Nếu đang bị giữ bởi một tài khoản/phiên khác -> Chặn
+                if (existingHolder != null && !existingHolder.equalsIgnoreCase(currentHolder)) {
+                    throw new AppException(ErrorCode.VALIDATION_ERROR, "Ghế " + seat.getSeatCode() + " đang được một khách hàng khác giữ chỗ thanh toán (thời hạn 10 phút)!");
+                }
             }
         }
 
         List<SeatUpdateEvent> events = new ArrayList<>();
         for (TripSeat seat : seats) {
             seat.setStatus(SeatStatus.LOCKED);
+            seatHolders.put(getHolderKey(tripId, seat.getSeatCode()), currentHolder);
             events.add(SeatUpdateEvent.builder()
                     .tripId(tripId)
                     .seatNumber(seat.getSeatCode())
                     .status(SeatStatus.LOCKED)
                     .message("Ghế " + seat.getSeatCode() + " đang được giữ chỗ thanh toán (thời hạn 10 phút)")
-                    .holderSessionId(sessionId)
+                    .holderSessionId(currentHolder)
                     .timestamp(LocalDateTime.now())
                     .build());
         }
@@ -143,13 +167,40 @@ public class SeatRealtimeService {
 
         // Broadcast sự kiện LOCKED tới toàn bộ người dùng đang mở sơ đồ chuyến này
         for (SeatUpdateEvent ev : events) {
-            broadcastSeatUpdate(tripId, ev.getSeatNumber(), ev.getStatus(), ev.getMessage(), sessionId);
+            broadcastSeatUpdate(tripId, ev.getSeatNumber(), ev.getStatus(), ev.getMessage(), currentHolder);
         }
 
         // Lên lịch tự động nhả ghế sau 10 phút (600s) nếu chưa hoàn tất thanh toán
         scheduler.schedule(() -> autoReleaseIfStillLocked(tripId, seatCodes), 10, TimeUnit.MINUTES);
 
         return events;
+    }
+
+    /**
+     * Kiểm tra xem ghế có đang được giữ bởi chính user này hay không
+     */
+    public boolean isSeatHeldBy(Long tripId, String seatCode, String userEmail, String sessionId) {
+        String existingHolder = seatHolders.get(getHolderKey(tripId, seatCode));
+        if (existingHolder == null) {
+            return true; // Không có ai giữ trong bộ nhớ -> Cho phép tiến hành
+        }
+        if (userEmail != null && !userEmail.isBlank() && existingHolder.equalsIgnoreCase(userEmail.trim())) {
+            return true;
+        }
+        if (sessionId != null && !sessionId.isBlank() && existingHolder.equalsIgnoreCase(sessionId.trim())) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Xóa thông tin giữ chỗ khi đã thanh toán thành công
+     */
+    public void removeSeatHolders(Long tripId, List<String> seatCodes) {
+        if (seatCodes == null) return;
+        for (String seatCode : seatCodes) {
+            seatHolders.remove(getHolderKey(tripId, seatCode));
+        }
     }
 
     /**
@@ -165,6 +216,7 @@ public class SeatRealtimeService {
         for (TripSeat seat : seats) {
             if (seat.getStatus() == SeatStatus.LOCKED) {
                 seat.setStatus(SeatStatus.AVAILABLE);
+                seatHolders.remove(getHolderKey(tripId, seat.getSeatCode()));
                 broadcastSeatUpdate(tripId, seat.getSeatCode(), SeatStatus.AVAILABLE,
                         "Ghế " + seat.getSeatCode() + " đã được mở lại cho khách khác đặt", null);
             }
@@ -178,6 +230,7 @@ public class SeatRealtimeService {
     public void broadcastBooked(Long tripId, List<String> seatCodes) {
         if (seatCodes == null) return;
         for (String seatCode : seatCodes) {
+            seatHolders.remove(getHolderKey(tripId, seatCode));
             broadcastSeatUpdate(tripId, seatCode, SeatStatus.BOOKED,
                     "Ghế " + seatCode + " vừa được thanh toán thành công!", null);
         }
@@ -241,6 +294,7 @@ public class SeatRealtimeService {
             for (TripSeat seat : seats) {
                 if (seat.getStatus() == SeatStatus.LOCKED) {
                     seat.setStatus(SeatStatus.AVAILABLE);
+                    seatHolders.remove(getHolderKey(tripId, seat.getSeatCode()));
                     seatsToSave.add(seat);
                     broadcastSeatUpdate(tripId, seat.getSeatCode(), SeatStatus.AVAILABLE,
                             "Ghế " + seat.getSeatCode() + " đã hết hạn giữ chỗ 10 phút và tự động mở lại", null);

@@ -19,5 +19,6 @@ public class SeatTemplateRequest {
     private Integer maxColumns;
     private Integer totalSeats;
     private String status;
+    private String layoutJson;
 }
 

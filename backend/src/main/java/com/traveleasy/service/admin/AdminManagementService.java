@@ -469,9 +469,42 @@ public class AdminManagementService {
                 .maxColumns(request.getMaxColumns() != null ? request.getMaxColumns() : 3)
                 .totalSeats(request.getTotalSeats() != null ? request.getTotalSeats() : 34)
                 .status(request.getStatus() != null ? request.getStatus().toUpperCase() : "PUBLISHED")
+                .layoutJson(request.getLayoutJson())
                 .build();
         SeatLayoutTemplate saved = seatLayoutTemplateRepository.save(tpl);
         logAction("admin@traveleasy.vn", "CREATE_SEAT_TEMPLATE", "seat_layout_templates #" + saved.getId(), "-", "{\"name\": \"" + saved.getName() + "\"}");
+        return saved;
+    }
+
+    @Transactional
+    public SeatLayoutTemplate updateSeatTemplate(Long id, SeatTemplateRequest request) {
+        SeatLayoutTemplate tpl = seatLayoutTemplateRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy mẫu sơ đồ ghế #" + id));
+
+        if (request.getName() != null && !request.getName().isBlank()) {
+            tpl.setName(request.getName().trim());
+        }
+        if (request.getMaxFloor() != null) {
+            tpl.setMaxFloor(request.getMaxFloor());
+        }
+        if (request.getMaxRows() != null) {
+            tpl.setMaxRows(request.getMaxRows());
+        }
+        if (request.getMaxColumns() != null) {
+            tpl.setMaxColumns(request.getMaxColumns());
+        }
+        if (request.getTotalSeats() != null) {
+            tpl.setTotalSeats(request.getTotalSeats());
+        }
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            tpl.setStatus(request.getStatus().toUpperCase());
+        }
+        if (request.getLayoutJson() != null) {
+            tpl.setLayoutJson(request.getLayoutJson());
+        }
+
+        SeatLayoutTemplate saved = seatLayoutTemplateRepository.save(tpl);
+        logAction("admin@traveleasy.vn", "UPDATE_SEAT_TEMPLATE", "seat_layout_templates #" + id, "-", "{\"name\": \"" + saved.getName() + "\"}");
         return saved;
     }
 
