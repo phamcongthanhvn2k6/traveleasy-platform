@@ -1,15 +1,15 @@
-# 📋 BÁO CÁO KẾT QUẢ KIỂM THỬ HỒI QUY HỢP ĐỒNG API & ÁNH XẠ NGOẠI LỆ (S319 TEST REPORT)
+# BÁO CÁO KẾT QUẢ KIỂM THỬ HỒI QUY HỢP ĐỒNG API & ÁNH XẠ NGOẠI LỆ (S319 TEST REPORT)
 > **Hướng dẫn:** Báo cáo kiểm thử độc lập của thành viên Phạm Thanh Phong tại `docs/test-reports/phong/S319_TEST_REPORT.md`.  
 > **Tuyệt đối:** Tuân thủ quy chuẩn Zero Merge Conflict và 100% Commit Tiếng Việt có dấu.
 
 ---
 
-## 📌 1. THÔNG TIN THẺ KIỂM THỬ
+## 1. THÔNG TIN THẺ KIỂM THỬ
 * **Mã thẻ Trello:** `[S319]` (`6ae81144` / `AyWUDmz6`)
 * **Tên task:** `[Ưu tiên: 2] [3 SP] [BE][S319] Kiểm thử hồi quy hợp đồng API — Ánh xạ ngoại lệ và nội dung lỗi (/api)`
 * **Người thực hiện:** Phạm Thanh Phong (`phmthanhphong17`)
 * **Người rà soát:** Phạm Công Thành (`thanhphmcong1`)
-* **Ngày kiểm thử:** `2026-11-05`
+* **Ngày kiểm thử:** `2026-11-06`
 * **Môi trường kiểm thử:** Localhost & Spring Boot MockMvc Integration Test (`@ActiveProfiles("test")`)
 * **Tệp kiểm thử tự động:** `backend/src/test/java/com/traveleasy/integration/S319ApiIntegrationTest.java`
 * **Tệp mã nguồn liên quan:**
@@ -18,7 +18,7 @@
 
 ---
 
-## 🔍 2. CHI TIẾT KỊCH BẢN KIỂM THỬ (TEST SCENARIOS)
+## 2. CHI TIẾT KỊCH BẢN KIỂM THỬ (TEST SCENARIOS)
 
 | STT | Kịch bản kiểm thử (Test Case) | Dữ liệu đầu vào (Input) | Kết quả mong đợi (Expected) | Kết quả thực tế (Actual) | Đánh giá |
 |:---:|:---|:---|:---|:---|:---:|
@@ -31,7 +31,7 @@
 
 ---
 
-## 📸 3. BẰNG CHỨNG KIỂM THỬ (EVIDENCE)
+## 3. BẰNG CHỨNG KIỂM THỬ (EVIDENCE)
 
 ### 3.1 Lệnh chạy kiểm thử tái lập kết quả:
 ```powershell
@@ -70,7 +70,6 @@ cd backend
 
 ---
 
-## 🎯 4. KẾT LUẬN & ĐỀ XUẤT
-* **Trạng thái thẻ:** ✅ **ĐẠT (PASS 6/6 DoD Test Cases)** — Sẵn sàng mở Pull Request vào `dev` và chuyển thẻ sang cột **`Done Sprint 3`**.
-* **Ghi chú/Lỗi phát hiện:** Không phát sinh hồi quy hay rò rỉ dữ liệu nội bộ.
-
+## 4. KẾT LUẬN & ĐỀ XUẤT
+* **Trạng thái thẻ:** **ĐẠT (PASS 6/6 DoD Test Cases)** — Sẵn sàng mở Pull Request vào `dev` và chuyển thẻ sang cột **`Done Sprint 3`**.
+* **Ghi chú/Lỗi phát hiện:** Không phát sinh hồi quy hay rò rỉ dữ liệu nội bộ; giữ nguyên `@RequestMapping({"/api/v1/trips", "/api/trips"})` tại `TripController.java` theo đúng hướng dẫn của Team Leader.
