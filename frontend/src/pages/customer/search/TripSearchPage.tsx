@@ -10,7 +10,8 @@ import { Pagination } from '../../../components/Pagination';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { toast } from '../../../context/ToastContext';
 import { useTheme } from '../../../context/ThemeContext';
-import { Bus, AlertCircle, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
+import { Bus, AlertCircle, SlidersHorizontal, ChevronDown, ChevronUp, Gift, Check } from 'lucide-react';
+import { getLocalNextDayString } from '../../../utils/dateUtils';
 
 // Bộ nhớ đệm Client-side SWR: Giữ kết quả tìm kiếm trong RAM và SessionStorage để hiển thị tức thì (0ms)
 const tripSearchClientCache = new Map<string, { data: Trip[]; timestamp: number }>();
@@ -72,6 +73,19 @@ export const TripSearchPage: React.FC = () => {
       }));
     }
   }, [companyParam]);
+
+  // Tu dong chua loi ngay ve khu hoi: neu ngay ve nho hon ngay di, dieu chinh ngay ve toi thieu = ngay di + 2 ngay
+  useEffect(() => {
+    if (date && returnDate && returnDate < date) {
+      const nextParams: Record<string, string> = {};
+      if (origin) nextParams.origin = origin;
+      if (destination) nextParams.destination = destination;
+      nextParams.date = date;
+      nextParams.returnDate = getLocalNextDayString(date, 2);
+      if (companyParam) nextParams.company = companyParam;
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [date, returnDate, origin, destination, companyParam, setSearchParams]);
 
   // Booking Modal State
   const [bookingTrip, setBookingTrip] = useState<Trip | null>(null);
@@ -148,8 +162,13 @@ export const TripSearchPage: React.FC = () => {
     if (newOrigin && newOrigin.trim() !== '') nextParams.origin = newOrigin.trim();
     if (newDestination && newDestination.trim() !== '') nextParams.destination = newDestination.trim();
     if (newDate && newDate.trim() !== '') nextParams.date = newDate.trim();
-    const rDate = newReturnDate !== undefined ? newReturnDate : returnDate;
-    if (rDate && rDate.trim() !== '') nextParams.returnDate = rDate.trim();
+    let rDate = newReturnDate !== undefined ? newReturnDate : returnDate;
+    if (rDate && rDate.trim() !== '') {
+      if (newDate && rDate < newDate) {
+        rDate = getLocalNextDayString(newDate, 2);
+      }
+      nextParams.returnDate = rDate.trim();
+    }
     if (companyParam && companyParam.trim() !== '') nextParams.company = companyParam.trim();
     setSearchParams(nextParams);
   };
@@ -620,7 +639,7 @@ export const TripSearchPage: React.FC = () => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '20px' }}>🎁</span>
+                <Gift size={22} color="#ea580c" />
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 800, color: '#c2410c' }}>
                     Bạn đang săn ưu đãi [ mã: {searchParams.get('voucher')} ]
@@ -775,10 +794,9 @@ export const TripSearchPage: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 margin: '0 auto 16px auto',
-                fontSize: '28px',
               }}
             >
-              ✓
+              <Check size={32} color="#16a34a" />
             </div>
 
             <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
