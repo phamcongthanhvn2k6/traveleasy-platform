@@ -49,6 +49,7 @@ logs/
 mysql_data/
 scratch/
 
+backend/src/main/resources/fir-traveleasy-platform-firebase-adminsdk-fbsvc-7e7452d400.json
 
 test-results/
 playwright-report/
