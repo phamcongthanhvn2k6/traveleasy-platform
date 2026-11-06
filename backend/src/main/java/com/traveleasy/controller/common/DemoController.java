@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ import java.util.*;
 @RequestMapping("/api/v1/demo")
 @RequiredArgsConstructor
 @Tag(name = "Demo & Presentation Hub", description = "Các endpoint hỗ trợ thiết lập dữ liệu minh họa lặp lại, phục hồi ghế và kịch bản thuyết trình bảo vệ đồ án OJT")
+@Profile("!prod")
 public class DemoController {
 
     private final TripRepository tripRepository;
