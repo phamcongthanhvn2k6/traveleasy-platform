@@ -45,6 +45,12 @@ public class BookingController {
         return ApiResponse.success(bookingService.getBookingByCode(bookingCode));
     }
 
+    @GetMapping("/phone/{phone}")
+    @Operation(summary = "Tra cứu đơn đặt vé theo số điện thoại khách hàng")
+    public ApiResponse<List<BookingResponse>> getBookingsByPhone(@PathVariable String phone) {
+        return ApiResponse.success(bookingService.getBookingsByPhone(phone));
+    }
+
     @GetMapping("/verify-ticket/{code}")
     @Operation(summary = "Quét mã QR và xác thực tính hợp lệ của vé xe điện tử")
     public ApiResponse<com.traveleasy.dto.booking.VerifiedTicketResponse> verifyTicket(@PathVariable String code) {
