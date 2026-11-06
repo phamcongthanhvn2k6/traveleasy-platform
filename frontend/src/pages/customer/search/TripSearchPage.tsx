@@ -509,6 +509,69 @@ export const TripSearchPage: React.FC = () => {
     toast.info('Đã hoàn tác toàn bộ bộ lọc và sắp xếp!', 'Đặt Lại');
   };
 
+  // Đọc phiên giữ chỗ còn hiệu lực trên toàn sàn
+  const [globalHold, setGlobalHold] = useState<{
+    trip: Trip;
+    seats: string[];
+    expiry: number;
+  } | null>(() => {
+    try {
+      const raw = sessionStorage.getItem('traveleasy_checkout_data');
+      const expStr = sessionStorage.getItem('traveleasy_hold_expiry');
+      if (!raw || !expStr) return null;
+      const exp = Number(expStr);
+      if (Date.now() >= exp) return null;
+      const data = JSON.parse(raw);
+      if (data.trip && data.selectedSeats?.length > 0) {
+        return {
+          trip: data.trip,
+          seats: data.selectedSeats,
+          expiry: exp,
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [globalRemaining, setGlobalRemaining] = useState<number>(() => {
+    if (!globalHold) return 0;
+    return Math.max(0, Math.floor((globalHold.expiry - Date.now()) / 1000));
+  });
+
+  useEffect(() => {
+    if (!globalHold) return;
+    const t = setInterval(() => {
+      const rem = Math.max(0, Math.floor((globalHold.expiry - Date.now()) / 1000));
+      setGlobalRemaining(rem);
+      if (rem <= 0) {
+        clearInterval(t);
+        setGlobalHold(null);
+        sessionStorage.removeItem('traveleasy_checkout_data');
+        sessionStorage.removeItem('traveleasy_hold_expiry');
+      }
+    }, 1000);
+    return () => clearInterval(t);
+  }, [globalHold]);
+
+  const handleCancelGlobalHold = async () => {
+    if (!globalHold) return;
+    if (window.confirm(`Bạn có chắc muốn hủy phiên giữ chỗ ghế [${globalHold.seats.join(', ')}] trên chuyến ${globalHold.trip.busCompanyName}?`)) {
+      try {
+        await api.post(`/trips/${globalHold.trip.id}/seats/release`, {
+          seatCodes: globalHold.seats,
+        });
+        toast.info('Đã hủy giữ chỗ thành công.', 'Đã Hủy');
+      } catch (e) {
+        console.error(e);
+      }
+      sessionStorage.removeItem('traveleasy_checkout_data');
+      sessionStorage.removeItem('traveleasy_hold_expiry');
+      setGlobalHold(null);
+    }
+  };
+
   const handleOpenBooking = (trip: Trip, seats: string[], points: any) => {
     const token = localStorage.getItem('traveleasy_token');
     const checkoutPayload = { trip, selectedSeats: seats, points };
@@ -550,6 +613,75 @@ export const TripSearchPage: React.FC = () => {
         totalTrips={filteredAndSortedTrips.length}
         onSearchChange={handleSearchChange}
       />
+
+      {/* 1.1 Sticky / Top Persistent 10-Minute Hold Banner (Chuẩn Vexere) */}
+      {globalHold && globalRemaining > 0 && (
+        <div
+          style={{
+            maxWidth: '1240px',
+            margin: '0 auto 20px auto',
+            padding: '14px 20px',
+            backgroundColor: isDark ? '#1e293b' : '#eff6ff',
+            border: `2px solid ${isDark ? '#3b82f6' : '#2563eb'}`,
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 4px 14px rgba(37,99,235,0.15)',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '24px' }}>⏱️</span>
+            <div>
+              <div style={{ fontSize: '14.5px', fontWeight: 700, color: isDark ? '#60a5fa' : '#1e40af' }}>
+                Bạn đang có phiên giữ chỗ trên chuyến: <strong>{globalHold.trip.busCompanyName}</strong>
+              </div>
+              <div style={{ fontSize: '13px', color: isDark ? '#cbd5e1' : '#475569', marginTop: '2px' }}>
+                Ghế giữ độc quyền: <strong style={{ color: '#2563eb' }}>{globalHold.seats.join(', ')}</strong> ({globalHold.seats.length} vé) • Thời gian giữ chỗ còn lại:{' '}
+                <strong style={{ color: '#dc2626', fontFamily: 'monospace', fontSize: '14px' }}>
+                  {Math.floor(globalRemaining / 60)}:{(globalRemaining % 60).toString().padStart(2, '0')}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => navigate('/checkout')}
+              style={{
+                backgroundColor: '#2563eb',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 22px',
+                fontSize: '14px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 10px rgba(37,99,235,0.3)',
+              }}
+            >
+              Tiếp Tục Đặt Vé ➔
+            </button>
+            <button
+              onClick={handleCancelGlobalHold}
+              style={{
+                backgroundColor: 'transparent',
+                color: '#ef4444',
+                border: '1px solid #fca5a5',
+                borderRadius: '8px',
+                padding: '9px 14px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Hủy giữ chỗ
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 2. Main Body Grid: Left Sidebar & Right Results */}
       <div

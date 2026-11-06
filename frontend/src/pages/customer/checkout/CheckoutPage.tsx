@@ -112,6 +112,22 @@ export const CheckoutPage: React.FC = () => {
     })()
   );
 
+  // Thời gian hết hạn giữ chỗ (10 phút = 600s), tiếp tục đếm nếu quay lại
+  const [initialTimerSeconds] = useState<number>(() => {
+    try {
+      const holdExpiryKey = 'traveleasy_hold_expiry';
+      const savedExpiry = sessionStorage.getItem(holdExpiryKey);
+      let expiryTimestamp = savedExpiry ? Number(savedExpiry) : null;
+      if (!expiryTimestamp || isNaN(expiryTimestamp) || expiryTimestamp <= Date.now()) {
+        expiryTimestamp = Date.now() + 600 * 1000;
+        sessionStorage.setItem(holdExpiryKey, String(expiryTimestamp));
+      }
+      return Math.max(10, Math.floor((expiryTimestamp - Date.now()) / 1000));
+    } catch {
+      return 600;
+    }
+  });
+
   const selectedSeatsKey = selectedSeats.join(',');
 
   // Tự động gửi lệnh giữ chỗ ghế lên server (đổi màu vàng LOCKED trên toàn hệ thống)
@@ -126,12 +142,16 @@ export const CheckoutPage: React.FC = () => {
         });
         if (isMounted) {
           isHeldRef.current = true;
+          if (!sessionStorage.getItem('traveleasy_hold_expiry')) {
+            sessionStorage.setItem('traveleasy_hold_expiry', String(Date.now() + 600 * 1000));
+          }
         }
       } catch (err: any) {
         if (!isMounted) return;
         const msg = err.response?.data?.message || 'Ghế bạn chọn đang được khách hàng khác giữ chỗ hoặc đã có người đặt mua!';
         toast.error(msg, 'Ghế Đang Được Giữ');
         sessionStorage.removeItem('traveleasy_checkout_data');
+        sessionStorage.removeItem('traveleasy_hold_expiry');
         navigate('/search');
       }
     };
@@ -140,12 +160,8 @@ export const CheckoutPage: React.FC = () => {
 
     return () => {
       isMounted = false;
-      // Nếu rời khỏi trang thanh toán mà chưa hoàn tất đặt vé, tự động trả ghế về trống (AVAILABLE)
-      if (isHeldRef.current && !bookingSuccessRef.current && trip?.id && selectedSeats?.length) {
-        api.post(`/trips/${trip.id}/seats/release`, {
-          seatCodes: selectedSeats,
-        }).catch(() => {});
-      }
+      // KHÔNG tự động giải phóng ghế khi rời component!
+      // Ghế được giữ độc quyền cho khách hàng trong trọn vẹn 10 phút.
     };
   }, [trip?.id, selectedSeatsKey]);
 
@@ -169,7 +185,26 @@ export const CheckoutPage: React.FC = () => {
       }).catch(() => {});
     }
     sessionStorage.removeItem('traveleasy_checkout_data');
+    sessionStorage.removeItem('traveleasy_hold_expiry');
     navigate('/search');
+  };
+
+  const handleCancelHold = async () => {
+    if (window.confirm('Bạn có chắc chắn muốn hủy phiên giữ chỗ và trả lại các ghế này cho sàn?')) {
+      if (trip?.id && selectedSeats?.length) {
+        try {
+          await api.post(`/trips/${trip.id}/seats/release`, {
+            seatCodes: selectedSeats,
+          });
+          toast.info('Đã hủy giữ chỗ thành công. Ghế đã được mở lại cho khách khác.', 'Đã Hủy');
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      sessionStorage.removeItem('traveleasy_checkout_data');
+      sessionStorage.removeItem('traveleasy_hold_expiry');
+      navigate('/search');
+    }
   };
 
   const handleApplyVoucher = (amount: number, code: string) => {
@@ -236,6 +271,8 @@ export const CheckoutPage: React.FC = () => {
         throw new Error(res.data?.message || 'Không thể tạo đơn đặt vé. Vui lòng thử lại!');
       }
       bookingSuccessRef.current = true;
+      sessionStorage.removeItem('traveleasy_checkout_data');
+      sessionStorage.removeItem('traveleasy_hold_expiry');
       const bookingData: Booking = res.data.data;
       setCreatedBooking(bookingData);
 
@@ -394,22 +431,41 @@ export const CheckoutPage: React.FC = () => {
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Breadcrumb & Navigation */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: '#2563eb',
-              fontWeight: 700,
-              fontSize: '14px',
-              cursor: 'pointer',
-            }}
-          >
-            <ArrowLeft size={16} /> Quay lại danh sách chuyến
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button
+              onClick={() => {
+                toast.info('Ghế của bạn vẫn được giữ chỗ an toàn trong 10 phút! Bạn có thể quay lại tiếp tục đặt vé bất cứ lúc nào.', 'Giữ Chỗ 10 Phút');
+                navigate('/search');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: '#2563eb',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: 'pointer',
+              }}
+            >
+              <ArrowLeft size={16} /> Quay lại danh sách chuyến (Vẫn giữ chỗ)
+            </button>
+            <button
+              onClick={handleCancelHold}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: '#ef4444',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+              }}
+            >
+              Hủy giữ chỗ
+            </button>
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#16a34a', fontWeight: 700 }}>
             <ShieldCheck size={16} /> Giao dịch được mã hóa an toàn 100%
@@ -471,7 +527,7 @@ export const CheckoutPage: React.FC = () => {
         </div>
 
         {/* 10-Minute Hard-Hold Countdown Timer */}
-        <CheckoutTimer initialSeconds={600} onExpire={handleTimerExpire} />
+        <CheckoutTimer initialSeconds={initialTimerSeconds} onExpire={handleTimerExpire} />
 
         {/* Main 2-Column Responsive Layout */}
         <div className="checkout-responsive-grid" style={{ display: 'grid', gap: '24px', alignItems: 'start' }}>

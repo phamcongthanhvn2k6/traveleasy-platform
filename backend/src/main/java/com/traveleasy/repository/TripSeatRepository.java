@@ -25,6 +25,12 @@ public interface TripSeatRepository extends JpaRepository<TripSeat, Long> {
         @Param("seatCodes") List<String> seatCodes
     );
 
+    @Query("SELECT s FROM TripSeat s WHERE s.trip.id = :tripId AND s.seatCode IN :seatCodes")
+    List<TripSeat> findByTripIdAndSeatCodeIn(
+        @Param("tripId") Long tripId,
+        @Param("seatCodes") List<String> seatCodes
+    );
+
     long countByTripIdAndStatus(Long tripId, SeatStatus status);
 
     @org.springframework.data.jpa.repository.Modifying

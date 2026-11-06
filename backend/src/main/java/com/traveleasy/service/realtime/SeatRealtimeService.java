@@ -167,8 +167,13 @@ public class SeatRealtimeService {
                     seat.setStatus(SeatStatus.AVAILABLE);
                     seatHolders.remove(key);
                     seatHoldTimes.remove(key);
-                } else if (existingHolder != null && !existingHolder.equalsIgnoreCase(currentHolder)) {
-                    throw new AppException(ErrorCode.VALIDATION_ERROR, "Ghế " + seat.getSeatCode() + " đang được một khách hàng khác giữ chỗ thanh toán (thời hạn 10 phút)!");
+                } else if (existingHolder != null) {
+                    boolean isSameHolder = existingHolder.equalsIgnoreCase(currentHolder)
+                            || (userEmail != null && !userEmail.isBlank() && existingHolder.equalsIgnoreCase(userEmail.trim()))
+                            || (sessionId != null && !sessionId.isBlank() && existingHolder.equalsIgnoreCase(sessionId.trim()));
+                    if (!isSameHolder) {
+                        throw new AppException(ErrorCode.VALIDATION_ERROR, "Ghế " + seat.getSeatCode() + " đang được một khách hàng khác giữ chỗ thanh toán (thời hạn 10 phút)!");
+                    }
                 }
             }
         }
@@ -178,7 +183,7 @@ public class SeatRealtimeService {
             seat.setStatus(SeatStatus.LOCKED);
             String key = getHolderKey(tripId, seat.getSeatCode());
             seatHolders.put(key, currentHolder);
-            seatHoldTimes.put(key, System.currentTimeMillis());
+            seatHoldTimes.putIfAbsent(key, System.currentTimeMillis());
             events.add(SeatUpdateEvent.builder()
                     .tripId(tripId)
                     .seatNumber(seat.getSeatCode())
@@ -323,7 +328,7 @@ public class SeatRealtimeService {
      */
     private void autoReleaseIfStillLocked(Long tripId, List<String> seatCodes) {
         try {
-            List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(tripId, seatCodes);
+            List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeIn(tripId, seatCodes);
             List<TripSeat> seatsToSave = new ArrayList<>();
             for (TripSeat seat : seats) {
                 if (seat.getStatus() == SeatStatus.LOCKED) {
