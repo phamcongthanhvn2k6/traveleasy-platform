@@ -48,3 +48,7 @@ Thumbs.db
 logs/
 mysql_data/
 scratch/
+
+
+test-results/
+playwright-report/
