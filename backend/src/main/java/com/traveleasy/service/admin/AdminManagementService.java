@@ -39,6 +39,7 @@ public class AdminManagementService {
     private final BookingRepository bookingRepository;
     private final TripRepository tripRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.traveleasy.service.common.EmailNotificationService emailNotificationService;
 
     // ==========================================
     // 1. USER MANAGEMENT
@@ -231,13 +232,16 @@ public class AdminManagementService {
         company.setStatus(normalizedStatus);
         BusCompany saved = busCompanyRepository.save(company);
 
-        // NẾU PHÊ DUYỆT ĐƯA LÊN SÀN (ACTIVE): TỰ ĐỘNG KHỞI TẠO TÀI KHOẢN ĐỐI TÁC (ROLE_OPERATOR)
+        // NẾU PHÊ DUYỆT ĐƯA LÊN SÀN (ACTIVE): TỰ ĐỘNG KHỞI TẠO TÀI KHOẢN ĐỐI TÁC (ROLE_OPERATOR) & GỬI EMAIL THÔNG BÁO
         if ("ACTIVE".equals(normalizedStatus) && company.getEmail() != null && !company.getEmail().isBlank()) {
             String opEmail = company.getEmail().trim().toLowerCase();
+            String tempPassword = "Travel@" + ((int)(Math.random() * 9000) + 1000) + "!nx";
+            boolean isNewAccount = false;
+
             if (!userRepository.existsByEmail(opEmail)) {
                 User operator = User.builder()
                         .email(opEmail)
-                        .password(passwordEncoder.encode("123456789@"))
+                        .password(passwordEncoder.encode(tempPassword))
                         .fullName("Điều Hành " + company.getName())
                         .phone(company.getHotline())
                         .role(Role.OPERATOR)
@@ -245,10 +249,29 @@ public class AdminManagementService {
                         .status("ACTIVE")
                         .build();
                 userRepository.save(operator);
+                isNewAccount = true;
                 logAction("admin@traveleasy.vn", "PROVISION_OPERATOR_ACCOUNT", "users #" + operator.getEmail(), "-",
                         "{\"companyId\": " + company.getId() + ", \"companyName\": \"" + company.getName() + "\"}");
                 log.info("✅ Đã tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác: {} ({})", company.getName(), opEmail);
+            } else {
+                userRepository.findByEmail(opEmail).ifPresent(u -> {
+                    if (u.getBusCompanyId() == null || u.getRole() != Role.OPERATOR) {
+                        u.setBusCompanyId(company.getId());
+                        u.setRole(Role.OPERATOR);
+                        userRepository.save(u);
+                        log.info("🔗 Đã liên kết tài khoản {} với nhà xe {}", opEmail, company.getName());
+                    }
+                });
             }
+
+            // Gửi email chúc mừng và bàn giao tài khoản đối tác
+            emailNotificationService.sendPartnerApprovalEmail(
+                    opEmail,
+                    company.getName(),
+                    company.getCode() != null ? company.getCode() : ("NX-" + company.getId()),
+                    isNewAccount ? tempPassword : "(Sử dụng mật khẩu tài khoản hiện tại của bạn)",
+                    company.getCommissionRate()
+            );
         }
 
         logAction("admin@traveleasy.vn", normalizedStatus.equals("ACTIVE") ? "APPROVE_COMPANY" : "UPDATE_COMPANY_STATUS",
@@ -263,15 +286,26 @@ public class AdminManagementService {
 
         String before = "{status: " + company.getStatus() + "}";
         company.setStatus("REJECTED");
+        company.setKycStatus("REJECTED");
+        company.setRejectionReason(reason != null ? reason : "Hồ sơ chưa đáp ứng đủ quy chuẩn vận tải sàn");
         BusCompany saved = busCompanyRepository.save(company);
 
+        // Gửi email thông báo từ chối kèm lý do thẩm định
+        if (company.getEmail() != null && !company.getEmail().isBlank()) {
+            emailNotificationService.sendPartnerRejectionEmail(
+                    company.getEmail().trim().toLowerCase(),
+                    company.getName(),
+                    company.getRejectionReason()
+            );
+        }
+
         logAction("admin@traveleasy.vn", "REJECT_PARTNER_APPLICATION", "bus_companies #" + id, before,
-                "{\"status\": \"REJECTED\", \"reason\": \"" + (reason != null ? reason : "Chưa đáp ứng đủ quy chuẩn vận tải sàn") + "\"}");
+                "{\"status\": \"REJECTED\", \"reason\": \"" + company.getRejectionReason() + "\"}");
         log.info("🚫 Đã từ chối hồ sơ đối tác: {} với lý do: {}", company.getName(), reason);
         return mapToCompanyResponse(saved);
     }
 
-        @Transactional
+    @Transactional
     public BusCompanyAdminResponse approveCompanyWithCommission(Long id, BigDecimal commissionRate, String adminNote) {
         BusCompany company = busCompanyRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy nhà xe"));
@@ -287,21 +321,46 @@ public class AdminManagementService {
 
         BusCompany saved = busCompanyRepository.save(company);
 
-        // Tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác nếu chưa có
+        // Tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác nếu chưa có & bàn giao tài khoản qua Email
         if (company.getEmail() != null && !company.getEmail().isBlank()) {
             String opEmail = company.getEmail().trim().toLowerCase();
+            String tempPassword = "Travel@" + ((int)(Math.random() * 9000) + 1000) + "!nx";
+            boolean isNewAccount = false;
+
             if (!userRepository.existsByEmail(opEmail)) {
                 User operator = User.builder()
                         .email(opEmail)
-                        .password(passwordEncoder.encode("123456789@"))
+                        .password(passwordEncoder.encode(tempPassword))
                         .fullName("Điều Hành " + company.getName())
                         .phone(company.getHotline())
                         .role(Role.OPERATOR)
+                        .busCompanyId(company.getId()) // ĐẢM BẢO GẮN busCompanyId
                         .status("ACTIVE")
                         .build();
                 userRepository.save(operator);
+                isNewAccount = true;
+                logAction("admin@traveleasy.vn", "PROVISION_OPERATOR_ACCOUNT", "users #" + operator.getEmail(), "-",
+                        "{\"companyId\": " + company.getId() + ", \"companyName\": \"" + company.getName() + "\"}");
                 log.info("✅ Đã tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác: {} ({})", company.getName(), opEmail);
+            } else {
+                userRepository.findByEmail(opEmail).ifPresent(u -> {
+                    if (u.getBusCompanyId() == null || u.getRole() != Role.OPERATOR) {
+                        u.setBusCompanyId(company.getId());
+                        u.setRole(Role.OPERATOR);
+                        userRepository.save(u);
+                        log.info("🔗 Đã liên kết tài khoản {} với nhà xe {}", opEmail, company.getName());
+                    }
+                });
             }
+
+            // Gửi email chúc mừng và bàn giao tài khoản đối tác
+            emailNotificationService.sendPartnerApprovalEmail(
+                    opEmail,
+                    company.getName(),
+                    company.getCode() != null ? company.getCode() : ("NX-" + company.getId()),
+                    isNewAccount ? tempPassword : "(Sử dụng mật khẩu tài khoản hiện tại của bạn)",
+                    company.getCommissionRate()
+            );
         }
 
         logAction("admin@traveleasy.vn", "APPROVE_COMPANY_KYB", "bus_companies #" + id, before, "{status: ACTIVE, commissionRate: " + company.getCommissionRate() + "}");
@@ -320,6 +379,15 @@ public class AdminManagementService {
         company.setRejectionReason(reason != null ? reason : "Yêu cầu bổ sung hồ sơ giấy tờ pháp lý");
 
         BusCompany saved = busCompanyRepository.save(company);
+
+        // Gửi email yêu cầu bổ sung hồ sơ
+        if (company.getEmail() != null && !company.getEmail().isBlank()) {
+            emailNotificationService.sendPartnerSupplementEmail(
+                    company.getEmail().trim().toLowerCase(),
+                    company.getName(),
+                    company.getRejectionReason()
+            );
+        }
 
         logAction("admin@traveleasy.vn", "REQUEST_COMPANY_SUPPLEMENT", "bus_companies #" + id, before, "{status: PENDING_SUPPLEMENT, reason: " + reason + "}");
         log.info("⚠️ Admin yêu cầu bổ sung hồ sơ nhà xe: {} (Lý do: {})", company.getName(), reason);
