@@ -2,9 +2,9 @@
 > **Dự án:** Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy  
 > **Đơn vị:** OJT Đồ Án Nhóm 7  
 > **Thời gian thực hiện:** Tuần 4 (Sprint 4 — Tuần Nước Rút & Nghiệm thu Bảo vệ OJT)  
-> **Quy mô danh mục chuẩn hóa:** 8 User Stories & Technical Tasks cốt lõi — 28 Story Points (Chuẩn Scrum 1 tuần)  
+> **Quy mô danh mục chuẩn hóa:** 9 User Stories & Technical Tasks cốt lõi — 31 Story Points (Chuẩn Scrum 1 tuần)  
 > **Trạng thái:** 🎯 **FINAL SPRINT & PRODUCTION READINESS (Đã rà soát & Tinh gọn backlog)**  
-> **Trọng tâm:** Khóa ghế Real-time, Email Bàn giao Tài khoản Đối tác, Triển khai VPS CI/CD, POS Bến xe & Kịch bản Demo Hội đồng 15 phút.
+> **Trọng tâm:** Khóa ghế Real-time, Email Bàn giao Tài khoản Đối tác, Triển khai VPS CI/CD, POS Bến xe, Tối ưu Hiệu năng SWR 0ms & Kịch bản Demo Hội đồng 15 phút.
 
 ---
 
@@ -28,7 +28,7 @@ Các tính năng sau bị loại bỏ vì **không thuộc phạm vi cốt lõi 
 
 ---
 
-### 2.2. Danh mục BỔ SUNG & CHỐT CHÍNH THỨC SPRINT 4 BACKLOG (8 Thẻ — 28 SP)
+### 2.2. Danh mục BỔ SUNG & CHỐT CHÍNH THỨC SPRINT 4 BACKLOG (9 Thẻ — 31 SP)
 
 | Mã Thẻ | Tên Nhiệm Vụ Nghiệp Vụ & Kỹ Thuật | Điểm SP | Người Phụ Trách (RACI) | Trạng Thái Thực Tế |
 | :---: | :--- | :---: | :---: | :--- |
@@ -40,7 +40,8 @@ Các tính năng sau bị loại bỏ vì **không thuộc phạm vi cốt lõi 
 | **`[S406]`** | **Bản Đồ Định Vị GPS Live Tracking Xe Chạy Thời Gian Thực (`/tracking/:tripId`)**<br>• Tích hợp bản đồ Leaflet hiển thị xe khách di chuyển theo tọa độ GPS.<br>• Server-Sent Events (SSE) truyền tọa độ thời gian thực về máy khách. | **4 SP** | **Đoàn Nhật Cường** | 🔵 **SẴN SÀNG NGHIỆM THU** |
 | **`[S407]`** | **Quản Trị Chính Sách Giá Vé Động & Phụ Thu Lễ Tết (`/company/pricing-rules`)**<br>• Cấu hình phụ thu cao điểm dịp Lễ Tết (+20%) hoặc giảm giá giờ chót (-15%).<br>• Tự động tính giá vé theo quy tắc khi khách đặt chỗ. | **3 SP** | **Trần Minh Đức** | 🔵 **SẴN SÀNG NGHIỆM THU** |
 | **`[S408]`** | **Trung Tâm Trình Diễn Demo Hub 15 Phút (`/demo`) & Hồ Sơ Bảo Vệ OJT**<br>• Trang Demo Hub chuyển nhanh các kịch bản demo.<br>• Slide thuyết trình 25 trang & Kịch bản khớp từng giây bảo vệ Hội đồng. | **3 SP** | **Phạm Công Thành** *(Lead)* | 🟢 **ĐÃ HOÀN THÀNH 100%** |
-| **TỔNG** | **8 User Stories & Technical Tasks Trọng Tâm** | **28 SP** | **Toàn đội Nhóm 7** | **Đạt chuẩn 100% Scrum 1 tuần** |
+| **`[S409]`** | **Màn Hình Loading Chuyển Trang & Tối Ưu Hiệu Năng SWR Cache 0ms, Skeleton Vé Của Tôi (`/my-tickets`)**<br>• Hiệu ứng Global Page Loading Screen mượt mà khi chuyển module.<br>• Tối ưu SWR Cache 0ms hiển thị vé tức thì, loại bỏ triệt để N+1 query.<br>• Thiết kế bộ khung nạp Shimmer Skeleton thay thế loading thô giật lag. | **3 SP** | **Phạm Công Thành** | 🟢 **ĐÃ HOÀN THÀNH 100%**<br>*(Đã kiểm thử & Merge)* |
+| **TỔNG** | **9 User Stories & Technical Tasks Trọng Tâm** | **31 SP** | **Toàn đội Nhóm 7** | **Đạt chuẩn 100% Scrum 1 tuần** |
 
 ---
 
@@ -48,7 +49,7 @@ Các tính năng sau bị loại bỏ vì **không thuộc phạm vi cốt lõi 
 
 | Thành viên | Trách nhiệm chính trong Sprint 4 | Định mức SP | Trạng thái cam kết |
 | :--- | :--- | :---: | :---: |
-| **Phạm Công Thành** *(Team Leader)* | • Hệ thống Email B2B bàn giao tài khoản nhà xe (`S402`)<br>• Hạ tầng Docker Production & CI/CD VPS (`S403`)<br>• Kịch bản Demo Hub 15 phút & Điều phối bảo vệ (`S408`) | **10 SP** *(Kiến trúc & DevOps)* | Cam kết hoàn thành 100% |
+| **Phạm Công Thành** *(Team Leader)* | • Hệ thống Email B2B bàn giao tài khoản nhà xe (`S402`)<br>• Hạ tầng Docker Production & CI/CD VPS (`S403`)<br>• Kịch bản Demo Hub 15 phút & Điều phối bảo vệ (`S408`)<br>• Màn hình Loading chuyển trang & Tối ưu SWR Cache 0ms, Skeleton vé (`S409`) | **13 SP** *(Kiến trúc, DevOps & Perf)* | Cam kết hoàn thành 100% |
 | **Phạm Thanh Phong** | • Động cơ khóa ghế Real-time 10 phút (`S401`)<br>• Phân hệ Bán vé Quầy POS Bến xe (`S404`) | **8 SP** *(Core Booking)* | Cam kết hoàn thành 100% |
 | **Nguyễn Đại Phát** | • Quản lý Ca trực & Đối soát Tiền mặt Quầy bến xe (`S405`) | **3 SP** *(Admin & Finance)* | Cam kết hoàn thành 100% |
 | **Đoàn Nhật Cường** | • Bản đồ GPS Live Tracking thời gian thực qua SSE (`S406`) | **4 SP** *(Mobile & Tracking)* | Cam kết hoàn thành 100% |
@@ -68,7 +69,7 @@ Các tính năng sau bị loại bỏ vì **không thuộc phạm vi cốt lõi 
 ---
 
 ## 🏆 5. TIÊU CHÍ NGHIỆM THU (DoD SPRINT 4)
-- ✅ Toàn bộ 8 thẻ công việc đạt trạng thái `Done` trên Trello và có bằng chứng kiểm thử rõ ràng.
+- ✅ Toàn bộ 9 thẻ công việc đạt trạng thái `Done` trên Trello và có bằng chứng kiểm thử rõ ràng.
 - ✅ Hệ thống chạy ổn định trực tiếp trên máy chủ VPS Internet `http://103.72.57.149`.
 - ✅ Cơ chế khóa ghế thời gian thực chống đặt trùng vé 100% không phát sinh xung đột.
 - ✅ Email thông báo phê duyệt đối tác gửi thành công qua Google SMTP live.
