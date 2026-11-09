@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: traveleasy-backend
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: supabase
+      SUPABASE_DB_URL: jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
+      SUPABASE_DB_USERNAME: postgres.ctvcwhdepzyvqsncbslf
+      SUPABASE_DB_PASSWORD: thanhtyou123@
+      JWT_SECRET: TravelEasyDevSecretKeyForLocalDevelopmentOnlyDoNotUseInProduction2026
+      APP_FRONTEND_URL: http://103.72.57.149
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: phamcongt56@gmail.com
+      SPRING_MAIL_PASSWORD: gizlexnljusfhuxd
+      PAYOS_CLIENT_ID: a187b55f-6c8a-499b-886b-722fcc0c3039
+      PAYOS_API_KEY: b8a86931-3e77-4787-8acd-322dceb91f70
+      PAYOS_CHECKSUM_KEY: 173bbbcb0a50af57bf7fa7b550a2cb643cc37baa601137
+      CLOUDINARY_CLOUD_NAME: dkzrqnahy
+      CLOUDINARY_API_KEY: 366548239469314
+      CLOUDINARY_API_SECRET: uyF3hFZGDfoRx_X2ps10rXNpADg
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/v1/public/statistics"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: traveleasy-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+

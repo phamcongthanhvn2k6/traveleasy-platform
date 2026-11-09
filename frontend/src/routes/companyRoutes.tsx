@@ -14,6 +14,12 @@ import { CompanyReviewsPage } from '../pages/company/reviews/CompanyReviewsPage'
 import { CompanySettlementsPage } from '../pages/company/settlements/CompanySettlementsPage';
 import { PartnerComingSoonPage } from '../pages/company/unsupported/PartnerComingSoonPage';
 
+// Sprint 4 Modules & Member Tasks
+import PosTerminalPage from '../pages/company/pos/PosTerminalPage';
+import { CompanyShiftsPage } from '../pages/company/shifts/CompanyShiftsPage';
+import { CompanyPricingRulesPage } from '../pages/company/pricing-rules/CompanyPricingRulesPage';
+import { CompanyReportsPage } from '../pages/company/reports/CompanyReportsPage';
+
 /**
  * =========================================================================
  * ROUTER PHÂN HỆ ĐỐI TÁC NHÀ XE (TRAVELEASY PARTNER PORTAL)
@@ -65,6 +71,25 @@ export const CompanyRoutes: React.FC = () => {
                 <Route path="/reviews" element={<CompanyReviewsPage />} />
                 <Route path="settlements" element={<CompanySettlementsPage />} />
                 <Route path="/settlements" element={<CompanySettlementsPage />} />
+
+                {/* ======================================================== */}
+                {/* SPRINT 4 MODULES (NHIỆM VỤ THÀNH VIÊN SPRINT 4)         */}
+                {/* ======================================================== */}
+                {/* [S404] Quầy bán vé nhanh POS - Phạm Thanh Phong */}
+                <Route path="pos" element={<PosTerminalPage />} />
+                <Route path="/pos" element={<PosTerminalPage />} />
+
+                {/* [S405] Quản lý ca trực & bàn giao tiền mặt - Đoàn Nhật Cường */}
+                <Route path="shifts" element={<CompanyShiftsPage />} />
+                <Route path="/shifts" element={<CompanyShiftsPage />} />
+
+                {/* [S407] Quản trị chính sách giá vé động - Trần Minh Đức */}
+                <Route path="pricing-rules" element={<CompanyPricingRulesPage />} />
+                <Route path="/pricing-rules" element={<CompanyPricingRulesPage />} />
+
+                {/* [S410] Báo cáo doanh thu & tỷ lệ lấp đầy ghế - Nguyễn Đại Phát */}
+                <Route path="reports" element={<CompanyReportsPage />} />
+                <Route path="/reports" element={<CompanyReportsPage />} />
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/company/dashboard" replace />} />

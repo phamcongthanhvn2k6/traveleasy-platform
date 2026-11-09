@@ -26,3 +26,4 @@ public class ActiveHoldResponse {
     private Long remainingSeconds;
     private Long expiryTimestamp;
 }
+
