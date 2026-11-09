@@ -34,7 +34,7 @@ Bảng Trello được cấu hình theo đúng quy chuẩn **Multi-Sprint Scrum 
    - `[S402]` Dịch vụ Email Tự Động Phê Duyệt Hồ Sơ Đối Tác & Cấp Tài Khoản Điều Hành (3 SP - ĐANG HOÀN TẤT - Thành).
    - `[S403]` Đóng gói Docker Compose Production & Triển khai CI/CD lên VPS `103.72.57.149` (4 SP - ĐANG HOÀN TẤT - Thành).
    - `[S404]` Phân hệ Bán vé Nhanh tại Quầy Bến Xe của Nhà Xe POS (`/company/pos`) (4 SP - Phong).
-   - `[S405]` Quản lý Ca trực & Bàn giao Đối soát Tiền mặt Quầy bến xe (`/company/pos/shifts`) (3 SP - Cường).
+   - `[S405]` Danh sách Hành khách & Điểm đón/trả cho Tài xế (`/driver/manifest`) (3 SP - Cường).
    - `[S406]` Bản đồ Định vị GPS Live Tracking xe chạy thời gian thực qua SSE (`/tracking/:tripId`) (4 SP - Phát).
    - `[S407]` Quản trị Chính sách Giá vé động & Phụ thu Lễ Tết/Cuối tuần (`/company/pricing-rules`) (3 SP - Đức).
    - `[S408]` Trung tâm Trình diễn Demo Hub 15 Phút (`/demo`) & Slide Bảo Vệ OJT (3 SP - ĐÃ XONG - Thành).
