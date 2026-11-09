@@ -7,6 +7,7 @@ import com.traveleasy.repository.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -33,6 +35,7 @@ public class PublicContentController {
     private final RouteRepository routeRepository;
     private final TripRepository tripRepository;
     private final AuditLogRepository auditLogRepository;
+    private final com.traveleasy.service.common.EmailNotificationService emailNotificationService;
 
     // ==========================================
     // 1. BANNERS
@@ -661,6 +664,19 @@ public class PublicContentController {
                 .build();
 
         BusCompany saved = busCompanyRepository.save(company);
+
+        // Gửi email tự động xác nhận đã tiếp nhận hồ sơ đăng ký đối tác (KYB)
+        try {
+            if (saved.getEmail() != null && !saved.getEmail().isBlank()) {
+                emailNotificationService.sendPartnerRegistrationReceivedEmail(
+                        saved.getEmail().trim(),
+                        saved.getName(),
+                        request.getContactName()
+                );
+            }
+        } catch (Exception e) {
+            log.warn("⚠️ Không thể gửi email tiếp nhận hồ sơ đối tác: {}", e.getMessage());
+        }
 
         try {
             AuditLog auditLog = AuditLog.builder()

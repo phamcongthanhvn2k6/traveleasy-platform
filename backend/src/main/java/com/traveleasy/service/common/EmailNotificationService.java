@@ -25,6 +25,60 @@ public class EmailNotificationService {
     private String frontendUrl;
 
     /**
+     * Gửi Email thông báo Đã Tiếp Nhận Hồ Sơ Đăng Ký Đối Tác (Chờ Xét Duyệt KYB)
+     */
+    @Async
+    public void sendPartnerRegistrationReceivedEmail(String recipientEmail, String companyName, String contactName) {
+        String subject = "📨 [TravelEasy] Đã tiếp nhận hồ sơ đăng ký đối tác nhà xe " + companyName;
+        String nameStr = (contactName != null && !contactName.isBlank()) ? contactName : "Quý Đối Tác";
+
+        String html = """
+            <!DOCTYPE html>
+            <html lang="vi">
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
+                .card { max-width: 620px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+                .header { background: linear-gradient(135deg, #2563eb, #1d4ed8); padding: 30px 24px; text-align: center; color: #ffffff; }
+                .header h1 { margin: 0; font-size: 22px; font-weight: 800; }
+                .header p { margin: 6px 0 0 0; opacity: 0.9; font-size: 14px; }
+                .content { padding: 30px 28px; line-height: 1.6; font-size: 14.5px; }
+                .box-info { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px 20px; margin: 20px 0; color: #166534; }
+                .footer { background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px; text-align: center; font-size: 12.5px; color: #64748b; }
+              </style>
+            </head>
+            <body>
+              <div class="card">
+                <div class="header">
+                  <h1>TravelEasy Platform</h1>
+                  <p>Hệ Thống Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh</p>
+                </div>
+                <div class="content">
+                  <p>Kính gửi <strong>%s</strong> (Đại diện <strong>%s</strong>),</p>
+                  <p>Hệ thống TravelEasy đã <strong>tiếp nhận thành công hồ sơ đăng ký hợp tác mở bán vé trực tuyến</strong> của Quý Nhà Xe.</p>
+                  
+                  <div class="box-info">
+                    ⏳ <strong>Trạng thái hồ sơ:</strong> Đang chờ thẩm định pháp nhân KYB<br>
+                    ⏱️ <strong>Thời gian xử lý:</strong> Chuyên viên thẩm định sẽ kiểm tra giấy phép kinh doanh và phản hồi trong vòng <strong>24 giờ làm việc</strong>.
+                  </div>
+
+                  <p>Khi hồ sơ được phê duyệt, hệ thống sẽ tự động gửi thông tin tài khoản đăng nhập Cổng Quản Lý Điều Hành Nhà Xe (OPERATOR) và mật khẩu khởi tạo trực tiếp qua email này.</p>
+                  <p>Trân trọng cảm ơn sự tin tưởng hợp tác của Quý Đơn vị!</p>
+                </div>
+                <div class="footer">
+                  Phòng Phát Triển Mạng Lưới Đối Tác TravelEasy • Hotline: <strong>1900 6868</strong><br>
+                  Email: support-partner@traveleasy.vn
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(nameStr, companyName);
+
+        sendHtmlEmail(recipientEmail, subject, html);
+    }
+
+    /**
      * Gửi Email thông báo Phê Duyệt Hồ Sơ Đối Tác & Bàn Giao Tài Khoản Điều Hành (ROLE_OPERATOR)
      */
     @Async
