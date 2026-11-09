@@ -297,7 +297,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
               );
             })}
 
-            {/* NHIỆM VỤ SPRINT 4 Group */}
+            {/* NHIỆM VỤ SPRINT 3 Group */}
             <div
               style={{
                 fontSize: '10px',
@@ -311,7 +311,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                 justifyContent: 'space-between'
               }}
             >
-              <span>SPRINT 4 NHIỆM VỤ</span>
+              <span>NHIỆM VỤ SPRINT 3</span>
               <span style={{ fontSize: '9px', backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '1px 5px', borderRadius: '4px' }}>
                 OJT
               </span>

@@ -3,7 +3,7 @@
  * @description Quản trị Chính sách Giá vé động & Phụ thu Lễ Tết/Cuối tuần (/company/pricing-rules)
  * @author Trần Minh Đức (minhdctrn13)
  * @role Pricing & Policy Specialist
- * @task [S407][PRICING] Sprint 4 (3 SP)
+ * @task [S307][PRICING] Sprint 3 (3 SP)
  */
 import React, { useState } from 'react';
 import {
@@ -116,15 +116,15 @@ export const CompanyPricingRulesPage: React.FC = () => {
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {/* BANNER THÔNG TIN TASK SPRINT 4 & NGƯỜI PHỤ TRÁCH */}
+        {/* BANNER THÔNG TIN TASK SPRINT 3 & NGƯỜI PHỤ TRÁCH */}
         <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-indigo-800 text-white p-5 rounded-2xl shadow-md mb-6 border border-indigo-700/50">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-amber-950 uppercase">
-                  SPRINT 4 TASK
+                  SPRINT 3 TASK
                 </span>
-                <span className="text-xs font-semibold text-indigo-200">Mã thẻ: [S407][PRICING] • Định mức: 3 SP</span>
+                <span className="text-xs font-semibold text-indigo-200">Mã thẻ: [S307][PRICING] • Định mức: 3 SP</span>
               </div>
               <h2 className="text-xl font-bold mt-1.5 flex items-center gap-2">
                 <Tag className="w-5 h-5 text-indigo-300" />

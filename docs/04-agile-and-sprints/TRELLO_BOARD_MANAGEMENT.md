@@ -7,42 +7,41 @@
 > **BẢNG TRELLO TRỰC TUYẾN DỰ ÁN:** [https://trello.com/b/AA5BYoe1/traveleasyplatform](https://trello.com/b/AA5BYoe1/traveleasyplatform)  
 > **BOARD ID:** `6ad6f486572cd6662754e074`  
 > **CÔNG CỤ ĐỒNG BỘ REST API:** `scripts/sync_trello.py`  
-> **HIỆN TRẠNG QUẢN TRỊ DỰ ÁN:** **84 THẺ CỐT LÕI — 149 STORY POINTS (CHUẨN HOÁ 4 TUẦN - 4 SPRINTS TIÊU CHUẨN SCRUM)**.  
-> **TIẾN ĐỘ NGHIỆM THU HIỆN TẠI:** Sprint 1 (19 Thẻ Done - 32 SP), Sprint 2 (19 Thẻ Done - 35 SP), Sprint 3 (36 Thẻ Done - 48 SP), Sprint 4 (10 Thẻ trọng tâm - 34 SP: Khóa ghế Realtime, Email B2B, CI/CD VPS, POS Bến xe, Demo Hub, Loading/SWR 0ms, GPS Tracking & Báo cáo Nhà xe).
+> **HIỆN TRẠNG QUẢN TRỊ DỰ ÁN:** **84 THẺ CỐT LÕI — 149 STORY POINTS (CHUẨN HOÁ 3 TUẦN - 3 SPRINTS TIÊU CHUẨN SCRUM THEO TIẾN ĐỘ MÔN HỌC)**.  
+> **TIẾN ĐỘ NGHIỆM THU HIỆN TẠI:** Sprint 1 (35 Thẻ Done - 56 SP), Sprint 2 (39 Thẻ Done - 59 SP), Sprint 3 (10 Thẻ trọng tâm - 34 SP: Khóa ghế Realtime, Email B2B, CI/CD VPS, POS Bến xe, Quản lý Ca trực, Demo Hub, Loading/SWR 0ms, GPS Tracking & Báo cáo Nhà xe).
 
 ---
 
-## 1. CẤU TRÚC 4 SPRINT & DANH SÁCH CHUẨN AGILE (LISTS WORKFLOW)
+## 1. CẤU TRÚC 3 SPRINT & DANH SÁCH CHUẨN AGILE (LISTS WORKFLOW)
 
 Bảng Trello được cấu hình theo đúng quy chuẩn **Multi-Sprint Scrum Board** tiêu chuẩn quốc tế:
 
 ```
 +-----------------------------------+-----------------------------------+-----------------------------------+
-| Sprint 1: Architecture & Core     | Sprint 2: Core Booking & Concurrency| Sprint 3: E2E QA & Payments       |
-| (19 Thẻ | 32 SP - Hoàn thành 100%)| (19 Thẻ | 35 SP - Hoàn thành 100%)| (36 Thẻ | 48 SP - Hoàn thành 100%)|
+| Sprint 1: Architecture & Core     | Sprint 2: Core Booking & Engine   | Sprint 3: POS, Realtime & Reports |
+| (35 Thẻ | Hoàn thành 100% - DONE) | (39 Thẻ | Hoàn thành 100% - DONE) | (10 Thẻ | 34 SP - Đang triển khai)|
 +-----------------------------------+-----------------------------------+-----------------------------------+
-| Sprint 4: POS, DevOps & Defense   | Testing & QA Verification         | Bug Tracking (0 Critical Issues)  |
-| (10 Thẻ | 34 SP - Đang nước rút)  | (Báo cáo & Bằng chứng nghiệm thu) | (0 lỗi chặn - Hệ thống ổn định)   |
+| Testing & QA Verification         | Bug Tracking (0 Critical Issues)  | Sprint Backlog (Goals & Runbook)  |
+| (Báo cáo & Bằng chứng nghiệm thu) | (0 lỗi chặn - Hệ thống ổn định)   | (Tài liệu đặc tả & Kịch bản bảo vệ|
 +-----------------------------------+-----------------------------------+-----------------------------------+
 ```
 
-1. **Sprint 1: Architecture, CSDL & Auth (32 SP) [DONE]**: Nền tảng dự án, CSDL 44 bảng Supabase Cloud, Stateless JWT Bearer, phân quyền RBAC và Master Data danh mục toàn quốc (19 thẻ | 32 SP).
-2. **Sprint 2: Core Booking & Concurrency Lock (35 SP) [DONE]**: Lõi tìm kiếm chuyến xe SWR Cache 0ms, sơ đồ 34 ghế 2 tầng Limousine VIP, Khóa giữ chỗ Concurrency Lock 10:00, Thanh toán VNPAY & VietQR (19 thẻ | 35 SP).
-3. **Sprint 3: E2E QA, Firebase Auth, Soát Vé & Fixtures (48 SP) [DONE]**: 36 thẻ Done (48 SP), Firebase Google Sign-In & OTP Phone (`S321`), Sửa lỗi Seed Fixtures & Khứ hồi (`S320`), Quét QR camera 0.2s (`S314`, `S317`).
-4. **Sprint 4: Khóa Ghế Real-time, Email B2B, CI/CD VPS, POS Bến Xe, GPS Tracking & Demo Bảo Vệ (34 SP) [SPRINT NƯỚC RÚT]**:
-   - `[S401]` Đồng bộ Khóa ghế & Giữ chỗ Real-time 10 phút SSE Concurrency Lock (4 SP - ĐÃ XONG - Phong).
-   - `[S402]` Dịch vụ Email Tự Động Phê Duyệt Hồ Sơ Đối Tác & Cấp Tài Khoản Điều Hành (3 SP - ĐANG HOÀN TẤT - Thành).
-   - `[S403]` Đóng gói Docker Compose Production & Triển khai CI/CD lên VPS `103.72.57.149` (4 SP - ĐANG HOÀN TẤT - Thành).
-   - `[S404]` Phân hệ Bán vé Nhanh tại Quầy Bến Xe của Nhà Xe POS (`/company/pos`) (4 SP - Phong).
-   - `[S405]` Quản lý Ca trực & Bàn giao Đối soát Tiền mặt Quầy bến xe (`/company/shifts`) (3 SP - Cường).
-   - `[S406]` Bản đồ Định vị GPS Live Tracking xe chạy thời gian thực qua SSE (`/tracking/:tripId`) (4 SP - Phát).
-   - `[S407]` Quản trị Chính sách Giá vé động & Phụ thu Lễ Tết/Cuối tuần (`/company/pricing-rules`) (3 SP - Đức).
-   - `[S408]` Trung tâm Trình diễn Demo Hub 15 Phút (`/demo`) & Slide Bảo Vệ OJT (3 SP - ĐÃ XONG - Thành).
-   - `[S409]` Màn hình Loading chuyển trang & Tối ưu hiệu năng giao diện SWR Cache 0ms, Skeleton Vé của tôi (`/my-tickets`) (3 SP - ĐÃ XONG - Thành).
-   - `[S410]` Phân hệ Báo cáo Thống kê Doanh thu & Tỷ lệ lấp đầy ghế Nhà xe (`/company/reports`) (3 SP - Phát).
-5. **Testing & QA Verification**: Báo cáo kiểm thử hồi quy độc lập tại `docs/test-reports/` cho từng thành viên (Cường, Đức, Phát, Phong).
-6. **Sprint Retrospective & Defense Ready**: Kịch bản thuyết trình bảo vệ 15 phút chi tiết từng giây và Hồ sơ bàn giao toàn sàn 100/100 điểm.
-7. **Bug Tracking**: Theo dõi lỗi hệ thống (0 bug nghiêm trọng, 100% pass).
+1. **Sprint 1: Architecture, CSDL, Auth & Portals (35 Thẻ) [DONE]**: Nền tảng dự án, CSDL Supabase Cloud, Stateless JWT Bearer, phân quyền RBAC, Cổng Admin, Cổng Nhà xe và Master Data danh mục toàn quốc (35 thẻ Done).
+2. **Sprint 2: Core Booking, Concurrency Lock, Tra Cứu & Thanh Toán (39 Thẻ) [DONE]**: Lõi tìm kiếm chuyến xe SWR Cache 0ms, sơ đồ 34 ghế 2 tầng Limousine VIP, Khóa giữ chỗ Concurrency Lock 10:00, Thanh toán VNPAY & VietQR, Quét QR Soát vé camera và Bộ test fixtures (39 thẻ Done).
+3. **Sprint 3: Khóa Ghế Real-time, Email B2B, CI/CD VPS, POS Bến Xe, GPS Tracking & Báo Cáo Nhà Xe (10 Thẻ - 34 SP) [SPRINT HIỆN TẠI]**:
+   - `[S301]` Đồng bộ Khóa ghế Concurrency Lock 10:00 & Giữ chỗ Real-time SSE chống trùng vé (4 SP - Phong).
+   - `[S302]` Dịch vụ Email Tự Động Phê Duyệt Hồ Sơ Đối Tác & Cấp Tài Khoản B2B qua Google SMTP (`/company/login`) (3 SP - Thành).
+   - `[S303]` Đóng gói Docker Compose Production & Triển khai CI/CD lên VPS `103.72.57.149` (4 SP - Thành).
+   - `[S304]` Phân hệ Bán vé Nhanh tại Quầy Bến Xe của Nhà Xe POS (`/company/pos`) & In vé nhiệt 80mm (4 SP - Phong).
+   - `[S305]` Quản lý Ca trực & Bàn giao Đối soát Tiền mặt Quầy bến xe (`/company/shifts`) (3 SP - Cường).
+   - `[S306]` Bản đồ Định vị GPS Live Tracking xe chạy thời gian thực qua SSE (`/tracking/:tripId`) (4 SP - Phát).
+   - `[S307]` Quản trị Chính sách Giá vé động & Phụ thu Lễ Tết/Cuối tuần (`/company/pricing-rules`) (3 SP - Đức).
+   - `[S308]` Trung tâm Trình diễn Demo Hub 15 Phút (`/demo`) & Slide Bảo Vệ OJT (3 SP - Thành).
+   - `[S309]` Màn hình Loading chuyển trang & Tối ưu hiệu năng giao diện SWR Cache 0ms, Skeleton Vé của tôi (`/my-tickets`) (3 SP - Đức).
+   - `[S310]` Phân hệ Báo cáo Thống kê Doanh thu & Tỷ lệ lấp đầy ghế Nhà xe (`/company/reports`) (3 SP - Cường).
+4. **Testing & QA Verification**: Báo cáo kiểm thử hồi quy độc lập tại `docs/test-reports/` cho từng thành viên (Cường, Đức, Phát, Phong).
+5. **Sprint Retrospective & Defense Ready**: Kịch bản thuyết trình bảo vệ 15 phút chi tiết từng giây và Hồ sơ bàn giao toàn sàn 100/100 điểm.
+6. **Bug Tracking**: Theo dõi lỗi hệ thống (0 bug nghiêm trọng, 100% pass).
 
 ---
 

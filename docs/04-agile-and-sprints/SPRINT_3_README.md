@@ -1,84 +1,84 @@
-# 📙 SPRINT 3 README — KIỂM THỬ TÍCH HỢP, SOÁT VÉ QR & TỐI ƯU VẬN HÀNH
-> **Dự án:** Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy  
-> **Đơn vị:** OJT Đồ Án Nhóm 7  
-> **Thời gian thực hiện:** Tuần 3 (Sprint 3 — Tuần Kiểm thử Tích hợp, Firebase Auth & Thanh toán)  
-> **Trạng thái:** 🚀 **NGHIỆM THU (30/36 Thẻ hoàn thành — Đạt 87.5% khối lượng)**  
-> **Quy mô danh mục:** 36 Thẻ | 48 Story Points (Đã hoàn thành 30 thẻ | 42 SP trong 'Done Sprint 3' trên Trello)  
+# 📙 SPRINT 3 README — KHÓA GHẾ REALTIME, POS BẾN XE, GPS TRACKING, CI/CD VPS & BÁO CÁO NHÀ XE
+> **Dự án:** Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy (`traveleasy-platform`)  
+> **Đơn vị:** OJT Đồ Án Tốt Nghiệp Nhóm 7  
+> **Thời gian thực hiện:** Tuần 3 (Sprint 3 — Tuần Hoàn Thiện & Nghiệm Thu Sản Phẩm)  
+> **Trạng thái:** 🚀 **ĐANG THỰC HIỆN (Theo đúng tiến độ Tuần 3 của môn học)**  
+> **Quy mô danh mục Sprint 3:** **10 User Stories & Technical Tasks | 34 Story Points | 06 Thành viên**  
 
 ---
 
 ## 🎯 1. MỤC TIÊU SPRINT (SPRINT GOAL)
-Kiểm thử tích hợp toàn diện (E2E Integration Testing) xuyên suốt 3 cổng người dùng (Khách hàng ⇄ Nhà xe ⇄ Quản trị sàn), xây dựng tính năng quét mã QR soát vé di động bằng camera (`/scanner`) với tốc độ < 0.2s, triển khai tra cứu vé ngoại tuyến (Offline Storage), tối ưu độ trễ hệ thống, tích hợp xác thực Firebase Google Sign-In & OTP Phone và gia cố độ tin cậy để đưa nền tảng vào trạng thái sẵn sàng sản xuất (Production-Ready).
+Triển khai trọn vẹn nghiệp vụ cốt lõi và hoàn tất chuyển giao sản phẩm:
+- **Hạ tầng & Real-time:** Hoàn tất cơ chế khóa ghế đồng thời **Concurrency Lock 10 phút** chống trùng vé, tích hợp Server-Sent Events (SSE). Đóng gói **Docker Compose** và triển khai hệ thống lên **VPS Production** (`103.72.57.149`).
+- **Nghiệp vụ Bến xe & Nhà xe:** Xây dựng quầy bán vé nhanh **POS Bến xe** (`/company/pos`) hỗ trợ in bill nhiệt 80mm có QR; phân hệ **Quản lý ca trực tiền mặt** Z-Report (`/company/shifts`); phân hệ **Báo cáo doanh thu & tỷ lệ lấp đầy ghế** (`/company/reports`).
+- **Khách hàng & Trải nghiệm:** Tích hợp bản đồ **GPS Live Tracking** xe chạy thời gian thực (`/tracking/:tripId`), cấu hình **luật giá vé động & giờ cao điểm** (`/company/pricing-rules`), tối ưu tốc độ tải trang với **SWR Cache 0ms & Skeleton UI**.
+- **Chuyển giao & Sẵn sàng bảo vệ:** Chuẩn bị trung tâm kịch bản **Demo Hub 15 phút** (`/demo`) và bộ slide báo cáo OJT.
 
 ---
 
-## 👥 2. PHÂN CÔNG THÀNH VIÊN (RACI)
+## 👥 2. PHÂN CÔNG THÀNH VIÊN VÀ ĐỊNH MỨC STORY POINTS (10 TASKS / 34 SP)
 
-| Thành viên | Vai trò | Trọng tâm công việc Sprint 3 |
-|:---|:---|:---|
-| **Phạm Công Thành** | Team Leader & System Architect | Kiểm tra kiến trúc tổng thể, tích hợp bộ lọc truy vết phân tán `CorrelationIdFilter`, chuẩn bị tài liệu kỹ thuật vận hành và hỗ trợ giải quyết các lỗi tích hợp phức tạp (0 task mới). |
-| **Nguyễn Đại Phát** | Admin Lead & Full-Stack | Kiểm thử nghiệm thu và tích hợp API Cổng Quản trị Admin: Đối soát hoa hồng, nhật ký kiểm toán bất biến (Immutable Audit Logs), kiểm tra quyền hạn các vai trò và chuẩn hóa mã phản hồi lỗi API. |
-| **Phạm Thanh Phong** | Core Booking & Seat Engine | Kiểm thử tải (Load Testing) thuật toán khóa ghế, kiểm thử các trường hợp biên của cổng thanh toán VietQR/VNPAY (chống thanh toán lặp, khôi phục khi mất mạng), tối ưu chỉ mục truy vấn tìm chuyến. |
-| **Đoàn Nhật Cường** | Mobile Specialist | Xây dựng và kiểm thử module Soát vé di động bằng QR Code qua webcam/camera điện thoại (`/scanner`), kiểm thử lưu trữ vé ngoại tuyến qua LocalStorage (`/lookup`), tối ưu giao diện Responsive Mobile. |
-| **Trần Minh Đức** | Customer Portal | Kiểm thử nghiệm thu luồng Đăng nhập, Hồ sơ cá nhân, Lịch sử vé và quy trình Hủy vé / Hoàn tiền tự động (`/my-tickets`), kiểm tra tính hợp lệ của mã giảm giá khi thanh toán. |
-| **Phan Trung Kiên** | Thành viên | Miễn thực tập OJT (Exempted) theo quyết định đào tạo. |
-
----
-
-## 📋 3. PHẠM VI & HẠNG MỤC CÔNG VIỆC CHÍNH (SPRINT BACKLOG)
-
-### 3.0. Hạng mục Ưu tiên 1 (Tiếp thu ý kiến Thầy) & Tồn đọng chuyển tiếp từ Sprint 2
-- **[Ưu tiên: 1] [5 SP] [S322] Tái cấu trúc Đăng ký Đối tác Nhà xe KYB & Thẩm định Cổng Admin (Phạm Công Thành):**
-  - Form thẩm định doanh nghiệp 3 khối (Pháp nhân MST 10-13 số, Hồ sơ số hóa PDF/CCCD 2 mặt <= 10MB, Tài khoản ngân hàng Escrow đối soát).
-  - Modal xem trước tài liệu PDF/CCCD trực quan tại /admin/bus-companies và cơ chế tự động cấp tài khoản /company/login khi duyệt.
-  - Chi tiết đặc tả & quy chế: [HIEP_DINH_QUY_CHE_HOAT_DONG_VA_HOP_DONG_HOP_TAC.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/01-requirements/HIEP_DINH_QUY_CHE_HOAT_DONG_VA_HOP_DONG_HOP_TAC.md).
-- **[Ưu tiên: 1] [5 SP] [S321] Tích hợp Đăng nhập Google & Xác thực OTP (Nguyễn Đại Phát — Đã phân tách 4 thẻ chuẩn Scrum):**
-  - `[FE][S321A]` (1 SP): Thiết kế nút Đăng nhập Google chuẩn & Xử lý Callback lấy ID Token.
-  - `[BE][S321B]` (2 SP): API Xác thực Google ID Token, Tự động liên kết User & Cấp JWT.
-  - `[FE][S321C]` (1 SP): Giao diện Modal nhập mã OTP 6 ô tự động nhảy focus & Bộ đếm 60s.
-  - `[BE][S321D]` (1 SP): Dịch vụ Sinh mã OTP, Quản trị thời gian sống TTL & Xác thực số điện thoại.
-  - Minh chứng: Đã hoàn thành 100% trong PR #45.
-- **[Ưu tiên: 2] [8 SP] Xử lý dứt điểm 2 task tồn đọng Sprint 2 (Trần Minh Đức):**
-  - [BE-S320] (3 SP): Bộ Fixtures dữ liệu mẫu và scripts dọn CSDL kiểm thử tự động.
-  - [FE-S320] (5 SP): Kiểm thử nghiệm thu giao diện Acceptance Testing /test/fixtures.
-
-### 3.1. Kiểm thử Tích hợp Liên Cổng (E2E Integration Testing)
-- Kiểm thử luồng thông suốt từ đầu đến cuối:
-  1. Admin duyệt nhà xe mới và kích hoạt tuyến đường.
-  2. Nhà xe tạo chuyến xe, gán biển số xe và mở bán vé.
-  3. Khách hàng tìm chuyến, chọn ghế, hoàn tất thanh toán.
-  4. Hệ thống ghi nhận doanh thu vào ví nhà xe và khấu trừ phí hoa hồng 10% về sàn.
-- Kiểm thử các tình huống ngoại lệ (Edge Cases): Khách hủy thanh toán giữa chừng, hết hạn giữ ghế khi đang nhập thông tin, thanh toán trễ.
-
-### 3.2. Soát vé Di động Bằng Mã QR Siêu Tốc (`/scanner`)
-- Tích hợp thư viện quét mã vạch/QR qua camera HTML5/WebRTC trên thiết bị di động.
-- Xác thực mã vé bảo mật (Signature Hash) chống làm giả vé.
-- Tốc độ nhận diện và cập nhật trạng thái vé sang `USED` (Đã lên xe) trong vòng dưới **0.2 giây**.
-- Cảnh báo âm thanh và màu sắc trực quan: Xanh (Vé hợp lệ), Đỏ (Vé đã sử dụng / Vé sai chuyến / Vé bị hủy).
-
-### 3.3. Tra cứu Vé Ngoại Tuyến (Offline Ticket Lookup)
-- Lưu cache thông tin vé và mã QR vào `localStorage` / `IndexedDB` ngay khi đặt vé thành công.
-- Cho phép hành khách mở trang Tra cứu vé (`/lookup`) xuất trình vé ngay cả khi bến xe bị mất sóng điện thoại hoặc không có Internet.
-
-### 3.4. Giám sát & Bền bỉ Hệ thống (Observability & Resilience)
-- Gắn mã định danh truy vết `X-Correlation-Id` vào từng yêu cầu HTTP để theo dõi log xuyên suốt Client ➔ Backend ➔ CSDL.
-- Xây dựng endpoint kiểm tra sức khỏe hệ thống: `/health`, `/health/liveness`, `/health/readiness`.
-- Chuẩn bị bộ test fixtures tự động nạp và dọn dẹp dữ liệu kiểm thử.
+| STT | Thành viên | Vai trò | Số task | Story Points | Nhiệm vụ trọng tâm Sprint 3 |
+|:---:|:---|:---|:---:|:---:|:---|
+| 1 | **Phạm Công Thành** | Team Leader & System Architect | 3 tasks | **10 SP** | DevOps VPS Production (`S303`), Email B2B SMTP (`S302`), Demo Hub 15p & Slide (`S308`) |
+| 2 | **Phạm Thanh Phong** | Core Booking & Seat Engine | 2 tasks | **8 SP** | Concurrency Lock 10:00 (`S301`), Quầy bán vé nhanh POS Bến xe in nhiệt 80mm (`S304`) |
+| 3 | **Nguyễn Đại Phát** | Admin Lead & Fullstack | 2 tasks | **7 SP** | GPS Live Tracking SSE (`S306`), Báo cáo doanh thu & lấp đầy ghế nhà xe (`S310`) |
+| 4 | **Trần Minh Đức** | Customer Portal & Performance | 2 tasks | **6 SP** | Giá vé động & giờ cao điểm (`S307`), Global Loading & SWR Cache 0ms (`S309`) |
+| 5 | **Đoàn Nhật Cường** | Mobile Specialist & Operator POS | 1 task | **3 SP** | Quản lý ca trực & bàn giao tiền mặt quầy bến xe Z-Report (`S305`) |
+| 6 | **Phan Trung Kiên** | Thành viên | 0 task | **0 SP** | Miễn thực tập OJT theo quy chế đào tạo |
 
 ---
 
-## 📦 4. SẢN PHẨM BÀN GIAO (DELIVERABLES)
-1. Ứng dụng quét mã QR soát vé di động vận hành thực tế tại `/scanner`.
-2. Tính năng tra cứu vé ngoại tuyến hoạt động khi ngắt kết nối mạng.
-3. Bộ tài liệu kiểm thử nghiệm thu tính năng `BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md`.
-4. Endpoint giám sát sức khỏe hệ thống `/health` và log truy vết chuẩn `X-Correlation-Id`.
+## 📋 3. DANH MỤC CÔNG VIỆC CHI TIẾT (SPRINT 3 BACKLOG)
+
+### 3.1. Phân hệ Lõi Đặt Vé, Hạ Tầng & DevOps
+- **[Ưu tiên: 1] [4 SP] [S301][CORE] Đồng bộ Khóa ghế Concurrency Lock 10:00 & Giữ chỗ Real-time SSE:**
+  - Ngăn chặn 100% tình trạng 2 khách hàng hoặc khách online và nhân viên quầy đặt trùng 1 ghế.
+  - Tự động hoàn ghế về trạng thái trống sau khi bộ đếm 10:00 kết thúc nếu chưa thanh toán.
+  - Phụ trách: **Phạm Thanh Phong**.
+- **[Ưu tiên: 1] [3 SP] [S302][MAIL] Dịch vụ Email Tự Động Phê Duyệt Hồ Sơ Đối Tác & Cấp Phát Tài Khoản B2B (`/company/login`):**
+  - Tự động kích hoạt tài khoản nhà xe khi Admin phê duyệt, gửi email HTML chứa thông tin đăng nhập và mật khẩu khởi tạo qua Google SMTP live.
+  - Phụ trách: **Phạm Công Thành**.
+- **[Ưu tiên: 1] [4 SP] [S303][DEVOPS] Đóng Gói Docker Compose Production & Triển Khai CI/CD Lên VPS Thực Tế (`103.72.57.149`):**
+  - Cấu hình Nginx reverse proxy cổng 80/443, SSL Let's Encrypt, container hóa Spring Boot Backend và React Frontend.
+  - Phụ trách: **Phạm Công Thành**.
+
+### 3.2. Phân hệ Quầy Vé Bến Xe & Điều Hành Nhà Xe
+- **[Ưu tiên: 2] [4 SP] [S304][POS] Giao diện & API Bán Vé Nhanh Tại Quầy Bến Xe POS (`/company/pos`):**
+  - Tối ưu thao tác bán vé cho khách vãng lai trong 3 click chuột hoặc phím tắt (F2 tìm chuyến, F9 in bill).
+  - Tích hợp in hóa đơn nhiệt khổ 80mm có mã QR bảo mật để tài xế quét soát vé.
+  - Phụ trách: **Phạm Thanh Phong**.
+- **[Ưu tiên: 2] [3 SP] [S305][SHIFTS] Quản Lý Ca Trực & Bàn Giao Tiền Mặt Quầy Bến Xe (`/company/shifts`):**
+  - Mở ca với tiền mặt đầu ca (Float Cash), ghi nhận doanh thu tiền mặt trong ca, kết ca xuất báo cáo Z-Report nộp quỹ.
+  - Tách biệt độc lập khỏi phân hệ POS để tránh xung đột mã nguồn.
+  - Phụ trách: **Đoàn Nhật Cường**.
+- **[Ưu tiên: 2] [3 SP] [S310][REPORTS] Phân Hệ Báo Cáo Thống Kê Doanh Thu & Tỷ Lệ Lấp Đầy Ghế Nhà Xe (`/company/reports`):**
+  - Biểu đồ trực quan doanh thu theo ngày/tháng, tỷ lệ lấp đầy ghế theo tuyến đường, xuất dữ liệu Excel đối soát.
+  - Phụ trách: **Nguyễn Đại Phát**.
+
+### 3.3. Phân hệ Trải Nghiệm Khách Hàng & Vận Hành
+- **[Ưu tiên: 2] [4 SP] [S306][TRACKING] Bản Đồ Định Vị GPS Live Tracking Xe Chạy Thời Gian Thực (`/tracking/:tripId`):**
+  - Tích hợp Leaflet Map hiển thị tuyến đường, mô phỏng tọa độ GPS xe chạy realtime qua Server-Sent Events (SSE).
+  - Khách hàng bấm xem vị trí xe trực tiếp từ trang Vé của tôi (`/my-tickets`).
+  - Phụ trách: **Nguyễn Đại Phát**.
+- **[Ưu tiên: 2] [3 SP] [S307][PRICING] Phân Hệ Quản Trị Giá Vé Động & Phụ Thu Lễ Tết/Cuối Tuần (`/company/pricing-rules`):**
+  - Thiết lập luật tự động điều chỉnh giá: phụ thu cuối tuần (+15%), ngày lễ (+30%), giảm giá giờ thấp điểm (-10%).
+  - Phụ trách: **Trần Minh Đức**.
+- **[Ưu tiên: 1] [3 SP] [S309][PERF] Màn hình Loading chuyển trang & Tối ưu hiệu năng giao diện SWR Cache 0ms, Skeleton Vé của tôi (`/my-tickets`):**
+  - Tối ưu trải nghiệm không giật lag, Skeleton Loading UI khi tải dữ liệu vé và lịch trình.
+  - Phụ trách: **Trần Minh Đức**.
+
+### 3.4. Phân hệ Tổng Kết & Sẵn Sàng Nghiệm Thu OJT
+- **[Ưu tiên: 1] [3 SP] [S308][DEMO-DEFENSE] Xây Dựng Trung Tâm Trình Diễn Demo Hub 15 Phút (`/demo`) & Slide Bảo Vệ OJT:**
+  - Cổng kịch bản demo 1-click kiểm tra sức khỏe hệ thống, nạp dữ liệu mẫu và slide thuyết trình chuẩn nhận diện.
+  - Phụ trách: **Phạm Công Thành**.
 
 ---
 
-## 🏆 5. KẾT QUẢ NGHIỆM THU & TIÊU CHÍ HOÀN THÀNH (DoD)
-- 🔄 Toàn bộ 54 user stories được rà soát và kiểm thử nghiệm thu theo ma trận chất lượng.
-- 🔄 Quét mã QR kiểm thử thành công trên cả trình duyệt máy tính và camera điện thoại thật.
-- 🔄 Không còn lỗi nghiêm trọng (Critical/Blocker Bug) ảnh hưởng đến luồng thanh toán và xuất vé.
-- 🔄 **Hiện trạng nghiệm thu Sprint 3: 30/36 Thẻ hoàn thành (42/48 SP — Đạt 87.5% khối lượng trong cột 'Done Sprint 3').**
-- 🚀 Đã nghiệm thu và merge 7 Pull Requests trọng yếu (#35, #36, #41, #42, #43, #45, #47) không có merge conflict nào.
-
+## 📦 4. SẢN PHẨM BÀN GIAO SPRINT 3 (DELIVERABLES)
+1. 🖨️ Phân hệ POS bán vé quầy bến xe (`/company/pos`) và Quản lý ca trực tiền mặt (`/company/shifts`).
+2. 🗺️ Phân hệ Bản đồ định vị GPS xe chạy thời gian thực (`/tracking/:tripId`).
+3. ⚡ Động cơ khóa ghế đồng thời Concurrency Lock 10 phút chống trùng vé.
+4. 📈 Báo cáo thống kê doanh thu & lấp đầy ghế nhà xe (`/company/reports`).
+5. 🐳 Môi trường Production VPS đóng gói Docker (`103.72.57.149`).
+6. 🎬 Cổng trình diễn Demo Hub 15 phút (`/demo`) và Kịch bản bảo vệ đồ án OJT.

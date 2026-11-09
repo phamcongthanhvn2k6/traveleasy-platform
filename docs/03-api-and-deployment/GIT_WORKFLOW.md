@@ -21,7 +21,7 @@ Mọi thành viên khi mở máy tính và làm việc với repository đều p
   $$\mathbf{1 \ Task \ (User \ Story) = 1 \ Branch \ Riêng \ Biệt = 1 \ Pull \ Request \ Duy \ Nhất}$$  
   Nghiêm cấm tuyệt đối hành vi gộp từ 2 task trở lên vào cùng một nhánh (Mega-PR). Một task chỉ được coi là hoàn thành khi PR của riêng task đó được Team Lead duyệt (Approve) và merge vào `dev`.
 * **NGUYÊN TẮC 2 — LUẬT BẢO TỒN RANH GIỚI SPRINT (SPRINT BOUNDARY INTEGRITY):**  
-  Sprint nào chỉ làm và nộp đúng các task của Sprint đó. Đang trong chu kỳ Sprint 3 thì tuyệt đối **CẤM** mở PR chứa mã task của Sprint 4 (`S4xx`). Bất kỳ PR nào "nhảy cóc" Sprint sẽ bị từ chối ngay lập tức.
+  Sprint nào chỉ làm và nộp đúng các task của Sprint đó. Đang trong chu kỳ Sprint 3 thì chỉ làm và mở PR cho các mã task của Sprint 3 (`S3xx`). Bất kỳ PR nào làm sai phạm vi sẽ bị từ chối ngay lập tức.
 * **NGUYÊN TẮC 3 — LUẬT NGÔN NGỮ BẢN ĐỊA CHUẨN MỰC (100% VIETNAMESE COMMITS):**  
   100% commit message phải viết bằng **Tiếng Việt có dấu đầy đủ, chuẩn ngữ pháp**, tuân thủ định dạng Conventional Commits và có mã task rõ ràng. Cấm tiếng Anh nửa mùa, cấm tiếng Việt không dấu, cấm commit vô nghĩa.
 * **NGUYÊN TẮC 4 — LUẬT KHÔNG HỎNG NHÁNH CHUNG (ZERO BROKEN BUILDS):**  

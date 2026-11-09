@@ -73,21 +73,21 @@ export const CompanyRoutes: React.FC = () => {
                 <Route path="/settlements" element={<CompanySettlementsPage />} />
 
                 {/* ======================================================== */}
-                {/* SPRINT 4 MODULES (NHIỆM VỤ THÀNH VIÊN SPRINT 4)         */}
+                {/* SPRINT 3 MODULES (NHIỆM VỤ THÀNH VIÊN SPRINT 3)         */}
                 {/* ======================================================== */}
-                {/* [S404] Quầy bán vé nhanh POS - Phạm Thanh Phong */}
+                {/* [S304] Quầy bán vé nhanh POS - Phạm Thanh Phong */}
                 <Route path="pos" element={<PosTerminalPage />} />
                 <Route path="/pos" element={<PosTerminalPage />} />
 
-                {/* [S405] Quản lý ca trực & bàn giao tiền mặt - Đoàn Nhật Cường */}
+                {/* [S305] Quản lý ca trực & bàn giao tiền mặt - Đoàn Nhật Cường */}
                 <Route path="shifts" element={<CompanyShiftsPage />} />
                 <Route path="/shifts" element={<CompanyShiftsPage />} />
 
-                {/* [S407] Quản trị chính sách giá vé động - Trần Minh Đức */}
+                {/* [S307] Quản trị chính sách giá vé động - Trần Minh Đức */}
                 <Route path="pricing-rules" element={<CompanyPricingRulesPage />} />
                 <Route path="/pricing-rules" element={<CompanyPricingRulesPage />} />
 
-                {/* [S410] Báo cáo doanh thu & tỷ lệ lấp đầy ghế - Nguyễn Đại Phát */}
+                {/* [S310] Báo cáo doanh thu & tỷ lệ lấp đầy ghế - Nguyễn Đại Phát */}
                 <Route path="reports" element={<CompanyReportsPage />} />
                 <Route path="/reports" element={<CompanyReportsPage />} />
 

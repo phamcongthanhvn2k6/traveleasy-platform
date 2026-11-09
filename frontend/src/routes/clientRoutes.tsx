@@ -63,7 +63,7 @@ export const ClientRoutes: React.FC = () => {
       <Route path="/reviews" element={<ReviewsPage />} />
       <Route path="/scanner" element={<TicketScannerPage />} />
 
-      {/* [S406] Định vị GPS Live Tracking xe chạy thời gian thực - Nguyễn Đại Phát */}
+      {/* [S306] Định vị GPS Live Tracking xe chạy thời gian thực - Nguyễn Đại Phát */}
       <Route path="/tracking" element={<LiveTrackingMapPage />} />
       <Route path="/tracking/:tripId" element={<LiveTrackingMapPage />} />
       {/* Test Fixtures & Demo Hub: Bảo vệ an toàn - Chỉ kích hoạt khi DEV, Localhost hoặc có cờ VITE_ENABLE_DEMO_ROUTES */}
