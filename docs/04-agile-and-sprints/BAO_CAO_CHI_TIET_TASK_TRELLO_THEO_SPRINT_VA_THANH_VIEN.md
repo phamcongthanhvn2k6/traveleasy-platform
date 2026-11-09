@@ -16,12 +16,12 @@
 | **Sprint 1** | Nền tảng Core, CSDL 36 bảng, Stateless JWT, Cổng Admin & Cổng Nhà xe | Tuần 1 | 19 thẻ | **32 SP** | 32 SP (19 thẻ) | 0 SP | **100%** ✅ |
 | **Sprint 2** | Tìm kiếm SWR Cache, Sơ đồ 34 ghế VIP, Khóa ghế Concurrency & Thanh toán | Tuần 2 | 19 thẻ | **35 SP** | 35 SP (19 thẻ) | 0 SP | **100%** ✅ |
 | **Sprint 3** | Kiểm thử tích hợp E2E, Hồi quy API/UI, Fixtures & Chuẩn hóa điểm SP | Tuần 3 | 36 thẻ | **48 SP** | 42 SP (30 thẻ) | 6 SP (6 thẻ) | **87.5%** 🚀 |
-| **Sprint 4** | Khóa ghế Realtime, Email B2B, CI/CD VPS, POS Bến xe, Tối ưu SWR 0ms & Demo Hub | Tuần 4 | 9 thẻ | **31 SP** | 10 SP (3 thẻ) | 21 SP (6 thẻ) | *(Nước rút)* 🎯 |
-| **TỔNG CỘNG** | **Toàn bộ hệ sinh thái Sàn Đặt Vé Xe Khách TravelEasy** | **4 Tuần** | **83 thẻ cốt lõi** | **146 SP** | **119 SP (71 thẻ)** | **27 SP (12 thẻ)** | **81.5% Hoàn thành** |
+| **Sprint 4** | Khóa ghế Realtime, Email B2B, CI/CD VPS, POS Bến xe, GPS Tracking & Báo cáo Nhà xe | Tuần 4 | 10 thẻ | **34 SP** | 10 SP (3 thẻ) | 24 SP (7 thẻ) | *(Nước rút)* 🎯 |
+| **TỔNG CỘNG** | **Toàn bộ hệ sinh thái Sàn Đặt Vé Xe Khách TravelEasy** | **4 Tuần** | **84 thẻ cốt lõi** | **149 SP** | **119 SP (71 thẻ)** | **30 SP (13 thẻ)** | **79.9% Hoàn thành** |
 
 > [!NOTE]
 > **Quy chuẩn chuẩn hóa Story Points (Scrum Calibration)**:
-> Danh mục công việc chính thức toàn bộ dự án gồm **83 User Stories & Technical Tasks cốt lõi với tổng định mức 146 SP** cho đúng **4 tuần làm việc (4 Sprints, mỗi Sprint 1 tuần)**. Bình quân mỗi thành viên đảm nhiệm ~6-7 SP/tuần theo chuẩn mực Agile/Scrum quốc tế. Nhóm đã loại bỏ các module ngoài phạm vi (Thuê xe du lịch tour, Logistics bưu kiện) để tập trung cao độ vào sàn vé xe khách liên tỉnh, DevOps VPS và kịch bản bảo vệ tốt nghiệp OJT.
+> Danh mục công việc chính thức toàn bộ dự án gồm **84 User Stories & Technical Tasks cốt lõi với tổng định mức 149 SP** cho đúng **4 tuần làm việc (4 Sprints, mỗi Sprint 1 tuần)**. Bình quân mỗi thành viên đảm nhiệm ~6-7 SP/tuần theo chuẩn mực Agile/Scrum quốc tế. Nhóm đã loại bỏ các module ngoài phạm vi (Thuê xe du lịch tour, Logistics bưu kiện) để tập trung cao độ vào sàn vé xe khách liên tỉnh, DevOps VPS và kịch bản bảo vệ tốt nghiệp OJT.
 
 ---
 
@@ -129,7 +129,7 @@
 | 35 | `TASK` | [[Ưu tiên: 1] [1 SP] [FE][S321C] Giao diện Modal nhập mã OTP 6 ô tự động nhảy focus & Bộ đếm 60s](https://trello.com/c/O8ecXGj0) | **1 SP** | `Done Sprint 3` | Phát Nguyễn | `Frontend`, `Customer Portal`, `Sprint 3` |
 | 36 | `TASK` | [[Ưu tiên: 1] [1 SP] [BE][S321D] Dịch vụ Sinh mã OTP, Quản trị thời gian sống TTL & Xác thực số điện thoại](https://trello.com/c/CnzTxRUc) | **1 SP** | `Done Sprint 3` | Phát Nguyễn | `Backend`, `Customer Portal`, `Sprint 3` |
 
-### 3.4. SPRINT 4 (Tuần 4: Khóa Ghế Real-time, Email B2B, CI/CD VPS, POS Bến Xe, Tối Ưu SWR 0ms & Demo Bảo Vệ) (9 Thẻ — Tổng: 31 Story Points)
+### 3.4. SPRINT 4 (Tuần 4: Khóa Ghế Real-time, Email B2B, CI/CD VPS, POS Bến Xe, GPS Tracking & Báo Cáo Nhà Xe) (10 Thẻ — Tổng: 34 Story Points)
 
 | STT | Loại | Tiêu đề thẻ & Mô tả công việc | Điểm SP | Danh sách Trello | Người phụ trách | Nhãn (Labels) |
 | :---: | :---: | :--- | :---: | :---: | :--- | :--- |
@@ -137,8 +137,9 @@
 | 2 | `TASK` | [[Ưu tiên: 1] [3 SP] [S402][MAIL] Dịch vụ Email Tự Động Phê Duyệt Hồ Sơ Đối Tác & Cấp Phát Tài Khoản B2B (/company/login)](https://trello.com/c/emailB2b) | **3 SP** | `In Progress - SPRINT 4` | Phạm Công Thành | `Backend`, `Email`, `Sprint 4` |
 | 3 | `TASK` | [[Ưu tiên: 1] [4 SP] [S403][DEVOPS] Đóng Gói Docker Compose Production & Triển Khai CI/CD Lên VPS Thực Tế (103.72.57.149)](https://trello.com/c/devopsVps) | **4 SP** | `In Progress - SPRINT 4` | Phạm Công Thành | `DevOps`, `Infrastructure`, `Sprint 4` |
 | 4 | `TASK` | [[Ưu tiên: 2] [4 SP] [S404][POS] Giao diện & API Bán vé nhanh tại Quầy Bến xe của Nhà xe (/company/pos) & In vé nhiệt 80mm](https://trello.com/c/LctI1W0z) | **4 SP** | `Sprint Backlog - SPRINT 4` | Phạm Thanh Phong | `Fullstack`, `POS`, `Sprint 4` |
-| 5 | `TASK` | [[Ưu tiên: 2] [3 SP] [S405][POS-SHIFTS] Quản lý Ca trực & Bàn giao Đối soát Tiền mặt quầy bến xe (/company/pos/shifts)](https://trello.com/c/ozO2O42W) | **3 SP** | `Sprint Backlog - SPRINT 4` | Phát Nguyễn | `Fullstack`, `Finance`, `Sprint 4` |
-| 6 | `TASK` | [[Ưu tiên: 2] [4 SP] [S406][TRACKING] Bản đồ Định vị GPS Live Tracking xe chạy thời gian thực qua Server-Sent Events (/tracking/:tripId)](https://trello.com/c/aaBDHuvQ) | **4 SP** | `Sprint Backlog - SPRINT 4` | Josh Liam | `Frontend`, `SSE`, `Sprint 4` |
+| 5 | `TASK` | [[Ưu tiên: 2] [3 SP] [S405][POS-SHIFTS] Quản lý Ca trực & Bàn giao Đối soát Tiền mặt quầy bến xe (/company/pos/shifts)](https://trello.com/c/ozO2O42W) | **3 SP** | `Sprint Backlog - SPRINT 4` | Đoàn Nhật Cường | `Fullstack`, `Finance`, `Sprint 4` |
+| 6 | `TASK` | [[Ưu tiên: 2] [4 SP] [S406][TRACKING] Bản đồ Định vị GPS Live Tracking xe chạy thời gian thực qua Server-Sent Events (/tracking/:tripId)](https://trello.com/c/aaBDHuvQ) | **4 SP** | `Sprint Backlog - SPRINT 4` | Phát Nguyễn | `Frontend`, `SSE`, `Sprint 4` |
 | 7 | `TASK` | [[Ưu tiên: 2] [3 SP] [S407][PRICING] Phân hệ Quản trị Giá vé động & Phụ thu Lễ Tết/Cuối tuần (/company/pricing-rules)](https://trello.com/c/xR5wd7N5) | **3 SP** | `Sprint Backlog - SPRINT 4` | Minh Đức Trần | `Fullstack`, `Pricing`, `Sprint 4` |
 | 8 | `TASK` | [[Ưu tiên: 1] [3 SP] [S408][DEMO-DEFENSE] Xây dựng Trung tâm Trình diễn Demo Hub 15 Phút (/demo) & Slide Bảo Vệ OJT](https://trello.com/c/demoHub15) | **3 SP** | `Done Sprint 4` | Phạm Công Thành | `Architecture`, `Demo`, `Sprint 4` |
 | 9 | `TASK` | [[Ưu tiên: 1] [3 SP] [S409][PERF] Màn hình Loading chuyển trang & Tối ưu hiệu năng giao diện SWR Cache 0ms, Skeleton Vé của tôi (/my-tickets)](https://trello.com/c/9QBFzTBp) | **3 SP** | `Done Sprint 4` | Phạm Công Thành | `Frontend`, `Backend`, `Performance`, `Sprint 4` |
+| 10 | `TASK` | [[Ưu tiên: 2] [3 SP] [S410][REPORTS] Phân Hệ Báo Cáo Thống Kê Doanh Thu & Tỷ Lệ Lấp Đầy Ghế Nhà Xe (/company/reports)](https://trello.com/c/RjniWR3Q) | **3 SP** | `Sprint Backlog - SPRINT 4` | Phát Nguyễn | `Company Portal`, `Finance`, `Sprint 4` |

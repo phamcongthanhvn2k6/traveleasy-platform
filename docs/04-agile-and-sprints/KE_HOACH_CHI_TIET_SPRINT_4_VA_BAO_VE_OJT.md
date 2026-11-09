@@ -4,7 +4,7 @@
 **Giai đoạn**: Tuần 4 (Sprint 4 — Tuần Nước Rút & Nghiệm thu Bảo vệ OJT)  
 **Thời hạn chốt nộp**: Cuối Tuần 4 (Code Freeze & Defense Ready)  
 **Nhóm trưởng / System Architect**: Phạm Công Thành (`phamcongthanhvn2k6` / `thanhphmcong1`)  
-**Quy mô kế hoạch Sprint 4 chuẩn hóa**: **9 User Stories & Technical Tasks cốt lõi — 31 Story Points (Chuẩn mực 1 tuần Scrum quốc tế)**  
+**Quy mô kế hoạch Sprint 4 chuẩn hóa**: **10 User Stories & Technical Tasks cốt lõi — 34 Story Points (Chuẩn mực 1 tuần Scrum quốc tế)**  
 
 ---
 
@@ -26,7 +26,7 @@ Bổ sung chính thức vào Sprint 4 các module sống còn đã và đang ho�
 
 ## 2. PHÂN BỔ ĐIỂM STORY POINTS (SP) VÀ MA TRẬN RACI SPRINT 4 CHUẨN
 
-### 2.1. Bảng phân bổ Story Points chuẩn Scrum (Tổng cộng: 31 SP)
+### 2.1. Bảng phân bổ Story Points chuẩn Scrum (Tổng cộng: 34 SP)
 
 | Mã Task | Phân hệ & Nghiệp vụ Trọng Tâm | Phụ trách (RACI) | Điểm SP | Trạng thái kỹ thuật thực tế |
 | :--- | :--- | :---: | :---: | :--- |
@@ -34,12 +34,13 @@ Bổ sung chính thức vào Sprint 4 các module sống còn đã và đang ho�
 | **`[S402]`** | **Dịch vụ Email Tự Động Phê Duyệt Đối Tác & Cấp Tài Khoản Điều Hành** | **Phạm Công Thành** | **3 SP** | 🟡 **ĐANG HOÀN TẤT** (Đã gửi live tới `phamcongt56@gmail.com`) |
 | **`[S403]`** | **Đóng Gói Docker Production & Triển Khai CI/CD Lên VPS Thực Tế** | **Phạm Công Thành** | **4 SP** | 🟡 **ĐANG HOÀN TẤT** (Container Backend & Frontend đã UP) |
 | **`[S404]`** | **Giao diện & API Bán Vé Nhanh Tại Quầy Bến Xe POS (`/company/pos`)** | **Phạm Thanh Phong** | **4 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (In vé nhiệt 80mm có QR) |
-| **`[S405]`** | **Quản Lý Ca Trực & Bàn Giao Tiền Mặt Quầy Bến Xe (`/company/pos/shifts`)** | **Nguyễn Đại Phát** | **3 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Mở ca, kết ca Z-Report) |
-| **`[S406]`** | **Bản Đồ GPS Live Tracking Xe Chạy Thời Gian Thực (`/tracking/:tripId`)** | **Đoàn Nhật Cường** | **4 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Leaflet map + SSE stream) |
+| **`[S405]`** | **Quản Lý Ca Trực & Bàn Giao Tiền Mặt Quầy Bến Xe (`/company/pos/shifts`)** | **Đoàn Nhật Cường** | **3 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Mở ca, kết ca Z-Report) |
+| **`[S406]`** | **Bản Đồ GPS Live Tracking Xe Chạy Thời Gian Thực (`/tracking/:tripId`)** | **Nguyễn Đại Phát** | **4 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Leaflet map + SSE stream) |
 | **`[S407]`** | **Quản Trị Giá Vé Động & Phụ Thu Lễ Tết/Cuối Tuần (`/company/pricing-rules`)** | **Trần Minh Đức** | **3 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Quy tắc phụ thu tự động) |
 | **`[S408]`** | **Trung Tâm Trình Diễn Demo Hub 15 Phút (`/demo`) & Slide Bảo Vệ OJT** | **Phạm Công Thành** *(Lead)* | **3 SP** | 🟢 **ĐÃ HOÀN THÀNH 100%** (Demo Hub & kịch bản sẵn sàng) |
 | **`[S409]`** | **Màn Hình Loading Chuyển Trang & Tối Ưu Hiệu Năng SWR Cache 0ms, Skeleton Vé Của Tôi (`/my-tickets`)** | **Phạm Công Thành** | **3 SP** | 🟢 **ĐÃ HOÀN THÀNH 100%** (SWR Cache 0ms, Skeleton UI) |
-| **TỔNG CỘNG** | **9 User Stories & Technical Tasks Chuẩn Hóa** | **Toàn đội** | **31 SP** | **Cân bằng tải chuẩn mực 1 tuần nước rút** |
+| **`[S410]`** | **Phân Hệ Báo Cáo Thống Kê Doanh Thu & Tỷ Lệ Lấp Đầy Ghế Nhà Xe (`/company/reports`)** | **Nguyễn Đại Phát** | **3 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Biểu đồ doanh thu & đối soát) |
+| **TỔNG CỘNG** | **10 User Stories & Technical Tasks Chuẩn Hóa** | **Toàn đội** | **34 SP** | **Cân bằng tải chuẩn mực 1 tuần nước rút** |
 
 ---
 
@@ -47,7 +48,7 @@ Bổ sung chính thức vào Sprint 4 các module sống còn đã và đang ho�
 
 | Thời gian | Nội dung trình bày | Người phụ trách | Hành động trực quan trên màn hình chiếu |
 | :---: | :--- | :---: | :--- |
-| **00:00 - 02:30**<br>*(2.5 phút)* | **Mở đầu & Kiến trúc Hệ thống**<br>- Giới thiệu Đề tài TravelEasy.<br>- Kiến trúc Modular Monolith, Supabase PostgreSQL.<br>- Bảng Trello 4 Sprint chuẩn Agile (31 SP Sprint 4). | **Phạm Công Thành**<br>*(Team Leader)* | - Mở trang `/demo` bấm nút **Kiểm tra Sức Khỏe Hệ Thống** (Show trạng thái UP, CSDL kết nối tốt, Memory < 256MB).<br>- Giới thiệu môi trường Production thực tế trên VPS `103.72.57.149`. |
+| **00:00 - 02:30**<br>*(2.5 phút)* | **Mở đầu & Kiến trúc Hệ thống**<br>- Giới thiệu Đề tài TravelEasy.<br>- Kiến trúc Modular Monolith, Supabase PostgreSQL.<br>- Bảng Trello 4 Sprint chuẩn Agile (34 SP Sprint 4). | **Phạm Công Thành**<br>*(Team Leader)* | - Mở trang `/demo` bấm nút **Kiểm tra Sức Khỏe Hệ Thống** (Show trạng thái UP, CSDL kết nối tốt, Memory < 256MB).<br>- Giới thiệu môi trường Production thực tế trên VPS `103.72.57.149`. |
 | **02:30 - 06:30**<br>*(4.0 phút)* | **Luồng Khách hàng Đặt vé & Concurrency Lock**<br>- Tìm kiếm chuyến SWR Cache 0ms.<br>- Sơ đồ 34 ghế Limousine VIP 2 tầng.<br>- Cơ chế khóa ghế Concurrency Lock 10:00.<br>- Quét VietQR thanh toán tự động PayOS. | **Trần Minh Đức**<br>*(Customer Portal)* | - Thao tác tìm xe Sài Gòn $\rightarrow$ Đà Lạt.<br>- **Chọn ghế A01, mở song song tab ẩn danh chứng minh ghế A01 lập tức chuyển màu Vàng (Đang giữ chỗ) trên màn hình người khác**.<br>- Quét VietQR hoàn tất đặt vé, sinh vé điện tử có QR code. |
 | **06:30 - 09:30**<br>*(3.0 phút)* | **Hiện trường Bến xe Thực tế**<br>- Quầy bán vé nhanh POS (`/company/pos`).<br>- In vé nhiệt cầm tay 80mm có mã QR bảo mật.<br>- Tài xế quét mã QR soát vé siêu tốc < 0.2s bằng camera điện thoại. | **Phạm Thanh Phong** & **Đoàn Nhật Cường** | - Phong mở `/company/pos`, dùng phím tắt F2 bán vé cho khách vãng lai, in hóa đơn nhiệt ra màn hình.<br>- Cường cầm điện thoại thật quét camera vào mã QR vé vừa in $\rightarrow$ Hệ thống lập tức "Tít" xanh và cập nhật vé sang trạng thái `ĐÃ LÊN XE`. |
 | **09:30 - 12:00**<br>*(2.5 phút)* | **Nghiệp vụ Đối tác B2B & Vận hành**<br>- Luồng đối tác nộp hồ sơ KYB.<br>- Admin duyệt và **hệ thống tự động gửi Email HTML bàn giao tài khoản**.<br>- Bản đồ GPS Live Tracking xe chạy thời gian thực (`/tracking`). | **Nguyễn Đại Phát** & **Phạm Công Thành** | - Phát mở Quản lý nhà xe duyệt đơn.<br>- Thành show hộp thư Gmail nhận thư chúc mừng có mật khẩu khởi tạo và nút đăng nhập thẳng vào Cổng Đối tác `/company/login`. |
