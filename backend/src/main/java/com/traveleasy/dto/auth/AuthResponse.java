@@ -18,4 +18,5 @@ public class AuthResponse {
     private String phone;
     private String role;
     private Long busCompanyId;
+    private String busCompanyName;
 }

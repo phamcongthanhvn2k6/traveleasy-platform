@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface BusCompanyRepository extends JpaRepository<BusCompany, Long> {
     Optional<BusCompany> findByName(String name);
     boolean existsByName(String name);
+    Optional<BusCompany> findByEmail(String email);
+    boolean existsByEmail(String email);
 }

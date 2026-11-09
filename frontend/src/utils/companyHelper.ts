@@ -30,9 +30,9 @@ export const getStoredCompany = (): CompanyInfo => {
         if (found) return found;
         return {
           id: Number(u.busCompanyId),
-          name: u.busCompanyName || u.fullName || 'Nhà Xe Đối Tác',
-          shortName: u.busCompanyName || u.fullName || 'Nhà Xe',
-          code: 'COMPANY_' + u.busCompanyId,
+          name: u.busCompanyName || u.fullName?.replace(/^Điều Hành\s+/i, '') || 'Nhà Xe Đối Tác',
+          shortName: u.busCompanyName || u.fullName?.replace(/^Điều Hành\s+/i, '') || 'Nhà Xe',
+          code: 'NX_' + u.busCompanyId,
           email: u.email || '',
           hotline: u.phone || '1900 8888',
         };
@@ -40,46 +40,36 @@ export const getStoredCompany = (): CompanyInfo => {
       const name = (u.fullName || '').trim().toLowerCase();
       const email = (u.email || '').toLowerCase();
 
-      // Check special aliases
-      if (name.includes('sao việt') || name.includes('sao viet') || email.includes('xesaoviet')) {
+      // Check special aliases strictly by official domain email or exact name
+      if (email.includes('xesaoviet') || name === 'sao việt') {
         return KNOWN_COMPANIES[2];
       }
-      if (name.includes('phương trang') || name.includes('phuong trang') || name.includes('futa') || email.includes('futa')) {
+      if (email.includes('futa') || name === 'phương trang') {
         return KNOWN_COMPANIES[0];
       }
-      if (name.includes('thành bưởi') || name.includes('thanh buoi') || email.includes('thanhbuoi')) {
+      if (email.includes('thanhbuoi') || name === 'thành bưởi') {
         return KNOWN_COMPANIES[1];
       }
-      if (name.includes('kumho') || email.includes('kumho')) {
+      if (email.includes('kumho') || name === 'kumho samco') {
         return KNOWN_COMPANIES[3];
       }
-      if (name.includes('hoa mai') || email.includes('hoamai')) {
+      if (email.includes('hoamai') || name === 'hoa mai') {
         return KNOWN_COMPANIES[4];
       }
-      if (name.includes('hoàng long') || name.includes('hoang long') || email.includes('hoanglong')) {
+      if (email.includes('hoanglongasia') || name === 'hoàng long asia') {
         return KNOWN_COMPANIES[5];
       }
-      if (name.includes('văn minh') || name.includes('van minh') || email.includes('vanminh')) {
+      if (email.includes('vanminh') || name === 'văn minh') {
         return KNOWN_COMPANIES[6];
       }
-      if (name.includes('cúc tùng') || name.includes('cuc tung') || email.includes('cuctung')) {
+      if (email.includes('cuctung') || name === 'cúc tùng') {
         return KNOWN_COMPANIES[7];
       }
-      if (name.includes('hải vân') || name.includes('hai van') || email.includes('haivan')) {
+      if (email.includes('haivan') || name === 'hải vân') {
         return KNOWN_COMPANIES[8];
       }
-      if (name.includes('chín nghĩa') || name.includes('chin nghia') || email.includes('chinnghia')) {
+      if (email.includes('chinnghia') || name === 'chín nghĩa') {
         return KNOWN_COMPANIES[9];
-      }
-
-      for (const comp of KNOWN_COMPANIES) {
-        if (
-          name.includes(comp.shortName.toLowerCase()) ||
-          name.includes(comp.code.toLowerCase()) ||
-          email.includes(comp.code.toLowerCase())
-        ) {
-          return comp;
-        }
       }
     }
   } catch (e) {

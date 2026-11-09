@@ -124,7 +124,7 @@ export const PartnerCooperationPage: React.FC = () => {
       legalRepresentative: 'Phạm Công Thành',
       identityCardNumber: '031088012345',
       phone: '0944354398',
-      email: 'phamcongt56@gmail.com',
+      email: 'phamcongt2707@gmail.com',
       businessAddress: 'Số 152 Đường Lê Duẩn, Phường Khâm Thiên, Quận Đống Đa, TP. Hà Nội',
       routes: 'Hà Nội ⇄ Hải Phòng, Hà Nội ⇄ Quảng Ninh',
 

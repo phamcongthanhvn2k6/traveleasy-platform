@@ -90,6 +90,7 @@ export interface AuthUser {
   role: 'ADMIN' | 'OPERATOR' | 'CUSTOMER';
   token: string;
   busCompanyId?: number;
+  busCompanyName?: string;
 }
 
 export interface ScheduleTripItem {
