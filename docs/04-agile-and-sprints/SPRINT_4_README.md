@@ -1,95 +1,75 @@
-# 📕 SPRINT 4 README — VẬN HÀNH SẴN SÀNG SẢN XUẤT, KỊCH BẢN BẢO VỆ OJT & LỘ TRÌNH MỞ RỘNG
+# 📕 SPRINT 4 README — VẬN HÀNH SẴN SÀNG SẢN XUẤT, DEVOPS VPS, EMAIL B2B & KỊCH BẢN BẢO VỆ OJT
 > **Dự án:** Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy  
 > **Đơn vị:** OJT Đồ Án Nhóm 7  
 > **Thời gian thực hiện:** Tuần 4 (Sprint 4 — Tuần Nước Rút & Nghiệm thu Bảo vệ OJT)  
-> **Quy mô danh mục:** 13 User Stories cốt lõi — 33 Story Points (Đúng chuẩn Sprint 1 tuần)  
-> **Trạng thái:** 🎯 **FINAL SPRINT & ROADMAP (Sẵn sàng nghiệm thu)**  
-> **Trọng tâm:** Bàn giao vận hành, Kịch bản Demo Hội đồng & Hệ sinh thái mở rộng sát thực tế bến xe  
+> **Quy mô danh mục chuẩn hóa:** 8 User Stories & Technical Tasks cốt lõi — 28 Story Points (Chuẩn Scrum 1 tuần)  
+> **Trạng thái:** 🎯 **FINAL SPRINT & PRODUCTION READINESS (Đã rà soát & Tinh gọn backlog)**  
+> **Trọng tâm:** Khóa ghế Real-time, Email Bàn giao Tài khoản Đối tác, Triển khai VPS CI/CD, POS Bến xe & Kịch bản Demo Hội đồng 15 phút.
 
 ---
 
 ## 🎯 1. MỤC TIÊU SPRINT (SPRINT GOAL)
-Đóng gói toàn bộ nền tảng vào trạng thái sẵn sàng phát hành sản xuất (Production Readiness), hoàn thiện tài liệu hướng dẫn vận hành (Operations Runbook), xây dựng trung tâm trình diễn tự động hóa (Demo Hub 15 phút) phục vụ buổi báo cáo bảo vệ tốt nghiệp OJT, và hiện thực hóa lộ trình các phân hệ nâng cao bám sát 100% nghiệp vụ thực tế tại các bến xe lớn (Bến xe Miền Đông, Bến xe Miền Tây, Mỹ Đình, Giáp Bát): **Phân hệ Quầy vé Bến xe của Nhà xe (`/company/pos`), Dịch vụ Thuê xe Hợp đồng Du lịch (`/charter`), Ký gửi hàng hóa bưu kiện (`/cargo`), và Bản đồ GPS Live Tracking thời gian thực (`/tracking/:tripId`)**.
+Đóng gói toàn bộ nền tảng vào trạng thái sẵn sàng phát hành sản xuất (Production Readiness), đưa hệ thống lên máy chủ VPS thực tế (`103.72.57.149`), hoàn tất cơ chế khóa ghế thời gian thực chống đặt trùng vé (Real-time Concurrency Lock 10 phút), kích hoạt luồng tự động gửi Email thông báo phê duyệt hồ sơ đối tác nhà xe kèm thông tin đăng nhập Cổng Điều Hành (`/company/login`), hoàn thiện phân hệ Quầy vé Bến xe của Nhà xe (`/company/pos`) và xây dựng Trung tâm trình diễn Demo Hub (`/demo`) phục vụ buổi báo cáo bảo vệ tốt nghiệp OJT 15 phút.
 
 ---
 
-## 👥 2. PHÂN CÔNG THÀNH VIÊN TRONG GIAI ĐOẠN CUỐI & NÂNG CẤP (RACI)
+## 🔍 2. KẾT QUẢ RÀ SOÁT & DUYỆT LẠI SPRINT 4 BACKLOG (BACKLOG REFINEMENT & SCRUBBING)
 
-*(Nguyên tắc phân công chuẩn OJT: **Phạm Công Thành** giữ vai trò Tổng công trình sư / System Architect, review mã nguồn, hạ tầng Docker và tài liệu kiến trúc, **0 nhận task code mới**; 4 thành viên còn lại chia đều các module)*:
+Sau khi rà soát kỹ lưỡng cùng Nhóm trưởng và yêu cầu nghiệp vụ thực tế của đề tài **"Nền tảng đặt vé xe khách liên tỉnh"**, nhóm đã thực hiện tinh gọn và thanh lọc backlog Sprint 4:
 
-| Thành viên | Vai trò | Trọng tâm Sprint 4 & Lộ trình mở rộng thực tế |
-|:---|:---|:---|
-| **Phạm Công Thành** | Team Leader & System Architect | Bàn giao tài liệu kiến trúc tổng thể, đóng gói Docker Compose Production, hỗ trợ kỹ thuật tối ưu hóa CSDL và trình bày phần Kiến trúc hệ thống trước Hội đồng. |
-| **Nguyễn Đại Phát** | Admin Lead & Full-Stack | Hoàn thiện tài liệu nghiệm thu Cổng Admin; Phụ trách: **Giám sát hợp đồng thuê xe & Ký quỹ an toàn Escrow 30% (`/admin/charters`)** và **Trang Quản trị giá vé động & Flash Sale giờ chót (`/company/pricing-rules`)**. |
-| **Phạm Thanh Phong** | Core Booking & Seat Engine | Hoàn thiện tài liệu tối ưu hiệu năng Booking; Phụ trách: **Phân hệ Bán vé nhanh tại Quầy bến xe của Nhà xe (`/company/pos`)**, **Quản lý đóng/mở ca trực & Tiền mặt (`/company/pos/shifts`)**, **Backend GPS Live Tracking SSE (`/api/v1/tracking`)**, **Backend Động cơ tính cước gửi bưu kiện (`/api/v1/cargo`)**. |
-| **Đoàn Nhật Cường** | Mobile Specialist | Hoàn thiện tài liệu và video demo Soát vé QR di động; Phụ trách: **Frontend Bản đồ GPS Live Tracking xe chạy thời gian thực (`/tracking/:tripId`)**, **Trang Trung tâm cứu hộ & CSKH khẩn cấp 24/7 (`/support`)**. |
-| **Trần Minh Đức** | Customer Portal | Hoàn thiện tài liệu quy trình hoàn hủy vé; Phụ trách: **Trang Đặt xe hợp đồng du lịch (`/charter`)**, **Frontend Ký gửi bưu kiện & Tra cứu vận đơn (`/cargo`)**, **Trang Bảo hiểm chuyến đi (`/insurance`)**, **Ví điểm thưởng EasyXu & Vòng quay may mắn (`/rewards`)**. |
-| **Phan Trung Kiên** | Thành viên | Miễn thực tập OJT (Exempted) theo quyết định đào tạo. |
-
----
-
-## 📋 3. CHI TIẾT CÁC PHÂN HỆ NÂNG CẤP SÁT NGHIỆP VỤ THỰC TẾ
-
-### 3.1. Phân hệ Bán vé Nhanh tại Quầy Bến xe của Nhà xe (`/company/pos`)
-* **Bối cảnh thực tế:** Các nhà xe lớn (Phương Trang, Thành Bưởi, Sao Việt...) đều thuê quầy vé tại bến xe (BXMĐ, Mỹ Đình...) và bố trí **nhân viên của chính nhà xe** ra trực quầy bán vé cho khách vãng lai/người lớn tuổi. Không sử dụng role "Agent trung gian" phi thực tế.
-* **Chức năng nghiệp vụ:**
-  * **Giao diện POS siêu tốc:** Tối ưu thao tác bằng phím tắt (F1-F9), nhân viên quầy chọn chuyến ➔ click chọn ghế ➔ nhập SĐT/Tên khách ➔ chọn thanh toán **`Tiền mặt (CASH)`** hoặc **`Quét VietQR tại quầy`** ➔ Xuất vé chỉ trong **3 cú click chuột (dưới 10 giây)**.
-  * **In vé nhiệt hóa đơn cầm tay (80mm):** Gửi lệnh in trực tiếp ra máy in bill nhiệt bến xe, nhả vé giấy có đầy đủ: Thông tin chuyến, biển số xe, số ghế, hướng dẫn lên xe và **Mã QR vé bảo mật** để tài xế quét soát vé.
-  * **Đồng bộ khóa ghế thời gian thực (Real-time Concurrency):** Ghế nhân viên bán tại quầy ngay lập tức chuyển sang trạng thái `ĐÃ BÁN` trên Web/App của khách hàng, loại bỏ 100% rủi ro trùng ghế.
-  * **Quản lý Ca trực & Đối soát tiền mặt (`/company/pos/shifts`):** Khởi tạo ca với số tiền lẻ đầu ca, theo dõi tổng tiền mặt thu được trong ca, bấm **Kết ca (Z-Report)** in phiếu tổng kết để nộp tiền lại cho thủ quỹ nhà xe.
+### 2.1. Danh mục các thẻ LOẠI BỎ khỏi Sprint 4 (Đưa vào Product Roadmap tương lai)
+Các tính năng sau bị loại bỏ vì **không thuộc phạm vi cốt lõi của sàn vé xe khách liên tỉnh tuyến cố định** và làm loãng nội dung bảo vệ trước Hội đồng OJT:
+1. ❌ **Thuê xe Hợp đồng Du lịch trọn gói (`/charter`) & Ký quỹ Escrow 30%** *(Cũ: `S401[FE]`, `S401[BE]`, `S409[FE]`)*:
+   - *Lý do loại bỏ:* Đề tài là xe khách liên tỉnh tuyến cố định (Intercity Scheduled Bus). Việc phát triển thêm sàn đấu thầu thuê xe hợp đồng tour du lịch riêng là một mô hình kinh doanh hoàn toàn khác, phân tán nguồn lực và không khả thi trong sprint cuối 1 tuần.
+2. ❌ **Ký gửi Hàng hóa Bưu kiện Hầm xe (`/cargo`)** *(Cũ: `S406[BE]`, `S410[FE]`)*:
+   - *Lý do loại bỏ:* Dịch vụ vận chuyển bưu kiện (tính cước theo cân nặng/kích thước, sinh mã vận đơn QR, ký gửi tại bến) là nghiệp vụ Logistics chuyên biệt. Đưa vào phạm vi bảo vệ dễ bị Hội đồng chất vấn làm nông, không sát đề tài cốt lõi. Chuyển sang Roadmap phiên bản 2.0.
+3. ❌ **Trung tâm Hỗ trợ Khẩn cấp 24/7 (`/support`) & Tối ưu Mobile-First** *(Cũ: `S407[FE]`, `S408[FE]`)*:
+   - *Lý do gộp:* Trang Support thực chất là trang tĩnh FAQ & Hotline đã có sẵn. Yêu cầu Mobile Responsive là tiêu chuẩn kỹ thuật (Non-functional) chứ không phải User Story nghiệp vụ mới.
 
 ---
 
-### 3.2. Dịch vụ Thuê Xe Hợp đồng Du lịch Đa Kênh (`/charter`)
-* **Kênh 1 — Khách đặt trực tuyến (`/charter`):**
-  * Khách hàng cá nhân hoặc doanh nghiệp nhập lộ trình (VD: Sài Gòn ⇄ Vũng Tàu 2 ngày 1 đêm), chọn loại xe (16, 29, 45 chỗ), tiện ích kèm theo ➔ Hệ thống gợi ý mức giá ước tính theo km.
-* **Kênh 2 — Khách hỏi thuê trực tiếp tại Quầy bến xe (`/company/pos/charter`):**
-  * Khách đoàn đến trực tiếp quầy vé của nhà xe tại bến hỏi thuê xe đi tour. Nhân viên quầy mở tab Hợp đồng, kiểm tra lịch xe trống của nhà xe mình trong ngày đó, báo giá và in **Phiếu giữ xe hợp đồng** cho khách ngay tại quầy.
-* **Sàn đấu giá báo giá cạnh tranh (`/company/charter-bids`):**
-  * Các nhà xe nhận thông báo có yêu cầu thuê xe trong khu vực ➔ Gửi báo giá trọn gói kèm hình ảnh xe thực tế và thông tin tài xế để khách lựa chọn.
-* **Ký quỹ giữ cọc an toàn (Escrow Payment 30% tại `/admin/charters`):**
-  * Sàn TravelEasy đứng giữa giữ 30% tiền cọc của khách hàng, chỉ giải ngân cho Nhà xe sau khi chuyến đi hoàn thành an toàn, bảo vệ khách hàng khỏi tình trạng bị "bỏ rơi" hoặc tráo xe cũ.
+### 2.2. Danh mục BỔ SUNG & CHỐT CHÍNH THỨC SPRINT 4 BACKLOG (8 Thẻ — 28 SP)
+
+| Mã Thẻ | Tên Nhiệm Vụ Nghiệp Vụ & Kỹ Thuật | Điểm SP | Người Phụ Trách (RACI) | Trạng Thái Thực Tế |
+| :---: | :--- | :---: | :---: | :--- |
+| **`[S401]`** | **Đồng bộ Khóa ghế & Giữ chỗ Real-time 10 phút (SSE Concurrency Lock)**<br>• Khóa ghế độc quyền 10 phút chống đặt trùng.<br>• Giữ chỗ bền vững khi chuyển trang checkout quay lại.<br>• SSE cập nhật màu ghế tức thì trên toàn sàn. | **4 SP** | **Phạm Thanh Phong** | 🟢 **ĐÃ HOÀN THÀNH 100%**<br>*(Đã kiểm thử & Merge)* |
+| **`[S402]`** | **Dịch vụ Email Tự Động Phê Duyệt Hồ Sơ Đối Tác & Cấp Tài Khoản B2B**<br>• Gửi email HTML chúc mừng khi Admin duyệt nhà xe.<br>• Tự sinh mật khẩu khởi tạo bảo mật & gán `ROLE_OPERATOR`, `busCompanyId`.<br>• Tích hợp Google SMTP live + Smart fallback. | **3 SP** | **Phạm Công Thành** | 🟡 **ĐANG HOÀN TẤT**<br>*(Đã code & test Gmail SMTP)* |
+| **`[S403]`** | **Đóng Gói Docker Compose Production & Triển Khai CI/CD Lên VPS Thực Tế**<br>• Cấu hình `docker-compose.prod.yml`, Nginx Reverse Proxy cổng 80.<br>• Kết nối Supabase PostgreSQL Cloud & nạp cấu hình production VPS `103.72.57.149`.<br>• Tự động hóa build & deploy. | **4 SP** | **Phạm Công Thành** | 🟡 **ĐANG HOÀN TẤT**<br>*(Container đã chạy trên VPS)* |
+| **`[S404]`** | **Giao Diện & API Bán Vé Nhanh Tại Quầy Bến Xe POS (`/company/pos`)**<br>• Tối ưu thao tác phím tắt F1-F9 cho nhân viên nhà xe tại bến.<br>• Xuất vé dưới 10 giây, in hóa đơn nhiệt 80mm có mã QR bảo mật.<br>• Đồng bộ trạng thái ghế đã bán sang Web khách hàng. | **4 SP** | **Phạm Thanh Phong** | 🔵 **SẴN SÀNG NGHIỆM THU**<br>*(Giao diện đã có sẵn)* |
+| **`[S405]`** | **Quản Lý Ca Trực & Bàn Giao Tiền Mặt Quầy Bến Xe (`/company/pos/shifts`)**<br>• Khởi tạo số tiền lẻ đầu ca trực.<br>• Theo dõi doanh thu tiền mặt và in phiếu kết ca Z-Report nộp thủ quỹ. | **3 SP** | **Nguyễn Đại Phát** | 🔵 **SẴN SÀNG NGHIỆM THU** |
+| **`[S406]`** | **Bản Đồ Định Vị GPS Live Tracking Xe Chạy Thời Gian Thực (`/tracking/:tripId`)**<br>• Tích hợp bản đồ Leaflet hiển thị xe khách di chuyển theo tọa độ GPS.<br>• Server-Sent Events (SSE) truyền tọa độ thời gian thực về máy khách. | **4 SP** | **Đoàn Nhật Cường** | 🔵 **SẴN SÀNG NGHIỆM THU** |
+| **`[S407]`** | **Quản Trị Chính Sách Giá Vé Động & Phụ Thu Lễ Tết (`/company/pricing-rules`)**<br>• Cấu hình phụ thu cao điểm dịp Lễ Tết (+20%) hoặc giảm giá giờ chót (-15%).<br>• Tự động tính giá vé theo quy tắc khi khách đặt chỗ. | **3 SP** | **Trần Minh Đức** | 🔵 **SẴN SÀNG NGHIỆM THU** |
+| **`[S408]`** | **Trung Tâm Trình Diễn Demo Hub 15 Phút (`/demo`) & Hồ Sơ Bảo Vệ OJT**<br>• Trang Demo Hub chuyển nhanh các kịch bản demo.<br>• Slide thuyết trình 25 trang & Kịch bản khớp từng giây bảo vệ Hội đồng. | **3 SP** | **Phạm Công Thành** *(Lead)* | 🟢 **ĐÃ HOÀN THÀNH 100%** |
+| **TỔNG** | **8 User Stories & Technical Tasks Trọng Tâm** | **28 SP** | **Toàn đội Nhóm 7** | **Đạt chuẩn 100% Scrum 1 tuần** |
 
 ---
 
-### 3.3. Bản đồ Định vị GPS Live Tracking Thời gian thực (`/tracking/:tripId`)
-* **Frontend (`/tracking/:tripId`):** Tích hợp bản đồ vệ tinh tương tác (Leaflet/Mapbox), hiển thị icon xe khách di chuyển mượt mà trên tuyến đường, các trạm dừng đón/trả và ước tính thời gian xe đến đón (ETA).
-* **Backend SSE (`/api/v1/tracking`):** Sử dụng giao thức **Server-Sent Events (SSE)** truyền tọa độ GPS theo thời gian thực về trình duyệt hành khách với độ trễ < 1 giây, tiết kiệm 90% băng thông so với cơ chế polling liên tục.
+## 👥 3. PHÂN CÔNG THÀNH VIÊN TRONG SPRINT 4 (MA TRẬN RACI CHUẨN)
+
+| Thành viên | Trách nhiệm chính trong Sprint 4 | Định mức SP | Trạng thái cam kết |
+| :--- | :--- | :---: | :---: |
+| **Phạm Công Thành** *(Team Leader)* | • Hệ thống Email B2B bàn giao tài khoản nhà xe (`S402`)<br>• Hạ tầng Docker Production & CI/CD VPS (`S403`)<br>• Kịch bản Demo Hub 15 phút & Điều phối bảo vệ (`S408`) | **10 SP** *(Kiến trúc & DevOps)* | Cam kết hoàn thành 100% |
+| **Phạm Thanh Phong** | • Động cơ khóa ghế Real-time 10 phút (`S401`)<br>• Phân hệ Bán vé Quầy POS Bến xe (`S404`) | **8 SP** *(Core Booking)* | Cam kết hoàn thành 100% |
+| **Nguyễn Đại Phát** | • Quản lý Ca trực & Đối soát Tiền mặt Quầy bến xe (`S405`) | **3 SP** *(Admin & Finance)* | Cam kết hoàn thành 100% |
+| **Đoàn Nhật Cường** | • Bản đồ GPS Live Tracking thời gian thực qua SSE (`S406`) | **4 SP** *(Mobile & Tracking)* | Cam kết hoàn thành 100% |
+| **Trần Minh Đức** | • Phân hệ Quản trị Giá vé động & Phụ thu Lễ Tết (`S407`) | **3 SP** *(Customer Portal)* | Cam kết hoàn thành 100% |
+| **Phan Trung Kiên** | Miễn thực tập OJT theo quy chế đào tạo. | **0 SP** | Exempted |
 
 ---
 
-### 3.4. Dịch vụ Ký gửi Hàng hóa Bưu kiện Theo Xe Khách (`/cargo`)
-* **Frontend Khách hàng (`/cargo`):** Nhập kích thước, trọng lượng, loại hàng (giấy tờ, bưu phẩm, hoa quả, xe máy) ➔ Tự động tính cước ➔ Sinh mã vận đơn bưu kiện kèm **Tem nhãn QR dán kiện hàng**.
-* **Phía Nhà xe (`/company/cargo`):** Nhân viên quầy bến xe tiếp nhận hàng, xếp vào hầm xe, xác nhận giao hàng cho người nhận bằng mã OTP SMS tại bến đích.
+## 🎬 4. KỊCH BẢN TRÌNH DIỄN BẢO VỆ OJT 15 PHÚT TẠI TRANG `/demo`
+
+* **Phút 00:00 - 02:30:** Giới thiệu bài toán sàn đặt vé xe khách liên tỉnh, kiến trúc Modular Monolith và CSDL Supabase PostgreSQL.
+* **Phút 02:30 - 06:30:** Demo luồng khách hàng: Tìm kiếm SWR Cache 0ms ➔ Chọn ghế Limousine VIP ➔ **Khóa ghế Concurrency Lock 10:00 thời gian thực (chứng minh tab ẩn danh bị khóa ngay lập tức)** ➔ Quét VietQR thanh toán tự động ➔ Nhận vé điện tử QR.
+* **Phút 06:30 - 09:30:** Demo hiện trường Bến xe: Nhân viên nhà xe bán vé quầy POS (`/company/pos`), nhả hóa đơn nhiệt có mã QR bảo mật; Tài xế dùng camera điện thoại quét soát vé siêu tốc < 0.2s (`/scanner`).
+* **Phút 09:30 - 12:00:** Demo B2B Nhà xe & Vận hành: Đối tác đăng ký hợp tác KYB ➔ Admin phê duyệt ➔ **Tự động gửi Email HTML bàn giao tài khoản điều hành** ➔ Bản đồ GPS Live Tracking xe chạy (`/tracking`).
+* **Phút 12:00 - 15:00:** Tổng kết giải pháp chịu tải Concurrency, báo cáo triển khai thực tế trên VPS `103.72.57.149` và đón nhận phản biện từ Hội đồng.
 
 ---
 
-### 3.5. Quản trị Giá vé Động & Gamification (`/company/pricing-rules` & `/rewards`)
-* **Giá vé động linh hoạt:** Tự động phụ thu +20% dịp Lễ Tết/cuối tuần; giảm giá Flash Sale -15% khi xe sắp xuất bến trong 2 giờ mà tỷ lệ trống > 50%.
-* **Ví EasyXu & Vòng quay may mắn:** Tích 2% giá trị vé thành EasyXu trừ tiền lần sau; Vòng quay may mắn tặng voucher giảm giá 10% - 30% giữ chân khách hàng.
-
----
-
-## 🎬 4. KỊCH BẢN TRÌNH DIỄN BẢO VỆ OJT 15 PHÚT (`/demo`)
-Xây dựng trang tổng quan Demo Hub `/demo` hỗ trợ Hội đồng chấm thi chuyển nhanh giữa các phân hệ:
-* **Phút 01 - 03:** Giới thiệu bài toán, kiến trúc Modular Monolith và CSDL 36 bảng chuẩn hóa.
-* **Phút 04 - 07:** Demo luồng khách hàng: Tìm kiếm ➔ Chọn ghế Limousine VIP ➔ Khóa ghế 10:00 phút ➔ Quét VietQR thanh toán ➔ Nhận vé điện tử.
-* **Phút 08 - 10:** Demo hiện trường bến xe: Nhân viên nhà xe bán vé quầy POS (`/company/pos`), in vé nhiệt mã QR; tài xế dùng camera điện thoại quét soát vé trong 0.2s (`/scanner`).
-* **Phút 11 - 13:** Demo các tính năng mở rộng: Bản đồ GPS xe chạy thời gian thực (`/tracking`), gửi hàng bưu phẩm (`/cargo`) và thuê xe hợp đồng (`/charter`).
-* **Phút 14 - 15:** Trình bày giải pháp chịu tải Concurrency Lock, Correlation ID tracing và trả lời câu hỏi phản biện của Hội đồng.
-
----
-
-## 📦 5. SẢN PHẨM BÀN GIAO (DELIVERABLES)
-1. Bộ tài liệu hoàn chỉnh: Sổ tay người dùng `USER_MANUAL.md`, Sổ tay vận hành `OPERATIONS_RUNBOOK.md`, Kế hoạch bảo vệ `KE_HOACH_THIET_KE_CONG_VIEC_VA_KICH_BAN_BAO_VE_OJT.md`.
-2. Kịch bản và dữ liệu mẫu phục vụ trình diễn tại trang `/demo`.
-3. Toàn bộ mã nguồn trên nhánh `dev` và `main` được gắn thẻ Release Tag `v1.0.0-production`.
-4. Báo cáo tổng kết đồ án OJT và slide thuyết trình bảo vệ.
-
----
-
-## 🏆 6. TIÊU CHÍ NGHIỆM THU TỐT NGHIỆP (DoD)
-- ✅ Hệ thống vận hành trơn tru trong suốt 15 phút demo trước Hội đồng, không phát sinh lỗi bất ngờ.
-- ✅ Tất cả thành viên trả lời đúng và sâu sắc về phân hệ mình phụ trách theo ma trận RACI.
-- ✅ Đầy đủ minh chứng: Mã nguồn sạch, bảng Trello chuẩn chỉ, CSDL chuẩn hóa, tài liệu kỹ thuật chuyên nghiệp.
-- ✅ Đạt điểm tối đa theo thang tiêu chí đánh giá đồ án OJT của Nhà trường và Doanh nghiệp.
+## 🏆 5. TIÊU CHÍ NGHIỆM THU (DoD SPRINT 4)
+- ✅ Toàn bộ 8 thẻ công việc đạt trạng thái `Done` trên Trello và có bằng chứng kiểm thử rõ ràng.
+- ✅ Hệ thống chạy ổn định trực tiếp trên máy chủ VPS Internet `http://103.72.57.149`.
+- ✅ Cơ chế khóa ghế thời gian thực chống đặt trùng vé 100% không phát sinh xung đột.
+- ✅ Email thông báo phê duyệt đối tác gửi thành công qua Google SMTP live.
+- ✅ Bài thuyết trình 15 phút diễn ra đúng kịch bản, trôi chảy, tự tin trước Hội đồng bảo vệ OJT.
