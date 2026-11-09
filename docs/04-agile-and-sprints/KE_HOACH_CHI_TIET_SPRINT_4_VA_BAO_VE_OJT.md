@@ -34,7 +34,7 @@ Bổ sung chính thức vào Sprint 4 các module sống còn đã và đang ho�
 | **`[S402]`** | **Dịch vụ Email Tự Động Phê Duyệt Đối Tác & Cấp Tài Khoản Điều Hành** | **Phạm Công Thành** | **3 SP** | 🟡 **ĐANG HOÀN TẤT** (Đã gửi live tới `phamcongt56@gmail.com`) |
 | **`[S403]`** | **Đóng Gói Docker Production & Triển Khai CI/CD Lên VPS Thực Tế** | **Phạm Công Thành** | **4 SP** | 🟡 **ĐANG HOÀN TẤT** (Container Backend & Frontend đã UP) |
 | **`[S404]`** | **Giao diện & API Bán Vé Nhanh Tại Quầy Bến Xe POS (`/company/pos`)** | **Phạm Thanh Phong** | **4 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (In vé nhiệt 80mm có QR) |
-| **`[S405]`** | **Danh Sách Hành Khách & Điểm Đón/Trả Cho Tài Xế (`/driver/manifest`)** | **Đoàn Nhật Cường** | **3 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Mobile list & Gọi điện) |
+| **`[S405]`** | **Quản Lý Ca Trực & Bàn Giao Tiền Mặt Quầy Bến Xe (`/company/shifts`)** | **Đoàn Nhật Cường** | **3 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Mở ca, kết ca Z-Report) |
 | **`[S406]`** | **Bản Đồ GPS Live Tracking Xe Chạy Thời Gian Thực (`/tracking/:tripId`)** | **Nguyễn Đại Phát** | **4 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Leaflet map + SSE stream) |
 | **`[S407]`** | **Quản Trị Giá Vé Động & Phụ Thu Lễ Tết/Cuối Tuần (`/company/pricing-rules`)** | **Trần Minh Đức** | **3 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Quy tắc phụ thu tự động) |
 | **`[S408]`** | **Trung Tâm Trình Diễn Demo Hub 15 Phút (`/demo`) & Slide Bảo Vệ OJT** | **Phạm Công Thành** *(Lead)* | **3 SP** | 🟢 **ĐÃ HOÀN THÀNH 100%** (Demo Hub & kịch bản sẵn sàng) |

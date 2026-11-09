@@ -17,7 +17,11 @@ import {
   Sun,
   Moon,
   Menu,
-  X
+  X,
+  Store,
+  Clock,
+  Tag,
+  BarChart3
 } from 'lucide-react';
 import { toast } from '../context/ToastContext';
 import { AuthUser } from '../types';
@@ -81,6 +85,13 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
     { label: 'Hành khách & Vé đã đặt', path: '/company/bookings', icon: Ticket },
     { label: 'Doanh thu & Đối soát sàn', path: '/company/settlements', icon: DollarSign },
     { label: 'Đánh giá từ khách hàng', path: '/company/reviews', icon: Star },
+  ];
+
+  const sprint4Items = [
+    { label: 'Quầy bán vé POS', path: '/company/pos', icon: Store, author: 'PTP' },
+    { label: 'Quản lý ca trực', path: '/company/shifts', icon: Clock, author: 'JL' },
+    { label: 'Quy tắc giá vé động', path: '/company/pricing-rules', icon: Tag, author: 'TMD' },
+    { label: 'Báo cáo & Lấp đầy ghế', path: '/company/reports', icon: BarChart3, author: 'Phat' },
   ];
 
   const isActive = (path: string) => {
@@ -282,6 +293,66 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                 >
                   <Icon size={17} color={active ? '#ffffff' : '#94a3b8'} />
                   <span>{item.label}</span>
+                </Link>
+              );
+            })}
+
+            {/* NHIỆM VỤ SPRINT 4 Group */}
+            <div
+              style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                color: '#38bdf8',
+                letterSpacing: '0.8px',
+                padding: '16px 12px 6px',
+                textTransform: 'uppercase',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}
+            >
+              <span>SPRINT 4 NHIỆM VỤ</span>
+              <span style={{ fontSize: '9px', backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '1px 5px', borderRadius: '4px' }}>
+                OJT
+              </span>
+            </div>
+            {sprint4Items.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontSize: '13px',
+                    fontWeight: active ? 600 : 500,
+                    color: active ? '#ffffff' : '#94a3b8',
+                    backgroundColor: active ? '#1e293b' : 'transparent',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <Icon size={17} color={active ? '#38bdf8' : '#94a3b8'} />
+                    <span>{item.label}</span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                      backgroundColor: active ? '#38bdf8' : 'rgba(255, 255, 255, 0.08)',
+                      color: active ? '#0f172a' : '#cbd5e1'
+                    }}
+                  >
+                    {item.author}
+                  </span>
                 </Link>
               );
             })}

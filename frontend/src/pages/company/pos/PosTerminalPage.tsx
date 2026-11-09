@@ -19,6 +19,35 @@ export default function PosTerminalPage() {
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
+      {/* BANNER THÔNG TIN TASK SPRINT 4 & NGƯỜI PHỤ TRÁCH */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-900 text-white p-5 rounded-2xl shadow-md mb-6 border border-indigo-700/50">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-amber-950 uppercase">
+                SPRINT 4 TASK
+              </span>
+              <span className="text-xs font-semibold text-indigo-200">Mã thẻ: [S404][POS] • Định mức: 4 SP</span>
+            </div>
+            <h2 className="text-xl font-bold mt-1.5 flex items-center gap-2">
+              🎫 Phân Hệ Bán Vé Nhanh Tại Quầy Bến Xe (POS Terminal)
+            </h2>
+            <p className="text-xs text-indigo-200 mt-1">
+              Bán vé tại quầy bến xe trong vòng 10 giây, in hóa đơn nhiệt 80mm có mã QR bảo mật & đồng bộ ghế real-time
+            </p>
+          </div>
+          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/10">
+            <div className="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-sm shadow">
+              P
+            </div>
+            <div>
+              <p className="text-xs text-indigo-200">Thành viên phụ trách</p>
+              <p className="text-sm font-bold text-white">Phạm Thanh Phong (@phmthanhphong17)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Quầy Bán Vé Bến Xe — Chế Độ POS</h1>
