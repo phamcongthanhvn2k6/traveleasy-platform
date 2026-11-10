@@ -22,7 +22,7 @@ export const CompanyDashboardPage: React.FC = () => {
     totalTrips: 0,
     scheduledTrips: 0,
     totalBookings: 0,
-    avgRating: 4.8,
+    avgRating: 0.0,
     totalReviews: 0,
     upcomingTrips: [],
   });
@@ -100,8 +100,8 @@ export const CompanyDashboardPage: React.FC = () => {
     },
     {
       label: 'Đánh giá trung bình',
-      value: `${stats.avgRating}/5`,
-      subtext: `${stats.totalReviews} phản hồi hành khách`,
+      value: stats.totalReviews > 0 ? `${stats.avgRating > 0 ? stats.avgRating.toFixed(1) : '5.0'}/5` : 'Chưa có',
+      subtext: stats.totalReviews > 0 ? `${stats.totalReviews} phản hồi hành khách` : 'Chưa có phản hồi nào',
       icon: Star,
       iconBg: '#fffbeb',
       iconColor: '#f59e0b',

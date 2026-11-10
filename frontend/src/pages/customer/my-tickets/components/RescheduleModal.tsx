@@ -19,11 +19,34 @@ export const RescheduleModal: React.FC<Props> = ({ booking, onClose, onSuccess }
   const [availableTrips, setAvailableTrips] = useState<Trip[]>([]);
   const [loadingTrips, setLoadingTrips] = useState(false);
   const [selectedTripId, setSelectedTripId] = useState<number | null>(null);
+  const [availableSeatsList, setAvailableSeatsList] = useState<string[]>([]);
+  const [loadingSeats, setLoadingSeats] = useState(false);
   const [selectedNewSeat, setSelectedNewSeat] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Available seats on selected trip (mock list based on bus type)
-  const availableSeatsList = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'A05', 'A06'];
+  // Tải danh sách ghế trống thực tế của chuyến xe được chọn
+  useEffect(() => {
+    if (!selectedTripId) return;
+    const fetchTripSeats = async () => {
+      setLoadingSeats(true);
+      try {
+        const res = await api.get(`/trips/${selectedTripId}`);
+        const seats = res.data?.data?.seats || [];
+        const available = seats
+          .filter((s: any) => s.status === 'AVAILABLE')
+          .map((s: any) => s.seatCode);
+        setAvailableSeatsList(available);
+        if (available.length > 0) {
+          setSelectedNewSeat(available[0]);
+        }
+      } catch {
+        setAvailableSeatsList([]);
+      } finally {
+        setLoadingSeats(false);
+      }
+    };
+    fetchTripSeats();
+  }, [selectedTripId]);
 
   // Load trips for the same route
   useEffect(() => {
@@ -42,7 +65,6 @@ export const RescheduleModal: React.FC<Props> = ({ booking, onClose, onSuccess }
         setAvailableTrips(alternatives);
         if (alternatives.length > 0) {
           setSelectedTripId(alternatives[0].id);
-          setSelectedNewSeat(availableSeatsList[0]);
         }
       } catch (err) {
         console.error('Failed to fetch alternative trips:', err);
@@ -88,33 +110,19 @@ export const RescheduleModal: React.FC<Props> = ({ booking, onClose, onSuccess }
         newSeatNumber: selectedNewSeat,
       });
 
-      const updated = res.data?.data || {
-        ...booking,
-        bookingCode: 'BK-RESCHEDULED-' + Math.floor(Math.random() * 1000),
-        trip: newTrip,
-        tickets: [
-          {
-            id: Date.now(),
-            ticketCode: 'TK-NEW-' + Math.floor(Math.random() * 1000),
-            seatNumber: selectedNewSeat,
-            price: newPrice,
-            status: 'ISSUED',
-          },
-        ],
-      };
-
-      toast.success(
-        `Đổi chuyến thành công sang chuyến ${newTrip.busCompanyName} (Ghế ${selectedNewSeat})!`,
-        'Đổi Chuyến Thành Công'
-      );
-      onSuccess(updated);
+      if (res.data?.data) {
+        toast.success(
+          `Đổi chuyến thành công sang chuyến ${newTrip?.busCompanyName || 'mới'} (Ghế ${selectedNewSeat})!`,
+          'Đổi Chuyến Thành Công'
+        );
+        onSuccess(res.data.data);
+      } else {
+        toast.error('Không nhận được phản hồi từ hệ thống đổi vé', 'Lỗi');
+      }
     } catch (err: any) {
-      // Fallback
-      toast.success(
-        `Đổi chuyến thành công sang chuyến ${newTrip.busCompanyName} (Ghế ${selectedNewSeat})!`,
-        'Đổi Chuyến Thành Công'
-      );
-      onSuccess(booking);
+      console.error('Reschedule error:', err);
+      const errMsg = err?.response?.data?.message || 'Không thể đổi chuyến lúc này. Vui lòng liên hệ nhà xe hoặc tổng đài hỗ trợ!';
+      toast.error(errMsg, 'Đổi Chuyến Thất Bại');
     } finally {
       setSubmitting(false);
     }

@@ -291,7 +291,7 @@ public class CompanyManagementController {
                 .description(desc)
                 .isDefault(isDefault)
                 .busCompanyName(targetCompanyName)
-                .rulesCount(3)
+                .rulesCount(1)
                 .build();
 
         return ApiResponse.success("Lưu chính sách hủy vé thành công cho nhà xe " + targetCompanyName, cancellationPolicyRepository.save(policy));
@@ -392,18 +392,25 @@ public class CompanyManagementController {
     // 6. ĐÁNH GIÁ & PHẢN HỒI (REVIEWS & REPORTS)
     // =========================================================================
     @GetMapping("/reviews")
-    @Operation(summary = "Lấy danh sách đánh giá từ CSDL thực tế")
-    public ApiResponse<List<ReviewReport>> getReviews() {
-        return ApiResponse.success(reviewReportRepository.findAll());
+    @Operation(summary = "Lấy danh sách đánh giá từ CSDL thực tế phân quyền theo nhà xe")
+    public ApiResponse<List<Review>> getReviews(
+            @RequestParam(required = false) Long companyId,
+            Authentication authentication) {
+        Long targetId = resolveTargetCompanyId(companyId, authentication);
+        if (targetId != null) {
+            return ApiResponse.success(reviewRepository.findByBusCompanyIdOrderByCreatedAtDesc(targetId));
+        }
+        return ApiResponse.success(reviewRepository.findAllByStatusOrderByCreatedAtDesc("APPROVED"));
     }
 
     @PostMapping("/reviews/{id}/reply")
     @Operation(summary = "Gửi phản hồi đánh giá và lưu vào CSDL thực tế")
-    public ApiResponse<ReviewReport> replyReview(@PathVariable Long id, @RequestBody Map<String, String> payload) {
-        ReviewReport review = reviewReportRepository.findById(id).orElse(null);
+    public ApiResponse<Review> replyReview(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        Review review = reviewRepository.findById(id).orElse(null);
         if (review != null) {
-            review.setStatus("APPROVED");
-            return ApiResponse.success("Đã lưu phản hồi vào CSDL", reviewReportRepository.save(review));
+            String replyText = payload.getOrDefault("reply", payload.getOrDefault("companyReply", ""));
+            review.setCompanyReply(replyText);
+            return ApiResponse.success("Đã lưu phản hồi vào CSDL", reviewRepository.save(review));
         }
         return ApiResponse.error("Không tìm thấy đánh giá với ID: " + id);
     }
@@ -411,13 +418,16 @@ public class CompanyManagementController {
     @PostMapping("/reviews/{id}/report")
     @Operation(summary = "Báo cáo vi phạm đánh giá lên Ban Quản Trị Sàn")
     public ApiResponse<ReviewReport> reportReview(@PathVariable Long id, @RequestBody Map<String, String> payload) {
-        ReviewReport review = reviewReportRepository.findById(id).orElse(null);
-        if (review != null) {
-            review.setStatus("PENDING");
-            review.setReason(payload.getOrDefault("reason", "Nội dung vi phạm quy chế"));
-            return ApiResponse.success("Đã gửi báo cáo vi phạm vào CSDL", reviewReportRepository.save(review));
-        }
-        return ApiResponse.error("Không tìm thấy đánh giá với ID: " + id);
+        Review review = reviewRepository.findById(id).orElse(null);
+        String author = review != null ? review.getCustomerName() : ("Hành khách #" + id);
+        String snippet = review != null ? review.getComment() : ("Đánh giá #" + id);
+        ReviewReport report = ReviewReport.builder()
+                .reviewAuthor(author)
+                .reviewSnippet(snippet)
+                .reason(payload.getOrDefault("reason", "Nội dung vi phạm quy chế"))
+                .status("PENDING")
+                .build();
+        return ApiResponse.success("Đã gửi báo cáo vi phạm vào CSDL", reviewReportRepository.save(report));
     }
 
     // =========================================================================
@@ -443,7 +453,7 @@ public class CompanyManagementController {
                 .address(address)
                 .locationType(locationType)
                 .status("ACTIVE")
-                .routesCount(5)
+                .routesCount(0)
                 .build();
 
         return ApiResponse.success("Lưu địa điểm đón trả thành công vào CSDL", locationRepository.save(loc));

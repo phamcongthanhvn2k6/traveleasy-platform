@@ -105,32 +105,9 @@ export const TicketScannerPage: React.FC = () => {
       }
     } catch (err: any) {
       console.warn('Verify ticket error:', err);
-      // Fallback local verification if offline or mock code
-      setVerifiedTicket({
-        bookingCode: cleanCode.startsWith('BK-') ? cleanCode : 'BK-20261030-9999',
-        ticketCode: cleanCode.startsWith('TK-') ? cleanCode : 'TK-999999',
-        passengerName: 'Trần Văn An',
-        passengerPhone: '0988***321',
-        passengerEmail: 'khachhang@gmail.com',
-        busCompanyName: 'Sao Việt Express',
-        busType: 'Limousine 34 Phòng VIP',
-        licensePlate: '29B-888.88',
-        routeName: 'Hà Nội ➔ Sa Pa',
-        originCity: 'Hà Nội',
-        destinationCity: 'Sa Pa',
-        pickupPoint: 'Bến xe Mỹ Đình (Quầy vé 12)',
-        dropoffPoint: 'Văn phòng Sa Pa (03 Điện Biên Phủ)',
-        departureTime: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
-        arrivalTime: new Date(Date.now() + 8 * 3600 * 1000).toISOString(),
-        seatNumber: 'A01',
-        price: 350000,
-        ticketStatus: 'ISSUED',
-        bookingStatus: 'CONFIRMED',
-        validationStatus: 'VALID',
-        validationMessage: '✓ VÉ HỢP LỆ — ĐÃ XÁC THỰC LÊN XE THÀNH CÔNG',
-        checkInAllowed: true,
-      });
-      toast.success('Đã xác thực thông tin vé thành công!', 'TravelEasy QR Scanner');
+      const errMsg = err?.response?.data?.message || 'Mã vé/QR không tồn tại trên hệ thống hoặc đã hết hiệu lực!';
+      setVerifiedTicket(null);
+      toast.error(errMsg, 'Vé Không Hợp Lệ');
     } finally {
       setIsVerifying(false);
     }
