@@ -1,84 +1,108 @@
-# 📙 SPRINT 3 README — KHÓA GHẾ REALTIME, POS BẾN XE, GPS TRACKING, CI/CD VPS & BÁO CÁO NHÀ XE
+# 📙 SPRINT 3 README — KHÓA GHẾ REALTIME, POS BẾN XE, ĐIỀU HÀNH TỔ LÁI, TRUNG CHUYỂN & VẬN HÀNH TOÀN DIỆN
 > **Dự án:** Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy (`traveleasy-platform`)  
-> **Đơn vị:** OJT Đồ Án Tốt Nghiệp Nhóm 7  
-> **Thời gian thực hiện:** Tuần 3 (Sprint 3 — Tuần Hoàn Thiện & Nghiệm Thu Sản Phẩm)  
-> **Trạng thái:** 🚀 **ĐANG THỰC HIỆN (Theo đúng tiến độ Tuần 3 của môn học)**  
-> **Quy mô danh mục Sprint 3:** **10 User Stories & Technical Tasks | 34 Story Points | 06 Thành viên**  
+> **Đơn vị:** OJT Đồ Án Tốt Nghiệp Nhóm 7 — FPT Polytechnic  
+> **Thời gian thực hiện:** Sprint 3 (Tuần Vận Hành Nâng Cao & Hoàn Thiện Nghiệp Vụ)  
+> **Trạng thái:** 🚀 **CHÍNH THỨC PHÊ DUYỆT & ĐANG THỰC HIỆN**  
+> **Quy mô Sprint 3 chính thức:** **16 User Stories & Technical Tasks | 42 Story Points | 04 Thành viên OJT Active**  
 
 ---
 
-## 🎯 1. MỤC TIÊU SPRINT (SPRINT GOAL)
-Triển khai trọn vẹn nghiệp vụ cốt lõi và hoàn tất chuyển giao sản phẩm:
-- **Hạ tầng & Real-time:** Hoàn tất cơ chế khóa ghế đồng thời **Concurrency Lock 10 phút** chống trùng vé, tích hợp Server-Sent Events (SSE). Đóng gói **Docker Compose** và triển khai hệ thống lên **VPS Production** (`103.72.57.149`).
-- **Nghiệp vụ Bến xe & Nhà xe:** Xây dựng quầy bán vé nhanh **POS Bến xe** (`/company/pos`) hỗ trợ in bill nhiệt 80mm có QR; phân hệ **Quản lý ca trực tiền mặt** Z-Report (`/company/shifts`); phân hệ **Báo cáo doanh thu & tỷ lệ lấp đầy ghế** (`/company/reports`).
-- **Khách hàng & Trải nghiệm:** Tích hợp bản đồ **GPS Live Tracking** xe chạy thời gian thực (`/tracking/:tripId`), cấu hình **luật giá vé động & giờ cao điểm** (`/company/pricing-rules`), tối ưu tốc độ tải trang với **SWR Cache 0ms & Skeleton UI**.
-- **Chuyển giao & Sẵn sàng bảo vệ:** Chuẩn bị trung tâm kịch bản **Demo Hub 15 phút** (`/demo`) và bộ slide báo cáo OJT.
+## 🎯 1. MỤC TIÊU SPRINT 3 (SPRINT GOALS)
+Sprint 3 mở rộng toàn diện nhằm giải quyết bài toán vận hành thực tế của các nhà xe liên tỉnh, nâng cao năng lực bảo vệ đồ án tốt nghiệp OJT với các năng lực nghiệp vụ đỉnh cao:
+1. **Lõi Đặt Vé & Concurrency:** Khóa ghế đồng thời **Concurrency Lock 10 phút** chống trùng vé đa luồng thời gian thực qua Server-Sent Events (SSE).
+2. **Nghiệp Vụ Vé Nâng Cao:** Xử lý **Đổi vé & Chuyển chuyến xe** (`/company/ticket-exchange`), quy định bậc thang **Biểu phí hoàn hủy vé** (`/company/refunds`) và **Thiết lập giá vé động Lễ/Tết** (`/company/pricing-rules`).
+3. **Hiện Trường Bến Xe & Điều Hành:** **Phân công tổ lái & kiểm tra cồn xuất bến** (`/company/crew`), **Quản lý đón/trả trung chuyển tận nơi** (`/company/shuttles`), **WebApp di động quét QR soát vé** (`/conductor/scanner`), **Quản lý ca trực POS nộp tiền mặt** (`/company/shifts`).
+4. **Tài Chính & Pháp Lý:** **Sổ chi phí vận hành chuyến & lãi/lỗ P&L** (`/company/expenses`), **Xuất lệnh vận chuyển điện tử chuẩn Bộ GTVT** (PDF/Excel), **Đối soát doanh thu & Ví nhà xe** (`/company/settlements`), **Cổng thanh toán tự động Webhook**.
 
 ---
 
-## 👥 2. PHÂN CÔNG THÀNH VIÊN VÀ ĐỊNH MỨC STORY POINTS (10 TASKS / 34 SP)
+## 👥 2. PHÂN BỔ STORY POINTS THEO THÀNH VIÊN (16 TASKS / 42 SP)
 
-| STT | Thành viên | Vai trò | Số task | Story Points | Nhiệm vụ trọng tâm Sprint 3 |
+| STT | Thành viên | Vai trò chuyên trách | Số task | Story Points | Các Task Phụ Trách |
 |:---:|:---|:---|:---:|:---:|:---|
-| 1 | **Phạm Công Thành** | Team Leader & System Architect | 3 tasks | **10 SP** | DevOps VPS Production (`S303`), Email B2B SMTP (`S302`), Demo Hub 15p & Slide (`S308`) |
-| 2 | **Phạm Thanh Phong** | Core Booking & Seat Engine | 2 tasks | **8 SP** | Concurrency Lock 10:00 (`S301`), Quầy bán vé nhanh POS Bến xe in nhiệt 80mm (`S304`) |
-| 3 | **Nguyễn Đại Phát** | Admin Lead & Fullstack | 2 tasks | **7 SP** | GPS Live Tracking SSE (`S306`), Báo cáo doanh thu & lấp đầy ghế nhà xe (`S310`) |
-| 4 | **Trần Minh Đức** | Customer Portal & Performance | 2 tasks | **6 SP** | Giá vé động & giờ cao điểm (`S307`), Global Loading & SWR Cache 0ms (`S309`) |
-| 5 | **Đoàn Nhật Cường** | Mobile Specialist & Operator POS | 1 task | **3 SP** | Quản lý ca trực & bàn giao tiền mặt quầy bến xe Z-Report (`S305`) |
-| 6 | **Phan Trung Kiên** | Thành viên | 0 task | **0 SP** | Miễn thực tập OJT theo quy chế đào tạo |
+| 1 | **Phạm Công Thành** | Team Leader & System Architect | 3 tasks | **10 SP** | `[S301]` (4 SP), `[S310]` (3 SP), `[S311]` (3 SP) |
+| 2 | **Trần Minh Đức** | Core Features & Pricing Engine | 4 tasks | **11 SP** | `[S307]` (3 SP), `[S316]` (3 SP), `[S317]` (3 SP), `[S318]` (2 SP) |
+| 3 | **Đoàn Nhật Cường** | Operator Hub & Mobile Scanner | 4 tasks | **11 SP** | `[S305]` (3 SP), `[S315]` (2 SP), `[S319]` (3 SP), `[S320]` (3 SP) |
+| 4 | **Nguyễn Đại Phát** | Payment Gateway, Legal & QA | 5 tasks | **10 SP** | `[S313]` (3 SP), `[S314]` (2 SP), `[S321]` (3 SP), `[S322]` (2 SP), `[S323]` (2 SP) |
+| 5 | **Phan Trung Kiên** | Thành viên | 0 task | **0 SP** | *(Miễn thực tập OJT theo quyết định đào tạo)* |
+| **TỔNG** | **Toàn đội Nhóm 7** | **Khối lượng chuẩn mực Sprint 3** | **16 tasks** | **42 SP** | **Phân bổ đồng đều 100% giữa 4 thành viên** |
 
 ---
 
-## 📋 3. DANH MỤC CÔNG VIỆC CHI TIẾT (SPRINT 3 BACKLOG)
+## 📋 3. DANH MỤC CÔNG VIỆC CHI TIẾT (SPRINT 3 SPRINT BACKLOG)
 
-### 3.1. Phân hệ Lõi Đặt Vé, Hạ Tầng & DevOps
-- **[Ưu tiên: 1] [4 SP] [S301][CORE] Đồng bộ Khóa ghế Concurrency Lock 10:00 & Giữ chỗ Real-time SSE:**
-  - Ngăn chặn 100% tình trạng 2 khách hàng hoặc khách online và nhân viên quầy đặt trùng 1 ghế.
-  - Tự động hoàn ghế về trạng thái trống sau khi bộ đếm 10:00 kết thúc nếu chưa thanh toán.
-  - Phụ trách: **Phạm Thanh Phong**.
-- **[Ưu tiên: 1] [3 SP] [S302][MAIL] Dịch vụ Email Tự Động Phê Duyệt Hồ Sơ Đối Tác & Cấp Phát Tài Khoản B2B (`/company/login`):**
-  - Tự động kích hoạt tài khoản nhà xe khi Admin phê duyệt, gửi email HTML chứa thông tin đăng nhập và mật khẩu khởi tạo qua Google SMTP live.
-  - Phụ trách: **Phạm Công Thành**.
-- **[Ưu tiên: 1] [4 SP] [S303][DEVOPS] Đóng Gói Docker Compose Production & Triển Khai CI/CD Lên VPS Thực Tế (`103.72.57.149`):**
-  - Cấu hình Nginx reverse proxy cổng 80/443, SSL Let's Encrypt, container hóa Spring Boot Backend và React Frontend.
-  - Phụ trách: **Phạm Công Thành**.
+### 3.1. Phân hệ Lõi Đặt Vé, Concurrency & Báo Cáo Tài Chính — Phạm Công Thành (10 SP)
+- **`[Ưu tiên: 1] [4 SP] [S301][CORE]` Đồng bộ Khóa ghế Concurrency Lock 10:00 & Giữ chỗ Real-time SSE:**
+  - Ngăn chặn triệt để xung đột khi 2 người cùng chọn 1 ghế tại cùng một thời điểm.
+  - Tự động nhả ghế sau 10:00 đếm ngược nếu chưa hoàn tất thanh toán.
+  - Route: `/booking`, `/trips/:id`.
+- **`[Ưu tiên: 2] [3 SP] [S310]` Dashboard Báo Cáo Doanh Thu & Tỷ Lệ Lấp Đầy Chuyến Xe:**
+  - Biểu đồ doanh thu theo ngày/tháng, tỷ lệ lấp đầy ghế theo tuyến đường, phân tích hiệu suất khai thác.
+  - Route: `/company/dashboard`.
+- **`[Ưu tiên: 2] [3 SP] [S311]` Đối Soát Doanh Số Bán Vé Định Kỳ & Quản Lý Ví Nhà Xe:**
+  - Tự động chốt kỳ đối soát ngày 01 và 15 hàng tháng, trừ phí hoa hồng sàn 3-5%, quản lý số dư ví khả dụng và yêu cầu rút tiền.
+  - Route: `/company/settlements`.
 
-### 3.2. Phân hệ Quầy Vé Bến Xe & Điều Hành Nhà Xe
-- **[Ưu tiên: 2] [4 SP] [S304][POS] Giao diện & API Bán Vé Nhanh Tại Quầy Bến Xe POS (`/company/pos`):**
-  - Tối ưu thao tác bán vé cho khách vãng lai trong 3 click chuột hoặc phím tắt (F2 tìm chuyến, F9 in bill).
-  - Tích hợp in hóa đơn nhiệt khổ 80mm có mã QR bảo mật để tài xế quét soát vé.
-  - Phụ trách: **Phạm Thanh Phong**.
-- **[Ưu tiên: 2] [3 SP] [S305][SHIFTS] Quản Lý Ca Trực & Bàn Giao Tiền Mặt Quầy Bến Xe (`/company/shifts`):**
-  - Mở ca với tiền mặt đầu ca (Float Cash), ghi nhận doanh thu tiền mặt trong ca, kết ca xuất báo cáo Z-Report nộp quỹ.
-  - Tách biệt độc lập khỏi phân hệ POS để tránh xung đột mã nguồn.
-  - Phụ trách: **Đoàn Nhật Cường**.
-- **[Ưu tiên: 2] [3 SP] [S310][REPORTS] Phân Hệ Báo Cáo Thống Kê Doanh Thu & Tỷ Lệ Lấp Đầy Ghế Nhà Xe (`/company/reports`):**
-  - Biểu đồ trực quan doanh thu theo ngày/tháng, tỷ lệ lấp đầy ghế theo tuyến đường, xuất dữ liệu Excel đối soát.
-  - Phụ trách: **Nguyễn Đại Phát**.
+### 3.2. Phân hệ Định Giá, Đổi Chuyến, Trung Chuyển & Chi Phí — Trần Minh Đức (11 SP)
+- **`[Ưu tiên: 2] [3 SP] [S307]` Cơ Chế Thiết Lập Giá Vé Động (Dynamic Pricing Engine):**
+  - Cấu hình quy tắc phụ thu ngày cuối tuần (T6, T7, CN) và ngày Lễ/Tết; phụ thu theo vị trí ghế tầng dưới.
+  - Route: `/company/pricing-rules`.
+- **`[Ưu tiên: 2] [3 SP] [S316]` Nghiệp Vụ Đổi Vé & Chuyển Chuyến Xe Khách:**
+  - Đổi vé trước giờ chạy $\ge 12h$, tự động hoàn vé cũ (`EXCHANGED`), tính toán chênh lệch giá, bảo lưu ghế mới.
+  - Route: `/company/ticket-exchange`. Bảng CSDL: `ticket_exchange_logs`.
+- **`[Ưu tiên: 3] [3 SP] [S317]` Quản Lý Đón Trả Trung Chuyển Hành Khách Tận Nơi:**
+  - Quản lý danh sách đón/trả tận nhà, phân bổ tài xế xe trung chuyển gom khách trước 60-90 phút.
+  - Route: `/company/shuttles`. Bảng CSDL: `shuttle_requests`.
+- **`[Ưu tiên: 3] [2 SP] [S318]` Sổ Chi Phí Vận Hành Chuyến & Báo Cáo Lãi Lỗ (P&L):**
+  - Kê khai chi phí thực tế chuyến xe: Xăng dầu, cầu đường BOT, bến bãi; tính lợi nhuận ròng chuyến xe.
+  - Route: `/company/expenses`. Bảng CSDL: `trip_expenses`.
 
-### 3.3. Phân hệ Trải Nghiệm Khách Hàng & Vận Hành
-- **[Ưu tiên: 2] [4 SP] [S306][TRACKING] Bản Đồ Định Vị GPS Live Tracking Xe Chạy Thời Gian Thực (`/tracking/:tripId`):**
-  - Tích hợp Leaflet Map hiển thị tuyến đường, mô phỏng tọa độ GPS xe chạy realtime qua Server-Sent Events (SSE).
-  - Khách hàng bấm xem vị trí xe trực tiếp từ trang Vé của tôi (`/my-tickets`).
-  - Phụ trách: **Nguyễn Đại Phát**.
-- **[Ưu tiên: 2] [3 SP] [S307][PRICING] Phân Hệ Quản Trị Giá Vé Động & Phụ Thu Lễ Tết/Cuối Tuần (`/company/pricing-rules`):**
-  - Thiết lập luật tự động điều chỉnh giá: phụ thu cuối tuần (+15%), ngày lễ (+30%), giảm giá giờ thấp điểm (-10%).
-  - Phụ trách: **Trần Minh Đức**.
-- **[Ưu tiên: 1] [3 SP] [S309][PERF] Màn hình Loading chuyển trang & Tối ưu hiệu năng giao diện SWR Cache 0ms, Skeleton Vé của tôi (`/my-tickets`):**
-  - Tối ưu trải nghiệm không giật lag, Skeleton Loading UI khi tải dữ liệu vé và lịch trình.
-  - Phụ trách: **Trần Minh Đức**.
+### 3.3. Phân hệ Điều Hành Bến Xe, Tổ Lái & Soát Vé Di Động — Đoàn Nhật Cường (11 SP)
+- **`[Ưu tiên: 2] [3 SP] [S305]` Quản Lý Ca Trực Bán Vé POS & Kết Ca Nộp Tiền Mặt:**
+  - Mở ca với tiền mặt đầu ca, ghi nhận doanh thu trong ca, kết ca đếm tiền và xuất báo cáo Z-Report nộp quỹ.
+  - Route: `/company/shifts`.
+- **`[Ưu tiên: 3] [2 SP] [S315]` Code Review & Tối Ưu Hóa Hiệu Năng Truy Vấn CSDL:**
+  - Rà soát N+1 JPA Query, bổ sung Index tối ưu hóa tốc độ tìm kiếm chuyến xe xuống dưới 50ms.
+- **`[Ưu tiên: 2] [3 SP] [S319]` Phân Công Tổ Lái & Kiểm Tra Điều Kiện Xuất Bến:**
+  - Phân công Lái chính, Lái phụ, Phụ xe; kiểm tra nồng độ cồn bắt buộc 0.00 mg/L và GPLX trước khi lăn bánh.
+  - Route: `/company/crew`. Bảng CSDL: `trip_crews`.
+- **`[Ưu tiên: 2] [3 SP] [S320]` WebApp Quét QR Soát Vé & Điểm Danh Hành Khách Lên Xe:**
+  - Ứng dụng di động quét mã QR vé tại cửa xe, âm thanh thông báo vé hợp lệ/trùng lặp, điểm danh sơ đồ ghế.
+  - Route: `/conductor/scanner`.
 
-### 3.4. Phân hệ Tổng Kết & Sẵn Sàng Nghiệm Thu OJT
-- **[Ưu tiên: 1] [3 SP] [S308][DEMO-DEFENSE] Xây Dựng Trung Tâm Trình Diễn Demo Hub 15 Phút (`/demo`) & Slide Bảo Vệ OJT:**
-  - Cổng kịch bản demo 1-click kiểm tra sức khỏe hệ thống, nạp dữ liệu mẫu và slide thuyết trình chuẩn nhận diện.
-  - Phụ trách: **Phạm Công Thành**.
+### 3.4. Phân hệ Thanh Toán, Pháp Lý Chuẩn Bộ GTVT & QA Testing — Nguyễn Đại Phát (10 SP)
+- **`[Ưu tiên: 1] [3 SP] [S313]` Tích Hợp Cổng Thanh Toán Tự Động & Xử Lý Webhook:**
+  - Tích hợp VietQR / VNPay Webhook, cơ chế Idempotency chống ghi nhận trùng lặp giao dịch.
+- **`[Ưu tiên: 2] [2 SP] [S314]` Kiểm Thử Hồi Quy & Tích Hợp Toàn Bộ Luồng Thanh Toán:**
+  - Integration Test suite cho toàn bộ vòng đời vé từ lúc tạo đến lúc thanh toán và xuất vé.
+- **`[Ưu tiên: 2] [3 SP] [S321]` Thiết Lập Chính Sách Phí Hoàn Hủy & Xử Lý Yêu Cầu Hủy Vé:**
+  - Cấu hình bậc thang phí phạt hủy vé theo thời gian báo trước, tính tiền hoàn trả và tự động mở lại ghế trống.
+  - Route: `/company/refunds`.
+- **`[Ưu tiên: 3] [2 SP] [S322]` Xuất PDF/Excel Lệnh Vận Chuyển Điện Tử Chuẩn Bộ GTVT:**
+  - Xuất file PDF/Excel mẫu Lệnh Vận Chuyển Hành Khách Bằng Xe Ô Tô theo đúng mẫu biểu quy chuẩn pháp lý.
+- **`[Ưu tiên: 2] [2 SP] [S323]` Kịch Bản E2E Test & Kiểm Thử Tích Hợp Ca Trực POS + Webhook:**
+  - Kịch bản kiểm thử E2E liên thông giữa POS bán vé quầy, quét mã QR thanh toán và đóng ca đối soát tiền mặt.
 
 ---
 
-## 📦 4. SẢN PHẨM BÀN GIAO SPRINT 3 (DELIVERABLES)
-1. 🖨️ Phân hệ POS bán vé quầy bến xe (`/company/pos`) và Quản lý ca trực tiền mặt (`/company/shifts`).
-2. 🗺️ Phân hệ Bản đồ định vị GPS xe chạy thời gian thực (`/tracking/:tripId`).
-3. ⚡ Động cơ khóa ghế đồng thời Concurrency Lock 10 phút chống trùng vé.
-4. 📈 Báo cáo thống kê doanh thu & lấp đầy ghế nhà xe (`/company/reports`).
-5. 🐳 Môi trường Production VPS đóng gói Docker (`103.72.57.149`).
-6. 🎬 Cổng trình diễn Demo Hub 15 phút (`/demo`) và Kịch bản bảo vệ đồ án OJT.
+## 🛠️ 4. QUY HOẠCH CẤU TRÚC MÃ NGUỒN CHỐNG XUNG ĐỘT (ZERO-CONFLICT ARCHITECTURE)
+
+Nhằm đảm bảo các thành viên làm việc song song mà **không xảy ra xung đột git (0 merge conflict)**:
+1. **Quy hoạch Router 2 cấp phẳng (`/company/*`):** Toàn bộ 6 route mới đã được khai báo và khóa trong `companyRoutes.tsx`. Thành viên chỉ viết code trong trang của mình.
+2. **Kiến trúc Package-by-Feature:**
+   - Đức: `CompanyTicketExchangeController.java`, `CompanyShuttleController.java`, `CompanyTripExpenseController.java`.
+   - Cường: `CompanyTripCrewController.java`, `ConductorScannerController.java`.
+   - Phát: `CompanyCancellationRefundController.java`.
+3. **CSDL Sẵn Sàng (Live Data):** 4 bảng mới (`trip_crews`, `shuttle_requests`, `trip_expenses`, `ticket_exchange_logs`) đã được tạo và seed sẵn dữ liệu mẫu thực tế của Nhà xe ID 14 trên Supabase.
+
+---
+
+## 📦 5. BỘ SẢN PHẨM BÀN GIAO SPRINT 3 (DELIVERABLES)
+1. ⚡ **Module Khóa Ghế Concurrency Lock 10 phút & SSE**.
+2. 🔄 **Module Đổi Vé Chuyển Chuyến & Biểu Phí Hoàn Hủy Vé**.
+3. 🚐 **Module Đón Trả Trung Chuyển Tận Nơi & Sổ Chi Phí Lãi/Lỗ P&L**.
+4. 👨‍✈️ **Module Phân Công Tổ Lái & Kiểm Tra Cồn Xuất Bến**.
+5. 📱 **WebApp Quét QR Soát Vé Cho Tài Xế / Phụ Xe Cầm Tay**.
+6. 📄 **Công Cụ Xuất PDF Lệnh Vận Chuyển Điện Tử Chuẩn Bộ GTVT**.
+7. 💳 **Cổng Thanh Toán Webhook Tự Động & Quầy Bán Vé POS Bến Xe**.
+8. 📊 **Bộ Test Suite E2E & Báo Cáo Đối Soát Doanh Số Nhà Xe**.

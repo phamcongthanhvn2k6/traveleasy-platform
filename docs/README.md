@@ -46,6 +46,10 @@ Tập trung vào phạm vi hệ thống, luồng hành trình người dùng và
   * **Nội dung**: Văn bản pháp lý, Quy chế hoạt động sàn TMĐT theo Nghị định 52/2013/NĐ-CP và Nghị định 85/2021/NĐ-CP.
   * **Trọng tâm**: Cơ chế ký quỹ bảo lãnh tiền vé (Escrow), phân định trách nhiệm khi huỷ chuyến, bồi thường chậm muộn 150%, điều khoản bất khả kháng và hợp đồng điện tử nhà xe.
 
+* 📄 [DAC_TA_LUONG_NGHIEP_VU_BO_SUNG_SPRINT_3.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/01-requirements/DAC_TA_LUONG_NGHIEP_VU_BO_SUNG_SPRINT_3.md) *(Mới bổ sung)*  
+  * **Nội dung**: Đặc tả kỹ thuật và luồng nghiệp vụ chi tiết cho 6 module mở rộng trọng điểm Sprint 3 (Đổi vé & chuyển chuyến, Quản lý đón trả trung chuyển, Sổ chi phí lãi/lỗ P&L, Phân công tổ lái kiểm tra cồn, WebApp quét QR soát vé và Biểu phí hoàn hủy vé).
+  * **Trọng tâm**: Bảng cấu trúc CSDL, sơ đồ luồng dữ liệu, phân tích rủi ro xung đột (Conflict Matrix) và biện pháp bảo toàn tính toàn vẹn tài chính.
+
 ---
 
 ## 2️⃣ PHÂN HỆ KIẾN TRÚC & CƠ SỞ DỮ LIỆU (`docs/02-architecture-and-db/`)
@@ -106,7 +110,10 @@ Tài liệu quản lý tiến độ, ma trận phân bổ công việc và kịc
   * **Nội dung**: Báo cáo pháp lý và thẩm định toàn diện 84 thẻ Trello của 3 Sprint (149 SP chuẩn mực theo tiến độ Tuần 3 của môn học), đối soát chi tiết công việc của các thành viên (Thành, Phát, Phong, Đức, Cường), danh sách link Trello trực tiếp từng thẻ và checklist nghiệm thu DoD 5 tiêu chí.
 
 * 📄 [KE_HOACH_CHI_TIET_SPRINT_3_VA_BAO_VE_OJT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/KE_HOACH_CHI_TIET_SPRINT_3_VA_BAO_VE_OJT.md) *(Master Action Plan)*  
-  * **Nội dung**: Kế hoạch tổng lực Sprint 3 (10 User Stories - 34 SP), lộ trình thực hiện, đối soát User Stories Trello với mã nguồn, ma trận RACI và kịch bản phối hợp Hội đồng.
+  * **Nội dung**: Kế hoạch tổng lực Sprint 3 mở rộng (16 User Stories & Technical Tasks - 42 SP), lộ trình thực hiện phân chia đồng đều 4 thành viên (Thành 10, Đức 11, Cường 11, Phát 10), ma trận RACI và kịch bản trình diễn 15 phút bảo vệ tốt nghiệp OJT.
+
+* 📄 [QUYET_DINH_PHE_DUYET_BO_SUNG_TASK_SPRINT_3.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/QUYET_DINH_PHE_DUYET_BO_SUNG_TASK_SPRINT_3.md) *(Văn bản phê duyệt)*  
+  * **Nội dung**: Quyết định chính thức số 03/2026/QD-S3-TRAVELEASY của Team Leader Phạm Công Thành phê duyệt gói mở rộng 8 tasks (từ S316 đến S323) thành các task chính thức thuộc Sprint 3 và nguyên tắc cách ly mã nguồn (Zero-Conflict Code Isolation).
 
 * 📄 [TRELLO_BOARD_MANAGEMENT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/TRELLO_BOARD_MANAGEMENT.md)  
   * **Nội dung**: Quy chế quản lý bảng Trello chuẩn công nghiệp, định nghĩa nhãn (Labels), trạng thái cột (To Do, In Progress, Code Review, Testing, Bug, Done Sprint 1, Done Sprint 2, Done Sprint 3), quy chuẩn phân định quyền hạn và Checklist DoD 5 tiêu chí.
@@ -120,7 +127,7 @@ Tài liệu quản lý tiến độ, ma trận phân bổ công việc và kịc
 * 📄 **Chi Tiết Báo Cáo Từng Sprint**:
   * [SPRINT_1_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_1_README.md): Nền tảng Core, Xác thực JWT, CSDL chuẩn Supabase và Quản trị Danh mục (35 thẻ | Done).
   * [SPRINT_2_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_2_README.md): Tìm kiếm vé xe đa tiêu chí, Chọn sơ đồ ghế 2 tầng, Thanh toán VNPAY & VietQR, Soát vé camera (39 thẻ | Done).
-  * [SPRINT_3_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_3_README.md): Khóa ghế Realtime, Email B2B SMTP, Docker VPS, POS bến xe, Quản lý ca trực, GPS Tracking & Báo cáo Nhà xe (10 thẻ | 34 SP - Đang triển khai).
+  * [SPRINT_3_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_3_README.md): Khóa ghế Realtime Concurrency, Đổi vé & chuyển chuyến, Đón trả trung chuyển, Sổ chi phí P&L, Tổ lái & kiểm tra cồn xuất bến, Soát vé QR di động, Lệnh vận chuyển GTVT, Biểu phí hoàn hủy (16 thẻ | 42 SP — Đang triển khai chính thức).
 
 ---
 
