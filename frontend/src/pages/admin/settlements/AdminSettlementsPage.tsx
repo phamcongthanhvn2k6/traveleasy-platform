@@ -92,7 +92,10 @@ export const AdminSettlementsPage: React.FC = () => {
   };
 
   const handleReconcile = async (s: SettlementPeriod) => {
-    if (!window.confirm(`Xác nhận chốt số liệu đối soát cho ${s.companyName} với số tiền thực chuyển: ${s.netPayable.toLocaleString('vi-VN')} đ?`)) {
+    const confirmMsg = s.netPayable > 0
+      ? `Xác nhận chốt số liệu đối soát cho ${s.companyName} với số tiền thực chuyển: ${s.netPayable.toLocaleString('vi-VN')} đ?`
+      : `Nhà xe ${s.companyName} hiện chưa phát sinh vé/doanh thu (0 đ). Bạn có chắc chắn muốn chốt đối soát kỳ này với số tiền 0 đ?`;
+    if (!window.confirm(confirmMsg)) {
       return;
     }
 
@@ -117,6 +120,10 @@ export const AdminSettlementsPage: React.FC = () => {
   };
 
   const openPayoutModal = (s: SettlementPeriod) => {
+    if (s.netPayable <= 0) {
+      toast.warning(`Nhà xe ${s.companyName} chưa có số dư doanh thu thực nhận (> 0 đ) để thực hiện lệnh chuyển khoản.`, 'Chưa Có Doanh Thu');
+      return;
+    }
     setPayoutModalSettlement(s);
     setTxHashInput(`VCB-FT-${Date.now().toString().slice(-8)}`);
     setNoteInput(`Quyet toan hoa hong ky TravelEasy cho ${s.companyName}`);

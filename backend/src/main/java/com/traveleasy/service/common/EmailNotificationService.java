@@ -271,6 +271,125 @@ public class EmailNotificationService {
     }
 
     /**
+     * Gửi Email thông báo Giải Ngân Doanh Thu Quyết Toán (Settlement Payout) cho Đối tác Nhà Xe
+     */
+    @Async
+    public void sendSettlementPayoutEmail(
+            String recipientEmail,
+            String companyName,
+            String settlementCode,
+            String periodName,
+            BigDecimal grossAmount,
+            BigDecimal platformCommission,
+            BigDecimal netPayable,
+            String bankName,
+            String accountNumber,
+            String accountHolder,
+            String payoutTxHash,
+            String payoutNote
+    ) {
+        String subject = "💰 [TravelEasy] Xác nhận giải ngân doanh thu kỳ " + periodName + " - " + companyName;
+
+        java.text.NumberFormat currencyFmt = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
+        String grossStr = currencyFmt.format(grossAmount != null ? grossAmount : BigDecimal.ZERO) + " đ";
+        String comStr = currencyFmt.format(platformCommission != null ? platformCommission : BigDecimal.ZERO) + " đ";
+        String netStr = currencyFmt.format(netPayable != null ? netPayable : BigDecimal.ZERO) + " đ";
+
+        String noteBlock = (payoutNote != null && !payoutNote.isBlank())
+                ? "<div style=\"margin-top: 12px; padding: 10px; background-color: #f8fafc; border-radius: 8px; font-size: 13px; color: #475569;\"><strong>Ghi chú:</strong> " + payoutNote + "</div>"
+                : "";
+
+        String html = """
+            <!DOCTYPE html>
+            <html lang="vi">
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
+                .card { max-width: 620px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+                .header { background: linear-gradient(135deg, #10b981, #059669); padding: 30px 24px; text-align: center; color: #ffffff; }
+                .header h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+                .header p { margin: 6px 0 0 0; opacity: 0.92; font-size: 14px; }
+                .content { padding: 30px 28px; line-height: 1.6; font-size: 14.5px; }
+                .badge-success { display: inline-block; background-color: #dcfce7; color: #15803d; font-weight: 700; padding: 6px 14px; border-radius: 9999px; font-size: 13px; margin-bottom: 16px; }
+                .amount-hero { text-align: center; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 14px; padding: 24px; margin: 20px 0; }
+                .amount-hero .label { font-size: 13px; color: #166534; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+                .amount-hero .value { font-size: 32px; font-weight: 900; color: #15803d; margin-top: 6px; }
+                .table-summary { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+                .table-summary td { padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+                .table-summary td:last-child { text-align: right; font-weight: 600; }
+                .bank-box { background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 16px 18px; margin: 18px 0; font-size: 13.5px; }
+                .footer { background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px; text-align: center; font-size: 12.5px; color: #64748b; }
+              </style>
+            </head>
+            <body>
+              <div class="card">
+                <div class="header">
+                  <h1>TravelEasy Settlement Desk</h1>
+                  <p>Xác Nhận Giải Ngân Quyết Toán Doanh Thu Đối Tác</p>
+                </div>
+                <div class="content">
+                  <span class="badge-success">✓ GIẢI NGÂN THÀNH CÔNG (PAID)</span>
+                  <p>Kính gửi Quý Đối Tác <strong>%s</strong>,</p>
+                  <p>Bộ phận Tài chính - Kế toán TravelEasy xin thông báo đã hoàn tất chuyển khoản quyết toán doanh thu bán vé cho Quý đơn vị theo kỳ đối soát <strong>%s</strong> (Mã đối soát: <strong>%s</strong>).</p>
+
+                  <div class="amount-hero">
+                    <div class="label">Số tiền thực nhận chuyển khoản</div>
+                    <div class="value">%s</div>
+                  </div>
+
+                  <table class="table-summary">
+                    <tr>
+                      <td style="color: #64748b;">Tổng doanh thu vé gốc (100%%):</td>
+                      <td style="color: #0f172a;">%s</td>
+                    </tr>
+                    <tr>
+                      <td style="color: #64748b;">Phí dịch vụ nền tảng (Hoa hồng 10%%):</td>
+                      <td style="color: #dc2626;">- %s</td>
+                    </tr>
+                    <tr style="border-bottom: 2px solid #e2e8f0;">
+                      <td style="font-weight: 700; color: #0f172a;">Thực nhận thanh toán (Net Payable):</td>
+                      <td style="font-weight: 800; color: #15803d; font-size: 16px;">%s</td>
+                    </tr>
+                  </table>
+
+                  <div class="bank-box">
+                    <strong style="color: #0f172a;">Thông tin tài khoản thụ hưởng (Escrow):</strong><br>
+                    • Ngân hàng: <strong>%s</strong><br>
+                    • Số tài khoản: <strong>%s</strong><br>
+                    • Chủ tài khoản: <strong>%s</strong><br>
+                    • Mã ủy nhiệm chi / Tx Hash: <strong style="font-family: monospace; color: #2563eb;">%s</strong>
+                    %s
+                  </div>
+
+                  <p style="font-size: 13.5px; color: #475569;">Doanh thu vé được đối soát tự động từ hệ thống giao dịch thực tế. Quý Nhà Xe có thể tra cứu chi tiết từng mã vé đối soát tại <strong>Cổng Điều Hành Nhà Xe > Báo Cáo Quyết Toán</strong>.</p>
+                </div>
+                <div class="footer">
+                  Ban Tài Chính Kế Toán TravelEasy Platform • Hotline: <strong>1900 6868</strong><br>
+                  Email: accounting@traveleasy.vn
+                </div>
+              </div>
+            </body>
+            </html>
+            """.formatted(
+                companyName,
+                periodName,
+                settlementCode,
+                netStr,
+                grossStr,
+                comStr,
+                netStr,
+                bankName != null ? bankName : "Tài khoản đối tác",
+                accountNumber != null ? accountNumber : "-",
+                accountHolder != null ? accountHolder : companyName,
+                payoutTxHash != null ? payoutTxHash : "VCB-FT-DIRECT",
+                noteBlock
+        );
+
+        sendHtmlEmail(recipientEmail, subject, html);
+    }
+
+    /**
      * Hàm dùng chung gửi Email HTML (Hỗ trợ SMTP thật + Smart Fallback sang Console Log)
      */
     private void sendHtmlEmail(String to, String subject, String htmlBody) {
