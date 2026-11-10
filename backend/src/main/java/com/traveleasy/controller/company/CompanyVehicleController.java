@@ -98,26 +98,25 @@ public class CompanyVehicleController {
         if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
             String email = authentication.getName();
             User user = userRepository.findByEmail(email).orElse(null);
-            if (user != null && user.getFullName() != null) {
-                String fullName = user.getFullName().toLowerCase();
-                for (BusCompany bc : busCompanyRepository.findAll()) {
-                    String bcName = bc.getName().toLowerCase();
-                    if (fullName.contains(bcName) || bcName.contains(fullName)) {
-                        return bc.getId();
+            if (user != null) {
+                if (user.getBusCompanyId() != null && user.getBusCompanyId() > 0) {
+                    return user.getBusCompanyId();
+                }
+                BusCompany comp = busCompanyRepository.findByEmail(email).orElse(null);
+                if (comp != null) {
+                    return comp.getId();
+                }
+                if (user.getFullName() != null) {
+                    String fullName = user.getFullName().trim().toLowerCase();
+                    for (BusCompany bc : busCompanyRepository.findAll()) {
+                        String bcName = bc.getName().trim().toLowerCase();
+                        if (fullName.equals(bcName) || fullName.equals("điều hành " + bcName)) {
+                            return bc.getId();
+                        }
                     }
                 }
-                if (fullName.contains("sao việt") || fullName.contains("sao viet")) return 3L;
-                if (fullName.contains("phương trang") || fullName.contains("futa")) return 1L;
-                if (fullName.contains("thành bưởi") || fullName.contains("thanh buoi")) return 2L;
-                if (fullName.contains("kumho")) return 4L;
-                if (fullName.contains("hoa mai")) return 5L;
-                if (fullName.contains("hoàng long") || fullName.contains("hoang long")) return 6L;
-                if (fullName.contains("văn minh") || fullName.contains("van minh")) return 7L;
-                if (fullName.contains("cúc tùng") || fullName.contains("cuc tung")) return 8L;
-                if (fullName.contains("hải vân") || fullName.contains("hai van")) return 9L;
-                if (fullName.contains("chín nghĩa") || fullName.contains("chin nghia")) return 10L;
             }
         }
-        return 3L; // Default fallback to Sao Việt
+        return 1L;
     }
 }

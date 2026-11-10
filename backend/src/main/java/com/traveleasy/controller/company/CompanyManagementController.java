@@ -39,6 +39,7 @@ public class CompanyManagementController {
     private final BookingService bookingService;
     private final CancellationPolicyRepository cancellationPolicyRepository;
     private final ReviewReportRepository reviewReportRepository;
+    private final ReviewRepository reviewRepository;
     private final LocationRepository locationRepository;
     private final BookingRepository bookingRepository;
     private final TripRepository tripRepository;
@@ -60,8 +61,12 @@ public class CompanyManagementController {
         long totalTrips = tripRepository.countByBusCompanyId(targetId);
         long totalBookings = bookingRepository.countByBusCompanyId(targetId);
         long scheduledTrips = tripRepository.countByBusCompanyIdAndStatus(targetId, TripStatus.SCHEDULED);
-        double avgRating = 4.8;
-        long totalReviews = reviewReportRepository.count();
+        double avgRating = busCompanyRepository.findById(targetId)
+                .map(BusCompany::getAverageRating)
+                .filter(Objects::nonNull)
+                .map(BigDecimal::doubleValue)
+                .orElse(5.0);
+        long totalReviews = reviewRepository.findByBusCompanyIdAndStatusOrderByCreatedAtDesc(targetId, "APPROVED").size();
 
         // TỐI ƯU HÓA: Chỉ map trực tiếp 5 chuyến sắp tới thay vì duyệt toàn bộ 480 chuyến xe toàn sàn!
         List<Trip> companyTripsRaw = tripRepository.findByBusCompanyIdOrderByDepartureTimeDesc(targetId);
@@ -286,7 +291,7 @@ public class CompanyManagementController {
                 .description(desc)
                 .isDefault(isDefault)
                 .busCompanyName(targetCompanyName)
-                .rulesCount(3)
+                .rulesCount(1)
                 .build();
 
         return ApiResponse.success("Lưu chính sách hủy vé thành công cho nhà xe " + targetCompanyName, cancellationPolicyRepository.save(policy));
@@ -387,18 +392,25 @@ public class CompanyManagementController {
     // 6. ĐÁNH GIÁ & PHẢN HỒI (REVIEWS & REPORTS)
     // =========================================================================
     @GetMapping("/reviews")
-    @Operation(summary = "Lấy danh sách đánh giá từ CSDL thực tế")
-    public ApiResponse<List<ReviewReport>> getReviews() {
-        return ApiResponse.success(reviewReportRepository.findAll());
+    @Operation(summary = "Lấy danh sách đánh giá từ CSDL thực tế phân quyền theo nhà xe")
+    public ApiResponse<List<Review>> getReviews(
+            @RequestParam(required = false) Long companyId,
+            Authentication authentication) {
+        Long targetId = resolveTargetCompanyId(companyId, authentication);
+        if (targetId != null) {
+            return ApiResponse.success(reviewRepository.findByBusCompanyIdOrderByCreatedAtDesc(targetId));
+        }
+        return ApiResponse.success(reviewRepository.findAllByStatusOrderByCreatedAtDesc("APPROVED"));
     }
 
     @PostMapping("/reviews/{id}/reply")
     @Operation(summary = "Gửi phản hồi đánh giá và lưu vào CSDL thực tế")
-    public ApiResponse<ReviewReport> replyReview(@PathVariable Long id, @RequestBody Map<String, String> payload) {
-        ReviewReport review = reviewReportRepository.findById(id).orElse(null);
+    public ApiResponse<Review> replyReview(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        Review review = reviewRepository.findById(id).orElse(null);
         if (review != null) {
-            review.setStatus("APPROVED");
-            return ApiResponse.success("Đã lưu phản hồi vào CSDL", reviewReportRepository.save(review));
+            String replyText = payload.getOrDefault("reply", payload.getOrDefault("companyReply", ""));
+            review.setCompanyReply(replyText);
+            return ApiResponse.success("Đã lưu phản hồi vào CSDL", reviewRepository.save(review));
         }
         return ApiResponse.error("Không tìm thấy đánh giá với ID: " + id);
     }
@@ -406,13 +418,16 @@ public class CompanyManagementController {
     @PostMapping("/reviews/{id}/report")
     @Operation(summary = "Báo cáo vi phạm đánh giá lên Ban Quản Trị Sàn")
     public ApiResponse<ReviewReport> reportReview(@PathVariable Long id, @RequestBody Map<String, String> payload) {
-        ReviewReport review = reviewReportRepository.findById(id).orElse(null);
-        if (review != null) {
-            review.setStatus("PENDING");
-            review.setReason(payload.getOrDefault("reason", "Nội dung vi phạm quy chế"));
-            return ApiResponse.success("Đã gửi báo cáo vi phạm vào CSDL", reviewReportRepository.save(review));
-        }
-        return ApiResponse.error("Không tìm thấy đánh giá với ID: " + id);
+        Review review = reviewRepository.findById(id).orElse(null);
+        String author = review != null ? review.getCustomerName() : ("Hành khách #" + id);
+        String snippet = review != null ? review.getComment() : ("Đánh giá #" + id);
+        ReviewReport report = ReviewReport.builder()
+                .reviewAuthor(author)
+                .reviewSnippet(snippet)
+                .reason(payload.getOrDefault("reason", "Nội dung vi phạm quy chế"))
+                .status("PENDING")
+                .build();
+        return ApiResponse.success("Đã gửi báo cáo vi phạm vào CSDL", reviewReportRepository.save(report));
     }
 
     // =========================================================================
@@ -438,7 +453,7 @@ public class CompanyManagementController {
                 .address(address)
                 .locationType(locationType)
                 .status("ACTIVE")
-                .routesCount(5)
+                .routesCount(0)
                 .build();
 
         return ApiResponse.success("Lưu địa điểm đón trả thành công vào CSDL", locationRepository.save(loc));
@@ -467,10 +482,9 @@ public class CompanyManagementController {
         BigDecimal totalSubsidy = bookingRepository.sumVoucherDiscountByBusCompanyId(targetId);
         long ticketCount = bookingRepository.countByBusCompanyId(targetId);
 
+        // NẾU NHÀ XE MỚI TINH CHƯA PHÁT SINH VÉ / DOANH THU: TRẢ VỀ DANH SÁCH RỖNG HỢP LÝ
         if (totalGross == null || (totalGross.compareTo(BigDecimal.ZERO) == 0 && ticketCount == 0)) {
-            totalGross = BigDecimal.valueOf(185000000); // Doanh thu mẫu khi nhà xe mới chưa có đơn
-            totalSubsidy = BigDecimal.valueOf(7500000);
-            ticketCount = 520;
+            return ApiResponse.success(Collections.emptyList());
         }
 
         BigDecimal feeRate = BigDecimal.valueOf(10);
@@ -534,33 +548,37 @@ public class CompanyManagementController {
     // HELPER METHODS: TENANT ISOLATION CHO ĐỐI TÁC NHÀ XE
     // =========================================================================
     private Long resolveTargetCompanyId(Long explicitCompanyId, Authentication authentication) {
-        if (explicitCompanyId != null) {
+        if (explicitCompanyId != null && explicitCompanyId > 0) {
             return explicitCompanyId;
         }
         if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
             String email = authentication.getName();
             User user = userRepository.findByEmail(email).orElse(null);
-            if (user != null && user.getFullName() != null) {
-                String fullName = user.getFullName().toLowerCase();
-                for (BusCompany bc : busCompanyRepository.findAll()) {
-                    String bcName = bc.getName().toLowerCase();
-                    if (fullName.contains(bcName) || bcName.contains(fullName)) {
-                        return bc.getId();
+            if (user != null) {
+                // 1. Ưu tiên cao nhất: Lấy trực tiếp từ busCompanyId gán cho User
+                if (user.getBusCompanyId() != null && user.getBusCompanyId() > 0) {
+                    return user.getBusCompanyId();
+                }
+
+                // 2. Tìm kiếm nếu email của tài khoản trùng với email đăng ký của BusCompany
+                Optional<BusCompany> compByEmail = busCompanyRepository.findByEmail(email);
+                if (compByEmail.isPresent()) {
+                    return compByEmail.get().getId();
+                }
+
+                // 3. Khớp chính xác tên nhà xe (không dùng contains để tránh gán nhầm sang hãng khác)
+                if (user.getFullName() != null) {
+                    String fullName = user.getFullName().trim().toLowerCase();
+                    for (BusCompany bc : busCompanyRepository.findAll()) {
+                        String bcName = bc.getName().trim().toLowerCase();
+                        if (fullName.equals(bcName) || fullName.equals("điều hành " + bcName)) {
+                            return bc.getId();
+                        }
                     }
                 }
-                if (fullName.contains("sao việt") || fullName.contains("sao viet")) return 3L;
-                if (fullName.contains("phương trang") || fullName.contains("futa")) return 1L;
-                if (fullName.contains("thành bưởi") || fullName.contains("thanh buoi")) return 2L;
-                if (fullName.contains("kumho")) return 4L;
-                if (fullName.contains("hoa mai")) return 5L;
-                if (fullName.contains("hoàng long") || fullName.contains("hoang long")) return 6L;
-                if (fullName.contains("văn minh") || fullName.contains("van minh")) return 7L;
-                if (fullName.contains("cúc tùng") || fullName.contains("cuc tung")) return 8L;
-                if (fullName.contains("hải vân") || fullName.contains("hai van")) return 9L;
-                if (fullName.contains("chín nghĩa") || fullName.contains("chin nghia")) return 10L;
             }
         }
-        return 3L; // Mặc định là Sao Việt nếu không định danh
+        return explicitCompanyId != null ? explicitCompanyId : 1L;
     }
 
     private boolean isSystemPolicy(CancellationPolicy p) {
@@ -585,32 +603,26 @@ public class CompanyManagementController {
         if (explicitName != null && !explicitName.isBlank() && !explicitName.equalsIgnoreCase("ALL")) {
             return explicitName.trim();
         }
-        if (companyId != null) {
+        if (companyId != null && companyId > 0) {
             return busCompanyRepository.findById(companyId)
                     .map(BusCompany::getName)
-                    .orElse("Sao Việt");
+                    .orElse("Nhà Xe Đối Tác");
         }
         if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
             String email = authentication.getName();
             User user = userRepository.findByEmail(email).orElse(null);
-            if (user != null && user.getFullName() != null) {
-                String fullName = user.getFullName();
-                for (BusCompany bc : busCompanyRepository.findAll()) {
-                    if (fullName.toLowerCase().contains(bc.getName().toLowerCase()) || bc.getName().toLowerCase().contains(fullName.toLowerCase())) {
-                        return bc.getName();
-                    }
+            if (user != null) {
+                if (user.getBusCompanyId() != null && user.getBusCompanyId() > 0) {
+                    return busCompanyRepository.findById(user.getBusCompanyId())
+                            .map(BusCompany::getName)
+                            .orElse(user.getFullName() != null ? user.getFullName() : "Nhà Xe Đối Tác");
                 }
-                if (fullName.contains("Sao Việt")) return "Sao Việt";
-                if (fullName.contains("Phương Trang") || fullName.contains("FUTA")) return "Phương Trang (FUTA Bus Lines)";
-                if (fullName.contains("Thành Bưởi")) return "Thành Bưởi";
-                if (fullName.contains("Hoa Mai")) return "Xe Khách Hoa Mai";
-                if (fullName.contains("Hoàng Long")) return "Hoàng Long Asia";
-                if (fullName.contains("Văn Minh")) return "Nhà Xe Văn Minh";
-                if (fullName.contains("Cúc Tùng")) return "Cúc Tùng Limousine";
-                if (fullName.contains("Hải Vân")) return "Hải Vân Express";
-                if (fullName.contains("Chín Nghĩa")) return "Chín Nghĩa";
+                Optional<BusCompany> compByEmail = busCompanyRepository.findByEmail(email);
+                if (compByEmail.isPresent()) {
+                    return compByEmail.get().getName();
+                }
             }
         }
-        return "Sao Việt";
+        return "Nhà Xe Đối Tác";
     }
 }

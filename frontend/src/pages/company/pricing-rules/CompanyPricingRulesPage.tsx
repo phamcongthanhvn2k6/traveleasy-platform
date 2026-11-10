@@ -3,7 +3,7 @@
  * @description Quản trị Chính sách Giá vé động & Phụ thu Lễ Tết/Cuối tuần (/company/pricing-rules)
  * @author Trần Minh Đức (minhdctrn13)
  * @role Pricing & Policy Specialist
- * @task [S407][PRICING] Sprint 4 (3 SP)
+ * @task [S307][PRICING] Sprint 3 (3 SP)
  */
 import React, { useState } from 'react';
 import {
@@ -37,49 +37,22 @@ interface PricingRule {
   description?: string;
 }
 
+const STORAGE_KEY = 'traveleasy_company_pricing_rules';
+
 export const CompanyPricingRulesPage: React.FC = () => {
-  const [rules, setRules] = useState<PricingRule[]>([
-    {
-      id: 'rule-01',
-      name: 'Phụ Thu Cao Điểm Tết Dương Lịch 2027',
-      ruleType: 'SURCHARGE',
-      scope: 'ALL_ROUTES',
-      adjustmentType: 'PERCENT',
-      adjustmentValue: 20,
-      startDate: '2026-12-30',
-      endDate: '2027-01-03',
-      applicableDays: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'],
-      status: 'SCHEDULED',
-      description: 'Phụ thu nhiên liệu & chi phí lái xe dịp cao điểm Tết Dương Lịch (+20% giá vé niêm yết)'
-    },
-    {
-      id: 'rule-02',
-      name: 'Phụ Thu Cuối Tuần Tuyến Sài Gòn ➔ Đà Lạt',
-      ruleType: 'SURCHARGE',
-      scope: 'SPECIFIC_ROUTE',
-      targetRouteName: 'Sài Gòn ➔ Đà Lạt (Khứ Hồi)',
-      adjustmentType: 'FIXED',
-      adjustmentValue: 50000,
-      startDate: '2026-11-01',
-      endDate: '2026-11-30',
-      applicableDays: ['Thứ 6', 'Chủ nhật'],
-      status: 'ACTIVE',
-      description: 'Phụ thu cố định 50,000đ/vé vào các chuyến khởi hành tối Thứ 6 và chiều Chủ Nhật'
-    },
-    {
-      id: 'rule-03',
-      name: 'Khuyến Mãi Giờ Chót Trước Giờ Chạy 2 Tiếng',
-      ruleType: 'DISCOUNT',
-      scope: 'ALL_ROUTES',
-      adjustmentType: 'PERCENT',
-      adjustmentValue: 15,
-      startDate: '2026-11-01',
-      endDate: '2026-12-31',
-      applicableDays: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5'],
-      status: 'ACTIVE',
-      description: 'Tự động giảm 15% cho các ghế còn trống trước giờ khởi hành 120 phút để kích cầu lấp đầy xe'
+  const [rules, setRules] = useState<PricingRule[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  ]);
+  });
+
+  const saveRules = (newRules: PricingRule[]) => {
+    setRules(newRules);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newRules));
+  };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
@@ -108,7 +81,7 @@ export const CompanyPricingRulesPage: React.FC = () => {
       status: 'ACTIVE',
       description
     };
-    setRules([newRule, ...rules]);
+    saveRules([newRule, ...rules]);
     setIsModalOpen(false);
     toast.success('Đã kích hoạt chính sách giá vé mới thành công!');
   };
@@ -116,15 +89,15 @@ export const CompanyPricingRulesPage: React.FC = () => {
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {/* BANNER THÔNG TIN TASK SPRINT 4 & NGƯỜI PHỤ TRÁCH */}
+        {/* BANNER THÔNG TIN TASK SPRINT 3 & NGƯỜI PHỤ TRÁCH */}
         <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-indigo-800 text-white p-5 rounded-2xl shadow-md mb-6 border border-indigo-700/50">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-amber-950 uppercase">
-                  SPRINT 4 TASK
+                  SPRINT 3 TASK
                 </span>
-                <span className="text-xs font-semibold text-indigo-200">Mã thẻ: [S407][PRICING] • Định mức: 3 SP</span>
+                <span className="text-xs font-semibold text-indigo-200">Mã thẻ: [S307][PRICING] • Định mức: 3 SP</span>
               </div>
               <h2 className="text-xl font-bold mt-1.5 flex items-center gap-2">
                 <Tag className="w-5 h-5 text-indigo-300" />
@@ -162,76 +135,86 @@ export const CompanyPricingRulesPage: React.FC = () => {
         </div>
 
         {/* Danh sách các thẻ quy tắc */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-          {rules.map((rule) => {
-            const isSurcharge = rule.ruleType === 'SURCHARGE';
-            return (
-              <div key={rule.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-indigo-300 transition-all">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                        isSurcharge
-                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      }`}
-                    >
-                      {isSurcharge ? <TrendingUp className="w-3.5 h-3.5" /> : <Percent className="w-3.5 h-3.5" />}
-                      {isSurcharge ? 'Phụ Thu Cao Điểm' : 'Giảm Giá Giờ Chót'}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        rule.status === 'ACTIVE'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      {rule.status === 'ACTIVE' ? 'Đang Áp Dụng' : 'Lên Lịch Trước'}
-                    </span>
-                  </div>
-
-                  <h3 className="font-bold text-slate-900 text-base mb-1">{rule.name}</h3>
-                  <p className="text-xs text-slate-500 mb-3">{rule.description}</p>
-
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1.5 text-xs text-slate-600">
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Mức điều chỉnh:</span>
-                      <span className={`font-bold text-sm ${isSurcharge ? 'text-rose-600' : 'text-emerald-600'}`}>
-                        {isSurcharge ? '+' : '-'}
-                        {rule.adjustmentValue}
-                        {rule.adjustmentType === 'PERCENT' ? '%' : ' đ'}
+        {rules.length === 0 ? (
+          <div className="bg-white p-12 rounded-2xl border border-slate-200 shadow-sm text-center text-slate-500 mb-8">
+            <Tag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-slate-800">Chưa có chính sách giá vé hoặc phụ thu nào</h3>
+            <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+              Nhà xe có thể bấm "Tạo Quy Tắc Giá Mới" để thiết lập mức phụ thu dịp Lễ Tết (+20%) hoặc giảm giá kích cầu giờ chót (-15%).
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+            {rules.map((rule) => {
+              const isSurcharge = rule.ruleType === 'SURCHARGE';
+              return (
+                <div key={rule.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-indigo-300 transition-all">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                          isSurcharge
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        }`}
+                      >
+                        {isSurcharge ? <TrendingUp className="w-3.5 h-3.5" /> : <Percent className="w-3.5 h-3.5" />}
+                        {isSurcharge ? 'Phụ Thu Cao Điểm' : 'Giảm Giá Giờ Chót'}
+                      </span>
+                      <span
+                        className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          rule.status === 'ACTIVE'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {rule.status === 'ACTIVE' ? 'Đang Áp Dụng' : 'Lên Lịch Trước'}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Thời gian:</span>
-                      <span className="font-medium text-slate-700">
-                        {rule.startDate} ➔ {rule.endDate}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Phạm vi:</span>
-                      <span className="font-medium text-slate-700">{rule.targetRouteName || 'Tất cả các tuyến'}</span>
+
+                    <h3 className="font-bold text-slate-900 text-base mb-1">{rule.name}</h3>
+                    <p className="text-xs text-slate-500 mb-3">{rule.description}</p>
+
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1.5 text-xs text-slate-600">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Mức điều chỉnh:</span>
+                        <span className={`font-bold text-sm ${isSurcharge ? 'text-rose-600' : 'text-emerald-600'}`}>
+                          {isSurcharge ? '+' : '-'}
+                          {rule.adjustmentValue}
+                          {rule.adjustmentType === 'PERCENT' ? '%' : ' đ'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Thời gian:</span>
+                        <span className="font-medium text-slate-700">
+                          {rule.startDate} ➔ {rule.endDate}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Phạm vi:</span>
+                        <span className="font-medium text-slate-700">{rule.targetRouteName || 'Tất cả các tuyến'}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Áp dụng: {rule.applicableDays.join(', ')}</span>
-                  <button
-                    onClick={() => {
-                      setRules(rules.filter((r) => r.id !== rule.id));
-                      toast.info(`Đã gỡ bỏ quy tắc: ${rule.name}`);
-                    }}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded transition-colors"
-                    title="Xóa quy tắc"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Áp dụng: {rule.applicableDays.join(', ')}</span>
+                    <button
+                      onClick={() => {
+                        saveRules(rules.filter((r) => r.id !== rule.id));
+                        toast.info(`Đã gỡ bỏ quy tắc: ${rule.name}`);
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                      title="Xóa quy tắc"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Modal tạo quy tắc */}
         {isModalOpen && (

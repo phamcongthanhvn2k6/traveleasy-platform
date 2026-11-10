@@ -21,7 +21,12 @@ import {
   Store,
   Clock,
   Tag,
-  BarChart3
+  BarChart3,
+  ArrowLeftRight,
+  Car,
+  Users,
+  Wallet,
+  RotateCcw
 } from 'lucide-react';
 import { toast } from '../context/ToastContext';
 import { AuthUser } from '../types';
@@ -92,6 +97,14 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
     { label: 'Quản lý ca trực', path: '/company/shifts', icon: Clock, author: 'JL' },
     { label: 'Quy tắc giá vé động', path: '/company/pricing-rules', icon: Tag, author: 'TMD' },
     { label: 'Báo cáo & Lấp đầy ghế', path: '/company/reports', icon: BarChart3, author: 'Phat' },
+  ];
+
+  const sprint3ExtendedItems = [
+    { label: 'Đổi vé & chuyển chuyến', path: '/company/ticket-exchange', icon: ArrowLeftRight, author: 'TMD' },
+    { label: 'Xe trung chuyển tận nơi', path: '/company/shuttles', icon: Car, author: 'TMD' },
+    { label: 'Sổ chi phí & Lợi nhuận', path: '/company/expenses', icon: Wallet, author: 'TMD' },
+    { label: 'Phân công tổ lái xe', path: '/company/crew', icon: Users, author: 'JL' },
+    { label: 'Chính sách hoàn hủy vé', path: '/company/refunds', icon: RotateCcw, author: 'Phat' },
   ];
 
   const isActive = (path: string) => {
@@ -297,7 +310,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
               );
             })}
 
-            {/* NHIỆM VỤ SPRINT 4 Group */}
+            {/* NHIỆM VỤ SPRINT 3 Group */}
             <div
               style={{
                 fontSize: '10px',
@@ -311,7 +324,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                 justifyContent: 'space-between'
               }}
             >
-              <span>SPRINT 4 NHIỆM VỤ</span>
+              <span>NHIỆM VỤ SPRINT 3</span>
               <span style={{ fontSize: '9px', backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '1px 5px', borderRadius: '4px' }}>
                 OJT
               </span>
@@ -348,6 +361,66 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                       padding: '1px 6px',
                       borderRadius: '4px',
                       backgroundColor: active ? '#38bdf8' : 'rgba(255, 255, 255, 0.08)',
+                      color: active ? '#0f172a' : '#cbd5e1'
+                    }}
+                  >
+                    {item.author}
+                  </span>
+                </Link>
+              );
+            })}
+
+            {/* VẬN HÀNH NÂNG CAO Group */}
+            <div
+              style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                color: '#10b981',
+                letterSpacing: '0.8px',
+                padding: '16px 12px 6px',
+                textTransform: 'uppercase',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}
+            >
+              <span>VẬN HÀNH NÂNG CAO</span>
+              <span style={{ fontSize: '9px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '1px 5px', borderRadius: '4px' }}>
+                MỚI
+              </span>
+            </div>
+            {sprint3ExtendedItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    fontSize: '13px',
+                    fontWeight: active ? 600 : 500,
+                    color: active ? '#ffffff' : '#94a3b8',
+                    backgroundColor: active ? '#1e293b' : 'transparent',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <Icon size={17} color={active ? '#10b981' : '#94a3b8'} />
+                    <span>{item.label}</span>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                      backgroundColor: active ? '#10b981' : 'rgba(255, 255, 255, 0.08)',
                       color: active ? '#0f172a' : '#cbd5e1'
                     }}
                   >

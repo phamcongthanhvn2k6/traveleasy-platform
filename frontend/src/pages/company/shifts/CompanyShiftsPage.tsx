@@ -40,55 +40,22 @@ interface ShiftRecord {
   notes?: string;
 }
 
+const STORAGE_KEY = 'traveleasy_company_shifts';
+
 export const CompanyShiftsPage: React.FC = () => {
-  // Mock dữ liệu ca trực ban đầu
-  const [shifts, setShifts] = useState<ShiftRecord[]>([
-    {
-      id: 'shift-102',
-      shiftCode: 'CA-20261109-02',
-      cashierName: 'Nguyễn Văn Hùng',
-      counterName: 'Quầy Vé Số 01 - Bến Xe Miền Đông Mới',
-      openedAt: '2026-11-09 13:00',
-      initialCash: 1500000,
-      cashRevenue: 6450000,
-      expectedEndingCash: 7950000,
-      ticketCount: 18,
-      status: 'OPEN',
-      notes: 'Ca chiều tuyến Sài Gòn - Đà Lạt'
-    },
-    {
-      id: 'shift-101',
-      shiftCode: 'CA-20261109-01',
-      cashierName: 'Trần Thị Mai',
-      counterName: 'Quầy Vé Số 01 - Bến Xe Miền Đông Mới',
-      openedAt: '2026-11-09 06:00',
-      closedAt: '2026-11-09 13:00',
-      initialCash: 1000000,
-      cashRevenue: 12850000,
-      expectedEndingCash: 13850000,
-      actualEndingCash: 13850000,
-      difference: 0,
-      ticketCount: 36,
-      status: 'CLOSED',
-      notes: 'Đã bàn giao đủ tiền mặt cho thủ quỹ ca sáng'
-    },
-    {
-      id: 'shift-100',
-      shiftCode: 'CA-20261108-02',
-      cashierName: 'Lê Hoàng Nam',
-      counterName: 'Quầy Vé Số 02 - Bến Xe An Sương',
-      openedAt: '2026-11-08 14:00',
-      closedAt: '2026-11-08 22:00',
-      initialCash: 1000000,
-      cashRevenue: 8900000,
-      expectedEndingCash: 9900000,
-      actualEndingCash: 9900000,
-      difference: 0,
-      ticketCount: 25,
-      status: 'CLOSED',
-      notes: 'Khớp 100% doanh thu hệ thống'
+  const [shifts, setShifts] = useState<ShiftRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  ]);
+  });
+
+  const saveShifts = (newShifts: ShiftRecord[]) => {
+    setShifts(newShifts);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newShifts));
+  };
 
   // Modal mở ca
   const [isOpeningModalOpen, setIsOpeningModalOpen] = useState(false);
@@ -128,7 +95,7 @@ export const CompanyShiftsPage: React.FC = () => {
       notes: 'Vừa khởi tạo ca trực mới'
     };
 
-    setShifts([newShift, ...shifts]);
+    saveShifts([newShift, ...shifts]);
     setIsOpeningModalOpen(false);
     toast.success('Mở ca trực thành công! Sẵn sàng bán vé quầy POS.');
   };
@@ -152,7 +119,7 @@ export const CompanyShiftsPage: React.FC = () => {
       return s;
     });
 
-    setShifts(updated);
+    saveShifts(updated);
     setSelectedShiftToClose(null);
     toast.success('Đã kết ca trực và xuất biên bản bàn giao Z-Report thành công!');
   };
@@ -165,15 +132,15 @@ export const CompanyShiftsPage: React.FC = () => {
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {/* BANNER THÔNG TIN TASK SPRINT 4 & NGƯỜI PHỤ TRÁCH */}
+        {/* BANNER THÔNG TIN TASK SPRINT 3 & NGƯỜI PHỤ TRÁCH */}
         <div className="bg-gradient-to-r from-purple-950 via-indigo-900 to-indigo-950 text-white p-5 rounded-2xl shadow-md mb-6 border border-purple-700/50">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-amber-950 uppercase">
-                  SPRINT 4 TASK
+                  SPRINT 3 TASK
                 </span>
-                <span className="text-xs font-semibold text-purple-200">Mã thẻ: [S405][SHIFTS] • Định mức: 3 SP</span>
+                <span className="text-xs font-semibold text-purple-200">Mã thẻ: [S305][SHIFTS] • Định mức: 3 SP</span>
               </div>
               <h2 className="text-xl font-bold mt-1.5 flex items-center gap-2">
                 <Clock className="w-5 h-5 text-purple-300" />
@@ -302,8 +269,16 @@ export const CompanyShiftsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
-                {shifts.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
+                {shifts.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-12 text-center text-slate-500">
+                      <p className="font-semibold text-slate-700">Chưa có ca trực nào được mở</p>
+                      <p className="text-xs text-slate-400 mt-1">Bấm "Mở Ca Trực Mới" ở góc trên để bắt đầu ca làm việc của quầy vé.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  shifts.map((s) => (
+                    <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-3.5 px-4 font-semibold text-indigo-600">{s.shiftCode}</td>
                     <td className="py-3.5 px-4">
                       <p className="font-medium text-slate-800">{s.cashierName}</p>
@@ -349,7 +324,7 @@ export const CompanyShiftsPage: React.FC = () => {
                       </button>
                     </td>
                   </tr>
-                ))}
+                )))}
               </tbody>
             </table>
           </div>

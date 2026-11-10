@@ -4,7 +4,7 @@
 > **Đơn vị thực hiện**: OJT Đồ Án Tốt Nghiệp Nhóm 7  
 > **Người ban hành / Phê duyệt**: Phạm Công Thành (Team Leader & System Architect — `thanhphmcong1`)  
 > **Đối tượng áp dụng**: Toàn bộ thành viên nhóm 7 (Phát, Phong, Đức, Cường)  
-> **Hiệu lực**: Áp dụng bắt buộc cho toàn bộ task kiểm thử từ Sprint 3 đến lễ bảo vệ đồ án Sprint 4  
+> **Hiệu lực**: Áp dụng bắt buộc cho toàn bộ task kiểm thử của Sprint 3 đến lễ bảo vệ đồ án tốt nghiệp  
 
 > 🔗 **TÀI LIỆU LIÊN QUAN TRONG BỘ HỒ SƠ QA & TESTING:**  
 > • 📋 **Hồ sơ nghiệm thu 34 trang**: [Biên bản nghiệm thu kiểm thử tính năng nội bộ](./BIEN_BAN_NGHIEM_THU_KIEM_THU_TINH_NANG_NHOM_7.md)  

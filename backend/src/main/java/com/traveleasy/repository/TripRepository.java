@@ -56,4 +56,8 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     boolean existsByRouteId(Long routeId);
     boolean existsByBusCompanyId(Long busCompanyId);
     boolean existsByRouteIdAndDepartureTime(Long routeId, LocalDateTime departureTime);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE Trip t SET t.availableSeats = (SELECT CAST(COUNT(s) AS int) FROM TripSeat s WHERE s.trip.id = :tripId AND s.status = com.traveleasy.entity.SeatStatus.AVAILABLE) WHERE t.id = :tripId")
+    int syncAvailableSeats(@Param("tripId") Long tripId);
 }

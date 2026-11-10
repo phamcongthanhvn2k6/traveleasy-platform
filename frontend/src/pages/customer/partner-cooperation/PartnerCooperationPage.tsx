@@ -120,11 +120,11 @@ export const PartnerCooperationPage: React.FC = () => {
     setFormData({
       companyName: 'Công ty TNHH Vận Tải Hoàng Long Express',
       taxCode: '0101234567',
-      contactName: 'Nguyễn Văn Hoàng',
-      legalRepresentative: 'Nguyễn Văn Hoàng',
+      contactName: 'Phạm Công Thành',
+      legalRepresentative: 'Phạm Công Thành',
       identityCardNumber: '031088012345',
-      phone: '0912888999',
-      email: 'contact@hoanglongexpress.vn',
+      phone: '0944354398',
+      email: 'phamcongt2707@gmail.com',
       businessAddress: 'Số 152 Đường Lê Duẩn, Phường Khâm Thiên, Quận Đống Đa, TP. Hà Nội',
       routes: 'Hà Nội ⇄ Hải Phòng, Hà Nội ⇄ Quảng Ninh',
 
@@ -135,7 +135,7 @@ export const PartnerCooperationPage: React.FC = () => {
       businessLicenseUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80',
       transportLicenseUrl: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?auto=format&fit=crop&w=800&q=80',
       bankName: 'MB Bank (Ngân hàng TMCP Quân Đội)',
-      bankAccountNumber: '091288899999',
+      bankAccountNumber: '0944354398',
       bankAccountOwner: 'CONG TY TNHH VAN TAI HOANG LONG EXPRESS',
     });
     toast.success('Đã điền thông tin hồ sơ pháp lý mẫu chuẩn của nhà xe!', 'Điền Dữ Liệu Mẫu');

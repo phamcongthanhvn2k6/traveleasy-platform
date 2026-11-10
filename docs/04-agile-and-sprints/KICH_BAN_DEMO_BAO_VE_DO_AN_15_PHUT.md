@@ -150,7 +150,7 @@ Sức khỏe hệ thống       Khóa ghế Concurrency    POS bán vé, In bill
 
 #### 🗣️ Lời thoại kết thúc:
 > *"Kính thưa quý Thầy Cô, trong suốt 4 Sprint vừa qua, Nhóm 7 đã hoàn thành xuất sắc **100% mục tiêu của đề tài** với những con số minh chứng rõ ràng:*  
-> *1. Toàn bộ **33 User Stories** của Sprint 3 và **13 User Stories** của Sprint 4 được nghiệm thu hoàn chỉnh trên bảng Trello.*  
+> *1. Toàn bộ **84 User Stories & Tasks** của 3 Sprint được nghiệm thu hoàn chỉnh trên bảng Trello.*  
 > *2. Bộ kiểm thử tự động **25/25 Test Cases** JUnit 5 và Playwright E2E đạt tỷ lệ **Pass 100%**.*  
 > *3. Toàn bộ mã nguồn đã được đóng gói container hóa qua **Docker Compose Production** và gắn thẻ phát hành chính thức `v1.0.0-production`.*  
 > *Nhóm 7 xin chân thành cảm ơn sự hướng dẫn tận tình của quý Thầy Cô bộ môn OJT trong suốt quá trình thực hiện đồ án. Chúng em xin phép được lắng nghe nhận xét và sẵn sàng đón nhận các câu hỏi phản biện từ Hội đồng!"*

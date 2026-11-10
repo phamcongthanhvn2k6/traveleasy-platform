@@ -297,6 +297,29 @@ public class PaymentService {
                     return paymentTransactionRepository.save(newTxn);
                 });
 
+        
+        // LATE WEBHOOK GUARD: Nếu đơn hàng đã bị hủy (do quá hạn 10 phút), tuyệt đối không hồi sinh sang CONFIRMED
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            log.warn("Late Webhook Alert: Đơn hàng {} đã bị HỦY trước đó do quá hạn 10 phút. Chuyển sang REFUND_REQUIRED để chống Double-Booking!", bookingCode);
+            transaction.setStatus(PaymentStatus.REFUND_REQUIRED);
+            transaction.setTransactionNo(manualRef != null ? manualRef : "VQR-LATE-" + System.currentTimeMillis());
+            transaction.setResponseCode("EXPIRED_LATE_PAYMENT");
+            paymentTransactionRepository.save(transaction);
+
+            return PaymentStatusResponse.builder()
+                    .bookingCode(bookingCode)
+                    .txnRef(transaction.getTxnRef())
+                    .paymentStatus(PaymentStatus.REFUND_REQUIRED)
+                    .bookingStatus(BookingStatus.CANCELLED)
+                    .paymentMethod(PaymentMethod.VIETQR)
+                    .amount(transaction.getAmount())
+                    .transactionNo(transaction.getTransactionNo())
+                    .payDate(LocalDateTime.now())
+                    .isPaid(false)
+                    .message("⚠️ CẢNH BÁO: Thanh toán nhận được sau khi đơn hàng đã hết hạn 10 phút và ghế đã được nhả. Hệ thống sẽ hoàn tiền cho quý khách trong 24 giờ!")
+                    .build();
+        }
+
         if (transaction.getStatus() == PaymentStatus.SUCCESS && booking.getStatus() == BookingStatus.CONFIRMED) {
             log.info("VietQR Confirm: Đơn {} đã được xác nhận thanh toán trước đó (Idempotent)", bookingCode);
             return PaymentStatusResponse.builder()

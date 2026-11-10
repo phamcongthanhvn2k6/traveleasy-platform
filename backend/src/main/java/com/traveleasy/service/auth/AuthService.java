@@ -7,7 +7,9 @@ import com.traveleasy.dto.auth.LoginRequest;
 import com.traveleasy.dto.auth.RegisterRequest;
 import com.traveleasy.entity.Role;
 import com.traveleasy.entity.User;
+import com.traveleasy.entity.BusCompany;
 import com.traveleasy.repository.UserRepository;
+import com.traveleasy.repository.BusCompanyRepository;
 import com.traveleasy.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final BusCompanyRepository busCompanyRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -52,8 +55,9 @@ public class AuthService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole().name())
-.busCompanyId(user.getBusCompanyId())
-.build();
+                .busCompanyId(user.getBusCompanyId())
+                .busCompanyName(resolveBusCompanyName(user.getBusCompanyId()))
+                .build();
     }
 
     @Transactional
@@ -106,8 +110,9 @@ public class AuthService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole().name())
-.busCompanyId(user.getBusCompanyId())
-.build();
+                .busCompanyId(user.getBusCompanyId())
+                .busCompanyName(resolveBusCompanyName(user.getBusCompanyId()))
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -121,8 +126,9 @@ public class AuthService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole().name())
-.busCompanyId(user.getBusCompanyId())
-.build();
+                .busCompanyId(user.getBusCompanyId())
+                .busCompanyName(resolveBusCompanyName(user.getBusCompanyId()))
+                .build();
     }
 
     @Transactional
@@ -149,8 +155,16 @@ public class AuthService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole().name())
-.busCompanyId(user.getBusCompanyId())
-.build();
+                .busCompanyId(user.getBusCompanyId())
+                .busCompanyName(resolveBusCompanyName(user.getBusCompanyId()))
+                .build();
+    }
+
+    private String resolveBusCompanyName(Long busCompanyId) {
+        if (busCompanyId == null) return null;
+        return busCompanyRepository.findById(busCompanyId)
+                .map(BusCompany::getName)
+                .orElse(null);
     }
 
     @Transactional

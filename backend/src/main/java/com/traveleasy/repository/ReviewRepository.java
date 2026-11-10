@@ -9,6 +9,7 @@ import java.util.List;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findAllByStatusOrderByCreatedAtDesc(String status);
+    List<Review> findByBusCompanyIdOrderByCreatedAtDesc(Long busCompanyId);
     List<Review> findByBusCompanyIdAndStatusOrderByCreatedAtDesc(Long busCompanyId, String status);
     List<Review> findByUserIdOrderByCreatedAtDesc(Long userId);
     boolean existsByBookingCode(String bookingCode);

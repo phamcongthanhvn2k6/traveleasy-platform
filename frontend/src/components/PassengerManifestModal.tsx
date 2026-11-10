@@ -98,46 +98,7 @@ export const PassengerManifestModal: React.FC<PassengerManifestModalProps> = ({
           }
         });
 
-        // If no bookings yet, generate realistic preview passengers for the trip
-        if (manifestList.length === 0) {
-          const sampleSeats = ['A01', 'A02', 'A03', 'A04', 'B01', 'B02', 'B05'];
-          const sampleNames = [
-            'Nguyễn Văn An',
-            'Trần Thị Bích Ngọc',
-            'Lê Hoàng Long',
-            'Phạm Thanh Tùng',
-            'Đỗ Thị Mai Hương',
-            'Vũ Minh Trí',
-            'Bùi Quỳnh Nga',
-          ];
-          const samplePhones = [
-            '0912 345 678',
-            '0988 765 432',
-            '0903 112 233',
-            '0977 445 566',
-            '0933 889 900',
-            '0944 556 677',
-            '0966 223 344',
-          ];
-
-          sampleSeats.forEach((seat, idx) => {
-            manifestList.push({
-              stt: idx + 1,
-              ticketCode: `TK-LIVE-${seat}-${Math.floor(100 + Math.random() * 900)}`,
-              bookingCode: `BK-20261027-${100 + idx}`,
-              seatNumber: seat,
-              passengerName: sampleNames[idx],
-              phone: samplePhones[idx],
-              pickupPoint: trip.pickupPointName || 'Bến xe Miền Tây (Quầy 12)',
-              dropoffPoint: trip.dropoffPointName || 'Bến xe Liên Tỉnh Đà Lạt',
-              price: trip.price || 320000,
-              status: 'CONFIRMED',
-              note: idx % 2 === 0 ? 'Có hành lý ký gửi' : '',
-              checkedIn: idx < 3,
-            });
-          });
-        }
-
+        // Phản ánh chính xác danh sách vé thực tế từ CSDL bookings
         setPassengers(manifestList);
       } catch (err) {
         console.error('Error fetching manifest passengers:', err);
@@ -472,8 +433,16 @@ export const PassengerManifestModal: React.FC<PassengerManifestModalProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {filteredPassengers.map((p, idx) => (
-                  <tr
+                {filteredPassengers.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{ padding: '36px 16px', textAlign: 'center', color: '#64748b' }}>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#334155' }}>Chuyến xe hiện chưa có hành khách nào đặt vé</div>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Danh sách hành khách sẽ tự động đồng bộ thời gian thực ngay khi có vé được xác nhận.</div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredPassengers.map((p, idx) => (
+                    <tr
                     key={p.stt}
                     style={{
                       borderBottom: '1px solid #e2e8f0',
@@ -535,7 +504,7 @@ export const PassengerManifestModal: React.FC<PassengerManifestModalProps> = ({
                       </button>
                     </td>
                   </tr>
-                ))}
+                )))}
               </tbody>
             </table>
           </div>

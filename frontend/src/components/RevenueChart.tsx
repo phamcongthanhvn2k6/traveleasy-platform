@@ -24,34 +24,19 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
   const [timeRange, setTimeRange] = useState<'7D' | '30D' | 'MONTHLY'>('7D');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Default dataset for 7 days
-  const default7Days: ChartDataPoint[] = [
-    { label: '21/10', revenue: 640000, bookings: 2 },
-    { label: '22/10', revenue: 1280000, bookings: 4 },
-    { label: '23/10', revenue: 960000, bookings: 3 },
-    { label: '24/10', revenue: 1920000, bookings: 6 },
-    { label: '25/10', revenue: 2560000, bookings: 8 },
-    { label: '26/10', revenue: 3200000, bookings: 10 },
-    { label: '27/10', revenue: 3840000, bookings: 12 },
-  ];
+  // Sinh 7 ngày gần nhất thực tế với giá trị 0 đ (tránh dữ liệu giả định)
+  const generateClean7Days = (): ChartDataPoint[] => {
+    const list: ChartDataPoint[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const label = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+      list.push({ label, revenue: 0, bookings: 0 });
+    }
+    return list;
+  };
 
-  // Default dataset for 30 days
-  const default30Days: ChartDataPoint[] = [
-    { label: 'Tuần 1', revenue: 8400000, bookings: 28 },
-    { label: 'Tuần 2', revenue: 12600000, bookings: 42 },
-    { label: 'Tuần 3', revenue: 16800000, bookings: 56 },
-    { label: 'Tuần 4', revenue: 21500000, bookings: 71 },
-  ];
-
-  // Default dataset for months
-  const defaultMonthly: ChartDataPoint[] = [
-    { label: 'T07', revenue: 32000000, bookings: 105 },
-    { label: 'T08', revenue: 45000000, bookings: 148 },
-    { label: 'T09', revenue: 62000000, bookings: 204 },
-    { label: 'T10', revenue: 84500000, bookings: 278 },
-  ];
-
-  const data = customData || (timeRange === '7D' ? default7Days : timeRange === '30D' ? default30Days : defaultMonthly);
+  const data = (customData && customData.length > 0) ? customData : generateClean7Days();
 
   const maxRevenue = Math.max(...data.map((d) => d.revenue), 1000000);
   const totalPeriodRevenue = data.reduce((sum, d) => sum + d.revenue, 0);
@@ -286,7 +271,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
           <div style={{ fontSize: '11px', color: '#64748b' }}>Giá trị trung bình/vé</div>
           <div style={{ fontSize: '14px', fontWeight: 800, color: '#16a34a', marginTop: '2px' }}>
             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
-              totalPeriodBookings > 0 ? Math.round(totalPeriodRevenue / totalPeriodBookings) : 320000
+              totalPeriodBookings > 0 ? Math.round(totalPeriodRevenue / totalPeriodBookings) : 0
             )}
           </div>
         </div>

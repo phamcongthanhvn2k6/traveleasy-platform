@@ -3,7 +3,7 @@
  * @description Bản đồ Định vị GPS Live Tracking xe khách chạy thời gian thực
  * @author Nguyễn Đại Phát (phatnguyn146)
  * @role Analytics & Tracking Specialist
- * @task [S406][TRACKING] Sprint 4 (4 SP)
+ * @task [S306][TRACKING] Sprint 3 (4 SP)
  */
 import React, { useState, useEffect } from 'react';
 
@@ -14,15 +14,15 @@ export default function LiveTrackingMapPage() {
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <div className="max-w-5xl mx-auto">
-        {/* BANNER THÔNG TIN TASK SPRINT 4 & NGƯỜI PHỤ TRÁCH */}
+        {/* BANNER THÔNG TIN TASK SPRINT 3 & NGƯỜI PHỤ TRÁCH */}
         <div className="bg-gradient-to-r from-emerald-950 via-teal-900 to-indigo-950 text-white p-5 rounded-2xl shadow-md mb-6 border border-teal-700/50">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-amber-950 uppercase">
-                  SPRINT 4 TASK
+                  SPRINT 3 TASK
                 </span>
-                <span className="text-xs font-semibold text-emerald-200">Mã thẻ: [S406][TRACKING] • Định mức: 4 SP</span>
+                <span className="text-xs font-semibold text-emerald-200">Mã thẻ: [S306][TRACKING] • Định mức: 4 SP</span>
               </div>
               <h2 className="text-xl font-bold mt-1.5 flex items-center gap-2">
                 📍 Bản Đồ Định Vị GPS Live Tracking Xe Chạy Thời Gian Thực

@@ -20,6 +20,13 @@ import { CompanyShiftsPage } from '../pages/company/shifts/CompanyShiftsPage';
 import { CompanyPricingRulesPage } from '../pages/company/pricing-rules/CompanyPricingRulesPage';
 import { CompanyReportsPage } from '../pages/company/reports/CompanyReportsPage';
 
+// Sprint 3 Extended Modules (Nhiệm vụ bổ sung cho thành viên OJT)
+import TicketExchangePage from '../pages/company/ticket-exchange/TicketExchangePage';
+import ShuttleManagementPage from '../pages/company/shuttles/ShuttleManagementPage';
+import TripExpensesPage from '../pages/company/expenses/TripExpensesPage';
+import TripCrewPage from '../pages/company/crew/TripCrewPage';
+import CancellationRefundPage from '../pages/company/refunds/CancellationRefundPage';
+
 /**
  * =========================================================================
  * ROUTER PHÂN HỆ ĐỐI TÁC NHÀ XE (TRAVELEASY PARTNER PORTAL)
@@ -73,23 +80,46 @@ export const CompanyRoutes: React.FC = () => {
                 <Route path="/settlements" element={<CompanySettlementsPage />} />
 
                 {/* ======================================================== */}
-                {/* SPRINT 4 MODULES (NHIỆM VỤ THÀNH VIÊN SPRINT 4)         */}
+                {/* SPRINT 3 MODULES (NHIỆM VỤ THÀNH VIÊN SPRINT 3)         */}
                 {/* ======================================================== */}
-                {/* [S404] Quầy bán vé nhanh POS - Phạm Thanh Phong */}
+                {/* [S304] Quầy bán vé nhanh POS - Phạm Thanh Phong */}
                 <Route path="pos" element={<PosTerminalPage />} />
                 <Route path="/pos" element={<PosTerminalPage />} />
 
-                {/* [S405] Quản lý ca trực & bàn giao tiền mặt - Đoàn Nhật Cường */}
+                {/* [S305] Quản lý ca trực & bàn giao tiền mặt - Đoàn Nhật Cường */}
                 <Route path="shifts" element={<CompanyShiftsPage />} />
                 <Route path="/shifts" element={<CompanyShiftsPage />} />
 
-                {/* [S407] Quản trị chính sách giá vé động - Trần Minh Đức */}
+                {/* [S307] Quản trị chính sách giá vé động - Trần Minh Đức */}
                 <Route path="pricing-rules" element={<CompanyPricingRulesPage />} />
                 <Route path="/pricing-rules" element={<CompanyPricingRulesPage />} />
 
-                {/* [S410] Báo cáo doanh thu & tỷ lệ lấp đầy ghế - Nguyễn Đại Phát */}
+                {/* [S310] Báo cáo doanh thu & tỷ lệ lấp đầy ghế - Nguyễn Đại Phát */}
                 <Route path="reports" element={<CompanyReportsPage />} />
                 <Route path="/reports" element={<CompanyReportsPage />} />
+
+                {/* ======================================================== */}
+                {/* SPRINT 3 EXTENDED TASKS (NHIỆM VỤ BỔ SUNG KHÔNG XUNG ĐỘT) */}
+                {/* ======================================================== */}
+                {/* [S316] Đổi vé, đổi giờ chạy & chuyển ghế - Trần Minh Đức */}
+                <Route path="ticket-exchange" element={<TicketExchangePage />} />
+                <Route path="/ticket-exchange" element={<TicketExchangePage />} />
+
+                {/* [S317] Quản lý xe trung chuyển gom khách tận nơi - Trần Minh Đức */}
+                <Route path="shuttles" element={<ShuttleManagementPage />} />
+                <Route path="/shuttles" element={<ShuttleManagementPage />} />
+
+                {/* [S318] Quản lý chi phí & lợi nhuận chuyến xe (Trip P&L) - Trần Minh Đức */}
+                <Route path="expenses" element={<TripExpensesPage />} />
+                <Route path="/expenses" element={<TripExpensesPage />} />
+
+                {/* [S319] Phân công tài xế & phụ xe (Tổ lái) - Đoàn Nhật Cường */}
+                <Route path="crew" element={<TripCrewPage />} />
+                <Route path="/crew" element={<TripCrewPage />} />
+
+                {/* [S321] Quản lý biểu phí & hoàn hủy vé - Nguyễn Đại Phát */}
+                <Route path="refunds" element={<CancellationRefundPage />} />
+                <Route path="/refunds" element={<CancellationRefundPage />} />
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/company/dashboard" replace />} />
