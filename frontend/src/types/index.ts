@@ -16,6 +16,10 @@ export interface Trip {
   totalSeats: number;
   availableSeats: number;
   status: string;
+  originalPrice?: number;
+  pricingBadge?: string;
+  surchargeAmount?: number;
+  ruleDescription?: string;
   pickupPoints?: Point[];
   dropoffPoints?: Point[];
 }
@@ -143,4 +147,94 @@ export interface RouteOption {
   arrivalLocation: string;
   distanceKm: number;
   durationHours: number;
+}
+
+// S307: Dinh nghia cac loai quy tac va phan he gia ve dong (Company Pricing Rules)
+export type PricingRuleType =
+  | 'HOLIDAY_SURCHARGE'
+  | 'WEEKEND_SURCHARGE'
+  | 'FLASH_SALE_LAST_MINUTE'
+  | 'EARLY_BIRD'
+  | 'CUSTOM';
+
+export type AdjustmentType = 'PERCENTAGE' | 'FIXED_AMOUNT';
+
+export type PricingRuleScope = 'SYSTEM_WIDE' | 'COMPANY_WIDE' | 'ROUTE_SPECIFIC' | 'TRIP_SPECIFIC';
+
+export type PricingRuleStatus = 'ACTIVE' | 'INACTIVE' | 'SCHEDULED' | 'EXPIRED';
+
+export interface CompanyPricingRule {
+  id: number;
+  busCompanyId: number;
+  name: string;
+  ruleType: PricingRuleType;
+  adjustmentType: AdjustmentType;
+  adjustmentValue: number;
+  scope: PricingRuleScope;
+  targetRouteId?: number | null;
+  targetTripId?: number | null;
+  startDate: string;
+  endDate: string;
+  applicableDaysOfWeek?: string | null;
+  conditionJson?: string | null;
+  priority: number;
+  status: PricingRuleStatus;
+  description?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreatePricingRuleRequest {
+  busCompanyId?: number;
+  name: string;
+  ruleType: PricingRuleType;
+  adjustmentType: AdjustmentType;
+  adjustmentValue: number;
+  scope: PricingRuleScope;
+  targetRouteId?: number | null;
+  targetTripId?: number | null;
+  startDate: string;
+  endDate: string;
+  applicableDaysOfWeek?: string | null;
+  conditionJson?: string | null;
+  priority?: number;
+  status?: PricingRuleStatus;
+  description?: string | null;
+}
+
+export interface UpdatePricingRuleRequest {
+  name: string;
+  ruleType: PricingRuleType;
+  adjustmentType: AdjustmentType;
+  adjustmentValue: number;
+  scope: PricingRuleScope;
+  targetRouteId?: number | null;
+  targetTripId?: number | null;
+  startDate: string;
+  endDate: string;
+  applicableDaysOfWeek?: string | null;
+  conditionJson?: string | null;
+  priority: number;
+  status: PricingRuleStatus;
+  description?: string | null;
+}
+
+export interface PriceSimulationRequest {
+  busCompanyId?: number;
+  routeId?: number;
+  departureTime: string;
+  basePrice: number;
+  totalSeats: number;
+  availableSeats: number;
+}
+
+export interface PriceSimulationResponse {
+  basePrice: number;
+  calculatedPrice: number;
+  adjustmentAmount: number;
+  pricingBadge?: string | null;
+  appliedRuleId?: number | null;
+  appliedRuleName?: string | null;
+  appliedRuleType?: PricingRuleType | null;
+  ruleDescription?: string | null;
 }

@@ -72,6 +72,9 @@ public class S320ApiIntegrationTest {
     @Autowired
     private VehicleRepository vehicleRepository;
 
+    @Autowired
+    private com.traveleasy.repository.SettlementRecordRepository settlementRecordRepository;
+
     private BusCompany sampleCompany;
     private Route sampleRoute;
     private Trip sampleTrip;
@@ -104,6 +107,7 @@ public class S320ApiIntegrationTest {
 
     private void cleanDatabase() {
         verifySafety();
+        settlementRecordRepository.deleteAllInBatch();
         paymentTransactionRepository.deleteAllInBatch();
         ticketRepository.deleteAllInBatch();
         reviewRepository.deleteAllInBatch();

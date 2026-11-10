@@ -83,6 +83,9 @@ public class S310ApiIntegrationTest {
     @Autowired
     private ReviewRepository reviewRepository;
 
+    @Autowired
+    private com.traveleasy.repository.SettlementRecordRepository settlementRecordRepository;
+
     private Trip activeTrip;
     private PickupDropoffPoint pickupPoint;
     private PickupDropoffPoint dropoffPoint;
@@ -99,6 +102,7 @@ public class S310ApiIntegrationTest {
     }
 
     private void cleanDatabase() {
+        settlementRecordRepository.deleteAllInBatch();
         paymentTransactionRepository.deleteAllInBatch();
         ticketRepository.deleteAllInBatch();
         reviewRepository.deleteAllInBatch();

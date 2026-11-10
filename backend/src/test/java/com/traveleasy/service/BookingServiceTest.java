@@ -50,6 +50,9 @@ class BookingServiceTest {
     @Mock
     private SeatRealtimeService seatRealtimeService;
 
+    @Mock
+    private com.traveleasy.service.company.DynamicPricingService dynamicPricingService;
+
     @InjectMocks
     private BookingService bookingService;
 
@@ -180,6 +183,47 @@ class BookingServiceTest {
 
         assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("trùng chuyến xe và ghế"));
+    }
+
+    @Test
+    @DisplayName("TC-S307-10: Đặt vé áp dụng giá động và chống gian lận can thiệp finalAmount từ Client")
+    void testCreateBooking_WithDynamicPricingAndAntiTampering() {
+        TripSeat seat1 = new TripSeat();
+        seat1.setSeatCode("A01");
+        seat1.setStatus(SeatStatus.AVAILABLE);
+
+        TripSeat seat2 = new TripSeat();
+        seat2.setSeatCode("A02");
+        seat2.setStatus(SeatStatus.AVAILABLE);
+
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(sampleTrip));
+        when(tripSeatRepository.findByTripIdAndSeatCodeInWithLock(eq(1L), anyList())).thenReturn(List.of(seat1, seat2));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> {
+            Booking b = invocation.getArgument(0);
+            b.setId(50L);
+            return b;
+        });
+
+        // Dynamic pricing trả về đơn giá 360,000 (tăng 20% từ gốc 300,000)
+        com.traveleasy.dto.company.pricing.DynamicPricingResult pricingResult = com.traveleasy.dto.company.pricing.DynamicPricingResult.builder()
+                .originalPrice(new BigDecimal("300000"))
+                .calculatedPrice(new BigDecimal("360000"))
+                .deltaAmount(new BigDecimal("60000"))
+                .ruleApplied(true)
+                .pricingBadge("+20% Lễ Tết")
+                .build();
+
+        when(dynamicPricingService.calculateDynamicPrice(eq(sampleTrip), any())).thenReturn(pricingResult);
+
+        // Client cố tình gửi finalAmount = 10,000 đ để gian lận tiền vé
+        bookingRequest.setFinalAmount(new BigDecimal("10000"));
+
+        com.traveleasy.dto.booking.BookingResponse response = bookingService.createBooking(bookingRequest, "an.nguyen@example.com");
+
+        assertNotNull(response);
+        // Backend tự động ghi đè giá đúng: 360,000 x 2 = 720,000 đ
+        assertEquals(new BigDecimal("720000"), response.getTotalAmount());
+        assertEquals(new BigDecimal("600000"), response.getOriginalAmount());
     }
 }
 
