@@ -74,14 +74,25 @@ public class BookingService {
             }
         }
 
-        // Tái tính toán đơn giá vé động tại micro-second đặt chỗ (Anti-tampering)
-        com.traveleasy.dto.company.pricing.DynamicPricingResult dynamicPricing = (dynamicPricingService != null)
-                ? dynamicPricingService.calculateDynamicPrice(trip, LocalDateTime.now())
-                : null;
+        // Kiểm tra kênh đặt vé (POS Channel Protection): Quầy bến xe bỏ qua giá động
+        boolean isPosChannel = request.getBookingChannel() != null &&
+                ("POS".equalsIgnoreCase(request.getBookingChannel().trim()) ||
+                 "COUNTER".equalsIgnoreCase(request.getBookingChannel().trim()));
 
-        BigDecimal unitPrice = (dynamicPricing != null && dynamicPricing.isRuleApplied())
-                ? dynamicPricing.getCalculatedPrice()
-                : trip.getPrice();
+        BigDecimal unitPrice;
+        if (isPosChannel) {
+            unitPrice = trip.getPrice();
+            log.info("Kênh đặt vé tại quầy (POS/COUNTER): Bỏ qua tính giá vé động, áp dụng giá gốc={}", unitPrice);
+        } else {
+            // Tái tính toán đơn giá vé động tại micro-second đặt chỗ (Anti-tampering)
+            com.traveleasy.dto.company.pricing.DynamicPricingResult dynamicPricing = (dynamicPricingService != null)
+                    ? dynamicPricingService.calculateDynamicPrice(trip, LocalDateTime.now())
+                    : null;
+
+            unitPrice = (dynamicPricing != null && dynamicPricing.isRuleApplied())
+                    ? dynamicPricing.getCalculatedPrice()
+                    : trip.getPrice();
+        }
 
         // Tính tổng tiền & Cập nhật trạng thái ghế
         BigDecimal baseSeatTotal = BigDecimal.ZERO;
@@ -161,6 +172,7 @@ public class BookingService {
                 .discountAmount(discount)
                 .insuranceAmount(insuranceAmount)
                 .voucherCode(request.getVoucherCode())
+                .bookingChannel(request.getBookingChannel() != null ? request.getBookingChannel().trim() : "ONLINE")
                 .paymentMethod(request.getPaymentMethod())
                 .status(initialStatus)
                 .build();

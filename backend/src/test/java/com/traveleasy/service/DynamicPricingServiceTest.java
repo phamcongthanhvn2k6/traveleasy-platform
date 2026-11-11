@@ -478,4 +478,159 @@ class DynamicPricingServiceTest {
         assertEquals(BigDecimal.valueOf(20), response.getAdjustmentPercent());
         assertEquals("+20% Lễ Tết", response.getPricingBadge());
     }
+
+    @Test
+    @DisplayName("AC-REV-02: Trần phụ thu tối đa không vượt quá +40% giá gốc")
+    void testBoundingRules_SurchargeCeiling_CapAt40Percent() {
+        // Quy tắc Lễ Tết phụ thu +100% (vượt quá trần +40%)
+        CompanyPricingRule excessiveSurchargeRule = CompanyPricingRule.builder()
+                .id(99L)
+                .busCompany(testCompany)
+                .name("Phụ thu siêu cao +100%")
+                .ruleType(PricingRuleType.HOLIDAY_SURCHARGE)
+                .adjustmentType(AdjustmentType.PERCENTAGE)
+                .adjustmentValue(BigDecimal.valueOf(100)) // +100%
+                .startDate(LocalDate.of(2026, 9, 1))
+                .endDate(LocalDate.of(2026, 9, 5))
+                .applicableDays("ALL")
+                .priority(100)
+                .status(PricingRuleStatus.ACTIVE)
+                .build();
+
+        when(pricingRuleRepository.findByBusCompanyIdAndStatusOrderByPriorityDesc(eq(1L), eq(PricingRuleStatus.ACTIVE)))
+                .thenReturn(List.of(excessiveSurchargeRule));
+
+        Trip trip = Trip.builder()
+                .id(101L)
+                .busCompany(testCompany)
+                .price(BigDecimal.valueOf(200000)) // Giá gốc 200,000 VNĐ
+                .departureTime(LocalDateTime.of(2026, 9, 2, 8, 0))
+                .totalSeats(40)
+                .availableSeats(20)
+                .build();
+
+        DynamicPricingResult result = dynamicPricingService.calculateDynamicPrice(trip, LocalDateTime.of(2026, 9, 1, 10, 0));
+
+        assertTrue(result.isRuleApplied());
+        // Giá gốc: 200,000. Nếu +100% là 400,000. Nhưng có trần +40% => Tối đa 200,000 * 1.40 = 280,000 VNĐ
+        assertEquals(BigDecimal.valueOf(280000), result.getCalculatedPrice());
+        assertEquals(BigDecimal.valueOf(80000), result.getDeltaAmount());
+    }
+
+    @Test
+    @DisplayName("AC-REV-02: Sàn chiết khấu tối đa không giảm quá -50% giá gốc")
+    void testBoundingRules_DiscountFloor_CapAt50Percent() {
+        // Quy tắc Flash sale giảm -75% (vượt quá sàn giảm tối đa -50%)
+        CompanyPricingRule excessiveDiscountRule = CompanyPricingRule.builder()
+                .id(98L)
+                .busCompany(testCompany)
+                .name("Flash sale sập sàn -75%")
+                .ruleType(PricingRuleType.FLASH_SALE)
+                .adjustmentType(AdjustmentType.PERCENTAGE)
+                .adjustmentValue(BigDecimal.valueOf(75)) // -75%
+                .startDate(LocalDate.of(2026, 9, 1))
+                .endDate(LocalDate.of(2026, 9, 5))
+                .isLastMinute(true)
+                .lastMinuteHours(2)
+                .minEmptySeatPercentage(50)
+                .priority(100)
+                .status(PricingRuleStatus.ACTIVE)
+                .build();
+
+        when(pricingRuleRepository.findByBusCompanyIdAndStatusOrderByPriorityDesc(eq(1L), eq(PricingRuleStatus.ACTIVE)))
+                .thenReturn(List.of(excessiveDiscountRule));
+
+        Trip trip = Trip.builder()
+                .id(102L)
+                .busCompany(testCompany)
+                .price(BigDecimal.valueOf(200000)) // Giá gốc 200,000 VNĐ
+                .departureTime(LocalDateTime.of(2026, 9, 2, 8, 0))
+                .totalSeats(40)
+                .availableSeats(30) // Còn 30/40 ghế (75% trống > 50%)
+                .build();
+
+        // Request lúc 07:00 (cách 1h < 2h)
+        DynamicPricingResult result = dynamicPricingService.calculateDynamicPrice(trip, LocalDateTime.of(2026, 9, 2, 7, 0));
+
+        assertTrue(result.isRuleApplied());
+        // Giá gốc: 200,000. Nếu -75% là 50,000. Nhưng có sàn -50% => Tối thiểu 200,000 * 0.50 = 100,000 VNĐ
+        assertEquals(BigDecimal.valueOf(100000), result.getCalculatedPrice());
+        assertEquals(BigDecimal.valueOf(-100000), result.getDeltaAmount());
+    }
+
+    @Test
+    @DisplayName("AC-REV-02: Sàn giá tuyệt đối không thấp hơn 50.000 VNĐ kể cả khi 50% giá gốc < 50k")
+    void testBoundingRules_AbsoluteFloor_50k() {
+        // Chuyến xe giá gốc rẻ 80,000 VNĐ, giảm 50% => 40,000 VNĐ (< 50,000 VNĐ sàn tuyệt đối)
+        CompanyPricingRule flashRule = CompanyPricingRule.builder()
+                .id(97L)
+                .busCompany(testCompany)
+                .name("Flash sale chuyến ngắn")
+                .ruleType(PricingRuleType.FLASH_SALE)
+                .adjustmentType(AdjustmentType.PERCENTAGE)
+                .adjustmentValue(BigDecimal.valueOf(50)) // -50%
+                .startDate(LocalDate.of(2026, 9, 1))
+                .endDate(LocalDate.of(2026, 9, 5))
+                .isLastMinute(true)
+                .lastMinuteHours(2)
+                .minEmptySeatPercentage(50)
+                .priority(100)
+                .status(PricingRuleStatus.ACTIVE)
+                .build();
+
+        when(pricingRuleRepository.findByBusCompanyIdAndStatusOrderByPriorityDesc(eq(1L), eq(PricingRuleStatus.ACTIVE)))
+                .thenReturn(List.of(flashRule));
+
+        Trip trip = Trip.builder()
+                .id(103L)
+                .busCompany(testCompany)
+                .price(BigDecimal.valueOf(80000)) // Giá gốc 80,000 VNĐ
+                .departureTime(LocalDateTime.of(2026, 9, 2, 8, 0))
+                .totalSeats(40)
+                .availableSeats(30)
+                .build();
+
+        DynamicPricingResult result = dynamicPricingService.calculateDynamicPrice(trip, LocalDateTime.of(2026, 9, 2, 7, 0));
+
+        assertTrue(result.isRuleApplied());
+        // 80,000 * 0.50 = 40,000 nhưng sàn tuyệt đối là 50,000 => Kết quả là 50,000 VNĐ
+        assertEquals(BigDecimal.valueOf(50000), result.getCalculatedPrice());
+    }
+
+    @Test
+    @DisplayName("AC-REV-02: Mô phỏng Live Price Simulator áp dụng đúng trần phụ thu và sàn chiết khấu")
+    void testBoundingRules_Simulation_AppliesCaps() {
+        CompanyPricingRule excessiveSurchargeRule = CompanyPricingRule.builder()
+                .id(96L)
+                .busCompany(testCompany)
+                .name("Phụ thu siêu ngạch +80%")
+                .ruleType(PricingRuleType.HOLIDAY_SURCHARGE)
+                .adjustmentType(AdjustmentType.PERCENTAGE)
+                .adjustmentValue(BigDecimal.valueOf(80)) // +80%
+                .startDate(LocalDate.of(2026, 9, 1))
+                .endDate(LocalDate.of(2026, 9, 5))
+                .applicableDays("ALL")
+                .priority(100)
+                .status(PricingRuleStatus.ACTIVE)
+                .build();
+
+        when(pricingRuleRepository.findByBusCompanyIdAndStatusOrderByPriorityDesc(eq(1L), eq(PricingRuleStatus.ACTIVE)))
+                .thenReturn(List.of(excessiveSurchargeRule));
+
+        PriceSimulationRequest request = PriceSimulationRequest.builder()
+                .busCompanyId(1L)
+                .basePrice(BigDecimal.valueOf(200000))
+                .departureTime(LocalDateTime.of(2026, 9, 2, 8, 0))
+                .totalSeats(40)
+                .availableSeats(20)
+                .requestTime(LocalDateTime.of(2026, 9, 1, 12, 0))
+                .build();
+
+        PriceSimulationResponse response = dynamicPricingService.simulatePricing(request);
+
+        assertTrue(response.getHasRuleApplied());
+        // Bị chặn ở trần +40%: 200,000 * 1.40 = 280,000 VNĐ
+        assertEquals(BigDecimal.valueOf(280000), response.getCalculatedPrice());
+        assertEquals(BigDecimal.valueOf(80000), response.getDeltaAmount());
+    }
 }

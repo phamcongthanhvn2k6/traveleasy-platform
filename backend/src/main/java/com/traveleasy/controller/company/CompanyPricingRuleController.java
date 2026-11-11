@@ -72,6 +72,7 @@ public class CompanyPricingRuleController {
         if (targetCompanyId == null) {
             throw new AppException(ErrorCode.UNAUTHORIZED, "Không thể xác thực nhà xe đối tác");
         }
+        request.setBusCompanyId(targetCompanyId);
 
         if (request.getEndDate().isBefore(request.getStartDate())) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Ngày kết thúc không được trước ngày bắt đầu");
@@ -284,40 +285,42 @@ public class CompanyPricingRuleController {
     }
 
     private Long resolveTargetCompanyId(Long explicitCompanyId, Authentication authentication) {
-        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
-            String email = authentication.getName();
-            User user = userRepository.findByEmail(email).orElse(null);
-            if (user != null) {
-                // Nếu là ADMIN, cho phép thao tác đại diện theo explicitCompanyId
-                if (user.getRole() == Role.ADMIN && explicitCompanyId != null && explicitCompanyId > 0) {
-                    return explicitCompanyId;
-                }
-                // Nếu là OPERATOR hoặc có busCompanyId gán cho tài khoản, BẮT BUỘC dùng busCompanyId của chính mình (chống giả mạo)
-                if (user.getBusCompanyId() != null && user.getBusCompanyId() > 0) {
-                    return user.getBusCompanyId();
-                }
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Vui lòng đăng nhập để thực hiện");
+        }
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED, "Người dùng không tồn tại"));
 
-                Optional<BusCompany> compByEmail = busCompanyRepository.findByEmail(email);
-                if (compByEmail.isPresent()) {
-                    return compByEmail.get().getId();
-                }
+        // Chỉ duy nhất ADMIN hệ thống mới được phép thao tác đại diện bằng explicitCompanyId
+        if (user.getRole() == Role.ADMIN) {
+            if (explicitCompanyId != null && explicitCompanyId > 0) {
+                return explicitCompanyId;
+            }
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Admin hệ thống vui lòng chỉ định mã nhà xe cần thao tác");
+        }
 
-                if (user.getFullName() != null) {
-                    String fullName = user.getFullName().trim().toLowerCase();
-                    for (BusCompany bc : busCompanyRepository.findAll()) {
-                        String bcName = bc.getName().trim().toLowerCase();
-                        if (fullName.equals(bcName) || fullName.equals("điều hành " + bcName)) {
-                            return bc.getId();
-                        }
-                    }
+        // Người dùng nhà xe BẮT BUỘC lấy busCompanyId từ tài khoản của chính mình (chống giả mạo)
+        if (user.getBusCompanyId() != null && user.getBusCompanyId() > 0) {
+            return user.getBusCompanyId();
+        }
+
+        Optional<BusCompany> compByEmail = busCompanyRepository.findByEmail(email);
+        if (compByEmail.isPresent()) {
+            return compByEmail.get().getId();
+        }
+
+        if (user.getFullName() != null) {
+            String fullName = user.getFullName().trim().toLowerCase();
+            for (BusCompany bc : busCompanyRepository.findAll()) {
+                String bcName = bc.getName().trim().toLowerCase();
+                if (fullName.equals(bcName) || fullName.equals("điều hành " + bcName)) {
+                    return bc.getId();
                 }
             }
         }
 
-        if (explicitCompanyId != null && explicitCompanyId > 0) {
-            return explicitCompanyId;
-        }
-
-        return null;
+        // Tuyệt đối không fallback explicitCompanyId cho non-admin: Trả về FORBIDDEN ngay lập tức
+        throw new AppException(ErrorCode.FORBIDDEN, "Tài khoản của bạn không được cấp quyền quản trị nhà xe nào");
     }
 }

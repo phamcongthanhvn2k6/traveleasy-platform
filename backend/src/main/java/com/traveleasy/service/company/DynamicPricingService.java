@@ -23,6 +23,8 @@ public class DynamicPricingService {
 
     private final CompanyPricingRuleRepository pricingRuleRepository;
 
+    public static final BigDecimal MAX_SURCHARGE_RATE = BigDecimal.valueOf(0.40); // Trần phụ thu tối đa +40%
+    public static final BigDecimal MAX_DISCOUNT_RATE = BigDecimal.valueOf(0.50);  // Sàn chiết khấu tối đa -50%
     private static final BigDecimal PRICE_FLOOR = BigDecimal.valueOf(50000);
     private static final BigDecimal THOUSAND = BigDecimal.valueOf(1000);
 
@@ -190,6 +192,22 @@ public class DynamicPricingService {
             }
         }
 
+        // CẬN BIÊN AN TOÀN (Bounding Rules):
+        // 1. Nếu là giảm giá (Flash sale): không được giảm quá -50% giá gốc và không thấp hơn sàn tuyệt đối 50.000 VNĐ
+        if (rule.getRuleType() == PricingRuleType.FLASH_SALE) {
+            BigDecimal discountFloorRate = basePrice.multiply(BigDecimal.ONE.subtract(MAX_DISCOUNT_RATE));
+            BigDecimal discountFloor = discountFloorRate.max(PRICE_FLOOR);
+            if (rawPrice.compareTo(discountFloor) < 0) {
+                rawPrice = discountFloor;
+            }
+        } else {
+            // 2. Nếu là phụ thu (Lễ Tết, Cuối tuần, Custom): trần phụ thu tối đa không vượt quá +40% giá gốc
+            BigDecimal surchargeCeiling = basePrice.multiply(BigDecimal.ONE.add(MAX_SURCHARGE_RATE));
+            if (rawPrice.compareTo(surchargeCeiling) > 0) {
+                rawPrice = surchargeCeiling;
+            }
+        }
+
         // Áp dụng giá sàn tối thiểu 50.000 VNĐ
         if (rawPrice.compareTo(PRICE_FLOOR) < 0) {
             rawPrice = PRICE_FLOOR;
@@ -247,13 +265,15 @@ public class DynamicPricingService {
         DynamicPricingResult result = calculateDynamicPrice(mockTrip, reqTime);
 
         BigDecimal adjustmentPercent = BigDecimal.ZERO;
-        if (result.isRuleApplied() && result.getAppliedRule() != null) {
-            if (result.getAppliedRule().getAdjustmentType() == AdjustmentType.PERCENTAGE) {
-                adjustmentPercent = result.getAppliedRule().getAdjustmentValue();
-            } else if (request.getBasePrice().compareTo(BigDecimal.ZERO) > 0) {
-                adjustmentPercent = result.getDeltaAmount()
-                        .multiply(BigDecimal.valueOf(100))
-                        .divide(request.getBasePrice(), 1, RoundingMode.HALF_UP);
+        if (result.isRuleApplied() && result.getAppliedRule() != null && request.getBasePrice().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal rawPercent = result.getDeltaAmount()
+                    .abs()
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(request.getBasePrice(), 2, RoundingMode.HALF_UP);
+            if (rawPercent.stripTrailingZeros().scale() <= 0) {
+                adjustmentPercent = BigDecimal.valueOf(rawPercent.longValue());
+            } else {
+                adjustmentPercent = rawPercent.setScale(1, RoundingMode.HALF_UP);
             }
         }
 

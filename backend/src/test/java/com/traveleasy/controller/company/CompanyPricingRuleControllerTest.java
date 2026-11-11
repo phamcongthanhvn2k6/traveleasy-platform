@@ -265,4 +265,70 @@ class CompanyPricingRuleControllerTest {
         assertEquals(BigDecimal.valueOf(300000), response.getData().getCalculatedPrice());
         assertEquals("+20% Lễ Tết", response.getData().getPricingBadge());
     }
+
+    @Test
+    @DisplayName("AC-REV-04: Operator không thể giả mạo busCompanyId qua body - Token luôn override")
+    void testCreatePricingRule_Operator_ForcesCompanyIdFromToken_IgnoresBody() {
+        mockAuth();
+        when(busCompanyRepository.findById(1L)).thenReturn(Optional.of(company1));
+        when(pricingRuleRepository.save(any(CompanyPricingRule.class))).thenReturn(rule1);
+
+        CreatePricingRuleRequest request = CreatePricingRuleRequest.builder()
+                .busCompanyId(999L)
+                .name("Phụ thu Lễ 2/9")
+                .ruleType(PricingRuleType.HOLIDAY_SURCHARGE)
+                .scope(PricingRuleScope.ALL_ROUTES)
+                .adjustmentType(AdjustmentType.PERCENTAGE)
+                .adjustmentValue(BigDecimal.valueOf(20))
+                .startDate(LocalDate.of(2026, 9, 1))
+                .endDate(LocalDate.of(2026, 9, 4))
+                .applicableDays("ALL")
+                .priority(100)
+                .status(PricingRuleStatus.ACTIVE)
+                .build();
+
+        ApiResponse<PricingRuleResponse> response = controller.createPricingRule(request, authentication);
+
+        assertTrue(response.isSuccess());
+        assertEquals(1L, request.getBusCompanyId());
+        verify(busCompanyRepository).findById(1L);
+        verify(busCompanyRepository, never()).findById(999L);
+    }
+
+    @Test
+    @DisplayName("AC-REV-04: Non-admin không có busCompanyId trong tài khoản/token bị từ chối 403 FORBIDDEN")
+    void testCreatePricingRule_NoCompanyInToken_ThrowsForbidden() {
+        User rogueUser = User.builder()
+                .id(99L)
+                .email("rogue@traveleasy.vn")
+                .role(Role.OPERATOR)
+                .busCompanyId(null)
+                .fullName("Rogue Operator")
+                .build();
+
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("rogue@traveleasy.vn");
+        when(userRepository.findByEmail("rogue@traveleasy.vn")).thenReturn(Optional.of(rogueUser));
+        when(busCompanyRepository.findByEmail("rogue@traveleasy.vn")).thenReturn(Optional.empty());
+        when(busCompanyRepository.findAll()).thenReturn(List.of());
+
+        CreatePricingRuleRequest request = CreatePricingRuleRequest.builder()
+                .busCompanyId(1L)
+                .name("Unauthorized Rule")
+                .ruleType(PricingRuleType.HOLIDAY_SURCHARGE)
+                .scope(PricingRuleScope.ALL_ROUTES)
+                .adjustmentType(AdjustmentType.PERCENTAGE)
+                .adjustmentValue(BigDecimal.valueOf(10))
+                .startDate(LocalDate.of(2026, 9, 1))
+                .endDate(LocalDate.of(2026, 9, 4))
+                .applicableDays("ALL")
+                .priority(100)
+                .status(PricingRuleStatus.ACTIVE)
+                .build();
+
+        AppException ex = assertThrows(AppException.class, () -> controller.createPricingRule(request, authentication));
+        assertEquals(ErrorCode.FORBIDDEN, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("không được cấp quyền quản trị nhà xe nào"));
+        verify(pricingRuleRepository, never()).save(any());
+    }
 }
