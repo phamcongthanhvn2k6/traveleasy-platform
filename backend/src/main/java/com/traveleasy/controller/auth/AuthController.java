@@ -4,11 +4,17 @@ import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.dto.auth.AuthResponse;
 import com.traveleasy.dto.auth.ChangePasswordRequest;
 import com.traveleasy.dto.auth.FirebaseAuthRequest;
+import com.traveleasy.dto.auth.ForgotPasswordRequest;
+import com.traveleasy.dto.auth.ForgotPasswordResponse;
 import com.traveleasy.dto.auth.LoginRequest;
 import com.traveleasy.dto.auth.RegisterRequest;
+import com.traveleasy.dto.auth.ResetPasswordRequest;
 import com.traveleasy.dto.auth.UpdateProfileRequest;
+import com.traveleasy.dto.auth.VerifyResetOtpRequest;
+import com.traveleasy.dto.auth.VerifyResetOtpResponse;
 import com.traveleasy.service.auth.AuthService;
 import com.traveleasy.service.auth.FirebaseAuthService;
+import com.traveleasy.service.auth.PasswordResetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,6 +31,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final FirebaseAuthService firebaseAuthService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/register")
     @Operation(summary = "Đăng ký tài khoản hành khách mới")
@@ -75,6 +82,33 @@ public class AuthController {
         }
         authService.changePassword(userDetails.getUsername(), request.getOldPassword(), request.getNewPassword());
         return ApiResponse.success("Đổi mật khẩu thành công", null);
+    }
+
+    // ==================== QUÊN MẬT KHẨU QUA EMAIL OTP ====================
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Gửi mã OTP khôi phục mật khẩu qua Email")
+    public ApiResponse<ForgotPasswordResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        return ApiResponse.success(
+                "Mã xác nhận OTP đã được gửi tới email của bạn",
+                passwordResetService.requestPasswordReset(request)
+        );
+    }
+
+    @PostMapping("/verify-reset-otp")
+    @Operation(summary = "Xác minh mã OTP khôi phục mật khẩu")
+    public ApiResponse<VerifyResetOtpResponse> verifyResetOtp(@Valid @RequestBody VerifyResetOtpRequest request) {
+        return ApiResponse.success(
+                "Xác minh mã OTP thành công",
+                passwordResetService.verifyResetOtp(request)
+        );
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Đặt lại mật khẩu mới sau khi xác minh OTP")
+    public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request);
+        return ApiResponse.success("Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới ngay bây giờ.", null);
     }
 
     // ==================== FIREBASE SOCIAL AUTH (Google / Phone OTP) ====================
