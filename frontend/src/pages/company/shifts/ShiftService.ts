@@ -1,12 +1,14 @@
 /**
- * @file shiftService.ts
+ * @file ShiftService.ts
  * @description Service layer Quản lý ca trực & bàn giao tiền mặt quầy bến xe [S305][SHIFTS]
  * @author Đoàn Nhật Cường
  *
- * Hiện lưu bằng localStorage (theo từng nhà xe - tenant isolation).
- * Khi Backend có API, chỉ cần thay thân các hàm export bên dưới
- * bằng lời gọi `api.get/post/patch(...)`, giao diện không phải sửa.
+ * Kết nối trực tiếp vào Backend REST API (/api/v1/company/shifts).
+ * Khi Backend phản hồi lỗi mạng hoặc máy chủ tắt, tự động fallback an toàn
+ * sang bộ nhớ cục bộ (localStorage) để thu ngân không bị gián đoạn bán vé.
  */
+
+import api from '../../../services/api';
 
 export type ShiftStatus = 'OPEN' | 'CLOSED';
 
@@ -29,9 +31,11 @@ export interface Shift {
   openedAt: string; // ISO
   status: ShiftStatus;
   manualSales: CashSale[];
+  cashRefunds?: CashSale[];
   // Chỉ có khi đã chốt ca (Z-Report)
   closedAt?: string;
   cashSalesTotal?: number;
+  cashRefundsTotal?: number;
   expectedCash?: number;
   countedCash?: number;
   variance?: number; // thực đếm - kỳ vọng (âm = thiếu, dương = thừa)
@@ -39,17 +43,10 @@ export interface Shift {
 }
 
 const storageKey = (companyId: number) => `traveleasy_company_shifts_${companyId}`;
-
-/**
- * Hợp đồng dữ liệu với POS của Phong (khi POS xong chỉ cần ghi vào key này):
- * localStorage['traveleasy_pos_tickets'] = [{
- *   ticketCode, companyId, paymentMethod: 'CASH' | 'QR', totalAmount, createdAt (ISO), cashierName?
- * }]
- * Sau này đổi thành API: thay thân hàm getPosCashSales.
- */
 const POS_TICKETS_KEY = 'traveleasy_pos_tickets';
 
-const read = (companyId: number): Shift[] => {
+// --- LocalStorage Fallback Helpers ---
+const readLocal = (companyId: number): Shift[] => {
   try {
     const raw = localStorage.getItem(storageKey(companyId));
     return raw ? (JSON.parse(raw) as Shift[]) : [];
@@ -58,11 +55,11 @@ const read = (companyId: number): Shift[] => {
   }
 };
 
-const write = (companyId: number, shifts: Shift[]) => {
+const writeLocal = (companyId: number, shifts: Shift[]) => {
   try {
     localStorage.setItem(storageKey(companyId), JSON.stringify(shifts));
   } catch (e) {
-    console.error('Không thể lưu ca trực:', e);
+    console.error('Không thể lưu ca trực local:', e);
   }
 };
 
@@ -73,6 +70,47 @@ const genCode = (existing: Shift[]) => {
   const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
   const todayCount = existing.filter((s) => s.code.includes(ymd)).length + 1;
   return `CA-${ymd}-${String(todayCount).padStart(2, '0')}`;
+};
+
+/** Convert backend DTO (PosShiftResponse) sang Frontend Shift interface */
+const mapDtoToShift = (dto: any, companyId: number): Shift => {
+  const manualSales: CashSale[] = (dto.cashSales || []).map((s: any) => ({
+    id: s.id || `sale_${Math.random()}`,
+    ticketCode: s.ticketCode || 'VÉ_QUẦY',
+    amount: Number(s.amount) || 0,
+    createdAt: s.createdAt || new Date().toISOString(),
+    note: s.note || undefined,
+    source: (s.source as 'POS' | 'MANUAL') || 'MANUAL',
+  }));
+
+  const cashRefunds: CashSale[] = (dto.cashRefunds || []).map((s: any) => ({
+    id: s.id || `refund_${Math.random()}`,
+    ticketCode: s.ticketCode || 'HOÀN_VÉ',
+    amount: Number(s.amount) || 0,
+    createdAt: s.createdAt || new Date().toISOString(),
+    note: s.note || undefined,
+    source: 'MANUAL',
+  }));
+
+  return {
+    id: String(dto.id),
+    code: dto.code || `CA-${dto.id}`,
+    companyId: Number(dto.companyId || companyId),
+    cashierName: dto.cashierName || 'Thu ngân',
+    counter: dto.counter || 'Quầy số 1',
+    openingFloat: Number(dto.openingFloat) || 0,
+    openedAt: dto.openedAt || new Date().toISOString(),
+    status: (dto.status as ShiftStatus) || 'OPEN',
+    manualSales,
+    cashRefunds,
+    closedAt: dto.closedAt || undefined,
+    cashSalesTotal: dto.cashSalesTotal != null ? Number(dto.cashSalesTotal) : undefined,
+    cashRefundsTotal: dto.cashRefundsTotal != null ? Number(dto.cashRefundsTotal) : undefined,
+    expectedCash: dto.expectedCash != null ? Number(dto.expectedCash) : undefined,
+    countedCash: dto.countedCash != null ? Number(dto.countedCash) : undefined,
+    variance: dto.variance != null ? Number(dto.variance) : undefined,
+    closeNote: dto.closeNote || undefined,
+  };
 };
 
 /** Vé tiền mặt do POS ghi nhận trong khoảng thời gian của ca. */
@@ -104,26 +142,45 @@ export const getPosCashSales = (companyId: number, fromIso: string, toIso: strin
 
 /** Toàn bộ giao dịch tiền mặt của một ca (POS + ghi nhận thủ công). */
 export const getShiftCashSales = (shift: Shift): CashSale[] => {
+  if (shift.manualSales && shift.manualSales.length > 0) {
+    const pos = shift.manualSales.filter(s => s.source === 'POS');
+    if (pos.length > 0) {
+      return [...shift.manualSales].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    }
+  }
   const to = shift.closedAt || new Date().toISOString();
   const pos = getPosCashSales(shift.companyId, shift.openedAt, to);
   const posIds = new Set(pos.map((p) => p.id));
-  const manual = shift.manualSales.filter((m) => !posIds.has(m.id));
+  const manual = (shift.manualSales || []).filter((m) => !posIds.has(m.id));
   return [...pos, ...manual].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 };
 
 export const getCashSalesTotal = (shift: Shift): number => {
-  // Ca đã chốt thì dùng số liệu đã đóng băng trong Z-Report
   if (shift.status === 'CLOSED' && shift.cashSalesTotal != null) return shift.cashSalesTotal;
   return getShiftCashSales(shift).reduce((sum, s) => sum + s.amount, 0);
 };
 
 export const getExpectedCash = (shift: Shift): number => {
   if (shift.status === 'CLOSED' && shift.expectedCash != null) return shift.expectedCash;
-  return shift.openingFloat + getCashSalesTotal(shift);
+  const refunds = (shift.cashRefunds || []).reduce((sum, r) => sum + r.amount, 0) || (shift.cashRefundsTotal || 0);
+  return shift.openingFloat + getCashSalesTotal(shift) - refunds;
 };
 
-export const listShifts = (companyId: number): Shift[] =>
-  read(companyId).sort((a, b) => b.openedAt.localeCompare(a.openedAt));
+// --- REST API CALLS WITH FALLBACK ---
+
+export const listShifts = async (companyId: number): Promise<Shift[]> => {
+  try {
+    const res = await api.get('/company/shifts');
+    if (res.data && res.data.data && Array.isArray(res.data.data)) {
+      const list = res.data.data.map((d: any) => mapDtoToShift(d, companyId));
+      writeLocal(companyId, list);
+      return list;
+    }
+  } catch (err) {
+    console.warn('API /company/shifts không phản hồi, dùng dữ liệu cache local:', err);
+  }
+  return readLocal(companyId).sort((a, b) => b.openedAt.localeCompare(a.openedAt));
+};
 
 export interface OpenShiftInput {
   companyId: number;
@@ -132,8 +189,29 @@ export interface OpenShiftInput {
   openingFloat: number;
 }
 
-export const openShift = (input: OpenShiftInput): Shift => {
-  const shifts = read(input.companyId);
+export const openShift = async (input: OpenShiftInput): Promise<Shift> => {
+  try {
+    const res = await api.post('/company/shifts/open', {
+      cashierName: input.cashierName.trim(),
+      counter: input.counter.trim(),
+      initialCash: input.openingFloat,
+    });
+    if (res.data && res.data.data) {
+      const shift = mapDtoToShift(res.data.data, input.companyId);
+      const existing = readLocal(input.companyId);
+      writeLocal(input.companyId, [shift, ...existing]);
+      return shift;
+    }
+  } catch (err: any) {
+    const apiMsg = err.response?.data?.message;
+    if (apiMsg && !apiMsg.includes('Network') && !apiMsg.includes('timeout')) {
+      throw new Error(apiMsg);
+    }
+    console.warn('API /company/shifts/open fallback sang local:', err);
+  }
+
+  // Fallback Local
+  const shifts = readLocal(input.companyId);
   const duplicated = shifts.find(
     (s) => s.status === 'OPEN' && s.counter.trim().toLowerCase() === input.counter.trim().toLowerCase()
   );
@@ -151,16 +229,44 @@ export const openShift = (input: OpenShiftInput): Shift => {
     status: 'OPEN',
     manualSales: [],
   };
-  write(input.companyId, [shift, ...shifts]);
+  writeLocal(input.companyId, [shift, ...shifts]);
   return shift;
 };
 
-export const addManualCashSale = (
+export const addManualCashSale = async (
   companyId: number,
   shiftId: string,
   sale: { ticketCode: string; amount: number; note?: string }
-): Shift => {
-  const shifts = read(companyId);
+): Promise<Shift> => {
+  const numericShiftId = Number(shiftId);
+  if (!isNaN(numericShiftId) && numericShiftId > 0) {
+    try {
+      const res = await api.post(`/company/shifts/${numericShiftId}/sales`, {
+        ticketCode: sale.ticketCode.trim() || undefined,
+        amount: sale.amount,
+        note: sale.note?.trim() || undefined,
+      });
+      if (res.data && res.data.data) {
+        const updated = mapDtoToShift(res.data.data, companyId);
+        const existing = readLocal(companyId);
+        const idx = existing.findIndex(s => s.id === shiftId);
+        if (idx >= 0) {
+          existing[idx] = updated;
+          writeLocal(companyId, existing);
+        }
+        return updated;
+      }
+    } catch (err: any) {
+      const apiMsg = err.response?.data?.message;
+      if (apiMsg && !apiMsg.includes('Network') && !apiMsg.includes('timeout')) {
+        throw new Error(apiMsg);
+      }
+      console.warn('API /company/shifts/{id}/sales fallback local:', err);
+    }
+  }
+
+  // Fallback Local
+  const shifts = readLocal(companyId);
   const idx = shifts.findIndex((s) => s.id === shiftId);
   if (idx < 0) throw new Error('Không tìm thấy ca trực.');
   if (shifts[idx].status !== 'OPEN') throw new Error('Ca trực đã chốt, không thể ghi thêm giao dịch.');
@@ -172,16 +278,46 @@ export const addManualCashSale = (
     note: sale.note?.trim() || undefined,
     source: 'MANUAL',
   });
-  write(companyId, shifts);
+  writeLocal(companyId, shifts);
   return shifts[idx];
 };
 
-export const closeShift = (
+export const closeShift = async (
   companyId: number,
   shiftId: string,
   input: { countedCash: number; closeNote?: string }
-): Shift => {
-  const shifts = read(companyId);
+): Promise<Shift> => {
+  const numericShiftId = Number(shiftId);
+  if (!isNaN(numericShiftId) && numericShiftId > 0) {
+    try {
+      const res = await api.post('/company/shifts/close', {
+        shiftId: numericShiftId,
+        countedCash: input.countedCash,
+        closeNote: input.closeNote?.trim() || undefined,
+      });
+      if (res.data && res.data.data) {
+        const updated = mapDtoToShift(res.data.data, companyId);
+        const existing = readLocal(companyId);
+        const idx = existing.findIndex(s => s.id === shiftId);
+        if (idx >= 0) {
+          existing[idx] = updated;
+        } else {
+          existing.unshift(updated);
+        }
+        writeLocal(companyId, existing);
+        return updated;
+      }
+    } catch (err: any) {
+      const apiMsg = err.response?.data?.message;
+      if (apiMsg && !apiMsg.includes('Network') && !apiMsg.includes('timeout')) {
+        throw new Error(apiMsg);
+      }
+      console.warn('API /company/shifts/close fallback local:', err);
+    }
+  }
+
+  // Fallback Local
+  const shifts = readLocal(companyId);
   const idx = shifts.findIndex((s) => s.id === shiftId);
   if (idx < 0) throw new Error('Không tìm thấy ca trực.');
   const shift = shifts[idx];
@@ -202,6 +338,6 @@ export const closeShift = (
     variance: input.countedCash - expectedCash,
     closeNote: input.closeNote?.trim() || undefined,
   };
-  write(companyId, shifts);
+  writeLocal(companyId, shifts);
   return shifts[idx];
 };

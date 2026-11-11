@@ -35,6 +35,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByUserIdOrPassengerEmailOrderByCreatedAtDesc(@Param("userId") Long userId, @Param("email") String email);
 
     List<Booking> findByPassengerPhoneOrderByCreatedAtDesc(String passengerPhone);
+
+    List<Booking> findByPosShiftIdAndBookingChannelAndPaymentMethodAndStatusInOrderByCreatedAtAsc(
+            Long posShiftId,
+            String bookingChannel,
+            com.traveleasy.entity.PaymentMethod paymentMethod,
+            List<BookingStatus> statuses
+    );
+
     long countByStatus(BookingStatus status);
     List<Booking> findByStatusAndCreatedAtBefore(BookingStatus status, java.time.LocalDateTime threshold);
 

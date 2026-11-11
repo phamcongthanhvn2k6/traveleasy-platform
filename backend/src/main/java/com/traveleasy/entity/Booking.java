@@ -65,6 +65,16 @@ public class Booking {
     @Column(name = "voucher_code", length = 50)
     private String voucherCode;
 
+    @Column(name = "booking_channel", length = 20)
+    @Builder.Default
+    private String bookingChannel = "ONLINE"; // ONLINE, POS_COUNTER, PHONE_ORDER
+
+    @Column(name = "pos_shift_id")
+    private Long posShiftId;
+
+    @Column(name = "staff_user_id")
+    private Long staffUserId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 20)
     @Builder.Default

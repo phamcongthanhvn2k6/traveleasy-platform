@@ -281,23 +281,7 @@ type TabKey = 'ALL' | 'OPEN' | 'CLOSED';
 const STORAGE_KEY = 'traveleasy_company_shifts';
 
 export const CompanyShiftsPage: React.FC = () => {
-<<<<<<< HEAD
   const company = getStoredCompany();
-=======
-  const [shifts, setShifts] = useState<ShiftRecord[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const saveShifts = (newShifts: ShiftRecord[]) => {
-    setShifts(newShifts);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newShifts));
-  };
->>>>>>> ddcaba26b33a98305c8bd994b5ed4c0ccd1e16c5
 
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [tab, setTab] = useState<TabKey>('ALL');
@@ -323,17 +307,15 @@ export const CompanyShiftsPage: React.FC = () => {
   const [saleAmount, setSaleAmount] = useState('');
   const [saleNote, setSaleNote] = useState('');
 
-<<<<<<< HEAD
-  const reload = () => {
-    const list = listShifts(company.id);
-    setShifts(list);
-    // đồng bộ lại ca đang xem (nếu có)
-    setViewing((cur) => (cur ? list.find((s) => s.id === cur.id) || null : cur));
-=======
-    saveShifts([newShift, ...shifts]);
-    setIsOpeningModalOpen(false);
-    toast.success('Mở ca trực thành công! Sẵn sàng bán vé quầy POS.');
->>>>>>> ddcaba26b33a98305c8bd994b5ed4c0ccd1e16c5
+  const reload = async () => {
+    try {
+      const list = await listShifts(company.id);
+      setShifts(list);
+      // đồng bộ lại ca đang xem (nếu có)
+      setViewing((cur) => (cur ? list.find((s) => s.id === cur.id) || null : cur));
+    } catch (e) {
+      console.error('Lỗi tải danh sách ca:', e);
+    }
   };
 
   useEffect(() => {
@@ -361,14 +343,14 @@ export const CompanyShiftsPage: React.FC = () => {
   });
 
   // ---- handlers
-  const handleOpenShift = (e: React.FormEvent) => {
+  const handleOpenShift = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!cashier.trim() || !counter.trim()) {
       toast.warning('Vui lòng nhập tên thu ngân và quầy vé!', 'Thiếu Thông Tin');
       return;
     }
     try {
-      const s = openShift({
+      const s = await openShift({
         companyId: company.id,
         cashierName: cashier,
         counter,
@@ -379,7 +361,7 @@ export const CompanyShiftsPage: React.FC = () => {
       setCashier('');
       setCounter('');
       setFloatInput('');
-      reload();
+      await reload();
     } catch (err: any) {
       toast.error(err.message || 'Không thể mở ca trực', 'Lỗi Mở Ca');
     }
@@ -395,7 +377,7 @@ export const CompanyShiftsPage: React.FC = () => {
   const closingCounted = parseMoney(countedInput);
   const closingVariance = closingCounted - closingExpected;
 
-  const handleCloseShift = (e: React.FormEvent) => {
+  const handleCloseShift = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!closing) return;
     if (countedInput.trim() === '') {
@@ -407,7 +389,7 @@ export const CompanyShiftsPage: React.FC = () => {
       return;
     }
     try {
-      const closed = closeShift(company.id, closing.id, { countedCash: closingCounted, closeNote });
+      const closed = await closeShift(company.id, closing.id, { countedCash: closingCounted, closeNote });
       if ((closed.variance || 0) === 0) {
         toast.success(`Ca ${closed.code} đã chốt, tiền khớp tuyệt đối.`, 'Chốt Ca Thành Công');
       } else {
@@ -416,24 +398,15 @@ export const CompanyShiftsPage: React.FC = () => {
           'Chốt Ca Có Chênh Lệch'
         );
       }
-<<<<<<< HEAD
       setClosing(null);
-      reload();
+      await reload();
       setReport(closed); // mở ngay Z-Report để in
     } catch (err: any) {
       toast.error(err.message || 'Không thể chốt ca', 'Lỗi Chốt Ca');
     }
-=======
-      return s;
-    });
-
-    saveShifts(updated);
-    setSelectedShiftToClose(null);
-    toast.success('Đã kết ca trực và xuất biên bản bàn giao Z-Report thành công!');
->>>>>>> ddcaba26b33a98305c8bd994b5ed4c0ccd1e16c5
   };
 
-  const handleAddSale = (e: React.FormEvent) => {
+  const handleAddSale = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!viewing) return;
     const amount = parseMoney(saleAmount);
@@ -442,12 +415,12 @@ export const CompanyShiftsPage: React.FC = () => {
       return;
     }
     try {
-      addManualCashSale(company.id, viewing.id, { ticketCode: saleCode, amount, note: saleNote });
+      await addManualCashSale(company.id, viewing.id, { ticketCode: saleCode, amount, note: saleNote });
       toast.success(`Đã ghi nhận thu ${money(amount)} tiền mặt.`, 'Ghi Nhận Thành Công');
       setSaleCode('');
       setSaleAmount('');
       setSaleNote('');
-      reload();
+      await reload();
     } catch (err: any) {
       toast.error(err.message || 'Không thể ghi nhận giao dịch', 'Lỗi');
     }
@@ -576,7 +549,6 @@ export const CompanyShiftsPage: React.FC = () => {
         </div>
       </div>
 
-<<<<<<< HEAD
       {/* Table */}
       <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', overflowX: 'auto', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px', minWidth: '980px' }}>
@@ -616,91 +588,6 @@ export const CompanyShiftsPage: React.FC = () => {
                     <td style={{ padding: '14px 18px' }}>
                       <div style={{ fontWeight: 700, color: '#0f172a' }}>{s.cashierName}</div>
                       <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{s.counter}</div>
-=======
-        {/* Thẻ trạng thái ca hiện tại */}
-        {currentActiveShift && (
-          <div className="bg-gradient-to-r from-indigo-900 to-indigo-800 text-white p-6 rounded-2xl shadow-lg mb-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-indigo-700/60 gap-4">
-              <div>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  ĐANG TRONG CA TRỰC
-                </span>
-                <h2 className="text-xl font-bold mt-2">{currentActiveShift.shiftCode}</h2>
-                <p className="text-sm text-indigo-200 mt-0.5">
-                  Thu ngân: <span className="font-semibold text-white">{currentActiveShift.cashierName}</span> • {currentActiveShift.counterName}
-                </p>
-              </div>
-
-              <div className="text-right">
-                <p className="text-xs text-indigo-300">Giờ mở ca</p>
-                <p className="text-sm font-semibold">{currentActiveShift.openedAt}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
-                <p className="text-xs text-indigo-200">Tiền Lẻ Ban Đầu</p>
-                <p className="text-xl font-bold mt-1">{currentActiveShift.initialCash.toLocaleString('vi-VN')} đ</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
-                <p className="text-xs text-indigo-200">Doanh Thu Vé Tiền Mặt</p>
-                <p className="text-xl font-bold text-emerald-300 mt-1">+{currentActiveShift.cashRevenue.toLocaleString('vi-VN')} đ</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
-                <p className="text-xs text-indigo-200">Tổng Tiền Két Kỳ Vọng</p>
-                <p className="text-xl font-bold text-amber-300 mt-1">{currentActiveShift.expectedEndingCash.toLocaleString('vi-VN')} đ</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
-                <p className="text-xs text-indigo-200">Số Vé Đã Xuất</p>
-                <p className="text-xl font-bold mt-1">{currentActiveShift.ticketCount} vé</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Bảng lịch sử các ca trực */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-slate-200 flex items-center justify-between">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-              <Receipt className="w-5 h-5 text-indigo-600" />
-              Lịch Sử & Báo Cáo Đối Soát Ca Trực
-            </h3>
-            <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full">
-              Tổng {shifts.length} ca trực
-            </span>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/75 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
-                  <th className="py-3.5 px-4">Mã Ca</th>
-                  <th className="py-3.5 px-4">Thu Ngân / Quầy</th>
-                  <th className="py-3.5 px-4">Thời Gian</th>
-                  <th className="py-3.5 px-4 text-right">Tiền Đầu Ca</th>
-                  <th className="py-3.5 px-4 text-right">Tiền Thu Được</th>
-                  <th className="py-3.5 px-4 text-right">Thực Nộp Két</th>
-                  <th className="py-3.5 px-4 text-center">Trạng Thái</th>
-                  <th className="py-3.5 px-4 text-center">Hành Động</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
-                {shifts.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-500">
-                      <p className="font-semibold text-slate-700">Chưa có ca trực nào được mở</p>
-                      <p className="text-xs text-slate-400 mt-1">Bấm "Mở Ca Trực Mới" ở góc trên để bắt đầu ca làm việc của quầy vé.</p>
-                    </td>
-                  </tr>
-                ) : (
-                  shifts.map((s) => (
-                    <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3.5 px-4 font-semibold text-indigo-600">{s.shiftCode}</td>
-                    <td className="py-3.5 px-4">
-                      <p className="font-medium text-slate-800">{s.cashierName}</p>
-                      <p className="text-xs text-slate-400">{s.counterName}</p>
->>>>>>> ddcaba26b33a98305c8bd994b5ed4c0ccd1e16c5
                     </td>
                     <td style={{ padding: '14px 18px', color: '#334155', fontSize: '12px' }}>
                       <div>Mở: {fmtTime(s.openedAt)}</div>
@@ -756,159 +643,11 @@ export const CompanyShiftsPage: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-<<<<<<< HEAD
                 );
               })
             )}
           </tbody>
         </table>
-=======
-                )))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Modal mở ca mới */}
-        {isOpeningModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-200">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4">
-                <PlusCircle className="w-5 h-5 text-indigo-600" />
-                Khởi Tạo Ca Trực Bán Vé Mới
-              </h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Thu Ngân Đảm Nhiệm</label>
-                  <input
-                    type="text"
-                    value={newCashierName}
-                    onChange={(e) => setNewCashierName(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Quầy Bến Xe</label>
-                  <input
-                    type="text"
-                    value={newCounterName}
-                    onChange={(e) => setNewCounterName(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    Số Tiền Lẻ Ban Đầu Trong Két (VNĐ)
-                  </label>
-                  <input
-                    type="number"
-                    step="50000"
-                    value={newInitialCash}
-                    onChange={(e) => setNewInitialCash(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-bold text-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                  />
-                  <p className="text-xs text-slate-400 mt-1">Dùng để thối tiền lẻ cho khách mua vé tại quầy.</p>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  onClick={() => setIsOpeningModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 text-sm font-medium rounded-lg"
-                >
-                  Hủy Bỏ
-                </button>
-                <button
-                  onClick={handleOpenShift}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm"
-                >
-                  Xác Nhận Mở Ca
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal đóng ca trực & Z-Report */}
-        {selectedShiftToClose && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 border border-slate-200">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-2">
-                <Lock className="w-5 h-5 text-amber-600" />
-                Chốt Ca Trực & Xuất Báo Cáo Z-Report
-              </h3>
-              <p className="text-xs text-slate-500 mb-4">
-                Ca: <span className="font-semibold text-slate-800">{selectedShiftToClose.shiftCode}</span> • Thu ngân:{' '}
-                {selectedShiftToClose.cashierName}
-              </p>
-
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Tiền lẻ ban đầu:</span>
-                  <span className="font-semibold">{selectedShiftToClose.initialCash.toLocaleString()} đ</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Doanh thu bán vé tiền mặt:</span>
-                  <span className="font-semibold text-emerald-600">+{selectedShiftToClose.cashRevenue.toLocaleString()} đ</span>
-                </div>
-                <div className="flex justify-between pt-2 border-t border-slate-200 text-base font-bold text-slate-900">
-                  <span>Tổng tiền két lý thuyết:</span>
-                  <span className="text-indigo-600">{selectedShiftToClose.expectedEndingCash.toLocaleString()} đ</span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Số Tiền Mặt Đếm Thực Tế Trong Két (VNĐ) <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={actualEndingCashInput}
-                    onChange={(e) => setActualEndingCashInput(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
-                  />
-                  {Number(actualEndingCashInput) !== selectedShiftToClose.expectedEndingCash && (
-                    <p className="text-xs text-rose-500 font-semibold mt-1">
-                      ⚠️ Lệch so với hệ thống:{' '}
-                      {(Number(actualEndingCashInput) - selectedShiftToClose.expectedEndingCash).toLocaleString()} đ
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Ghi Chú Bàn Giao</label>
-                  <textarea
-                    rows={2}
-                    value={closingNote}
-                    onChange={(e) => setClosingNote(e.target.value)}
-                    placeholder="Ghi chú về tiền rách, tiền giả (nếu có)..."
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  onClick={() => setSelectedShiftToClose(null)}
-                  className="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 text-sm font-medium rounded-lg"
-                >
-                  Quay Lại
-                </button>
-                <button
-                  onClick={handleCloseShift}
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg shadow-sm"
-                >
-                  Xác Nhận Đóng Ca & Xuất Z-Report
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
->>>>>>> ddcaba26b33a98305c8bd994b5ed4c0ccd1e16c5
       </div>
 
       <div style={{ marginTop: '12px', fontSize: '12px', color: '#64748b' }}>
