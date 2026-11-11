@@ -40,6 +40,7 @@ public class AdminManagementService {
     private final TripRepository tripRepository;
     private final PasswordEncoder passwordEncoder;
     private final com.traveleasy.service.common.EmailNotificationService emailNotificationService;
+    private final SettlementRecordRepository settlementRecordRepository;
 
     // ==========================================
     // 1. USER MANAGEMENT
@@ -922,9 +923,7 @@ public class AdminManagementService {
         logAction("admin@traveleasy.vn", "DELETE_ROUTE", "routes #" + id, "{\"from\": \"" + route.getDepartureLocation() + "\", \"to\": \"" + route.getArrivalLocation() + "\"}", "-");
     }
 
-    private final Map<String, Map<String, Object>> settlementOverrides = new ConcurrentHashMap<>();
-
-    @Transactional(readOnly = true)
+    @Transactional
     public List<java.util.Map<String, Object>> getAdminSettlements() {
         List<BusCompany> companies = busCompanyRepository.findAll();
         List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
@@ -949,92 +948,216 @@ public class AdminManagementService {
             }
         }
 
+        // Tải các hồ sơ đối soát đã lưu trữ bền vững trong CSDL Postgres (settlement_records)
+        List<SettlementRecord> savedRecords = settlementRecordRepository.findAll();
+        Map<Long, SettlementRecord> recordMap = new HashMap<>();
+        for (SettlementRecord sr : savedRecords) {
+            if (sr.getCompany() != null && sr.getCompany().getId() != null) {
+                recordMap.put(sr.getCompany().getId(), sr);
+            }
+        }
+
         for (BusCompany c : companies) {
             int count = ticketCountMap.getOrDefault(c.getId(), 0L).intValue();
-            java.math.BigDecimal gross = grossAmountMap.getOrDefault(c.getId(), java.math.BigDecimal.ZERO);
-            java.math.BigDecimal paid = customerPaidMap.getOrDefault(c.getId(), gross);
-            java.math.BigDecimal subsidy = voucherSubsidyMap.getOrDefault(c.getId(), java.math.BigDecimal.ZERO);
+            BigDecimal gross = grossAmountMap.getOrDefault(c.getId(), BigDecimal.ZERO);
+            BigDecimal paid = customerPaidMap.getOrDefault(c.getId(), gross);
+            BigDecimal subsidy = voucherSubsidyMap.getOrDefault(c.getId(), BigDecimal.ZERO);
 
-            if (count == 0 && gross.compareTo(java.math.BigDecimal.ZERO) == 0) {
-                gross = java.math.BigDecimal.valueOf(450000000 + (c.getId() * 30000000));
-                subsidy = java.math.BigDecimal.valueOf(15000000 + (c.getId() * 1000000));
-                paid = gross.subtract(subsidy);
-                count = 1200 + (int)(c.getId() * 100);
+            // TỈ LỆ HOA HỒNG SÀN THEO HỢP ĐỒNG KYB (MẶC ĐỊNH 10%)
+            int comRate = c.getCommissionRate() != null ? c.getCommissionRate().intValue() : 10;
+            BigDecimal commission = gross.multiply(BigDecimal.valueOf(comRate)).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            BigDecimal net = gross.subtract(commission);
+
+            SettlementRecord record = recordMap.get(c.getId());
+            if (record == null) {
+                // Tự động khởi tạo bản ghi đối soát thực tế vào CSDL
+                String sId = "s-" + c.getId();
+                String code = "DS-202610-" + (c.getCode() != null && !c.getCode().isBlank() ? c.getCode() : ("BC" + c.getId()));
+                record = SettlementRecord.builder()
+                        .id(sId)
+                        .code(code)
+                        .company(c)
+                        .periodName("Kỳ 2 - Tháng 10/2026")
+                        .startDate("16/10/2026")
+                        .endDate("31/10/2026")
+                        .ticketCount(count)
+                        .grossAmount(gross)
+                        .customerPaid(paid)
+                        .platformSubsidy(subsidy)
+                        .commissionRate(comRate)
+                        .platformCommission(commission)
+                        .netPayable(net)
+                        .status("PENDING")
+                        .build();
+                record = settlementRecordRepository.save(record);
+                recordMap.put(c.getId(), record);
+            } else if ("PENDING".equals(record.getStatus())) {
+                // Nếu hồ sơ đang ở trạng thái PENDING, cập nhật dữ liệu vé mới nhất từ CSDL
+                if (record.getTicketCount() != count || record.getGrossAmount().compareTo(gross) != 0) {
+                    record.setTicketCount(count);
+                    record.setGrossAmount(gross);
+                    record.setCustomerPaid(paid);
+                    record.setPlatformSubsidy(subsidy);
+                    record.setCommissionRate(comRate);
+                    record.setPlatformCommission(commission);
+                    record.setNetPayable(net);
+                    record.setUpdatedAt(LocalDateTime.now());
+                    record = settlementRecordRepository.save(record);
+                }
             }
 
-            // DOANH THU NHÀ XE ĐƯỢC BẢO TOÀN 100% THEO GIÁ VÉ GỐC NIÊM YẾT
-            // VOUCHER KHUYẾN MÃI DO SÀN TRAVELEASY TÀI TRỢ TỪ NGÂN SÁCH MARKETING
-            java.math.BigDecimal commission = gross.multiply(java.math.BigDecimal.valueOf(0.10));
-            java.math.BigDecimal net = gross.subtract(commission);
+            // Trích xuất tài khoản ngân hàng Escrow đã được thẩm định KYB thực tế của nhà xe
+            String bankName = (c.getBankName() != null && !c.getBankName().isBlank())
+                    ? c.getBankName() : "Ngân hàng TMCP Quân Đội (MB)";
+            String accNum = (c.getBankAccountNumber() != null && !c.getBankAccountNumber().isBlank())
+                    ? c.getBankAccountNumber() : "09128889999";
+            String accHolder = (c.getBankAccountOwner() != null && !c.getBankAccountOwner().isBlank())
+                    ? c.getBankAccountOwner().toUpperCase() : c.getName().toUpperCase();
+            String bankCode = resolveBankCode(bankName);
 
-            String id = "s-" + c.getId();
-            String defaultStatus = c.getId() <= 3 ? "PAID" : c.getId() <= 6 ? "RECONCILED" : "PENDING";
-            String defaultReconciledAt = c.getId() <= 6 ? "28/10/2026 10:30" : null;
-            String defaultPaidAt = c.getId() <= 3 ? "29/10/2026 14:15" : null;
-            String defaultTxHash = c.getId() <= 3 ? ("VCB-FT-88992019" + c.getId()) : null;
-
-            java.util.Map<String, Object> item = new java.util.HashMap<>();
-            item.put("id", id);
-            item.put("code", "DS-202610-" + (c.getCode() != null ? c.getCode() : ("BC" + c.getId())));
-            item.put("companyId", c.getId());
-            item.put("companyName", c.getName());
-            item.put("companyLogo", c.getLogoUrl() != null ? c.getLogoUrl() : "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289372/traveleasy/bus-companies/logo_futa_buslines.jpg");
-            item.put("periodName", "Kỳ 2 - Tháng 10/2026");
-            item.put("startDate", "16/10/2026");
-            item.put("endDate", "31/10/2026");
-            item.put("ticketCount", count);
-            item.put("grossAmount", gross); // Doanh thu gốc niêm yết 100%
-            item.put("customerPaid", paid); // Tiền khách trả thực tế sau giảm giá
-            item.put("platformSubsidy", subsidy); // Sàn tài trợ ngân sách kích cầu
-            item.put("commissionRate", 10);
-            item.put("platformCommission", commission); // Hoa hồng sàn 10%
-            item.put("netPayable", net); // Nhà xe thực nhận đủ 100% - 10% phí sàn
-
-            String bankCode = c.getId() % 3 == 0 ? "MB" : c.getId() % 2 == 0 ? "TCB" : "VCB";
-            String bankName = c.getId() % 3 == 0 ? "MBBank - CN Lê Hồng Phong" : c.getId() % 2 == 0 ? "Techcombank - CN Sài Gòn" : "Vietcombank - Chi nhánh Sài Gòn";
-            String accNum = "0071000987" + (100 + c.getId());
-            String accHolder = "CTY CP XE KHACH " + c.getName().toUpperCase();
-
-            java.util.Map<String, String> bank = new java.util.HashMap<>();
+            Map<String, String> bank = new HashMap<>();
             bank.put("bankCode", bankCode);
             bank.put("bankName", bankName);
             bank.put("accountNumber", accNum);
             bank.put("accountHolder", accHolder);
+
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", record.getId());
+            item.put("code", record.getCode());
+            item.put("companyId", c.getId());
+            item.put("companyName", c.getName());
+            item.put("companyLogo", c.getLogoUrl() != null && !c.getLogoUrl().isBlank()
+                    ? c.getLogoUrl()
+                    : "https://res.cloudinary.com/dkzrqnahy/image/upload/v1793289372/traveleasy/bus-companies/logo_futa_buslines.jpg");
+            item.put("periodName", record.getPeriodName());
+            item.put("startDate", record.getStartDate());
+            item.put("endDate", record.getEndDate());
+            item.put("ticketCount", record.getTicketCount());
+            item.put("grossAmount", record.getGrossAmount());
+            item.put("customerPaid", record.getCustomerPaid());
+            item.put("platformSubsidy", record.getPlatformSubsidy());
+            item.put("commissionRate", record.getCommissionRate());
+            item.put("platformCommission", record.getPlatformCommission());
+            item.put("netPayable", record.getNetPayable());
             item.put("bankAccount", bank);
-
-            item.put("status", defaultStatus);
-            item.put("reconciledAt", defaultReconciledAt);
-            item.put("paidAt", defaultPaidAt);
-            item.put("payoutTxHash", defaultTxHash);
-
-            // Nạp các ghi đè can thiệp thời gian thực từ Admin Payout Execution
-            if (settlementOverrides.containsKey(id)) {
-                item.putAll(settlementOverrides.get(id));
-            }
+            item.put("status", record.getStatus());
+            item.put("reconciledAt", record.getReconciledAt());
+            item.put("paidAt", record.getPaidAt());
+            item.put("payoutTxHash", record.getPayoutTxHash());
+            item.put("payoutNote", record.getPayoutNote());
 
             list.add(item);
         }
         return list;
     }
 
+    @Transactional
     public Map<String, Object> reconcileSettlement(String settlementId, String userEmail) {
-        Map<String, Object> override = settlementOverrides.computeIfAbsent(settlementId, k -> new HashMap<>());
-        override.put("status", "RECONCILED");
-        override.put("reconciledAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        SettlementRecord record = findSettlementRecord(settlementId);
+        record.setStatus("RECONCILED");
+        String nowStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        record.setReconciledAt(nowStr);
+        record.setUpdatedAt(LocalDateTime.now());
+        SettlementRecord saved = settlementRecordRepository.save(record);
+
         logAction(userEmail != null ? userEmail : "admin@traveleasy.vn", "RECONCILE_SETTLEMENT", settlementId, "-", "RECONCILED");
-        return override;
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", saved.getId());
+        result.put("code", saved.getCode());
+        result.put("status", saved.getStatus());
+        result.put("reconciledAt", saved.getReconciledAt());
+        return result;
     }
 
+    @Transactional
     public Map<String, Object> paySettlement(String settlementId, String payoutTxHash, String note, String userEmail) {
-        Map<String, Object> override = settlementOverrides.computeIfAbsent(settlementId, k -> new HashMap<>());
-        override.put("status", "PAID");
-        override.put("paidAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-        override.put("payoutTxHash", payoutTxHash != null && !payoutTxHash.isBlank() ? payoutTxHash : ("VCB-FT-" + System.currentTimeMillis()));
+        SettlementRecord record = findSettlementRecord(settlementId);
+        record.setStatus("PAID");
+        String nowStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        record.setPaidAt(nowStr);
+        String txHash = (payoutTxHash != null && !payoutTxHash.isBlank()) ? payoutTxHash : ("VCB-FT-" + System.currentTimeMillis());
+        record.setPayoutTxHash(txHash);
         if (note != null && !note.isBlank()) {
-            override.put("payoutNote", note);
+            record.setPayoutNote(note);
         }
-        logAction(userEmail != null ? userEmail : "admin@traveleasy.vn", "PAY_SETTLEMENT", settlementId, "-", "PAID: " + override.get("payoutTxHash"));
-        return override;
+        record.setUpdatedAt(LocalDateTime.now());
+        SettlementRecord saved = settlementRecordRepository.save(record);
+
+        // GỬI EMAIL THÔNG BÁO GIẢI NGÂN TỰ ĐỘNG TỚI ĐỐI TÁC NHÀ XE
+        try {
+            BusCompany comp = saved.getCompany();
+            String targetEmail = comp.getEmail();
+            if (targetEmail == null || targetEmail.isBlank()) {
+                List<User> operators = userRepository.findByBusCompanyId(comp.getId());
+                if (!operators.isEmpty() && operators.get(0).getEmail() != null) {
+                    targetEmail = operators.get(0).getEmail();
+                }
+            }
+
+            if (targetEmail != null && !targetEmail.isBlank()) {
+                emailNotificationService.sendSettlementPayoutEmail(
+                        targetEmail,
+                        comp.getName(),
+                        saved.getCode(),
+                        saved.getPeriodName(),
+                        saved.getGrossAmount(),
+                        saved.getPlatformCommission(),
+                        saved.getNetPayable(),
+                        comp.getBankName(),
+                        comp.getBankAccountNumber(),
+                        comp.getBankAccountOwner(),
+                        txHash,
+                        note
+                );
+                log.info("📧 [SETTLEMENT PAYOUT] Đã kích hoạt email giải ngân tới nhà xe {}: {}", comp.getName(), targetEmail);
+            }
+        } catch (Exception ex) {
+            log.error("⚠️ Không thể gửi email thông báo giải ngân: {}", ex.getMessage());
+        }
+
+        logAction(userEmail != null ? userEmail : "admin@traveleasy.vn", "PAY_SETTLEMENT", settlementId, "-", "PAID: " + txHash);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", saved.getId());
+        result.put("code", saved.getCode());
+        result.put("status", saved.getStatus());
+        result.put("paidAt", saved.getPaidAt());
+        result.put("payoutTxHash", saved.getPayoutTxHash());
+        result.put("payoutNote", saved.getPayoutNote());
+        return result;
+    }
+
+    private SettlementRecord findSettlementRecord(String settlementId) {
+        return settlementRecordRepository.findById(settlementId)
+                .or(() -> {
+                    if (settlementId.startsWith("s-")) {
+                        try {
+                            Long cId = Long.parseLong(settlementId.substring(2));
+                            return settlementRecordRepository.findByCompanyId(cId);
+                        } catch (Exception ignored) {}
+                    }
+                    return java.util.Optional.empty();
+                })
+                .or(() -> settlementRecordRepository.findByCode(settlementId))
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy hồ sơ đối soát quyết toán: " + settlementId));
+    }
+
+    private String resolveBankCode(String bankName) {
+        if (bankName == null) return "VCB";
+        String upper = bankName.toUpperCase();
+        if (upper.contains("MB") || upper.contains("QUÂN ĐỘI")) return "MB";
+        if (upper.contains("TECHCOM") || upper.contains("TCB")) return "TCB";
+        if (upper.contains("VIETCOM") || upper.contains("VCB")) return "VCB";
+        if (upper.contains("BIDV") || upper.contains("ĐẦU TƯ")) return "BIDV";
+        if (upper.contains("VIETIN") || upper.contains("CTG") || upper.contains("CÔNG THƯƠNG")) return "CTG";
+        if (upper.contains("ACB") || upper.contains("Á CHÂU")) return "ACB";
+        if (upper.contains("VP") || upper.contains("THỊNH VƯỢNG")) return "VPB";
+        if (upper.contains("TP") || upper.contains("TIÊN PHONG")) return "TPB";
+        if (upper.contains("SACOM") || upper.contains("STB")) return "STB";
+        if (upper.contains("HD") || upper.contains("HDB")) return "HDB";
+        if (upper.contains("SHB")) return "SHB";
+        return "VCB";
     }
 
     private RouteAdminResponse mapToRouteResponse(Route r) {

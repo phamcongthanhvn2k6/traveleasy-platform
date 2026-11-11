@@ -54,9 +54,13 @@ public class BookingService {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Nhà xe " + trip.getBusCompany().getName() + " hiện đang tạm ngừng hoạt động trên sàn.");
         }
 
+        // CANONICAL LOCK ORDERING: Sắp xếp thứ tự ghế theo alphabet để chống Deadlock trên PostgreSQL
+        List<String> sortedSeatNumbers = new ArrayList<>(request.getSeatNumbers());
+        Collections.sort(sortedSeatNumbers);
+
         // PESSIMISTIC LOCK: Lock các ghế được chọn để chống xung đột đặt trùng
         List<TripSeat> requestedSeats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(
-                trip.getId(), request.getSeatNumbers());
+                trip.getId(), sortedSeatNumbers);
 
         if (requestedSeats.size() != request.getSeatNumbers().size()) {
             throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Một số ghế không tồn tại trên chuyến này");

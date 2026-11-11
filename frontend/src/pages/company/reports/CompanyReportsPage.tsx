@@ -5,7 +5,7 @@
  * @role Analytics & Finance Specialist
  * @task [S310][REPORTS] Sprint 3 (3 SP)
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BarChart3,
   TrendingUp,
@@ -19,9 +19,12 @@ import {
   FileSpreadsheet,
   ArrowUpRight,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
+import api from '../../../services/api';
+import { getStoredCompany } from '../../../utils/companyHelper';
 
 interface RoutePerformance {
   routeId: string;
@@ -36,64 +39,85 @@ interface RoutePerformance {
 }
 
 export const CompanyReportsPage: React.FC = () => {
-  const [dateRange, setDateRange] = useState('MONTH'); // 'WEEK' | 'MONTH' | 'QUARTER'
+  const currentCompany = getStoredCompany();
+  const [dateRange, setDateRange] = useState('MONTH');
+  const [loading, setLoading] = useState(false);
+  const [performanceData, setPerformanceData] = useState<RoutePerformance[]>([]);
 
-  // Dữ liệu hiệu suất tuyến xe
-  const performanceData: RoutePerformance[] = [
-    {
-      routeId: 'route-01',
-      routeName: 'TP. Hồ Chí Minh ➔ Đà Lạt (Khứ Hồi)',
-      tripsCount: 42,
-      totalSeats: 1428,
-      bookedSeats: 1314,
-      occupancyRate: 92.0,
-      grossRevenue: 394200000,
-      platformFee: 31536000,
-      netRevenue: 362664000
-    },
-    {
-      routeId: 'route-02',
-      routeName: 'TP. Hồ Chí Minh ➔ Nha Trang (Khứ Hồi)',
-      tripsCount: 28,
-      totalSeats: 952,
-      bookedSeats: 818,
-      occupancyRate: 85.9,
-      grossRevenue: 228900000,
-      platformFee: 18312000,
-      netRevenue: 210588000
-    },
-    {
-      routeId: 'route-03',
-      routeName: 'TP. Hồ Chí Minh ➔ Phan Thiết / Mũi Né',
-      tripsCount: 30,
-      totalSeats: 1020,
-      bookedSeats: 795,
-      occupancyRate: 77.9,
-      grossRevenue: 159000000,
-      platformFee: 12720000,
-      netRevenue: 146280000
-    },
-    {
-      routeId: 'route-04',
-      routeName: 'TP. Hồ Chí Minh ➔ Cần Thơ / Miền Tây',
-      tripsCount: 20,
-      totalSeats: 680,
-      bookedSeats: 490,
-      occupancyRate: 72.1,
-      grossRevenue: 88200000,
-      platformFee: 7056000,
-      netRevenue: 81144000
-    }
-  ];
+  useEffect(() => {
+    const fetchReportData = async () => {
+      setLoading(true);
+      try {
+        // Tải danh sách chuyến xe thực tế của nhà xe từ CSDL
+        const tripsRes = await api.get('/company/trips', {
+          params: { companyId: currentCompany.id }
+        });
+        const trips = Array.isArray(tripsRes.data?.data) ? tripsRes.data.data : [];
+
+        if (trips.length === 0) {
+          setPerformanceData([]);
+          return;
+        }
+
+        // Nhóm theo tuyến xe thực tế
+        const routeMap = new Map<string, RoutePerformance>();
+        for (const t of trips) {
+          const rName = t.routeName || `${t.originCity || 'Điểm đi'} ➔ ${t.destinationCity || 'Điểm đến'}`;
+          const rKey = rName;
+          const existing = routeMap.get(rKey) || {
+            routeId: `R-${t.routeId || routeMap.size + 1}`,
+            routeName: rName,
+            tripsCount: 0,
+            totalSeats: 0,
+            bookedSeats: 0,
+            occupancyRate: 0,
+            grossRevenue: 0,
+            platformFee: 0,
+            netRevenue: 0
+          };
+
+          const totalS = t.totalSeats || 34;
+          const availS = t.availableSeats !== undefined ? t.availableSeats : totalS;
+          const bookedS = Math.max(0, totalS - availS);
+          const price = t.price || 0;
+          const gross = bookedS * price;
+          const fee = Math.round(gross * 0.08);
+
+          existing.tripsCount += 1;
+          existing.totalSeats += totalS;
+          existing.bookedSeats += bookedS;
+          existing.grossRevenue += gross;
+          existing.platformFee += fee;
+          existing.netRevenue += (gross - fee);
+
+          routeMap.set(rKey, existing);
+        }
+
+        const calculated = Array.from(routeMap.values()).map(r => ({
+          ...r,
+          occupancyRate: r.totalSeats > 0 ? Number(((r.bookedSeats / r.totalSeats) * 100).toFixed(1)) : 0
+        }));
+
+        setPerformanceData(calculated);
+      } catch (err) {
+        console.warn('Lỗi tải báo cáo chuyến xe:', err);
+        setPerformanceData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReportData();
+  }, [currentCompany.id]);
 
   // Tính tổng
   const totalGross = performanceData.reduce((acc, cur) => acc + cur.grossRevenue, 0);
   const totalFee = performanceData.reduce((acc, cur) => acc + cur.platformFee, 0);
   const totalNet = performanceData.reduce((acc, cur) => acc + cur.netRevenue, 0);
   const totalTickets = performanceData.reduce((acc, cur) => acc + cur.bookedSeats, 0);
-  const avgOccupancy = (
-    performanceData.reduce((acc, cur) => acc + cur.occupancyRate, 0) / performanceData.length
-  ).toFixed(1);
+  const avgOccupancy = performanceData.length > 0
+    ? (performanceData.reduce((acc, cur) => acc + cur.occupancyRate, 0) / performanceData.length).toFixed(1)
+    : '0.0';
 
   const handleExportCSV = () => {
     toast.info('Đang tạo file bảng tính Báo cáo doanh thu & Đối soát TravelEasy...');
@@ -243,8 +267,24 @@ export const CompanyReportsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
-                {performanceData.map((row) => (
-                  <tr key={row.routeId} className="hover:bg-slate-50/50 transition-colors">
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-500">
+                      <RefreshCw className="w-6 h-6 animate-spin mx-auto text-indigo-600 mb-2" />
+                      <p className="text-xs text-slate-400">Đang tổng hợp dữ liệu hiệu suất chuyến xe từ CSDL...</p>
+                    </td>
+                  </tr>
+                ) : performanceData.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-500">
+                      <BarChart3 className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                      <p className="font-semibold text-slate-700">Chưa phát sinh dữ liệu hiệu suất chuyến trong kỳ này</p>
+                      <p className="text-xs text-slate-400 mt-1">Khi nhà xe vận hành chuyến và phát sinh vé đặt, báo cáo doanh thu sẽ tự động hiển thị tại đây.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  performanceData.map((row) => (
+                    <tr key={row.routeId} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-3.5 px-4">
                       <p className="font-bold text-slate-800">{row.routeName}</p>
                       <p className="text-xs text-slate-400">Mã: {row.routeId}</p>
@@ -281,7 +321,7 @@ export const CompanyReportsPage: React.FC = () => {
                       {row.netRevenue.toLocaleString('vi-VN')} đ
                     </td>
                   </tr>
-                ))}
+                )))}
               </tbody>
             </table>
           </div>

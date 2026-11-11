@@ -642,7 +642,7 @@ public class PublicContentController {
                 .email(email)
                 .address(address)
                 .logoUrl("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=120")
-                .averageRating(BigDecimal.valueOf(5.0))
+                .averageRating(BigDecimal.ZERO)
                 .status("PENDING")
                 .createdAt(LocalDateTime.now())
                 // Hồ sơ pháp lý KYB

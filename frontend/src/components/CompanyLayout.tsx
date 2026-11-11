@@ -21,7 +21,14 @@ import {
   Store,
   Clock,
   Tag,
-  BarChart3
+  BarChart3,
+  ArrowLeftRight,
+  Car,
+  Users,
+  Wallet,
+  RotateCcw,
+  ShieldAlert,
+  UserCheck
 } from 'lucide-react';
 import { toast } from '../context/ToastContext';
 import { AuthUser } from '../types';
@@ -34,14 +41,38 @@ interface CompanyLayoutProps {
   children: React.ReactNode;
 }
 
+export type StaffRole = 'OWNER' | 'CASHIER' | 'DISPATCHER';
+
 export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobileOrTablet, setIsMobileOrTablet] = useState(() => {
     return typeof window !== 'undefined' ? window.innerWidth <= 1024 : false;
   });
+
+  // Cơ chế Phân quyền nội bộ nhà xe (Sub-Account RBAC)
+  const [staffRole, setStaffRole] = useState<StaffRole>(() => {
+    try {
+      const saved = localStorage.getItem('traveleasy_staff_role');
+      if (saved === 'CASHIER' || saved === 'DISPATCHER' || saved === 'OWNER') {
+        return saved as StaffRole;
+      }
+    } catch {}
+    return 'OWNER';
+  });
+
+  const handleRoleChange = (newRole: StaffRole) => {
+    setStaffRole(newRole);
+    localStorage.setItem('traveleasy_staff_role', newRole);
+    const roleLabels: Record<StaffRole, string> = {
+      OWNER: 'Chủ Nhà Xe / Giám Đốc (Toàn Quyền)',
+      CASHIER: 'Nhân Viên Thu Ngân Quầy Bến Xe',
+      DISPATCHER: 'Điều Hành Viên / Trực Ban Bến Xe'
+    };
+    toast.success(`Đã chuyển sang góc nhìn quyền hạn: ${roleLabels[newRole]}`, 'Phân Quyền RBAC');
+  };
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -69,30 +100,72 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
   const handleLogout = () => {
     localStorage.removeItem('traveleasy_token');
     localStorage.removeItem('traveleasy_user');
+    localStorage.removeItem('traveleasy_staff_role');
     toast.info('Đã đăng xuất khỏi Cổng Đối Tác Nhà Xe.', 'Đăng Xuất');
     navigate('/company/login', { replace: true });
   };
 
-  const operationItems = [
-    { label: 'Đội xe của tôi', path: '/company/vehicles', icon: Bus },
-    { label: 'Điểm đón/trả riêng', path: '/company/locations', icon: MapPin },
-    { label: 'Tuyến đường đăng ký', path: '/company/routes', icon: Route },
-    { label: 'Chính sách hủy vé riêng', path: '/company/cancellation-policies', icon: Shield },
+  // Danh mục menu gốc
+  const allOperationItems = [
+    { label: 'Đội xe của tôi', path: '/company/vehicles', icon: Bus, roles: ['OWNER', 'DISPATCHER'] },
+    { label: 'Điểm đón/trả riêng', path: '/company/locations', icon: MapPin, roles: ['OWNER', 'DISPATCHER'] },
+    { label: 'Tuyến đường đăng ký', path: '/company/routes', icon: Route, roles: ['OWNER', 'DISPATCHER'] },
+    { label: 'Chính sách hủy vé riêng', path: '/company/cancellation-policies', icon: Shield, roles: ['OWNER'] },
   ];
 
-  const businessItems = [
-    { label: 'Lịch chuyến xe xuất bến', path: '/company/trips', icon: Calendar },
-    { label: 'Hành khách & Vé đã đặt', path: '/company/bookings', icon: Ticket },
-    { label: 'Doanh thu & Đối soát sàn', path: '/company/settlements', icon: DollarSign },
-    { label: 'Đánh giá từ khách hàng', path: '/company/reviews', icon: Star },
+  const allBusinessItems = [
+    { label: 'Lịch chuyến xe xuất bến', path: '/company/trips', icon: Calendar, roles: ['OWNER', 'DISPATCHER'] },
+    { label: 'Hành khách & Vé đã đặt', path: '/company/bookings', icon: Ticket, roles: ['OWNER', 'CASHIER', 'DISPATCHER'] },
+    { label: 'Doanh thu & Đối soát sàn', path: '/company/settlements', icon: DollarSign, roles: ['OWNER'] },
+    { label: 'Đánh giá từ khách hàng', path: '/company/reviews', icon: Star, roles: ['OWNER'] },
   ];
 
-  const sprint4Items = [
-    { label: 'Quầy bán vé POS', path: '/company/pos', icon: Store, author: 'PTP' },
-    { label: 'Quản lý ca trực', path: '/company/shifts', icon: Clock, author: 'JL' },
-    { label: 'Quy tắc giá vé động', path: '/company/pricing-rules', icon: Tag, author: 'TMD' },
-    { label: 'Báo cáo & Lấp đầy ghế', path: '/company/reports', icon: BarChart3, author: 'Phat' },
+  const allSprint4Items = [
+    { label: 'Quầy bán vé POS', path: '/company/pos', icon: Store, author: 'PTP', roles: ['OWNER', 'CASHIER'] },
+    { label: 'Quản lý ca trực', path: '/company/shifts', icon: Clock, author: 'JL', roles: ['OWNER', 'CASHIER'] },
+    { label: 'Quy tắc giá vé động', path: '/company/pricing-rules', icon: Tag, author: 'TMD', roles: ['OWNER'] },
+    { label: 'Báo cáo & Lấp đầy ghế', path: '/company/reports', icon: BarChart3, author: 'Phat', roles: ['OWNER'] },
   ];
+
+  const allSprint3ExtendedItems = [
+    { label: 'Đổi vé & chuyển chuyến', path: '/company/ticket-exchange', icon: ArrowLeftRight, author: 'TMD', roles: ['OWNER', 'CASHIER'] },
+    { label: 'Xe trung chuyển tận nơi', path: '/company/shuttles', icon: Car, author: 'TMD', roles: ['OWNER', 'DISPATCHER'] },
+    { label: 'Sổ chi phí & Lợi nhuận', path: '/company/expenses', icon: Wallet, author: 'TMD', roles: ['OWNER'] },
+    { label: 'Phân công tổ lái xe', path: '/company/crew', icon: Users, author: 'JL', roles: ['OWNER', 'DISPATCHER'] },
+    { label: 'Chính sách hoàn hủy vé', path: '/company/refunds', icon: RotateCcw, author: 'Phat', roles: ['OWNER'] },
+  ];
+
+  // Lọc Menu hiển thị theo StaffRole hiện tại
+  const operationItems = allOperationItems.filter(item => item.roles.includes(staffRole));
+  const businessItems = allBusinessItems.filter(item => item.roles.includes(staffRole));
+  const sprint4Items = allSprint4Items.filter(item => item.roles.includes(staffRole));
+  const sprint3ExtendedItems = allSprint3ExtendedItems.filter(item => item.roles.includes(staffRole));
+
+  // Kiểm tra quyền truy cập đường dẫn hiện tại (Route Guard)
+  const isCurrentPathRestricted = () => {
+    if (staffRole === 'OWNER') return false;
+    const currentPath = location.pathname;
+
+    // Các đường dẫn tối mật về tài chính chỉ dành riêng cho OWNER
+    const ownerOnlyPaths = ['/company/settlements', '/company/expenses', '/company/pricing-rules', '/company/reports', '/company/cancellation-policies'];
+    if (ownerOnlyPaths.includes(currentPath)) {
+      return true;
+    }
+
+    // CASHIER bị cấm vào phân công tổ lái & trung chuyển
+    const dispatcherOnlyPaths = ['/company/crew', '/company/shuttles', '/company/vehicles', '/company/routes'];
+    if (dispatcherOnlyPaths.includes(currentPath) && staffRole === 'CASHIER') {
+      return true;
+    }
+
+    // DISPATCHER bị cấm vào quầy bán vé & ca trực
+    const cashierOnlyPaths = ['/company/pos', '/company/shifts'];
+    if (cashierOnlyPaths.includes(currentPath) && staffRole === 'DISPATCHER') {
+      return true;
+    }
+
+    return false;
+  };
 
   const isActive = (path: string) => {
     if (path === '/company/dashboard' && (location.pathname === '/company' || location.pathname === '/company/dashboard')) {
@@ -136,54 +209,63 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
           top: 0,
           bottom: 0,
           height: '100vh',
-          flexShrink: 0,
-          zIndex: isMobileOrTablet ? 100 : 40,
-          transform: isMobileOrTablet && !sidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
-          transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-          boxShadow: isMobileOrTablet && sidebarOpen ? '6px 0 24px rgba(0,0,0,0.5)' : 'none',
+          zIndex: 100,
+          transform: isMobileOrTablet ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
+          transition: 'transform 0.25s ease',
+          boxShadow: isMobileOrTablet && sidebarOpen ? '4px 0 24px rgba(0,0,0,0.4)' : 'none',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 72px)', overflowY: 'auto' }}>
-          {/* Brand Header */}
-          <div style={{ padding: '20px 18px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+          {/* Logo & Close Button Header */}
+          <div
+            style={{
+              padding: '18px 20px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <Link to="/company/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
               <div
                 style={{
                   width: '32px',
                   height: '32px',
                   borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #0ea5e9 0%, #10b981 100%)',
+                  backgroundColor: '#38bdf8',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#ffffff',
+                  color: '#0f172a',
                   fontWeight: 800,
-                  fontSize: '13px',
-                  letterSpacing: '0.5px',
-                  boxShadow: '0 2px 8px rgba(14, 165, 233, 0.35)',
-                  flexShrink: 0
+                  fontSize: '16px'
                 }}
               >
-                TE
+                T
               </div>
-              <div>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: '#ffffff', lineHeight: 1.2 }}>TravelEasy Partner</div>
-                <div style={{ fontSize: '10px', color: '#38bdf8', fontWeight: 600, letterSpacing: '0.6px', marginTop: '2px' }}>
-                  BUS OPERATOR PORTAL
-                </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ color: '#ffffff', fontWeight: 800, fontSize: '15px', letterSpacing: '-0.3px' }}>
+                  TravelEasy
+                </span>
+                <span style={{ color: '#38bdf8', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px' }}>
+                  PARTNER PORTAL
+                </span>
               </div>
-            </div>
+            </Link>
+
             {isMobileOrTablet && (
               <button
                 onClick={() => setSidebarOpen(false)}
-                aria-label="Đóng Menu"
+                aria-label="Đóng Menu Điều Hành"
                 style={{
-                  padding: '4px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
                   color: '#94a3b8',
-                  borderRadius: '6px',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
                   cursor: 'pointer',
+                  padding: '4px',
                   display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 <X size={18} />
@@ -191,12 +273,31 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
             )}
           </div>
 
-          {/* Nav List */}
-          <nav 
-            onClick={() => { if (isMobileOrTablet) setSidebarOpen(false); }}
-            style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}
-          >
-            {/* Tong quan */}
+          {/* Current Staff Role Badge in Sidebar */}
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 10px',
+              borderRadius: '6px',
+              backgroundColor: staffRole === 'OWNER' ? 'rgba(245, 158, 11, 0.15)' : (staffRole === 'CASHIER' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(139, 92, 246, 0.15)'),
+              border: `1px solid ${staffRole === 'OWNER' ? 'rgba(245, 158, 11, 0.3)' : (staffRole === 'CASHIER' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(139, 92, 246, 0.3)')}`,
+              color: staffRole === 'OWNER' ? '#fbbf24' : (staffRole === 'CASHIER' ? '#60a5fa' : '#c084fc'),
+              fontSize: '11px',
+              fontWeight: 700
+            }}>
+              <UserCheck size={14} />
+              <span>
+                {staffRole === 'OWNER' && 'QUYỀN: CHỦ NHÀ XE'}
+                {staffRole === 'CASHIER' && 'QUYỀN: THU NGÂN QUẦY'}
+                {staffRole === 'DISPATCHER' && 'QUYỀN: ĐIỀU HÀNH BẾN'}
+              </span>
+            </div>
+          </div>
+
+          {/* Navigation Links (Được lọc tự động theo Staff Role) */}
+          <nav style={{ padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
             <Link
               to="/company/dashboard"
               style={{
@@ -213,153 +314,193 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                 transition: 'all 0.15s ease'
               }}
             >
-              <LayoutGrid size={17} color={isActive('/company/dashboard') ? '#ffffff' : '#94a3b8'} />
-              <span>Tổng quan</span>
+              <LayoutGrid size={17} color={isActive('/company/dashboard') ? '#38bdf8' : '#94a3b8'} />
+              <span>Bảng tổng quan</span>
             </Link>
 
-            {/* VẬN HÀNH ĐỘI XE Group */}
-            <div
-              style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                color: '#475569',
-                letterSpacing: '0.8px',
-                padding: '16px 12px 6px',
-                textTransform: 'uppercase'
-              }}
-            >
-              VẬN HÀNH ĐỘI XE
-            </div>
-            {operationItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    fontSize: '13px',
-                    fontWeight: active ? 600 : 500,
-                    color: active ? '#ffffff' : '#94a3b8',
-                    backgroundColor: active ? '#1e293b' : 'transparent',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <Icon size={17} color={active ? '#ffffff' : '#94a3b8'} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+            {/* VẬN HÀNH Group (nếu có item cho role này) */}
+            {operationItems.length > 0 && (
+              <>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', letterSpacing: '0.8px', padding: '16px 12px 6px', textTransform: 'uppercase' }}>
+                  VẬN HÀNH XE
+                </div>
+                {operationItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        textDecoration: 'none',
+                        fontSize: '13px',
+                        fontWeight: active ? 600 : 500,
+                        color: active ? '#ffffff' : '#94a3b8',
+                        backgroundColor: active ? '#1e293b' : 'transparent',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <Icon size={17} color={active ? '#38bdf8' : '#94a3b8'} />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </>
+            )}
 
-            {/* KINH DOANH & BÁN VÉ Group */}
-            <div
-              style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                color: '#475569',
-                letterSpacing: '0.8px',
-                padding: '16px 12px 6px',
-                textTransform: 'uppercase'
-              }}
-            >
-              KINH DOANH & BÁN VÉ
-            </div>
-            {businessItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    fontSize: '13px',
-                    fontWeight: active ? 600 : 500,
-                    color: active ? '#ffffff' : '#94a3b8',
-                    backgroundColor: active ? '#1e293b' : 'transparent',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <Icon size={17} color={active ? '#ffffff' : '#94a3b8'} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+            {/* KINH DOANH Group (nếu có item) */}
+            {businessItems.length > 0 && (
+              <>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', letterSpacing: '0.8px', padding: '16px 12px 6px', textTransform: 'uppercase' }}>
+                  KINH DOANH & ĐỐI SOÁT
+                </div>
+                {businessItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        textDecoration: 'none',
+                        fontSize: '13px',
+                        fontWeight: active ? 600 : 500,
+                        color: active ? '#ffffff' : '#94a3b8',
+                        backgroundColor: active ? '#1e293b' : 'transparent',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <Icon size={17} color={active ? '#ffffff' : '#94a3b8'} />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </>
+            )}
 
             {/* NHIỆM VỤ SPRINT 3 Group */}
-            <div
-              style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                color: '#38bdf8',
-                letterSpacing: '0.8px',
-                padding: '16px 12px 6px',
-                textTransform: 'uppercase',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}
-            >
-              <span>NHIỆM VỤ SPRINT 3</span>
-              <span style={{ fontSize: '9px', backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '1px 5px', borderRadius: '4px' }}>
-                OJT
-              </span>
-            </div>
-            {sprint4Items.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    fontSize: '13px',
-                    fontWeight: active ? 600 : 500,
-                    color: active ? '#ffffff' : '#94a3b8',
-                    backgroundColor: active ? '#1e293b' : 'transparent',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <Icon size={17} color={active ? '#38bdf8' : '#94a3b8'} />
-                    <span>{item.label}</span>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      padding: '1px 6px',
-                      borderRadius: '4px',
-                      backgroundColor: active ? '#38bdf8' : 'rgba(255, 255, 255, 0.08)',
-                      color: active ? '#0f172a' : '#cbd5e1'
-                    }}
-                  >
-                    {item.author}
+            {sprint4Items.length > 0 && (
+              <>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: '#38bdf8', letterSpacing: '0.8px', padding: '16px 12px 6px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>NHIỆM VỤ SPRINT 3</span>
+                  <span style={{ fontSize: '9px', backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '1px 5px', borderRadius: '4px' }}>
+                    OJT
                   </span>
-                </Link>
-              );
-            })}
+                </div>
+                {sprint4Items.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        textDecoration: 'none',
+                        fontSize: '13px',
+                        fontWeight: active ? 600 : 500,
+                        color: active ? '#ffffff' : '#94a3b8',
+                        backgroundColor: active ? '#1e293b' : 'transparent',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Icon size={17} color={active ? '#38bdf8' : '#94a3b8'} />
+                        <span>{item.label}</span>
+                      </div>
+                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: active ? '#38bdf8' : 'rgba(255, 255, 255, 0.08)', color: active ? '#0f172a' : '#cbd5e1' }}>
+                        {item.author}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </>
+            )}
+
+            {/* VẬN HÀNH NÂNG CAO Group */}
+            {sprint3ExtendedItems.length > 0 && (
+              <>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: '#10b981', letterSpacing: '0.8px', padding: '16px 12px 6px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>VẬN HÀNH NÂNG CAO</span>
+                  <span style={{ fontSize: '9px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '1px 5px', borderRadius: '4px' }}>
+                    MỚI
+                  </span>
+                </div>
+                {sprint3ExtendedItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        textDecoration: 'none',
+                        fontSize: '13px',
+                        fontWeight: active ? 600 : 500,
+                        color: active ? '#ffffff' : '#94a3b8',
+                        backgroundColor: active ? '#1e293b' : 'transparent',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Icon size={17} color={active ? '#10b981' : '#94a3b8'} />
+                        <span>{item.label}</span>
+                      </div>
+                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: active ? '#10b981' : 'rgba(255, 255, 255, 0.08)', color: active ? '#0f172a' : '#cbd5e1' }}>
+                        {item.author}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </>
+            )}
           </nav>
         </div>
 
-
+        {/* User Footer Profile */}
+        <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', backgroundColor: '#070d1e' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#0284c7', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700 }}>
+                {currentUser?.fullName?.charAt(0) || 'N'}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {currentUser?.fullName || 'Nhà Xe Đối Tác'}
+                </span>
+                <span style={{ fontSize: '10px', color: '#64748b' }}>
+                  {staffRole}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Đăng xuất khỏi Cổng Nhà Xe"
+              style={{ backgroundColor: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px', borderRadius: '4px' }}
+            >
+              <LogOut size={15} />
+            </button>
+          </div>
+        </div>
       </aside>
 
       {/* ======================================================== */}
@@ -382,7 +523,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
             transition: 'all 0.25s ease'
           }}
         >
-          {/* Left Header: Hamburger button on Mobile/Tablet & Search Box */}
+          {/* Left Header: Hamburger button on Mobile/Tablet */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {isMobileOrTablet && (
               <button
@@ -406,55 +547,36 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
               </button>
             )}
 
-            {/* Search Box */}
-            <div
-              className="hide-on-mobile"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: isDark ? '#0f172a' : '#f8fafc',
-                border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-                borderRadius: '8px',
-                padding: '6px 10px',
-                width: isMobileOrTablet ? '180px' : '280px',
-                gap: '8px'
-              }}
-            >
-              <Search size={15} color="#94a3b8" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm..."
+            {/* DEMO SWITCHER: Chuyển đổi vai trò nhân viên tức thì cho Hội Đồng xem */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: isDark ? '#94a3b8' : '#64748b' }} className="hide-on-mobile">
+                Góc nhìn:
+              </span>
+              <select
+                value={staffRole}
+                onChange={(e) => handleRoleChange(e.target.value as StaffRole)}
                 style={{
-                  border: 'none',
-                  background: 'transparent',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  backgroundColor: staffRole === 'OWNER' ? (isDark ? '#78350f' : '#fef3c7') : (staffRole === 'CASHIER' ? (isDark ? '#1e3a8a' : '#dbeafe') : (isDark ? '#581c87' : '#f3e8ff')),
+                  color: staffRole === 'OWNER' ? '#d97706' : (staffRole === 'CASHIER' ? '#2563eb' : '#9333ea'),
+                  border: `1px solid ${staffRole === 'OWNER' ? '#f59e0b' : (staffRole === 'CASHIER' ? '#3b82f6' : '#a855f7')}`,
                   outline: 'none',
-                  fontSize: '13px',
-                  color: isDark ? '#f8fafc' : '#0f172a',
-                  flex: 1
-                }}
-              />
-              <span
-                style={{
-                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                  border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
-                  borderRadius: '4px',
-                  padding: '1px 5px',
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  color: isDark ? '#94a3b8' : '#64748b'
+                  cursor: 'pointer'
                 }}
               >
-                ⌘ K
-              </span>
+                <option value="OWNER">👑 Chủ Nhà Xe / Giám Đốc (Full Access)</option>
+                <option value="CASHIER">🎟️ Nhân Viên Thu Ngân Quầy Bến Xe</option>
+                <option value="DISPATCHER">👨‍✈️ Điều Hành Viên / Trực Ban Bến</option>
+              </select>
             </div>
           </div>
 
-          {/* Right Header: Theme Toggle, Company Selector, Notification & User Profile */}
+          {/* Right Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            {/* Theme Toggle Button */}
             <ThemeToggle showLabel={false} />
-
-            {/* Current Company Switcher */}
             <div
               style={{
                 display: 'flex',
@@ -466,76 +588,58 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
                 borderRadius: '6px',
                 fontSize: '12px',
                 color: isDark ? '#7dd3fc' : '#0369a1',
-                cursor: 'pointer'
               }}
             >
               <span>Nhà xe: <strong style={{ color: isDark ? '#38bdf8' : '#0284c7' }}>{getCompanyDisplayName()}</strong></span>
-              <ChevronDown size={13} color={isDark ? '#38bdf8' : '#0284c7'} />
             </div>
-
-            {/* Notification Center Popover */}
             <NotificationDropdown />
-
-            {/* Profile */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #0ea5e9, #0d9488)',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '12px',
-                  fontWeight: 700
-                }}
-              >
-                {currentUser?.fullName?.substring(0, 2)?.toUpperCase() || 'TE'}
-              </div>
-              <div style={{ lineHeight: 1.15 }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
-                  {currentUser?.fullName || 'Điều Hành Nhà Xe'}
-                </div>
-                <div style={{ fontSize: '10px', fontWeight: 700, color: isDark ? '#2dd4bf' : '#0d9488' }}>
-                  ĐỐI TÁC NHÀ XE
-                </div>
-              </div>
-            </div>
-
-            {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              title="Đăng xuất Cổng Nhà Xe"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fef2f2',
-                color: isDark ? '#fca5a5' : '#dc2626',
-                border: `1px solid ${isDark ? 'rgba(239, 68, 68, 0.4)' : '#fecaca'}`,
-                borderRadius: '6px',
-                padding: '6px 12px',
-                fontSize: '12px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <LogOut size={13} /> Đăng Xuất
-            </button>
           </div>
         </header>
 
-        {/* Page Content */}
-        <main style={{ flex: 1, padding: isMobileOrTablet ? '16px 14px' : '24px 28px', backgroundColor: isDark ? '#0b0f19' : '#f8fafc', color: isDark ? '#f8fafc' : '#0f172a', transition: 'all 0.25s ease' }}>
-          {children}
+        {/* Content Body with Route Guard (Chặn 403 nếu cố tình gõ URL cấm) */}
+        <main style={{ flex: 1, padding: isMobileOrTablet ? '16px' : '24px 28px', overflowY: 'auto' }}>
+          {isCurrentPathRestricted() ? (
+            <div style={{
+              maxWidth: '640px',
+              margin: '60px auto',
+              padding: '36px',
+              backgroundColor: isDark ? '#1e1b4b' : '#fef2f2',
+              border: `1px solid ${isDark ? '#4338ca' : '#fecaca'}`,
+              borderRadius: '16px',
+              textAlign: 'center'
+            }}>
+              <div style={{ width: '64px', height: '64px', margin: '0 auto 16px', backgroundColor: '#ef4444', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ShieldAlert size={32} />
+              </div>
+              <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#ef4444', marginBottom: '8px' }}>
+                403 - TRUY CẬP BỊ TỪ CHỐI
+              </h2>
+              <p style={{ fontSize: '14px', color: isDark ? '#cbd5e1' : '#475569', marginBottom: '20px', lineHeight: 1.6 }}>
+                Bạn đang truy cập với vai trò <strong>{staffRole === 'CASHIER' ? 'Nhân viên thu ngân' : 'Điều hành viên'}</strong>.
+                Thông tin này thuộc danh mục bảo mật tài chính / điều hành của Chủ Nhà Xe và bạn không có quyền xem!
+              </p>
+              <button
+                onClick={() => navigate(staffRole === 'CASHIER' ? '/company/pos' : '/company/trips')}
+                style={{
+                  padding: '10px 24px',
+                  backgroundColor: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: 'pointer'
+                }}
+              >
+                Quay về trang được phân quyền
+              </button>
+            </div>
+          ) : (
+            children
+          )}
         </main>
       </div>
     </div>
   );
 };
-
 export default CompanyLayout;
-

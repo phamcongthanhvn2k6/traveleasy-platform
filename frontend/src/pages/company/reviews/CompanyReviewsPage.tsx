@@ -31,15 +31,15 @@ export const CompanyReviewsPage: React.FC = () => {
         const mapped: CompanyReviewItem[] = res.data.data.map((r: any) => ({
           id: String(r.id),
           rating: r.rating || 5,
-          comment: r.reviewSnippet || r.reason || 'Dịch vụ rất chu đáo, xe chạy an toàn và êm ái.',
-          reviewer: r.reporterEmail || 'customer@gmail.com',
-          reviewerName: r.reviewAuthor || 'Hành khách TravelEasy',
-          tripCode: `TR-${r.id || 1}`,
-          reply: r.status === 'APPROVED' ? 'TravelEasy Express xin chân thành cảm ơn đánh giá của bạn!' : null,
-          repliedAt: r.status === 'APPROVED' ? '24/10/2026' : null,
-          isReported: r.status === 'PENDING',
+          comment: r.comment || r.reviewSnippet || '',
+          reviewer: r.customerName || r.reporterEmail || 'Hành khách',
+          reviewerName: r.customerName || r.reviewAuthor || 'Hành khách',
+          tripCode: r.bookingCode || (r.tripId ? `TR-${r.tripId}` : `TR-${r.id}`),
+          reply: r.companyReply || (r.status === 'APPROVED' && r.reply ? r.reply : null),
+          repliedAt: r.companyReply ? 'Đã phản hồi' : null,
+          isReported: r.status === 'REPORTED',
           reportReason: r.reason || undefined,
-          reviewedAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString('vi-VN') : '24/10/2026',
+          reviewedAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString('vi-VN') : '',
         }));
         setReviews(mapped);
       }

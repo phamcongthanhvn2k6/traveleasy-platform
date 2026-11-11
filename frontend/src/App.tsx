@@ -12,6 +12,7 @@ import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { LoadingProvider } from './context/LoadingContext';
 import { GlobalPageLoader } from './components/GlobalPageLoader';
+import QrTicketScannerPage from './pages/conductor/QrTicketScannerPage';
 
 const ClientLayout: React.FC = () => {
   const { isDark } = useTheme();
@@ -61,7 +62,10 @@ export const App: React.FC = () => {
               {/* 2. Phân hệ Đối tác nhà xe (Company Partner Portal) */}
               <Route path="/company/*" element={<CompanyRoutes />} />
 
-              {/* 3. Phân hệ Người dùng & Khách hàng đặt vé (Client Portal) */}
+              {/* 3. Phân hệ Phụ xe quét mã QR soát vé (Conductor Mobile Web - Task S320) */}
+              <Route path="/conductor/scanner" element={<QrTicketScannerPage />} />
+
+              {/* 4. Phân hệ Người dùng & Khách hàng đặt vé (Client Portal) */}
               <Route path="/*" element={<ClientLayout />} />
             </Routes>
           </LoadingProvider>

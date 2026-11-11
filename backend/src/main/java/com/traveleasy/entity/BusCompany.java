@@ -39,7 +39,7 @@ public class BusCompany {
 
     @Column(nullable = false, precision = 3, scale = 2)
     @Builder.Default
-    private BigDecimal averageRating = BigDecimal.valueOf(5.0);
+    private BigDecimal averageRating = BigDecimal.ZERO;
 
     @Column(length = 30)
     @Builder.Default
