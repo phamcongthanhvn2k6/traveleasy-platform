@@ -55,9 +55,13 @@ public class BookingService {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Nhà xe " + trip.getBusCompany().getName() + " hiện đang tạm ngừng hoạt động trên sàn.");
         }
 
+        // CANONICAL LOCK ORDERING: Sắp xếp thứ tự ghế theo alphabet để chống Deadlock trên PostgreSQL
+        List<String> sortedSeatNumbers = new ArrayList<>(request.getSeatNumbers());
+        Collections.sort(sortedSeatNumbers);
+
         // PESSIMISTIC LOCK: Lock các ghế được chọn để chống xung đột đặt trùng
         List<TripSeat> requestedSeats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(
-                trip.getId(), request.getSeatNumbers());
+                trip.getId(), sortedSeatNumbers);
 
         if (requestedSeats.size() != request.getSeatNumbers().size()) {
             throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Một số ghế không tồn tại trên chuyến này");
@@ -75,9 +79,30 @@ public class BookingService {
         }
 
         // Kiểm tra kênh đặt vé (POS Channel Protection): Quầy bến xe bỏ qua giá động
-        boolean isPosChannel = request.getBookingChannel() != null &&
+        // BẢO MẬT: Chỉ nhân viên nhà xe (OPERATOR) hoặc ADMIN mới có quyền tạo đơn kênh POS/COUNTER
+        boolean requestedPos = request.getBookingChannel() != null &&
                 ("POS".equalsIgnoreCase(request.getBookingChannel().trim()) ||
                  "COUNTER".equalsIgnoreCase(request.getBookingChannel().trim()));
+
+        boolean isAuthorizedPos = false;
+        if (requestedPos) {
+            if (userEmail != null && !userEmail.isBlank()) {
+                Optional<User> callerOpt = userRepository.findByEmail(userEmail);
+                if (callerOpt.isPresent()) {
+                    Role callerRole = callerOpt.get().getRole();
+                    if (callerRole == Role.OPERATOR || callerRole == Role.ADMIN) {
+                        isAuthorizedPos = true;
+                    }
+                }
+            }
+            if (!isAuthorizedPos) {
+                log.warn("Cảnh báo bảo mật: Người dùng '{}' không có vai trò nhân viên nhà xe nhưng gửi bookingChannel='{}'. Tự động chuyển về ONLINE.",
+                        userEmail, request.getBookingChannel());
+                request.setBookingChannel("ONLINE");
+            }
+        }
+
+        boolean isPosChannel = isAuthorizedPos;
 
         BigDecimal unitPrice;
         if (isPosChannel) {

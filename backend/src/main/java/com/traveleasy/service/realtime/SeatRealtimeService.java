@@ -155,7 +155,9 @@ public class SeatRealtimeService {
                 ? userEmail.trim().toLowerCase()
                 : (sessionId != null && !sessionId.isBlank() ? sessionId.trim() : "anonymous_" + UUID.randomUUID().toString().substring(0, 8));
 
-        List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(tripId, seatCodes);
+        List<String> sortedCodes = new ArrayList<>(seatCodes);
+        Collections.sort(sortedCodes);
+        List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(tripId, sortedCodes);
         if (seats.size() != seatCodes.size()) {
             throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Một số ghế không tồn tại trên chuyến này");
         }
@@ -404,7 +406,9 @@ public class SeatRealtimeService {
             return;
         }
 
-        List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(tripId, seatCodes);
+        List<String> sortedCodes = new ArrayList<>(seatCodes);
+        Collections.sort(sortedCodes);
+        List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(tripId, sortedCodes);
         for (TripSeat seat : seats) {
             if (seat.getStatus() == SeatStatus.LOCKED) {
                 seat.setStatus(SeatStatus.AVAILABLE);

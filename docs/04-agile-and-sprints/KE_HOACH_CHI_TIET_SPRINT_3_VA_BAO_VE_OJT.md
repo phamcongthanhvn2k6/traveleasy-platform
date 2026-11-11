@@ -1,67 +1,53 @@
-# 🎯 KẾ HOẠCH TỔNG LỰC SPRINT 3 & ĐỐI SOÁT BẢNG TRELLO (FINAL SPRINT DEFENSE RUNBOOK)
+# 🎯 KẾ HOẠCH TỔNG LỰC SPRINT 3 & KỊCH BẢN BẢO VỆ ĐỒ ÁN OJT (DEFENSE RUNBOOK)
 **Dự án**: Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy (`traveleasy-platform`)  
-**Đơn vị thực hiện**: OJT Đồ Án Tốt Nghiệp Nhóm 7  
-**Giai đoạn**: Tuần 3 (Sprint 3 — Tuần Nước Rút & Nghiệm thu Bảo vệ OJT)  
-**Thời hạn chốt nộp**: Cuối Tuần 3 (Code Freeze & Defense Ready)  
-**Nhóm trưởng / System Architect**: Phạm Công Thành (`phamcongthanhvn2k6` / `thanhphmcong1`)  
-**Quy mô kế hoạch Sprint 3 chuẩn hóa**: **10 User Stories & Technical Tasks cốt lõi — 34 Story Points (Chuẩn mực 1 tuần Scrum quốc tế)**  
+**Đơn vị thực hiện**: OJT Đồ Án Tốt Nghiệp Nhóm 7 — FPT Polytechnic  
+**Giai đoạn**: Sprint 3 (Nâng cao Năng Lực Vận Hành & Hoàn Thiện Sản Phẩm Nghiệm Thu)  
+**Nhóm trưởng / System Architect**: Phạm Công Thành (`phamcongthanhvn2k6`)  
+**Quy mô kế hoạch Sprint 3 chuẩn hóa**: **16 User Stories & Technical Tasks — 42 Story Points — 04 Thành viên OJT Active**  
 
 ---
 
-## 1. BÁO CÁO ĐỐI SOÁT & TINH GỌN BACKLOG SPRINT 3 (RECONCILIATION & SCRUBBING)
+## 1. TỔNG QUAN PHÂN BỔ STORY POINTS & MA TRẬN TRÁCH NHIỆM RACI
 
-### 1.1. Tinh gọn & Loại bỏ các tính năng ngoài phạm vi đề tài (Out of Scope)
-Qua rà soát chuyên môn và đối chiếu với mục tiêu đề tài **"Nền tảng đặt vé xe khách liên tỉnh tuyến cố định"**, nhóm thống nhất loại bỏ các tính năng không thuộc nghiệp vụ cốt lõi để tránh loãng đề tài và áp lực bảo vệ:
-- ❌ **Thuê xe Hợp đồng Du lịch (`/charter`) & Ký quỹ Escrow 30%**: Chuyển sang Product Roadmap tương lai (v2.0) vì đây là mô hình thuê xe tour du lịch, không thuộc tuyến cố định.
-- ❌ **Ký gửi Hàng hóa Bưu kiện Hầm xe (`/cargo`)**: Chuyển sang Product Roadmap tương lai (v2.0) để tập trung 100% vào nghiệp vụ cốt lõi Hành khách, Bến xe & Nhà xe.
-- ❌ **Tách nhỏ Support & Mobile-first**: Gộp vào tiêu chuẩn phi chức năng (Non-functional Quality Gate).
-
-### 1.2. Bổ sung các tính năng cốt lõi bắt buộc cho vận hành thực tế
-Bổ sung chính thức vào Sprint 3 các module sống còn đã và đang hoàn tất:
-- ✅ **Đồng bộ Khóa ghế & Giữ chỗ Real-time 10 phút (SSE Concurrency Lock)**: Đã hoàn thiện, ngăn 100% rủi ro đặt trùng ghế trên toàn sàn.
-- ✅ **Dịch vụ Email Tự Động Phê Duyệt Hồ Sơ Đối Tác & Cấp Phát Tài Khoản B2B (`/company/login`)**: Bàn giao tài khoản nhà xe có mật khẩu khởi tạo rõ ràng qua Google SMTP live.
-- ✅ **Đóng gói Docker Compose Production & Triển khai CI/CD lên VPS (`103.72.57.149`)**: Đưa hệ thống lên môi trường thật có Nginx Reverse Proxy cổng 80 và kết nối Supabase Cloud.
-
----
-
-## 2. PHÂN BỔ ĐIỂM STORY POINTS (SP) VÀ MA TRẬN RACI SPRINT 3 CHUẨN
-
-### 2.1. Bảng phân bổ Story Points chuẩn Scrum (Tổng cộng: 34 SP)
-
-| Mã Task | Phân hệ & Nghiệp vụ Trọng Tâm | Phụ trách (RACI) | Điểm SP | Trạng thái kỹ thuật thực tế |
+| Mã Task | Tên Tính Năng & Nghiệp Vụ Trọng Tâm | Phụ trách (RACI) | Điểm SP | Trạng thái kỹ thuật & File phụ trách |
 | :--- | :--- | :---: | :---: | :--- |
-| **`[S301]`** | **Khóa ghế Concurrency Lock 10:00 & Đồng bộ Sơ đồ ghế Real-time SSE** | **Phạm Thanh Phong** | **4 SP** | 🟢 **ĐÃ HOÀN THÀNH 100%** (Đã merge `origin/dev`) |
-| **`[S302]`** | **Dịch vụ Email Tự Động Phê Duyệt Đối Tác & Cấp Tài Khoản Điều Hành** | **Phạm Công Thành** | **3 SP** | 🟡 **ĐANG HOÀN TẤT** (Đã gửi live tới `phamcongt56@gmail.com`) |
-| **`[S303]`** | **Đóng Gói Docker Production & Triển Khai CI/CD Lên VPS Thực Tế** | **Phạm Công Thành** | **4 SP** | 🟡 **ĐANG HOÀN TẤT** (Container Backend & Frontend đã UP) |
-| **`[S304]`** | **Giao diện & API Bán Vé Nhanh Tại Quầy Bến Xe POS (`/company/pos`)** | **Phạm Thanh Phong** | **4 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (In vé nhiệt 80mm có QR) |
-| **`[S305]`** | **Quản Lý Ca Trực & Bàn Giao Tiền Mặt Quầy Bến Xe (`/company/shifts`)** | **Đoàn Nhật Cường** | **3 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Mở ca, kết ca Z-Report) |
-| **`[S306]`** | **Bản Đồ GPS Live Tracking Xe Chạy Thời Gian Thực (`/tracking/:tripId`)** | **Nguyễn Đại Phát** | **4 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Leaflet map + SSE stream) |
-| **`[S307]`** | **Quản Trị Giá Vé Động & Phụ Thu Lễ Tết/Cuối Tuần (`/company/pricing-rules`)** | **Trần Minh Đức** | **3 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Quy tắc phụ thu tự động) |
-| **`[S308]`** | **Trung Tâm Trình Diễn Demo Hub 15 Phút (`/demo`) & Slide Bảo Vệ OJT** | **Phạm Công Thành** *(Lead)* | **3 SP** | 🟢 **ĐÃ HOÀN THÀNH 100%** (Demo Hub & kịch bản sẵn sàng) |
-| **`[S309]`** | **Màn Hình Loading Chuyển Trang & Tối Ưu Hiệu Năng SWR Cache 0ms, Skeleton Vé Của Tôi (`/my-tickets`)** | **Trần Minh Đức** | **3 SP** | 🟢 **ĐÃ HOÀN THÀNH 100%** (SWR Cache 0ms, Skeleton UI) |
-| **`[S310]`** | **Phân Hệ Báo Cáo Thống Kê Doanh Thu & Tỷ Lệ Lấp Đầy Ghế Nhà Xe (`/company/reports`)** | **Nguyễn Đại Phát** | **3 SP** | 🔵 **SẴN SÀNG NGHIỆM THU** (Biểu đồ doanh thu & đối soát) |
-| **TỔNG CỘNG** | **10 User Stories & Technical Tasks Chuẩn Hóa** | **Toàn đội** | **34 SP** | **Cân bằng tải chuẩn mực 1 tuần nước rút** |
+| **`[S301]`** | **Khóa ghế Concurrency Lock 10:00 & Giữ chỗ Real-time SSE** | **Phạm Công Thành** | **4 SP** | 🟡 `In Progress` (`SeatLockEngine`, Supabase Lock) |
+| **`[S310]`** | **Dashboard Báo Cáo Doanh Thu & Tỷ Lệ Lấp Đầy Chuyến Xe** | **Phạm Công Thành** | **3 SP** | 🔵 `To Do` (`/company/dashboard`) |
+| **`[S311]`** | **Đối Soát Doanh Số Bán Vé Định Kỳ & Quản Lý Ví Nhà Xe** | **Phạm Công Thành** | **3 SP** | 🔵 `To Do` (`/company/settlements`) |
+| **`[S307]`** | **Cơ Chế Thiết Lập Giá Vé Động (Dynamic Pricing Engine)** | **Trần Minh Đức** | **3 SP** | 🔵 `To Do` (`/company/pricing-rules`) |
+| **`[S316]`** | **Nghiệp Vụ Đổi Vé & Chuyển Chuyến Xe Khách** | **Trần Minh Đức** | **3 SP** | 🔵 `To Do` (`TicketExchangePage.tsx`, `ticket_exchange_logs`) |
+| **`[S317]`** | **Quản Lý Đón Trả Trung Chuyển Hành Khách Tận Nơi** | **Trần Minh Đức** | **3 SP** | 🔵 `To Do` (`ShuttleManagementPage.tsx`, `shuttle_requests`) |
+| **`[S318]`** | **Sổ Chi Phí Vận Hành Chuyến & Báo Cáo Lãi Lỗ (P&L)** | **Trần Minh Đức** | **2 SP** | 🔵 `To Do` (`TripExpensesPage.tsx`, `trip_expenses`) |
+| **`[S305]`** | **Quản Lý Ca Trực Bán Vé POS & Kết Ca Nộp Tiền Mặt** | **Đoàn Nhật Cường** | **3 SP** | 🔵 `To Do` (`/company/shifts`, `pos_shifts`) |
+| **`[S315]`** | **Code Review & Tối Ưu Hóa Hiệu Năng Truy Vấn CSDL** | **Đoàn Nhật Cường** | **2 SP** | 🔵 `To Do` (PostgreSQL Index, Query Tuning) |
+| **`[S319]`** | **Phân Công Tổ Lái & Kiểm Tra Điều Kiện Xuất Bến** | **Đoàn Nhật Cường** | **3 SP** | 🔵 `To Do` (`TripCrewPage.tsx`, `trip_crews`) |
+| **`[S320]`** | **WebApp Quét QR Soát Vé & Điểm Danh Hành Khách Lên Xe** | **Đoàn Nhật Cường** | **3 SP** | 🔵 `To Do` (`QrTicketScannerPage.tsx`, Conductor Scanner) |
+| **`[S313]`** | **Tích Hợp Cổng Thanh Toán Tự Động & Xử Lý Webhook** | **Nguyễn Đại Phát** | **3 SP** | 🔵 `To Do` (VietQR Webhook, Idempotency Service) |
+| **`[S314]`** | **Kiểm Thử Hồi Quy & Tích Hợp Toàn Bộ Luồng Thanh Toán** | **Nguyễn Đại Phát** | **2 SP** | 🔵 `To Do` (`S313ApiIntegrationTest.java`) |
+| **`[S321]`** | **Thiết Lập Chính Sách Phí Hoàn Hủy & Xử Lý Yêu Cầu Hủy Vé** | **Nguyễn Đại Phát** | **3 SP** | 🔵 `To Do` (`CancellationRefundPage.tsx`, `cancellation_rules`) |
+| **`[S322]`** | **Xuất PDF/Excel Lệnh Vận Chuyển Điện Tử Chuẩn Bộ GTVT** | **Nguyễn Đại Phát** | **2 SP** | 🔵 `To Do` (`PdfExportService`, GTVT Manifest) |
+| **`[S323]`** | **Kịch Bản E2E Test & Kiểm Thử Tích Hợp Ca Trực POS + Webhook** | **Nguyễn Đại Phát** | **2 SP** | 🔵 `To Do` (E2E Test Collection) |
+| **TỔNG** | **16 Tasks Chuẩn Hóa Theo Định Mức Scrum** | **4 Thành viên** | **42 SP** | **Phân chia đồng đều: Thành 10, Đức 11, Cường 11, Phát 10** |
 
 ---
 
-## 3. KỊCH BẢN TRÌNH DIỄN BẢO VỆ 15 PHÚT TRƯỚC HỘI ĐỒNG (15-MINUTE DEFENSE RUNBOOK)
+## 2. KỊCH BẢN TRÌNH DIỄN BẢO VỆ 15 PHÚT TRƯỚC HỘI ĐỒNG OJT
 
-| Thời gian | Nội dung trình bày | Người phụ trách | Hành động trực quan trên màn hình chiếu |
+Kịch bản trình diễn được thiết kế liền mạch theo dòng chảy thực tế của một chuyến xe từ lúc khách đặt vé đến khi xe hoàn thành lộ trình:
+
+| Mốc thời gian | Phân đoạn & Nghiệp vụ trình diễn | Thành viên phụ trách | Thao tác trực quan trên màn hình chiếu |
 | :---: | :--- | :---: | :--- |
-| **00:00 - 02:30**<br>*(2.5 phút)* | **Mở đầu & Kiến trúc Hệ thống**<br>- Giới thiệu Đề tài TravelEasy.<br>- Kiến trúc Modular Monolith, Supabase PostgreSQL.<br>- Bảng Trello 3 Sprint chuẩn Agile (Sprint 1: 35 thẻ Done, Sprint 2: 39 thẻ Done, Sprint 3: 10 thẻ / 34 SP). | **Phạm Công Thành**<br>*(Team Leader)* | - Mở trang `/demo` bấm nút **Kiểm tra Sức Khỏe Hệ Thống** (Show trạng thái UP, CSDL kết nối tốt, Memory < 256MB).<br>- Giới thiệu môi trường Production thực tế trên VPS `103.72.57.149`. |
-| **02:30 - 06:30**<br>*(4.0 phút)* | **Luồng Khách hàng Đặt vé & Concurrency Lock**<br>- Tìm kiếm chuyến SWR Cache 0ms.<br>- Sơ đồ 34 ghế Limousine VIP 2 tầng.<br>- Cơ chế khóa ghế Concurrency Lock 10:00.<br>- Quét VietQR thanh toán tự động PayOS. | **Trần Minh Đức**<br>*(Customer Portal)* | - Thao tác tìm xe Sài Gòn $\rightarrow$ Đà Lạt.<br>- **Chọn ghế A01, mở song song tab ẩn danh chứng minh ghế A01 lập tức chuyển màu Vàng (Đang giữ chỗ) trên màn hình người khác**.<br>- Quét VietQR hoàn tất đặt vé, sinh vé điện tử có QR code. |
-| **06:30 - 09:30**<br>*(3.0 phút)* | **Hiện trường Bến xe Thực tế**<br>- Quầy bán vé nhanh POS (`/company/pos`).<br>- In vé nhiệt cầm tay 80mm có mã QR bảo mật.<br>- Quản lý ca trực & nộp tiền mặt Z-Report (`/company/shifts`).<br>- Tài xế quét mã QR soát vé siêu tốc < 0.2s bằng camera điện thoại. | **Phạm Thanh Phong** & **Đoàn Nhật Cường** | - Phong mở `/company/pos`, dùng phím tắt F2 bán vé cho khách vãng lai, in hóa đơn nhiệt ra màn hình.<br>- Cường thao tác mở/kết ca trực `/company/shifts` và cầm điện thoại thật quét camera vào mã QR vé vừa in $\rightarrow$ Hệ thống lập tức "Tít" xanh và cập nhật vé sang trạng thái `ĐÃ LÊN XE`. |
-| **09:30 - 12:00**<br>*(2.5 phút)* | **Nghiệp vụ Đối tác B2B & Vận hành**<br>- Luồng đối tác nộp hồ sơ KYB.<br>- Admin duyệt và **hệ thống tự động gửi Email HTML bàn giao tài khoản**.<br>- Bản đồ GPS Live Tracking xe chạy thời gian thực (`/tracking`). | **Nguyễn Đại Phát** & **Phạm Công Thành** | - Phát mở Quản lý nhà xe duyệt đơn.<br>- Thành show hộp thư Gmail nhận thư chúc mừng có mật khẩu khởi tạo và nút đăng nhập thẳng vào Cổng Đối tác `/company/login`. |
-| **12:00 - 15:00**<br>*(3.0 phút)* | **Tổng kết Hạ tầng CI/CD, Đối soát & Q&A**<br>- Báo cáo Docker Compose trên VPS.<br>- Báo cáo doanh thu & tỷ lệ lấp đầy (`/company/reports`).<br>- Đối soát hoa hồng 8%-10% bất biến.<br>- Đón nhận câu hỏi phản biện từ Hội đồng. | **Phạm Công Thành** & Toàn đội | - Chiếu báo cáo deploy VPS, log giao dịch và trả lời câu hỏi chuyên sâu từ các Thầy Cô trong Hội đồng. |
+| **00:00 - 02:30**<br>*(2.5 phút)* | **Mở đầu & Báo cáo Kiến trúc Tổng thể**<br>- Giới thiệu đề tài TravelEasy.<br>- Kiến trúc Modular Monolith, Supabase PostgreSQL, Redis Lock.<br>- Báo cáo phân công công việc 3 Sprint chuẩn Agile/Scrum. | **Phạm Công Thành**<br>*(Team Leader)* | - Trình chiếu Dashboard quản trị hệ thống.<br>- Show trạng thái các dịch vụ Backend Spring Boot, Frontend React Vite và kết nối Supabase Cloud. |
+| **02:30 - 05:30**<br>*(3.0 phút)* | **Trải Nghiệm Khách Hàng & Khóa Ghế Concurrency Lock**<br>- Cơ chế khóa ghế 10:00 chống trùng vé đa luồng thời gian thực.<br>- Thanh toán tự động qua Webhook VietQR/VNPay. | **Phạm Công Thành** & **Nguyễn Đại Phát** | - Mở 2 trình duyệt song song cùng chọn ghế A01 chuyến 696: Tab A chọn thành công có đồng hồ đếm ngược, Tab B lập tức đổi màu Vàng (Đang giữ chỗ) qua SSE.<br>- Phát mô phỏng Webhook thanh toán thành công, vé lập tức chuyển sang trạng thái ĐÃ XUẤT. |
+| **05:30 - 08:30**<br>*(3.0 phút)* | **Nghiệp Vụ Đổi Chuyến, Giá Động & Đón Trả Trung Chuyển**<br>- Xử lý đổi vé sang chuyến mới & phụ thu giá vé.<br>- Phân bổ tài xế xe trung chuyển đón khách tận nhà. | **Trần Minh Đức** | - Minh họa thao tác khách đổi từ vé thường sang vé VIP trên trang `/company/ticket-exchange`: tính phí phụ thu, cấp mã vé mới và giải phóng ghế cũ.<br>- Mở trang `/company/shuttles` phân tài xế gom khách đón tận nơi tại Quận 1. |
+| **08:30 - 11:30**<br>*(3.0 phút)* | **Hiện Trường Bến Xe: Tổ Lái, Kiểm Tra Cồn & Soát Vé QR**<br>- Phân công tài xế, kiểm tra cồn 0.00 mg/L trước khi xuất bến.<br>- WebApp di động cho phụ xe quét mã QR soát vé tại cửa xe. | **Đoàn Nhật Cường** | - Mở `/company/crew`: Gán tài xế, nhập kết quả test cồn 0.00 mg/L để ký lệnh xuất bến.<br>- Cầm điện thoại mở `/conductor/scanner` quét mã QR vé vừa xuất $\rightarrow$ Hệ thống phát âm thanh "Ting" xanh, đổi trạng thái ĐÃ LÊN XE. |
+| **11:30 - 13:30**<br>*(2.0 phút)* | **Tài Chính Vận Hành: Sổ Chi Phí P&L & Lệnh GTVT**<br>- Nhập chi phí xăng dầu, BOT để tính lãi/lỗ chuyến xe.<br>- Xuất file PDF Lệnh Vận Chuyển chuẩn Bộ Giao thông Vận tải. | **Trần Minh Đức** & **Nguyễn Đại Phát** | - Mở `/company/expenses`: Kê khai tiền xăng 1.2tr, hệ thống tính lợi nhuận ròng chuyến xe là +3.12tr.<br>- Bấm xuất PDF Lệnh Vận Chuyển Bộ GTVT có đầy đủ danh sách 34 hành khách và thông tin tổ lái. |
+| **13:30 - 15:00**<br>*(1.5 phút)* | **Tổng Kết & Trả Lời Phản Biện Hội Đồng**<br>- Báo cáo đối soát hoa hồng sàn và ví nhà xe.<br>- Đón nhận câu hỏi đánh giá từ Thầy Cô Hội đồng. | **Cả 4 thành viên** | - Mở `/company/settlements` show lịch sử đối soát và sẵn sàng trả lời các câu hỏi kỹ thuật. |
 
 ---
 
-## 4. BỘ SẢN PHẨM BÀN GIAO NGHIỆM THU (FINAL DELIVERABLES)
-1. 📂 **Mã nguồn hoàn chỉnh**: Nhánh `main` sạch sẽ, gắn tag `v1.0.0-production`.
-2. 🐳 **Gói Docker triển khai**: `docker-compose.prod.yml` chạy trên VPS `103.72.57.149`.
-3. 📑 **Hồ sơ kỹ thuật**: Kiến trúc hệ thống, Báo cáo kiểm thử E2E, Sổ tay vận hành Runbook.
-4. 📊 **Slide thuyết trình bảo vệ**: 25 slides chuẩn nhận diện thương hiệu TravelEasy.
-5. 🎥 **Video Demo Backup**: Video 7 phút full HD phòng trường hợp sự cố mạng tại bến xe/hội trường.
+## 3. BẢNG TIÊU CHÍ CHẤT LƯỢNG NGHIỆM THU (QUALITY GATES)
 
----
-*Kế hoạch đã được rà soát, tinh gọn và phê duyệt bởi Nhóm trưởng Phạm Công Thành để đảm bảo đạt điểm số tuyệt đối tại buổi bảo vệ OJT.*
+1. **Code Isolation 100%**: Mỗi thành viên làm việc độc lập trên Controller, Service, DTO và Page riêng biệt, không chạm vào code của nhau.
+2. **Build Pass 100%**: Cả backend (`./gradlew compileJava`) và frontend (`npm run build`) luôn ở trạng thái pass tại mọi commit trên nhánh `dev`.
+3. **Data Integrity**: Bảng dữ liệu có ràng buộc khóa ngoại, transaction `@Transactional` chặt chẽ, không sinh ra dữ liệu mồ côi khi hủy vé hoặc đổi chuyến.

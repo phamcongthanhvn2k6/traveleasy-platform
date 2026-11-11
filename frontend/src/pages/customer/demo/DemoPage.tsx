@@ -34,6 +34,17 @@ interface DemoStats {
   readyForDemo: boolean;
 }
 
+interface DbPoolData {
+  type?: string;
+  poolName?: string;
+  active?: number;
+  idle?: number;
+  total?: number;
+  waiting?: number;
+  maxPoolSize?: number;
+  status?: string;
+}
+
 interface HealthData {
   status: string;
   version: string;
@@ -43,6 +54,8 @@ interface HealthData {
   tripCount: number;
   memoryUsedMb: number;
   memoryTotalMb: number;
+  memoryMaxMb?: number;
+  dbPool?: DbPoolData;
 }
 
 export const DemoPage: React.FC = () => {
@@ -221,7 +234,15 @@ export const DemoPage: React.FC = () => {
               </span>
               <span className="text-xs text-slate-500">v{health?.version || '1.0.0'}</span>
             </div>
-            <p className="mt-1 text-xs text-slate-500">DB: {health?.database || 'CONNECTED'}</p>
+            <p className="mt-1 text-xs text-slate-500">
+              DB: {health?.database || 'CONNECTED'}
+              {health?.dbPool?.total !== undefined && (
+                <> • Pool: {health.dbPool.active ?? 0}/{health.dbPool.total} (max {health.dbPool.maxPoolSize ?? 10})</>
+              )}
+            </p>
+            <p className="mt-0.5 text-[11px] text-slate-400">
+              RAM JVM: {health ? `${health.memoryUsedMb} / ${health.memoryTotalMb} MB` : 'Đang đo...'}
+            </p>
           </div>
 
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
@@ -478,7 +499,7 @@ export const DemoPage: React.FC = () => {
                 </Link>
               </div>
               <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                <strong>Thao tác trực tiếp:</strong> Tìm tuyến TP.HCM - Đà Lạt. Chọn chuyến xe Thành Bưởi hoặc FUTA. Mở sơ đồ ghế 2 tầng, chọn ghế A01/A02. Minh họa cơ chế khóa ghế 10 phút chống đặt trùng. Nhập thông tin hành khách, áp dụng mã giảm giá `HELLOSUMMER`, chọn thanh toán VietQR / VNPAY và hoàn tất xuất vé.
+                <strong>Thao tác trực tiếp:</strong> Đăng nhập hoặc thử tính năng <strong>Quên mật khẩu OTP Email</strong> tại <code>/auth</code>. Sau đó tìm tuyến TP.HCM - Đà Lạt, mở sơ đồ ghế 2 tầng, chọn ghế A01/A02 để minh họa cơ chế khóa ghế 10 phút chống đặt trùng. Nhập thông tin hành khách, áp dụng mã giảm giá <code>HELLOSUMMER</code>, chọn thanh toán VietQR / VNPAY và hoàn tất xuất vé.
               </p>
             </div>
 
@@ -518,7 +539,7 @@ export const DemoPage: React.FC = () => {
                 </Link>
               </div>
               <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                <strong>Thao tác trực tiếp:</strong> Đăng nhập Admin (`admin@traveleasy.vn`). Xem biểu đồ doanh thu toàn sàn, phân tích theo nhà xe. Thao tác phê duyệt hồ sơ đối tác mới (`/admin/partners`). Kiểm tra nhật ký kiểm toán (Audit Logs) để xem toàn bộ lịch sử thao tác gắn liền mã tương quan `X-Correlation-Id`.
+                <strong>Thao tác trực tiếp:</strong> Đăng nhập Admin (<code>admin@traveleasy.vn</code>). Xem biểu đồ doanh thu toàn sàn và bảng đối soát hoa hồng 8% (<code>/admin/settlements</code>). Thao tác phê duyệt hồ sơ đối tác mới (<code>/admin/bus-companies</code>) để kích hoạt gửi Email HTML tự động cấp tài khoản + mật khẩu ngẫu nhiên. Kiểm tra nhật ký kiểm toán (<code>/admin/audit-logs</code>) gắn mã <code>X-Correlation-Id</code>.
               </p>
             </div>
 
@@ -536,7 +557,7 @@ export const DemoPage: React.FC = () => {
                 <CheckCircle size={20} className="text-emerald-500" />
               </div>
               <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                <strong>Nội dung:</strong> Sẵn sàng trả lời các câu hỏi về: Giải thuật chống race-condition khi 2 người cùng đặt 1 ghế (Pessimistic lock), cơ chế bảo mật JWT stateless, chính sách hoàn tiền tự động và chiến lược backup dữ liệu. Bấm nút "Đặt Lại Ghế Khóa" để chứng minh khả năng dọn dẹp phiên thử nghiệm tức thì.
+                <strong>Nội dung:</strong> Sẵn sàng trả lời các câu hỏi về: Giải thuật chống race-condition khi 2 người cùng đặt 1 ghế (Pessimistic lock), cơ chế bảo mật JWT stateless, OTP khôi phục mật khẩu 2 bước và chiến lược backup dữ liệu. Bấm nút "Đặt Lại Ghế Khóa Tạm (LOCKED)" để chứng minh khả năng dọn dẹp phiên thử nghiệm tức thì.
               </p>
             </div>
           </div>

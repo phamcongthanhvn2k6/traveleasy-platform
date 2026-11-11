@@ -14,7 +14,7 @@
 | Cửa sổ trình duyệt | Vai trò demo | Đường dẫn mở sẵn | Tài khoản đăng nhập sẵn | Mật khẩu mẫu |
 | :--- | :--- | :--- | :--- | :--- |
 | **Cửa sổ 1: Chrome chính** | **Khách hàng** & **Demo Hub** | `http://localhost:5173/demo` | `customer@gmail.com` | `123456789@` |
-| **Cửa sổ 2: Chrome Ẩn danh** | **Đối tác Nhà xe (POS & Điều hành)** | `http://localhost:5173/company/login` | `operator@futa.vn` *(Phương Trang)* | `123456789@` |
+| **Cửa sổ 2: Chrome Ẩn danh** | **Đối tác Nhà xe (POS & Điều hành)** | `http://localhost:5173/company/login` | `partner@traveleasy.vn` *(hoặc `dieuhanh@futabus.vn`)* | `123456789@` |
 | **Cửa sổ 3: MS Edge / Firefox** | **Quản trị viên Sàn Tổng (Admin)** | `http://localhost:5173/admin/login` | `admin@traveleasy.vn` *(hoặc `daiphat.admin@traveleasy.vn`)* | `123456789@` |
 | **Thiết bị phụ: Điện thoại thật** | **Tài xế / Nhân viên soát vé** | Camera điện thoại kết nối mạng nội bộ | Quét trực tiếp mã QR trên vé máy tính | *(Không cần mật khẩu)* |
 
@@ -46,11 +46,11 @@ Sức khỏe hệ thống       Khóa ghế Concurrency    POS bán vé, In bill
 
 #### 🖥️ Thao tác trực quan trên màn hình chiếu:
 1. Mở trang **Demo Hub** tại `http://localhost:5173/demo`.
-2. Bấm nút xanh **`Kiểm tra Sức Khỏe Hệ Thống`**:
+2. Bấm nút **`Kiểm Tra Sức Khỏe API`**:
    - Màn hình hiện Toast thông báo xanh: *`Trạng thái UP - Cơ sở dữ liệu KẾT NỐI TỐT`*.
-   - Khối thống kê nhảy số: Uptime, Memory Used < 256MB, 44 bảng CSDL hoạt động hoàn hảo.
+   - Khối thống kê hiển thị trực tiếp: Trạng thái `UP`, kết nối DB `CONNECTED`, chỉ số **DB Connection Pool (HikariCP active/total)** và **RAM JVM (`memoryUsedMb / memoryTotalMb MB`)**.
 3. Thành chỉ tay vào màn hình:
-   > *"Như Hội đồng có thể thấy trên màn hình trung tâm Demo Hub, toàn bộ dịch vụ Backend và CSDL Supabase đang kết nối trực tiếp, độ trễ mạng dưới 50ms, bộ nhớ RAM được tối ưu hóa ở mức an toàn. Sau đây, em xin nhường lại phần trình diễn cho bạn Trần Minh Đức để biểu diễn luồng đặt vé và giải thuật khóa ghế Concurrency."*
+   > *"Như Hội đồng có thể thấy trên màn hình trung tâm Demo Hub, toàn bộ dịch vụ Backend, HikariCP DB Pool và CSDL Supabase đang kết nối trực tiếp, bộ nhớ RAM JVM ở mức an toàn. Sau đây, em xin nhường lại phần trình diễn cho bạn Trần Minh Đức để biểu diễn luồng đặt vé và giải thuật khóa ghế Concurrency."*
 
 ---
 
@@ -116,30 +116,25 @@ Sức khỏe hệ thống       Khóa ghế Concurrency    POS bán vé, In bill
 
 ---
 
-### ⏱️ CHẶNG 4: HỆ SINH THÁI MỞ RỘNG BẾN XE: CARGO, THUÊ XE & GPS TRACKING (09:30 - 12:30)
+### ⏱️ CHẶNG 4: ĐỊNH VỊ GPS LIVE TRACKING, PHÊ DUYỆT ĐỐI TÁC EMAIL & ĐỐI SOÁT ADMIN (09:30 - 12:30)
 **Người trình bày**: **Đoàn Nhật Cường** & **Nguyễn Đại Phát**  
-**Mục tiêu**: Trình diễn các tính năng vượt trội nâng tầm đề tài lên mức Enterprise: Bản đồ GPS vệ tinh, Ký gửi hàng hóa và Ký quỹ Escrow.
+**Mục tiêu**: Trình diễn các tính năng quản trị & trải nghiệm nâng cao thực tế trên hệ thống: Bản đồ GPS vệ tinh, Quên mật khẩu OTP Email / Phê duyệt hồ sơ đối tác tự động gửi Email cấp tài khoản, Đối soát 8% hoa hồng và Audit Logs.
 
 #### 🗣️ Lời thoại của Cường:
 > *"Để giải quyết nỗi lo lắng của người nhà khi đón khách lúc nửa đêm, nhóm em đã phát triển tính năng **Bản đồ Định vị GPS Live Tracking xe chạy thời gian thực**."*
 
 #### 🖥️ Thao tác trực quan trên màn hình chiếu:
 1. **Live Tracking Xe Chạy Thời Gian Thực (`/tracking/:tripId`)**:
-   - Cường mở đường dẫn `/tracking/101`.
-   - Bản đồ tương tác vệ tinh Leaflet hiển thị lộ trình TP.HCM ➔ Đà Lạt.
-   - Icon xe khách màu đỏ di chuyển mượt mà dọc theo Quốc lộ 20 theo từng giây nhờ giao thức **Server-Sent Events (SSE)**, hiển thị thời gian dự kiến tới trạm dừng chân (ETA) và tốc độ xe chạy 75 km/h.
-2. **Ký Gửi Bưu Kiện Hầm Xe (`/cargo`)**:
-   - Cường chuyển sang trang `/cargo`:
-     - Nhập kiện hàng: `Thùng trái cây sầu riêng`, nặng `15 kg`.
-     - Hệ thống tự động tính cước theo biểu phí bến xe: `120.000 VNĐ`.
-     - Bấm đặt gửi hàng ➔ Sinh mã vận đơn bưu kiện kèm **Tem nhãn QR dán kiện hàng**.
-3. **Cổng Quản Trị Admin & Ký Quỹ Escrow 30% (`/admin/charters`)**:
+   - Cường mở đường dẫn `/tracking` (hoặc `/tracking/1`).
+   - Bản đồ tương tác hiển thị lộ trình chuyến xe theo thời gian thực.
+2. **Bảo mật tài khoản OTP Email (`/auth`)**:
+   - Cường (hoặc Đức) minh họa nhanh luồng **`Quên mật khẩu`**: nhập đúng email đăng ký -> hệ thống gửi **OTP 6 số có hiệu lực 5 phút** qua Gmail SMTP -> xác minh OTP và đổi mật khẩu mới tức thì.
+3. **Cổng Quản Trị Admin: Phê Duyệt Đối Tác Gửi Email B2B & Đối Soát (`/admin/bus-companies`, `/admin/settlements`)**:
    - Phát chuyển sang Cửa sổ 3 (Cổng Admin):
-     - Mở trang `/admin/charters`: Quản lý danh sách các hợp đồng thuê xe du lịch 45 chỗ trọn gói đi Vũng Tàu.
-     - Phát chỉ vào cột **Ký quỹ Escrow**: Sàn TravelEasy giữ 30% tiền cọc (3.000.000 VNĐ).
-     - Bấm nút **`Phê Duyệt & Giải Ngân Escrow`**: Hệ thống chuyển tiền cho nhà xe sau khi nhận được xác nhận chuyến đi an toàn từ hành khách.
+     - Mở `/admin/bus-companies`: Trình diễn luồng **Phê duyệt / Yêu cầu bổ sung / Từ chối hồ sơ đối tác**. Khi bấm **Phê duyệt**, hệ thống tự động tạo tài khoản `ROLE_OPERATOR` gắn `busCompanyId`, sinh mật khẩu ngẫu nhiên `12 ký tự` bằng `SecureRandom` và gửi ngay Email HTML chuẩn nhận diện TravelEasy qua SMTP tới email đối tác.
+     - Mở `/admin/settlements`: Hiển thị kỳ đối soát doanh thu toàn sàn với mức khấu trừ tự động **8% phí hoa hồng sàn** (92% chi trả nhà xe).
 4. **Vết Kiểm Toán Bất Biến (`/admin/audit-logs`)**:
-   - Phát mở bảng Audit Logs: Hiển thị ngay lập tức dòng log vừa thực hiện: *`ADMIN duyệt giải ngân hợp đồng CH-001 lúc HH:mm:ss, IP 127.0.0.1`*.
+   - Phát mở bảng Audit Logs: Hiển thị ngay lập tức dòng log thao tác gắn kèm mã tương quan `X-Correlation-Id`.
    > *Phát nhấn mạnh: "Bảng `audit_logs` được thiết kế theo nguyên tắc Append-Only, chỉ cho INSERT, không cho sửa xóa, bảo vệ tính trung thực của kiểm toán tài chính sàn."*
 
 ---
@@ -200,26 +195,26 @@ Dưới đây là 5 câu hỏi kinh điển mà các Giảng viên thường ch�
 > *"Mô hình đối soát doanh thu giữa Sàn và các Nhà xe hoạt động ra sao?"*
 * **Trả lời chuẩn (Phát)**:  
   *"Dạ thưa Thầy Cô, TravelEasy áp dụng cơ chế **Net Payout Escrow**:  
-  Toàn bộ tiền vé khách thanh toán online ban đầu được giữ tại tài khoản trung gian của Sàn. Định kỳ hàng tuần hoặc sau khi chuyến xe hoàn thành an toàn, hệ thống tự động chạy bảng đối soát khấu trừ đúng **10% phí hoa hồng sàn**, và xuất phiếu kết toán 90% doanh thu thực nhận về ví của nhà xe. Mọi giao dịch đối soát đều ghi vết vào sổ cái bất biến `audit_logs` để kế toán hai bên đối chiếu minh bạch."*
+  Toàn bộ tiền vé khách thanh toán online ban đầu được giữ tại tài khoản trung gian của Sàn. Định kỳ hàng tuần hoặc sau khi chuyến xe hoàn thành an toàn, hệ thống tự động chạy bảng đối soát khấu trừ đúng **8% phí hoa hồng sàn**, và xuất phiếu kết toán **92% doanh thu thực nhận** về ví của nhà xe. Mọi giao dịch đối soát đều ghi vết vào sổ cái bất biến `audit_logs` để kế toán hai bên đối chiếu minh bạch."*
 
 ---
 
 ## 📋 5. BẢNG CHECKLIST CHUẨN BỊ TRƯỚC GIỜ BẢO VỆ 30 PHÚT
 
 - [ ] **Kiểm tra nguồn điện & mạng**: Cắm sạc laptop 100%, kết nối mạng Wi-Fi ổn định (chuẩn bị sẵn 1 điện thoại phát 4G dự phòng).
-- [ ] **Khởi động server**:
+- [ ] **Khởi động server (Profile mặc định/dev để kích hoạt `/demo`)**:
   ```powershell
   # Terminal 1 - Backend:
-  cd backend; ./mvnw spring-boot:run
+  cd backend; .\gradlew.bat bootRun
   # Terminal 2 - Frontend:
   cd frontend; npm run dev
   ```
 - [ ] **Mở sẵn 3 cửa sổ trình duyệt**:
   - Tab 1: `http://localhost:5173/demo`
-  - Tab 2: `http://localhost:5173/company/pos` (Đăng nhập sẵn `operator@futa.vn`)
+  - Tab 2: `http://localhost:5173/company/pos` (Đăng nhập sẵn `partner@traveleasy.vn` hoặc `dieuhanh@futabus.vn`)
   - Tab 3: `http://localhost:5173/admin/dashboard` (Đăng nhập sẵn `admin@traveleasy.vn`)
 - [ ] **Điện thoại quét mã QR**: Bật sẵn camera hoặc truy cập `http://<ip-may-tinh>:5173/scanner`.
-- [ ] **File Slide thuyết trình**: Mở sẵn ở chế độ Presenter View.
+- [x] **File Slide thuyết trình**: `docs/04-agile-and-sprints/TravelEasy_BaoVe_OJT_25_Slides.pptx` (25 trang chuẩn nhận diện TravelEasy — mở sẵn ở chế độ Presenter View).
 - [ ] **Trang phục**: Áo sơ mi chỉnh tề, tinh thần tự tin, đoàn kết hỗ trợ đồng đội!
 
 ---

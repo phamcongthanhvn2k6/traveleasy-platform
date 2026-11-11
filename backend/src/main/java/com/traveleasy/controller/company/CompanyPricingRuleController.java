@@ -3,6 +3,7 @@ package com.traveleasy.controller.company;
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.exception.ErrorCode;
+import com.traveleasy.common.security.CompanySecurityService;
 import com.traveleasy.dto.company.pricing.*;
 import com.traveleasy.entity.*;
 import com.traveleasy.repository.BusCompanyRepository;
@@ -18,15 +19,23 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * [S307] Phân Hệ Quản Trị Giá Vé Động & Phụ Thu Lễ Tết / Cuối Tuần (/company/pricing-rules)
+ * BẢO MẬT: Chỉ Chủ nhà xe (StaffRole.OWNER) và ADMIN mới có quyền cấu hình luật giá
+ * @author Trần Minh Đức (tranduc2601)
+ */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/company/pricing-rules")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@Slf4j
 @Tag(name = "Company Pricing Rules Management", description = "Quản trị quy tắc giá vé động, phụ thu Lễ Tết/Cuối tuần và Flash Sale giờ chót cho nhà xe đối tác")
 public class CompanyPricingRuleController {
 
@@ -35,6 +44,8 @@ public class CompanyPricingRuleController {
     private final RouteRepository routeRepository;
     private final UserRepository userRepository;
     private final DynamicPricingService dynamicPricingService;
+    private final CompanySecurityService securityService;
+    private static final BigDecimal MAX_SURCHARGE_CAP_PERCENT = new BigDecimal("40.0"); // Trần tối đa 40%
 
     @GetMapping
     @Operation(summary = "Lấy danh sách quy tắc giá vé của nhà xe")
@@ -181,7 +192,7 @@ public class CompanyPricingRuleController {
             rule.setDescription(request.getDescription());
         }
 
-        CompanyPricingRule updatedRule = pricingRuleRepository.save(rule);
+         CompanyPricingRule updatedRule = pricingRuleRepository.save(rule);
         log.info("Nhà xe {} cập nhật quy tắc giá vé: id={}", targetCompanyId, updatedRule.getId());
 
         return ApiResponse.success("Cập nhật quy tắc giá vé thành công", mapToResponse(updatedRule));
@@ -236,6 +247,69 @@ public class CompanyPricingRuleController {
 
         PriceSimulationResponse response = dynamicPricingService.simulatePricing(request);
         return ApiResponse.success("Mô phỏng tính giá vé thành công", response);
+    }
+
+    @PostMapping("/calculate-dynamic-price")
+    @Operation(summary = "Tính toán giá vé thực tế có áp dụng trần phụ thu Max Surcharge Cap 40% (BUG-ROUND2-04)")
+    public ApiResponse<Map<String, Object>> calculateDynamicPrice(@RequestBody Map<String, Object> payload) {
+        Object basePriceObj = payload.getOrDefault("basePrice", 300000);
+        BigDecimal basePrice = new BigDecimal(basePriceObj.toString());
+
+        String departureDateStr = (String) payload.getOrDefault("departureDate", LocalDate.now().toString());
+        LocalDate departureDate = LocalDate.parse(departureDateStr.substring(0, 10));
+
+        boolean isFloor1 = Boolean.TRUE.equals(payload.get("isFloor1")) || "1".equals(String.valueOf(payload.get("floor")));
+        boolean isHoliday = Boolean.TRUE.equals(payload.get("isHoliday"));
+
+        // 1. Tính phụ thu cuối tuần
+        DayOfWeek day = departureDate.getDayOfWeek();
+        boolean isWeekend = (day == DayOfWeek.FRIDAY || day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY);
+        BigDecimal weekendSurcharge = BigDecimal.ZERO;
+        if (isWeekend) {
+            weekendSurcharge = basePrice.multiply(new BigDecimal("0.15")).setScale(0, RoundingMode.HALF_UP);
+        }
+
+        // 2. Tính phụ thu ngày Lễ
+        BigDecimal holidaySurcharge = BigDecimal.ZERO;
+        if (isHoliday) {
+            holidaySurcharge = basePrice.multiply(new BigDecimal("0.30")).setScale(0, RoundingMode.HALF_UP);
+        }
+
+        // 3. Tính phụ thu tầng 1
+        BigDecimal floor1Surcharge = isFloor1 ? new BigDecimal("20000") : BigDecimal.ZERO;
+
+        BigDecimal totalRawSurcharge = weekendSurcharge.add(holidaySurcharge).add(floor1Surcharge);
+
+        // KIỂM SOÁT TRẦN PHỤ THU
+        BigDecimal maxAllowedSurcharge = basePrice.multiply(MAX_SURCHARGE_CAP_PERCENT)
+                .divide(new BigDecimal("100"), 0, RoundingMode.HALF_UP);
+
+        boolean capApplied = false;
+        BigDecimal finalSurcharge = totalRawSurcharge;
+        if (totalRawSurcharge.compareTo(maxAllowedSurcharge) > 0) {
+            finalSurcharge = maxAllowedSurcharge;
+            capApplied = true;
+        }
+
+        BigDecimal finalPrice = basePrice.add(finalSurcharge);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("basePrice", basePrice);
+        result.put("departureDate", departureDateStr);
+        result.put("isWeekend", isWeekend);
+        result.put("isHoliday", isHoliday);
+        result.put("isFloor1", isFloor1);
+        result.put("weekendSurcharge", weekendSurcharge);
+        result.put("holidaySurcharge", holidaySurcharge);
+        result.put("floor1Surcharge", floor1Surcharge);
+        result.put("rawTotalSurcharge", totalRawSurcharge);
+        result.put("maxAllowedSurcharge", maxAllowedSurcharge);
+        result.put("capApplied", capApplied);
+        result.put("finalSurcharge", finalSurcharge);
+        result.put("finalPrice", finalPrice);
+        result.put("regulatoryCompliance", "Tuân thủ quy chuẩn giá vé Bộ GTVT & Sở Tài chính (Trần <= 40%)");
+
+        return ApiResponse.success(result);
     }
 
     private CompanyPricingRule findRuleAndValidateOwnership(Long ruleId, Long targetCompanyId) {
@@ -300,6 +374,12 @@ public class CompanyPricingRuleController {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Admin hệ thống vui lòng chỉ định mã nhà xe cần thao tác");
         }
 
+        // BẢO MẬT PHÂN QUYỀN NỘI BỘ NHÀ XE (Sub-Account RBAC):
+        // Chỉ Chủ nhà xe (StaffRole.OWNER) mới có quyền cấu hình luật giá vé (cấm Thu ngân & Điều phối viên)
+        if (securityService != null) {
+            securityService.requireStaffRole(authentication, StaffRole.OWNER);
+        }
+
         // Người dùng nhà xe BẮT BUỘC lấy busCompanyId từ tài khoản của chính mình (chống giả mạo)
         if (user.getBusCompanyId() != null && user.getBusCompanyId() > 0) {
             return user.getBusCompanyId();
@@ -310,16 +390,7 @@ public class CompanyPricingRuleController {
             return compByEmail.get().getId();
         }
 
-        if (user.getFullName() != null) {
-            String fullName = user.getFullName().trim().toLowerCase();
-            for (BusCompany bc : busCompanyRepository.findAll()) {
-                String bcName = bc.getName().trim().toLowerCase();
-                if (fullName.equals(bcName) || fullName.equals("điều hành " + bcName)) {
-                    return bc.getId();
-                }
-            }
-        }
-
+        // Đã xóa bỏ hoàn toàn lỗ hổng cướp quyền qua fullName (findAll loop).
         // Tuyệt đối không fallback explicitCompanyId cho non-admin: Trả về FORBIDDEN ngay lập tức
         throw new AppException(ErrorCode.FORBIDDEN, "Tài khoản của bạn không được cấp quyền quản trị nhà xe nào");
     }

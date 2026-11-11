@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
+    .card { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+    .header { background: linear-gradient(135deg, #ef4444, #dc2626); padding: 24px; text-align: center; color: #ffffff; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: 800; }
+    .content { padding: 28px; line-height: 1.6; font-size: 14.5px; }
+    .box-reason { background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; color: #991b1b; font-weight: 600; margin: 18px 0; }
+    .footer { background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px; text-align: center; font-size: 12.5px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>TravelEasy Platform</h1>
+      <p>Thông Báo Thẩm Định Hồ Sơ Hợp Tác</p>
+    </div>
+    <div class="content">
+      <p>Kính gửi Đại diện Nhà Xe <strong>{{companyName}}</strong>,</p>
+      <p>Ban Quản Trị TravelEasy xin cảm ơn Quý Đơn vị đã quan tâm và nộp hồ sơ hợp tác mở bán vé trực tuyến trên nền tảng của chúng tôi.</p>
+      <p>Sau khi thẩm định giấy tờ và điều kiện vận tải, chúng tôi rất tiếc phải thông báo hồ sơ của Quý Đơn vị hiện <strong>chưa được phê duyệt</strong> vì lý do:</p>
+
+      <div class="box-reason">
+        📌 {{reason}}
+      </div>
+
+      <p>Quý Nhà Xe vui lòng kiểm tra và hoàn thiện lại hồ sơ giấy tờ, sau đó có thể nộp lại đơn đăng ký mới hoặc liên hệ trực tiếp với chuyên viên thẩm định để được hỗ trợ hướng dẫn chi tiết.</p>
+    </div>
+    <div class="footer">
+      Tổng Đài Thẩm Định Đối Tác: <strong>1900 6868</strong> • Email: partner-kyb@traveleasy.vn
+    </div>
+  </div>
+</body>
+</html>
