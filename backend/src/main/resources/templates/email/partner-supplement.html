@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
+    .card { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+    .header { background: linear-gradient(135deg, #f59e0b, #d97706); padding: 24px; text-align: center; color: #ffffff; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: 800; }
+    .content { padding: 28px; line-height: 1.6; font-size: 14.5px; }
+    .box-req { background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 14px 18px; color: #92400e; font-weight: 600; margin: 18px 0; }
+    .footer { background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px; text-align: center; font-size: 12.5px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>TravelEasy Platform</h1>
+      <p>Yêu Cầu Bổ Sung Hồ Sơ Pháp Lý</p>
+    </div>
+    <div class="content">
+      <p>Kính gửi Đại diện Nhà Xe <strong>{{companyName}}</strong>,</p>
+      <p>Ban Quản Trị TravelEasy đã tiếp nhận hồ sơ đăng ký hợp tác của Quý Nhà Xe. Để hoàn tất quy trình phê duyệt KYB, Quý Nhà Xe vui lòng bổ sung thông tin sau:</p>
+
+      <div class="box-req">
+        📝 {{requirements}}
+      </div>
+
+      <p>Quý Nhà Xe vui lòng phản hồi email này hoặc liên hệ chuyên viên phụ trách để gửi bổ sung các chứng từ theo yêu cầu trong vòng 03 ngày làm việc.</p>
+    </div>
+    <div class="footer">
+      Phòng Hợp Tác Đối Tác TravelEasy • Hotline: <strong>1900 6868</strong>
+    </div>
+  </div>
+</body>
+</html>
