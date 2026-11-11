@@ -708,7 +708,7 @@ export const TripSearchPage: React.FC = () => {
                 boxShadow: '0 4px 10px rgba(37,99,235,0.3)',
               }}
             >
-              Tiếp Tục Đặt Vé ➔
+              Tiếp Tục Đặt Vé {'->'}
             </button>
             <button
               onClick={handleCancelGlobalHold}
