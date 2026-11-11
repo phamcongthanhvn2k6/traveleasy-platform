@@ -68,6 +68,9 @@ public class S313ApiIntegrationTest {
     @Autowired
     private ReviewRepository reviewRepository;
 
+    @Autowired
+    private com.traveleasy.repository.SettlementRecordRepository settlementRecordRepository;
+
     private static final String TEST_BOOKING_CODE = "BK-S313-TEST-8888";
     private static final String TEST_TICKET_CODE = "TK-S313-TEST-8888";
 
@@ -83,6 +86,7 @@ public class S313ApiIntegrationTest {
     }
 
     private void cleanDatabase() {
+        settlementRecordRepository.deleteAllInBatch();
         paymentTransactionRepository.deleteAllInBatch();
         ticketRepository.deleteAllInBatch();
         reviewRepository.deleteAllInBatch();
