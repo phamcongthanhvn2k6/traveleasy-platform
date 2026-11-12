@@ -56,7 +56,7 @@ export const CompanyPricingRulesPage: React.FC = () => {
   const [ruleType, setRuleType] = useState<PricingRuleType>('HOLIDAY_SURCHARGE');
   const [adjustmentType, setAdjustmentType] = useState<AdjustmentType>('PERCENTAGE');
   const [adjustmentValue, setAdjustmentValue] = useState<number>(20);
-  const [scope, setScope] = useState<PricingRuleScope>('COMPANY_WIDE');
+  const [scope, setScope] = useState<PricingRuleScope>('ALL_ROUTES');
   const [targetRouteId, setTargetRouteId] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('2026-09-01');
   const [endDate, setEndDate] = useState<string>('2026-09-04');
@@ -88,7 +88,7 @@ export const CompanyPricingRulesPage: React.FC = () => {
   const fetchRules = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/v1/company/pricing-rules');
+      const res = await api.get('/company/pricing-rules');
       if (res.data) {
         setRules(Array.isArray(res.data) ? res.data : (res.data.data || []));
       }
@@ -111,7 +111,7 @@ export const CompanyPricingRulesPage: React.FC = () => {
     setRuleType('HOLIDAY_SURCHARGE');
     setAdjustmentType('PERCENTAGE');
     setAdjustmentValue(20);
-    setScope('COMPANY_WIDE');
+    setScope('ALL_ROUTES');
     setTargetRouteId('');
     setStartDate(new Date().toISOString().split('T')[0]);
     const nextWeek = new Date();
@@ -130,11 +130,17 @@ export const CompanyPricingRulesPage: React.FC = () => {
     setRuleType(rule.ruleType);
     setAdjustmentType(rule.adjustmentType);
     setAdjustmentValue(rule.adjustmentValue);
-    setScope(rule.scope);
-    setTargetRouteId(rule.targetRouteId ? String(rule.targetRouteId) : '');
+    setScope(rule.scope || 'ALL_ROUTES');
+    const rId = rule.routeId ?? rule.targetRouteId;
+    setTargetRouteId(rId ? String(rId) : '');
     setStartDate(rule.startDate);
     setEndDate(rule.endDate);
-    setSelectedDays(rule.applicableDaysOfWeek ? rule.applicableDaysOfWeek.split(',') : []);
+    const daysStr = rule.applicableDays ?? rule.applicableDaysOfWeek;
+    if (daysStr) {
+      setSelectedDays(daysStr === 'ALL' ? ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] : daysStr.split(','));
+    } else {
+      setSelectedDays([]);
+    }
     setPriority(rule.priority);
     setDescription(rule.description || '');
     setIsModalOpen(true);
@@ -173,20 +179,25 @@ export const CompanyPricingRulesPage: React.FC = () => {
         adjustmentType,
         adjustmentValue: Number(adjustmentValue),
         scope,
-        targetRouteId: targetRouteId ? Number(targetRouteId) : null,
+        routeId: scope === 'SPECIFIC_ROUTE' && targetRouteId ? Number(targetRouteId) : null,
+        targetRouteId: scope === 'SPECIFIC_ROUTE' && targetRouteId ? Number(targetRouteId) : null,
         startDate,
         endDate,
-        applicableDaysOfWeek: selectedDays.length > 0 ? selectedDays.join(',') : null,
+        applicableDays: selectedDays.length === 7 ? 'ALL' : (selectedDays.length > 0 ? selectedDays.join(',') : 'ALL'),
+        applicableDaysOfWeek: selectedDays.length === 7 ? 'ALL' : (selectedDays.length > 0 ? selectedDays.join(',') : 'ALL'),
+        isLastMinute: ruleType === 'FLASH_SALE',
+        lastMinuteHours: 2,
+        minEmptySeatPercentage: 50,
         priority: Number(priority),
         status: 'ACTIVE',
         description: description.trim() || null
       };
 
       if (editingRuleId) {
-        await api.put(`/api/v1/company/pricing-rules/${editingRuleId}`, payload);
+        await api.put(`/company/pricing-rules/${editingRuleId}`, payload);
         toast.success('Cập nhật quy tắc giá thành công!');
       } else {
-        await api.post('/api/v1/company/pricing-rules', payload);
+        await api.post('/company/pricing-rules', payload);
         toast.success('Tạo quy tắc giá mới thành công!');
       }
 
@@ -203,7 +214,7 @@ export const CompanyPricingRulesPage: React.FC = () => {
   // Bật/tắt trạng thái nhanh 1-Click
   const handleToggleStatus = async (ruleId: number) => {
     try {
-      await api.patch(`/api/v1/company/pricing-rules/${ruleId}/toggle-status`);
+      await api.patch(`/company/pricing-rules/${ruleId}/toggle-status`);
       toast.success('Đã cập nhật trạng thái quy tắc giá.');
       fetchRules();
     } catch (err: any) {
@@ -218,7 +229,7 @@ export const CompanyPricingRulesPage: React.FC = () => {
       return;
     }
     try {
-      await api.delete(`/api/v1/company/pricing-rules/${ruleId}`);
+      await api.delete(`/company/pricing-rules/${ruleId}`);
       toast.success('Đã xóa quy tắc giá thành công.');
       fetchRules();
     } catch (err: any) {
@@ -242,8 +253,9 @@ export const CompanyPricingRulesPage: React.FC = () => {
         availableSeats: Number(simAvailableSeats)
       };
 
-      const res = await api.post('/api/v1/company/pricing-rules/simulate', req);
-      setSimResult(res.data);
+      const res = await api.post('/company/pricing-rules/simulate', req);
+      const simData: PriceSimulationResponse = res.data?.data || res.data;
+      setSimResult(simData);
       toast.success('Mô phỏng tính giá động thành công!');
     } catch (err: any) {
       console.error('Lỗi khi mô phỏng giá:', err);
@@ -258,7 +270,7 @@ export const CompanyPricingRulesPage: React.FC = () => {
     const total = rules.length;
     const active = rules.filter(r => r.status === 'ACTIVE').length;
     const surcharge = rules.filter(r => r.ruleType === 'HOLIDAY_SURCHARGE' || r.ruleType === 'WEEKEND_SURCHARGE').length;
-    const discount = rules.filter(r => r.ruleType === 'FLASH_SALE_LAST_MINUTE' || r.ruleType === 'EARLY_BIRD').length;
+    const discount = rules.filter(r => r.ruleType === 'FLASH_SALE').length;
     return { total, active, surcharge, discount };
   }, [rules]);
 
@@ -266,7 +278,7 @@ export const CompanyPricingRulesPage: React.FC = () => {
   const filteredRules = useMemo(() => {
     if (activeTab === 'ACTIVE') return rules.filter(r => r.status === 'ACTIVE');
     if (activeTab === 'SURCHARGE') return rules.filter(r => r.ruleType === 'HOLIDAY_SURCHARGE' || r.ruleType === 'WEEKEND_SURCHARGE');
-    if (activeTab === 'DISCOUNT') return rules.filter(r => r.ruleType === 'FLASH_SALE_LAST_MINUTE' || r.ruleType === 'EARLY_BIRD');
+    if (activeTab === 'DISCOUNT') return rules.filter(r => r.ruleType === 'FLASH_SALE');
     return rules;
   }, [rules, activeTab]);
 
@@ -280,10 +292,8 @@ export const CompanyPricingRulesPage: React.FC = () => {
         return { label: 'Phụ thu Lễ Tết (+20%)', color: 'bg-rose-50 text-rose-700 border-rose-200' };
       case 'WEEKEND_SURCHARGE':
         return { label: 'Phụ thu Cuối tuần (+10%)', color: 'bg-amber-50 text-amber-700 border-amber-200' };
-      case 'FLASH_SALE_LAST_MINUTE':
+      case 'FLASH_SALE':
         return { label: 'Flash Sale Giờ Chót (-15%)', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
-      case 'EARLY_BIRD':
-        return { label: 'Ưu Đãi Đặt Sớm (-10%)', color: 'bg-teal-50 text-teal-700 border-teal-200' };
       default:
         return { label: 'Quy Tắc Tùy Chỉnh', color: 'bg-blue-50 text-blue-700 border-blue-200' };
     }
@@ -507,7 +517,7 @@ export const CompanyPricingRulesPage: React.FC = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-slate-400">Phạm vi:</span>
                         <span className="font-medium text-slate-700">
-                          {rule.scope === 'COMPANY_WIDE' ? 'Toàn nhà xe' : `Tuyến xe #${rule.targetRouteId || 'Tất cả'}`}
+                          {rule.scope === 'ALL_ROUTES' ? 'Toàn mạng lưới' : (rule.routeName ? rule.routeName : (rule.routeId ? `Tuyến xe #${rule.routeId}` : `Tuyến xe #${rule.targetRouteId || 'Cụ thể'}`))}
                         </span>
                       </div>
                     </div>
@@ -516,7 +526,7 @@ export const CompanyPricingRulesPage: React.FC = () => {
                   {/* Actions bottom */}
                   <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
                     <span className="text-slate-400 text-2xs truncate max-w-[150px]">
-                      {rule.applicableDaysOfWeek ? `Áp dụng: ${rule.applicableDaysOfWeek}` : 'Tất cả các ngày'}
+                      {rule.applicableDays ? (rule.applicableDays === 'ALL' ? 'Tất cả các ngày' : `Áp dụng: ${rule.applicableDays}`) : (rule.applicableDaysOfWeek ? `Áp dụng: ${rule.applicableDaysOfWeek}` : 'Tất cả các ngày')}
                     </span>
                     <div className="flex items-center gap-1">
                       <button
@@ -634,13 +644,13 @@ export const CompanyPricingRulesPage: React.FC = () => {
                     <div className="space-y-1.5 text-xs text-slate-600 border-t border-slate-200 pt-2">
                       <div className="flex justify-between">
                         <span className="text-slate-400">Giá vé gốc:</span>
-                        <span className="font-semibold">{formatCurrency(simResult.basePrice)}</span>
+                        <span className="font-semibold">{formatCurrency(simResult.originalPrice ?? simResult.basePrice ?? 0)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Chênh lệch điều chỉnh:</span>
-                        <span className={`font-bold ${simResult.adjustmentAmount >= 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                          {simResult.adjustmentAmount >= 0 ? '+' : ''}
-                          {formatCurrency(simResult.adjustmentAmount)}
+                        <span className={`font-bold ${(simResult.deltaAmount ?? simResult.adjustmentAmount ?? 0) >= 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                          {(simResult.deltaAmount ?? simResult.adjustmentAmount ?? 0) >= 0 ? '+' : ''}
+                          {formatCurrency(simResult.deltaAmount ?? simResult.adjustmentAmount ?? 0)}
                         </span>
                       </div>
                       {simResult.pricingBadge && (
@@ -661,9 +671,9 @@ export const CompanyPricingRulesPage: React.FC = () => {
                       )}
                     </div>
 
-                    {simResult.ruleDescription && (
+                    {(simResult.explanation || simResult.ruleDescription) && (
                       <div className="bg-indigo-50/70 p-2.5 rounded-lg border border-indigo-100 text-2xs text-indigo-900">
-                        <strong>Thông báo khách hàng:</strong> {simResult.ruleDescription}
+                        <strong>Thông báo khách hàng:</strong> {simResult.explanation || simResult.ruleDescription}
                       </div>
                     )}
                   </div>
@@ -725,8 +735,7 @@ export const CompanyPricingRulesPage: React.FC = () => {
                     >
                       <option value="HOLIDAY_SURCHARGE">Phụ thu Lễ Tết (+20%)</option>
                       <option value="WEEKEND_SURCHARGE">Phụ thu Cuối tuần (+10%)</option>
-                      <option value="FLASH_SALE_LAST_MINUTE">Flash Sale Giờ Chót (-15%)</option>
-                      <option value="EARLY_BIRD">Ưu Đãi Đặt Sớm (-10%)</option>
+                      <option value="FLASH_SALE">Flash Sale Giờ Chót (-15%)</option>
                       <option value="CUSTOM">Tùy Chỉnh Khác</option>
                     </select>
                   </div>
@@ -823,15 +832,15 @@ export const CompanyPricingRulesPage: React.FC = () => {
                       onChange={(e) => setScope(e.target.value as PricingRuleScope)}
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800"
                     >
-                      <option value="COMPANY_WIDE">Toàn Nhà Xe</option>
-                      <option value="ROUTE_SPECIFIC">Theo Tuyến Cụ Thể</option>
+                      <option value="ALL_ROUTES">Toàn Mạng Lưới (Tất Cả Tuyến)</option>
+                      <option value="SPECIFIC_ROUTE">Theo Tuyến Cụ Thể</option>
                     </select>
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Mã Tuyến (Nếu có)</label>
                     <input
                       type="number"
-                      disabled={scope !== 'ROUTE_SPECIFIC'}
+                      disabled={scope !== 'SPECIFIC_ROUTE'}
                       value={targetRouteId}
                       onChange={(e) => setTargetRouteId(e.target.value)}
                       placeholder="VD: 101"

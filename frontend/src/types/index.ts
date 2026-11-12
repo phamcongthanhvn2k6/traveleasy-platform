@@ -153,30 +153,34 @@ export interface RouteOption {
 export type PricingRuleType =
   | 'HOLIDAY_SURCHARGE'
   | 'WEEKEND_SURCHARGE'
-  | 'FLASH_SALE_LAST_MINUTE'
-  | 'EARLY_BIRD'
+  | 'FLASH_SALE'
   | 'CUSTOM';
 
 export type AdjustmentType = 'PERCENTAGE' | 'FIXED_AMOUNT';
 
-export type PricingRuleScope = 'SYSTEM_WIDE' | 'COMPANY_WIDE' | 'ROUTE_SPECIFIC' | 'TRIP_SPECIFIC';
+export type PricingRuleScope = 'ALL_ROUTES' | 'SPECIFIC_ROUTE';
 
-export type PricingRuleStatus = 'ACTIVE' | 'INACTIVE' | 'SCHEDULED' | 'EXPIRED';
+export type PricingRuleStatus = 'ACTIVE' | 'INACTIVE';
 
 export interface CompanyPricingRule {
   id: number;
   busCompanyId: number;
+  busCompanyName?: string;
   name: string;
   ruleType: PricingRuleType;
   adjustmentType: AdjustmentType;
   adjustmentValue: number;
   scope: PricingRuleScope;
+  routeId?: number | null;
+  routeName?: string | null;
   targetRouteId?: number | null;
-  targetTripId?: number | null;
   startDate: string;
   endDate: string;
+  applicableDays?: string | null;
   applicableDaysOfWeek?: string | null;
-  conditionJson?: string | null;
+  isLastMinute?: boolean;
+  lastMinuteHours?: number;
+  minEmptySeatPercentage?: number;
   priority: number;
   status: PricingRuleStatus;
   description?: string | null;
@@ -191,31 +195,35 @@ export interface CreatePricingRuleRequest {
   adjustmentType: AdjustmentType;
   adjustmentValue: number;
   scope: PricingRuleScope;
+  routeId?: number | null;
   targetRouteId?: number | null;
-  targetTripId?: number | null;
   startDate: string;
   endDate: string;
+  applicableDays?: string | null;
   applicableDaysOfWeek?: string | null;
-  conditionJson?: string | null;
+  isLastMinute?: boolean;
+  lastMinuteHours?: number;
+  minEmptySeatPercentage?: number;
   priority?: number;
   status?: PricingRuleStatus;
   description?: string | null;
 }
 
 export interface UpdatePricingRuleRequest {
-  name: string;
-  ruleType: PricingRuleType;
-  adjustmentType: AdjustmentType;
-  adjustmentValue: number;
-  scope: PricingRuleScope;
-  targetRouteId?: number | null;
-  targetTripId?: number | null;
-  startDate: string;
-  endDate: string;
-  applicableDaysOfWeek?: string | null;
-  conditionJson?: string | null;
-  priority: number;
-  status: PricingRuleStatus;
+  name?: string;
+  ruleType?: PricingRuleType;
+  adjustmentType?: AdjustmentType;
+  adjustmentValue?: number;
+  scope?: PricingRuleScope;
+  routeId?: number | null;
+  startDate?: string;
+  endDate?: string;
+  applicableDays?: string | null;
+  isLastMinute?: boolean;
+  lastMinuteHours?: number;
+  minEmptySeatPercentage?: number;
+  priority?: number;
+  status?: PricingRuleStatus;
   description?: string | null;
 }
 
@@ -229,12 +237,16 @@ export interface PriceSimulationRequest {
 }
 
 export interface PriceSimulationResponse {
-  basePrice: number;
+  originalPrice: number;
   calculatedPrice: number;
-  adjustmentAmount: number;
+  deltaAmount: number;
+  adjustmentPercent: number;
   pricingBadge?: string | null;
-  appliedRuleId?: number | null;
   appliedRuleName?: string | null;
   appliedRuleType?: PricingRuleType | null;
+  explanation?: string | null;
+  hasRuleApplied?: boolean;
+  basePrice?: number;
+  adjustmentAmount?: number;
   ruleDescription?: string | null;
 }

@@ -3,6 +3,7 @@ package com.traveleasy.controller.company;
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.exception.ErrorCode;
+import com.traveleasy.common.security.CompanySecurityService;
 import com.traveleasy.dto.company.pricing.*;
 import com.traveleasy.entity.*;
 import com.traveleasy.repository.BusCompanyRepository;
@@ -48,6 +49,9 @@ class CompanyPricingRuleControllerTest {
 
     @Mock
     private DynamicPricingService dynamicPricingService;
+
+    @Mock
+    private CompanySecurityService securityService;
 
     @Mock
     private Authentication authentication;
@@ -329,6 +333,79 @@ class CompanyPricingRuleControllerTest {
         AppException ex = assertThrows(AppException.class, () -> controller.createPricingRule(request, authentication));
         assertEquals(ErrorCode.FORBIDDEN, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("không được cấp quyền quản trị nhà xe nào"));
+        verify(pricingRuleRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("BUG-RBAC-01: Nhân viên Thu ngân (CASHIER) hoặc Điều phối (DISPATCHER) bị từ chối 403 khi cấu hình giá")
+    void testCreatePricingRule_Cashier_ThrowsForbidden() {
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("cashier@phuongtrang.vn");
+        User cashierUser = User.builder()
+                .id(12L)
+                .email("cashier@phuongtrang.vn")
+                .role(Role.OPERATOR)
+                .staffRole(StaffRole.CASHIER)
+                .busCompanyId(1L)
+                .build();
+        when(userRepository.findByEmail("cashier@phuongtrang.vn")).thenReturn(Optional.of(cashierUser));
+        doThrow(new AppException(ErrorCode.FORBIDDEN, "TRUY CẬP BỊ TỪ CHỐI (403 Forbidden): Chỉ dành riêng cho OWNER!"))
+                .when(securityService).requireStaffRole(authentication, StaffRole.OWNER);
+
+        CreatePricingRuleRequest request = CreatePricingRuleRequest.builder()
+                .busCompanyId(1L)
+                .name("Rule by Cashier")
+                .ruleType(PricingRuleType.HOLIDAY_SURCHARGE)
+                .scope(PricingRuleScope.ALL_ROUTES)
+                .adjustmentType(AdjustmentType.PERCENTAGE)
+                .adjustmentValue(BigDecimal.valueOf(10))
+                .startDate(LocalDate.of(2026, 9, 1))
+                .endDate(LocalDate.of(2026, 9, 4))
+                .applicableDays("ALL")
+                .priority(100)
+                .status(PricingRuleStatus.ACTIVE)
+                .build();
+
+        AppException ex = assertThrows(AppException.class, () -> controller.createPricingRule(request, authentication));
+        assertEquals(ErrorCode.FORBIDDEN, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("Chỉ dành riêng cho OWNER"));
+        verify(pricingRuleRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("BUG-SEC-01: Chặn lỗ hổng cướp quyền qua trùng tên fullName - Kẻ gian đổi tên nhà xe vẫn bị từ chối 403")
+    void testCreatePricingRule_FullNameSpoofingBlocked() {
+        // Kẻ gian không có busCompanyId nhưng cố tình đặt fullName = "Nhà xe Phương Trang"
+        User attacker = User.builder()
+                .id(999L)
+                .email("attacker@gmail.com")
+                .role(Role.OPERATOR)
+                .staffRole(StaffRole.OWNER)
+                .busCompanyId(null)
+                .fullName("Nhà xe Phương Trang")
+                .build();
+
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("attacker@gmail.com");
+        when(userRepository.findByEmail("attacker@gmail.com")).thenReturn(Optional.of(attacker));
+        when(busCompanyRepository.findByEmail("attacker@gmail.com")).thenReturn(Optional.empty());
+
+        CreatePricingRuleRequest request = CreatePricingRuleRequest.builder()
+                .busCompanyId(1L)
+                .name("Spoofed Rule")
+                .ruleType(PricingRuleType.HOLIDAY_SURCHARGE)
+                .scope(PricingRuleScope.ALL_ROUTES)
+                .adjustmentType(AdjustmentType.PERCENTAGE)
+                .adjustmentValue(BigDecimal.valueOf(10))
+                .startDate(LocalDate.of(2026, 9, 1))
+                .endDate(LocalDate.of(2026, 9, 4))
+                .build();
+
+        AppException ex = assertThrows(AppException.class, () -> controller.createPricingRule(request, authentication));
+        assertEquals(ErrorCode.FORBIDDEN, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("không được cấp quyền quản trị nhà xe nào"));
+        // Xác nhận không còn quét busCompanyRepository.findAll()
+        verify(busCompanyRepository, never()).findAll();
         verify(pricingRuleRepository, never()).save(any());
     }
 }
