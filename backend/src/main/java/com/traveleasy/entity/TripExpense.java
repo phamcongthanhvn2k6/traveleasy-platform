@@ -26,7 +26,7 @@ public class TripExpense {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trip_id", nullable = false)
+    @JoinColumn(name = "trip_id", nullable = false, unique = true)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Trip trip;
 

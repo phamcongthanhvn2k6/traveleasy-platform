@@ -61,4 +61,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT COALESCE(SUM(b.totalAmount), 0) FROM Booking b WHERE b.trip.id = :tripId AND b.status IN (com.traveleasy.entity.BookingStatus.CONFIRMED, com.traveleasy.entity.BookingStatus.COMPLETED)")
     BigDecimal sumRevenueByTripId(@Param("tripId") Long tripId);
+
+    @Query("SELECT b.trip.id, COALESCE(SUM(b.totalAmount), 0) FROM Booking b WHERE b.trip.busCompany.id = :busCompanyId AND b.status IN (com.traveleasy.entity.BookingStatus.CONFIRMED, com.traveleasy.entity.BookingStatus.COMPLETED) GROUP BY b.trip.id")
+    List<Object[]> sumRevenueGroupedByTripId(@Param("busCompanyId") Long busCompanyId);
 }

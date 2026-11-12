@@ -18,9 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -41,7 +40,9 @@ public class TripExpenseServiceImpl implements TripExpenseService {
             throw new AppException(ErrorCode.FORBIDDEN, "Bạn không có quyền truy cập thông tin chi phí của chuyến xe này");
         }
 
-        return buildProfitLossResponse(trip);
+        Optional<TripExpense> expenseOpt = tripExpenseRepository.findByTripId(trip.getId());
+        BigDecimal actualRevenue = bookingRepository.sumRevenueByTripId(trip.getId());
+        return mapExpenseToResponse(trip, expenseOpt.orElse(null), actualRevenue);
     }
 
     @Override
@@ -82,21 +83,49 @@ public class TripExpenseServiceImpl implements TripExpenseService {
         expense.setNotes(request.getNotes());
 
         TripExpense savedExpense = tripExpenseRepository.save(expense);
-        return mapExpenseToResponse(trip, savedExpense);
+        BigDecimal actualRevenue = bookingRepository.sumRevenueByTripId(trip.getId());
+        return mapExpenseToResponse(trip, savedExpense, actualRevenue);
     }
 
     @Override
     @Transactional(readOnly = true)
     public CompanyExpenseSummaryResponse getCompanyExpenseSummary(Long companyId) {
-        List<Trip> trips = tripRepository.findByBusCompanyId(companyId);
-        List<TripProfitLossResponse> tripResponses = new ArrayList<>();
+        // 1. Batch query 1: Lấy danh sách Trip kèm Route và BusCompany (Tránh N+1 Lazy load)
+        List<Trip> trips = tripRepository.findByBusCompanyIdWithDetails(companyId);
+        if (trips == null || trips.isEmpty()) {
+            trips = tripRepository.findByBusCompanyId(companyId);
+        }
 
+        // 2. Batch query 2: Lấy toàn bộ TripExpense của nhà xe trong 1 câu query
+        List<TripExpense> expenses = tripExpenseRepository.findByBusCompanyId(companyId);
+        Map<Long, TripExpense> expenseMap = (expenses != null) ? expenses.stream()
+                .filter(e -> e.getTrip() != null && e.getTrip().getId() != null)
+                .collect(Collectors.toMap(e -> e.getTrip().getId(), e -> e, (e1, e2) -> e1))
+                : Collections.emptyMap();
+
+        // 3. Batch query 3: Lấy tổng doanh thu theo từng chuyến xe trong 1 câu GROUP BY
+        List<Object[]> revenueRows = bookingRepository.sumRevenueGroupedByTripId(companyId);
+        Map<Long, BigDecimal> revenueMap = new HashMap<>();
+        if (revenueRows != null) {
+            for (Object[] row : revenueRows) {
+                if (row != null && row.length >= 2 && row[0] != null) {
+                    Long tId = ((Number) row[0]).longValue();
+                    BigDecimal rev = (BigDecimal) row[1];
+                    revenueMap.put(tId, rev != null ? rev : BigDecimal.ZERO);
+                }
+            }
+        }
+
+        List<TripProfitLossResponse> tripResponses = new ArrayList<>();
         BigDecimal totalRevenue = BigDecimal.ZERO;
         BigDecimal totalExpense = BigDecimal.ZERO;
         int lossCount = 0;
 
         for (Trip trip : trips) {
-            TripProfitLossResponse res = buildProfitLossResponse(trip);
+            BigDecimal actualRevenue = revenueMap.getOrDefault(trip.getId(), BigDecimal.ZERO);
+            TripExpense expense = expenseMap.get(trip.getId());
+            TripProfitLossResponse res = mapExpenseToResponse(trip, expense, actualRevenue);
+
             tripResponses.add(res);
             if (res.getActualRevenue() != null) {
                 totalRevenue = totalRevenue.add(res.getActualRevenue());
@@ -127,13 +156,7 @@ public class TripExpenseServiceImpl implements TripExpenseService {
                 .build();
     }
 
-    private TripProfitLossResponse buildProfitLossResponse(Trip trip) {
-        Optional<TripExpense> expenseOpt = tripExpenseRepository.findByTripId(trip.getId());
-        return mapExpenseToResponse(trip, expenseOpt.orElse(null));
-    }
-
-    private TripProfitLossResponse mapExpenseToResponse(Trip trip, TripExpense expense) {
-        BigDecimal actualRevenue = bookingRepository.sumRevenueByTripId(trip.getId());
+    private TripProfitLossResponse mapExpenseToResponse(Trip trip, TripExpense expense, BigDecimal actualRevenue) {
         if (actualRevenue == null) {
             actualRevenue = BigDecimal.ZERO;
         }
@@ -146,7 +169,6 @@ public class TripExpenseServiceImpl implements TripExpenseService {
         BigDecimal totalExpense = BigDecimal.ZERO;
         String invoiceNumber = null;
         String notes = null;
-        boolean isLocked = false;
 
         if (expense != null) {
             fuelCost = expense.getFuelCost() != null ? expense.getFuelCost() : BigDecimal.ZERO;
@@ -157,7 +179,6 @@ public class TripExpenseServiceImpl implements TripExpenseService {
             totalExpense = fuelCost.add(tollBotCost).add(driverSalary).add(terminalFee).add(otherCosts);
             invoiceNumber = expense.getInvoiceNumber();
             notes = expense.getNotes();
-            isLocked = Boolean.TRUE.equals(expense.getIsLocked());
         }
 
         BigDecimal netProfit = actualRevenue.subtract(totalExpense);
@@ -174,6 +195,21 @@ public class TripExpenseServiceImpl implements TripExpenseService {
         String routeName = null;
         if (trip.getRoute() != null) {
             routeName = trip.getRoute().getDepartureLocation() + " - " + trip.getRoute().getArrivalLocation();
+        }
+
+        // Tính cờ khóa sổ: Bản ghi đã chốt sổ (is_locked = true) HOẶC Chuyến xe kết thúc quá 48 giờ
+        LocalDateTime completionTime = trip.getArrivalTime() != null ? trip.getArrivalTime() : trip.getDepartureTime();
+        boolean isOverdue = completionTime != null && completionTime.isBefore(LocalDateTime.now().minusHours(48));
+        boolean isRecordLocked = expense != null && Boolean.TRUE.equals(expense.getIsLocked());
+        boolean effectiveLocked = isRecordLocked || isOverdue;
+
+        String lockNotice;
+        if (effectiveLocked) {
+            lockNotice = isOverdue
+                    ? "Sổ chi phí đã bị khóa: Chuyến xe đã kết thúc quá 48 giờ."
+                    : "Sổ chi phí đã bị khóa: Đã chốt kỳ đối soát tài chính.";
+        } else {
+            lockNotice = "Sổ chi phí còn mở. Có thể điều chỉnh hóa đơn trong vòng 48h sau chuyến đi.";
         }
 
         return TripProfitLossResponse.builder()
@@ -197,11 +233,9 @@ public class TripExpenseServiceImpl implements TripExpenseService {
                 .profitMarginPercent(marginPercent)
                 .invoiceNumber(invoiceNumber)
                 .notes(notes)
-                .isLocked(isLocked)
+                .isLocked(effectiveLocked)
                 .accessScope("CONFIDENTIAL_OWNER_ONLY")
-                .lockNotice(isLocked
-                        ? "Sổ chi phí đã bị khóa. Không thể chỉnh sửa."
-                        : "Sổ chi phí còn mở. Có thể điều chỉnh hóa đơn trong vòng 48h sau chuyến đi.")
+                .lockNotice(lockNotice)
                 .build();
     }
 }

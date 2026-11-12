@@ -1,6 +1,8 @@
 package com.traveleasy.controller.company;
 
 import com.traveleasy.common.dto.ApiResponse;
+import com.traveleasy.common.exception.AppException;
+import com.traveleasy.common.exception.ErrorCode;
 import com.traveleasy.common.security.CompanySecurityService;
 import com.traveleasy.dto.company.expense.CompanyExpenseSummaryResponse;
 import com.traveleasy.dto.company.expense.SaveTripExpenseRequest;
@@ -69,12 +71,13 @@ public class CompanyTripExpenseController {
     }
 
     private Long resolveCompanyId(Authentication authentication, Long busCompanyId) {
-        if (authentication != null && authentication.isAuthenticated()) {
-            User user = securityService.requireStaffRole(authentication, StaffRole.OWNER);
-            if (user != null && user.getBusCompanyId() != null) {
-                return user.getBusCompanyId();
-            }
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "BẠN CẦN ĐĂNG NHẬP để truy cập sổ chi phí và báo cáo tài chính!");
         }
-        return busCompanyId != null ? busCompanyId : 1L;
+        User user = securityService.requireStaffRole(authentication, StaffRole.OWNER);
+        if (user == null || user.getBusCompanyId() == null) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Tài khoản của bạn chưa được liên kết với nhà xe hợp lệ!");
+        }
+        return user.getBusCompanyId();
     }
 }

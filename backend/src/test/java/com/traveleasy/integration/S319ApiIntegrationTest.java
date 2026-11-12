@@ -72,9 +72,6 @@ public class S319ApiIntegrationTest {
     @Autowired
     private ReviewRepository reviewRepository;
 
-    @Autowired
-    private com.traveleasy.repository.SettlementRecordRepository settlementRecordRepository;
-
     private Trip sampleTrip;
 
     @BeforeEach
@@ -89,7 +86,6 @@ public class S319ApiIntegrationTest {
     }
 
     private void cleanDatabase() {
-        settlementRecordRepository.deleteAllInBatch();
         paymentTransactionRepository.deleteAllInBatch();
         ticketRepository.deleteAllInBatch();
         reviewRepository.deleteAllInBatch();

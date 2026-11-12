@@ -294,9 +294,10 @@ class TripExpenseServiceTest {
     @Test
     @DisplayName("TC-S318-09: Tổng kết báo cáo chi phí và lãi lỗ toàn bộ đội xe của nhà xe")
     void getCompanyExpenseSummary_Success() {
-        when(tripRepository.findByBusCompanyId(1L)).thenReturn(List.of(tripNormal));
-        when(tripExpenseRepository.findByTripId(100L)).thenReturn(Optional.of(expenseExisting));
-        when(bookingRepository.sumRevenueByTripId(100L)).thenReturn(new BigDecimal("3600000.00"));
+        when(tripRepository.findByBusCompanyIdWithDetails(1L)).thenReturn(List.of(tripNormal));
+        when(tripExpenseRepository.findByBusCompanyId(1L)).thenReturn(List.of(expenseExisting));
+        when(bookingRepository.sumRevenueGroupedByTripId(1L))
+                .thenReturn(List.<Object[]>of(new Object[]{100L, new BigDecimal("3600000.00")}));
 
         CompanyExpenseSummaryResponse summary = tripExpenseService.getCompanyExpenseSummary(1L);
 

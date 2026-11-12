@@ -219,56 +219,15 @@ export const TripExpensesPage: React.FC = () => {
         setIsModalOpen(false);
         fetchExpenses();
       } else {
-        // Cập nhật optimistic local state nếu chạy mock/offline
-        updateLocalOptimistic(selectedTrip.tripId, payload);
-        toast.success('Đã cập nhật chi phí chuyến xe trên giao diện!', 'Thành Công');
-        setIsModalOpen(false);
+        const msg = res.data?.message || 'Không thể lưu chi phí chuyến xe.';
+        toast.error(msg, 'Thao Tác Thất Bại');
       }
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Không thể kết nối máy chủ để lưu chi phí.';
-      // Fallback update local state for presentation resilience
-      updateLocalOptimistic(selectedTrip.tripId, payload);
-      toast.info(`Đã lưu bản ghi cục bộ: ${msg}`, 'Ghi Nhận');
-      setIsModalOpen(false);
+      toast.error(msg, 'Thao Tác Thất Bại');
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const updateLocalOptimistic = (tripId: number, payload: any) => {
-    setSummary(prev => {
-      const newTrips = prev.trips.map(t => {
-        if (t.tripId !== tripId) return t;
-        const totalExp = payload.fuelCost + payload.tollBotCost + payload.driverSalary + payload.terminalFee + payload.otherCosts;
-        const net = t.actualRevenue - totalExp;
-        const loss = totalExp > t.actualRevenue;
-        const margin = t.actualRevenue > 0 ? Math.round((net / t.actualRevenue) * 10000) / 100 : 0;
-        return {
-          ...t,
-          ...payload,
-          totalExpense: totalExp,
-          netProfit: net,
-          isLoss: loss,
-          lossAmount: loss ? Math.abs(net) : 0,
-          profitMarginPercent: margin
-        };
-      });
-
-      const totalRev = newTrips.reduce((acc, cur) => acc + cur.actualRevenue, 0);
-      const totalExp = newTrips.reduce((acc, cur) => acc + cur.totalExpense, 0);
-      const totalNet = totalRev - totalExp;
-      const margin = totalRev > 0 ? Math.round((totalNet / totalRev) * 10000) / 100 : 0;
-      const lossCount = newTrips.filter(t => t.isLoss).length;
-
-      return {
-        trips: newTrips,
-        totalRevenue: totalRev,
-        totalExpense: totalExp,
-        totalNetProfit: totalNet,
-        overallMarginPercent: margin,
-        lossTripsCount: lossCount
-      };
-    });
   };
 
   return (
@@ -560,7 +519,7 @@ export const TripExpensesPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Chi Phí Khác / Tiếp Khách / Thanh Tra (VNĐ)
+                    Chi Phí Phát Sinh Hợp Lệ Khác (VNĐ)
                   </label>
                   <input
                     type="number"
@@ -569,7 +528,7 @@ export const TripExpensesPage: React.FC = () => {
                     value={otherCosts}
                     onChange={(e) => setOtherCosts(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-mono focus:ring-2 focus:ring-amber-500 outline-none"
-                    placeholder="VD: 100000"
+                    placeholder="VD: 100000 (Rửa xe, tiếp nước, vệ sinh xe...)"
                   />
                 </div>
 

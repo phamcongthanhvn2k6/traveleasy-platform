@@ -51,6 +51,8 @@ class CompanyTripExpenseControllerTest {
     private CompanyTripExpenseController companyTripExpenseController;
 
     private ObjectMapper objectMapper;
+    private User mockOwner;
+    private Authentication mockAuth;
 
     @BeforeEach
     void setUp() {
@@ -58,6 +60,14 @@ class CompanyTripExpenseControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(companyTripExpenseController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
+
+        mockOwner = User.builder()
+                .id(10L)
+                .busCompanyId(1L)
+                .build();
+        mockAuth = mock(Authentication.class);
+        lenient().when(mockAuth.isAuthenticated()).thenReturn(true);
+        lenient().when(securityService.requireStaffRole(mockAuth, StaffRole.OWNER)).thenReturn(mockOwner);
     }
 
     @Test
@@ -87,7 +97,7 @@ class CompanyTripExpenseControllerTest {
         when(tripExpenseService.getCompanyExpenseSummary(eq(1L))).thenReturn(summary);
 
         mockMvc.perform(get("/api/v1/company/expenses")
-                        .param("busCompanyId", "1")
+                        .principal(mockAuth)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -128,7 +138,7 @@ class CompanyTripExpenseControllerTest {
         when(tripExpenseService.getTripProfitLoss(eq(101L), eq(1L))).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/company/expenses/trips/101")
-                        .param("busCompanyId", "1")
+                        .principal(mockAuth)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -172,7 +182,7 @@ class CompanyTripExpenseControllerTest {
                 .thenReturn(savedResponse);
 
         mockMvc.perform(post("/api/v1/company/expenses/trips/101")
-                        .param("busCompanyId", "1")
+                        .principal(mockAuth)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -195,13 +205,39 @@ class CompanyTripExpenseControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/company/expenses/trips/101")
-                        .param("busCompanyId", "1")
+                        .principal(mockAuth)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
 
         verify(tripExpenseService, never()).saveTripExpense(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Chặn người dùng khi chưa đăng nhập (401 Unauthorized)")
+    void requireLogin_Unauthorized_WhenNotAuthenticated() throws Exception {
+        mockMvc.perform(get("/api/v1/company/expenses")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("BẠN CẦN ĐĂNG NHẬP")));
+    }
+
+    @Test
+    @DisplayName("Chặn khi tài khoản không gắn với nhà xe nào (403 Forbidden)")
+    void requireBusCompany_Forbidden_WhenUserHasNoCompanyId() throws Exception {
+        Authentication authNoCompany = mock(Authentication.class);
+        when(authNoCompany.isAuthenticated()).thenReturn(true);
+        User userWithoutCompany = User.builder().id(20L).busCompanyId(null).build();
+        when(securityService.requireStaffRole(authNoCompany, StaffRole.OWNER)).thenReturn(userWithoutCompany);
+
+        mockMvc.perform(get("/api/v1/company/expenses")
+                        .principal(authNoCompany)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("chưa được liên kết với nhà xe")));
     }
 
     @Test
