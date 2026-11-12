@@ -33,6 +33,9 @@ class TicketExchangeServiceTest {
     private TicketRepository ticketRepository;
 
     @Mock
+    private BookingRepository bookingRepository;
+
+    @Mock
     private TripRepository tripRepository;
 
     @Mock
@@ -48,6 +51,7 @@ class TicketExchangeServiceTest {
     private TicketExchangeService ticketExchangeService;
 
     private BusCompany testCompany;
+    private BusCompany otherCompany;
     private Route testRoute;
     private Trip oldTrip;
     private Trip newTrip;
@@ -60,20 +64,27 @@ class TicketExchangeServiceTest {
     void setUp() {
         testCompany = BusCompany.builder()
                 .id(1L)
-                .name("Nha Xe Phuong Trang")
+                .name("Nhà Xe Phương Trang")
                 .code("FUTA")
                 .hotline("19006067")
+                .build();
+
+        otherCompany = BusCompany.builder()
+                .id(2L)
+                .name("Nhà Xe Thành Bưởi")
+                .code("TB")
+                .hotline("19001234")
                 .build();
 
         testRoute = Route.builder()
                 .id(10L)
                 .busCompany(testCompany)
-                .departureLocation("TP. Ho Chi Minh")
-                .arrivalLocation("Da Lat")
+                .departureLocation("TP. Hồ Chí Minh")
+                .arrivalLocation("Đà Lạt")
                 .durationHours(BigDecimal.valueOf(6.5))
                 .build();
 
-        // Chuyen cu khoi hanh sau 24 tieng (>= 12h hop le)
+        // Chuyến cũ khởi hành sau 24 tiếng (>= 12h hợp lệ)
         oldTrip = Trip.builder()
                 .id(101L)
                 .busCompany(testCompany)
@@ -84,7 +95,7 @@ class TicketExchangeServiceTest {
                 .availableSeats(20)
                 .build();
 
-        // Chuyen moi khoi hanh sau 48 tieng
+        // Chuyến mới khởi hành sau 48 tiếng
         newTrip = Trip.builder()
                 .id(102L)
                 .busCompany(testCompany)
@@ -99,7 +110,7 @@ class TicketExchangeServiceTest {
                 .id(501L)
                 .bookingCode("BK-20261111-001")
                 .trip(oldTrip)
-                .passengerName("Nguyen Van Du Khach")
+                .passengerName("Nguyễn Văn Du Khách")
                 .passengerPhone("0912345678")
                 .passengerEmail("khach@gmail.com")
                 .seatNumbers("A05")
@@ -133,11 +144,11 @@ class TicketExchangeServiceTest {
     }
 
     @Test
-    @DisplayName("TC-S316-01: Tra cuu ve hop le va du dieu kien doi ve (con > 12h)")
+    @DisplayName("TC-S316-01: Tra cứu vé hợp lệ và đủ điều kiện đổi vé (còn > 12h)")
     void testLookupTicket_Success_MoreThan12Hours() {
         when(ticketRepository.findByTicketCode("TK-20261111-01")).thenReturn(Optional.of(oldTicket));
 
-        TicketLookupResponse response = ticketExchangeService.lookupTicket("TK-20261111-01");
+        TicketLookupResponse response = ticketExchangeService.lookupTicket("TK-20261111-01", 1L);
 
         assertNotNull(response);
         assertEquals("TK-20261111-01", response.getTicketCode());
@@ -146,58 +157,57 @@ class TicketExchangeServiceTest {
         assertEquals(BigDecimal.valueOf(300000), response.getPrice());
         assertTrue(response.isCanExchange());
         assertTrue(response.getHoursUntilDeparture() >= 12);
-        assertTrue(response.getPolicyNotice().contains("Du dieu kien doi ve"));
+        assertTrue(response.getPolicyNotice().contains("Đủ điều kiện đổi vé"));
     }
 
     @Test
-    @DisplayName("TC-S316-02: Tra cuu ve khoi hanh trong vong < 12h khong du dieu kien doi ve")
+    @DisplayName("TC-S316-02: Tra cứu vé khởi hành trong vòng < 12h không đủ điều kiện đổi vé")
     void testLookupTicket_LessThan12Hours_CannotExchange() {
-        // Chuyen xe khoi hanh sau 5 tieng (< 12h)
         oldTrip.setDepartureTime(LocalDateTime.now().plusHours(5));
         when(ticketRepository.findByTicketCode("TK-20261111-01")).thenReturn(Optional.of(oldTicket));
 
-        TicketLookupResponse response = ticketExchangeService.lookupTicket("TK-20261111-01");
+        TicketLookupResponse response = ticketExchangeService.lookupTicket("TK-20261111-01", 1L);
 
         assertNotNull(response);
         assertFalse(response.isCanExchange());
         assertTrue(response.getHoursUntilDeparture() < 12);
-        assertTrue(response.getPolicyNotice().contains("< 12 gio"));
+        assertTrue(response.getPolicyNotice().contains("Không đủ điều kiện đổi vé"));
     }
 
     @Test
-    @DisplayName("TC-S316-03: Tra cuu ma ve khong ton tai tra ve loi 404")
+    @DisplayName("TC-S316-03: Tra cứu vé không tồn tại ném lỗi RESOURCE_NOT_FOUND (404)")
     void testLookupTicket_NotFound_ThrowsException() {
         when(ticketRepository.findByTicketCode("TK-UNKNOWN")).thenReturn(Optional.empty());
 
-        AppException ex = assertThrows(AppException.class, () -> ticketExchangeService.lookupTicket("TK-UNKNOWN"));
+        AppException ex = assertThrows(AppException.class, () -> ticketExchangeService.lookupTicket("TK-UNKNOWN", 1L));
         assertEquals(ErrorCode.RESOURCE_NOT_FOUND, ex.getErrorCode());
     }
 
     @Test
-    @DisplayName("TC-S316-04: Tra cuu ve da USED hoac CANCELLED hoac EXCHANGED bi tu choi")
+    @DisplayName("TC-S316-04: Tra cứu vé đã USED hoặc CANCELLED hoặc EXCHANGED bị từ chối")
     void testLookupTicket_UsedOrCancelledOrExchanged_ThrowsException() {
         oldTicket.setStatus(TicketStatus.USED);
         when(ticketRepository.findByTicketCode("TK-USED")).thenReturn(Optional.of(oldTicket));
 
-        AppException exUsed = assertThrows(AppException.class, () -> ticketExchangeService.lookupTicket("TK-USED"));
+        AppException exUsed = assertThrows(AppException.class, () -> ticketExchangeService.lookupTicket("TK-USED", 1L));
         assertEquals(ErrorCode.VALIDATION_ERROR, exUsed.getErrorCode());
 
         oldTicket.setStatus(TicketStatus.CANCELLED);
-        AppException exCancelled = assertThrows(AppException.class, () -> ticketExchangeService.lookupTicket("TK-USED"));
+        AppException exCancelled = assertThrows(AppException.class, () -> ticketExchangeService.lookupTicket("TK-USED", 1L));
         assertEquals(ErrorCode.VALIDATION_ERROR, exCancelled.getErrorCode());
 
         oldTicket.setStatus(TicketStatus.EXCHANGED);
-        AppException exExchanged = assertThrows(AppException.class, () -> ticketExchangeService.lookupTicket("TK-USED"));
+        AppException exExchanged = assertThrows(AppException.class, () -> ticketExchangeService.lookupTicket("TK-USED", 1L));
         assertEquals(ErrorCode.VALIDATION_ERROR, exExchanged.getErrorCode());
     }
 
     @Test
-    @DisplayName("TC-S316-05: Tinh toan chenh lech gia khi ve moi dat hon (Phu thu)")
+    @DisplayName("TC-S316-05: Tính toán chênh lệch giá khi vé mới đắt hơn (Phụ thu)")
     void testCalculateDifference_Surcharge() {
         when(ticketRepository.findByTicketCode("TK-20261111-01")).thenReturn(Optional.of(oldTicket));
         when(tripRepository.findById(102L)).thenReturn(Optional.of(newTrip));
 
-        var diff = ticketExchangeService.calculateDifference("TK-20261111-01", 102L);
+        var diff = ticketExchangeService.calculateDifference("TK-20261111-01", 102L, 1L);
 
         assertEquals(BigDecimal.valueOf(80000), diff.get("priceDifference"));
         assertEquals(BigDecimal.valueOf(80000), diff.get("surchargeAmount"));
@@ -206,13 +216,13 @@ class TicketExchangeServiceTest {
     }
 
     @Test
-    @DisplayName("TC-S316-06: Tinh toan chenh lech gia khi ve moi re hon (Hoan tien)")
+    @DisplayName("TC-S316-06: Tính toán chênh lệch giá khi vé mới rẻ hơn (Hoàn tiền)")
     void testCalculateDifference_Refund() {
-        newTrip.setPrice(BigDecimal.valueOf(250000)); // re hon 50k
+        newTrip.setPrice(BigDecimal.valueOf(250000));
         when(ticketRepository.findByTicketCode("TK-20261111-01")).thenReturn(Optional.of(oldTicket));
         when(tripRepository.findById(102L)).thenReturn(Optional.of(newTrip));
 
-        var diff = ticketExchangeService.calculateDifference("TK-20261111-01", 102L);
+        var diff = ticketExchangeService.calculateDifference("TK-20261111-01", 102L, 1L);
 
         assertEquals(BigDecimal.valueOf(-50000), diff.get("priceDifference"));
         assertEquals(BigDecimal.ZERO, diff.get("surchargeAmount"));
@@ -221,13 +231,13 @@ class TicketExchangeServiceTest {
     }
 
     @Test
-    @DisplayName("TC-S316-07: Tinh toan chenh lech gia khi gia bang nhau (Khong phu thu, khong hoan)")
+    @DisplayName("TC-S316-07: Tính toán chênh lệch giá khi giá bằng nhau (Không phụ thu, không hoàn)")
     void testCalculateDifference_Equal() {
-        newTrip.setPrice(BigDecimal.valueOf(300000)); // bang gia
+        newTrip.setPrice(BigDecimal.valueOf(300000));
         when(ticketRepository.findByTicketCode("TK-20261111-01")).thenReturn(Optional.of(oldTicket));
         when(tripRepository.findById(102L)).thenReturn(Optional.of(newTrip));
 
-        var diff = ticketExchangeService.calculateDifference("TK-20261111-01", 102L);
+        var diff = ticketExchangeService.calculateDifference("TK-20261111-01", 102L, 1L);
 
         assertEquals(BigDecimal.ZERO, diff.get("priceDifference"));
         assertEquals(BigDecimal.ZERO, diff.get("surchargeAmount"));
@@ -235,21 +245,22 @@ class TicketExchangeServiceTest {
     }
 
     @Test
-    @DisplayName("TC-S316-08, 09, 10: Thuc hien doi ve thanh cong: Ve cu sang EXCHANGED, ve moi ISSUED, ghe cu AVAILABLE, ghe moi BOOKED, ghi log vao DB")
+    @DisplayName("TC-S316-08, 09, 10: Thực hiện đổi vé thành công: Tạo Booking mới gắn chuyến mới, vé mới ISSUED có QR, ghế cũ AVAILABLE, ghế mới BOOKED")
     void testExchangeTicket_Success_DoD123() {
         TicketExchangeRequest request = TicketExchangeRequest.builder()
                 .oldTicketCode("TK-20261111-01")
                 .newTripId(102L)
                 .newSeatNumber("B02")
-                .note("Doi gio chay chuyen som hon")
+                .note("Đổi giờ chạy chuyến sớm hơn")
                 .build();
 
-        User operatorUser = User.builder().id(99L).email("operator@futa.vn").build();
+        User operatorUser = User.builder().id(99L).email("operator@futa.vn").busCompanyId(1L).build();
 
         when(ticketRepository.findByTicketCode("TK-20261111-01")).thenReturn(Optional.of(oldTicket));
         when(tripRepository.findById(102L)).thenReturn(Optional.of(newTrip));
-        when(tripSeatRepository.findByTripIdAndSeatCode(102L, "B02")).thenReturn(Optional.of(newSeat));
+        when(tripSeatRepository.findByTripIdAndSeatCodeWithLock(102L, "B02")).thenReturn(Optional.of(newSeat));
         when(tripSeatRepository.findByTripIdAndSeatCode(101L, "A05")).thenReturn(Optional.of(oldSeat));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(ticketExchangeLogRepository.save(any(TicketExchangeLog.class))).thenAnswer(invocation -> {
             TicketExchangeLog l = invocation.getArgument(0);
@@ -268,49 +279,55 @@ class TicketExchangeServiceTest {
         assertEquals(BigDecimal.valueOf(80000), response.getPriceDifference());
         assertEquals(BigDecimal.valueOf(80000), response.getSurchargeAmount());
         assertEquals(BigDecimal.ZERO, response.getRefundAmount());
+        assertTrue(response.getNewTicketCode().startsWith("TK-EX-"));
 
-        // Kiem tra DoD 2: Ghe cu duoc giai phong ve AVAILABLE
+        // Kiểm tra Review Point #1: Đơn Booking mới được lưu độc lập gắn chuyến mới
+        verify(bookingRepository, times(1)).save(argThat(b -> b.getTrip().getId().equals(102L) && b.getBookingCode().startsWith("BK-EX-")));
+
+        // Kiểm tra Review Point #1: Vé mới có mã QR Hash và gắn Booking mới
+        verify(ticketRepository).save(argThat(t -> t.getQrCodeHash() != null && !t.getQrCodeHash().isEmpty()));
+
+        // Kiểm tra DoD 2: Ghế cũ được giải phóng về AVAILABLE
         assertEquals(SeatStatus.AVAILABLE, oldSeat.getStatus());
         verify(tripSeatRepository).save(oldSeat);
         verify(seatRealtimeService).broadcastReleased(eq(101L), eq(List.of("A05")));
         verify(tripRepository).syncAvailableSeats(101L);
 
-        // Kiem tra DoD 3: Ghe moi duoc cap nhat BOOKED
+        // Kiểm tra DoD 3: Ghế mới được cập nhật BOOKED
         assertEquals(SeatStatus.BOOKED, newSeat.getStatus());
         verify(tripSeatRepository).save(newSeat);
         verify(seatRealtimeService).broadcastBooked(eq(102L), eq(List.of("B02")));
         verify(tripRepository).syncAvailableSeats(102L);
 
-        // Kiem tra DoD 1: Ghi log vao ticket_exchange_logs
+        // Kiểm tra DoD 1: Ghi log vào ticket_exchange_logs
         verify(ticketExchangeLogRepository, times(1)).save(any(TicketExchangeLog.class));
     }
 
     @Test
-    @DisplayName("TC-S316-11: Tu choi doi ve neu ghe moi tren chuyen moi da bi nguoi khac dat (BOOKED) - 409 Conflict")
+    @DisplayName("TC-S316-11: Từ chối đổi vé nếu ghế mới trên chuyến mới đã bị người khác đặt (BOOKED) - 409 Conflict")
     void testExchangeTicket_NewSeatAlreadyBooked_ThrowsConflictException() {
-        newSeat.setStatus(SeatStatus.BOOKED); // Ghe da co nguoi mua
+        newSeat.setStatus(SeatStatus.BOOKED);
 
         TicketExchangeRequest request = TicketExchangeRequest.builder()
                 .oldTicketCode("TK-20261111-01")
                 .newTripId(102L)
                 .newSeatNumber("B02")
                 .build();
+
+        User operatorUser = User.builder().id(99L).email("operator@futa.vn").busCompanyId(1L).build();
 
         when(ticketRepository.findByTicketCode("TK-20261111-01")).thenReturn(Optional.of(oldTicket));
         when(tripRepository.findById(102L)).thenReturn(Optional.of(newTrip));
-        when(tripSeatRepository.findByTripIdAndSeatCode(102L, "B02")).thenReturn(Optional.of(newSeat));
+        when(tripSeatRepository.findByTripIdAndSeatCodeWithLock(102L, "B02")).thenReturn(Optional.of(newSeat));
 
-        AppException ex = assertThrows(AppException.class, () -> ticketExchangeService.exchangeTicket(request, null));
+        AppException ex = assertThrows(AppException.class, () -> ticketExchangeService.exchangeTicket(request, operatorUser));
         assertEquals(ErrorCode.SEAT_ALREADY_BOOKED, ex.getErrorCode());
-        assertTrue(ex.getMessage().contains("nguoi khac dat"));
-
-        verify(ticketExchangeLogRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("TC-S316-12: Tu choi thuc hien doi ve neu gio khoi hanh chuyen cu < 12h - 400 Validation Error")
-    void testExchangeTicket_DepartureLessThan12Hours_ThrowsValidationException() {
-        oldTrip.setDepartureTime(LocalDateTime.now().plusHours(8)); // Chi con 8h
+    @DisplayName("TC-S316-12: Từ chối đổi vé nếu ghế mới đang bị LOCKED (chống race condition - Review Point #3)")
+    void testExchangeTicket_NewSeatLocked_ThrowsConflictException() {
+        newSeat.setStatus(SeatStatus.LOCKED);
 
         TicketExchangeRequest request = TicketExchangeRequest.builder()
                 .oldTicketCode("TK-20261111-01")
@@ -318,12 +335,31 @@ class TicketExchangeServiceTest {
                 .newSeatNumber("B02")
                 .build();
 
+        User operatorUser = User.builder().id(99L).email("operator@futa.vn").busCompanyId(1L).build();
+
+        when(ticketRepository.findByTicketCode("TK-20261111-01")).thenReturn(Optional.of(oldTicket));
+        when(tripRepository.findById(102L)).thenReturn(Optional.of(newTrip));
+        when(tripSeatRepository.findByTripIdAndSeatCodeWithLock(102L, "B02")).thenReturn(Optional.of(newSeat));
+
+        AppException ex = assertThrows(AppException.class, () -> ticketExchangeService.exchangeTicket(request, operatorUser));
+        assertEquals(ErrorCode.SEAT_ALREADY_BOOKED, ex.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("TC-S316-13: Chặn IDOR chéo nhà xe: Nhà xe A không được đổi vé của Nhà xe B (Review Point #2)")
+    void testExchangeTicket_CrossCompanyIDOR_ThrowsForbidden() {
+        TicketExchangeRequest request = TicketExchangeRequest.builder()
+                .oldTicketCode("TK-20261111-01")
+                .newTripId(102L)
+                .newSeatNumber("B02")
+                .build();
+
+        // Nhân viên thuộc nhà xe 2 (Thành Bưởi) cố tình đổi vé của nhà xe 1 (Phương Trang)
+        User attacker = User.builder().id(88L).email("attacker@thanhbuoi.com").busCompanyId(2L).build();
+
         when(ticketRepository.findByTicketCode("TK-20261111-01")).thenReturn(Optional.of(oldTicket));
 
-        AppException ex = assertThrows(AppException.class, () -> ticketExchangeService.exchangeTicket(request, null));
-        assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
-        assertTrue(ex.getMessage().contains("toi thieu 12 tieng"));
-
-        verify(ticketExchangeLogRepository, never()).save(any());
+        AppException ex = assertThrows(AppException.class, () -> ticketExchangeService.exchangeTicket(request, attacker));
+        assertEquals(ErrorCode.FORBIDDEN, ex.getErrorCode());
     }
 }

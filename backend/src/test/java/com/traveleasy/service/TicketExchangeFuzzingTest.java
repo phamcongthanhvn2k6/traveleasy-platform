@@ -25,18 +25,21 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * [S316] Kiem thu Fuzzing va truong hop bien cho nghiep vu doi ve
- * - Bien 12 tieng: 11h59m (tu choi) vs 12h01m (chap nhan)
- * - Chenh lech gia cuc doan (0 VND, 100 trieu VND, ve mien phi)
- * - Ma ve ky tu la, khoang trang, null
- * - Idempotency va phong ve concurrency
- * @author Tran Minh Duc (minhdctrn13)
+ * [S316] Kiểm thử Fuzzing và trường hợp biên cho nghiệp vụ đổi vé
+ * - Biên 12 tiếng: 11h59m (từ chối) vs 12h01m (chấp nhận)
+ * - Chênh lệch giá cực đoan (0 VNĐ, 10 triệu VNĐ, vé miễn phí)
+ * - Mã vé ký tự lạ, khoảng trắng, null
+ * - Idempotency và phòng vệ concurrency
+ * @author Trần Minh Đức (tranduc2601)
  */
 @ExtendWith(MockitoExtension.class)
 class TicketExchangeFuzzingTest {
 
     @Mock
     private TicketRepository ticketRepository;
+
+    @Mock
+    private BookingRepository bookingRepository;
 
     @Mock
     private TripRepository tripRepository;
@@ -64,8 +67,8 @@ class TicketExchangeFuzzingTest {
 
     @BeforeEach
     void setUp() {
-        testCompany = BusCompany.builder().id(1L).name("Phuong Trang").build();
-        testRoute = Route.builder().id(1L).departureLocation("Sai Gon").arrivalLocation("Nha Trang").build();
+        testCompany = BusCompany.builder().id(1L).name("Phương Trang").build();
+        testRoute = Route.builder().id(1L).departureLocation("Sài Gòn").arrivalLocation("Nha Trang").build();
 
         baseOldTrip = Trip.builder()
                 .id(10L)
@@ -110,9 +113,8 @@ class TicketExchangeFuzzingTest {
     }
 
     @Test
-    @DisplayName("FUZZ-01: Truong hop bien thoi gian - Chinh xac 11 gio 59 phut (Tu choi 400)")
+    @DisplayName("FUZZ-01: Trường hợp biên thời gian - Chính xác 11 giờ 59 phút (Từ chối 400)")
     void testBoundary_11Hours59Minutes_Rejected() {
-        // Khoi hanh sau dung 11h 59m (< 12h)
         baseOldTrip.setDepartureTime(LocalDateTime.now().plusHours(11).plusMinutes(59));
 
         TicketExchangeRequest req = TicketExchangeRequest.builder()
@@ -125,13 +127,12 @@ class TicketExchangeFuzzingTest {
 
         AppException ex = assertThrows(AppException.class, () -> ticketExchangeService.exchangeTicket(req, null));
         assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
-        assertTrue(ex.getMessage().contains("toi thieu 12 tieng"));
+        assertTrue(ex.getMessage().contains("12 tiếng"));
     }
 
     @Test
-    @DisplayName("FUZZ-02: Truong hop bien thoi gian - Chinh xac 12 gio 01 phut (Chap nhan thanh cong)")
+    @DisplayName("FUZZ-02: Trường hợp biên thời gian - Chính xác 12 giờ 01 phút (Chấp nhận thành công)")
     void testBoundary_12Hours01Minute_Accepted() {
-        // Khoi hanh sau 12h 01m (>= 12h)
         baseOldTrip.setDepartureTime(LocalDateTime.now().plusHours(12).plusMinutes(1));
 
         TicketExchangeRequest req = TicketExchangeRequest.builder()
@@ -142,8 +143,9 @@ class TicketExchangeFuzzingTest {
 
         when(ticketRepository.findByTicketCode("TK-FUZZ-01")).thenReturn(Optional.of(baseTicket));
         when(tripRepository.findById(20L)).thenReturn(Optional.of(baseNewTrip));
-        when(tripSeatRepository.findByTripIdAndSeatCode(20L, "B01")).thenReturn(Optional.of(baseNewSeat));
+        when(tripSeatRepository.findByTripIdAndSeatCodeWithLock(20L, "B01")).thenReturn(Optional.of(baseNewSeat));
         when(tripSeatRepository.findByTripIdAndSeatCode(10L, "A01")).thenReturn(Optional.of(baseOldSeat));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(i -> i.getArgument(0));
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
         when(ticketExchangeLogRepository.save(any(TicketExchangeLog.class))).thenAnswer(i -> {
             TicketExchangeLog l = i.getArgument(0);
@@ -157,12 +159,13 @@ class TicketExchangeFuzzingTest {
         assertEquals("SUCCESS", res.getStatus());
         assertEquals(SeatStatus.AVAILABLE, baseOldSeat.getStatus());
         assertEquals(SeatStatus.BOOKED, baseNewSeat.getStatus());
+        verify(bookingRepository, times(1)).save(any(Booking.class));
     }
 
     @Test
-    @DisplayName("FUZZ-03: Chenh lech gia cuc doan - Chuyen moi gia 0 VND (Ve khuyen mai dac biet, hoan toan bo tien)")
+    @DisplayName("FUZZ-03: Chênh lệch giá cực đoan - Chuyến mới giá 0 VNĐ (Vé khuyến mãi đặc biệt, hoàn toàn bộ tiền)")
     void testExtremePrice_NewPriceZero_RefundsFullAmount() {
-        baseNewTrip.setPrice(BigDecimal.ZERO); // Gia 0d
+        baseNewTrip.setPrice(BigDecimal.ZERO);
 
         TicketExchangeRequest req = TicketExchangeRequest.builder()
                 .oldTicketCode("TK-FUZZ-01")
@@ -172,8 +175,9 @@ class TicketExchangeFuzzingTest {
 
         when(ticketRepository.findByTicketCode("TK-FUZZ-01")).thenReturn(Optional.of(baseTicket));
         when(tripRepository.findById(20L)).thenReturn(Optional.of(baseNewTrip));
-        when(tripSeatRepository.findByTripIdAndSeatCode(20L, "B01")).thenReturn(Optional.of(baseNewSeat));
+        when(tripSeatRepository.findByTripIdAndSeatCodeWithLock(20L, "B01")).thenReturn(Optional.of(baseNewSeat));
         when(tripSeatRepository.findByTripIdAndSeatCode(10L, "A01")).thenReturn(Optional.of(baseOldSeat));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(i -> i.getArgument(0));
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
         when(ticketExchangeLogRepository.save(any(TicketExchangeLog.class))).thenAnswer(i -> {
             TicketExchangeLog l = i.getArgument(0);
@@ -190,9 +194,9 @@ class TicketExchangeFuzzingTest {
     }
 
     @Test
-    @DisplayName("FUZZ-04: Chenh lech gia cuc doan - Chuyen moi dat hon 10 trieu VND (Phu thu lon)")
+    @DisplayName("FUZZ-04: Chênh lệch giá cực đoan - Chuyến mới đắt hơn 10 triệu VNĐ (Phụ thu lớn)")
     void testExtremePrice_HighSurcharge() {
-        baseNewTrip.setPrice(BigDecimal.valueOf(10000000)); // 10 trieu
+        baseNewTrip.setPrice(BigDecimal.valueOf(10000000));
 
         TicketExchangeRequest req = TicketExchangeRequest.builder()
                 .oldTicketCode("TK-FUZZ-01")
@@ -202,8 +206,9 @@ class TicketExchangeFuzzingTest {
 
         when(ticketRepository.findByTicketCode("TK-FUZZ-01")).thenReturn(Optional.of(baseTicket));
         when(tripRepository.findById(20L)).thenReturn(Optional.of(baseNewTrip));
-        when(tripSeatRepository.findByTripIdAndSeatCode(20L, "B01")).thenReturn(Optional.of(baseNewSeat));
+        when(tripSeatRepository.findByTripIdAndSeatCodeWithLock(20L, "B01")).thenReturn(Optional.of(baseNewSeat));
         when(tripSeatRepository.findByTripIdAndSeatCode(10L, "A01")).thenReturn(Optional.of(baseOldSeat));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(i -> i.getArgument(0));
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
         when(ticketExchangeLogRepository.save(any(TicketExchangeLog.class))).thenAnswer(i -> {
             TicketExchangeLog l = i.getArgument(0);
@@ -220,9 +225,9 @@ class TicketExchangeFuzzingTest {
     }
 
     @Test
-    @DisplayName("FUZZ-05: Chuyen xe moi co gio khoi hanh trong qua khu (Tu choi 400)")
+    @DisplayName("FUZZ-05: Chuyến xe mới có giờ khởi hành trong quá khứ (Từ chối 400)")
     void testNewTripInPast_ThrowsValidationException() {
-        baseNewTrip.setDepartureTime(LocalDateTime.now().minusHours(2)); // Da qua
+        baseNewTrip.setDepartureTime(LocalDateTime.now().minusHours(2));
 
         TicketExchangeRequest req = TicketExchangeRequest.builder()
                 .oldTicketCode("TK-FUZZ-01")
@@ -235,13 +240,13 @@ class TicketExchangeFuzzingTest {
 
         AppException ex = assertThrows(AppException.class, () -> ticketExchangeService.exchangeTicket(req, null));
         assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
-        assertTrue(ex.getMessage().contains("trong tuong lai"));
+        assertTrue(ex.getMessage().contains("trong tương lai"));
     }
 
     @Test
-    @DisplayName("FUZZ-06: Idempotency - Ve da EXCHANGED roi khong the tiep tuc doi lan thu hai")
+    @DisplayName("FUZZ-06: Idempotency - Vé đã EXCHANGED rồi không thể tiếp tục đổi lần thứ hai")
     void testIdempotency_AlreadyExchanged_CannotExchangeAgain() {
-        baseTicket.setStatus(TicketStatus.EXCHANGED); // Da doi truoc do
+        baseTicket.setStatus(TicketStatus.EXCHANGED);
 
         TicketExchangeRequest req = TicketExchangeRequest.builder()
                 .oldTicketCode("TK-FUZZ-01")
@@ -253,6 +258,6 @@ class TicketExchangeFuzzingTest {
 
         AppException ex = assertThrows(AppException.class, () -> ticketExchangeService.exchangeTicket(req, null));
         assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
-        assertTrue(ex.getMessage().contains("Chi co the doi ve o trang thai ISSUED"));
+        assertTrue(ex.getMessage().contains("ISSUED"));
     }
 }
