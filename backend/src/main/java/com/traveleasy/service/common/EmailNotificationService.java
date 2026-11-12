@@ -1,19 +1,42 @@
 package com.traveleasy.service.common;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
 public class EmailNotificationService {
+
+    private static final String TEMPLATE_DIR = "templates/email/";
+    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{([a-zA-Z0-9_]+)}}");
+    private static final List<String> PRELOAD_TEMPLATES = List.of(
+            "partner-received.html",
+            "partner-approved.html",
+            "partner-rejected.html",
+            "partner-supplement.html",
+            "password-reset-otp.html",
+            "password-reset-success.html"
+    );
+
+    private final ConcurrentHashMap<String, String> templateCache = new ConcurrentHashMap<>();
 
     @Autowired(required = false)
     private JavaMailSender mailSender;
@@ -24,56 +47,31 @@ public class EmailNotificationService {
     @Value("${app.frontend-url:${app.frontend.url:http://localhost:5173}}")
     private String frontendUrl;
 
+    @PostConstruct
+    public void preloadTemplates() {
+        for (String name : PRELOAD_TEMPLATES) {
+            try {
+                loadTemplate(name);
+            } catch (Exception e) {
+                log.warn("⚠️ Không thể nạp trước mẫu email {}: {}", name, e.getMessage());
+            }
+        }
+        log.info("✅ Đã nạp và cache {} mẫu email vào bộ nhớ để tối ưu tốc độ gửi.", templateCache.size());
+    }
+
     /**
      * Gửi Email thông báo Đã Tiếp Nhận Hồ Sơ Đăng Ký Đối Tác (Chờ Xét Duyệt KYB)
      */
     @Async
     public void sendPartnerRegistrationReceivedEmail(String recipientEmail, String companyName, String contactName) {
         String subject = "📨 [TravelEasy] Đã tiếp nhận hồ sơ đăng ký đối tác nhà xe " + companyName;
-        String nameStr = (contactName != null && !contactName.isBlank()) ? contactName : "Quý Đối Tác";
+        String safeContact = escapeHtml((contactName != null && !contactName.isBlank()) ? contactName.trim() : "Quý Đối Tác");
+        String safeCompany = escapeHtml(companyName != null ? companyName.trim() : "Nhà Xe Đối Tác");
 
-        String html = """
-            <!DOCTYPE html>
-            <html lang="vi">
-            <head>
-              <meta charset="UTF-8">
-              <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
-                .card { max-width: 620px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
-                .header { background: linear-gradient(135deg, #2563eb, #1d4ed8); padding: 30px 24px; text-align: center; color: #ffffff; }
-                .header h1 { margin: 0; font-size: 22px; font-weight: 800; }
-                .header p { margin: 6px 0 0 0; opacity: 0.9; font-size: 14px; }
-                .content { padding: 30px 28px; line-height: 1.6; font-size: 14.5px; }
-                .box-info { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px 20px; margin: 20px 0; color: #166534; }
-                .footer { background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px; text-align: center; font-size: 12.5px; color: #64748b; }
-              </style>
-            </head>
-            <body>
-              <div class="card">
-                <div class="header">
-                  <h1>TravelEasy Platform</h1>
-                  <p>Hệ Thống Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh</p>
-                </div>
-                <div class="content">
-                  <p>Kính gửi <strong>%s</strong> (Đại diện <strong>%s</strong>),</p>
-                  <p>Hệ thống TravelEasy đã <strong>tiếp nhận thành công hồ sơ đăng ký hợp tác mở bán vé trực tuyến</strong> của Quý Nhà Xe.</p>
-                  
-                  <div class="box-info">
-                    ⏳ <strong>Trạng thái hồ sơ:</strong> Đang chờ thẩm định pháp nhân KYB<br>
-                    ⏱️ <strong>Thời gian xử lý:</strong> Chuyên viên thẩm định sẽ kiểm tra giấy phép kinh doanh và phản hồi trong vòng <strong>24 giờ làm việc</strong>.
-                  </div>
-
-                  <p>Khi hồ sơ được phê duyệt, hệ thống sẽ tự động gửi thông tin tài khoản đăng nhập Cổng Quản Lý Điều Hành Nhà Xe (OPERATOR) và mật khẩu khởi tạo trực tiếp qua email này.</p>
-                  <p>Trân trọng cảm ơn sự tin tưởng hợp tác của Quý Đơn vị!</p>
-                </div>
-                <div class="footer">
-                  Phòng Phát Triển Mạng Lưới Đối Tác TravelEasy • Hotline: <strong>1900 6868</strong><br>
-                  Email: support-partner@traveleasy.vn
-                </div>
-              </div>
-            </body>
-            </html>
-            """.formatted(nameStr, companyName);
+        String html = renderTemplate("partner-received.html", Map.of(
+                "contactName", safeContact,
+                "companyName", safeCompany
+        ));
 
         sendHtmlEmail(recipientEmail, subject, html);
     }
@@ -89,82 +87,19 @@ public class EmailNotificationService {
             String tempPassword,
             BigDecimal commissionRate
     ) {
-        String loginUrl = frontendUrl + "/company/login";
+        String baseUrl = (frontendUrl != null && !frontendUrl.isBlank()) ? frontendUrl.trim() : "http://localhost:5173";
+        String loginUrl = baseUrl.endsWith("/") ? (baseUrl + "company/login") : (baseUrl + "/company/login");
         String subject = "🎉 [TravelEasy] Chúc mừng! Hồ sơ đối tác nhà xe " + companyName + " đã được phê duyệt thành công";
+        String rateStr = formatCommissionRate(commissionRate);
 
-        String rateStr = (commissionRate != null) ? commissionRate.stripTrailingZeros().toPlainString() + "%" : "8%";
-
-        String html = """
-            <!DOCTYPE html>
-            <html lang="vi">
-            <head>
-              <meta charset="UTF-8">
-              <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
-                .card { max-width: 620px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
-                .header { background: linear-gradient(135deg, #2563eb, #1d4ed8); padding: 30px 24px; text-align: center; color: #ffffff; }
-                .header h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
-                .header p { margin: 6px 0 0 0; opacity: 0.9; font-size: 14px; }
-                .content { padding: 30px 28px; line-height: 1.6; font-size: 14.5px; }
-                .greeting { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
-                .box-creds { background-color: #eff6ff; border: 2px dashed #93c5fd; border-radius: 12px; padding: 18px 20px; margin: 20px 0; }
-                .cred-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #dbeafe; font-size: 14px; }
-                .cred-item:last-child { border-bottom: none; }
-                .cred-label { color: #475569; font-weight: 600; }
-                .cred-value { font-weight: 700; color: #1e40af; font-family: monospace; font-size: 15px; }
-                .btn-cta { display: block; text-align: center; background-color: #2563eb; color: #ffffff !important; text-decoration: none; padding: 14px 24px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 25px 0 15px 0; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-                .note { background-color: #fefce8; border-left: 4px solid #eab308; padding: 12px 14px; font-size: 13px; color: #713f12; border-radius: 0 8px 8px 0; margin-top: 15px; }
-                .footer { background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px; text-align: center; font-size: 12.5px; color: #64748b; }
-              </style>
-            </head>
-            <body>
-              <div class="card">
-                <div class="header">
-                  <h1>TravelEasy Platform</h1>
-                  <p>Hệ Thống Đặt Vé Xe Khách Trực Tuyến Hàng Đầu Việt Nam</p>
-                </div>
-                <div class="content">
-                  <div class="greeting">Kính gửi Ban Giám Đốc Nhà Xe %s,</div>
-                  <p>Ban Quản Trị TravelEasy xin trân trọng thông báo: <strong>Hồ sơ đăng ký đối tác mở bán vé trực tuyến của Quý Nhà Xe đã được phê duyệt thành công!</strong></p>
-                  <p>Dưới đây là thông tin tài khoản Điều Hành (OPERATOR) được cấp phát riêng biệt để Quý Đối tác truy cập vào Cổng Quản Lý Điều Hành Nhà Xe:</p>
-                  
-                  <div class="box-creds">
-                    <div class="cred-item">
-                      <span class="cred-label">Đường dẫn Cổng Đối Tác:</span>
-                      <span class="cred-value">%s</span>
-                    </div>
-                    <div class="cred-item">
-                      <span class="cred-label">Tài khoản (Email):</span>
-                      <span class="cred-value">%s</span>
-                    </div>
-                    <div class="cred-item">
-                      <span class="cred-label">Mật khẩu khởi tạo:</span>
-                      <span class="cred-value">%s</span>
-                    </div>
-                    <div class="cred-item">
-                      <span class="cred-label">Mã nhà xe sàn cấp:</span>
-                      <span class="cred-value">%s</span>
-                    </div>
-                    <div class="cred-item">
-                      <span class="cred-label">Tỉ lệ hoa hồng sàn:</span>
-                      <span class="cred-value">%s</span>
-                    </div>
-                  </div>
-
-                  <a href="%s" class="btn-cta" target="_blank">ĐĂNG NHẬP CỔNG ĐIỀU HÀNH NHÀ XE NGAY ➔</a>
-
-                  <div class="note">
-                    🔒 <strong>Lưu ý bảo mật:</strong> Để đảm bảo an toàn tuyệt đối cho doanh thu và dữ liệu đội xe, Quý Đối tác vui lòng đổi mật khẩu ngay trong lần đầu tiên đăng nhập.
-                  </div>
-                </div>
-                <div class="footer">
-                  Hotline Hỗ Trợ Kỹ Thuật Đối Tác: <strong>1900 6868 (24/7)</strong><br>
-                  Email: support-partner@traveleasy.vn • Trụ sở TravelEasy Platform Việt Nam
-                </div>
-              </div>
-            </body>
-            </html>
-            """.formatted(companyName, loginUrl, recipientEmail, tempPassword, companyCode, rateStr, loginUrl);
+        String html = renderTemplate("partner-approved.html", Map.of(
+                "companyName", escapeHtml(companyName != null ? companyName.trim() : "Đối Tác"),
+                "loginUrl", escapeHtml(loginUrl),
+                "recipientEmail", escapeHtml(recipientEmail != null ? recipientEmail.trim() : ""),
+                "tempPassword", escapeHtml(tempPassword != null ? tempPassword : ""),
+                "companyCode", escapeHtml(companyCode != null ? companyCode : ""),
+                "commissionRate", escapeHtml(rateStr)
+        ));
 
         sendHtmlEmail(recipientEmail, subject, html);
     }
@@ -175,47 +110,14 @@ public class EmailNotificationService {
     @Async
     public void sendPartnerRejectionEmail(String recipientEmail, String companyName, String reason) {
         String subject = "⚠️ [TravelEasy] Thông báo về hồ sơ đăng ký hợp tác nhà xe " + companyName;
-        String reasonStr = (reason != null && !reason.isBlank()) ? reason : "Hồ sơ chưa đáp ứng đầy đủ tiêu chuẩn kiểm duyệt giấy phép kinh doanh vận tải của sàn.";
+        String reasonStr = (reason != null && !reason.isBlank())
+                ? reason.trim()
+                : "Hồ sơ chưa đáp ứng đầy đủ tiêu chuẩn kiểm duyệt giấy phép kinh doanh vận tải của sàn.";
 
-        String html = """
-            <!DOCTYPE html>
-            <html lang="vi">
-            <head>
-              <meta charset="UTF-8">
-              <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
-                .card { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
-                .header { background: linear-gradient(135deg, #ef4444, #dc2626); padding: 24px; text-align: center; color: #ffffff; }
-                .header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-                .content { padding: 28px; line-height: 1.6; font-size: 14.5px; }
-                .box-reason { background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; color: #991b1b; font-weight: 600; margin: 18px 0; }
-                .footer { background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px; text-align: center; font-size: 12.5px; color: #64748b; }
-              </style>
-            </head>
-            <body>
-              <div class="card">
-                <div class="header">
-                  <h1>TravelEasy Platform</h1>
-                  <p>Thông Báo Thẩm Định Hồ Sơ Hợp Tác</p>
-                </div>
-                <div class="content">
-                  <p>Kính gửi Đại diện Nhà Xe <strong>%s</strong>,</p>
-                  <p>Ban Quản Trị TravelEasy xin cảm ơn Quý Đơn vị đã quan tâm và nộp hồ sơ hợp tác mở bán vé trực tuyến trên nền tảng của chúng tôi.</p>
-                  <p>Sau khi thẩm định giấy tờ và điều kiện vận tải, chúng tôi rất tiếc phải thông báo hồ sơ của Quý Đơn vị hiện <strong>chưa được phê duyệt</strong> vì lý do:</p>
-                  
-                  <div class="box-reason">
-                    📌 %s
-                  </div>
-
-                  <p>Quý Nhà Xe vui lòng kiểm tra và hoàn thiện lại hồ sơ giấy tờ, sau đó có thể nộp lại đơn đăng ký mới hoặc liên hệ trực tiếp với chuyên viên thẩm định để được hỗ trợ hướng dẫn chi tiết.</p>
-                </div>
-                <div class="footer">
-                  Tổng Đài Thẩm Định Đối Tác: <strong>1900 6868</strong> • Email: partner-kyb@traveleasy.vn
-                </div>
-              </div>
-            </body>
-            </html>
-            """.formatted(companyName, reasonStr);
+        String html = renderTemplate("partner-rejected.html", Map.of(
+                "companyName", escapeHtml(companyName != null ? companyName.trim() : "Đối Tác"),
+                "reason", escapeHtml(reasonStr)
+        ));
 
         sendHtmlEmail(recipientEmail, subject, html);
     }
@@ -226,46 +128,14 @@ public class EmailNotificationService {
     @Async
     public void sendPartnerSupplementEmail(String recipientEmail, String companyName, String requirements) {
         String subject = "📋 [TravelEasy] Yêu cầu bổ sung hồ sơ pháp lý đối tác nhà xe " + companyName;
-        String reqStr = (requirements != null && !requirements.isBlank()) ? requirements : "Bổ sung ảnh chụp rõ nét Giấy phép kinh doanh vận tải và CCCD người đại diện pháp luật.";
+        String reqStr = (requirements != null && !requirements.isBlank())
+                ? requirements.trim()
+                : "Bổ sung ảnh chụp rõ nét Giấy phép kinh doanh vận tải và CCCD người đại diện pháp luật.";
 
-        String html = """
-            <!DOCTYPE html>
-            <html lang="vi">
-            <head>
-              <meta charset="UTF-8">
-              <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
-                .card { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
-                .header { background: linear-gradient(135deg, #f59e0b, #d97706); padding: 24px; text-align: center; color: #ffffff; }
-                .header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-                .content { padding: 28px; line-height: 1.6; font-size: 14.5px; }
-                .box-req { background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 14px 18px; color: #92400e; font-weight: 600; margin: 18px 0; }
-                .footer { background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px; text-align: center; font-size: 12.5px; color: #64748b; }
-              </style>
-            </head>
-            <body>
-              <div class="card">
-                <div class="header">
-                  <h1>TravelEasy Platform</h1>
-                  <p>Yêu Cầu Bổ Sung Hồ Sơ Pháp Lý</p>
-                </div>
-                <div class="content">
-                  <p>Kính gửi Đại diện Nhà Xe <strong>%s</strong>,</p>
-                  <p>Ban Quản Trị TravelEasy đã tiếp nhận hồ sơ đăng ký hợp tác của Quý Nhà Xe. Để hoàn tất quy trình phê duyệt KYB, Quý Nhà Xe vui lòng bổ sung thông tin sau:</p>
-                  
-                  <div class="box-req">
-                    📝 %s
-                  </div>
-
-                  <p>Quý Nhà Xe vui lòng phản hồi email này hoặc liên hệ chuyên viên phụ trách để gửi bổ sung các chứng từ theo yêu cầu trong vòng 03 ngày làm việc.</p>
-                </div>
-                <div class="footer">
-                  Phòng Hợp Tác Đối Tác TravelEasy • Hotline: <strong>1900 6868</strong>
-                </div>
-              </div>
-            </body>
-            </html>
-            """.formatted(companyName, reqStr);
+        String html = renderTemplate("partner-supplement.html", Map.of(
+                "companyName", escapeHtml(companyName != null ? companyName.trim() : "Đối Tác"),
+                "requirements", escapeHtml(reqStr)
+        ));
 
         sendHtmlEmail(recipientEmail, subject, html);
     }
@@ -296,7 +166,7 @@ public class EmailNotificationService {
         String netStr = currencyFmt.format(netPayable != null ? netPayable : BigDecimal.ZERO) + " đ";
 
         String noteBlock = (payoutNote != null && !payoutNote.isBlank())
-                ? "<div style=\"margin-top: 12px; padding: 10px; background-color: #f8fafc; border-radius: 8px; font-size: 13px; color: #475569;\"><strong>Ghi chú:</strong> " + payoutNote + "</div>"
+                ? "<div style=\"margin-top: 12px; padding: 10px; background-color: #f8fafc; border-radius: 8px; font-size: 13px; color: #475569;\"><strong>Ghi chú:</strong> " + escapeHtml(payoutNote) + "</div>"
                 : "";
 
         String html = """
@@ -372,21 +242,96 @@ public class EmailNotificationService {
             </body>
             </html>
             """.formatted(
-                companyName,
-                periodName,
-                settlementCode,
+                escapeHtml(companyName),
+                escapeHtml(periodName),
+                escapeHtml(settlementCode),
                 netStr,
                 grossStr,
                 comStr,
                 netStr,
-                bankName != null ? bankName : "Tài khoản đối tác",
-                accountNumber != null ? accountNumber : "-",
-                accountHolder != null ? accountHolder : companyName,
-                payoutTxHash != null ? payoutTxHash : "VCB-FT-DIRECT",
+                escapeHtml(bankName != null ? bankName : "Tài khoản đối tác"),
+                escapeHtml(accountNumber != null ? accountNumber : "-"),
+                escapeHtml(accountHolder != null ? accountHolder : companyName),
+                escapeHtml(payoutTxHash != null ? payoutTxHash : "VCB-FT-DIRECT"),
                 noteBlock
         );
 
         sendHtmlEmail(recipientEmail, subject, html);
+    }
+
+    /**
+     * Gửi Email mã OTP 6 chữ số để xác minh khôi phục mật khẩu người dùng.
+     */
+    @Async
+    public void sendPasswordResetOtpEmail(String recipientEmail, String fullName, String otpCode, int expiryMinutes) {
+        String safeName = escapeHtml((fullName != null && !fullName.isBlank()) ? fullName.trim() : "Quý khách");
+        String subject = "[TravelEasy] Mã OTP xác nhận khôi phục mật khẩu: " + otpCode;
+
+        String html = renderTemplate("password-reset-otp.html", Map.of(
+                "fullName", safeName,
+                "otpCode", escapeHtml(otpCode),
+                "expiryMinutes", String.valueOf(expiryMinutes)
+        ));
+
+        sendHtmlEmail(recipientEmail, subject, html);
+    }
+
+    /**
+     * Gửi Email thông báo đã đổi mật khẩu thành công sau khi khôi phục qua OTP.
+     */
+    @Async
+    public void sendPasswordResetSuccessEmail(String recipientEmail, String fullName) {
+        String safeName = escapeHtml((fullName != null && !fullName.isBlank()) ? fullName.trim() : "Quý khách");
+        String subject = "[TravelEasy] Mật khẩu tài khoản của bạn đã được thay đổi";
+
+        String html = renderTemplate("password-reset-success.html", Map.of(
+                "fullName", safeName
+        ));
+
+        sendHtmlEmail(recipientEmail, subject, html);
+    }
+
+    String renderTemplate(String templateName, Map<String, String> variables) {
+        String template = loadTemplate(templateName);
+        Matcher matcher = PLACEHOLDER_PATTERN.matcher(template);
+        StringBuilder result = new StringBuilder(template.length() + 128);
+        while (matcher.find()) {
+            String key = matcher.group(1);
+            String value = variables.getOrDefault(key, "");
+            matcher.appendReplacement(result, Matcher.quoteReplacement(value != null ? value : ""));
+        }
+        matcher.appendTail(result);
+        return result.toString();
+    }
+
+    private String loadTemplate(String templateName) {
+        return templateCache.computeIfAbsent(templateName, name -> {
+            ClassPathResource resource = new ClassPathResource(TEMPLATE_DIR + name);
+            try (InputStream is = resource.getInputStream()) {
+                return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new IllegalStateException("Không thể đọc mẫu email: " + TEMPLATE_DIR + name, e);
+            }
+        });
+    }
+
+    private String formatCommissionRate(BigDecimal commissionRate) {
+        if (commissionRate == null) {
+            return "8%";
+        }
+        BigDecimal pct = commissionRate.compareTo(BigDecimal.ONE) < 0
+                ? commissionRate.multiply(BigDecimal.valueOf(100))
+                : commissionRate;
+        return pct.stripTrailingZeros().toPlainString() + "%";
+    }
+
+    private String escapeHtml(String value) {
+        if (value == null) return "";
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     /**
@@ -425,4 +370,3 @@ public class EmailNotificationService {
         }
     }
 }
-
