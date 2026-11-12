@@ -1,12 +1,13 @@
 package com.traveleasy.controller.company;
 
 import com.traveleasy.common.dto.ApiResponse;
-import com.traveleasy.common.exception.AppException;
-import com.traveleasy.common.exception.ErrorCode;
+import com.traveleasy.common.security.CompanySecurityService;
+import com.traveleasy.entity.StaffRole;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -17,7 +18,7 @@ import java.util.*;
 
 /**
  * [S307] Phân Hệ Quản Trị Giá Vé Động & Phụ Thu Lễ Tết / Cuối Tuần (/company/pricing-rules)
- * Đã khắc phục BUG-ROUND2-04: Giới hạn trần phụ thu Max Surcharge Cap (40%) chống nhồi giá quá khung quy định
+ * BẢO MẬT: Chỉ Chủ nhà xe (StaffRole.OWNER) mới có quyền cấu hình luật giá
  * @author Trần Minh Đức (tranduc2601)
  */
 @Slf4j
@@ -28,12 +29,19 @@ import java.util.*;
 @Tag(name = "Company Dynamic Pricing", description = "[S307] Động cơ định giá vé động và kiểm soát trần giá Bộ GTVT - Trần Minh Đức")
 public class CompanyPricingRuleController {
 
-    private static final BigDecimal MAX_SURCHARGE_CAP_PERCENT = new BigDecimal("40.0"); // Trần tối đa 40% theo khung đăng ký Sở GTVT
+    private final CompanySecurityService securityService;
+    private static final BigDecimal MAX_SURCHARGE_CAP_PERCENT = new BigDecimal("40.0"); // Trần tối đa 40%
 
     @GetMapping
     @Operation(summary = "Lấy danh sách quy tắc phụ thu giá vé đang áp dụng")
     public ApiResponse<List<Map<String, Object>>> getPricingRules(
-            @RequestParam(required = false) Long busCompanyId) {
+            @RequestParam(required = false) Long busCompanyId,
+            Authentication authentication) {
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            securityService.requireStaffRole(authentication, StaffRole.OWNER);
+        }
+
         return ApiResponse.success(List.of(
                 Map.of(
                         "id", "RULE-01",
@@ -77,7 +85,7 @@ public class CompanyPricingRuleController {
         boolean isFloor1 = Boolean.TRUE.equals(payload.get("isFloor1")) || "1".equals(String.valueOf(payload.get("floor")));
         boolean isHoliday = Boolean.TRUE.equals(payload.get("isHoliday"));
 
-        // 1. Tính phụ thu cuối tuần (T6, T7, CN)
+        // 1. Tính phụ thu cuối tuần
         DayOfWeek day = departureDate.getDayOfWeek();
         boolean isWeekend = (day == DayOfWeek.FRIDAY || day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY);
         BigDecimal weekendSurcharge = BigDecimal.ZERO;
@@ -94,10 +102,9 @@ public class CompanyPricingRuleController {
         // 3. Tính phụ thu tầng 1
         BigDecimal floor1Surcharge = isFloor1 ? new BigDecimal("20000") : BigDecimal.ZERO;
 
-        // Tổng phụ thu lý thuyết
         BigDecimal totalRawSurcharge = weekendSurcharge.add(holidaySurcharge).add(floor1Surcharge);
 
-        // KIỂM SOÁT TRẦN PHỤ THU (Khắc phục BUG-ROUND2-04: Price Gouging Prevention)
+        // KIỂM SOÁT TRẦN PHỤ THU
         BigDecimal maxAllowedSurcharge = basePrice.multiply(MAX_SURCHARGE_CAP_PERCENT)
                 .divide(new BigDecimal("100"), 0, RoundingMode.HALF_UP);
 
@@ -106,8 +113,6 @@ public class CompanyPricingRuleController {
         if (totalRawSurcharge.compareTo(maxAllowedSurcharge) > 0) {
             finalSurcharge = maxAllowedSurcharge;
             capApplied = true;
-            log.info("Price Cap Alert: Tổng phụ thu {} vượt trần 40% ({}), đã tự động điều chỉnh về mức trần cho phép.",
-                    totalRawSurcharge, maxAllowedSurcharge);
         }
 
         BigDecimal finalPrice = basePrice.add(finalSurcharge);

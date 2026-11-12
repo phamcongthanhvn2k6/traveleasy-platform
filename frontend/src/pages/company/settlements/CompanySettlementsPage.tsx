@@ -26,22 +26,53 @@ interface PartnerSettlementRecord {
   startDate: string;
   endDate: string;
   ticketCount: number;
+  previousBalance?: number;
   grossAmount: number;
   customerPaid?: number;
   platformSubsidy?: number;
   platformFeeRate: number;
   platformFeeAmount: number;
   netReceived: number;
+  totalWithPrevious?: number;
   guaranteeNote?: string;
-  status: 'PENDING' | 'RECONCILED' | 'PAID';
+  status: 'PENDING' | 'RECONCILED' | 'PAID' | 'COMPLETED';
   reconciledAt?: string;
   paidAt?: string;
   payoutTxHash?: string;
 }
 
+interface PayoutRequestItem {
+  id: number;
+  requestCode: string;
+  amount: number;
+  bankName: string;
+  bankAccountNumber: string;
+  bankAccountOwner: string;
+  status: string;
+  note?: string;
+  createdAt?: string;
+}
+
+interface WalletData {
+  commissionRate: number;
+  minPayoutAmount: number;
+  availableBalance: number;
+  pendingPayoutAmount: number;
+  totalPaidOut: number;
+  bankAccount?: {
+    bankName: string;
+    accountNumber: string;
+    accountHolder: string;
+  };
+  payoutRequests: PayoutRequestItem[];
+}
+
+const MIN_PAYOUT_VND = 500000;
+
 export const CompanySettlementsPage: React.FC = () => {
   const currentCompany = getStoredCompany();
   const [settlements, setSettlements] = useState<PartnerSettlementRecord[]>([]);
+  const [wallet, setWallet] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState<PartnerSettlementRecord | null>(null);
 
@@ -54,14 +85,22 @@ export const CompanySettlementsPage: React.FC = () => {
   const fetchSettlements = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/company/settlements', {
-        params: {
-          companyId: currentCompany.id,
-          companyName: currentCompany.name,
-        },
-      });
-      if (res.data?.data && Array.isArray(res.data.data)) {
-        setSettlements(res.data.data);
+      const [settRes, walletRes] = await Promise.all([
+        api.get('/company/settlements', {
+          params: {
+            companyId: currentCompany.id,
+            companyName: currentCompany.name,
+          },
+        }),
+        api.get('/company/settlements/wallet', {
+          params: { companyId: currentCompany.id },
+        }),
+      ]);
+      if (settRes.data?.data && Array.isArray(settRes.data.data)) {
+        setSettlements(settRes.data.data);
+      }
+      if (walletRes.data?.data) {
+        setWallet(walletRes.data.data);
       }
     } catch (err: any) {
       if (err?.response?.status === 401) return;
@@ -76,30 +115,45 @@ export const CompanySettlementsPage: React.FC = () => {
     fetchSettlements();
   }, []);
 
+  const isCompleted = (status: string) => status === 'PAID' || status === 'COMPLETED';
   const totalGross = settlements.reduce((a, b) => a + b.grossAmount, 0);
-  const totalPaid = settlements.filter(s => s.status === 'PAID').reduce((a, b) => a + b.netReceived, 0);
-  const totalPending = settlements.filter(s => s.status !== 'PAID').reduce((a, b) => a + b.netReceived, 0);
+  const totalPaid = settlements.filter(s => isCompleted(s.status)).reduce((a, b) => a + b.netReceived, 0);
+  const totalPending = wallet?.availableBalance ?? settlements.filter(s => !isCompleted(s.status)).reduce((a, b) => a + b.netReceived, 0);
 
   const openWithdrawModal = () => {
-    setWithdrawAmount(totalPending > 0 ? totalPending : 50000000);
-    setWithdrawNote('Đề nghị sàn TravelEasy tất toán kỳ hiện tại vào tài khoản Vietcombank của nhà xe');
+    setWithdrawAmount(totalPending >= MIN_PAYOUT_VND ? totalPending : MIN_PAYOUT_VND);
+    setWithdrawNote('Đề nghị sàn TravelEasy tất toán kỳ hiện tại vào tài khoản ngân hàng của nhà xe');
     setWithdrawModalOpen(true);
   };
 
   const handleSendWithdrawRequest = async () => {
+    if (withdrawAmount < MIN_PAYOUT_VND) {
+      toast.error(`Số tiền rút tối thiểu là ${MIN_PAYOUT_VND.toLocaleString('vi-VN')} VNĐ`, 'Không Hợp Lệ');
+      return;
+    }
+    if (withdrawAmount > totalPending) {
+      toast.error(`Số dư khả dụng (${totalPending.toLocaleString('vi-VN')} đ) không đủ cho lệnh rút này`, 'Vượt Số Dư');
+      return;
+    }
     setSubmittingWithdraw(true);
     try {
-      await api.post('/company/settlements/request-payout', null, {
-        params: { amount: withdrawAmount },
+      const res = await api.post('/company/settlements/request-payout', null, {
+        params: {
+          companyId: currentCompany.id,
+          amount: withdrawAmount,
+          note: withdrawNote,
+        },
       });
       toast.success(
-        `Đã gửi yêu cầu rút ${withdrawAmount.toLocaleString('vi-VN')} đ tới Kế toán Sàn TravelEasy. Tiền sẽ được giải ngân trong 24h!`,
+        res.data?.message ||
+          `Đã gửi yêu cầu rút ${withdrawAmount.toLocaleString('vi-VN')} đ tới Kế toán Sàn TravelEasy!`,
         'Yêu Cầu Rút Tiền'
       );
       setWithdrawModalOpen(false);
+      await fetchSettlements();
     } catch (err: any) {
       console.error('Failed to request payout:', err);
-      toast.error('Gửi yêu cầu rút tiền thất bại', 'Lỗi');
+      toast.error(err?.response?.data?.message || 'Gửi yêu cầu rút tiền thất bại', 'Lỗi');
     } finally {
       setSubmittingWithdraw(false);
     }
@@ -256,15 +310,18 @@ export const CompanySettlementsPage: React.FC = () => {
               </span>
             </div>
             <div style={{ fontSize: '13px', color: '#334155', marginTop: '3px' }}>
-              Ngân hàng: <strong>Vietcombank - Chi nhánh Sài Gòn</strong> • STK:{' '}
-              <strong style={{ fontFamily: 'monospace', color: '#1e3a8a' }}>0071000987101</strong> • Chủ TK:{' '}
-              <strong>CTY CP XE KHACH PHUONG TRANG</strong>
+              Ngân hàng: <strong>{wallet?.bankAccount?.bankName || 'Vietcombank - Chi nhánh TP.HCM'}</strong> • STK:{' '}
+              <strong style={{ fontFamily: 'monospace', color: '#1e3a8a' }}>
+                {wallet?.bankAccount?.accountNumber || 'Đang cập nhật'}
+              </strong>{' '}
+              • Chủ TK:{' '}
+              <strong>{wallet?.bankAccount?.accountHolder || currentCompany.name.toUpperCase()}</strong>
             </div>
           </div>
         </div>
 
         <div style={{ fontSize: '12px', color: '#64748b' }}>
-          Chu kỳ quyết toán: <strong>Ngày 16 & Ngày 01 hàng tháng</strong> (Tự động chuyển khoản 24/7)
+          Chu kỳ tự động chốt: <strong>Ngày 01 & Ngày 15 hàng tháng</strong> • Rút tối thiểu: <strong>500.000 đ</strong>
         </div>
       </div>
 
@@ -317,10 +374,10 @@ export const CompanySettlementsPage: React.FC = () => {
             <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
               <th style={{ padding: '12px 18px' }}>MÃ ĐỐI SOÁT & KỲ</th>
               <th style={{ padding: '12px 18px' }}>THỜI GIAN KỲ</th>
-              <th style={{ padding: '12px 18px' }}>SỐ VÉ ĐÃ BÁN</th>
-              <th style={{ padding: '12px 18px' }}>DOANH THU VÉ</th>
-              <th style={{ padding: '12px 18px' }}>PHÍ SÀN (10%)</th>
-              <th style={{ padding: '12px 18px' }}>THỰC NHẬN VỀ TK</th>
+              <th style={{ padding: '12px 18px' }}>SỐ VÉ / KỲ TRƯỚC</th>
+              <th style={{ padding: '12px 18px' }}>DOANH THU PHÁT SINH</th>
+              <th style={{ padding: '12px 18px' }}>PHÍ SÀN ({wallet?.commissionRate ?? settlements[0]?.platformFeeRate ?? 5}%)</th>
+              <th style={{ padding: '12px 18px' }}>THỰC NHẬN KỲ NÀY</th>
               <th style={{ padding: '12px 18px' }}>TRẠNG THÁI</th>
               <th style={{ padding: '12px 18px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
@@ -354,6 +411,11 @@ export const CompanySettlementsPage: React.FC = () => {
 
                   <td style={{ padding: '14px 18px', fontWeight: 600 }}>
                     {s.ticketCount.toLocaleString('vi-VN')} vé
+                    {(s.previousBalance ?? 0) > 0 && (
+                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                        Kỳ trước: +{(s.previousBalance ?? 0).toLocaleString('vi-VN')} đ
+                      </div>
+                    )}
                   </td>
 
                   <td style={{ padding: '14px 18px', fontWeight: 700 }}>
@@ -361,7 +423,7 @@ export const CompanySettlementsPage: React.FC = () => {
                   </td>
 
                   <td style={{ padding: '14px 18px', color: '#0d9488', fontWeight: 600 }}>
-                    -{s.platformFeeAmount.toLocaleString('vi-VN')} đ
+                    -{s.platformFeeAmount.toLocaleString('vi-VN')} đ ({s.platformFeeRate}%)
                   </td>
 
                   <td style={{ padding: '14px 18px', fontWeight: 900, color: '#16a34a', fontSize: '14px' }}>
@@ -376,19 +438,19 @@ export const CompanySettlementsPage: React.FC = () => {
                         fontSize: '11.5px',
                         fontWeight: 700,
                         backgroundColor:
-                          s.status === 'PAID'
+                          isCompleted(s.status)
                             ? '#f0fdf4'
                             : s.status === 'RECONCILED'
                             ? '#eff6ff'
                             : '#fffbeb',
                         color:
-                          s.status === 'PAID'
+                          isCompleted(s.status)
                             ? '#16a34a'
                             : s.status === 'RECONCILED'
                             ? '#2563eb'
                             : '#d97706',
                         border: `1px solid ${
-                          s.status === 'PAID'
+                          isCompleted(s.status)
                             ? '#bbf7d0'
                             : s.status === 'RECONCILED'
                             ? '#bfdbfe'
@@ -397,6 +459,7 @@ export const CompanySettlementsPage: React.FC = () => {
                       }}
                     >
                       {s.status === 'PAID' && '● ĐÃ NHẬN TIỀN'}
+                      {s.status === 'COMPLETED' && '● ĐÃ HOÀN TẤT'}
                       {s.status === 'RECONCILED' && '⏳ ĐÃ CHỐT SỐ (CHỜ TIỀN)'}
                       {s.status === 'PENDING' && '⚙️ ĐANG ĐỐI SOÁT'}
                     </span>
@@ -425,6 +488,44 @@ export const CompanySettlementsPage: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* 4b. Lịch sử lệnh rút tiền (Payout Requests) */}
+      {wallet?.payoutRequests && wallet.payoutRequests.length > 0 && (
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', marginTop: '24px' }}>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong style={{ fontSize: '14px', color: '#0f172a' }}>Lịch Sử Lệnh Rút Tiền (Payout Requests)</strong>
+            <span style={{ fontSize: '12px', color: '#64748b' }}>
+              Đang chờ xử lý: <strong>{(wallet.pendingPayoutAmount ?? 0).toLocaleString('vi-VN')} đ</strong>
+            </span>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
+                <th style={{ padding: '10px 18px' }}>MÃ LỆNH</th>
+                <th style={{ padding: '10px 18px' }}>SỐ TIỀN RÚT</th>
+                <th style={{ padding: '10px 18px' }}>NGÂN HÀNG NHẬN</th>
+                <th style={{ padding: '10px 18px' }}>TRẠNG THÁI</th>
+                <th style={{ padding: '10px 18px' }}>GHI CHÚ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {wallet.payoutRequests.map((pr) => (
+                <tr key={pr.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '12px 18px', fontFamily: 'monospace', fontWeight: 700, color: '#1e3a8a' }}>{pr.requestCode}</td>
+                  <td style={{ padding: '12px 18px', fontWeight: 800, color: '#0f172a' }}>{Number(pr.amount).toLocaleString('vi-VN')} đ</td>
+                  <td style={{ padding: '12px 18px', color: '#475569' }}>{pr.bankName} • {pr.bankAccountNumber}</td>
+                  <td style={{ padding: '12px 18px' }}>
+                    <span style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '11.5px', fontWeight: 700, backgroundColor: pr.status === 'PAID' ? '#f0fdf4' : '#fffbeb', color: pr.status === 'PAID' ? '#16a34a' : '#d97706' }}>
+                      {pr.status}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px 18px', color: '#64748b', fontSize: '12px' }}>{pr.note || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 5. MODAL YÊU CẦU RÚT TIỀN / TẤT TOÁN SỚM                                    */}
@@ -473,7 +574,10 @@ export const CompanySettlementsPage: React.FC = () => {
             <div style={{ backgroundColor: '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '16px', fontSize: '12.5px' }}>
               <div style={{ color: '#64748b' }}>Tài khoản nhận tiền:</div>
               <div style={{ fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>
-                Vietcombank • 0071000987101 • CTY CP XE KHACH PHUONG TRANG
+                {wallet?.bankAccount?.bankName || 'Vietcombank'} • {wallet?.bankAccount?.accountNumber || 'Chưa cập nhật'} • {wallet?.bankAccount?.accountHolder || currentCompany.name.toUpperCase()}
+              </div>
+              <div style={{ color: '#0d9488', fontWeight: 700, marginTop: '6px' }}>
+                Số dư khả dụng ví: {totalPending.toLocaleString('vi-VN')} VNĐ (Tối thiểu: 500.000 VNĐ)
               </div>
             </div>
 
@@ -483,13 +587,15 @@ export const CompanySettlementsPage: React.FC = () => {
               </label>
               <input
                 type="number"
+                min={MIN_PAYOUT_VND}
+                step={50000}
                 value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(Number(e.target.value))}
                 style={{
                   width: '100%',
                   padding: '9px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
+                  border: `1px solid ${withdrawAmount < MIN_PAYOUT_VND || withdrawAmount > totalPending ? '#ef4444' : '#cbd5e1'}`,
                   fontSize: '15px',
                   fontWeight: 800,
                   color: '#1e3a8a',
@@ -497,6 +603,16 @@ export const CompanySettlementsPage: React.FC = () => {
                   boxSizing: 'border-box',
                 }}
               />
+              {withdrawAmount < MIN_PAYOUT_VND && (
+                <div style={{ fontSize: '11.5px', color: '#dc2626', marginTop: '4px' }}>
+                  Hạn mức rút tối thiểu là 500.000 VNĐ.
+                </div>
+              )}
+              {withdrawAmount >= MIN_PAYOUT_VND && withdrawAmount > totalPending && (
+                <div style={{ fontSize: '11.5px', color: '#dc2626', marginTop: '4px' }}>
+                  Số tiền rút không được vượt quá số dư khả dụng ({totalPending.toLocaleString('vi-VN')} VNĐ).
+                </div>
+              )}
             </div>
 
             <div style={{ marginBottom: '18px' }}>
@@ -538,17 +654,17 @@ export const CompanySettlementsPage: React.FC = () => {
               </button>
 
               <button
-                disabled={submittingWithdraw || withdrawAmount <= 0}
+                disabled={submittingWithdraw || withdrawAmount < MIN_PAYOUT_VND || withdrawAmount > totalPending}
                 onClick={handleSendWithdrawRequest}
                 style={{
                   padding: '9px 20px',
-                  backgroundColor: '#2563eb',
+                  backgroundColor: submittingWithdraw || withdrawAmount < MIN_PAYOUT_VND || withdrawAmount > totalPending ? '#94a3b8' : '#2563eb',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '13px',
                   fontWeight: 700,
-                  cursor: submittingWithdraw || withdrawAmount <= 0 ? 'not-allowed' : 'pointer',
+                  cursor: submittingWithdraw || withdrawAmount < MIN_PAYOUT_VND || withdrawAmount > totalPending ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',

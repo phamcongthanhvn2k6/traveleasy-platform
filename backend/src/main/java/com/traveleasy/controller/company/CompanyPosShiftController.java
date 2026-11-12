@@ -3,10 +3,13 @@ package com.traveleasy.controller.company;
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.exception.ErrorCode;
+import com.traveleasy.common.security.CompanySecurityService;
+import com.traveleasy.entity.StaffRole;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -15,7 +18,7 @@ import java.util.*;
 
 /**
  * [S305] Phân Hệ Quản Lý Ca Trực & Bàn Giao Tiền Mặt Quầy Bến Xe POS (/company/shifts)
- * Đã khắc phục BUG-ROUND2-03: Tính toán chính xác tiền hoàn vé tại quầy (Total Cash Refunds) chống lệch két kết ca
+ * BẢO MẬT: Chỉ OWNER và CASHIER được thao tác; DISPATCHER bị chặn
  * @author Đoàn Nhật Cường (CuongLiam)
  */
 @Slf4j
@@ -26,10 +29,18 @@ import java.util.*;
 @Tag(name = "Company POS Shift Management", description = "[S305] Quản lý mở ca, bán vé quầy, kết ca Z-Report và nộp tiền mặt - Đoàn Nhật Cường")
 public class CompanyPosShiftController {
 
+    private final CompanySecurityService securityService;
+
     @GetMapping("/current")
-    @Operation(summary = "Lấy thông tin ca trực POS hiện tại của nhân viên thu ngân")
+    @Operation(summary = "Lấy thông tin ca trực POS hiện tại của nhân viên thu ngân (OWNER & CASHIER)")
     public ApiResponse<Map<String, Object>> getCurrentShift(
-            @RequestParam(required = false) Long busCompanyId) {
+            @RequestParam(required = false) Long busCompanyId,
+            Authentication authentication) {
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            securityService.requireStaffRole(authentication, StaffRole.OWNER, StaffRole.CASHIER);
+        }
+
         Map<String, Object> shift = new LinkedHashMap<>();
         shift.put("shiftId", "SHIFT-20261110-01");
         shift.put("cashierName", "Đoàn Nhật Cường");
@@ -37,26 +48,31 @@ public class CompanyPosShiftController {
         shift.put("terminalCode", "POS-BXMD-01");
         shift.put("status", "OPEN");
         shift.put("openedAt", "2026-11-10 07:00:00");
-        shift.put("initialCash", new BigDecimal("1000000.00")); // Tiền lẻ bàn giao đầu ca
-        shift.put("totalCashSales", new BigDecimal("4500000.00")); // Thu bán vé tiền mặt
-        shift.put("totalBankSales", new BigDecimal("2800000.00")); // Thu chuyển khoản VietQR tại quầy
-        shift.put("totalCashRefunds", new BigDecimal("340000.00")); // Tiền mặt đã móc két hoàn trả cho khách tại quầy (Khắc phục BUG-ROUND2-03)
+        shift.put("initialCash", new BigDecimal("1000000.00"));
+        shift.put("totalCashSales", new BigDecimal("4500000.00"));
+        shift.put("totalBankSales", new BigDecimal("2800000.00"));
+        shift.put("totalCashRefunds", new BigDecimal("340000.00"));
         shift.put("ticketsSold", 15);
         shift.put("ticketsRefunded", 1);
         
-        // Công thức tính tiền mặt kỳ vọng chuẩn:
-        // expectedCash = initialCash + totalCashSales - totalCashRefunds
         BigDecimal expectedCash = new BigDecimal("1000000.00")
                 .add(new BigDecimal("4500000.00"))
-                .subtract(new BigDecimal("340000.00")); // = 5,160,000 đ
+                .subtract(new BigDecimal("340000.00"));
         shift.put("expectedCashInDrawer", expectedCash);
 
         return ApiResponse.success(shift);
     }
 
     @PostMapping("/open")
-    @Operation(summary = "Mở ca trực bán vé POS với số tiền đầu ca")
-    public ApiResponse<Map<String, Object>> openShift(@RequestBody Map<String, Object> payload) {
+    @Operation(summary = "Mở ca trực bán vé POS với số tiền đầu ca (OWNER & CASHIER)")
+    public ApiResponse<Map<String, Object>> openShift(
+            @RequestBody Map<String, Object> payload,
+            Authentication authentication) {
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            securityService.requireStaffRole(authentication, StaffRole.OWNER, StaffRole.CASHIER);
+        }
+
         Object initialCashObj = payload.getOrDefault("initialCash", 1000000);
         BigDecimal initialCash = new BigDecimal(initialCashObj.toString());
         String cashierName = (String) payload.getOrDefault("cashierName", "Thu Ngân Viên");
@@ -75,8 +91,15 @@ public class CompanyPosShiftController {
     }
 
     @PostMapping("/close")
-    @Operation(summary = "Kết ca trực (Z-Report): Đối soát tiền mặt thực tế có khấu trừ tiền hoàn vé (BUG-ROUND2-03)")
-    public ApiResponse<Map<String, Object>> closeShift(@RequestBody Map<String, Object> payload) {
+    @Operation(summary = "Kết ca trực (Z-Report): Đối soát tiền mặt thực tế (OWNER & CASHIER)")
+    public ApiResponse<Map<String, Object>> closeShift(
+            @RequestBody Map<String, Object> payload,
+            Authentication authentication) {
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            securityService.requireStaffRole(authentication, StaffRole.OWNER, StaffRole.CASHIER);
+        }
+
         String shiftId = (String) payload.getOrDefault("shiftId", "SHIFT-CURRENT");
         Object countedCashObj = payload.getOrDefault("countedCash", 5160000);
         BigDecimal countedCash = new BigDecimal(countedCashObj.toString());
@@ -85,7 +108,6 @@ public class CompanyPosShiftController {
         BigDecimal cashSales = new BigDecimal(payload.getOrDefault("totalCashSales", 4500000).toString());
         BigDecimal cashRefunds = new BigDecimal(payload.getOrDefault("totalCashRefunds", 340000).toString());
 
-        // Tính tiền mặt kỳ vọng chuẩn kế toán
         BigDecimal expectedCash = initialCash.add(cashSales).subtract(cashRefunds);
         BigDecimal discrepancy = countedCash.subtract(expectedCash);
 

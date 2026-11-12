@@ -36,6 +36,11 @@ public class User {
     @Column(name = "bus_company_id")
     private Long busCompanyId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "staff_role", length = 30)
+    @Builder.Default
+    private StaffRole staffRole = StaffRole.OWNER;
+
     @Column(name = "status", length = 20)
     @Builder.Default
     private String status = "ACTIVE";

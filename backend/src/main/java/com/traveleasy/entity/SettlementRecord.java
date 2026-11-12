@@ -40,6 +40,10 @@ public class SettlementRecord {
     @Builder.Default
     private Integer ticketCount = 0;
 
+    @Column(name = "previous_balance", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal previousBalance = BigDecimal.ZERO;
+
     @Column(name = "gross_amount", nullable = false, precision = 15, scale = 2)
     @Builder.Default
     private BigDecimal grossAmount = BigDecimal.ZERO;

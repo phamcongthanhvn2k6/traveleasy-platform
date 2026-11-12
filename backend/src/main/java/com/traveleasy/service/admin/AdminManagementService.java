@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -234,44 +235,8 @@ public class AdminManagementService {
         BusCompany saved = busCompanyRepository.save(company);
 
         // NẾU PHÊ DUYỆT ĐƯA LÊN SÀN (ACTIVE): TỰ ĐỘNG KHỞI TẠO TÀI KHOẢN ĐỐI TÁC (ROLE_OPERATOR) & GỬI EMAIL THÔNG BÁO
-        if ("ACTIVE".equals(normalizedStatus) && company.getEmail() != null && !company.getEmail().isBlank()) {
-            String opEmail = company.getEmail().trim().toLowerCase();
-            String tempPassword = "Travel@" + ((int)(Math.random() * 9000) + 1000) + "!nx";
-            boolean isNewAccount = false;
-
-            if (!userRepository.existsByEmail(opEmail)) {
-                User operator = User.builder()
-                        .email(opEmail)
-                        .password(passwordEncoder.encode(tempPassword))
-                        .fullName("Điều Hành " + company.getName())
-                        .phone(company.getHotline())
-                        .role(Role.OPERATOR)
-                        .busCompanyId(company.getId())
-                        .status("ACTIVE")
-                        .build();
-                userRepository.save(operator);
-                isNewAccount = true;
-                logAction("admin@traveleasy.vn", "PROVISION_OPERATOR_ACCOUNT", "users #" + operator.getEmail(), "-",
-                        "{\"companyId\": " + company.getId() + ", \"companyName\": \"" + company.getName() + "\"}");
-                log.info("✅ Đã tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác: {} ({})", company.getName(), opEmail);
-            } else {
-                userRepository.findByEmail(opEmail).ifPresent(u -> {
-                    u.setBusCompanyId(company.getId());
-                    u.setRole(Role.OPERATOR);
-                    u.setPassword(passwordEncoder.encode(tempPassword));
-                    userRepository.save(u);
-                    log.info("🔗 Đã liên kết tài khoản {} với nhà xe {} và cấp mật khẩu mới", opEmail, company.getName());
-                });
-            }
-
-            // Gửi email chúc mừng và bàn giao tài khoản đối tác
-            emailNotificationService.sendPartnerApprovalEmail(
-                    opEmail,
-                    company.getName(),
-                    company.getCode() != null ? company.getCode() : ("NX-" + company.getId()),
-                    tempPassword,
-                    company.getCommissionRate()
-            );
+        if ("ACTIVE".equals(normalizedStatus)) {
+            provisionOperatorAccountAndNotify(saved);
         }
 
         logAction("admin@traveleasy.vn", normalizedStatus.equals("ACTIVE") ? "APPROVE_COMPANY" : "UPDATE_COMPANY_STATUS",
@@ -322,49 +287,80 @@ public class AdminManagementService {
         BusCompany saved = busCompanyRepository.save(company);
 
         // Tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác nếu chưa có & bàn giao tài khoản qua Email
-        if (company.getEmail() != null && !company.getEmail().isBlank()) {
-            String opEmail = company.getEmail().trim().toLowerCase();
-            String tempPassword = "Travel@" + ((int)(Math.random() * 9000) + 1000) + "!nx";
-            boolean isNewAccount = false;
-
-            if (!userRepository.existsByEmail(opEmail)) {
-                User operator = User.builder()
-                        .email(opEmail)
-                        .password(passwordEncoder.encode(tempPassword))
-                        .fullName("Điều Hành " + company.getName())
-                        .phone(company.getHotline())
-                        .role(Role.OPERATOR)
-                        .busCompanyId(company.getId()) // ĐẢM BẢO GẮN busCompanyId
-                        .status("ACTIVE")
-                        .build();
-                userRepository.save(operator);
-                isNewAccount = true;
-                logAction("admin@traveleasy.vn", "PROVISION_OPERATOR_ACCOUNT", "users #" + operator.getEmail(), "-",
-                        "{\"companyId\": " + company.getId() + ", \"companyName\": \"" + company.getName() + "\"}");
-                log.info("✅ Đã tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác: {} ({})", company.getName(), opEmail);
-            } else {
-                userRepository.findByEmail(opEmail).ifPresent(u -> {
-                    u.setBusCompanyId(company.getId());
-                    u.setRole(Role.OPERATOR);
-                    u.setPassword(passwordEncoder.encode(tempPassword));
-                    userRepository.save(u);
-                    log.info("🔗 Đã liên kết tài khoản {} với nhà xe {} và cấp mật khẩu mới", opEmail, company.getName());
-                });
-            }
-
-            // Gửi email chúc mừng và bàn giao tài khoản đối tác
-            emailNotificationService.sendPartnerApprovalEmail(
-                    opEmail,
-                    company.getName(),
-                    company.getCode() != null ? company.getCode() : ("NX-" + company.getId()),
-                    tempPassword,
-                    company.getCommissionRate()
-            );
-        }
+        provisionOperatorAccountAndNotify(saved);
 
         logAction("admin@traveleasy.vn", "APPROVE_COMPANY_KYB", "bus_companies #" + id, before, "{status: ACTIVE, commissionRate: " + company.getCommissionRate() + "}");
         log.info("🎉 Admin đã phê duyệt thành công hồ sơ nhà xe: {} (Commission: {}%)", company.getName(), company.getCommissionRate());
         return mapToCompanyResponse(saved);
+    }
+
+    private void provisionOperatorAccountAndNotify(BusCompany company) {
+        if (company.getEmail() == null || company.getEmail().isBlank()) {
+            return;
+        }
+        String opEmail = company.getEmail().trim().toLowerCase();
+        String tempPassword = generateRandomOperatorPassword();
+
+        if (!userRepository.existsByEmail(opEmail)) {
+            User operator = User.builder()
+                    .email(opEmail)
+                    .password(passwordEncoder.encode(tempPassword))
+                    .fullName("Điều Hành " + company.getName())
+                    .phone(company.getHotline())
+                    .role(Role.OPERATOR)
+                    .busCompanyId(company.getId())
+                    .status("ACTIVE")
+                    .build();
+            userRepository.save(operator);
+            logAction("admin@traveleasy.vn", "PROVISION_OPERATOR_ACCOUNT", "users #" + operator.getEmail(), "-",
+                    "{\"companyId\": " + company.getId() + ", \"companyName\": \"" + company.getName() + "\"}");
+            log.info("✅ Đã tự động tạo tài khoản Điều Hành (OPERATOR) cho đối tác: {} ({})", company.getName(), opEmail);
+        } else {
+            userRepository.findByEmail(opEmail).ifPresent(u -> {
+                u.setBusCompanyId(company.getId());
+                u.setRole(Role.OPERATOR);
+                u.setPassword(passwordEncoder.encode(tempPassword));
+                userRepository.save(u);
+                log.info("🔗 Đã liên kết tài khoản {} với nhà xe {} và cấp mật khẩu mới", opEmail, company.getName());
+            });
+        }
+
+        String companyCode = (company.getCode() != null && !company.getCode().isBlank())
+                ? company.getCode().trim()
+                : ("NX-" + company.getId());
+
+        emailNotificationService.sendPartnerApprovalEmail(
+                opEmail,
+                company.getName(),
+                companyCode,
+                tempPassword,
+                company.getCommissionRate()
+        );
+    }
+
+    private String generateRandomOperatorPassword() {
+        final String upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        final String lower = "abcdefghijkmnpqrstuvwxyz";
+        final String digits = "23456789";
+        final String specials = "@#$!&*";
+        final String all = upper + lower + digits + specials;
+        SecureRandom random = new SecureRandom();
+
+        char[] chars = new char[12];
+        chars[0] = upper.charAt(random.nextInt(upper.length()));
+        chars[1] = lower.charAt(random.nextInt(lower.length()));
+        chars[2] = digits.charAt(random.nextInt(digits.length()));
+        chars[3] = specials.charAt(random.nextInt(specials.length()));
+        for (int i = 4; i < chars.length; i++) {
+            chars[i] = all.charAt(random.nextInt(all.length()));
+        }
+        for (int i = chars.length - 1; i > 0; i--) {
+            int j = random.nextInt(i + 1);
+            char tmp = chars[i];
+            chars[i] = chars[j];
+            chars[j] = tmp;
+        }
+        return new String(chars);
     }
 
     @Transactional
@@ -1134,7 +1130,7 @@ public class AdminManagementService {
                     if (settlementId.startsWith("s-")) {
                         try {
                             Long cId = Long.parseLong(settlementId.substring(2));
-                            return settlementRecordRepository.findByCompanyId(cId);
+                            return settlementRecordRepository.findFirstByCompanyIdOrderByCreatedAtDesc(cId);
                         } catch (Exception ignored) {}
                     }
                     return java.util.Optional.empty();

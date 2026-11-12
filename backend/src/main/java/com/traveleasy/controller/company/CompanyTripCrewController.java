@@ -3,10 +3,13 @@ package com.traveleasy.controller.company;
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.exception.ErrorCode;
+import com.traveleasy.common.security.CompanySecurityService;
+import com.traveleasy.entity.StaffRole;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -16,7 +19,7 @@ import java.util.Map;
 
 /**
  * [S319] Phân Hệ Phân Công Tài Xế & Phụ Xe Cho Từng Chuyến Xe (/company/crew)
- * Đã khắc phục BUG-NEW-06: Ràng buộc an toàn giao thông Nghị định 10/2020/NĐ-CP (Kiểm tra cồn & 2 tài xế cho tuyến dài)
+ * BẢO MẬT: Chỉ OWNER và DISPATCHER được quyền thao tác; CASHIER bị chặn 100%
  * @author Đoàn Nhật Cường (CuongLiam)
  */
 @Slf4j
@@ -27,11 +30,18 @@ import java.util.Map;
 @Tag(name = "Company Trip Crew Operations", description = "[S319] Phân công tổ lái, tài xế phụ và kiểm soát giờ lái xe an toàn - Đoàn Nhật Cường")
 public class CompanyTripCrewController {
 
+    private final CompanySecurityService securityService;
+
     @GetMapping("/assignments")
-    @Operation(summary = "Lấy danh sách phân công tổ lái theo chuyến xe kèm trạng thái kiểm định")
+    @Operation(summary = "Lấy danh sách phân công tổ lái theo chuyến xe (OWNER & DISPATCHER)")
     public ApiResponse<List<Map<String, Object>>> getCrewAssignments(
             @RequestParam(required = false) Long busCompanyId,
-            @RequestParam(required = false) String date) {
+            @RequestParam(required = false) String date,
+            Authentication authentication) {
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            securityService.requireStaffRole(authentication, StaffRole.OWNER, StaffRole.DISPATCHER);
+        }
 
         List<Map<String, Object>> list = new ArrayList<>();
 
@@ -66,8 +76,15 @@ public class CompanyTripCrewController {
     }
 
     @PostMapping("/assignments")
-    @Operation(summary = "Phân công hoặc cập nhật tổ lái (Có validation BUG-NEW-06 chống vi phạm an toàn)")
-    public ApiResponse<Map<String, Object>> assignCrew(@RequestBody Map<String, Object> payload) {
+    @Operation(summary = "Phân công hoặc cập nhật tổ lái (Chỉ OWNER & DISPATCHER)")
+    public ApiResponse<Map<String, Object>> assignCrew(
+            @RequestBody Map<String, Object> payload,
+            Authentication authentication) {
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            securityService.requireStaffRole(authentication, StaffRole.OWNER, StaffRole.DISPATCHER);
+        }
+
         String primaryDriver = (String) payload.get("primaryDriverName");
         String secondaryDriver = (String) payload.get("secondaryDriverName");
         Boolean alcoholTested = Boolean.TRUE.equals(payload.get("alcoholTested"));
