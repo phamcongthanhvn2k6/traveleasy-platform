@@ -13,6 +13,7 @@ import com.traveleasy.entity.*;
 import com.traveleasy.repository.*;
 import com.traveleasy.service.admin.AdminManagementService;
 import com.traveleasy.service.admin.AdminTripService;
+import com.traveleasy.service.company.CompanySettlementService;
 import com.traveleasy.service.customer.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,6 +46,7 @@ public class CompanyManagementController {
     private final TripRepository tripRepository;
     private final UserRepository userRepository;
     private final BusCompanyRepository busCompanyRepository;
+    private final CompanySettlementService companySettlementService;
     private final com.traveleasy.service.automation.TripAutomationService tripAutomationService;
 
     // =========================================================================
@@ -469,79 +471,38 @@ public class CompanyManagementController {
     // =========================================================================
     // 8. ĐỐI SOÁT & QUYẾT TOÁN CỦA NHÀ XE (COMPANY SETTLEMENTS)
     // =========================================================================
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @GetMapping("/settlements")
-    @Operation(summary = "Lấy dữ liệu đối soát và thanh quyết toán thực tế từ CSDL đơn đặt vé Supabase")
+    @Operation(summary = "Lấy lịch sử các kỳ đối soát thực tế từ bảng settlement_records của nhà xe")
     public ApiResponse<List<Map<String, Object>>> getCompanySettlements(
+            @RequestParam(required = false) Long companyId,
+            @RequestParam(required = false) String status,
+            Authentication authentication) {
+        Long targetId = resolveTargetCompanyId(companyId, authentication);
+        return ApiResponse.success(companySettlementService.getCompanySettlements(targetId, status));
+    }
+
+    @GetMapping("/settlements/wallet")
+    @Operation(summary = "Lấy số dư khả dụng ví nhà xe và danh sách lệnh rút tiền (Payout Requests)")
+    public ApiResponse<Map<String, Object>> getCompanyWallet(
             @RequestParam(required = false) Long companyId,
             Authentication authentication) {
         Long targetId = resolveTargetCompanyId(companyId, authentication);
-
-        // TỐI ƯU HÓA: Doanh thu đối soát tính đủ 100% theo giá niêm yết của nhà xe
-        BigDecimal totalGross = bookingRepository.sumTotalRevenueByBusCompanyId(targetId);
-        BigDecimal totalSubsidy = bookingRepository.sumVoucherDiscountByBusCompanyId(targetId);
-        long ticketCount = bookingRepository.countByBusCompanyId(targetId);
-
-        // NẾU NHÀ XE MỚI TINH CHƯA PHÁT SINH VÉ / DOANH THU: TRẢ VỀ DANH SÁCH RỖNG HỢP LÝ
-        if (totalGross == null || (totalGross.compareTo(BigDecimal.ZERO) == 0 && ticketCount == 0)) {
-            return ApiResponse.success(Collections.emptyList());
-        }
-
-        BigDecimal feeRate = BigDecimal.valueOf(10);
-        BigDecimal feeAmount = totalGross.multiply(BigDecimal.valueOf(0.10));
-        BigDecimal netAmount = totalGross.subtract(feeAmount);
-
-        List<Map<String, Object>> settlements = new ArrayList<>();
-
-        Map<String, Object> p1 = new HashMap<>();
-        p1.put("id", "ds-" + targetId + "-p1");
-        p1.put("code", "DS-202610-P1");
-        p1.put("periodName", "Kỳ 1 - Tháng 10/2026");
-        p1.put("startDate", "01/10/2026");
-        p1.put("endDate", "15/10/2026");
-        p1.put("ticketCount", (int)(ticketCount * 0.45));
-        p1.put("grossAmount", totalGross.multiply(BigDecimal.valueOf(0.45)));
-        p1.put("platformSubsidy", totalSubsidy.multiply(BigDecimal.valueOf(0.45)));
-        p1.put("customerPaid", totalGross.subtract(totalSubsidy).multiply(BigDecimal.valueOf(0.45)));
-        p1.put("platformFeeRate", 10);
-        p1.put("platformFeeAmount", feeAmount.multiply(BigDecimal.valueOf(0.45)));
-        p1.put("netReceived", netAmount.multiply(BigDecimal.valueOf(0.45)));
-        p1.put("guaranteeNote", "Sàn TravelEasy tài trợ 100% voucher khuyến mãi. Nhà xe nhận đủ doanh thu vé niêm yết.");
-        p1.put("status", "PAID");
-        p1.put("reconciledAt", "16/10/2026 10:30");
-        p1.put("paidAt", "17/10/2026 14:15");
-        p1.put("payoutTxHash", "VCB-FT-889920192");
-        settlements.add(p1);
-
-        Map<String, Object> p2 = new HashMap<>();
-        p2.put("id", "ds-" + targetId + "-p2");
-        p2.put("code", "DS-202610-P2");
-        p2.put("periodName", "Kỳ 2 - Tháng 10/2026");
-        p2.put("startDate", "16/10/2026");
-        p2.put("endDate", "31/10/2026");
-        p2.put("ticketCount", (int)(ticketCount * 0.55));
-        p2.put("grossAmount", totalGross.multiply(BigDecimal.valueOf(0.55)));
-        p2.put("platformSubsidy", totalSubsidy.multiply(BigDecimal.valueOf(0.55)));
-        p2.put("customerPaid", totalGross.subtract(totalSubsidy).multiply(BigDecimal.valueOf(0.55)));
-        p2.put("platformFeeRate", 10);
-        p2.put("platformFeeAmount", feeAmount.multiply(BigDecimal.valueOf(0.55)));
-        p2.put("netReceived", netAmount.multiply(BigDecimal.valueOf(0.55)));
-        p2.put("guaranteeNote", "Sàn TravelEasy tài trợ 100% voucher khuyến mãi. Nhà xe nhận đủ doanh thu vé niêm yết.");
-        p2.put("status", "RECONCILED");
-        p2.put("reconciledAt", "29/10/2026 18:00");
-        settlements.add(p2);
-
-        return ApiResponse.success(settlements);
+        return ApiResponse.success(companySettlementService.getCompanyWallet(targetId));
     }
 
     @PostMapping("/settlements/request-payout")
-    @Operation(summary = "Nhà xe gửi yêu cầu rút tiền / tất toán doanh thu về tài khoản ngân hàng")
-    public ApiResponse<String> requestPayout(
+    @Operation(summary = "Nhà xe tạo lệnh rút tiền (tối thiểu 500.000 VNĐ, kiểm tra số dư khả dụng)")
+    public ApiResponse<Map<String, Object>> requestPayout(
             @RequestParam(required = false) Long companyId,
-            @RequestParam(required = false) BigDecimal amount,
+            @RequestParam BigDecimal amount,
+            @RequestParam(required = false) String note,
             Authentication authentication) {
         Long targetId = resolveTargetCompanyId(companyId, authentication);
-        return ApiResponse.success("Yêu cầu tất toán đã được gửi tới Ban quản trị Sàn TravelEasy. Tiền sẽ được đối soát và giải ngân về tài khoản ngân hàng của bạn trong vòng 24 giờ làm việc.");
+        String userEmail = authentication != null ? authentication.getName() : null;
+        Map<String, Object> payout = companySettlementService.createPayoutRequest(targetId, amount, note, userEmail);
+        return ApiResponse.success(
+                "Đã tạo lệnh rút tiền " + payout.get("requestCode") + " thành công. Hệ thống sẽ đối soát và giải ngân trong 24h làm việc.",
+                payout);
     }
 
     // =========================================================================
