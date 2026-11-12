@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
+    .card { max-width: 620px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+    .header { background: linear-gradient(135deg, #2563eb, #1d4ed8); padding: 30px 24px; text-align: center; color: #ffffff; }
+    .header h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .header p { margin: 6px 0 0 0; opacity: 0.9; font-size: 14px; }
+    .content { padding: 30px 28px; line-height: 1.6; font-size: 14.5px; }
+    .greeting { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+    .box-creds { background-color: #eff6ff; border: 2px dashed #93c5fd; border-radius: 12px; padding: 18px 20px; margin: 20px 0; }
+    .cred-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #dbeafe; font-size: 14px; }
+    .cred-item:last-child { border-bottom: none; }
+    .cred-label { color: #475569; font-weight: 600; }
+    .cred-value { font-weight: 700; color: #1e40af; font-family: monospace; font-size: 15px; }
+    .btn-cta { display: block; text-align: center; background-color: #2563eb; color: #ffffff !important; text-decoration: none; padding: 14px 24px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 25px 0 15px 0; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+    .note { background-color: #fefce8; border-left: 4px solid #eab308; padding: 12px 14px; font-size: 13px; color: #713f12; border-radius: 0 8px 8px 0; margin-top: 15px; }
+    .footer { background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px; text-align: center; font-size: 12.5px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>TravelEasy Platform</h1>
+      <p>Hệ Thống Đặt Vé Xe Khách Trực Tuyến Hàng Đầu Việt Nam</p>
+    </div>
+    <div class="content">
+      <div class="greeting">Kính gửi Ban Giám Đốc Nhà Xe {{companyName}},</div>
+      <p>Ban Quản Trị TravelEasy xin trân trọng thông báo: <strong>Hồ sơ đăng ký đối tác mở bán vé trực tuyến của Quý Nhà Xe đã được phê duyệt thành công!</strong></p>
+      <p>Dưới đây là thông tin tài khoản Điều Hành (OPERATOR) được cấp phát riêng biệt để Quý Đối tác truy cập vào Cổng Quản Lý Điều Hành Nhà Xe:</p>
+
+      <div class="box-creds">
+        <div class="cred-item">
+          <span class="cred-label">Đường dẫn Cổng Đối Tác:</span>
+          <span class="cred-value">{{loginUrl}}</span>
+        </div>
+        <div class="cred-item">
+          <span class="cred-label">Tài khoản (Email):</span>
+          <span class="cred-value">{{recipientEmail}}</span>
+        </div>
+        <div class="cred-item">
+          <span class="cred-label">Mật khẩu khởi tạo:</span>
+          <span class="cred-value">{{tempPassword}}</span>
+        </div>
+        <div class="cred-item">
+          <span class="cred-label">Mã nhà xe sàn cấp:</span>
+          <span class="cred-value">{{companyCode}}</span>
+        </div>
+        <div class="cred-item">
+          <span class="cred-label">Tỉ lệ hoa hồng sàn:</span>
+          <span class="cred-value">{{commissionRate}}</span>
+        </div>
+      </div>
+
+      <a href="{{loginUrl}}" class="btn-cta" target="_blank">ĐĂNG NHẬP CỔNG ĐIỀU HÀNH NHÀ XE NGAY ➔</a>
+
+      <div class="note">
+        🔒 <strong>Lưu ý bảo mật:</strong> Để đảm bảo an toàn tuyệt đối cho doanh thu và dữ liệu đội xe, Quý Đối tác vui lòng đổi mật khẩu ngay trong lần đầu tiên đăng nhập.
+      </div>
+    </div>
+    <div class="footer">
+      Hotline Hỗ Trợ Kỹ Thuật Đối Tác: <strong>1900 6868 (24/7)</strong><br>
+      Email: support-partner@traveleasy.vn • Trụ sở TravelEasy Platform Việt Nam
+    </div>
+  </div>
+</body>
+</html>

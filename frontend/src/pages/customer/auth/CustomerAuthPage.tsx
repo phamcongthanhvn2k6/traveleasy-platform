@@ -27,6 +27,7 @@ import {
   verifyPhoneOtp as firebaseVerifyPhoneOtp,
   type AuthResponseData,
 } from '../../../services/firebaseAuthService';
+import { ForgotPasswordModal } from '../../../components/auth/ForgotPasswordModal';
 
 export const CustomerAuthPage: React.FC = () => {
   const navigate = useNavigate();
@@ -112,6 +113,7 @@ export const CustomerAuthPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   // ==================== FIREBASE SOCIAL AUTH STATE ====================
   // Google: đang xử lý popup
@@ -847,7 +849,14 @@ export const CustomerAuthPage: React.FC = () => {
                     Ghi nhớ đăng nhập (30 ngày)
                   </label>
 
-                  <a href="#forgot" onClick={(e) => { e.preventDefault(); alert('Vui lòng liên hệ Hotline 1900 6868 hoặc quản trị viên để cấp lại mật khẩu!'); }} style={{ fontSize: '12.5px', color: '#059669', fontWeight: 700, textDecoration: 'none' }}>
+                  <a
+                    href="#forgot"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowForgotModal(true);
+                    }}
+                    style={{ fontSize: '12.5px', color: '#059669', fontWeight: 700, textDecoration: 'none' }}
+                  >
                     Quên mật khẩu?
                   </a>
                 </div>
@@ -1403,6 +1412,19 @@ export const CustomerAuthPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ForgotPasswordModal
+        isOpen={showForgotModal}
+        initialIdentifier={loginIdentifier}
+        onClose={() => setShowForgotModal(false)}
+        onResetSuccess={(resetEmail) => {
+          setActiveTab('login');
+          setLoginIdentifier(resetEmail);
+          setLoginPassword('');
+          setErrorMessage(null);
+          setSuccessMessage('Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.');
+        }}
+      />
     </div>
   );
 };
