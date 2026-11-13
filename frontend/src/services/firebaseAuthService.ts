@@ -61,6 +61,18 @@ export async function loginWithGoogle(): Promise<AuthResponseData> {
 // ==================== PHONE OTP ====================
 
 let confirmationResult: ConfirmationResult | null = null;
+let phoneRecaptchaVerifier: RecaptchaVerifier | null = null;
+
+/** Firebase Phone Auth client cooldown. This is UX protection only; Firebase quotas remain authoritative. */
+export const PHONE_OTP_RESEND_COOLDOWN_SECONDS = 60;
+
+export function resetPhoneVerification(): void {
+  confirmationResult = null;
+  if (phoneRecaptchaVerifier) {
+    phoneRecaptchaVerifier.clear();
+    phoneRecaptchaVerifier = null;
+  }
+}
 
 /**
  * BƯỚC 1 CỦA PHONE AUTH - Gửi OTP qua SMS:
@@ -76,7 +88,7 @@ export async function sendPhoneOtp(
   const appVerifier =
     containerOrVerifier instanceof RecaptchaVerifier
       ? containerOrVerifier
-      : new RecaptchaVerifier(auth, containerOrVerifier, { size: 'invisible' });
+      : (phoneRecaptchaVerifier ??= new RecaptchaVerifier(auth, containerOrVerifier, { size: 'invisible' }));
 
   await appVerifier.render();
 
@@ -84,6 +96,14 @@ export async function sendPhoneOtp(
   confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
 }
 
+/** Last verified attempt is invalidated when the user explicitly starts over. */
+export function clearPhoneOtpSession(): void {
+  confirmationResult = null;
+  if (phoneRecaptchaVerifier) {
+    phoneRecaptchaVerifier.clear();
+    phoneRecaptchaVerifier = null;
+  }
+}
 /**
  * BƯỚC 2 CỦA PHONE AUTH - Xác minh OTP người dùng nhập:
  *   - Nếu đúng: user được đăng nhập Firebase → lấy ID Token → gọi backend
@@ -122,5 +142,8 @@ export async function signOutFirebase(): Promise<void> {
     // Không sao nếu fail (chưa đăng nhập Firebase)
   }
   confirmationResult = null;
+  if (phoneRecaptchaVerifier) {
+    phoneRecaptchaVerifier.clear();
+    phoneRecaptchaVerifier = null;
+  }
 }
-
