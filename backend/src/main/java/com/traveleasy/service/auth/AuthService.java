@@ -100,6 +100,19 @@ public class AuthService {
             throw new AppException(ErrorCode.ACCOUNT_LOCKED, "Tài khoản của bạn đã bị vô hiệu hóa hoặc xóa khỏi hệ thống. Vui lòng liên hệ quản trị viên.");
         }
 
+        if (user.getRole() == Role.OPERATOR && user.getBusCompanyId() == null) {
+            if (user.getFullName() != null) {
+                for (BusCompany comp : busCompanyRepository.findAll()) {
+                    if (user.getFullName().toLowerCase().contains(comp.getName().toLowerCase())
+                            || comp.getName().toLowerCase().contains(user.getFullName().toLowerCase())) {
+                        user.setBusCompanyId(comp.getId());
+                        userRepository.save(user);
+                        break;
+                    }
+                }
+            }
+        }
+
         String token = jwtTokenProvider.generateToken(user.getEmail(), user.getRole().name(), user.getId());
 
         return AuthResponse.builder()
