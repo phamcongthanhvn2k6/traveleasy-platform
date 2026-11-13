@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/company/pricing-rules")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+@Transactional(readOnly = true)
 @Tag(name = "Company Pricing Rules Management", description = "Quản trị quy tắc giá vé động, phụ thu Lễ Tết/Cuối tuần và Flash Sale giờ chót cho nhà xe đối tác")
 public class CompanyPricingRuleController {
 
@@ -74,6 +76,7 @@ public class CompanyPricingRuleController {
     }
 
     @PostMapping
+    @Transactional
     @Operation(summary = "Tạo mới quy tắc giá vé")
     public ApiResponse<PricingRuleResponse> createPricingRule(
             @Valid @RequestBody CreatePricingRuleRequest request,
@@ -127,6 +130,7 @@ public class CompanyPricingRuleController {
     }
 
     @PutMapping("/{id}")
+    @Transactional
     @Operation(summary = "Cập nhật thông tin quy tắc giá vé")
     public ApiResponse<PricingRuleResponse> updatePricingRule(
             @PathVariable Long id,
@@ -199,6 +203,7 @@ public class CompanyPricingRuleController {
     }
 
     @PatchMapping("/{id}/toggle-status")
+    @Transactional
     @Operation(summary = "Bật hoặc tắt trạng thái quy tắc giá vé")
     public ApiResponse<PricingRuleResponse> togglePricingRuleStatus(
             @PathVariable Long id,
@@ -219,6 +224,7 @@ public class CompanyPricingRuleController {
     }
 
     @DeleteMapping("/{id}")
+    @Transactional
     @Operation(summary = "Xóa quy tắc giá vé")
     public ApiResponse<Void> deletePricingRule(
             @PathVariable Long id,
@@ -329,18 +335,39 @@ public class CompanyPricingRuleController {
 
     private PricingRuleResponse mapToResponse(CompanyPricingRule rule) {
         String routeName = null;
+        Long routeId = null;
         if (rule.getRoute() != null) {
-            routeName = rule.getRoute().getDepartureLocation() + " -> " + rule.getRoute().getArrivalLocation();
+            try {
+                routeId = rule.getRoute().getId();
+                String dep = rule.getRoute().getDepartureLocation();
+                String arr = rule.getRoute().getArrivalLocation();
+                if (dep != null && arr != null) {
+                    routeName = dep + " -> " + arr;
+                }
+            } catch (Exception e) {
+                log.warn("Lazy load route failed for rule {}: {}", rule.getId(), e.getMessage());
+            }
+        }
+
+        Long busCompanyId = null;
+        String busCompanyName = null;
+        if (rule.getBusCompany() != null) {
+            try {
+                busCompanyId = rule.getBusCompany().getId();
+                busCompanyName = rule.getBusCompany().getName();
+            } catch (Exception e) {
+                log.warn("Lazy load busCompany failed for rule {}: {}", rule.getId(), e.getMessage());
+            }
         }
 
         return PricingRuleResponse.builder()
                 .id(rule.getId())
-                .busCompanyId(rule.getBusCompany().getId())
-                .busCompanyName(rule.getBusCompany().getName())
+                .busCompanyId(busCompanyId)
+                .busCompanyName(busCompanyName)
                 .name(rule.getName())
                 .ruleType(rule.getRuleType())
                 .scope(rule.getScope())
-                .routeId(rule.getRoute() != null ? rule.getRoute().getId() : null)
+                .routeId(routeId)
                 .routeName(routeName)
                 .adjustmentType(rule.getAdjustmentType())
                 .adjustmentValue(rule.getAdjustmentValue())

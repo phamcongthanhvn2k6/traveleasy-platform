@@ -7,6 +7,7 @@ interface Props {
   bookingCode: string;
   totalAmount: number;
   paymentUrl?: string;
+  expiresAt?: number;
   onSuccess: () => void;
   onClose: () => void;
 }
@@ -15,22 +16,41 @@ export const VnPayModal: React.FC<Props> = ({
   bookingCode,
   totalAmount,
   paymentUrl,
+  expiresAt,
   onSuccess,
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<'QR' | 'ATM' | 'VISA'>('QR');
   const [processing, setProcessing] = useState(false);
   const [paymentResult, setPaymentResult] = useState<PaymentStatusResponse | null>(null);
-  const [timeLeft, setTimeLeft] = useState(900); // 15:00 countdown
+  
+  // Master Timer 10 phút (600s) đồng bộ CSDL
+  const [timeLeft, setTimeLeft] = useState<number>(() => {
+    if (expiresAt && !isNaN(expiresAt)) {
+      return Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+    }
+    return 600;
+  });
 
   // Countdown timer for realistic payment window
   useEffect(() => {
     if (paymentResult) return;
     const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+      const remaining = expiresAt
+        ? Math.max(0, Math.floor((expiresAt - Date.now()) / 1000))
+        : null;
+
+      setTimeLeft((prev) => {
+        const next = remaining !== null ? remaining : (prev > 0 ? prev - 1 : 0);
+        if (next <= 0) {
+          clearInterval(timer);
+          toast.error('Thời hạn thanh toán 10 phút đã kết thúc! Ghế đã được tự động giải phóng.', 'Hết Hạn Giữ Chỗ');
+        }
+        return next;
+      });
     }, 1000);
     return () => clearInterval(timer);
-  }, [paymentResult]);
+  }, [expiresAt, paymentResult]);
 
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
