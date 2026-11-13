@@ -109,16 +109,35 @@ jobs:
         port: ${{ secrets.VPS_SSH_PORT }}
         timeout: 300s
         script: |
+          set -e
           echo "🚀 [CI/CD] Bắt đầu tự động triển khai mã nguồn mới từ nhánh MAIN lên VPS..."
+          whoami
+          pwd
           
-          # Đảm bảo thư mục dự án tồn tại trên VPS
-          if [ ! -d "/root/Nhom7_QUANLYNHAXE" ]; then
-            echo "Thư mục /root/Nhom7_QUANLYNHAXE chưa tồn tại. Đang clone dự án..."
-            cd /root
-            git clone https://github.com/phamcongthanhvn2k6/traveleasy-platform.git Nhom7_QUANLYNHAXE
+          # Xác định lệnh docker compose (v2) hoặc docker-compose (v1)
+          if docker compose version >/dev/null 2>&1; then
+            DC="docker compose"
+          elif command -v docker-compose >/dev/null 2>&1; then
+            DC="docker-compose"
+          else
+            echo "❌ Không tìm thấy docker compose hoặc docker-compose trên VPS!"
+            exit 1
+          fi
+          echo "✅ Sử dụng công cụ: $DC"
+
+          # Tìm thư mục dự án
+          TARGET_DIR="/root/Nhom7_QUANLYNHAXE"
+          if [ ! -d "$TARGET_DIR" ]; then
+            if [ -d "/root/traveleasy-platform" ]; then
+              TARGET_DIR="/root/traveleasy-platform"
+            else
+              echo "Thư mục $TARGET_DIR chưa tồn tại. Đang clone dự án..."
+              git clone https://github.com/phamcongthanhvn2k6/traveleasy-platform.git "$TARGET_DIR"
+            fi
           fi
 
-          cd /root/Nhom7_QUANLYNHAXE
+          cd "$TARGET_DIR"
+          echo "📁 Thư mục triển khai: $(pwd)"
           
           # Chuyển và kéo mã nguồn mới nhất từ nhánh production (main)
           git checkout main
@@ -127,9 +146,12 @@ jobs:
           
           # Rebuild và khởi động lại container bằng docker-compose.prod.yml
           echo "📦 [Docker] Đang build và chạy lại container trên nhánh MAIN..."
-          docker compose -f docker-compose.prod.yml down
-          docker compose -f docker-compose.prod.yml up -d --build
+          $DC -f docker-compose.prod.yml down || true
+          $DC -f docker-compose.prod.yml up -d --build
           
+          echo "📋 Danh sách container đang chạy trên VPS:"
+          docker ps -a
+
           # Dọn dẹp images cũ giải phóng dung lượng ổ cứng
           docker image prune -f
           
