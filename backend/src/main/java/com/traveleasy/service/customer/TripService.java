@@ -30,8 +30,7 @@ public class TripService {
     private final TripSeatRepository tripSeatRepository;
     private final PickupDropoffPointRepository pointRepository;
     private final RouteRepository routeRepository;
-    @org.springframework.context.annotation.Lazy
-    private final com.traveleasy.service.automation.TripAutomationService tripAutomationService;
+    private final org.springframework.beans.factory.ObjectProvider<com.traveleasy.service.automation.TripAutomationService> tripAutomationServiceProvider;
     private final com.traveleasy.service.realtime.SeatRealtimeService seatRealtimeService;
     private final com.traveleasy.service.company.DynamicPricingService dynamicPricingService;
     private final com.traveleasy.repository.CompanyPricingRuleRepository companyPricingRuleRepository;
@@ -59,9 +58,7 @@ public class TripService {
             endTime = departureDate.atTime(LocalTime.MAX);
 
             // On-demand: Tự động đảm bảo sinh chuyến nếu ngày tìm kiếm chưa có chuyến nào
-            if (tripAutomationService != null) {
-                tripAutomationService.ensureTripsForRouteAndDate(origin, destination, departureDate);
-            }
+            tripAutomationServiceProvider.ifAvailable(tas -> tas.ensureTripsForRouteAndDate(origin, destination, departureDate));
         } else {
             // Không truyền ngày: Mặc định hiển thị các chuyến mở bán trong 3 ngày tới nếu chưa lọc tuyến (hoặc 7 ngày nếu đã chọn tuyến) để phản hồi siêu tốc
             startTime = now;

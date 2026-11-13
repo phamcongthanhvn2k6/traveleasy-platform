@@ -25,8 +25,7 @@ public class TripAutomationService {
 
     private final TripRepository tripRepository;
     private final TripSeatRepository tripSeatRepository;
-    @org.springframework.context.annotation.Lazy
-    private final com.traveleasy.service.customer.BookingService bookingService;
+    private final org.springframework.beans.factory.ObjectProvider<com.traveleasy.service.customer.BookingService> bookingServiceProvider;
     private final RouteRepository routeRepository;
     private final BusCompanyRepository busCompanyRepository;
     private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
@@ -138,7 +137,7 @@ public class TripAutomationService {
         try {
             // Thiết lập ngưỡng 12 phút (Grace Period Buffer 2 phút) so với đồng hồ 10 phút của Frontend,
             // đảm bảo nếu khách chuyển tiền ở giây 599 thì Webhook từ Ngân hàng vẫn kịp đến trước khi ghế bị giải phóng.
-            bookingService.cleanupExpiredPendingBookings(12);
+            bookingServiceProvider.ifAvailable(bs -> bs.cleanupExpiredPendingBookings(12));
         } catch (Exception e) {
             log.warn("Lỗi khi tự động giải phóng ghế quá hạn: {}", e.getMessage());
         }
