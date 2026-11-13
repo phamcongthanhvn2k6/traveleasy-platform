@@ -445,7 +445,7 @@ export const CompanyReportsPage: React.FC = () => {
                   <YAxis
                     stroke="#94a3b8"
                     fontSize={11}
-                    tickFormatter={(v) => `${(v / 1000000).toFixed(1)}Tr`}
+                    tickFormatter={(v: any) => `${(v / 1000000).toFixed(1)}Tr`}
                     tickLine={false}
                     axisLine={false}
                   />
@@ -461,7 +461,7 @@ export const CompanyReportsPage: React.FC = () => {
                     contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
                   />
                   <Legend
-                    formatter={(value) => {
+                    formatter={(value: any) => {
                       if (value === 'grossRevenue') return <span className="text-xs font-medium text-slate-700">Tổng Doanh Thu</span>;
                       if (value === 'netRevenue') return <span className="text-xs font-medium text-emerald-700">Thực Nhận Nhà Xe</span>;
                       if (value === 'platformFee') return <span className="text-xs font-medium text-amber-700">Phí Sàn 8%</span>;
@@ -488,7 +488,7 @@ export const CompanyReportsPage: React.FC = () => {
                     stroke="#94a3b8"
                     fontSize={11}
                     domain={[0, 100]}
-                    tickFormatter={(v) => `${v}%`}
+                    tickFormatter={(v: any) => `${v}%`}
                     tickLine={false}
                     axisLine={false}
                   />
@@ -502,7 +502,7 @@ export const CompanyReportsPage: React.FC = () => {
                     contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0' }}
                   />
                   <Legend
-                    formatter={(value) => (
+                    formatter={(value: any) => (
                       <span className="text-xs font-medium text-blue-700">
                         {value === 'occupancyRate' ? 'Tỷ Lệ Lấp Đầy Ghế (%)' : value}
                       </span>
