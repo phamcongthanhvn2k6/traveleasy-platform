@@ -101,7 +101,7 @@ export default function LiveTrackingMapPage() {
   const [autoFollowBus, setAutoFollowBus] = useState<boolean>(true);
   const [simulating, setSimulating] = useState<boolean>(false);
 
-  // 0. Tải danh sách vé của tài khoản người dùng đang đăng nhập
+  // 0. Tải danh sách vé và lọc DUY NHẤT chuyến xe sắp khởi hành hoặc đang chạy của người dùng
   useEffect(() => {
     const token = localStorage.getItem('traveleasy_token');
     if (!token) return;
@@ -111,27 +111,84 @@ export default function LiveTrackingMapPage() {
       .then((res) => {
         const data = res.data?.data;
         if (Array.isArray(data) && data.length > 0) {
-          const mapped: UserTripBooking[] = data
-            .filter((b: any) => b.trip && b.trip.id)
-            .map((b: any) => ({
-              bookingId: b.id,
-              bookingCode: b.bookingCode,
-              tripId: b.trip.id,
-              originCity: b.trip.originCity || 'Điểm đón',
-              destinationCity: b.trip.destinationCity || 'Điểm đến',
-              departureTime: b.trip.departureTime || '',
-              busCompanyName: b.trip.busCompanyName || 'TravelEasy Partner',
-              busType: b.trip.busType || 'LIMOUSINE',
-              seats: Array.isArray(b.tickets) ? b.tickets.map((t: any) => t.seatNumber) : [],
-              pickupPointName: b.pickupPointName,
-              dropoffPointName: b.dropoffPointName,
-              status: b.status
-            }));
-          setMyBookings(mapped);
+          const now = new Date();
+          const nowTime = now.getTime();
 
-          // Nếu URL chưa có tripId cụ thể, tự động chọn chuyến xe đầu tiên user đã mua
-          if (!paramTripId && mapped.length > 0) {
-            navigate(`/tracking/${mapped[0].tripId}`, { replace: true });
+          // 1. Chỉ lấy vé hợp lệ (chưa bị hủy / hoàn tiền)
+          const validBookings = data.filter((b: any) => {
+            if (!b.trip || !b.trip.id) return false;
+            if (b.status === 'CANCELLED' || b.status === 'REFUNDED') return false;
+            return true;
+          });
+
+          // 2. Gom nhóm các vé thuộc cùng 1 chuyến xe theo tripId (gộp số ghế ngồi)
+          const tripMap = new Map<number, UserTripBooking>();
+
+          validBookings.forEach((b: any) => {
+            const tId = b.trip.id;
+            const seatList: string[] = Array.isArray(b.tickets)
+              ? b.tickets.map((t: any) => t.seatNumber).filter(Boolean)
+              : [];
+
+            if (!tripMap.has(tId)) {
+              tripMap.set(tId, {
+                bookingId: b.id,
+                bookingCode: b.bookingCode,
+                tripId: tId,
+                originCity: b.trip.originCity || 'Điểm đón',
+                destinationCity: b.trip.destinationCity || 'Điểm đến',
+                departureTime: b.trip.departureTime || '',
+                busCompanyName: b.trip.busCompanyName || 'TravelEasy Partner',
+                busType: b.trip.busType || 'LIMOUSINE',
+                seats: [...seatList],
+                pickupPointName: b.pickupPointName,
+                dropoffPointName: b.dropoffPointName,
+                status: b.status
+              });
+            } else {
+              const existing = tripMap.get(tId)!;
+              seatList.forEach((s) => {
+                if (!existing.seats.includes(s)) {
+                  existing.seats.push(s);
+                }
+              });
+            }
+          });
+
+          const uniqueTrips = Array.from(tripMap.values());
+
+          // 3. LỌC BỎ HOÀN TOÀN CÁC VÉ ĐÃ HẾT HẠN TRONG QUÁ KHỨ:
+          // Chỉ giữ chuyến xe đang chạy hoặc sắp khởi hành (thời điểm xuất bến + 8 tiếng >= thời điểm hiện tại)
+          const upcomingTrips = uniqueTrips.filter((t) => {
+            if (!t.departureTime) return false;
+            const depTime = new Date(t.departureTime).getTime();
+            if (isNaN(depTime)) return false;
+            // Cho phép xem xe đang chạy (trong vòng 8 giờ kể từ lúc xuất bến) hoặc các chuyến sắp đi trong tương lai
+            return depTime + (8 * 3600 * 1000) >= nowTime;
+          });
+
+          // Sắp xếp chuyến sắp khởi hành gần nhất lên đầu tiên
+          upcomingTrips.sort((a, b) => {
+            const tA = new Date(a.departureTime).getTime();
+            const tB = new Date(b.departureTime).getTime();
+            return tA - tB;
+          });
+
+          // Nếu có chuyến sắp đi, chỉ gán các chuyến sắp đi!
+          // Nếu tất cả vé đều đã qua trong quá khứ và không có chuyến nào hôm nay/tương lai,
+          // lấy duy nhất 1 chuyến mới nhất gần đây nhất để khách hàng không bị màn hình trắng.
+          const finalActiveTrips = upcomingTrips.length > 0
+            ? upcomingTrips
+            : (uniqueTrips.length > 0 ? [uniqueTrips[0]] : []);
+
+          setMyBookings(finalActiveTrips);
+
+          // Tự động chuyển hướng ngay sang chuyến xe sắp đi duy nhất của khách hàng
+          if (finalActiveTrips.length > 0) {
+            const hasMatched = finalActiveTrips.some(t => t.tripId === Number(paramTripId));
+            if (!hasMatched) {
+              navigate(`/tracking/${finalActiveTrips[0].tripId}`, { replace: true });
+            }
           }
         }
       })
@@ -484,51 +541,56 @@ export default function LiveTrackingMapPage() {
           </div>
         )}
 
-        {/* THANH ĐIỀU KHIỂN & CHỌN CHUYẾN XE */}
-        <div className="bg-slate-800/90 backdrop-blur-md p-4 rounded-xl border border-slate-700/70 flex flex-col gap-3 shadow-md">
-          {/* PHẦN 1: VÉ CỦA BẠN (TỰ ĐỘNG ĐỒNG BỘ TỪ TÀI KHOẢN NGƯỜI DÙNG) */}
+        {/* THANH ĐIỀU KHIỂN & TRẠNG THÁI GPS CHUYẾN XE CỦA BẠN */}
+        <div className="bg-slate-800/90 backdrop-blur-md p-4 rounded-xl border border-slate-700/70 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-md">
+          {/* PHẦN 1: THÔNG TIN CHUYẾN XE DUY NHẤT BẠN ĐANG ĐI */}
           {myBookings.length > 0 ? (
-            <div className="flex flex-col gap-2 pb-3 border-b border-slate-700/80">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Ticket className="w-4 h-4 text-emerald-400" /> Vé xe bạn đã mua ({myBookings.length} chuyến):
-                </label>
-                <span className="text-[11px] text-slate-400">Tự động đồng bộ từ tài khoản của bạn</span>
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 shrink-0">
+                <Navigation className="w-5 h-5 animate-pulse" />
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {myBookings.map((b) => {
-                  const isSelected = activeTripId === b.tripId;
-                  return (
-                    <button
-                      key={b.bookingId}
-                      onClick={() => navigate(`/tracking/${b.tripId}`)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
-                        isSelected
-                          ? 'bg-emerald-600 text-white border-emerald-300 shadow-lg shadow-emerald-950/60 ring-2 ring-emerald-400'
-                          : 'bg-slate-900/90 text-emerald-300 border-emerald-700/60 hover:bg-slate-800 hover:border-emerald-500'
-                      }`}
-                    >
-                      <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-white animate-ping' : 'bg-emerald-400'}`}></span>
-                      <span>#{b.bookingCode}: {b.originCity} ➔ {b.destinationCity}</span>
-                      <span className="bg-emerald-950/90 text-emerald-300 px-2 py-0.5 rounded text-[11px] border border-emerald-600/60">
-                        Ghế: {b.seats.join(', ') || 'VIP'}
-                      </span>
-                    </button>
-                  );
-                })}
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-black bg-emerald-500 text-slate-950 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                    Chuyến Xe Bạn Sắp Đi
+                  </span>
+                  <span className="text-white font-bold text-sm">
+                    {currentBooking?.originCity || myBookings[0].originCity} ➔ {currentBooking?.destinationCity || myBookings[0].destinationCity}
+                  </span>
+                  <span className="text-xs text-amber-300 font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/30">
+                    Ghế: {currentBooking?.seats.join(', ') || myBookings[0].seats.join(', ')}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Mã vé: <strong className="text-emerald-400">#{currentBooking?.bookingCode || myBookings[0].bookingCode}</strong> • Hãng xe: {currentBooking?.busCompanyName || myBookings[0].busCompanyName}
+                </p>
               </div>
+
+              {/* Nếu khách có chuyến xe sắp đi thứ 2 (ví dụ chuyến về khứ hồi) */}
+              {myBookings.length > 1 && (
+                <div className="flex items-center gap-2 ml-2 pl-3 border-l border-slate-700">
+                  <span className="text-[11px] text-slate-400">Chuyến sắp tới khác:</span>
+                  {myBookings
+                    .filter((b) => b.tripId !== activeTripId)
+                    .map((b) => (
+                      <button
+                        key={b.tripId}
+                        onClick={() => navigate(`/tracking/${b.tripId}`)}
+                        className="px-2.5 py-1 bg-slate-900 hover:bg-slate-700 text-emerald-300 text-xs rounded-lg border border-slate-700 transition-colors font-medium"
+                      >
+                        {b.originCity} ➔ {b.destinationCity} (Ghế {b.seats.join(',')})
+                      </button>
+                    ))}
+                </div>
+              )}
             </div>
           ) : (
-            <div className="flex items-center justify-between text-xs bg-slate-900/70 p-2.5 rounded-lg border border-slate-700/60">
+            <div className="flex items-center justify-between text-xs bg-slate-900/70 p-2.5 rounded-lg border border-slate-700/60 w-full md:w-auto">
               <span className="text-slate-400 flex items-center gap-1.5">
                 <Ticket className="w-3.5 h-3.5 text-slate-500" />
-                Bạn chưa có vé xe nào đang chạy trên tài khoản.
+                Bạn không có chuyến xe nào sắp khởi hành trong 24h tới.
               </span>
-              <div className="flex items-center gap-2">
-                <Link to="/my-tickets" className="text-emerald-400 font-bold hover:underline">
-                  Vé của tôi
-                </Link>
-                <span className="text-slate-600">•</span>
+              <div className="flex items-center gap-2 ml-3">
                 <Link to="/search" className="text-sky-400 font-bold hover:underline">
                   Đặt vé chuyến mới
                 </Link>
@@ -536,60 +598,36 @@ export default function LiveTrackingMapPage() {
             </div>
           )}
 
-          {/* PHẦN 2: CHUYẾN XE TOÀN QUỐC & TRẠNG THÁI STREAM */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Bus className="w-4 h-4 text-slate-400" /> Tuyến xe toàn quốc:
-              </label>
-              <div className="flex items-center gap-2">
-                {DEMO_TRIPS.map((trip) => (
-                  <button
-                    key={trip.id}
-                    onClick={() => navigate(`/tracking/${trip.id}`)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      activeTripId === trip.id
-                        ? 'bg-teal-600 text-white shadow-md shadow-teal-900/50 ring-2 ring-teal-400'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                    }`}
-                  >
-                    #{trip.id} - {trip.name.split(' (')[0]}
-                  </button>
-                ))}
-              </div>
+          {/* PHẦN 2: TRẠNG THÁI STREAM SSE & BÁM THEO XE */}
+          <div className="flex items-center gap-3 text-xs w-full md:w-auto justify-between md:justify-end">
+            <div className="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700">
+              <span className="relative flex h-2.5 w-2.5">
+                {isConnected ? (
+                  <>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </>
+                ) : (
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                )}
+              </span>
+              <span className={`font-semibold ${isConnected ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {isConnected ? 'GPS Live Stream 1s' : 'Đang kết nối lại...'}
+              </span>
+              {lastPingTime && <span className="text-slate-500">({lastPingTime})</span>}
             </div>
 
-            {/* Trạng thái kết nối SSE Stream */}
-            <div className="flex items-center gap-3 text-xs">
-              <div className="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-700">
-                <span className="relative flex h-2.5 w-2.5">
-                  {isConnected ? (
-                    <>
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                    </>
-                  ) : (
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
-                  )}
-                </span>
-                <span className={`font-semibold ${isConnected ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {isConnected ? 'SSE Live Stream 1s' : 'Đang kết nối lại...'}
-                </span>
-                {lastPingTime && <span className="text-slate-500">({lastPingTime})</span>}
-              </div>
-
-              <button
-                onClick={() => setAutoFollowBus(!autoFollowBus)}
-                className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 border transition-all ${
-                  autoFollowBus
-                    ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500'
-                    : 'bg-slate-700 text-slate-400 border-slate-600'
-                }`}
-              >
-                <Navigation className="w-3.5 h-3.5" />
-                {autoFollowBus ? 'Bám theo xe: BẬT' : 'Bám theo xe: TẮT'}
-              </button>
-            </div>
+            <button
+              onClick={() => setAutoFollowBus(!autoFollowBus)}
+              className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 border transition-all ${
+                autoFollowBus
+                  ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500'
+                  : 'bg-slate-700 text-slate-400 border-slate-600'
+              }`}
+            >
+              <Navigation className="w-3.5 h-3.5" />
+              {autoFollowBus ? 'Bám theo xe: BẬT' : 'Bám theo xe: TẮT'}
+            </button>
           </div>
         </div>
 
