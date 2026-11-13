@@ -22,3 +22,4 @@ public class UpdateTripGpsRequest {
     private String driverPhone;
     private String note;
 }
+

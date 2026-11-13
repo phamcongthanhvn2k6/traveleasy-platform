@@ -359,3 +359,4 @@ public class TripGpsRealtimeService {
         return (brng + 360) % 360;
     }
 }
+
