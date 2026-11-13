@@ -217,7 +217,27 @@ export const CheckoutPage: React.FC = () => {
     }
   }, [location.search]);
 
-  const handleTimerExpire = () => {
+  const handleTimerExpire = async () => {
+    // GRACEFUL VERIFICATION: Nếu khách đang mở Modal thanh toán (có thể đã chuyển tiền ở giây cuối cùng),
+    // kiểm tra lần cuối từ Backend xem Webhook ngân hàng đã ghi nhận tiền chưa trước khi hủy đơn
+    if (showQrModal || showVnPayModal) {
+      if (createdBooking?.bookingCode) {
+        try {
+          const statusRes = await paymentService.getPaymentStatus(createdBooking.bookingCode);
+          if (statusRes?.isPaid || statusRes?.bookingStatus === 'CONFIRMED') {
+            toast.success('Hệ thống đã nhận được tiền thanh toán từ ngân hàng!', 'Thanh Toán Thành Công');
+            cleanupPendingSession();
+            setShowQrModal(false);
+            setShowVnPayModal(false);
+            navigate(`/tickets/${createdBooking.bookingCode}?payment=success`);
+            return;
+          }
+        } catch (e) {
+          console.warn('Lỗi khi kiểm tra thanh toán lần cuối:', e);
+        }
+      }
+    }
+
     toast.error('Thời gian giữ chỗ 10 phút đã hết hạn! Ghế đã được tự động giải phóng.', 'Hết Hạn');
     if (createdBooking?.id) {
       api.post(`/bookings/${createdBooking.id}/cancel`).catch(() => {});
