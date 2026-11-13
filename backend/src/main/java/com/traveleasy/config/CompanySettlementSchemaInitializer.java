@@ -87,7 +87,89 @@ public class CompanySettlementSchemaInitializer implements CommandLineRunner {
                 "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
             );
-            log.info("[SETTLEMENT SCHEMA] Verified settlement_records.previous_balance, payout_requests, and company_pos_shifts tables.");
+            // [Sprint 3] Đảm bảo cấu trúc CSDL cho S307, S316, S317, S318 luôn sẵn sàng trên mọi môi trường
+            jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS company_pricing_rules (" +
+                "id BIGSERIAL PRIMARY KEY, " +
+                "bus_company_id BIGINT NOT NULL, " +
+                "name VARCHAR(150) NOT NULL, " +
+                "rule_type VARCHAR(30) NOT NULL, " +
+                "scope VARCHAR(30) NOT NULL DEFAULT 'ALL_ROUTES', " +
+                "route_id BIGINT, " +
+                "adjustment_type VARCHAR(30) NOT NULL DEFAULT 'PERCENTAGE', " +
+                "adjustment_value NUMERIC(12, 2) NOT NULL DEFAULT 0, " +
+                "start_date DATE NOT NULL, " +
+                "end_date DATE NOT NULL, " +
+                "applicable_days VARCHAR(100) DEFAULT 'ALL', " +
+                "is_last_minute BOOLEAN NOT NULL DEFAULT FALSE, " +
+                "last_minute_hours INT DEFAULT 2, " +
+                "min_empty_seat_percentage INT DEFAULT 50, " +
+                "priority INT NOT NULL DEFAULT 0, " +
+                "status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE', " +
+                "description TEXT, " +
+                "created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP, " +
+                "updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP)"
+            );
+            jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS ticket_exchange_logs (" +
+                "id BIGSERIAL PRIMARY KEY, " +
+                "bus_company_id BIGINT NOT NULL, " +
+                "original_ticket_id BIGINT NOT NULL, " +
+                "new_ticket_id BIGINT, " +
+                "old_trip_id BIGINT NOT NULL, " +
+                "new_trip_id BIGINT NOT NULL, " +
+                "old_seat_code VARCHAR(20) NOT NULL, " +
+                "new_seat_code VARCHAR(20) NOT NULL, " +
+                "price_difference NUMERIC(12, 2) NOT NULL DEFAULT 0, " +
+                "surcharge_paid NUMERIC(12, 2) NOT NULL DEFAULT 0, " +
+                "refund_returned NUMERIC(12, 2) NOT NULL DEFAULT 0, " +
+                "performed_by_user_id BIGINT, " +
+                "reason TEXT, " +
+                "created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP)"
+            );
+            jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS trip_expenses (" +
+                "id BIGSERIAL PRIMARY KEY, " +
+                "trip_id BIGINT NOT NULL, " +
+                "bus_company_id BIGINT NOT NULL, " +
+                "fuel_cost NUMERIC(12, 2) NOT NULL DEFAULT 0, " +
+                "toll_bot_cost NUMERIC(12, 2) NOT NULL DEFAULT 0, " +
+                "driver_salary NUMERIC(12, 2) NOT NULL DEFAULT 0, " +
+                "terminal_fee NUMERIC(12, 2) NOT NULL DEFAULT 0, " +
+                "other_costs NUMERIC(12, 2) NOT NULL DEFAULT 0, " +
+                "invoice_number VARCHAR(100), " +
+                "is_locked BOOLEAN DEFAULT FALSE, " +
+                "notes TEXT, " +
+                "created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP, " +
+                "updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP)"
+            );
+            jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS shuttle_requests (" +
+                "id BIGSERIAL PRIMARY KEY, " +
+                "bus_company_id BIGINT NOT NULL, " +
+                "booking_id BIGINT, " +
+                "passenger_name VARCHAR(100) NOT NULL, " +
+                "passenger_phone VARCHAR(20) NOT NULL, " +
+                "pickup_address VARCHAR(255) NOT NULL, " +
+                "main_trip_id BIGINT NOT NULL, " +
+                "shuttle_pickup_time TIMESTAMP WITHOUT TIME ZONE NOT NULL, " +
+                "assigned_vehicle_plate VARCHAR(30), " +
+                "shuttle_driver_name VARCHAR(100), " +
+                "status VARCHAR(30) NOT NULL DEFAULT 'PENDING', " +
+                "created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP)"
+            );
+            // Tự động liên kết bus_company_id cho các tài khoản đối tác mẫu để không bị 401/403 khi đăng nhập
+            jdbcTemplate.execute(
+                "UPDATE users SET bus_company_id = 1 WHERE (email = 'futa@gmail.com' OR email = 'operator1@futa.vn') AND bus_company_id IS NULL; " +
+                "UPDATE users SET bus_company_id = 2 WHERE (email = 'thanhbuoi@gmail.com' OR email = 'dieuhanh@thanhbuoi.com.vn') AND bus_company_id IS NULL; " +
+                "UPDATE users SET bus_company_id = 3 WHERE (email = 'saoviet@gmail.com' OR email = 'dieuhanh@xesaoviet.com.vn') AND bus_company_id IS NULL; " +
+                "UPDATE users SET bus_company_id = 5 WHERE (email = 'hoamai@gmail.com' OR email = 'dieuhanh@hoamaivungtau.com.vn') AND bus_company_id IS NULL; " +
+                "UPDATE users SET bus_company_id = 6 WHERE (email = 'dieuhanh@hoanglongasia.com') AND bus_company_id IS NULL; " +
+                "UPDATE users SET bus_company_id = 7 WHERE (email = 'dieuhanh@vanminh74.vn') AND bus_company_id IS NULL; " +
+                "UPDATE users SET bus_company_id = 9 WHERE (email = 'haivan@gmail.com' OR email = 'dieuhanh@haivan.com') AND bus_company_id IS NULL; " +
+                "UPDATE users SET bus_company_id = 14 WHERE email = 'phamcongt56@gmail.com' AND bus_company_id IS NULL;"
+            );
+            log.info("[SETTLEMENT SCHEMA] Verified all Sprint 3 schema, payout_requests, POS shifts, and partner company associations.");
         } catch (Exception e) {
             log.warn("[SETTLEMENT SCHEMA] Bỏ qua khởi tạo DDL (có thể đang chạy H2/test hoặc thiếu quyền): {}", e.getMessage());
         }

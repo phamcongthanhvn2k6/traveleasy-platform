@@ -14,7 +14,6 @@ import java.time.LocalDate;
 @Slf4j
 @Profile("!test")
 @Component
-@org.springframework.context.annotation.Profile("!test")
 @RequiredArgsConstructor
 public class CacheWarmupRunner {
 

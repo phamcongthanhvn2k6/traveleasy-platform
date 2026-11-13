@@ -203,8 +203,7 @@ public class SeatRealtimeService {
                     .timestamp(LocalDateTime.now())
                     .build());
         }
-        tripSeatRepository.saveAll(seats);
-        tripSeatRepository.flush();
+        tripSeatRepository.saveAllAndFlush(seats);
 
         // Cập nhật số chỗ trống thực tế trên bảng trips để kết quả tìm kiếm toàn sàn khớp 100%
         try {
@@ -420,8 +419,7 @@ public class SeatRealtimeService {
                         "Ghế " + seat.getSeatCode() + " đã được mở lại cho khách khác đặt", null);
             }
         }
-        tripSeatRepository.saveAll(seats);
-        tripSeatRepository.flush();
+        tripSeatRepository.saveAllAndFlush(seats);
 
         try {
             tripRepository.findById(tripId).ifPresent(trip -> {

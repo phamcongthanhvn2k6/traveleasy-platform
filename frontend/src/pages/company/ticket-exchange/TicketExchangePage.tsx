@@ -148,7 +148,7 @@ export const TicketExchangePage: React.FC = () => {
         const seats: any[] = res.data?.data?.seats || [];
         const available = seats
           .filter((s: any) => s.status === 'AVAILABLE')
-          .map((s: any) => s.seatCode);
+          .map((s: any) => s.seatNumber || s.seatCode);
 
         setAvailableSeats(available);
         if (available.length > 0) {
