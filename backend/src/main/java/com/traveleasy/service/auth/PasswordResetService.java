@@ -97,7 +97,7 @@ public class PasswordResetService {
                     return existing;
                 }
             }
-            return new OtpEntry(user.getId(), registeredEmail, hashedOtp, now.plusSeconds(OTP_TTL_SECONDS), now, 0);
+            return new OtpEntry(user.getId(), registeredEmail, inputPhone, hashedOtp, now.plusSeconds(OTP_TTL_SECONDS), now, 0);
         });
 
         if (retryAfterSeconds[0] > 0) {
@@ -134,6 +134,7 @@ public class PasswordResetService {
         Instant now = clock.instant();
         byte[] submittedHash = hashOtp(user.getId(), registeredEmail, otp);
         VerificationOutcome[] outcomeHolder = {VerificationOutcome.notFound()};
+        final String[] pendingPhoneHolder = new String[1];
 
         otpCache.asMap().compute(user.getId(), (key, existing) -> {
             if (existing == null || !existing.registeredEmail().equals(registeredEmail)) {
@@ -146,6 +147,7 @@ public class PasswordResetService {
             }
             if (MessageDigest.isEqual(existing.otpHash(), submittedHash)) {
                 outcomeHolder[0] = VerificationOutcome.verified();
+                pendingPhoneHolder[0] = existing.pendingPhone();
                 return null;
             }
             int nextAttempts = existing.failedAttempts() + 1;
@@ -157,6 +159,7 @@ public class PasswordResetService {
             return new OtpEntry(
                     existing.userId(),
                     existing.registeredEmail(),
+                    existing.pendingPhone(),
                     existing.otpHash(),
                     existing.expiresAt(),
                     existing.lastSentAt(),
@@ -182,7 +185,7 @@ public class PasswordResetService {
                 String resetToken = generateResetToken();
                 resetTokenCache.put(
                         resetToken,
-                        new ResetTokenEntry(user.getId(), registeredEmail, now.plusSeconds(RESET_TOKEN_TTL_SECONDS))
+                        new ResetTokenEntry(user.getId(), registeredEmail, pendingPhoneHolder[0], now.plusSeconds(RESET_TOKEN_TTL_SECONDS))
                 );
                 return VerifyResetOtpResponse.builder()
                         .resetToken(resetToken)
@@ -230,6 +233,15 @@ public class PasswordResetService {
         checkUserAccountStatus(user);
 
         user.setPassword(passwordEncoder.encode(newPassword));
+        // Nếu tài khoản trước đó chưa có số điện thoại (ví dụ tài khoản tạo qua Google OAuth),
+        // tự động liên kết số điện thoại người dùng đã đối chiếu ở Bước 1
+        if ((user.getPhone() == null || user.getPhone().isBlank())
+                && tokenEntry.pendingPhone() != null
+                && !tokenEntry.pendingPhone().isBlank()) {
+            if (!userRepository.existsByPhoneAndIdNot(tokenEntry.pendingPhone(), user.getId())) {
+                user.setPhone(tokenEntry.pendingPhone());
+            }
+        }
         userRepository.save(user);
 
         emailNotificationService.sendPasswordResetSuccessEmail(user.getEmail().trim(), user.getFullName());
@@ -250,6 +262,17 @@ public class PasswordResetService {
                 .toList();
 
         if (matchedByPhone.isEmpty()) {
+            // Nếu có nhiều bản ghi trùng email nhưng không khớp SĐT, kiểm tra tài khoản chưa có SĐT (Google OAuth)
+            List<User> withoutPhone = candidates.stream()
+                    .filter(u -> u.getPhone() == null || normalizePhoneSafe(u.getPhone()).isEmpty())
+                    .toList();
+            if (withoutPhone.size() == 1) {
+                User user = withoutPhone.get(0);
+                checkUserAccountStatus(user);
+                verifyUserPhoneMatches(user, normalizedInputPhone);
+                return user;
+            }
+
             throw new AppException(
                     ErrorCode.VALIDATION_ERROR,
                     "Email và số điện thoại không khớp với cùng một tài khoản đã đăng ký. Vui lòng kiểm tra lại để tránh nhầm sang tài khoản khác."
