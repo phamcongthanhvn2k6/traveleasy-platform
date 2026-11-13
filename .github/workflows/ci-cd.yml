@@ -146,11 +146,29 @@ jobs:
           
           # Rebuild và khởi động lại container bằng docker-compose.prod.yml
           echo "📦 [Docker] Đang build và chạy lại container trên nhánh MAIN..."
-          $DC -f docker-compose.prod.yml down || true
+          $DC -f docker-compose.prod.yml down --remove-orphans || true
           $DC -f docker-compose.prod.yml up -d --build
           
           echo "📋 Danh sách container đang chạy trên VPS:"
           docker ps -a
+
+          # Healthcheck tự động: Kiểm tra endpoint backend & reverse proxy
+          echo "⏳ Đang kiểm tra trạng thái khởi động ứng dụng..."
+          HEALTHY=0
+          for i in $(seq 1 15); do
+            sleep 6
+            if curl -sf http://localhost:8080/api/v1/trips/search >/dev/null 2>&1; then
+              echo "🎉 [Healthcheck] Backend phản hồi 200 OK thành công ở lần thử thứ $i!"
+              HEALTHY=1
+              break
+            fi
+            echo "Chờ Backend sẵn sàng (lần $i/15)..."
+          done
+
+          if [ $HEALTHY -eq 0 ]; then
+            echo "⚠️ [Warning] Backend mất hơn 90s để khởi động, log gần nhất:"
+            docker logs --tail 40 traveleasy-backend || true
+          fi
 
           # Dọn dẹp images cũ giải phóng dung lượng ổ cứng
           docker image prune -f
