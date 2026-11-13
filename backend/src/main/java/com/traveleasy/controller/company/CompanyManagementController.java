@@ -519,13 +519,18 @@ public class CompanyManagementController {
     // HELPER METHODS: TENANT ISOLATION CHO ĐỐI TÁC NHÀ XE
     // =========================================================================
     private Long resolveTargetCompanyId(Long explicitCompanyId, Authentication authentication) {
-        if (explicitCompanyId != null && explicitCompanyId > 0) {
-            return explicitCompanyId;
-        }
         if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
             String email = authentication.getName();
             User user = userRepository.findByEmail(email).orElse(null);
             if (user != null) {
+                // Admin được quyền chỉ định explicitCompanyId
+                if (user.getRole() == Role.ADMIN) {
+                    if (explicitCompanyId != null && explicitCompanyId > 0) {
+                        return explicitCompanyId;
+                    }
+                    return 1L; // Mặc định cho admin xem tổng quan FUTA
+                }
+
                 // 1. Ưu tiên cao nhất: Lấy trực tiếp từ busCompanyId gán cho User
                 if (user.getBusCompanyId() != null && user.getBusCompanyId() > 0) {
                     return user.getBusCompanyId();
@@ -547,9 +552,15 @@ public class CompanyManagementController {
                         }
                     }
                 }
+
+                // Nhà xe chưa được liên kết công ty thì không fallback bừa bãi sang hãng 1 (FUTA)
+                throw new AppException(ErrorCode.FORBIDDEN, "Tài khoản của bạn chưa được liên kết với nhà xe nào trên hệ thống");
             }
         }
-        return explicitCompanyId != null ? explicitCompanyId : 1L;
+        if (explicitCompanyId != null && explicitCompanyId > 0) {
+            return explicitCompanyId;
+        }
+        return 1L;
     }
 
     private boolean isSystemPolicy(CancellationPolicy p) {

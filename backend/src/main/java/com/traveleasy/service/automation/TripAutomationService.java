@@ -286,8 +286,9 @@ public class TripAutomationService {
         }
 
         Route route = routeOpt.get();
-        BusCompany company = busCompanyRepository.findByName(tmpl.companyName)
-                .orElseGet(() -> busCompanyRepository.findAll().stream().findFirst().orElse(null));
+        // Chỉ gán chuyến khi tìm thấy chính xác nhà xe sở hữu template;
+        // TUYỆT ĐỐI không fallback sang findAll().findFirst() để tránh tự sinh chuyến gán nhầm cho nhà xe mới đăng ký
+        BusCompany company = busCompanyRepository.findByName(tmpl.companyName).orElse(null);
 
         if (company == null) {
             return 0;
