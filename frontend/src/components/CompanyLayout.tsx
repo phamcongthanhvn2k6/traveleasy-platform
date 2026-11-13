@@ -28,7 +28,8 @@ import {
   Wallet,
   RotateCcw,
   ShieldAlert,
-  UserCheck
+  UserCheck,
+  Radio
 } from 'lucide-react';
 import { toast } from '../context/ToastContext';
 import { AuthUser } from '../types';
@@ -115,6 +116,7 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
 
   const allBusinessItems = [
     { label: 'Lịch chuyến xe xuất bến', path: '/company/trips', icon: Calendar, roles: ['OWNER', 'DISPATCHER'] },
+    { label: 'Định vị GPS buồng lái (Live)', path: '/company/tracking', icon: Radio, roles: ['OWNER', 'DISPATCHER'] },
     { label: 'Hành khách & Vé đã đặt', path: '/company/bookings', icon: Ticket, roles: ['OWNER', 'CASHIER', 'DISPATCHER'] },
     { label: 'Doanh thu & Đối soát sàn', path: '/company/settlements', icon: DollarSign, roles: ['OWNER'] },
     { label: 'Đánh giá từ khách hàng', path: '/company/reviews', icon: Star, roles: ['OWNER'] },
