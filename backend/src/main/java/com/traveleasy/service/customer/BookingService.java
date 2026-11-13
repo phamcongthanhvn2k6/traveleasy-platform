@@ -32,7 +32,8 @@ public class BookingService {
     private final TripSeatRepository tripSeatRepository;
     private final PickupDropoffPointRepository pointRepository;
     private final UserRepository userRepository;
-    private final org.springframework.beans.factory.ObjectProvider<TripService> tripServiceProvider;
+    @org.springframework.context.annotation.Lazy
+    private final TripService tripService;
     private final SeatRealtimeService seatRealtimeService;
     private final com.traveleasy.service.company.DynamicPricingService dynamicPricingService;
 
@@ -663,13 +664,9 @@ public class BookingService {
                 .createdAt(t.getCreatedAt())
                 .build()).collect(Collectors.toList());
 
-        TripService ts = tripServiceProvider.getIfAvailable();
-        TripResponse tripResponse = null;
-        if (ts != null) {
-            tripResponse = (routePoints != null && !routePoints.isEmpty())
-                    ? ts.mapToTripResponse(b.getTrip(), routePoints)
-                    : ts.mapToTripResponse(b.getTrip());
-        }
+        TripResponse tripResponse = (routePoints != null && !routePoints.isEmpty())
+                ? (tripService != null ? tripService.mapToTripResponse(b.getTrip(), routePoints) : null)
+                : (tripService != null ? tripService.mapToTripResponse(b.getTrip()) : null);
 
         return BookingResponse.builder()
                 .id(b.getId())
