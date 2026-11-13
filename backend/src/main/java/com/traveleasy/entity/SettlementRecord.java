@@ -24,7 +24,7 @@ public class SettlementRecord {
     private String code;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id", nullable = false)
+    @JoinColumn(name = "bus_company_id", nullable = false)
     private BusCompany company;
 
     @Column(name = "period_name", nullable = false, length = 100)

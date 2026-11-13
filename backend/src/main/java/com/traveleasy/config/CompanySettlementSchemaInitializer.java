@@ -26,6 +26,22 @@ public class CompanySettlementSchemaInitializer implements CommandLineRunner {
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS staff_role VARCHAR(30) DEFAULT 'OWNER'"
             );
             jdbcTemplate.execute(
+                "ALTER TABLE settlement_records ADD COLUMN IF NOT EXISTS bus_company_id BIGINT"
+            );
+            jdbcTemplate.execute(
+                "DO $$ BEGIN " +
+                "IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'settlement_records' AND column_name = 'company_id') THEN " +
+                "UPDATE settlement_records SET bus_company_id = company_id WHERE bus_company_id IS NULL; " +
+                "END IF; " +
+                "END $$;"
+            );
+            jdbcTemplate.execute(
+                "ALTER TABLE settlement_records ADD COLUMN IF NOT EXISTS start_date VARCHAR(20)"
+            );
+            jdbcTemplate.execute(
+                "ALTER TABLE settlement_records ADD COLUMN IF NOT EXISTS end_date VARCHAR(20)"
+            );
+            jdbcTemplate.execute(
                 "ALTER TABLE settlement_records ADD COLUMN IF NOT EXISTS code VARCHAR(50)"
             );
             jdbcTemplate.execute(
