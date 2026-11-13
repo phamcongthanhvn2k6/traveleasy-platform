@@ -30,6 +30,10 @@ public class TripResponse {
     private LocalDateTime arrivalTime;
     private BusType busType;
     private BigDecimal price;
+    private BigDecimal originalPrice;
+    private String pricingBadge;
+    private BigDecimal surchargeAmount;
+    private String ruleDescription;
     private Integer totalSeats;
     private Integer availableSeats;
     private TripStatus status;

@@ -10,7 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ForgotPasswordResponse {
+    private String channel;
+    private String destination;
+    private String maskedDestination;
     private String maskedEmail;
+    private String maskedPhone;
     private String maskedFullName;
     private String roleLabel;
     private int expiresInSeconds;

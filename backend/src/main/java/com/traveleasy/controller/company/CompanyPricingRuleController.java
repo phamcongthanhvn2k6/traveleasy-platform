@@ -1,10 +1,19 @@
 package com.traveleasy.controller.company;
 
 import com.traveleasy.common.dto.ApiResponse;
+import com.traveleasy.common.exception.AppException;
+import com.traveleasy.common.exception.ErrorCode;
 import com.traveleasy.common.security.CompanySecurityService;
-import com.traveleasy.entity.StaffRole;
+import com.traveleasy.dto.company.pricing.*;
+import com.traveleasy.entity.*;
+import com.traveleasy.repository.BusCompanyRepository;
+import com.traveleasy.repository.CompanyPricingRuleRepository;
+import com.traveleasy.repository.RouteRepository;
+import com.traveleasy.repository.UserRepository;
+import com.traveleasy.service.company.DynamicPricingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -15,10 +24,11 @@ import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * [S307] Phân Hệ Quản Trị Giá Vé Động & Phụ Thu Lễ Tết / Cuối Tuần (/company/pricing-rules)
- * BẢO MẬT: Chỉ Chủ nhà xe (StaffRole.OWNER) mới có quyền cấu hình luật giá
+ * BẢO MẬT: Chỉ Chủ nhà xe (StaffRole.OWNER) và ADMIN mới có quyền cấu hình luật giá
  * @author Trần Minh Đức (tranduc2601)
  */
 @Slf4j
@@ -26,51 +36,217 @@ import java.util.*;
 @RequestMapping("/api/v1/company/pricing-rules")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@Tag(name = "Company Dynamic Pricing", description = "[S307] Động cơ định giá vé động và kiểm soát trần giá Bộ GTVT - Trần Minh Đức")
+@Tag(name = "Company Pricing Rules Management", description = "Quản trị quy tắc giá vé động, phụ thu Lễ Tết/Cuối tuần và Flash Sale giờ chót cho nhà xe đối tác")
 public class CompanyPricingRuleController {
 
+    private final CompanyPricingRuleRepository pricingRuleRepository;
+    private final BusCompanyRepository busCompanyRepository;
+    private final RouteRepository routeRepository;
+    private final UserRepository userRepository;
+    private final DynamicPricingService dynamicPricingService;
     private final CompanySecurityService securityService;
     private static final BigDecimal MAX_SURCHARGE_CAP_PERCENT = new BigDecimal("40.0"); // Trần tối đa 40%
 
     @GetMapping
-    @Operation(summary = "Lấy danh sách quy tắc phụ thu giá vé đang áp dụng")
-    public ApiResponse<List<Map<String, Object>>> getPricingRules(
-            @RequestParam(required = false) Long busCompanyId,
+    @Operation(summary = "Lấy danh sách quy tắc giá vé của nhà xe")
+    public ApiResponse<List<PricingRuleResponse>> getPricingRules(
+            @RequestParam(required = false) Long companyId,
+            @RequestParam(required = false) PricingRuleStatus status,
             Authentication authentication) {
 
-        if (authentication != null && authentication.isAuthenticated()) {
-            securityService.requireStaffRole(authentication, StaffRole.OWNER);
+        Long targetCompanyId = resolveTargetCompanyId(companyId, authentication);
+        if (targetCompanyId == null) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Không thể xác thực nhà xe đối tác");
         }
 
-        return ApiResponse.success(List.of(
-                Map.of(
-                        "id", "RULE-01",
-                        "ruleName", "Phụ thu Cuối tuần (T6, T7, CN)",
-                        "ruleType", "WEEKEND",
-                        "surchargePercent", 15,
-                        "fixedSurcharge", 0,
-                        "active", true,
-                        "description", "Áp dụng tự động cho các chuyến khởi hành Thứ 6, Thứ 7 và Chủ Nhật"
-                ),
-                Map.of(
-                        "id", "RULE-02",
-                        "ruleName", "Phụ thu Giường Tầng 1 (Tầng Dưới)",
-                        "ruleType", "SEAT_POSITION",
-                        "surchargePercent", 0,
-                        "fixedSurcharge", 20000,
-                        "active", true,
-                        "description", "Phụ thu tiện ích cho hành khách ưu tiên chọn giường tầng dưới thuận tiện di chuyển"
-                ),
-                Map.of(
-                        "id", "RULE-03",
-                        "ruleName", "Phụ thu Cao điểm Lễ / Tết",
-                        "ruleType", "HOLIDAY",
-                        "surchargePercent", 30,
-                        "fixedSurcharge", 0,
-                        "active", true,
-                        "description", "Áp dụng trong các dịp Lễ 30/4 - 1/5, Quốc khánh 2/9 và Tết Nguyên Đán"
-                )
-        ));
+        List<CompanyPricingRule> rules;
+        if (status != null) {
+            rules = pricingRuleRepository.findByBusCompanyIdAndStatusOrderByPriorityDesc(targetCompanyId, status);
+        } else {
+            rules = pricingRuleRepository.findByBusCompanyIdOrderByPriorityDesc(targetCompanyId);
+        }
+
+        List<PricingRuleResponse> responses = rules.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+
+        return ApiResponse.success("Lấy danh sách quy tắc giá vé thành công", responses);
+    }
+
+    @PostMapping
+    @Operation(summary = "Tạo mới quy tắc giá vé")
+    public ApiResponse<PricingRuleResponse> createPricingRule(
+            @Valid @RequestBody CreatePricingRuleRequest request,
+            Authentication authentication) {
+
+        Long targetCompanyId = resolveTargetCompanyId(request.getBusCompanyId(), authentication);
+        if (targetCompanyId == null) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Không thể xác thực nhà xe đối tác");
+        }
+        request.setBusCompanyId(targetCompanyId);
+
+        if (request.getEndDate().isBefore(request.getStartDate())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Ngày kết thúc không được trước ngày bắt đầu");
+        }
+
+        BusCompany busCompany = busCompanyRepository.findById(targetCompanyId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Nhà xe không tồn tại"));
+
+        Route route = null;
+        if (request.getScope() == PricingRuleScope.SPECIFIC_ROUTE) {
+            if (request.getRouteId() == null) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Vui lòng chọn tuyến đường cụ thể khi áp dụng phạm vi theo tuyến");
+            }
+            route = routeRepository.findById(request.getRouteId())
+                    .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Tuyến đường không tồn tại"));
+        }
+
+        CompanyPricingRule rule = CompanyPricingRule.builder()
+                .busCompany(busCompany)
+                .name(request.getName().trim())
+                .ruleType(request.getRuleType())
+                .scope(request.getScope())
+                .route(route)
+                .adjustmentType(request.getAdjustmentType())
+                .adjustmentValue(request.getAdjustmentValue())
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
+                .applicableDays(request.getApplicableDays() != null && !request.getApplicableDays().isBlank() ? request.getApplicableDays().trim() : "ALL")
+                .isLastMinute(Boolean.TRUE.equals(request.getIsLastMinute()))
+                .lastMinuteHours(request.getLastMinuteHours() != null ? request.getLastMinuteHours() : 2)
+                .minEmptySeatPercentage(request.getMinEmptySeatPercentage() != null ? request.getMinEmptySeatPercentage() : 50)
+                .priority(request.getPriority() != null ? request.getPriority() : 0)
+                .status(request.getStatus() != null ? request.getStatus() : PricingRuleStatus.ACTIVE)
+                .description(request.getDescription())
+                .build();
+
+        CompanyPricingRule savedRule = pricingRuleRepository.save(rule);
+        log.info("Nhà xe {} tạo mới quy tắc giá vé: id={}, name='{}'", targetCompanyId, savedRule.getId(), savedRule.getName());
+
+        return ApiResponse.success("Tạo mới quy tắc giá vé thành công", mapToResponse(savedRule));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Cập nhật thông tin quy tắc giá vé")
+    public ApiResponse<PricingRuleResponse> updatePricingRule(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdatePricingRuleRequest request,
+            Authentication authentication) {
+
+        Long targetCompanyId = resolveTargetCompanyId(null, authentication);
+        CompanyPricingRule rule = findRuleAndValidateOwnership(id, targetCompanyId);
+
+        if (request.getStartDate() != null && request.getEndDate() != null && request.getEndDate().isBefore(request.getStartDate())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Ngày kết thúc không được trước ngày bắt đầu");
+        }
+
+        if (request.getName() != null && !request.getName().isBlank()) {
+            rule.setName(request.getName().trim());
+        }
+        if (request.getRuleType() != null) {
+            rule.setRuleType(request.getRuleType());
+        }
+        if (request.getScope() != null) {
+            rule.setScope(request.getScope());
+            if (request.getScope() == PricingRuleScope.SPECIFIC_ROUTE) {
+                if (request.getRouteId() != null) {
+                    Route route = routeRepository.findById(request.getRouteId())
+                            .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Tuyến đường không tồn tại"));
+                    rule.setRoute(route);
+                }
+            } else {
+                rule.setRoute(null);
+            }
+        }
+        if (request.getAdjustmentType() != null) {
+            rule.setAdjustmentType(request.getAdjustmentType());
+        }
+        if (request.getAdjustmentValue() != null) {
+            rule.setAdjustmentValue(request.getAdjustmentValue());
+        }
+        if (request.getStartDate() != null) {
+            rule.setStartDate(request.getStartDate());
+        }
+        if (request.getEndDate() != null) {
+            rule.setEndDate(request.getEndDate());
+        }
+        if (request.getApplicableDays() != null) {
+            rule.setApplicableDays(request.getApplicableDays().trim());
+        }
+        if (request.getIsLastMinute() != null) {
+            rule.setIsLastMinute(request.getIsLastMinute());
+        }
+        if (request.getLastMinuteHours() != null) {
+            rule.setLastMinuteHours(request.getLastMinuteHours());
+        }
+        if (request.getMinEmptySeatPercentage() != null) {
+            rule.setMinEmptySeatPercentage(request.getMinEmptySeatPercentage());
+        }
+        if (request.getPriority() != null) {
+            rule.setPriority(request.getPriority());
+        }
+        if (request.getStatus() != null) {
+            rule.setStatus(request.getStatus());
+        }
+        if (request.getDescription() != null) {
+            rule.setDescription(request.getDescription());
+        }
+
+         CompanyPricingRule updatedRule = pricingRuleRepository.save(rule);
+        log.info("Nhà xe {} cập nhật quy tắc giá vé: id={}", targetCompanyId, updatedRule.getId());
+
+        return ApiResponse.success("Cập nhật quy tắc giá vé thành công", mapToResponse(updatedRule));
+    }
+
+    @PatchMapping("/{id}/toggle-status")
+    @Operation(summary = "Bật hoặc tắt trạng thái quy tắc giá vé")
+    public ApiResponse<PricingRuleResponse> togglePricingRuleStatus(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        Long targetCompanyId = resolveTargetCompanyId(null, authentication);
+        CompanyPricingRule rule = findRuleAndValidateOwnership(id, targetCompanyId);
+
+        PricingRuleStatus nextStatus = (rule.getStatus() == PricingRuleStatus.ACTIVE)
+                ? PricingRuleStatus.INACTIVE
+                : PricingRuleStatus.ACTIVE;
+
+        rule.setStatus(nextStatus);
+        CompanyPricingRule updated = pricingRuleRepository.save(rule);
+        log.info("Nhà xe {} chuyển trạng thái quy tắc id={} sang {}", targetCompanyId, id, nextStatus);
+
+        return ApiResponse.success("Thay đổi trạng thái quy tắc thành công", mapToResponse(updated));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Xóa quy tắc giá vé")
+    public ApiResponse<Void> deletePricingRule(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        Long targetCompanyId = resolveTargetCompanyId(null, authentication);
+        CompanyPricingRule rule = findRuleAndValidateOwnership(id, targetCompanyId);
+
+        pricingRuleRepository.delete(rule);
+        log.info("Nhà xe {} đã xóa quy tắc giá vé id={}", targetCompanyId, id);
+
+        return ApiResponse.success("Xóa quy tắc giá vé thành công", null);
+    }
+
+    @PostMapping("/simulate")
+    @Operation(summary = "Mô phỏng tính giá thời gian thực cho nhà xe")
+    public ApiResponse<PriceSimulationResponse> simulatePricing(
+            @Valid @RequestBody PriceSimulationRequest request,
+            Authentication authentication) {
+
+        Long targetCompanyId = resolveTargetCompanyId(request.getBusCompanyId(), authentication);
+        if (targetCompanyId == null) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Không thể xác thực nhà xe đối tác");
+        }
+        request.setBusCompanyId(targetCompanyId);
+
+        PriceSimulationResponse response = dynamicPricingService.simulatePricing(request);
+        return ApiResponse.success("Mô phỏng tính giá vé thành công", response);
     }
 
     @PostMapping("/calculate-dynamic-price")
@@ -134,5 +310,88 @@ public class CompanyPricingRuleController {
         result.put("regulatoryCompliance", "Tuân thủ quy chuẩn giá vé Bộ GTVT & Sở Tài chính (Trần <= 40%)");
 
         return ApiResponse.success(result);
+    }
+
+    private CompanyPricingRule findRuleAndValidateOwnership(Long ruleId, Long targetCompanyId) {
+        if (targetCompanyId == null) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Không thể xác thực nhà xe đối tác");
+        }
+
+        CompanyPricingRule rule = pricingRuleRepository.findById(ruleId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy quy tắc giá vé"));
+
+        if (!rule.getBusCompany().getId().equals(targetCompanyId)) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Bạn không có quyền thao tác trên quy tắc của nhà xe khác");
+        }
+
+        return rule;
+    }
+
+    private PricingRuleResponse mapToResponse(CompanyPricingRule rule) {
+        String routeName = null;
+        if (rule.getRoute() != null) {
+            routeName = rule.getRoute().getDepartureLocation() + " -> " + rule.getRoute().getArrivalLocation();
+        }
+
+        return PricingRuleResponse.builder()
+                .id(rule.getId())
+                .busCompanyId(rule.getBusCompany().getId())
+                .busCompanyName(rule.getBusCompany().getName())
+                .name(rule.getName())
+                .ruleType(rule.getRuleType())
+                .scope(rule.getScope())
+                .routeId(rule.getRoute() != null ? rule.getRoute().getId() : null)
+                .routeName(routeName)
+                .adjustmentType(rule.getAdjustmentType())
+                .adjustmentValue(rule.getAdjustmentValue())
+                .startDate(rule.getStartDate())
+                .endDate(rule.getEndDate())
+                .applicableDays(rule.getApplicableDays())
+                .isLastMinute(rule.getIsLastMinute())
+                .lastMinuteHours(rule.getLastMinuteHours())
+                .minEmptySeatPercentage(rule.getMinEmptySeatPercentage())
+                .priority(rule.getPriority())
+                .status(rule.getStatus())
+                .description(rule.getDescription())
+                .createdAt(rule.getCreatedAt())
+                .updatedAt(rule.getUpdatedAt())
+                .build();
+    }
+
+    private Long resolveTargetCompanyId(Long explicitCompanyId, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Vui lòng đăng nhập để thực hiện");
+        }
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED, "Người dùng không tồn tại"));
+
+        // Chỉ duy nhất ADMIN hệ thống mới được phép thao tác đại diện bằng explicitCompanyId
+        if (user.getRole() == Role.ADMIN) {
+            if (explicitCompanyId != null && explicitCompanyId > 0) {
+                return explicitCompanyId;
+            }
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Admin hệ thống vui lòng chỉ định mã nhà xe cần thao tác");
+        }
+
+        // BẢO MẬT PHÂN QUYỀN NỘI BỘ NHÀ XE (Sub-Account RBAC):
+        // Chỉ Chủ nhà xe (StaffRole.OWNER) mới có quyền cấu hình luật giá vé (cấm Thu ngân & Điều phối viên)
+        if (securityService != null) {
+            securityService.requireStaffRole(authentication, StaffRole.OWNER);
+        }
+
+        // Người dùng nhà xe BẮT BUỘC lấy busCompanyId từ tài khoản của chính mình (chống giả mạo)
+        if (user.getBusCompanyId() != null && user.getBusCompanyId() > 0) {
+            return user.getBusCompanyId();
+        }
+
+        Optional<BusCompany> compByEmail = busCompanyRepository.findByEmail(email);
+        if (compByEmail.isPresent()) {
+            return compByEmail.get().getId();
+        }
+
+        // Đã xóa bỏ hoàn toàn lỗ hổng cướp quyền qua fullName (findAll loop).
+        // Tuyệt đối không fallback explicitCompanyId cho non-admin: Trả về FORBIDDEN ngay lập tức
+        throw new AppException(ErrorCode.FORBIDDEN, "Tài khoản của bạn không được cấp quyền quản trị nhà xe nào");
     }
 }

@@ -493,13 +493,23 @@ public class CompanyManagementController {
     @PostMapping("/settlements/request-payout")
     @Operation(summary = "Nhà xe tạo lệnh rút tiền (tối thiểu 500.000 VNĐ, kiểm tra số dư khả dụng)")
     public ApiResponse<Map<String, Object>> requestPayout(
+            @RequestBody(required = false) Map<String, Object> body,
             @RequestParam(required = false) Long companyId,
-            @RequestParam BigDecimal amount,
+            @RequestParam(required = false) BigDecimal amount,
             @RequestParam(required = false) String note,
             Authentication authentication) {
-        Long targetId = resolveTargetCompanyId(companyId, authentication);
+        Long targetId = resolveTargetCompanyId(
+                companyId != null ? companyId : (body != null && body.get("companyId") != null ? Long.valueOf(body.get("companyId").toString()) : null),
+                authentication);
+        BigDecimal targetAmount = amount != null ? amount :
+                (body != null && body.get("amount") != null ? new BigDecimal(body.get("amount").toString()) : null);
+        if (targetAmount == null) {
+            throw new IllegalArgumentException("Số tiền rút (amount) là bắt buộc");
+        }
+        String targetNote = note != null ? note :
+                (body != null && body.get("note") != null ? body.get("note").toString() : null);
         String userEmail = authentication != null ? authentication.getName() : null;
-        Map<String, Object> payout = companySettlementService.createPayoutRequest(targetId, amount, note, userEmail);
+        Map<String, Object> payout = companySettlementService.createPayoutRequest(targetId, targetAmount, targetNote, userEmail);
         return ApiResponse.success(
                 "Đã tạo lệnh rút tiền " + payout.get("requestCode") + " thành công. Hệ thống sẽ đối soát và giải ngân trong 24h làm việc.",
                 payout);

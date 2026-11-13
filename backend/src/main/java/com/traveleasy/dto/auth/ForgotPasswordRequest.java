@@ -1,15 +1,21 @@
 package com.traveleasy.dto.auth;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
 public class ForgotPasswordRequest {
-    @NotBlank(message = "Email đăng ký không được để trống")
-    @Email(message = "Định dạng email không hợp lệ")
+    /**
+     * Kênh nhận mã OTP: "EMAIL" hoặc "PHONE" (mặc định EMAIL nếu để trống)
+     */
+    private String channel;
+
+    /**
+     * Địa chỉ email của tài khoản khi chọn kênh EMAIL (hoặc đối chiếu)
+     */
     private String email;
 
-    @NotBlank(message = "Số điện thoại đăng ký không được để trống")
+    /**
+     * Số điện thoại của tài khoản khi chọn kênh PHONE (hoặc đối chiếu)
+     */
     private String phone;
 }

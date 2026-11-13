@@ -66,7 +66,7 @@ const SeatMapSkeleton: React.FC<{ isDark?: boolean; totalSeats?: number }> = ({ 
             animation: 'spin 0.8s linear infinite',
           }}
         />
-        <span>⚡ Đang đồng bộ sơ đồ ghế thời gian thực...</span>
+        <span>Đang đồng bộ sơ đồ ghế thời gian thực...</span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -359,7 +359,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
           : action === 'BOOK'
           ? 'Đã mua xong (Xám / BOOKED)'
           : 'Mở lại trống (Trắng / AVAILABLE)';
-      toast.success(`⚡ Đã kích hoạt giả lập: Ghế ${simSeatNumber} -> ${actionText}`, 'Giả Lập Realtime');
+      toast.success(`Đã kích hoạt giả lập: Ghế ${simSeatNumber} -> ${actionText}`, 'Giả Lập Realtime');
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Có lỗi khi gửi lệnh giả lập', 'Lỗi Giả Lập');
     } finally {
@@ -562,8 +562,45 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
           {/* Column 3: Price & Action */}
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '22px', fontWeight: 800, color: isDark ? '#38bdf8' : '#2563eb' }}>
-              {formatCurrency(trip.price)}
+            {trip.pricingBadge && (
+              <div style={{ marginBottom: '4px' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '2px 8px',
+                    borderRadius: '9999px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    backgroundColor: (trip.surchargeAmount && trip.surchargeAmount < 0) || trip.pricingBadge.includes('-')
+                      ? (isDark ? '#064e3b' : '#ecfdf5')
+                      : (isDark ? '#7f1d1d' : '#fff1f2'),
+                    color: (trip.surchargeAmount && trip.surchargeAmount < 0) || trip.pricingBadge.includes('-')
+                      ? (isDark ? '#34d399' : '#047857')
+                      : (isDark ? '#f87171' : '#b91c1c'),
+                    border: `1px solid ${(trip.surchargeAmount && trip.surchargeAmount < 0) || trip.pricingBadge.includes('-') ? (isDark ? '#059669' : '#a7f3d0') : (isDark ? '#dc2626' : '#fecdd3')}`,
+                  }}
+                  title={trip.ruleDescription || trip.pricingBadge}
+                >
+                  {trip.pricingBadge}
+                </span>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '6px' }}>
+              {trip.originalPrice && trip.originalPrice > trip.price && (
+                <span style={{
+                  fontSize: '13px',
+                  color: isDark ? '#64748b' : '#94a3b8',
+                  textDecoration: 'line-through',
+                  fontWeight: 600
+                }}>
+                  {formatCurrency(trip.originalPrice)}
+                </span>
+              )}
+              <span style={{ fontSize: '22px', fontWeight: 800, color: isDark ? '#38bdf8' : '#2563eb' }}>
+                {formatCurrency(trip.price)}
+              </span>
             </div>
 
             <div style={{
@@ -754,7 +791,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '22px' }}>⏱️</span>
+                <Clock className="w-5 h-5 text-blue-600" />
                 <div>
                   <div style={{ fontSize: '14px', fontWeight: 700, color: isDark ? '#60a5fa' : '#1d4ed8' }}>
                     Bạn đang có phiên giữ chỗ cho ghế: <span style={{ textDecoration: 'underline' }}>{activeHold.seats.join(', ')}</span> ({activeHold.seats.length} vé)
@@ -782,7 +819,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                     boxShadow: '0 2px 8px rgba(37,99,235,0.35)',
                   }}
                 >
-                  Tiếp Tục Đặt Vé ➔
+                  Tiếp Tục Đặt Vé {'->'}
                 </button>
                 <button
                   type="button"
@@ -884,7 +921,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                             }}
                           >
                             <Zap size={14} color="#f59e0b" />
-                            🧪 Thử Nghiệm Real-time (Đổi màu Vàng / Xám trực tiếp)
+                            Thử Nghiệm Real-time (Đổi màu Vàng / Xám trực tiếp)
                           </span>
                           <button
                             type="button"
@@ -899,7 +936,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                               textDecoration: 'underline',
                             }}
                           >
-                            {showSimPanel ? '▲ Đóng bảng thử' : '▼ Bật giả lập kiểm thử'}
+                            {showSimPanel ? '[-] Đóng bảng thử' : '[+] Bật giả lập kiểm thử'}
                           </button>
                         </div>
 
@@ -954,7 +991,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                                 cursor: simulating ? 'not-allowed' : 'pointer',
                               }}
                             >
-                              🟡 Đổi Vàng (Đang TT)
+                              [Vàng] Đổi Vàng (Đang TT)
                             </button>
 
                             <button
@@ -973,7 +1010,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                                 cursor: simulating ? 'not-allowed' : 'pointer',
                               }}
                             >
-                              ⚫ Đổi Xám (Đã Bán)
+                              [Bán] Đổi Xám (Đã Bán)
                             </button>
 
                             <button
@@ -992,7 +1029,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                                 cursor: simulating ? 'not-allowed' : 'pointer',
                               }}
                             >
-                              ⚪ Trả Về Trống
+                              [Trống] Trả Về Trống
                             </button>
                           </div>
                         )}
@@ -1109,7 +1146,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                     >
                       <div>
                         <div style={{ fontSize: '13px', color: isDark ? '#93c5fd' : '#1e40af', fontWeight: 700 }}>
-                          ⭐ Bạn đang giữ chỗ các ghế: <strong style={{ color: '#2563eb', fontSize: '15px' }}>{activeHold.seats.join(', ')}</strong> ({activeHold.seats.length} vé)
+                          Bạn đang giữ chỗ các ghế: <strong style={{ color: '#2563eb', fontSize: '15px' }}>{activeHold.seats.join(', ')}</strong> ({activeHold.seats.length} vé)
                         </div>
                         <div style={{ fontSize: '13px', color: isDark ? '#cbd5e1' : '#475569', marginTop: '2px' }}>
                           Thời gian giữ chỗ còn lại: <strong style={{ color: '#dc2626', fontFamily: 'monospace', fontSize: '14px' }}>
@@ -1134,7 +1171,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                             boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.4)',
                           }}
                         >
-                          Tiếp Tục Đặt Vé ➔
+                          Tiếp Tục Đặt Vé {'->'}
                         </button>
                         <button
                           type="button"
@@ -1177,6 +1214,16 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                         </div>
                         <div style={{ fontSize: '20px', fontWeight: 800, color: isDark ? '#f8fafc' : '#0f172a' }}>
                           Tổng tạm tính: {formatCurrency(totalPrice)}
+                          {trip.pricingBadge && (
+                            <span style={{
+                              marginLeft: '8px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              color: (trip.surchargeAmount && trip.surchargeAmount < 0) || trip.pricingBadge.includes('-') ? '#16a34a' : '#ea580c'
+                            }}>
+                              ({trip.pricingBadge})
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -1195,7 +1242,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                           transition: 'all 0.15s ease',
                         }}
                       >
-                        {localStorage.getItem('traveleasy_token') ? 'Tiếp Tục Đặt Vé →' : 'Đăng Nhập Để Đặt Vé →'}
+                        {localStorage.getItem('traveleasy_token') ? 'Tiếp Tục Đặt Vé ->' : 'Đăng Nhập Để Đặt Vé ->'}
                       </button>
                     </div>
                   )}
