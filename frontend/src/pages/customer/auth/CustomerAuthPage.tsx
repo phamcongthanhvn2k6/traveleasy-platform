@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Bus, 
@@ -25,6 +25,8 @@ import {
   loginWithGoogle as firebaseLoginWithGoogle,
   sendPhoneOtp as firebaseSendPhoneOtp,
   verifyPhoneOtp as firebaseVerifyPhoneOtp,
+  resetPhoneVerification,
+  PHONE_OTP_RESEND_COOLDOWN_SECONDS,
   type AuthResponseData,
 } from '../../../services/firebaseAuthService';
 import { ForgotPasswordModal } from '../../../components/auth/ForgotPasswordModal';
@@ -122,8 +124,16 @@ export const CustomerAuthPage: React.FC = () => {
   const [otpStep, setOtpStep] = useState<'idle' | 'awaiting'>('idle'); // 'awaiting' = đã gửi SMS, chờ nhập OTP
   const [otpPhone, setOtpPhone] = useState('');      // input SĐT (E.164: +84xxxxxxxxx)
   const [otpCode, setOtpCode] = useState('');        // input mã OTP 6 số
+  const [otpCooldown, setOtpCooldown] = useState(0);
   // Container id cho RecaptchaVerifier (invisible) của Firebase Phone Auth
   const RECAPTCHA_CONTAINER_ID = 'firebase-recaptcha-container';
+
+  // Countdown dùng deadline tuyệt đối để không drift khi tab bị browser throttle.
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = window.setInterval(() => setOtpCooldown((value) => Math.max(0, value - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [otpCooldown > 0]);
 
   // Lưu JWT do backend cấp + điều hướng theo role - dùng chung cho mọi luồng đăng nhập
   const applyAuthSuccess = (authData: AuthResponseData, welcomeName: string) => {
@@ -178,6 +188,10 @@ export const CustomerAuthPage: React.FC = () => {
       return;
     }
     const phone = otpPhone.trim();
+    if (otpCooldown > 0) {
+      toast.warning(`Vui lòng chờ ${otpCooldown} giây trước khi gửi lại mã OTP.`, 'Giới hạn gửi OTP');
+      return;
+    }
     if (!/^\+?\d{9,15}$/.test(phone.replace(/[\s.-]/g, ''))) {
       const msg = 'Số điện thoại không hợp lệ. Dùng dạng quốc tế, vd: +84912345678';
       toast.warning(msg, 'Số Điện Thoại');
@@ -191,9 +205,12 @@ export const CustomerAuthPage: React.FC = () => {
     try {
       await firebaseSendPhoneOtp(e164, RECAPTCHA_CONTAINER_ID);
       setOtpStep('awaiting');
+      setOtpCooldown(PHONE_OTP_RESEND_COOLDOWN_SECONDS);
       toast.info(`Đã gửi mã OTP tới ${e164}. Kiểm tra tin nhắn SMS của bạn.`, 'Gửi OTP');
     } catch (err: any) {
       console.error('Send OTP error:', err);
+      // Nếu Firebase reject request, cho phép thử lại sau khi reset verifier.
+      resetPhoneVerification();
       const msg = err?.message || 'Không gửi được mã OTP. Vui lòng thử lại.';
       toast.error(msg, 'Gửi OTP Thất Bại');
       setErrorMessage(msg);
@@ -994,7 +1011,7 @@ export const CustomerAuthPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleSendPhoneOtp}
-                      disabled={socialLoading !== null || otpStep === 'awaiting'}
+                      disabled={socialLoading !== null || otpCooldown > 0}
                       style={{
                         backgroundColor: '#059669',
                         color: '#ffffff',
@@ -1008,11 +1025,12 @@ export const CustomerAuthPage: React.FC = () => {
                         opacity: otpStep === 'awaiting' ? 0.6 : 1
                       }}
                     >
-                      {socialLoading === 'otp' && otpStep === 'idle' ? 'Đang gửi...' : 'GỬI MÃ OTP'}
+                      {socialLoading === 'otp' && otpStep === 'idle' ? 'Đang gửi...' : otpCooldown > 0 ? `GỬI LẠI (${otpCooldown}s)` : 'GỬI MÃ OTP'}
                     </button>
                   </div>
 
                   {otpStep === 'awaiting' && (
+                    <>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <input
                         type="text"
@@ -1052,6 +1070,10 @@ export const CustomerAuthPage: React.FC = () => {
                         {socialLoading === 'otp' && otpStep === 'awaiting' ? 'Đang xác minh...' : 'XÁC MINH →'}
                       </button>
                     </div>
+                    <div style={{ fontSize: '11px', color: otpCooldown > 0 ? '#64748b' : '#dc2626' }}>
+                      {otpCooldown > 0 ? `Bạn có thể yêu cầu mã mới sau ${otpCooldown} giây.` : 'Mã cũ có thể đã hết hạn. Bạn có thể gửi lại mã mới.'}
+                    </div>
+                    </>
                   )}
 
                   <div style={{ fontSize: '10.5px', color: '#94a3b8' }}>
