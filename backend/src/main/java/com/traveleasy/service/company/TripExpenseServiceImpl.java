@@ -110,7 +110,7 @@ public class TripExpenseServiceImpl implements TripExpenseService {
             for (Object[] row : revenueRows) {
                 if (row != null && row.length >= 2 && row[0] != null) {
                     Long tId = ((Number) row[0]).longValue();
-                    BigDecimal rev = (BigDecimal) row[1];
+                    BigDecimal rev = (row[1] instanceof BigDecimal) ? (BigDecimal) row[1] : (row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO);
                     revenueMap.put(tId, rev != null ? rev : BigDecimal.ZERO);
                 }
             }

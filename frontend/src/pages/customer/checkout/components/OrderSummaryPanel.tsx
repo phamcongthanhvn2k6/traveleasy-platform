@@ -268,10 +268,33 @@ export const OrderSummaryPanel: React.FC<Props> = ({
 
       {/* Price breakdown */}
       <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
-          <span>Giá vé ({seatCount} x {formatCurrency(trip.price)}):</span>
-          <span>{formatCurrency(baseTicketPrice)}</span>
-        </div>
+        {trip.originalPrice && trip.originalPrice !== trip.price ? (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
+              <span>Giá vé gốc ({seatCount} x {formatCurrency(trip.originalPrice)}):</span>
+              <span>{formatCurrency(seatCount * trip.originalPrice)}</span>
+            </div>
+
+            {trip.surchargeAmount && trip.surchargeAmount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#dc2626', fontWeight: 600 }}>
+                <span>Phụ thu {trip.pricingBadge ? `(${trip.pricingBadge})` : ''} ({seatCount} x +{formatCurrency(trip.surchargeAmount)}):</span>
+                <span>+{formatCurrency(seatCount * trip.surchargeAmount)}</span>
+              </div>
+            )}
+
+            {trip.surchargeAmount && trip.surchargeAmount < 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a', fontWeight: 600 }}>
+                <span>Chiết khấu {trip.pricingBadge ? `(${trip.pricingBadge})` : ''} ({seatCount} x {formatCurrency(trip.surchargeAmount)}):</span>
+                <span>{formatCurrency(seatCount * trip.surchargeAmount)}</span>
+              </div>
+            )}
+          </>
+        ) : (
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
+            <span>Giá vé ({seatCount} x {formatCurrency(trip.price)}):</span>
+            <span>{formatCurrency(baseTicketPrice)}</span>
+          </div>
+        )}
 
         {hasInsurance && (
           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a' }}>
@@ -321,7 +344,7 @@ export const OrderSummaryPanel: React.FC<Props> = ({
           transition: 'all 0.15s ease',
         }}
       >
-        {loading ? 'Đang Xử Lý Giao Dịch...' : 'Thanh Toán Ngay →'}
+        {loading ? 'Đang Xử Lý Giao Dịch...' : 'Thanh Toán Ngay ->'}
       </button>
 
       <div style={{ textAlign: 'center', fontSize: '11px', color: '#94a3b8', marginTop: '10px' }}>
