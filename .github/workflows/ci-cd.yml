@@ -58,7 +58,7 @@ jobs:
     - name: Install dependencies & Build Frontend
       working-directory: ./frontend
       run: |
-        npm install
+        npm install --include=optional
         npm run build
 
     - name: Upload Frontend Dist Artifact
