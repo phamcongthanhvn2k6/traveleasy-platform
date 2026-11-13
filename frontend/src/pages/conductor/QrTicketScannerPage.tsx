@@ -15,7 +15,8 @@ import {
   User,
   MapPin,
   ShieldCheck,
-  Smartphone
+  Smartphone,
+  Radio
 } from 'lucide-react';
 import { toast } from '../../context/ToastContext';
 
@@ -141,6 +142,24 @@ export const QrTicketScannerPage: React.FC = () => {
           Check-in
         </button>
       </form>
+
+      {/* [S306] Liên kết GPS Live Tracking cho Tài xế / Phụ xe */}
+      <div className="mt-3">
+        <a
+          href="/tracking/696"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-between p-3 rounded-xl bg-slate-800/90 border border-emerald-500/40 text-xs text-slate-200 hover:border-emerald-400 transition"
+        >
+          <div className="flex items-center gap-2">
+            <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
+            <span>
+              <strong className="text-emerald-400">Định vị GPS Live Xe:</strong> Bật phát vị trí xe
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-emerald-400">Mở bản đồ ➔</span>
+        </a>
+      </div>
     </div>
   );
 };
