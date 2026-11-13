@@ -223,6 +223,7 @@ public class CompanySettlementService {
         SettlementRecord created = SettlementRecord.builder()
                 .id(id)
                 .code(code)
+                .periodCode(code)
                 .company(company)
                 .periodName(period.periodName())
                 .startDate(period.startDate().format(DATE_FMT))
