@@ -20,6 +20,7 @@ import { useTheme } from '../context/ThemeContext';
 import { toast } from '../context/ToastContext';
 import {
   AppNotification,
+  CUSTOMER_DEFAULT_NOTIFICATIONS,
   OPERATOR_DEFAULT_NOTIFICATIONS,
   ADMIN_DEFAULT_NOTIFICATIONS,
   sendAppNotification,
@@ -54,7 +55,9 @@ export const NotificationDropdown: React.FC = () => {
 
   const defaultNotifs = isOperator
     ? OPERATOR_DEFAULT_NOTIFICATIONS
-    : ADMIN_DEFAULT_NOTIFICATIONS;
+    : isAdmin
+    ? ADMIN_DEFAULT_NOTIFICATIONS
+    : CUSTOMER_DEFAULT_NOTIFICATIONS;
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
     try {
@@ -85,7 +88,8 @@ export const NotificationDropdown: React.FC = () => {
       if (
         newNotif.role !== 'ALL' &&
         ((isOperator && newNotif.role !== 'OPERATOR') ||
-          (isAdmin && newNotif.role !== 'ADMIN'))
+          (isAdmin && newNotif.role !== 'ADMIN') ||
+          (!isOperator && !isAdmin && newNotif.role !== 'CUSTOMER'))
       ) {
         return;
       }
@@ -175,7 +179,8 @@ export const NotificationDropdown: React.FC = () => {
             priority: 'HIGH' as const,
           },
         ]
-      : [
+      : isAdmin
+      ? [
           {
             type: 'SECURITY' as const,
             role: 'ADMIN' as const,
@@ -185,11 +190,45 @@ export const NotificationDropdown: React.FC = () => {
             priority: 'HIGH' as const,
           },
           {
-            type: 'BOOKING' as const,
+            type: 'COMPANY' as const,
             role: 'ADMIN' as const,
-            title: '📊 Đơn vé giá trị cao trên sàn',
-            message: 'Khách hàng đặt vé đoàn 8 chỗ tuyến Sài Gòn - Đà Lạt (Tổng tiền: 2.800.000 đ).',
-            link: '/admin/bookings',
+            title: '🏢 Hồ sơ mở tuyến mới chờ phê duyệt',
+            message: 'Nhà xe Thành Bưởi vừa bổ sung giấy phép kinh doanh vận tải cho tuyến TP.HCM - Cần Thơ.',
+            link: '/admin/bus-companies',
+            priority: 'NORMAL' as const,
+          },
+          {
+            type: 'FINANCE' as const,
+            role: 'ADMIN' as const,
+            title: '💵 Yêu cầu đối soát & rút tiền từ nhà xe',
+            message: 'Phương Trang vừa gửi yêu cầu tất toán doanh thu đợt 2: 45.200.000 đ.',
+            link: '/admin/settlements',
+            priority: 'HIGH' as const,
+          },
+        ]
+      : [
+          {
+            type: 'BOOKING' as const,
+            role: 'CUSTOMER' as const,
+            title: '🎟️ Thanh toán vé thành công - Ghế A02',
+            message: 'Đơn vé BK-20261113-1024 tuyến Sài Gòn - Phan Thiết đã thanh toán thành công. Mã QR lên xe đã sẵn sàng.',
+            link: '/lookup?code=BK-20261113-1024',
+            priority: 'HIGH' as const,
+          },
+          {
+            type: 'TRIP' as const,
+            role: 'CUSTOMER' as const,
+            title: '⏰ Nhắc nhở xe đón: Còn 2 tiếng nữa xe chạy',
+            message: 'Tài xế Nguyễn Văn Long (Xe 51B-294.11) đang đón khách tại Bến xe Miền Đông. Quý khách vui lòng có mặt.',
+            link: '/tracking',
+            priority: 'HIGH' as const,
+          },
+          {
+            type: 'FINANCE' as const,
+            role: 'CUSTOMER' as const,
+            title: '🎁 Mã giảm 50.000đ cuối tuần vừa tặng bạn',
+            message: 'Nhập mã TRAVELEASY50 khi đặt vé bất kỳ trong ngày hôm nay. Hạn sử dụng đến 23:59 chủ nhật.',
+            link: '/promotions',
             priority: 'NORMAL' as const,
           },
         ];

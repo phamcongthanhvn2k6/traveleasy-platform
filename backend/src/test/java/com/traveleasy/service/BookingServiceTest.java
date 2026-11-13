@@ -50,6 +50,9 @@ class BookingServiceTest {
     @Mock
     private SeatRealtimeService seatRealtimeService;
 
+    @Mock
+    private com.traveleasy.service.company.DynamicPricingService dynamicPricingService;
+
     @InjectMocks
     private BookingService bookingService;
 
@@ -180,6 +183,173 @@ class BookingServiceTest {
 
         assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("trùng chuyến xe và ghế"));
+    }
+
+    @Test
+    @DisplayName("TC-S307-10: Đặt vé áp dụng giá động và chống gian lận can thiệp finalAmount từ Client")
+    void testCreateBooking_WithDynamicPricingAndAntiTampering() {
+        TripSeat seat1 = new TripSeat();
+        seat1.setSeatCode("A01");
+        seat1.setStatus(SeatStatus.AVAILABLE);
+
+        TripSeat seat2 = new TripSeat();
+        seat2.setSeatCode("A02");
+        seat2.setStatus(SeatStatus.AVAILABLE);
+
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(sampleTrip));
+        when(tripSeatRepository.findByTripIdAndSeatCodeInWithLock(eq(1L), anyList())).thenReturn(List.of(seat1, seat2));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> {
+            Booking b = invocation.getArgument(0);
+            b.setId(50L);
+            return b;
+        });
+
+        // Dynamic pricing trả về đơn giá 360,000 (tăng 20% từ gốc 300,000)
+        com.traveleasy.dto.company.pricing.DynamicPricingResult pricingResult = com.traveleasy.dto.company.pricing.DynamicPricingResult.builder()
+                .originalPrice(new BigDecimal("300000"))
+                .calculatedPrice(new BigDecimal("360000"))
+                .deltaAmount(new BigDecimal("60000"))
+                .ruleApplied(true)
+                .pricingBadge("+20% Lễ Tết")
+                .build();
+
+        when(dynamicPricingService.calculateDynamicPrice(eq(sampleTrip), any())).thenReturn(pricingResult);
+
+        // Client cố tình gửi finalAmount = 10,000 đ để gian lận tiền vé
+        bookingRequest.setFinalAmount(new BigDecimal("10000"));
+
+        com.traveleasy.dto.booking.BookingResponse response = bookingService.createBooking(bookingRequest, "an.nguyen@example.com");
+
+        assertNotNull(response);
+        // Backend tự động ghi đè giá đúng: 360,000 x 2 = 720,000 đ
+        assertEquals(new BigDecimal("720000"), response.getTotalAmount());
+        assertEquals(new BigDecimal("600000"), response.getOriginalAmount());
+    }
+
+    @Test
+    @DisplayName("AC-REV-03: Kênh đặt vé tại quầy (POS/COUNTER) tự động bỏ qua giá động, giữ nguyên giá gốc")
+    void testCreateBooking_PosChannel_BypassesDynamicPricing() {
+        TripSeat seat1 = new TripSeat();
+        seat1.setSeatCode("A01");
+        seat1.setStatus(SeatStatus.AVAILABLE);
+
+        TripSeat seat2 = new TripSeat();
+        seat2.setSeatCode("A02");
+        seat2.setStatus(SeatStatus.AVAILABLE);
+
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(sampleTrip));
+        when(tripSeatRepository.findByTripIdAndSeatCodeInWithLock(eq(1L), anyList())).thenReturn(List.of(seat1, seat2));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> {
+            Booking b = invocation.getArgument(0);
+            b.setId(51L);
+            return b;
+        });
+
+        // Thiết lập kênh đặt vé là quầy bến xe (POS) bởi nhân viên nhà xe hợp lệ
+        User operatorStaff = User.builder()
+                .id(10L)
+                .email("nhanvienquay@traveleasy.vn")
+                .role(Role.OPERATOR)
+                .build();
+        when(userRepository.findByEmail("nhanvienquay@traveleasy.vn")).thenReturn(Optional.of(operatorStaff));
+
+        bookingRequest.setBookingChannel("POS");
+
+        com.traveleasy.dto.booking.BookingResponse response = bookingService.createBooking(bookingRequest, "nhanvienquay@traveleasy.vn");
+
+        assertNotNull(response);
+        // Tại quầy giữ nguyên giá gốc: 300,000 x 2 = 600,000 đ (KHÔNG phụ thu 360,000 x 2 = 720,000 đ)
+        assertEquals(new BigDecimal("600000"), response.getTotalAmount());
+        assertEquals(new BigDecimal("600000"), response.getOriginalAmount());
+        // Dynamic pricing service KHÔNG được gọi khi là POS channel hợp lệ
+        verify(dynamicPricingService, never()).calculateDynamicPrice(any(), any());
+    }
+
+    @Test
+    @DisplayName("AC-REV-03 / BUG-SEC-02: Khách hàng online giả mạo kênh POS bị tự động ép về ONLINE và tính phụ thu giá động")
+    void testCreateBooking_CustomerSpoofsPosChannel_ForcesOnlineAndAppliesDynamicPricing() {
+        TripSeat seat1 = new TripSeat();
+        seat1.setSeatCode("A01");
+        seat1.setStatus(SeatStatus.AVAILABLE);
+
+        TripSeat seat2 = new TripSeat();
+        seat2.setSeatCode("A02");
+        seat2.setStatus(SeatStatus.AVAILABLE);
+
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(sampleTrip));
+        when(tripSeatRepository.findByTripIdAndSeatCodeInWithLock(eq(1L), anyList())).thenReturn(List.of(seat1, seat2));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> {
+            Booking b = invocation.getArgument(0);
+            b.setId(52L);
+            return b;
+        });
+
+        // Khách hàng thông thường (Role.CUSTOMER) cố tình gửi bookingChannel = "POS"
+        User customerUser = User.builder()
+                .id(20L)
+                .email("hacker@gmail.com")
+                .role(Role.CUSTOMER)
+                .build();
+        when(userRepository.findByEmail("hacker@gmail.com")).thenReturn(Optional.of(customerUser));
+
+        // Phụ thu Lễ Tết: 300,000 + 20% = 360,000 đ
+        com.traveleasy.dto.company.pricing.DynamicPricingResult pricingResult = com.traveleasy.dto.company.pricing.DynamicPricingResult.builder()
+                .originalPrice(new BigDecimal("300000"))
+                .calculatedPrice(new BigDecimal("360000"))
+                .deltaAmount(new BigDecimal("60000"))
+                .ruleApplied(true)
+                .build();
+        when(dynamicPricingService.calculateDynamicPrice(eq(sampleTrip), any())).thenReturn(pricingResult);
+
+        bookingRequest.setBookingChannel("POS");
+        com.traveleasy.dto.booking.BookingResponse response = bookingService.createBooking(bookingRequest, "hacker@gmail.com");
+
+        assertNotNull(response);
+        // Hệ thống phát hiện khách online mạo danh POS, ép về ONLINE và áp dụng giá động: 360,000 x 2 = 720,000 đ
+        assertEquals(new BigDecimal("720000"), response.getTotalAmount());
+        assertEquals("ONLINE", bookingRequest.getBookingChannel());
+        verify(dynamicPricingService, times(1)).calculateDynamicPrice(any(), any());
+    }
+
+    @Test
+    @DisplayName("AC-REV-01: Khóa cứng giá vé (Price Freezing) bất biến sau khi booking đã tạo")
+    void testPriceFreezing_ImmutabilityAfterCreation() {
+        TripSeat seat1 = new TripSeat();
+        seat1.setSeatCode("A01");
+        seat1.setStatus(SeatStatus.AVAILABLE);
+
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(sampleTrip));
+        when(tripSeatRepository.findByTripIdAndSeatCodeInWithLock(eq(1L), anyList())).thenReturn(List.of(seat1));
+
+        Booking savedBooking = Booking.builder()
+                .id(999L)
+                .bookingCode("BK-20261111-TEST")
+                .totalAmount(new BigDecimal("360000"))
+                .originalAmount(new BigDecimal("300000"))
+                .status(BookingStatus.PENDING)
+                .trip(sampleTrip)
+                .build();
+
+        when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
+
+        com.traveleasy.dto.company.pricing.DynamicPricingResult pricingResult = com.traveleasy.dto.company.pricing.DynamicPricingResult.builder()
+                .originalPrice(new BigDecimal("300000"))
+                .calculatedPrice(new BigDecimal("360000"))
+                .deltaAmount(new BigDecimal("60000"))
+                .ruleApplied(true)
+                .build();
+        when(dynamicPricingService.calculateDynamicPrice(eq(sampleTrip), any())).thenReturn(pricingResult);
+
+        bookingRequest.setSeatNumbers(List.of("A01"));
+        com.traveleasy.dto.booking.BookingResponse response = bookingService.createBooking(bookingRequest, "khach@example.com");
+
+        assertNotNull(response);
+        assertEquals(new BigDecimal("360000"), response.getTotalAmount());
+
+        // Kiểm tra sau khi tạo: giá vé đã đóng băng cố định, các thao tác tra cứu hay thanh toán
+        // chỉ đọc totalAmount từ entity, không bao giờ gọi lại recalculate
+        assertEquals(new BigDecimal("360000"), savedBooking.getTotalAmount());
+        assertEquals(new BigDecimal("300000"), savedBooking.getOriginalAmount());
     }
 }
 

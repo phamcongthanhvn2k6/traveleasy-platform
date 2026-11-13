@@ -122,7 +122,7 @@
 | 38 | [[Ưu tiên: 1] [1 SP] [FE][S235] Giao diện Modal nhập mã OTP 6 ô tự động nhảy focus & Bộ đếm 60s](https://trello.com/c/O8ecXGj0/228-%C6%B0u-ti%C3%AAn-1-1-sp-fes235-giao-di%E1%BB%87n-modal-nh%E1%BA%ADp-m%C3%A3-otp-6-%C3%B4-t%E1%BB%B1-%C4%91%E1%BB%99ng-nh%E1%BA%A3y-focus-b%E1%BB%99-%C4%91%E1%BA%BFm-60s) | **1 SP** | `Done Sprint 2` | Nguyễn Đại Phát |
 | 39 | [[Ưu tiên: 1] [1 SP] [BE][S236] Dịch vụ Sinh mã OTP, Quản trị thời gian sống TTL & Xác thực số điện thoại](https://trello.com/c/CnzTxRUc/229-%C6%B0u-ti%C3%AAn-1-1-sp-bes236-d%E1%BB%8Bch-v%E1%BB%A5-sinh-m%C3%A3-otp-qu%E1%BA%A3n-tr%E1%BB%8B-th%E1%BB%9Di-gian-s%E1%BB%91ng-ttl-x%C3%A1c-th%E1%BB%B1c-s%E1%BB%91-%C4%91i%E1%BB%87n-tho%E1%BA%A1i) | **1 SP** | `Done Sprint 2` | Nguyễn Đại Phát |
 
-### 3.3. SPRINT 3 (Tuần 3: POS Bến xe, GPS Tracking, DevOps VPS & Báo cáo) (10 Thẻ — Tổng: 34 Story Points)
+### 3.3. SPRINT 3 (Tuần 3: POS Bến xe, GPS Tracking, DevOps VPS, Báo cáo & Quản trị bảo mật) (11 Thẻ — Tổng: 37 Story Points)
 
 | STT | Tiêu đề thẻ & Mô tả công việc | Điểm SP | Danh sách Trello | Người phụ trách |
 | :---: | :--- | :---: | :---: | :--- |
@@ -136,3 +136,4 @@
 | 8 | [[Ưu tiên: 2] [3 SP] [S307][PRICING] Phân Hệ Quản Trị Giá Vé Động & Phụ Thu Lễ Tết/Cuối Tuần (/company/pricing-rules)](https://trello.com/c/F8QqqRSh/232-%C6%B0u-ti%C3%AAn-2-3-sp-s307pricing-ph%C3%A2n-h%E1%BB%87-qu%E1%BA%A3n-tr%E1%BB%8B-gi%C3%A1-v%C3%A9-%C4%91%E1%BB%99ng-ph%E1%BB%A5-thu-l%E1%BB%85-t%E1%BA%BFt-cu%E1%BB%91i-tu%E1%BA%A7n-company-pricing-rules) | **3 SP** | `To Do` | Trần Minh Đức |
 | 9 | [[Ưu tiên: 1] [3 SP] [S309][PERF] Màn hình Loading chuyển trang & Tối ưu hiệu năng giao diện SWR Cache 0ms, Skeleton Vé của tôi (/my-tickets)](https://trello.com/c/9QBFzTBp/234-%C6%B0u-ti%C3%AAn-1-3-sp-s309perf-m%C3%A0n-h%C3%ACnh-loading-chuy%E1%BB%83n-trang-t%E1%BB%91i-%C6%B0u-hi%E1%BB%87u-n%C4%83ng-giao-di%E1%BB%87n-swr-cache-0ms-skeleton-v%C3%A9-c%E1%BB%A7a-t%C3%B4i-my-tickets) | **3 SP** | `To Do` | Phạm Công Thành |
 | 10 | [[Ưu tiên: 1] [3 SP] [S308][DEMO-DEFENSE] Xây Dựng Trung Tâm Trình Diễn Demo Hub 15 Phút (/demo) & Slide Bảo Vệ OJT](https://trello.com/c/wjJoEEf4/233-%C6%B0u-ti%C3%AAn-1-3-sp-s308demo-defense-x%C3%A2y-d%E1%BB%B1ng-trung-t%C3%A2m-tr%C3%ACnh-di%E1%BB%85n-demo-hub-15-ph%C3%BAt-demo-slide-b%E1%BA%A3o-v%E1%BB%87-ojt) | **3 SP** | `To Do` | Phạm Công Thành |
+| 11 | [[Ưu tiên: 2] [3 SP] [AUTH-FORGOT] Chức Năng Quên Mật Khẩu & Xác Thực OTP Khôi Phục Qua Gmail](#) | **3 SP** | `To Do` | Phạm Công Thành |

@@ -22,7 +22,8 @@ import {
   Sun,
   Moon,
   Menu,
-  X
+  X,
+  Radio
 } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
@@ -72,6 +73,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const navItems = [
     { label: 'Tổng quan', path: '/admin/dashboard', icon: LayoutGrid },
     { label: 'Chuyến xe toàn sàn', path: '/admin/trips', icon: Calendar },
+    { label: 'Giám sát GPS đội xe (Live)', path: '/admin/gps-tracking', icon: Radio },
     { label: 'Tuyến đường toàn quốc', path: '/admin/routes', icon: MapPin },
     { label: 'Đơn đặt vé toàn sàn', path: '/admin/bookings', icon: Ticket },
     { label: 'Đối soát & Hoa hồng sàn', path: '/admin/settlements', icon: DollarSign },

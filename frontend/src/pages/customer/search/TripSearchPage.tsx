@@ -10,7 +10,7 @@ import { Pagination } from '../../../components/Pagination';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { toast } from '../../../context/ToastContext';
 import { useTheme } from '../../../context/ThemeContext';
-import { Bus, AlertCircle, SlidersHorizontal, ChevronDown, ChevronUp, Gift, Check } from 'lucide-react';
+import { Bus, AlertCircle, SlidersHorizontal, ChevronDown, ChevronUp, Gift, Check, Clock } from 'lucide-react';
 import { getLocalNextDayString } from '../../../utils/dateUtils';
 
 // Bộ nhớ đệm Client-side SWR: Giữ kết quả tìm kiếm trong RAM và SessionStorage để hiển thị tức thì (0ms)
@@ -679,7 +679,7 @@ export const TripSearchPage: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '24px' }}>⏱️</span>
+            <Clock className="w-6 h-6 text-blue-600" />
             <div>
               <div style={{ fontSize: '14.5px', fontWeight: 700, color: isDark ? '#60a5fa' : '#1e40af' }}>
                 Bạn đang có phiên giữ chỗ trên chuyến: <strong>{globalHold.trip.busCompanyName}</strong>
@@ -708,7 +708,7 @@ export const TripSearchPage: React.FC = () => {
                 boxShadow: '0 4px 10px rgba(37,99,235,0.3)',
               }}
             >
-              Tiếp Tục Đặt Vé ➔
+              Tiếp Tục Đặt Vé {'->'}
             </button>
             <button
               onClick={handleCancelGlobalHold}

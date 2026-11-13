@@ -16,5 +16,11 @@ public interface SettlementRecordRepository extends JpaRepository<SettlementReco
 
     Optional<SettlementRecord> findByCompanyId(Long companyId);
 
+    Optional<SettlementRecord> findFirstByCompanyIdOrderByCreatedAtDesc(Long companyId);
+
+    List<SettlementRecord> findByCompanyIdOrderByCreatedAtDesc(Long companyId);
+
+    Optional<SettlementRecord> findByCompanyIdAndCode(Long companyId, String code);
+
     Optional<SettlementRecord> findByCode(String code);
 }

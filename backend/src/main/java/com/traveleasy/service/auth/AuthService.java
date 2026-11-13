@@ -140,7 +140,10 @@ public class AuthService {
             user.setFullName(fullName.trim());
         }
         if (phone != null && !phone.trim().isEmpty()) {
-            String trimmedPhone = phone.trim();
+            String trimmedPhone = phone.trim().replaceAll("\\s+", "");
+            if (trimmedPhone.startsWith("+84")) {
+                trimmedPhone = "0" + trimmedPhone.substring(3);
+            }
             if (userRepository.existsByPhoneAndIdNot(trimmedPhone, user.getId())) {
                 throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS, "Số điện thoại này đã được sử dụng bởi tài khoản khác");
             }

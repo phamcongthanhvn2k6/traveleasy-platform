@@ -41,4 +41,5 @@ public class CreateBookingRequest {
     private Boolean hasInsurance;
     private BigDecimal finalAmount;
     private String sessionId;
+    private String bookingChannel;
 }

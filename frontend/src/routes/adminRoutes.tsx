@@ -18,6 +18,7 @@ import { AdminTripsPage } from '../pages/admin/trips/AdminTripsPage';
 import { AdminBookingsPage } from '../pages/admin/bookings/AdminBookingsPage';
 import { AdminRoutesPage } from '../pages/admin/routes/AdminRoutesPage';
 import { AdminSettlementsPage } from '../pages/admin/settlements/AdminSettlementsPage';
+import AdminGpsFleetPage from '../pages/admin/tracking/AdminGpsFleetPage';
 
 /**
  * =========================================================================
@@ -52,6 +53,11 @@ export const AdminRoutes: React.FC = () => {
                 {/* Nhóm Chuyến xe & Đơn đặt vé */}
                 <Route path="trips" element={<AdminTripsPage />} />
                 <Route path="/trips" element={<AdminTripsPage />} />
+                {/* [S306] Giám sát GPS Đội xe toàn quốc */}
+                <Route path="gps-tracking" element={<AdminGpsFleetPage />} />
+                <Route path="/gps-tracking" element={<AdminGpsFleetPage />} />
+                <Route path="tracking" element={<AdminGpsFleetPage />} />
+                <Route path="/tracking" element={<AdminGpsFleetPage />} />
                 <Route path="routes" element={<AdminRoutesPage />} />
                 <Route path="/routes" element={<AdminRoutesPage />} />
                 <Route path="bookings" element={<AdminBookingsPage />} />

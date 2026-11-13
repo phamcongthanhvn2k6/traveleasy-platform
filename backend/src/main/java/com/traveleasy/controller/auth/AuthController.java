@@ -14,6 +14,7 @@ import com.traveleasy.dto.auth.VerifyResetOtpRequest;
 import com.traveleasy.dto.auth.VerifyResetOtpResponse;
 import com.traveleasy.service.auth.AuthService;
 import com.traveleasy.service.auth.FirebaseAuthService;
+import com.traveleasy.service.auth.FirebaseAuthRateLimitService;
 import com.traveleasy.service.auth.PasswordResetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,6 +24,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final FirebaseAuthService firebaseAuthService;
+    private final FirebaseAuthRateLimitService firebaseAuthRateLimitService;
     private final PasswordResetService passwordResetService;
 
     @PostMapping("/register")
@@ -115,13 +119,19 @@ public class AuthController {
 
     @PostMapping("/firebase/google")
     @Operation(summary = "Đăng nhập bằng Google qua Firebase (nhận Firebase ID Token)")
-    public ApiResponse<AuthResponse> firebaseGoogle(@Valid @RequestBody FirebaseAuthRequest request) {
+    public ApiResponse<AuthResponse> firebaseGoogle(
+            @Valid @RequestBody FirebaseAuthRequest request,
+            HttpServletRequest httpRequest) {
+        firebaseAuthRateLimitService.check("google", httpRequest.getRemoteAddr());
         return ApiResponse.success("Đăng nhập Google thành công", firebaseAuthService.loginWithGoogle(request));
     }
 
     @PostMapping("/firebase/phone")
     @Operation(summary = "Đăng nhập bằng Số điện thoại OTP qua Firebase (nhận Firebase ID Token)")
-    public ApiResponse<AuthResponse> firebasePhone(@Valid @RequestBody FirebaseAuthRequest request) {
+    public ApiResponse<AuthResponse> firebasePhone(
+            @Valid @RequestBody FirebaseAuthRequest request,
+            HttpServletRequest httpRequest) {
+        firebaseAuthRateLimitService.check("phone", httpRequest.getRemoteAddr());
         return ApiResponse.success("Đăng nhập OTP thành công", firebaseAuthService.loginWithPhone(request));
     }
 }

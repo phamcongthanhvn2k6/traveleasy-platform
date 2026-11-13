@@ -30,8 +30,10 @@ public class TripService {
     private final TripSeatRepository tripSeatRepository;
     private final PickupDropoffPointRepository pointRepository;
     private final RouteRepository routeRepository;
-    private final com.traveleasy.service.automation.TripAutomationService tripAutomationService;
+    private final org.springframework.beans.factory.ObjectProvider<com.traveleasy.service.automation.TripAutomationService> tripAutomationServiceProvider;
     private final com.traveleasy.service.realtime.SeatRealtimeService seatRealtimeService;
+    private final com.traveleasy.service.company.DynamicPricingService dynamicPricingService;
+    private final com.traveleasy.repository.CompanyPricingRuleRepository companyPricingRuleRepository;
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -56,9 +58,7 @@ public class TripService {
             endTime = departureDate.atTime(LocalTime.MAX);
 
             // On-demand: Tự động đảm bảo sinh chuyến nếu ngày tìm kiếm chưa có chuyến nào
-            if (tripAutomationService != null) {
-                tripAutomationService.ensureTripsForRouteAndDate(origin, destination, departureDate);
-            }
+            tripAutomationServiceProvider.ifAvailable(tas -> tas.ensureTripsForRouteAndDate(origin, destination, departureDate));
         } else {
             // Không truyền ngày: Mặc định hiển thị các chuyến mở bán trong 3 ngày tới nếu chưa lọc tuyến (hoặc 7 ngày nếu đã chọn tuyến) để phản hồi siêu tốc
             startTime = now;
@@ -94,9 +94,37 @@ public class TripService {
         }
         long t2 = System.currentTimeMillis();
 
+        // Tải trước quy tắc định giá vé động của các nhà xe để tránh N+1 Query
+        Set<Long> companyIds = trips.stream()
+                .filter(t -> t.getBusCompany() != null && t.getBusCompany().getId() != null)
+                .map(t -> t.getBusCompany().getId())
+                .collect(Collectors.toSet());
+
+        Map<Long, List<com.traveleasy.entity.CompanyPricingRule>> rulesByCompany = Collections.emptyMap();
+        if (!companyIds.isEmpty() && companyPricingRuleRepository != null) {
+            List<com.traveleasy.entity.CompanyPricingRule> activeRules =
+                    companyPricingRuleRepository.findByBusCompanyIdInAndStatusOrderByPriorityDesc(
+                            companyIds, com.traveleasy.entity.PricingRuleStatus.ACTIVE);
+            rulesByCompany = activeRules.stream()
+                    .collect(Collectors.groupingBy(r -> r.getBusCompany().getId()));
+        }
+        Map<Long, List<com.traveleasy.entity.CompanyPricingRule>> finalRulesMap = rulesByCompany;
+
         List<TripResponse> responses = trips.stream()
                 .map(t -> {
                     Long rId = t.getRoute() != null ? t.getRoute().getId() : null;
+                    Long compId = t.getBusCompany() != null ? t.getBusCompany().getId() : null;
+                    List<com.traveleasy.entity.CompanyPricingRule> compRules = finalRulesMap.getOrDefault(compId, Collections.emptyList());
+
+                    com.traveleasy.dto.company.pricing.DynamicPricingResult pricing = (dynamicPricingService != null)
+                            ? dynamicPricingService.calculateDynamicPriceWithRules(t, now, compRules)
+                            : com.traveleasy.dto.company.pricing.DynamicPricingResult.builder()
+                                    .originalPrice(t.getPrice())
+                                    .calculatedPrice(t.getPrice())
+                                    .deltaAmount(BigDecimal.ZERO)
+                                    .ruleApplied(false)
+                                    .build();
+
                     return TripResponse.builder()
                             .id(t.getId())
                             .busCompanyId(t.getBusCompany().getId())
@@ -111,7 +139,11 @@ public class TripService {
                             .departureTime(t.getDepartureTime())
                             .arrivalTime(t.getArrivalTime())
                             .busType(t.getBusType())
-                            .price(t.getPrice())
+                            .price(pricing.getCalculatedPrice())
+                            .originalPrice(pricing.getOriginalPrice())
+                            .pricingBadge(pricing.getPricingBadge())
+                            .surchargeAmount(pricing.getDeltaAmount())
+                            .ruleDescription(pricing.getRuleDescription())
                             .totalSeats(t.getTotalSeats())
                             .availableSeats(t.getAvailableSeats())
                             .status(t.getStatus())
@@ -341,6 +373,15 @@ public class TripService {
                 .map(this::mapToPointResponse)
                 .collect(Collectors.toList()) : Collections.emptyList();
 
+        com.traveleasy.dto.company.pricing.DynamicPricingResult pricing = (dynamicPricingService != null)
+                ? dynamicPricingService.calculateDynamicPrice(trip, LocalDateTime.now())
+                : com.traveleasy.dto.company.pricing.DynamicPricingResult.builder()
+                        .originalPrice(trip.getPrice())
+                        .calculatedPrice(trip.getPrice())
+                        .deltaAmount(BigDecimal.ZERO)
+                        .ruleApplied(false)
+                        .build();
+
         return TripResponse.builder()
                 .id(trip.getId())
                 .busCompanyId(trip.getBusCompany().getId())
@@ -355,7 +396,11 @@ public class TripService {
                 .departureTime(trip.getDepartureTime())
                 .arrivalTime(trip.getArrivalTime())
                 .busType(trip.getBusType())
-                .price(trip.getPrice())
+                .price(pricing.getCalculatedPrice())
+                .originalPrice(pricing.getOriginalPrice())
+                .pricingBadge(pricing.getPricingBadge())
+                .surchargeAmount(pricing.getDeltaAmount())
+                .ruleDescription(pricing.getRuleDescription())
                 .totalSeats(trip.getTotalSeats())
                 .availableSeats(trip.getAvailableSeats())
                 .status(trip.getStatus())

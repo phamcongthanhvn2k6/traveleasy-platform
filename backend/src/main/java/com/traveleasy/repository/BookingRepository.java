@@ -58,4 +58,18 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b.trip.busCompany.id, COUNT(b), COALESCE(SUM(COALESCE(b.originalAmount, b.totalAmount)), 0), COALESCE(SUM(b.totalAmount), 0), COALESCE(SUM(b.discountAmount), 0) FROM Booking b WHERE b.status = com.traveleasy.entity.BookingStatus.CONFIRMED GROUP BY b.trip.busCompany.id")
     List<Object[]> getBookingStatsGroupedByCompany();
+
+    @Query("SELECT COALESCE(SUM(b.totalAmount), 0) FROM Booking b WHERE b.trip.id = :tripId AND b.status IN (com.traveleasy.entity.BookingStatus.CONFIRMED, com.traveleasy.entity.BookingStatus.COMPLETED)")
+    BigDecimal sumRevenueByTripId(@Param("tripId") Long tripId);
+
+    @Query("SELECT b.trip.id, COALESCE(SUM(b.totalAmount), 0) FROM Booking b WHERE b.trip.busCompany.id = :busCompanyId AND b.status IN (com.traveleasy.entity.BookingStatus.CONFIRMED, com.traveleasy.entity.BookingStatus.COMPLETED) GROUP BY b.trip.id")
+    List<Object[]> sumRevenueGroupedByTripId(@Param("busCompanyId") Long busCompanyId);
+
+    @Query("SELECT COUNT(b), COALESCE(SUM(COALESCE(b.originalAmount, b.totalAmount)), 0), COALESCE(SUM(b.totalAmount), 0), COALESCE(SUM(b.discountAmount), 0) " +
+           "FROM Booking b WHERE b.trip.busCompany.id = :busCompanyId AND b.status = com.traveleasy.entity.BookingStatus.CONFIRMED " +
+           "AND b.createdAt >= :start AND b.createdAt < :end")
+    List<Object[]> getCompanyStatsInPeriod(
+            @Param("busCompanyId") Long busCompanyId,
+            @Param("start") java.time.LocalDateTime start,
+            @Param("end") java.time.LocalDateTime end);
 }

@@ -17,6 +17,7 @@ import {
   Bus,
   Search,
   Mail,
+  Navigation,
 } from 'lucide-react';
 import { PartialCancelModal } from './components/PartialCancelModal';
 import { RescheduleModal } from './components/RescheduleModal';
@@ -456,6 +457,29 @@ export const MyTicketsPage: React.FC = () => {
                       flexWrap: 'wrap',
                     }}
                   >
+                    {booking.trip?.id && (
+                      <button
+                        onClick={() => navigate(`/tracking/${booking.trip.id}`)}
+                        title="Xem vị trí xe đang chạy thời gian thực trên bản đồ GPS"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          backgroundColor: '#ecfdf5',
+                          color: '#059669',
+                          border: '1px solid #a7f3d0',
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          fontWeight: 700,
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <Navigation size={15} /> Định Vị GPS Xe (Live)
+                      </button>
+                    )}
+
                     <button
                       onClick={() => navigate(`/tickets/${booking.bookingCode}`)}
                       style={{
