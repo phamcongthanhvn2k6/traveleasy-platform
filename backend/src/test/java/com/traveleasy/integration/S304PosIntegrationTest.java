@@ -115,6 +115,8 @@ public class S304PosIntegrationTest {
         pointRepository.deleteAllInBatch();
         routeRepository.deleteAllInBatch();
         vehicleRepository.deleteAllInBatch();
+        userRepository.findByEmail("cashier.pos@futa.vn").ifPresent(userRepository::delete);
+        userRepository.findByEmail("dispatcher.pos@futa.vn").ifPresent(userRepository::delete);
         if (futaCompany != null && futaCompany.getId() != null) {
             busCompanyRepository.deleteById(futaCompany.getId());
             futaCompany = null;
@@ -123,8 +125,6 @@ public class S304PosIntegrationTest {
             busCompanyRepository.deleteById(otherCompany.getId());
             otherCompany = null;
         }
-        userRepository.findByEmail("cashier.pos@futa.vn").ifPresent(userRepository::delete);
-        userRepository.findByEmail("dispatcher.pos@futa.vn").ifPresent(userRepository::delete);
     }
 
     private void initFixtures() {
