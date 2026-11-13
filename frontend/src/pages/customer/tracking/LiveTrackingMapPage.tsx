@@ -29,7 +29,8 @@ import {
   ArrowRight,
   Ticket,
   QrCode,
-  UserCheck
+  UserCheck,
+  Share2
 } from 'lucide-react';
 
 export interface UserTripBooking {
@@ -678,34 +679,28 @@ export default function LiveTrackingMapPage() {
 
             <div className="p-3 bg-slate-850 border-t border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
-                <button
-                  onClick={handleSimulateStep}
-                  disabled={simulating}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1.5 shadow transition-all disabled:opacity-50"
-                >
-                  <RotateCw className={`w-3.5 h-3.5 ${simulating ? 'animate-spin' : ''}`} />
-                  Di chuyển tiếp 1 bước (Mô phỏng Test)
-                </button>
-                <span className="text-slate-400">
-                  Tọa độ: [{tripData?.latitude ? tripData.latitude.toFixed(4) : '0.0000'}, {tripData?.longitude ? tripData.longitude.toFixed(4) : '0.0000'}] • Hướng quay: {Math.round(tripData?.heading || 0)}°
+                <span className="text-xs text-slate-300 flex items-center gap-1.5 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Vị trí xe: [{tripData?.latitude ? tripData.latitude.toFixed(4) : '10.8231'}, {tripData?.longitude ? tripData.longitude.toFixed(4) : '106.6297'}] • Hướng di chuyển: {Math.round(tripData?.heading || 0)}°
                 </span>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setDriverMode(!driverMode)}
-                  className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all ${
-                    driverMode ? 'bg-amber-500 text-slate-950' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert('Đã sao chép đường dẫn theo dõi GPS! Bạn có thể gửi cho người thân để cùng theo dõi xe.');
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow"
                 >
-                  <Smartphone className="w-3.5 h-3.5" />
-                  {driverMode ? 'Đang mở Bảng điều khiển Tài xế' : 'Chuyển sang Chế độ Tài xế'}
+                  <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+                  Chia sẻ hành trình cho người thân
                 </button>
               </div>
             </div>
           </div>
 
-          {/* CỘT BÊN PHẢI: THÔNG TIN TÀI XẾ & TỔ LÁI + CHẾ ĐỘ PHÁT GPS */}
+          {/* CỘT BÊN PHẢI: THÔNG TIN TỔ LÁI, HƯỚNG DẪN ĐÓN XE & HỖ TRỢ KHÁCH HÀNG */}
           <div className="space-y-4">
             {/* Thẻ Tài xế & Kiểm định an toàn */}
             <div className="bg-slate-800/90 rounded-2xl p-4 border border-slate-700 shadow-lg space-y-3">
@@ -727,92 +722,74 @@ export default function LiveTrackingMapPage() {
 
               <div className="pt-2 border-t border-slate-700/80 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Số điện thoại:</span>
+                  <span className="text-slate-400">Số điện thoại tài xế:</span>
                   <a
                     href={`tel:${tripData?.driverPhone || '0912345678'}`}
-                    className="font-bold text-emerald-400 hover:underline flex items-center gap-1"
+                    className="font-bold text-emerald-400 hover:underline flex items-center gap-1.5 bg-emerald-950/40 px-2 py-1 rounded-md border border-emerald-500/30"
                   >
-                    <Phone className="w-3 h-3" /> {tripData?.driverPhone || '0912 345 678'}
+                    <Phone className="w-3.5 h-3.5" /> {tripData?.driverPhone || '0912 345 678'}
                   </a>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Đơn vị vận hành:</span>
-                  <span className="font-semibold text-slate-200">{tripData?.busCompanyName || 'Nhà xe Phương Trang'}</span>
+                  <span className="font-semibold text-slate-200">{tripData?.busCompanyName || 'TravelEasy Partner'}</span>
                 </div>
 
                 <div className="mt-2 bg-emerald-950/60 border border-emerald-500/40 p-2.5 rounded-xl flex items-center gap-2.5">
                   <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
                   <div>
-                    <p className="font-bold text-emerald-300 text-xs">Kiểm tra cồn & sức khỏe: ĐẠT</p>
-                    <p className="text-[10px] text-emerald-400/80">0.00 mg/L khí thở lúc xuất bến</p>
+                    <p className="font-bold text-emerald-300 text-xs">Kiểm tra nồng độ cồn: ĐẠT CHUẨN</p>
+                    <p className="text-[10px] text-emerald-400/80">0.00 mg/L khí thở trước khi xuất bến</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* BẢNG ĐIỀU KHIỂN TÀI XẾ */}
-            <div className={`rounded-2xl p-4 border transition-all ${
-              driverMode ? 'bg-amber-950/40 border-amber-500/50 shadow-xl' : 'bg-slate-800/80 border-slate-700'
-            }`}>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                  <Smartphone className="w-4 h-4 text-amber-400" /> Bảng Điều Khiển Tài Xế
-                </h3>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-bold">
-                  Driver App
-                </span>
+            {/* HƯỚNG DẪN ĐÓN XE & LƯU Ý DÀNH CHO HÀNH KHÁCH */}
+            <div className="bg-slate-800/80 rounded-2xl p-4 border border-slate-700 shadow-lg space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-amber-400" /> Hướng Dẫn Đón Xe Tại Trạm
+              </h3>
+
+              <div className="text-xs text-slate-300 space-y-2 leading-relaxed">
+                <div className="flex items-start gap-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-700/60">
+                  <Clock className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-slate-200">Thời gian có mặt:</strong>
+                    <p className="text-slate-400 text-[11px] mt-0.5">Quý khách vui lòng có mặt tại điểm đón trước <strong>15 - 30 phút</strong> so với giờ xe dự kiến đến.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-700/60">
+                  <Ticket className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-slate-200">Chuẩn bị vé lên xe:</strong>
+                    <p className="text-slate-400 text-[11px] mt-0.5">Mở sẵn mã vé điện tử QR trên điện thoại hoặc tin nhắn SMS để phụ xe quét khi lên xe.</p>
+                  </div>
+                </div>
               </div>
 
-              <p className="text-xs text-slate-300 mb-3 leading-relaxed">
-                Khi bắt đầu chuyến xe, tài xế bật nút bên dưới để điện thoại tự động truyền tọa độ GPS lên hệ thống cho khách hàng và công ty theo dõi.
-              </p>
-
-              {gpsError && (
-                <div className="p-2.5 mb-3 rounded-lg bg-rose-950/60 border border-rose-500/50 text-[11px] text-rose-300 leading-normal">
-                  ⚠️ {gpsError}
-                </div>
-              )}
-
-              <button
-                onClick={toggleDriverGpsShare}
-                className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all ${
-                  isSharingGps
-                    ? 'bg-rose-600 hover:bg-rose-500 text-white animate-pulse'
-                    : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                }`}
-              >
-                <Radio className="w-4 h-4" />
-                {isSharingGps ? '🔴 Đang phát GPS (Nhấn để Dừng)' : '🟢 Bật Định Vị GPS Chia Sẻ Vị Trí Xe'}
-              </button>
-
-              <div className="mt-3 pt-3 border-t border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
-                <span>Cập nhật vị trí:</span>
-                <span className="font-semibold text-slate-200">
-                  {isSharingGps ? 'Liên tục (1s / xung nhịp)' : 'Chế độ mô phỏng nền'}
-                </span>
+              {/* Nút Gọi Tổng Đài Trợ Giúp */}
+              <div className="pt-2 border-t border-slate-700/60 flex items-center justify-between text-xs">
+                <span className="text-slate-400">Tổng đài hỗ trợ 24/7:</span>
+                <a
+                  href="tel:19006868"
+                  className="font-bold text-amber-400 hover:underline flex items-center gap-1"
+                >
+                  <Phone className="w-3 h-3" /> 1900 6868
+                </a>
               </div>
             </div>
 
-            {/* Liên kết tiện ích tra cứu */}
-            <div className="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/70 text-xs space-y-2">
-              <p className="font-bold text-slate-300">Cổng Quản Lý & Điều Hành:</p>
-              <div className="space-y-1.5">
-                <a
-                  href="/company/trips"
-                  className="flex items-center justify-between p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-200 transition-colors"
-                >
-                  <span>🏢 Giám sát chuyến xe đối tác (/company/trips)</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </a>
-                <a
-                  href="/conductor/scanner"
-                  className="flex items-center justify-between p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-200 transition-colors"
-                >
-                  <span>📱 Quét vé tài xế / phụ xe (/conductor/scanner)</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </a>
+            {/* CAM KẾT CHẤT LƯỢNG TRAVEL EASY */}
+            <div className="bg-gradient-to-br from-indigo-950/40 to-slate-900 p-3.5 rounded-xl border border-indigo-500/30 text-xs space-y-1">
+              <div className="font-bold text-indigo-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Cam Kết Hành Trình An Toàn
               </div>
+              <p className="text-[11px] text-slate-400 leading-normal">
+                Xe lắp thiết bị định vị GPS đạt chuẩn QCVN 31:2014/BGTVT. Vận tốc và lộ trình được hệ thống TravelEasy giám sát tự động 24/7.
+              </p>
             </div>
           </div>
         </div>

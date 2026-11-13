@@ -26,6 +26,7 @@ import ShuttleManagementPage from '../pages/company/shuttles/ShuttleManagementPa
 import TripExpensesPage from '../pages/company/expenses/TripExpensesPage';
 import TripCrewPage from '../pages/company/crew/TripCrewPage';
 import CancellationRefundPage from '../pages/company/refunds/CancellationRefundPage';
+import DriverGpsTrackingPage from '../pages/company/tracking/DriverGpsTrackingPage';
 
 /**
  * =========================================================================
@@ -82,6 +83,10 @@ export const CompanyRoutes: React.FC = () => {
                 {/* ======================================================== */}
                 {/* SPRINT 3 MODULES (NHIỆM VỤ THÀNH VIÊN SPRINT 3)         */}
                 {/* ======================================================== */}
+                {/* [S306] Bảng điều khiển định vị GPS tài xế & phụ xe */}
+                <Route path="tracking" element={<DriverGpsTrackingPage />} />
+                <Route path="/tracking" element={<DriverGpsTrackingPage />} />
+
                 {/* [S304] Quầy bán vé nhanh POS - Phạm Thanh Phong */}
                 <Route path="pos" element={<PosTerminalPage />} />
                 <Route path="/pos" element={<PosTerminalPage />} />
