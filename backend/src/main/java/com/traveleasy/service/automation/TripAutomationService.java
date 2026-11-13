@@ -135,7 +135,9 @@ public class TripAutomationService {
     @Scheduled(fixedDelay = 60000)
     public void cleanupExpiredBookingsJob() {
         try {
-            bookingService.cleanupExpiredPendingBookings(10);
+            // Thiết lập ngưỡng 12 phút (Grace Period Buffer 2 phút) so với đồng hồ 10 phút của Frontend,
+            // đảm bảo nếu khách chuyển tiền ở giây 599 thì Webhook từ Ngân hàng vẫn kịp đến trước khi ghế bị giải phóng.
+            bookingService.cleanupExpiredPendingBookings(12);
         } catch (Exception e) {
             log.warn("Lỗi khi tự động giải phóng ghế quá hạn: {}", e.getMessage());
         }
