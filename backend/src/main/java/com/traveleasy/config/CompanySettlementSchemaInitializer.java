@@ -48,7 +48,7 @@ public class CompanySettlementSchemaInitializer implements CommandLineRunner {
                 "ALTER TABLE settlement_records ADD COLUMN IF NOT EXISTS code VARCHAR(50)"
             );
             jdbcTemplate.execute(
-                "UPDATE settlement_records SET code = id WHERE code IS NULL"
+                "UPDATE settlement_records SET code = CAST(id AS VARCHAR) WHERE code IS NULL"
             );
             jdbcTemplate.execute(
                 "ALTER TABLE settlement_records ADD COLUMN IF NOT EXISTS previous_balance NUMERIC(15, 2) NOT NULL DEFAULT 0"
