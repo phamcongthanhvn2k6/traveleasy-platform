@@ -1,4 +1,6 @@
 spring:
+  main:
+    allow-circular-references: true
   datasource:
     # Supabase Transaction Pooler (Port 6543, prepareThreshold=0 for PgBouncer compatibility):
     url: ${SUPABASE_DB_URL:jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0&tcpKeepAlive=true&connectTimeout=10&socketTimeout=30&loginTimeout=10}

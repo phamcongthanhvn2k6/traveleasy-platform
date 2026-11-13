@@ -17,9 +17,11 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class CacheWarmupRunner {
 
+    @org.springframework.context.annotation.Lazy
     private final TripService tripService;
     private final com.traveleasy.service.admin.AdminTripService adminTripService;
     private final com.traveleasy.service.admin.AdminManagementService adminManagementService;
+    @org.springframework.context.annotation.Lazy
     private final com.traveleasy.service.customer.BookingService bookingService;
     private final com.traveleasy.service.company.VehicleService vehicleService;
     private final com.traveleasy.controller.customer.PublicContentController publicContentController;
