@@ -30,6 +30,7 @@ public class TripService {
     private final TripSeatRepository tripSeatRepository;
     private final PickupDropoffPointRepository pointRepository;
     private final RouteRepository routeRepository;
+    @org.springframework.context.annotation.Lazy
     private final com.traveleasy.service.automation.TripAutomationService tripAutomationService;
     private final com.traveleasy.service.realtime.SeatRealtimeService seatRealtimeService;
     private final com.traveleasy.service.company.DynamicPricingService dynamicPricingService;

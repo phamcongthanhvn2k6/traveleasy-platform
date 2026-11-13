@@ -25,6 +25,7 @@ public class TripAutomationService {
 
     private final TripRepository tripRepository;
     private final TripSeatRepository tripSeatRepository;
+    @org.springframework.context.annotation.Lazy
     private final com.traveleasy.service.customer.BookingService bookingService;
     private final RouteRepository routeRepository;
     private final BusCompanyRepository busCompanyRepository;
