@@ -25,13 +25,15 @@ interface ForgotPasswordModalProps {
   isOpen: boolean;
   initialIdentifier?: string;
   onClose: () => void;
-  onResetSuccess: (email: string) => void;
+  onResetSuccess: (identifier: string) => void;
 }
 
-type RecoveryStep = 'email' | 'otp' | 'reset';
+type RecoveryStep = 'identity' | 'otp' | 'reset';
+type RecoveryChannel = 'EMAIL' | 'PHONE';
 
 interface ConfirmedAccountInfo {
-  maskedEmail: string;
+  destination: string;
+  maskedDestination: string;
   maskedFullName: string;
   roleLabel: string;
 }
@@ -59,7 +61,8 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   onClose,
   onResetSuccess,
 }) => {
-  const [step, setStep] = useState<RecoveryStep>('email');
+  const [step, setStep] = useState<RecoveryStep>('identity');
+  const [channel, setChannel] = useState<RecoveryChannel>('EMAIL');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [confirmedAccount, setConfirmedAccount] = useState<ConfirmedAccountInfo | null>(null);
@@ -111,7 +114,8 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     const isEmail = raw.includes('@');
     const isPhone = !isEmail && /^\+?\d[\d\s.-]{7,16}$/.test(raw);
 
-    setStep('email');
+    setStep('identity');
+    setChannel(isPhone ? 'PHONE' : 'EMAIL');
     setEmail(isEmail ? raw : '');
     setPhone(isPhone ? raw : '');
     setConfirmedAccount(null);
@@ -128,7 +132,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     setErrorMsg(null);
   }, [isOpen, initialIdentifier]);
 
-  // Đếm ngược hiệu lực OTP và cooldown gửi lại
+  // Đếm ngược hiệu lực OTP (5 phút) và cooldown gửi lại (60s)
   useEffect(() => {
     if (!isOpen || step !== 'otp') return;
     if (otpExpiresIn <= 0 && resendCooldown <= 0) return;
@@ -160,18 +164,20 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     const cleanPhone = phone.trim();
     const phoneDigits = normalizePhoneDigits(cleanPhone);
 
-    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      const msg = 'Vui lòng nhập đúng định dạng địa chỉ email đã đăng ký.';
-      setErrorMsg(msg);
-      toast.warning(msg, 'Email Không Hợp Lệ');
-      return;
-    }
-
-    if (!cleanPhone || phoneDigits.length < 9 || phoneDigits.length > 15) {
-      const msg = 'Vui lòng nhập đúng số điện thoại đã đăng ký để đối chiếu chính xác tài khoản.';
-      setErrorMsg(msg);
-      toast.warning(msg, 'Số Điện Thoại Không Hợp Lệ');
-      return;
+    if (channel === 'EMAIL') {
+      if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+        const msg = 'Vui lòng nhập đúng định dạng địa chỉ email đã đăng ký.';
+        setErrorMsg(msg);
+        toast.warning(msg, 'Email Không Hợp Lệ');
+        return;
+      }
+    } else {
+      if (!cleanPhone || phoneDigits.length < 9 || phoneDigits.length > 15) {
+        const msg = 'Vui lòng nhập đúng số điện thoại đã đăng ký (9-15 chữ số).';
+        setErrorMsg(msg);
+        toast.warning(msg, 'Số Điện Thoại Không Hợp Lệ');
+        return;
+      }
     }
 
     setErrorMsg(null);
@@ -183,22 +189,26 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
     try {
       const res = await api.post('/auth/forgot-password', {
-        email: cleanEmail,
-        phone: cleanPhone,
+        channel,
+        email: channel === 'EMAIL' ? cleanEmail : undefined,
+        phone: channel === 'PHONE' ? cleanPhone : undefined,
       });
+
       const data = res.data?.data;
+      const targetDest = data?.maskedDestination || (channel === 'EMAIL' ? cleanEmail : cleanPhone);
       setConfirmedAccount({
-        maskedEmail: data?.maskedEmail || cleanEmail,
+        destination: data?.destination || (channel === 'EMAIL' ? cleanEmail : cleanPhone),
+        maskedDestination: targetDest,
         maskedFullName: data?.maskedFullName || 'Thành viên TravelEasy',
         roleLabel: data?.roleLabel || 'Thành viên',
       });
-      setOtpExpiresIn(data?.expiresInSeconds ?? 300);
-      setResendCooldown(data?.resendCooldownSeconds ?? 60);
+      setOtpExpiresIn(data?.expiresInSeconds ?? 300); // 5 phút (300 giây)
+      setResendCooldown(data?.resendCooldownSeconds ?? 60); // 60s cooldown
       setOtpDigits(Array(OTP_LENGTH).fill(''));
       setStep('otp');
 
       toast.success(
-        res.data?.message || `Đã gửi mã OTP tới ${data?.maskedEmail || cleanEmail}.`,
+        res.data?.message || `Mã OTP đã được gửi tới ${targetDest}. Mã có hiệu lực trong 5 phút.`,
         'Đã Gửi Mã OTP'
       );
 
@@ -208,9 +218,11 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     } catch (err: any) {
       const msg =
         err.response?.data?.message ||
-        'Không thể gửi mã OTP. Vui lòng kiểm tra lại đúng cặp Email và Số điện thoại đã đăng ký.';
+        (channel === 'EMAIL'
+          ? 'Địa chỉ email này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại hoặc tạo tài khoản mới.'
+          : 'Số điện thoại này chưa được đăng ký trong hệ thống. Vui lòng kiểm tra lại.');
       setErrorMsg(msg);
-      toast.error(msg, 'Xác Minh Tài Khoản Thất Bại');
+      toast.error(msg, 'Xác Thực Thất Bại');
     } finally {
       setSubmitting(false);
       setResending(false);
@@ -283,9 +295,16 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otpValue.length !== OTP_LENGTH) {
-      const msg = 'Vui lòng nhập đầy đủ mã OTP gồm 6 chữ số.';
+      const msg = 'Vui lòng nhập đầy đủ mã OTP gồm đúng 6 chữ số.';
       setErrorMsg(msg);
       toast.warning(msg, 'Thiếu Mã OTP');
+      return;
+    }
+
+    if (otpExpiresIn <= 0) {
+      const msg = 'Mã OTP đã hết hiệu lực sau 5 phút. Vui lòng bấm "Gửi lại mã OTP" để nhận mã mới.';
+      setErrorMsg(msg);
+      toast.warning(msg, 'OTP Hết Hạn');
       return;
     }
 
@@ -293,16 +312,20 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     setSubmitting(true);
     try {
       const res = await api.post('/auth/verify-reset-otp', {
-        email: email.trim(),
+        channel,
+        identifier: channel === 'EMAIL' ? email.trim() : phone.trim(),
+        email: channel === 'EMAIL' ? email.trim() : undefined,
+        phone: channel === 'PHONE' ? phone.trim() : undefined,
         otp: otpValue,
       });
+
       const token = res.data?.data?.resetToken;
       if (!token) {
         throw new Error('Không nhận được phiên xác thực đặt lại mật khẩu.');
       }
       setResetToken(token);
       setStep('reset');
-      toast.success('Xác minh mã OTP thành công. Hãy thiết lập mật khẩu mới.', 'Xác Minh Thành Công');
+      toast.success('Xác minh mã OTP thành công! Mời bạn thiết lập mật khẩu mới.', 'Xác Minh Thành Công');
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Mã OTP không hợp lệ hoặc đã hết hạn.';
       setErrorMsg(msg);
@@ -330,16 +353,20 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     setErrorMsg(null);
     setSubmitting(true);
     try {
+      const targetIdentifier = channel === 'EMAIL' ? email.trim() : phone.trim();
       const res = await api.post('/auth/reset-password', {
-        email: email.trim(),
+        identifier: targetIdentifier,
+        email: channel === 'EMAIL' ? email.trim() : undefined,
+        phone: channel === 'PHONE' ? phone.trim() : undefined,
         resetToken,
         newPassword,
       });
+
       toast.success(
         res.data?.message || 'Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.',
         'Khôi Phục Thành Công'
       );
-      onResetSuccess(email.trim());
+      onResetSuccess(targetIdentifier);
       onClose();
     } catch (err: any) {
       const msg =
@@ -351,7 +378,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     }
   };
 
-  const stepIndex = step === 'email' ? 1 : step === 'otp' ? 2 : 3;
+  const stepIndex = step === 'identity' ? 1 : step === 'otp' ? 2 : 3;
 
   return (
     <div
@@ -362,7 +389,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
         backdropFilter: 'blur(4px)',
         display: 'flex',
         alignItems: 'center',
@@ -372,38 +399,36 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     >
       <div
         style={{
-          width: '100%',
-          maxWidth: '470px',
           backgroundColor: '#ffffff',
-          borderRadius: '20px',
-          boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.35)',
+          borderRadius: '16px',
+          maxWidth: '480px',
+          width: '100%',
           overflow: 'hidden',
-          border: '1px solid #e2e8f0',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          animation: 'fadeIn 0.2s ease-out',
         }}
       >
         {/* Header */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-            color: '#ffffff',
-            padding: '20px 24px',
+            padding: '18px 24px',
+            backgroundColor: '#0f172a',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div
               style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                backgroundColor: 'rgba(16, 185, 129, 0.18)',
-                border: '1px solid rgba(52, 211, 153, 0.4)',
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                color: '#10b981',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#34d399',
               }}
             >
               <KeyRound size={20} />
@@ -416,7 +441,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                 Khôi phục mật khẩu
               </h3>
               <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#94a3b8' }}>
-                Đối chiếu chính chủ & xác minh mã OTP Email
+                Xác thực tài khoản chính chủ qua mã OTP bảo mật
               </p>
             </div>
           </div>
@@ -454,7 +479,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
           }}
         >
           {[
-            { num: 1, label: 'Đối chiếu tài khoản' },
+            { num: 1, label: 'Kênh nhận OTP' },
             { num: 2, label: 'Xác minh OTP' },
             { num: 3, label: 'Mật khẩu mới' },
           ].map((item) => {
@@ -544,106 +569,152 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
             </div>
           )}
 
-          {/* STEP 1: ĐỐI CHIẾU EMAIL + SĐT ĐĂNG KÝ */}
-          {step === 'email' && (
+          {/* STEP 1: CHỌN KÊNH & NHẬP THÔNG TIN TÀI KHOẢN */}
+          {step === 'identity' && (
             <form onSubmit={(e) => handleRequestOtp(e, false)}>
-              <div
-                style={{
-                  backgroundColor: '#eff6ff',
-                  border: '1px solid #bfdbfe',
-                  borderRadius: '10px',
-                  padding: '11px 13px',
-                  marginBottom: '18px',
-                  fontSize: '12.5px',
-                  color: '#1e40af',
-                  lineHeight: 1.5,
-                }}
-              >
-                Hệ thống sẽ đối chiếu đúng cặp <strong>Email</strong> và <strong>Số điện thoại</strong> đã
-                đăng ký trong tài khoản TravelEasy trước khi gửi OTP, tránh gửi nhầm sang tài khoản khác.
-              </div>
-
+              {/* CHỌN KÊNH NHẬN MÃ OTP */}
               <div style={{ marginBottom: '14px' }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    color: '#334155',
-                    marginBottom: '6px',
-                  }}
-                >
-                  ĐỊA CHỈ EMAIL ĐÃ ĐĂNG KÝ *
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
+                  CHỌN PHƯƠNG THỨC NHẬN MÃ OTP *
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <Mail
-                    size={16}
-                    color="#64748b"
-                    style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)' }}
-                  />
-                  <input
-                    type="email"
-                    required
-                    autoFocus={!email}
-                    placeholder="vd: customer@gmail.com"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (errorMsg) setErrorMsg(null);
-                    }}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => { setChannel('EMAIL'); setErrorMsg(null); }}
                     style={{
-                      width: '100%',
-                      padding: '11px 14px 11px 40px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '11px',
                       borderRadius: '10px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '14.5px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
+                      border: channel === 'EMAIL' ? '2px solid #059669' : '1px solid #cbd5e1',
+                      backgroundColor: channel === 'EMAIL' ? '#ecfdf5' : '#ffffff',
+                      color: channel === 'EMAIL' ? '#065f46' : '#64748b',
+                      fontWeight: channel === 'EMAIL' ? 800 : 600,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
                     }}
-                  />
+                  >
+                    <Mail size={16} color={channel === 'EMAIL' ? '#059669' : '#64748b'} />
+                    <span>Qua Email</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setChannel('PHONE'); setErrorMsg(null); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '11px',
+                      borderRadius: '10px',
+                      border: channel === 'PHONE' ? '2px solid #059669' : '1px solid #cbd5e1',
+                      backgroundColor: channel === 'PHONE' ? '#ecfdf5' : '#ffffff',
+                      color: channel === 'PHONE' ? '#065f46' : '#64748b',
+                      fontWeight: channel === 'PHONE' ? 800 : 600,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <PhoneCall size={16} color={channel === 'PHONE' ? '#059669' : '#64748b'} />
+                    <span>Qua Số điện thoại</span>
+                  </button>
                 </div>
               </div>
 
-              <div style={{ marginBottom: '20px' }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    color: '#334155',
-                    marginBottom: '6px',
-                  }}
-                >
-                  SỐ ĐIỆN THOẠI ĐÃ ĐĂNG KÝ *
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <PhoneCall
-                    size={16}
-                    color="#64748b"
-                    style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)' }}
-                  />
-                  <input
-                    type="tel"
-                    required
-                    autoFocus={Boolean(email)}
-                    placeholder="vd: 0912345678"
-                    value={phone}
-                    onChange={(e) => {
-                      setPhone(e.target.value);
-                      if (errorMsg) setErrorMsg(null);
-                    }}
+              {channel === 'EMAIL' ? (
+                <div style={{ marginBottom: '16px' }}>
+                  <label
                     style={{
-                      width: '100%',
-                      padding: '11px 14px 11px 40px',
-                      borderRadius: '10px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '14.5px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
+                      display: 'block',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: '#334155',
+                      marginBottom: '6px',
                     }}
-                  />
+                  >
+                    ĐỊA CHỈ EMAIL ĐÃ ĐĂNG KÝ *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Mail
+                      size={16}
+                      color="#64748b"
+                      style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)' }}
+                    />
+                    <input
+                      type="email"
+                      required
+                      autoFocus
+                      placeholder="Nhập email tài khoản TravelEasy..."
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (errorMsg) setErrorMsg(null);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px 11px 40px',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '14.5px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                  <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '6px' }}>
+                    Mã xác minh gồm 6 số sẽ được gửi tới hòm thư này và có hiệu lực trong 5 phút.
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{ marginBottom: '16px' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: '#334155',
+                      marginBottom: '6px',
+                    }}
+                  >
+                    SỐ ĐIỆN THOẠI ĐÃ ĐĂNG KÝ *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <PhoneCall
+                      size={16}
+                      color="#64748b"
+                      style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)' }}
+                    />
+                    <input
+                      type="tel"
+                      required
+                      autoFocus
+                      placeholder="Ví dụ: 0988123456"
+                      value={phone}
+                      onChange={(e) => {
+                        setPhone(e.target.value);
+                        if (errorMsg) setErrorMsg(null);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px 11px 40px',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '14.5px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                  <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '6px' }}>
+                    Mã xác minh sẽ được gửi qua SMS/thông báo tới số điện thoại này.
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"
@@ -665,7 +736,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   opacity: submitting ? 0.75 : 1,
                 }}
               >
-                {submitting ? 'Đang đối chiếu & gửi OTP...' : 'ĐỐI CHIẾU & GỬI MÃ OTP'}
+                {submitting ? 'Đang kiểm tra tài khoản & gửi OTP...' : 'GỬI MÃ XÁC NHẬN OTP'}
                 {!submitting && <ArrowRight size={16} />}
               </button>
 
@@ -706,7 +777,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
             </form>
           )}
 
-          {/* STEP 2: XÁC MINH MÃ OTP */}
+          {/* STEP 2: XÁC MINH MÃ OTP (HIỆU LỰC 5 PHÚT) */}
           {step === 'otp' && (
             <form onSubmit={handleVerifyOtp}>
               <div
@@ -721,84 +792,114 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   lineHeight: 1.55,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, marginBottom: '4px' }}>
-                  <UserCheck size={15} />
-                  <span>
-                    Tài khoản: {confirmedAccount?.maskedFullName} ({confirmedAccount?.roleLabel})
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <CheckCircle size={16} color="#059669" />
+                    <strong>Tài khoản đã xác nhận:</strong> {confirmedAccount?.maskedFullName}
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      backgroundColor: '#d1fae5',
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {confirmedAccount?.roleLabel}
                   </span>
                 </div>
-                Mã xác nhận 6 chữ số đã được gửi tới email đăng ký{' '}
-                <strong>{confirmedAccount?.maskedEmail || email}</strong>. Vui lòng kiểm tra cả hộp thư đến và
-                thư mục Spam/Quảng cáo.
+                <div style={{ fontSize: '12px', color: '#047857' }}>
+                  Đã phát mã xác nhận gồm 6 số tới: <strong>{confirmedAccount?.maskedDestination}</strong>
+                </div>
               </div>
 
+              {/* ĐỒNG HỒ ĐẾM NGƯỢC 5 PHÚT */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  marginBottom: '10px',
-                  fontSize: '12.5px',
+                  padding: '10px 14px',
+                  backgroundColor: otpExpiresIn > 0 ? '#f0fdf4' : '#fef2f2',
+                  border: `1px solid ${otpExpiresIn > 0 ? '#bbf7d0' : '#fecaca'}`,
+                  borderRadius: '10px',
+                  marginBottom: '16px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: otpExpiresIn > 0 ? '#166534' : '#dc2626',
                 }}
               >
-                <span style={{ fontWeight: 700, color: '#334155' }}>NHẬP MÃ OTP (6 SỐ)</span>
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    fontWeight: 700,
-                    color: otpExpiresIn > 0 ? '#059669' : '#dc2626',
-                  }}
-                >
-                  <Clock size={14} />
-                  {otpExpiresIn > 0 ? `Hết hạn sau ${formatCountdown(otpExpiresIn)}` : 'Mã OTP đã hết hạn'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Clock size={16} />
+                  <span>
+                    {otpExpiresIn > 0
+                      ? `Mã OTP hết hạn sau: ${formatCountdown(otpExpiresIn)} (5 phút)`
+                      : 'Mã OTP đã hết hạn sau 5 phút!'}
+                  </span>
+                </div>
+                {otpExpiresIn <= 0 && (
+                  <span style={{ fontSize: '11.5px', color: '#b91c1c' }}>Vui lòng bấm gửi lại mã mới</span>
+                )}
               </div>
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(6, 1fr)',
-                  gap: '8px',
-                  marginBottom: '18px',
-                }}
-              >
-                {otpDigits.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    ref={(el) => {
-                      otpInputRefs.current[idx] = el;
-                    }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    aria-label={`Chữ số OTP thứ ${idx + 1}`}
-                    value={digit}
-                    onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    onPaste={handleOtpPaste}
-                    style={{
-                      height: '50px',
-                      width: '100%',
-                      textAlign: 'center',
-                      fontSize: '22px',
-                      fontWeight: 800,
-                      fontFamily: 'monospace',
-                      borderRadius: '10px',
-                      border: digit ? '2px solid #059669' : '1.5px solid #cbd5e1',
-                      backgroundColor: digit ? '#f0fdf4' : '#ffffff',
-                      color: '#0f172a',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                ))}
+              <div style={{ marginBottom: '18px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: '#334155',
+                    marginBottom: '10px',
+                    textAlign: 'center',
+                  }}
+                >
+                  NHẬP MÃ OTP GỒM 6 CHỮ SỐ
+                </label>
+
+                {/* 6 ô nhập mã OTP */}
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '8px',
+                  }}
+                  onPaste={handleOtpPaste}
+                >
+                  {otpDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={(el) => {
+                        otpInputRefs.current[idx] = el;
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      style={{
+                        width: '46px',
+                        height: '52px',
+                        textAlign: 'center',
+                        fontSize: '22px',
+                        fontWeight: 800,
+                        borderRadius: '10px',
+                        border: digit ? '2px solid #059669' : '1px solid #cbd5e1',
+                        backgroundColor: digit ? '#f0fdf4' : '#ffffff',
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
 
               <button
                 type="submit"
-                disabled={submitting || otpValue.length < OTP_LENGTH}
+                disabled={submitting || otpValue.length !== OTP_LENGTH || otpExpiresIn <= 0}
                 style={{
                   width: '100%',
                   backgroundColor: '#059669',
@@ -808,16 +909,20 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   padding: '13px',
                   fontSize: '14.5px',
                   fontWeight: 800,
-                  cursor: submitting || otpValue.length < OTP_LENGTH ? 'not-allowed' : 'pointer',
+                  cursor:
+                    submitting || otpValue.length !== OTP_LENGTH || otpExpiresIn <= 0
+                      ? 'not-allowed'
+                      : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  opacity: submitting || otpValue.length < OTP_LENGTH ? 0.65 : 1,
+                  opacity:
+                    submitting || otpValue.length !== OTP_LENGTH || otpExpiresIn <= 0 ? 0.6 : 1,
                 }}
               >
-                <ShieldCheck size={17} />
-                {submitting ? 'Đang xác minh mã OTP...' : 'XÁC MINH MÃ OTP'}
+                {submitting ? 'Đang xác minh OTP...' : 'XÁC MINH MÃ OTP'}
+                {!submitting && <ShieldCheck size={18} />}
               </button>
 
               <div
@@ -826,76 +931,79 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: '10px',
                   fontSize: '12.5px',
                 }}
               >
                 <button
                   type="button"
                   onClick={() => {
-                    setStep('email');
+                    setStep('identity');
                     setErrorMsg(null);
                   }}
                   style={{
                     background: 'none',
                     border: 'none',
-                    padding: 0,
                     color: '#64748b',
-                    fontWeight: 700,
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '4px',
+                    fontWeight: 600,
+                    padding: 0,
                   }}
                 >
-                  <ArrowLeft size={14} /> Đổi thông tin tài khoản
+                  <ArrowLeft size={14} /> Thay đổi {channel === 'EMAIL' ? 'email' : 'số điện thoại'}
                 </button>
 
                 <button
                   type="button"
-                  disabled={resending || resendCooldown > 0}
-                  onClick={() => handleRequestOtp(undefined, true)}
+                  disabled={resendCooldown > 0 || resending}
+                  onClick={(e) => handleRequestOtp(e, true)}
                   style={{
                     background: 'none',
                     border: 'none',
-                    padding: 0,
-                    color: resendCooldown > 0 ? '#94a3b8' : '#059669',
-                    fontWeight: 700,
-                    cursor: resending || resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                    color: resendCooldown > 0 || resending ? '#94a3b8' : '#059669',
+                    cursor: resendCooldown > 0 || resending ? 'not-allowed' : 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '5px',
+                    fontWeight: 700,
+                    padding: 0,
                   }}
                 >
-                  <RefreshCw size={13} />
+                  <RefreshCw
+                    size={14}
+                    style={{
+                      animation: resending ? 'spin 1s linear infinite' : 'none',
+                    }}
+                  />
                   {resending
                     ? 'Đang gửi lại...'
                     : resendCooldown > 0
-                    ? `Gửi lại mã sau ${resendCooldown}s`
+                    ? `Gửi lại sau ${resendCooldown}s`
                     : 'Gửi lại mã OTP'}
                 </button>
               </div>
             </form>
           )}
 
-          {/* STEP 3: TẠO MẬT KHẨU MỚI */}
+          {/* STEP 3: THIẾT LẬP MẬT KHẨU MỚI */}
           {step === 'reset' && (
             <form onSubmit={handleResetPassword}>
               <div
                 style={{
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  padding: '10px 12px',
+                  backgroundColor: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: '12px',
+                  padding: '11px 14px',
                   marginBottom: '16px',
-                  fontSize: '13px',
-                  color: '#334155',
-                  lineHeight: 1.5,
+                  fontSize: '12.5px',
+                  color: '#1e40af',
+                  lineHeight: 1.45,
                 }}
               >
-                Đang đặt lại mật khẩu cho tài khoản:{' '}
-                <strong>{confirmedAccount?.maskedFullName}</strong> ({confirmedAccount?.roleLabel}) —{' '}
-                <strong>{email.trim()}</strong>
+                Xác thực thành công cho tài khoản{' '}
+                <strong>{confirmedAccount?.maskedDestination}</strong>. Vui lòng tạo mật khẩu mới.
               </div>
 
               <div style={{ marginBottom: '14px' }}>
@@ -928,7 +1036,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                     }}
                     style={{
                       width: '100%',
-                      padding: '11px 42px 11px 40px',
+                      padding: '11px 40px 11px 40px',
                       borderRadius: '10px',
                       border: '1px solid #cbd5e1',
                       fontSize: '14.5px',
@@ -944,52 +1052,19 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                       right: '12px',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      border: 'none',
                       background: 'none',
+                      border: 'none',
                       color: '#64748b',
                       cursor: 'pointer',
+                      padding: '4px',
                     }}
                   >
-                    {showNewPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
 
-              <div
-                style={{
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  padding: '10px 12px',
-                  marginBottom: '14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '5px',
-                }}
-              >
-                {passwordChecks.map((chk) => (
-                  <div
-                    key={chk.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '7px',
-                      fontSize: '12px',
-                      color: chk.met ? '#059669' : '#64748b',
-                      fontWeight: chk.met ? 700 : 500,
-                    }}
-                  >
-                    {chk.met ? (
-                      <CheckCircle size={13} color="#059669" />
-                    ) : (
-                      <AlertCircle size={13} color="#94a3b8" />
-                    )}
-                    <span>{chk.label}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ marginBottom: '20px' }}>
+              <div style={{ marginBottom: '14px' }}>
                 <label
                   style={{
                     display: 'block',
@@ -1010,7 +1085,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
                     required
-                    placeholder="Nhập lại mật khẩu mới..."
+                    placeholder="Nhập lại chính xác mật khẩu mới..."
                     value={confirmPassword}
                     onChange={(e) => {
                       setConfirmPassword(e.target.value);
@@ -1018,7 +1093,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                     }}
                     style={{
                       width: '100%',
-                      padding: '11px 42px 11px 40px',
+                      padding: '11px 40px 11px 40px',
                       borderRadius: '10px',
                       border: '1px solid #cbd5e1',
                       fontSize: '14.5px',
@@ -1034,20 +1109,52 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                       right: '12px',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      border: 'none',
                       background: 'none',
+                      border: 'none',
                       color: '#64748b',
                       cursor: 'pointer',
+                      padding: '4px',
                     }}
                   >
-                    {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
 
+              {/* Gợi ý độ mạnh mật khẩu */}
+              <div
+                style={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  marginBottom: '18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}
+              >
+                {passwordChecks.map((check) => (
+                  <div
+                    key={check.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '11.5px',
+                      color: check.met ? '#059669' : '#64748b',
+                      fontWeight: check.met ? 700 : 500,
+                    }}
+                  >
+                    <span>{check.met ? '✓' : '•'}</span>
+                    <span>{check.label}</span>
+                  </div>
+                ))}
+              </div>
+
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || newPassword.length < 6 || newPassword !== confirmPassword}
                 style={{
                   width: '100%',
                   backgroundColor: '#059669',
@@ -1057,16 +1164,20 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   padding: '13px',
                   fontSize: '14.5px',
                   fontWeight: 800,
-                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  cursor:
+                    submitting || newPassword.length < 6 || newPassword !== confirmPassword
+                      ? 'not-allowed'
+                      : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  opacity: submitting ? 0.75 : 1,
+                  opacity:
+                    submitting || newPassword.length < 6 || newPassword !== confirmPassword ? 0.6 : 1,
                 }}
               >
-                <ShieldCheck size={17} />
-                {submitting ? 'Đang cập nhật mật khẩu...' : 'CẬP NHẬT MẬT KHẨU MỚI'}
+                {submitting ? 'Đang cập nhật mật khẩu...' : 'LƯU MẬT KHẨU MỚI & HOÀN TẤT'}
+                {!submitting && <CheckCircle size={18} />}
               </button>
             </form>
           )}
