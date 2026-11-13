@@ -71,11 +71,23 @@ export const getStoredCompany = (): CompanyInfo => {
       if (email.includes('chinnghia') || name === 'chín nghĩa') {
         return KNOWN_COMPANIES[9];
       }
+
+      // Nếu tài khoản là đối tác mới đăng ký (không khớp danh sách mẫu cố định)
+      if (u.fullName || u.email) {
+        return {
+          id: u.busCompanyId || 0,
+          name: u.busCompanyName || u.fullName || 'Nhà xe đối tác mới',
+          shortName: u.busCompanyName || u.fullName || 'Nhà xe mới',
+          code: 'NX_' + (u.busCompanyId || 'NEW'),
+          email: u.email || '',
+          hotline: u.phone || '1900 8888',
+        };
+      }
     }
   } catch (e) {
     console.error('Error resolving stored company:', e);
   }
-  // Mặc định là Sao Việt nếu không tìm thấy
+  // Mặc định là Sao Việt nếu hoàn toàn không có thông tin đăng nhập
   return KNOWN_COMPANIES[2];
 };
 

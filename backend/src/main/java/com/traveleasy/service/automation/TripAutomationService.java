@@ -25,7 +25,7 @@ public class TripAutomationService {
 
     private final TripRepository tripRepository;
     private final TripSeatRepository tripSeatRepository;
-    private final com.traveleasy.service.customer.BookingService bookingService;
+    private final org.springframework.beans.factory.ObjectProvider<com.traveleasy.service.customer.BookingService> bookingServiceProvider;
     private final RouteRepository routeRepository;
     private final BusCompanyRepository busCompanyRepository;
     private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
@@ -135,7 +135,9 @@ public class TripAutomationService {
     @Scheduled(fixedDelay = 60000)
     public void cleanupExpiredBookingsJob() {
         try {
-            bookingService.cleanupExpiredPendingBookings(10);
+            // Thiết lập ngưỡng 12 phút (Grace Period Buffer 2 phút) so với đồng hồ 10 phút của Frontend,
+            // đảm bảo nếu khách chuyển tiền ở giây 599 thì Webhook từ Ngân hàng vẫn kịp đến trước khi ghế bị giải phóng.
+            bookingServiceProvider.ifAvailable(bs -> bs.cleanupExpiredPendingBookings(12));
         } catch (Exception e) {
             log.warn("Lỗi khi tự động giải phóng ghế quá hạn: {}", e.getMessage());
         }
@@ -286,8 +288,9 @@ public class TripAutomationService {
         }
 
         Route route = routeOpt.get();
-        BusCompany company = busCompanyRepository.findByName(tmpl.companyName)
-                .orElseGet(() -> busCompanyRepository.findAll().stream().findFirst().orElse(null));
+        // Chỉ gán chuyến khi tìm thấy chính xác nhà xe sở hữu template;
+        // TUYỆT ĐỐI không fallback sang findAll().findFirst() để tránh tự sinh chuyến gán nhầm cho nhà xe mới đăng ký
+        BusCompany company = busCompanyRepository.findByName(tmpl.companyName).orElse(null);
 
         if (company == null) {
             return 0;

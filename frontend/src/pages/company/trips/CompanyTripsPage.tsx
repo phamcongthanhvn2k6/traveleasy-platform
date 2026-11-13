@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Eye, Clock, AlertTriangle, CheckCircle, Play, Ban, X, RefreshCw, Bus, DollarSign, Users, FileText, Zap, Sparkles, Calendar } from 'lucide-react';
+import { Plus, Eye, Clock, AlertTriangle, CheckCircle, Play, Ban, X, RefreshCw, Bus, DollarSign, Users, FileText, Zap, Sparkles, Calendar, Radio } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { PassengerManifestModal } from '../../../components/PassengerManifestModal';
@@ -573,6 +573,31 @@ export const CompanyTripsPage: React.FC = () => {
                         <Users size={14} />
                         <span>Khách Đi Xe</span>
                       </button>
+
+                      <a
+                        href={`/tracking/${item.id || 696}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="[S306] Theo dõi định vị GPS Live Tracking xe chạy thời gian thực"
+                        style={{
+                          background: '#ecfdf5',
+                          border: '1px solid #a7f3d0',
+                          cursor: 'pointer',
+                          padding: '6px 9px',
+                          color: '#059669',
+                          borderRadius: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                          marginRight: '6px',
+                        }}
+                      >
+                        <Radio size={14} className="text-emerald-600" />
+                        <span>GPS Live</span>
+                      </a>
 
                       <button
                         title="Xem chi tiết & Cập nhật chuyến"

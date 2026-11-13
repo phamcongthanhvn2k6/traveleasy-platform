@@ -1130,7 +1130,7 @@ public class AdminManagementService {
                     if (settlementId.startsWith("s-")) {
                         try {
                             Long cId = Long.parseLong(settlementId.substring(2));
-                            return settlementRecordRepository.findByCompanyId(cId);
+                            return settlementRecordRepository.findFirstByCompanyIdOrderByCreatedAtDesc(cId);
                         } catch (Exception ignored) {}
                     }
                     return java.util.Optional.empty();

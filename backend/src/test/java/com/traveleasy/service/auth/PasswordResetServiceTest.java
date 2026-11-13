@@ -132,6 +132,80 @@ class PasswordResetServiceTest {
     }
 
     @Test
+    @DisplayName("Tài khoản Google chưa có SĐT: cho phép gửi OTP về email Google, xác minh và tự động liên kết SĐT mới")
+    void googleUserWithoutPhone_CanResetPasswordAndBindPhoneSuccessfully() {
+        User googleUser = User.builder()
+                .id(99L)
+                .email("googleuser@gmail.com")
+                .phone(null)
+                .fullName("Google User")
+                .password("$2a$10$unusableUuidHash")
+                .role(Role.CUSTOMER)
+                .status("ACTIVE")
+                .build();
+
+        when(userRepository.findAllByEmailIgnoreCase("googleuser@gmail.com")).thenReturn(List.of(googleUser));
+        when(userRepository.existsByPhoneAndIdNot("0944354398", 99L)).thenReturn(false);
+        when(userRepository.findById(99L)).thenReturn(Optional.of(googleUser));
+        when(passwordEncoder.encode("NewSecret@123")).thenReturn("$2a$10$newSecretHash");
+
+        ForgotPasswordRequest forgotReq = new ForgotPasswordRequest();
+        forgotReq.setEmail("googleuser@gmail.com");
+        forgotReq.setPhone("0944354398");
+
+        ForgotPasswordResponse forgotRes = passwordResetService.requestPasswordReset(forgotReq);
+        assertEquals("go***@gmail.com", forgotRes.getMaskedEmail());
+
+        ArgumentCaptor<String> otpCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emailNotificationService).sendPasswordResetOtpEmail(
+                eq("googleuser@gmail.com"),
+                eq("Google User"),
+                otpCaptor.capture(),
+                eq(5)
+        );
+
+        VerifyResetOtpRequest verifyReq = new VerifyResetOtpRequest();
+        verifyReq.setEmail("googleuser@gmail.com");
+        verifyReq.setOtp(otpCaptor.getValue());
+        VerifyResetOtpResponse verifyRes = passwordResetService.verifyResetOtp(verifyReq);
+        assertNotNull(verifyRes.getResetToken());
+
+        ResetPasswordRequest resetReq = new ResetPasswordRequest();
+        resetReq.setEmail("googleuser@gmail.com");
+        resetReq.setResetToken(verifyRes.getResetToken());
+        resetReq.setNewPassword("NewSecret@123");
+        passwordResetService.resetPassword(resetReq);
+
+        assertEquals("$2a$10$newSecretHash", googleUser.getPassword());
+        assertEquals("0944354398", googleUser.getPhone());
+        verify(userRepository).save(googleUser);
+    }
+
+    @Test
+    @DisplayName("Tài khoản Google chưa có SĐT: chặn nếu SĐT nhập vào đã thuộc về tài khoản khác")
+    void googleUserWithoutPhone_RejectsIfPhoneAlreadyTaken() {
+        User googleUser = User.builder()
+                .id(99L)
+                .email("googleuser@gmail.com")
+                .phone(null)
+                .fullName("Google User")
+                .role(Role.CUSTOMER)
+                .status("ACTIVE")
+                .build();
+
+        when(userRepository.findAllByEmailIgnoreCase("googleuser@gmail.com")).thenReturn(List.of(googleUser));
+        when(userRepository.existsByPhoneAndIdNot("0944354398", 99L)).thenReturn(true);
+
+        ForgotPasswordRequest forgotReq = new ForgotPasswordRequest();
+        forgotReq.setEmail("googleuser@gmail.com");
+        forgotReq.setPhone("0944354398");
+
+        AppException ex = assertThrows(AppException.class, () -> passwordResetService.requestPasswordReset(forgotReq));
+        assertEquals(ErrorCode.PHONE_ALREADY_EXISTS, ex.getErrorCode());
+        verify(emailNotificationService, never()).sendPasswordResetOtpEmail(anyString(), anyString(), anyString(), anyInt());
+    }
+
+    @Test
     @DisplayName("Chặn ngay ở Bước 1 nếu nhập nhầm Email của tài khoản khác không khớp SĐT")
     void requestPasswordReset_RejectsMismatchedEmailAndPhone() {
         when(userRepository.findAllByEmailIgnoreCase("other@gmail.com")).thenReturn(List.of(otherUser));
@@ -286,6 +360,82 @@ class PasswordResetServiceTest {
         AppException ex = assertThrows(AppException.class, () -> passwordResetService.resetPassword(hijackReq));
         assertEquals(ErrorCode.UNAUTHORIZED, ex.getErrorCode());
         verify(userRepository, never()).save(otherUser);
+    }
+
+    @Test
+    @DisplayName("Kênh Số điện thoại: đối chiếu đúng SĐT trong DB -> gửi OTP SMS -> xác minh thành công")
+    void requestPasswordReset_PhoneChannel_Success() {
+        when(userRepository.findByPhone("0912345678")).thenReturn(Optional.of(activeUser));
+        when(userRepository.findById(10L)).thenReturn(Optional.of(activeUser));
+        when(passwordEncoder.encode("PhonePass@123")).thenReturn("$2a$10$phonePassHash");
+
+        ForgotPasswordRequest forgotReq = new ForgotPasswordRequest();
+        forgotReq.setChannel("PHONE");
+        forgotReq.setPhone("0912345678");
+
+        ForgotPasswordResponse forgotRes = passwordResetService.requestPasswordReset(forgotReq);
+        assertEquals("PHONE", forgotRes.getChannel());
+        assertEquals("0912***678", forgotRes.getMaskedDestination());
+        assertEquals(300, forgotRes.getExpiresInSeconds());
+
+        ArgumentCaptor<String> otpCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emailNotificationService).sendPasswordResetOtpEmail(
+                eq("customer@gmail.com"),
+                eq("Nguyễn Văn A"),
+                otpCaptor.capture(),
+                eq(5)
+        );
+
+        VerifyResetOtpRequest verifyReq = new VerifyResetOtpRequest();
+        verifyReq.setChannel("PHONE");
+        verifyReq.setPhone("0912345678");
+        verifyReq.setOtp(otpCaptor.getValue());
+
+        VerifyResetOtpResponse verifyRes = passwordResetService.verifyResetOtp(verifyReq);
+        assertNotNull(verifyRes.getResetToken());
+
+        ResetPasswordRequest resetReq = new ResetPasswordRequest();
+        resetReq.setResetToken(verifyRes.getResetToken());
+        resetReq.setNewPassword("PhonePass@123");
+        passwordResetService.resetPassword(resetReq);
+
+        assertEquals("$2a$10$phonePassHash", activeUser.getPassword());
+        verify(userRepository).save(activeUser);
+    }
+
+    @Test
+    @DisplayName("Kênh Số điện thoại: báo lỗi nếu SĐT chưa được đăng ký trong database")
+    void requestPasswordReset_PhoneChannel_NotFound() {
+        when(userRepository.findByPhone("0999999999")).thenReturn(Optional.empty());
+
+        ForgotPasswordRequest forgotReq = new ForgotPasswordRequest();
+        forgotReq.setChannel("PHONE");
+        forgotReq.setPhone("0999999999");
+
+        AppException ex = assertThrows(AppException.class, () -> passwordResetService.requestPasswordReset(forgotReq));
+        assertEquals(ErrorCode.RESOURCE_NOT_FOUND, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("Số điện thoại này chưa được đăng ký"));
+    }
+
+    @Test
+    @DisplayName("Giới hạn số request: Chặn sau 5 lần yêu cầu OTP trong vòng 15 phút để chống nghẽn dữ liệu")
+    void requestPasswordReset_RateLimiting_BlocksAfterMaxRequests() {
+        when(userRepository.findAllByEmailIgnoreCase("customer@gmail.com")).thenReturn(List.of(activeUser));
+
+        ForgotPasswordRequest req = new ForgotPasswordRequest();
+        req.setChannel("EMAIL");
+        req.setEmail("customer@gmail.com");
+
+        // Gửi 5 lần hợp lệ (mỗi lần qua 61s cooldown)
+        for (int i = 1; i <= 5; i++) {
+            assertDoesNotThrow(() -> passwordResetService.requestPasswordReset(req));
+            clock.advanceSeconds(61);
+        }
+
+        // Lần thứ 6 trong vòng 15 phút: Bị chặn bởi Rate Limiter
+        AppException rateLimitEx = assertThrows(AppException.class, () -> passwordResetService.requestPasswordReset(req));
+        assertEquals(ErrorCode.OPERATION_NOT_ALLOWED, rateLimitEx.getErrorCode());
+        assertTrue(rateLimitEx.getMessage().contains("quá 5 lần trong 15 phút"));
     }
 
     private static final class MutableClock extends Clock {

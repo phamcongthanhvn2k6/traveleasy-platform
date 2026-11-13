@@ -53,11 +53,8 @@ export const auth = getAuth(app);
 // Export `googleProvider`: cấu hình đăng nhập Google đã khởi tạo sẵn.
 export const googleProvider = new GoogleAuthProvider();
 
-// NGHIỆP VỤ TESTING / DEV MODE:
-//   - Tắt reCAPTCHA khi chạy localhost để test Phone OTP nhanh với số test
-//     (+16505553434, mã cố định) mà không cần tick captcha, không tốn quota SMS.
-//   - CỰC KỲ QUAN TRỌNG: KHÔNG BAO GIỜ bật ở production (import.meta.env.PROD là false ở đây).
-if (import.meta.env.DEV) {
+// Chỉ bật khi chủ động dùng Firebase test phone numbers; không bật mặc định trong mọi dev run.
+if (import.meta.env.DEV && import.meta.env.VITE_FIREBASE_AUTH_TEST_MODE === 'true') {
   (auth.settings as any).appVerificationDisabledForTesting = true;
 }
 

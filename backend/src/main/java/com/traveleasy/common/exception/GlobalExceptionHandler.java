@@ -4,11 +4,13 @@ import com.traveleasy.common.dto.ApiResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -121,6 +123,13 @@ public class GlobalExceptionHandler {
         log.warn("Database lock or concurrency collision: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error("Ghế này đang được người khác giữ chỗ hoặc hệ thống đang xử lý, vui lòng chọn ghế khác!"));
+    }
+
+    @ExceptionHandler({CannotCreateTransactionException.class, DataAccessResourceFailureException.class})
+    public ResponseEntity<ApiResponse<Void>> handleDatabaseUnavailable(Exception ex) {
+        log.error("Database connection temporarily unavailable: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponse.error("Kết nối cơ sở dữ liệu tạm thời gián đoạn, hệ thống đang tự khôi phục. Vui lòng thử lại sau vài giây."));
     }
 
     @ExceptionHandler(Exception.class)

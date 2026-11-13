@@ -66,7 +66,7 @@ class SeatRealtimeServiceTest {
         assertEquals(2, events.size());
         assertEquals(SeatStatus.LOCKED, seatA01.getStatus());
         assertEquals(SeatStatus.LOCKED, seatA02.getStatus());
-        verify(tripSeatRepository, times(1)).saveAll(any());
+        verify(tripSeatRepository, times(1)).saveAllAndFlush(any());
     }
 
     @Test
@@ -94,7 +94,7 @@ class SeatRealtimeServiceTest {
         seatRealtimeService.releaseSeats(1L, List.of("A01"));
 
         assertEquals(SeatStatus.AVAILABLE, seatA01.getStatus());
-        verify(tripSeatRepository, times(1)).saveAll(any());
+        verify(tripSeatRepository, times(1)).saveAllAndFlush(any());
     }
 
     @Test

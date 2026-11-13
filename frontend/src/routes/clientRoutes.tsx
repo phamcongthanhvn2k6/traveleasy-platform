@@ -13,6 +13,7 @@ import { PromotionsPage } from '../pages/customer/promotions/PromotionsPage';
 import { ReviewsPage } from '../pages/customer/reviews/ReviewsPage';
 import { TicketScannerPage } from '../pages/customer/scanner/TicketScannerPage';
 import LiveTrackingMapPage from '../pages/customer/tracking/LiveTrackingMapPage';
+import DriverGpsTrackingPage from '../pages/company/tracking/DriverGpsTrackingPage';
 import { PartnerCooperationPage } from '../pages/customer/partner-cooperation/PartnerCooperationPage';
 import { DemoPage } from '../pages/customer/demo/DemoPage';
 import { TestFixturesPage } from '../pages/customer/test-fixtures/TestFixturesPage';
@@ -66,6 +67,7 @@ export const ClientRoutes: React.FC = () => {
       {/* [S306] Định vị GPS Live Tracking xe chạy thời gian thực - Nguyễn Đại Phát */}
       <Route path="/tracking" element={<LiveTrackingMapPage />} />
       <Route path="/tracking/:tripId" element={<LiveTrackingMapPage />} />
+      <Route path="/driver/tracking" element={<DriverGpsTrackingPage />} />
       {/* Test Fixtures & Demo Hub: Bảo vệ an toàn - Chỉ kích hoạt khi DEV, Localhost hoặc có cờ VITE_ENABLE_DEMO_ROUTES */}
       {(import.meta.env.DEV || 
         import.meta.env.VITE_ENABLE_DEMO_ROUTES === 'true' || 

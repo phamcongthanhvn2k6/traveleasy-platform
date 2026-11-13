@@ -10,7 +10,7 @@ import { OrderSummaryPanel } from './components/OrderSummaryPanel';
 import { QrPaymentModal } from './components/QrPaymentModal';
 import { VnPayModal } from './components/VnPayModal';
 import { toast } from '../../../context/ToastContext';
-import { Check, ChevronRight, ShieldCheck, ArrowLeft, Lock } from 'lucide-react';
+import { Check, ChevronRight, ShieldCheck, ArrowLeft, Lock, QrCode, RefreshCw } from 'lucide-react';
 
 export const CheckoutPage: React.FC = () => {
   const location = useLocation();
@@ -97,12 +97,51 @@ export const CheckoutPage: React.FC = () => {
   // QR Modal & Payment State
   const [showQrModal, setShowQrModal] = useState(false);
   const [showVnPayModal, setShowVnPayModal] = useState(false);
-  const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
-  const [paymentInitData, setPaymentInitData] = useState<PaymentInitResponse | null>(null);
+
+  // Master Expiry Timestamp (10 phút = 600s)
+  const [holdExpiryTimestamp] = useState<number>(() => {
+    try {
+      const holdExpiryKey = 'traveleasy_hold_expiry';
+      const savedExpiry = sessionStorage.getItem(holdExpiryKey);
+      let expiry = savedExpiry ? Number(savedExpiry) : null;
+      if (!expiry || isNaN(expiry) || expiry <= Date.now()) {
+        expiry = Date.now() + 600 * 1000;
+        sessionStorage.setItem(holdExpiryKey, String(expiry));
+      }
+      return expiry;
+    } catch {
+      return Date.now() + 600 * 1000;
+    }
+  });
+
+  // Tái sử dụng đơn đặt vé PENDING đang còn hiệu lực 10 phút nếu khách quay lại
+  const [createdBooking, setCreatedBooking] = useState<Booking | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('traveleasy_pending_booking');
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      const expiry = Number(sessionStorage.getItem('traveleasy_hold_expiry') || 0);
+      if (expiry > Date.now()) {
+        return parsed;
+      }
+      sessionStorage.removeItem('traveleasy_pending_booking');
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [paymentInitData, setPaymentInitData] = useState<PaymentInitResponse | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('traveleasy_payment_init');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   // Cơ chế Khóa & Giữ chỗ ghế thời gian thực (Hard Lock 10 phút)
   const isHeldRef = useRef(false);
-  const bookingSuccessRef = useRef(false);
   const sessionIdRef = useRef<string>(
     sessionStorage.getItem('traveleasy_session_id') ||
     localStorage.getItem('traveleasy_session_id') ||
@@ -114,29 +153,30 @@ export const CheckoutPage: React.FC = () => {
     })()
   );
 
-  // Thời gian hết hạn giữ chỗ (10 phút = 600s), tiếp tục đếm nếu quay lại
   const [initialTimerSeconds] = useState<number>(() => {
-    try {
-      const holdExpiryKey = 'traveleasy_hold_expiry';
-      const savedExpiry = sessionStorage.getItem(holdExpiryKey);
-      let expiryTimestamp = savedExpiry ? Number(savedExpiry) : null;
-      if (!expiryTimestamp || isNaN(expiryTimestamp) || expiryTimestamp <= Date.now()) {
-        expiryTimestamp = Date.now() + 600 * 1000;
-        sessionStorage.setItem(holdExpiryKey, String(expiryTimestamp));
-      }
-      return Math.max(10, Math.floor((expiryTimestamp - Date.now()) / 1000));
-    } catch {
-      return 600;
-    }
+    return Math.max(10, Math.floor((holdExpiryTimestamp - Date.now()) / 1000));
   });
 
   const selectedSeatsKey = selectedSeats.join(',');
 
+  // Dọn dẹp toàn bộ dữ liệu giữ chỗ sau khi thanh toán thành công hoặc hết giờ
+  const cleanupPendingSession = () => {
+    sessionStorage.removeItem('traveleasy_checkout_data');
+    sessionStorage.removeItem('traveleasy_hold_expiry');
+    sessionStorage.removeItem('traveleasy_pending_booking');
+    sessionStorage.removeItem('traveleasy_payment_init');
+    localStorage.removeItem('traveleasy_checkout_data');
+    localStorage.removeItem('traveleasy_hold_expiry');
+  };
+
   // Tự động gửi lệnh giữ chỗ ghế lên server (đổi màu vàng LOCKED trên toàn hệ thống)
+  // Lưu ý: Nếu đã có đơn PENDING nắm giữ các ghế này, không gọi lại holdSeats tránh xung đột
   useEffect(() => {
     let isMounted = true;
     const holdSeatsOnBackend = async () => {
       if (!trip?.id || !selectedSeats?.length) return;
+      if (createdBooking && createdBooking.status === 'PENDING') return;
+
       try {
         await api.post(`/trips/${trip.id}/seats/hold`, {
           seatCodes: selectedSeats,
@@ -144,19 +184,13 @@ export const CheckoutPage: React.FC = () => {
         });
         if (isMounted) {
           isHeldRef.current = true;
-          if (!sessionStorage.getItem('traveleasy_hold_expiry')) {
-            sessionStorage.setItem('traveleasy_hold_expiry', String(Date.now() + 600 * 1000));
-          }
         }
       } catch (err: any) {
         if (!isMounted) return;
         const msg = err.response?.data?.message || 'Ghế bạn chọn đang được khách hàng khác giữ chỗ hoặc đã có người đặt mua!';
         if (err.response?.status === 400 || err.response?.status === 409) {
           toast.error(msg, 'Ghế Đang Được Giữ');
-          sessionStorage.removeItem('traveleasy_checkout_data');
-          sessionStorage.removeItem('traveleasy_hold_expiry');
-          localStorage.removeItem('traveleasy_checkout_data');
-          localStorage.removeItem('traveleasy_hold_expiry');
+          cleanupPendingSession();
           navigate('/search');
         } else {
           console.warn('Lỗi kết nối khi gửi holdSeats:', err);
@@ -168,10 +202,8 @@ export const CheckoutPage: React.FC = () => {
 
     return () => {
       isMounted = false;
-      // KHÔNG tự động giải phóng ghế khi rời component!
-      // Ghế được giữ độc quyền cho khách hàng trong trọn vẹn 10 phút.
     };
-  }, [trip?.id, selectedSeatsKey]);
+  }, [trip?.id, selectedSeatsKey, createdBooking]);
 
   // Check if returning from VNPAY with failure
   useEffect(() => {
@@ -185,36 +217,62 @@ export const CheckoutPage: React.FC = () => {
     }
   }, [location.search]);
 
-  const handleTimerExpire = () => {
-    toast.error('Thời gian giữ chỗ 10 phút đã hết hạn! Ghế đã được giải phóng.', 'Hết Hạn');
+  const handleTimerExpire = async () => {
+    // GRACEFUL VERIFICATION: Nếu khách đang mở Modal thanh toán (có thể đã chuyển tiền ở giây cuối cùng),
+    // kiểm tra lần cuối từ Backend xem Webhook ngân hàng đã ghi nhận tiền chưa trước khi hủy đơn
+    if (showQrModal || showVnPayModal) {
+      if (createdBooking?.bookingCode) {
+        try {
+          const statusRes = await paymentService.getPaymentStatus(createdBooking.bookingCode);
+          if (statusRes?.isPaid || statusRes?.bookingStatus === 'CONFIRMED') {
+            toast.success('Hệ thống đã nhận được tiền thanh toán từ ngân hàng!', 'Thanh Toán Thành Công');
+            cleanupPendingSession();
+            setShowQrModal(false);
+            setShowVnPayModal(false);
+            navigate(`/tickets/${createdBooking.bookingCode}?payment=success`);
+            return;
+          }
+        } catch (e) {
+          console.warn('Lỗi khi kiểm tra thanh toán lần cuối:', e);
+        }
+      }
+    }
+
+    toast.error('Thời gian giữ chỗ 10 phút đã hết hạn! Ghế đã được tự động giải phóng.', 'Hết Hạn');
+    if (createdBooking?.id) {
+      api.post(`/bookings/${createdBooking.id}/cancel`).catch(() => {});
+    }
     if (trip?.id && selectedSeats?.length) {
       api.post(`/trips/${trip.id}/seats/release`, {
         seatCodes: selectedSeats,
       }).catch(() => {});
     }
-    sessionStorage.removeItem('traveleasy_checkout_data');
-    sessionStorage.removeItem('traveleasy_hold_expiry');
-    localStorage.removeItem('traveleasy_checkout_data');
-    localStorage.removeItem('traveleasy_hold_expiry');
+    cleanupPendingSession();
+    setShowQrModal(false);
+    setShowVnPayModal(false);
     navigate('/search');
   };
 
   const handleCancelHold = async () => {
     if (window.confirm('Bạn có chắc chắn muốn hủy phiên giữ chỗ và trả lại các ghế này cho sàn?')) {
+      if (createdBooking?.id) {
+        try {
+          await api.post(`/bookings/${createdBooking.id}/cancel`);
+        } catch (e) {}
+      }
       if (trip?.id && selectedSeats?.length) {
         try {
           await api.post(`/trips/${trip.id}/seats/release`, {
             seatCodes: selectedSeats,
           });
-          toast.info('Đã hủy giữ chỗ thành công. Ghế đã được mở lại cho khách khác.', 'Đã Hủy');
         } catch (e) {
           console.error(e);
         }
       }
-      sessionStorage.removeItem('traveleasy_checkout_data');
-      sessionStorage.removeItem('traveleasy_hold_expiry');
-    localStorage.removeItem('traveleasy_checkout_data');
-    localStorage.removeItem('traveleasy_hold_expiry');
+      toast.info('Đã hủy giữ chỗ thành công. Ghế đã được mở lại cho khách khác.', 'Đã Hủy');
+      cleanupPendingSession();
+      setCreatedBooking(null);
+      setPaymentInitData(null);
       navigate('/search');
     }
   };
@@ -256,57 +314,62 @@ export const CheckoutPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const baseTicketPrice = selectedSeats.length * (trip.price || 0);
-      const insurancePrice = passengerInfo.hasInsurance ? selectedSeats.length * 25000 : 0;
-      const finalTotal = Math.max(0, baseTicketPrice + insurancePrice - discountAmount);
+      let bookingData = createdBooking;
 
-      const payload = {
-        tripId: trip.id,
-        seatNumbers: selectedSeats,
-        customerName: passengerInfo.fullName,
-        customerPhone: passengerInfo.phone,
-        customerEmail: passengerInfo.email,
-        pickupPointId: points.pickup,
-        dropoffPointId: points.dropoff,
-        paymentMethod: paymentMethod,
-        note: passengerInfo.note,
-        voucherCode: appliedVoucherCode || null,
-        discountAmount: discountAmount || 0,
-        hasInsurance: passengerInfo.hasInsurance,
-        finalAmount: finalTotal,
-        sessionId: sessionStorage.getItem('traveleasy_session_id') || undefined,
-      };
+      // NẾU CHƯA CÓ ĐƠN HOẶC ĐƠN ĐÃ HỦY: Tạo mới đơn đặt vé trong database
+      // NẾU ĐÃ CÓ ĐƠN PENDING HỢP LỆ: Tái sử dụng đơn cũ, KHÔNG gọi lại POST /bookings tránh lỗi ghế đang giữ chỗ
+      if (!bookingData || bookingData.status !== 'PENDING') {
+        const baseTicketPrice = selectedSeats.length * (trip.price || 0);
+        const insurancePrice = passengerInfo.hasInsurance ? selectedSeats.length * 25000 : 0;
+        const finalTotal = Math.max(0, baseTicketPrice + insurancePrice - discountAmount);
 
-      // 1. Tạo đơn đặt vé trong database
-      const res = await api.post('/bookings', payload);
-      if (!res.data?.success || !res.data?.data) {
-        throw new Error(res.data?.message || 'Không thể tạo đơn đặt vé. Vui lòng thử lại!');
+        const payload = {
+          tripId: trip.id,
+          seatNumbers: selectedSeats,
+          customerName: passengerInfo.fullName,
+          customerPhone: passengerInfo.phone,
+          customerEmail: passengerInfo.email,
+          pickupPointId: points.pickup,
+          dropoffPointId: points.dropoff,
+          paymentMethod: paymentMethod,
+          note: passengerInfo.note,
+          voucherCode: appliedVoucherCode || null,
+          discountAmount: discountAmount || 0,
+          hasInsurance: passengerInfo.hasInsurance,
+          finalAmount: finalTotal,
+          sessionId: sessionStorage.getItem('traveleasy_session_id') || undefined,
+        };
+
+        const res = await api.post('/bookings', payload);
+        if (!res.data?.success || !res.data?.data) {
+          throw new Error(res.data?.message || 'Không thể tạo đơn đặt vé. Vui lòng thử lại!');
+        }
+
+        bookingData = res.data.data;
+        setCreatedBooking(bookingData);
+        sessionStorage.setItem('traveleasy_pending_booking', JSON.stringify(bookingData));
       }
-      bookingSuccessRef.current = true;
-      sessionStorage.removeItem('traveleasy_checkout_data');
-      sessionStorage.removeItem('traveleasy_hold_expiry');
-    localStorage.removeItem('traveleasy_checkout_data');
-    localStorage.removeItem('traveleasy_hold_expiry');
-      const bookingData: Booking = res.data.data;
-      setCreatedBooking(bookingData);
 
-      // 2. Khởi tạo phiên thanh toán qua Payment API
+      if (!bookingData) {
+        throw new Error('Không thể khởi tạo đơn đặt vé. Vui lòng thử lại!');
+      }
+
+      // Khởi tạo hoặc cập nhật phiên thanh toán qua Payment API
       const initRes = await paymentService.initiatePayment({
         bookingCode: bookingData.bookingCode,
         paymentMethod: paymentMethod,
       });
       setPaymentInitData(initRes);
+      sessionStorage.setItem('traveleasy_payment_init', JSON.stringify(initRes));
 
       if (paymentMethod === 'VNPAY') {
-        // Mo Modal VNPAY voi nut Demo duyet ngay
         setShowVnPayModal(true);
       } else if (paymentMethod === 'PAYOS') {
-        // Mo Modal VietQR Napas 24/7 (Cong PayOS / MB Bank - PHAM CONG THANH)
         setShowQrModal(true);
       } else {
-        // COD - Tien mat khi len xe
+        // COD - Tiền mặt khi lên xe
         toast.success(`Đặt vé thành công! Mã đơn: ${bookingData.bookingCode}`, 'Thành Công');
-        sessionStorage.removeItem('traveleasy_checkout_data');
+        cleanupPendingSession();
         navigate(`/tickets/${bookingData.bookingCode}`);
       }
     } catch (err: any) {
@@ -319,7 +382,7 @@ export const CheckoutPage: React.FC = () => {
 
   const handleVnPaySuccess = () => {
     setShowVnPayModal(false);
-    sessionStorage.removeItem('traveleasy_checkout_data');
+    cleanupPendingSession();
     if (createdBooking) {
       navigate(`/tickets/${createdBooking.bookingCode}?payment=success`);
     } else {
@@ -329,7 +392,7 @@ export const CheckoutPage: React.FC = () => {
 
   const handleQrSuccess = () => {
     setShowQrModal(false);
-    sessionStorage.removeItem('traveleasy_checkout_data');
+    cleanupPendingSession();
     if (createdBooking) {
       toast.success('Hệ thống đã nhận được thanh toán chuyển khoản! Vé đã được kích hoạt.', 'Thanh Toán Thành Công');
       navigate(`/tickets/${createdBooking.bookingCode}?payment=success`);
@@ -547,6 +610,88 @@ export const CheckoutPage: React.FC = () => {
         <div className="checkout-responsive-grid" style={{ display: 'grid', gap: '24px', alignItems: 'start' }}>
           {/* Left Column: Form & Payment Method */}
           <div>
+            {/* Banner Khôi Phục Thanh Toán Đơn Đang Giữ Chỗ (Resuming Pending Booking) */}
+            {createdBooking && createdBooking.status === 'PENDING' && (
+              <div
+                style={{
+                  backgroundColor: '#fffbeb',
+                  border: '1.5px solid #f59e0b',
+                  borderRadius: '16px',
+                  padding: '16px 20px',
+                  marginBottom: '20px',
+                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.1)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ backgroundColor: '#fef3c7', padding: '10px', borderRadius: '12px', color: '#b45309' }}>
+                      <Lock size={22} />
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '15px', fontWeight: 800, color: '#92400e' }}>
+                          Đơn vé đang giữ chỗ: {createdBooking.bookingCode}
+                        </span>
+                        <span style={{ backgroundColor: '#fef3c7', color: '#b45309', fontSize: '11px', fontWeight: 800, padding: '2px 8px', borderRadius: '10px' }}>
+                          CHỜ THANH TOÁN
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#78350f', marginTop: '3px' }}>
+                        Ghế: <strong>{selectedSeats.join(', ')}</strong> | Tổng tiền: <strong>{Number(createdBooking.totalAmount).toLocaleString('vi-VN')} đ</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (paymentMethod === 'VNPAY') {
+                          setShowVnPayModal(true);
+                        } else {
+                          setShowQrModal(true);
+                        }
+                      }}
+                      style={{
+                        backgroundColor: '#16a34a',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '9px 18px',
+                        fontSize: '13.5px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)',
+                      }}
+                    >
+                      <QrCode size={16} />
+                      Mở Lại Mã QR Thanh Toán
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCancelHold}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        color: '#dc2626',
+                        border: '1px solid #fca5a5',
+                        borderRadius: '8px',
+                        padding: '8px 14px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Hủy Giữ Chỗ & Đổi Ghế
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <PassengerInfoForm
               info={passengerInfo}
               onChange={setPassengerInfo}
@@ -583,6 +728,7 @@ export const CheckoutPage: React.FC = () => {
           qrCodeUrl={paymentInitData?.qrCodeUrl}
           paymentUrl={paymentInitData?.paymentUrl}
           bankDetails={paymentInitData?.bankDetails}
+          expiresAt={holdExpiryTimestamp}
           onSuccess={handleQrSuccess}
           onClose={() => setShowQrModal(false)}
         />
@@ -594,6 +740,7 @@ export const CheckoutPage: React.FC = () => {
           bookingCode={createdBooking.bookingCode}
           totalAmount={createdBooking.totalAmount}
           paymentUrl={paymentInitData?.paymentUrl}
+          expiresAt={holdExpiryTimestamp}
           onSuccess={handleVnPaySuccess}
           onClose={() => setShowVnPayModal(false)}
         />

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import { AuthUser } from '../../../types';
 import { toast } from '../../../context/ToastContext';
+import { ForgotPasswordModal } from '../../../components/auth/ForgotPasswordModal';
 import {
   User,
   Users,
@@ -17,6 +18,7 @@ import {
   Trash2,
   CheckCircle2,
   ArrowRight,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface FrequentTraveler {
@@ -53,6 +55,7 @@ export const UserProfilePage: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   // Frequent Travelers State
   const [travelers, setTravelers] = useState<FrequentTraveler[]>(() => {
@@ -114,19 +117,27 @@ export const UserProfilePage: React.FC = () => {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanPhone = phone.trim().replace(/\s+/g, '');
+    if (cleanPhone && !/^(0|\+84)[0-9]{9,10}$/.test(cleanPhone)) {
+      toast.warning('Số điện thoại không đúng định dạng (VD: 0988123456 hoặc +84988123456)', 'SĐT Không Hợp Lệ');
+      return;
+    }
+
     setSavingProfile(true);
     try {
       const res = await api.put('/auth/profile', {
         fullName: fullName.trim(),
-        phone: phone.trim(),
+        phone: cleanPhone,
       });
 
       const updatedUser: AuthUser = res.data?.data || {
         ...user!,
         fullName: fullName.trim(),
-        phone: phone.trim(),
+        phone: cleanPhone,
       };
       setUser(updatedUser);
+      setPhone(updatedUser.phone || cleanPhone);
+      setFullName(updatedUser.fullName || fullName.trim());
       localStorage.setItem('traveleasy_user', JSON.stringify(updatedUser));
       toast.success('Cập nhật thông tin cá nhân thành công!', 'Thành Công');
     } catch (err: any) {
@@ -440,6 +451,32 @@ export const UserProfilePage: React.FC = () => {
                 <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '22px' }}>
                   Cập nhật thông tin của bạn để thuận tiện nhận thông báo vé xe và đối soát hành trình.
                 </p>
+
+                {!phone && (
+                  <div
+                    style={{
+                      backgroundColor: '#fffbeb',
+                      border: '1px solid #fde68a',
+                      borderRadius: '10px',
+                      padding: '13px 16px',
+                      marginBottom: '20px',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '12px',
+                      color: '#92400e',
+                      fontSize: '13px',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <AlertTriangle size={18} color="#d97706" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <div>
+                      <strong style={{ fontSize: '13.5px', color: '#b45309' }}>Tài khoản chưa cập nhật số điện thoại</strong>
+                      <div style={{ marginTop: '2px' }}>
+                        Tài khoản Google của bạn hiện chưa có số điện thoại liên hệ. Vui lòng điền số điện thoại bên dưới và bấm <strong>"Lưu thay đổi"</strong> để nhà xe có thể liên lạc đón trả và gửi mã vé SMS.
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <form onSubmit={handleUpdateProfile}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '18px' }}>
@@ -763,6 +800,24 @@ export const UserProfilePage: React.FC = () => {
                         boxSizing: 'border-box',
                       }}
                     />
+                    <div style={{ marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
+                      Đăng nhập qua Google hoặc quên mật khẩu hiện tại?{' '}
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotModal(true)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#2563eb',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          padding: 0,
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        Thiết lập mật khẩu mới qua Email OTP →
+                      </button>
+                    </div>
                   </div>
 
                   <div style={{ marginBottom: '16px' }}>
@@ -830,6 +885,19 @@ export const UserProfilePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ForgotPasswordModal
+        isOpen={showForgotModal}
+        initialIdentifier={user?.email || email}
+        onClose={() => setShowForgotModal(false)}
+        onResetSuccess={() => {
+          setShowForgotModal(false);
+          toast.success('Thiết lập mật khẩu thành công! Bạn có thể dùng mật khẩu mới này để đăng nhập trực tiếp.', 'Thành Công');
+          setOldPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+        }}
+      />
     </div>
   );
 };

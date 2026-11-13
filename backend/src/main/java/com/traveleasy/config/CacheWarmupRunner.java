@@ -4,6 +4,7 @@ import com.traveleasy.service.customer.TripService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -11,15 +12,16 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 
 @Slf4j
+@Profile("!test")
 @Component
 @org.springframework.context.annotation.Profile("!test")
 @RequiredArgsConstructor
 public class CacheWarmupRunner {
 
-    private final TripService tripService;
+    private final org.springframework.beans.factory.ObjectProvider<TripService> tripServiceProvider;
     private final com.traveleasy.service.admin.AdminTripService adminTripService;
     private final com.traveleasy.service.admin.AdminManagementService adminManagementService;
-    private final com.traveleasy.service.customer.BookingService bookingService;
+    private final org.springframework.beans.factory.ObjectProvider<com.traveleasy.service.customer.BookingService> bookingServiceProvider;
     private final com.traveleasy.service.company.VehicleService vehicleService;
     private final com.traveleasy.controller.customer.PublicContentController publicContentController;
 
@@ -38,14 +40,17 @@ public class CacheWarmupRunner {
             publicContentController.getPromotions("ALL");
 
             // 2. Warmup Khách hàng: Toàn bộ chuyến xe & các tuyến trọng điểm
-            tripService.searchTrips(null, null, null);
+            TripService tripService = tripServiceProvider.getIfAvailable();
+            if (tripService != null) {
+                tripService.searchTrips(null, null, null);
 
-            LocalDate today = LocalDate.now();
-            LocalDate tomorrow = today.plusDays(1);
-            tripService.searchTrips("TP. Hồ Chí Minh", "Đà Lạt", today);
-            tripService.searchTrips("Hà Nội", "Sa Pa", today);
-            tripService.searchTrips("TP. Hồ Chí Minh", "Nha Trang", today);
-            tripService.searchTrips("TP. Hồ Chí Minh", "Đà Lạt", tomorrow);
+                LocalDate today = LocalDate.now();
+                LocalDate tomorrow = today.plusDays(1);
+                tripService.searchTrips("TP. Hồ Chí Minh", "Đà Lạt", today);
+                tripService.searchTrips("Hà Nội", "Sa Pa", today);
+                tripService.searchTrips("TP. Hồ Chí Minh", "Nha Trang", today);
+                tripService.searchTrips("TP. Hồ Chí Minh", "Đà Lạt", tomorrow);
+            }
 
             // 3. Warmup Admin Portal & Partner: Thống kê Dashboard, Chuyến xe toàn sàn, Người dùng, Nhà xe, Tuyến đường, Đơn vé, Đội xe, Quyết toán
             adminTripService.getDashboardStats();
@@ -54,7 +59,10 @@ public class CacheWarmupRunner {
             adminManagementService.getAllBusCompanies(null, null);
             adminManagementService.getAllRoutes(null, null);
             adminManagementService.getAdminSettlements();
-            bookingService.getAllBookings();
+            com.traveleasy.service.customer.BookingService bookingService = bookingServiceProvider.getIfAvailable();
+            if (bookingService != null) {
+                bookingService.getAllBookings();
+            }
             vehicleService.getVehicles(null, null, null, null);
 
             long t1 = System.currentTimeMillis();
