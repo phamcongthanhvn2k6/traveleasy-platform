@@ -601,8 +601,91 @@ public class PublicContentController {
         }
 
         String name = request.getCompanyName().trim();
-        if (busCompanyRepository.existsByName(name)) {
-            return ApiResponse.error("Nhà xe '" + name + "' đã tồn tại trong danh mục hệ thống. Vui lòng kiểm tra lại hoặc liên hệ tổng đài!");
+        String reqEmail = (request.getEmail() != null && !request.getEmail().isBlank())
+                ? request.getEmail().trim()
+                : null;
+
+        // Kiểm tra xem đã có hồ sơ đăng ký trước đó với tên hoặc email này chưa
+        Optional<BusCompany> existingOpt = busCompanyRepository.findFirstByName(name);
+        if (existingOpt.isEmpty() && reqEmail != null) {
+            existingOpt = busCompanyRepository.findByEmail(reqEmail);
+        }
+
+        if (existingOpt.isPresent()) {
+            BusCompany existing = existingOpt.get();
+            String currentStatus = existing.getStatus() != null ? existing.getStatus().toUpperCase() : "PENDING";
+
+            // Nếu nhà xe đã được duyệt và đang hoạt động (ACTIVE): cấm đăng ký trùng
+            if ("ACTIVE".equals(currentStatus)) {
+                return ApiResponse.error("Nhà xe '" + existing.getName() + "' đã được kích hoạt và đang hoạt động trên hệ thống. Vui lòng đăng nhập hoặc liên hệ tổng đài!");
+            }
+
+            // Nếu hồ sơ ở trạng thái REJECTED (từ chối), PENDING_SUPPLEMENT (yêu cầu bổ sung), hoặc PENDING (chờ duyệt):
+            // Cho phép nhà xe cập nhật lại toàn bộ thông tin hồ sơ và chuyển trạng thái về PENDING để Admin duyệt lại
+            String hotline = request.getPhone().trim();
+            String email = (reqEmail != null) ? reqEmail : existing.getEmail();
+
+            StringBuilder addressBuilder = new StringBuilder();
+            if (request.getContactName() != null && !request.getContactName().isBlank()) {
+                addressBuilder.append("Đại diện: ").append(request.getContactName().trim());
+            }
+            if (request.getTaxCode() != null && !request.getTaxCode().isBlank()) {
+                if (addressBuilder.length() > 0) addressBuilder.append(" | ");
+                addressBuilder.append("MST: ").append(request.getTaxCode().trim());
+            }
+            if (request.getFleetSize() != null && !request.getFleetSize().isBlank()) {
+                if (addressBuilder.length() > 0) addressBuilder.append(" | ");
+                addressBuilder.append("Quy mô: ").append(request.getFleetSize().trim());
+            }
+            if (request.getRoutes() != null && !request.getRoutes().isBlank()) {
+                if (addressBuilder.length() > 0) addressBuilder.append(" | ");
+                addressBuilder.append("Tuyến: ").append(request.getRoutes().trim());
+            }
+            if (request.getBusinessAddress() != null && !request.getBusinessAddress().isBlank()) {
+                if (addressBuilder.length() > 0) addressBuilder.append(" | ");
+                addressBuilder.append("Trụ sở: ").append(request.getBusinessAddress().trim());
+            }
+            String address = addressBuilder.length() > 0 ? addressBuilder.toString() : (existing.getAddress() != null ? existing.getAddress() : "Việt Nam");
+
+            existing.setName(name);
+            existing.setHotline(hotline);
+            existing.setEmail(email);
+            existing.setAddress(address);
+            existing.setStatus("PENDING");
+            existing.setKycStatus("PENDING");
+            existing.setRejectionReason(null);
+
+            if (request.getTaxCode() != null && !request.getTaxCode().isBlank()) existing.setTaxCode(request.getTaxCode().trim());
+            if (request.getLegalRepresentative() != null && !request.getLegalRepresentative().isBlank()) {
+                existing.setLegalRepresentative(request.getLegalRepresentative().trim());
+            } else if (request.getContactName() != null) {
+                existing.setLegalRepresentative(request.getContactName().trim());
+            }
+            if (request.getIdentityCardNumber() != null && !request.getIdentityCardNumber().isBlank()) existing.setIdentityCardNumber(request.getIdentityCardNumber().trim());
+            if (request.getIdentityCardFrontUrl() != null && !request.getIdentityCardFrontUrl().isBlank()) existing.setIdentityCardFrontUrl(request.getIdentityCardFrontUrl().trim());
+            if (request.getIdentityCardBackUrl() != null && !request.getIdentityCardBackUrl().isBlank()) existing.setIdentityCardBackUrl(request.getIdentityCardBackUrl().trim());
+            if (request.getBusinessLicenseUrl() != null && !request.getBusinessLicenseUrl().isBlank()) existing.setBusinessLicenseUrl(request.getBusinessLicenseUrl().trim());
+            if (request.getTransportLicenseUrl() != null && !request.getTransportLicenseUrl().isBlank()) existing.setTransportLicenseUrl(request.getTransportLicenseUrl().trim());
+
+            if (request.getBankName() != null && !request.getBankName().isBlank()) existing.setBankName(request.getBankName().trim());
+            if (request.getBankAccountNumber() != null && !request.getBankAccountNumber().isBlank()) existing.setBankAccountNumber(request.getBankAccountNumber().trim());
+            if (request.getBankAccountOwner() != null && !request.getBankAccountOwner().isBlank()) existing.setBankAccountOwner(request.getBankAccountOwner().trim().toUpperCase());
+
+            BusCompany updated = busCompanyRepository.save(existing);
+
+            try {
+                if (updated.getEmail() != null && !updated.getEmail().isBlank()) {
+                    emailNotificationService.sendPartnerRegistrationReceivedEmail(
+                            updated.getEmail().trim(),
+                            updated.getName(),
+                            request.getContactName()
+                    );
+                }
+            } catch (Exception e) {
+                log.warn("⚠️ Không thể gửi email tiếp nhận hồ sơ đối tác cập nhật: {}", e.getMessage());
+            }
+
+            return ApiResponse.success("Hồ sơ đăng ký của nhà xe '" + updated.getName() + "' đã được cập nhật/bổ sung thành công và đang chờ xét duyệt lại!", updated);
         }
 
         String rand = String.format("%04d", new Random().nextInt(10000));

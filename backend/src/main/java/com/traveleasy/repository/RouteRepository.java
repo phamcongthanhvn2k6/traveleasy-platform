@@ -10,7 +10,11 @@ import java.util.Optional;
 
 @Repository
 public interface RouteRepository extends JpaRepository<Route, Long> {
-    Optional<Route> findByDepartureLocationAndArrivalLocation(String departureLocation, String arrivalLocation);
+    Optional<Route> findFirstByDepartureLocationAndArrivalLocation(String departureLocation, String arrivalLocation);
+
+    default Optional<Route> findByDepartureLocationAndArrivalLocation(String departureLocation, String arrivalLocation) {
+        return findFirstByDepartureLocationAndArrivalLocation(departureLocation, arrivalLocation);
+    }
     List<Route> findByDepartureLocationContainingIgnoreCase(String departureLocation);
     List<Route> findAllByOrderByDepartureLocationAscArrivalLocationAsc();
 

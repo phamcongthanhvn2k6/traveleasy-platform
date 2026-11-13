@@ -65,6 +65,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/promotions/**").permitAll()
                         .requestMatchers("/api/v1/upload/**").permitAll()
                         .requestMatchers("/api/v1/ai/**").permitAll()
+                        .requestMatchers("/api/v1/tracking/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/v1/company/**").permitAll()
                         // Phân quyền nghiêm ngặt: Chỉ ROLE_ADMIN mới có quyền gọi API quản trị

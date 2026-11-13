@@ -493,13 +493,23 @@ public class CompanyManagementController {
     @PostMapping("/settlements/request-payout")
     @Operation(summary = "Nhà xe tạo lệnh rút tiền (tối thiểu 500.000 VNĐ, kiểm tra số dư khả dụng)")
     public ApiResponse<Map<String, Object>> requestPayout(
+            @RequestBody(required = false) Map<String, Object> body,
             @RequestParam(required = false) Long companyId,
-            @RequestParam BigDecimal amount,
+            @RequestParam(required = false) BigDecimal amount,
             @RequestParam(required = false) String note,
             Authentication authentication) {
-        Long targetId = resolveTargetCompanyId(companyId, authentication);
+        Long targetId = resolveTargetCompanyId(
+                companyId != null ? companyId : (body != null && body.get("companyId") != null ? Long.valueOf(body.get("companyId").toString()) : null),
+                authentication);
+        BigDecimal targetAmount = amount != null ? amount :
+                (body != null && body.get("amount") != null ? new BigDecimal(body.get("amount").toString()) : null);
+        if (targetAmount == null) {
+            throw new IllegalArgumentException("Số tiền rút (amount) là bắt buộc");
+        }
+        String targetNote = note != null ? note :
+                (body != null && body.get("note") != null ? body.get("note").toString() : null);
         String userEmail = authentication != null ? authentication.getName() : null;
-        Map<String, Object> payout = companySettlementService.createPayoutRequest(targetId, amount, note, userEmail);
+        Map<String, Object> payout = companySettlementService.createPayoutRequest(targetId, targetAmount, targetNote, userEmail);
         return ApiResponse.success(
                 "Đã tạo lệnh rút tiền " + payout.get("requestCode") + " thành công. Hệ thống sẽ đối soát và giải ngân trong 24h làm việc.",
                 payout);
@@ -509,13 +519,18 @@ public class CompanyManagementController {
     // HELPER METHODS: TENANT ISOLATION CHO ĐỐI TÁC NHÀ XE
     // =========================================================================
     private Long resolveTargetCompanyId(Long explicitCompanyId, Authentication authentication) {
-        if (explicitCompanyId != null && explicitCompanyId > 0) {
-            return explicitCompanyId;
-        }
         if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
             String email = authentication.getName();
             User user = userRepository.findByEmail(email).orElse(null);
             if (user != null) {
+                // Admin được quyền chỉ định explicitCompanyId
+                if (user.getRole() == Role.ADMIN) {
+                    if (explicitCompanyId != null && explicitCompanyId > 0) {
+                        return explicitCompanyId;
+                    }
+                    return 1L; // Mặc định cho admin xem tổng quan FUTA
+                }
+
                 // 1. Ưu tiên cao nhất: Lấy trực tiếp từ busCompanyId gán cho User
                 if (user.getBusCompanyId() != null && user.getBusCompanyId() > 0) {
                     return user.getBusCompanyId();
@@ -537,9 +552,15 @@ public class CompanyManagementController {
                         }
                     }
                 }
+
+                // Nhà xe chưa được liên kết công ty thì không fallback bừa bãi sang hãng 1 (FUTA)
+                throw new AppException(ErrorCode.FORBIDDEN, "Tài khoản của bạn chưa được liên kết với nhà xe nào trên hệ thống");
             }
         }
-        return explicitCompanyId != null ? explicitCompanyId : 1L;
+        if (explicitCompanyId != null && explicitCompanyId > 0) {
+            return explicitCompanyId;
+        }
+        return 1L;
     }
 
     private boolean isSystemPolicy(CancellationPolicy p) {

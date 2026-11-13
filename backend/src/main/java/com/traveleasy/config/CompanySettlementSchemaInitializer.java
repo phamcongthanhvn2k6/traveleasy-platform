@@ -26,10 +26,29 @@ public class CompanySettlementSchemaInitializer implements CommandLineRunner {
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS staff_role VARCHAR(30) DEFAULT 'OWNER'"
             );
             jdbcTemplate.execute(
+                "ALTER TABLE settlement_records ADD COLUMN IF NOT EXISTS bus_company_id BIGINT"
+            );
+            jdbcTemplate.execute(
+                "DO $$ BEGIN " +
+                "IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'settlement_records' AND column_name = 'company_id') THEN " +
+                "UPDATE settlement_records SET bus_company_id = company_id WHERE bus_company_id IS NULL; " +
+                "END IF; " +
+                "END $$;"
+            );
+            jdbcTemplate.execute(
+                "ALTER TABLE settlement_records ADD COLUMN IF NOT EXISTS start_date VARCHAR(20)"
+            );
+            jdbcTemplate.execute(
+                "ALTER TABLE settlement_records ADD COLUMN IF NOT EXISTS end_date VARCHAR(20)"
+            );
+            jdbcTemplate.execute(
+                "ALTER TABLE settlement_records ALTER COLUMN period_code DROP NOT NULL"
+            );
+            jdbcTemplate.execute(
                 "ALTER TABLE settlement_records ADD COLUMN IF NOT EXISTS code VARCHAR(50)"
             );
             jdbcTemplate.execute(
-                "UPDATE settlement_records SET code = id WHERE code IS NULL"
+                "UPDATE settlement_records SET code = CAST(id AS VARCHAR) WHERE code IS NULL"
             );
             jdbcTemplate.execute(
                 "ALTER TABLE settlement_records ADD COLUMN IF NOT EXISTS previous_balance NUMERIC(15, 2) NOT NULL DEFAULT 0"
@@ -49,7 +68,26 @@ public class CompanySettlementSchemaInitializer implements CommandLineRunner {
                 "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "processed_at TIMESTAMP)"
             );
-            log.info("[SETTLEMENT SCHEMA] Verified settlement_records.previous_balance and payout_requests table.");
+            jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS company_pos_shifts (" +
+                "id BIGSERIAL PRIMARY KEY, " +
+                "bus_company_id BIGINT NOT NULL, " +
+                "cashier_id BIGINT, " +
+                "cashier_name VARCHAR(150), " +
+                "shift_code VARCHAR(50), " +
+                "initial_cash_amount NUMERIC(15, 2) NOT NULL DEFAULT 0, " +
+                "total_cash_collected NUMERIC(15, 2) NOT NULL DEFAULT 0, " +
+                "counted_cash_amount NUMERIC(15, 2), " +
+                "cash_discrepancy NUMERIC(15, 2), " +
+                "total_tickets_issued INT NOT NULL DEFAULT 0, " +
+                "status VARCHAR(30) NOT NULL DEFAULT 'OPEN', " +
+                "opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "closed_at TIMESTAMP, " +
+                "note TEXT, " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+            );
+            log.info("[SETTLEMENT SCHEMA] Verified settlement_records.previous_balance, payout_requests, and company_pos_shifts tables.");
         } catch (Exception e) {
             log.warn("[SETTLEMENT SCHEMA] Bỏ qua khởi tạo DDL (có thể đang chạy H2/test hoặc thiếu quyền): {}", e.getMessage());
         }

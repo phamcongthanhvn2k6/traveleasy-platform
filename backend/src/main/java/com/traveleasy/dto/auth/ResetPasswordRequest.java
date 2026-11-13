@@ -1,15 +1,14 @@
 package com.traveleasy.dto.auth;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class ResetPasswordRequest {
-    @NotBlank(message = "Email không được để trống")
-    @Email(message = "Định dạng email không hợp lệ")
+    private String identifier;
     private String email;
+    private String phone;
 
     @NotBlank(message = "Phiên xác thực khôi phục mật khẩu không hợp lệ")
     private String resetToken;
