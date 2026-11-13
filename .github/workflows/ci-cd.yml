@@ -95,10 +95,10 @@ jobs:
         echo "=========================================================="
 
   deploy-to-vps:
-    name: Continuous Deployment to Production VPS
+    name: Continuous Deployment to Production VPS (Main Branch)
     runs-on: ubuntu-latest
     needs: [backend-ci, frontend-ci, docker-cd-verification]
-    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     steps:
     - name: SSH into VPS & Execute Deployment Script
       uses: appleboy/ssh-action@v1.0.3
@@ -109,7 +109,7 @@ jobs:
         port: ${{ secrets.VPS_SSH_PORT }}
         timeout: 300s
         script: |
-          echo "🚀 [CI/CD] Bắt đầu tự động triển khai mã nguồn mới lên VPS..."
+          echo "🚀 [CI/CD] Bắt đầu tự động triển khai mã nguồn mới từ nhánh MAIN lên VPS..."
           
           # Đảm bảo thư mục dự án tồn tại trên VPS
           if [ ! -d "/root/Nhom7_QUANLYNHAXE" ]; then
@@ -120,16 +120,17 @@ jobs:
 
           cd /root/Nhom7_QUANLYNHAXE
           
-          # Kéo mã nguồn mới nhất từ nhánh vừa push
-          git fetch origin ${{ github.ref_name }}
-          git reset --hard origin/${{ github.ref_name }}
+          # Chuyển và kéo mã nguồn mới nhất từ nhánh production (main)
+          git checkout main
+          git fetch origin main
+          git reset --hard origin/main
           
           # Rebuild và khởi động lại container bằng docker-compose.prod.yml
-          echo "📦 [Docker] Đang build và chạy lại container..."
+          echo "📦 [Docker] Đang build và chạy lại container trên nhánh MAIN..."
           docker compose -f docker-compose.prod.yml down
           docker compose -f docker-compose.prod.yml up -d --build
           
           # Dọn dẹp images cũ giải phóng dung lượng ổ cứng
           docker image prune -f
           
-          echo "✅ [CI/CD] Hoàn tất triển khai tự động lên http://103.72.57.149!"
+          echo "✅ [CI/CD] Hoàn tất triển khai tự động nhánh MAIN lên http://103.72.57.149!"
