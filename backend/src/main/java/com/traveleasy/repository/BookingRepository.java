@@ -47,6 +47,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByStatusAndCreatedAtBefore(BookingStatus status, java.time.LocalDateTime threshold);
 
     boolean existsByTripId(Long tripId);
+    List<Booking> findByTripId(Long tripId);
     boolean existsByUserId(Long userId);
 
     @Query("SELECT COALESCE(SUM(b.totalAmount), 0) FROM Booking b WHERE b.status = com.traveleasy.entity.BookingStatus.CONFIRMED")

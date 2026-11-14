@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Printer, Download, Users, Bus, Calendar, Clock, MapPin, CheckCircle, Search } from 'lucide-react';
+import { X, Printer, Download, Users, Bus, Calendar, Clock, MapPin, CheckCircle, Search, FileText } from 'lucide-react';
 import api from '../services/api';
 import { toast } from '../context/ToastContext';
+import { WaybillModal } from './WaybillModal';
 
 interface PassengerManifestItem {
   stt: number;
@@ -34,6 +35,7 @@ export const PassengerManifestModal: React.FC<PassengerManifestModalProps> = ({
   const [passengers, setPassengers] = useState<PassengerManifestItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showWaybill, setShowWaybill] = useState(false);
 
   useEffect(() => {
     if (!isOpen || !trip) return;
@@ -288,6 +290,25 @@ export const PassengerManifestModal: React.FC<PassengerManifestModalProps> = ({
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button
+              onClick={() => setShowWaybill(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: '#dc2626',
+                color: '#ffffff',
+                border: 'none',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '12.5px',
+                cursor: 'pointer',
+              }}
+              title="[S322] Xem và in Lệnh Vận Chuyển Điện Tử Chuẩn Mẫu Bộ GTVT (Nghị định 10/2020/NĐ-CP)"
+            >
+              <FileText size={14} /> Mẫu Lệnh Bộ GTVT
+            </button>
+            <button
               onClick={handleExportCSV}
               style={{
                 display: 'flex',
@@ -534,6 +555,14 @@ export const PassengerManifestModal: React.FC<PassengerManifestModalProps> = ({
           </div>
         </div>
       </div>
+
+      {showWaybill && (
+        <WaybillModal
+          tripId={trip.id || 696}
+          isOpen={showWaybill}
+          onClose={() => setShowWaybill(false)}
+        />
+      )}
     </div>
   );
 };

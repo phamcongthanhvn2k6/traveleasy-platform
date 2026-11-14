@@ -3,6 +3,7 @@ import { Plus, Eye, Clock, AlertTriangle, CheckCircle, Play, Ban, X, RefreshCw, 
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { PassengerManifestModal } from '../../../components/PassengerManifestModal';
+import { WaybillModal } from '../../../components/WaybillModal';
 import { getStoredCompany } from '../../../utils/companyHelper';
 
 export interface CompanyTripItem {
@@ -86,6 +87,7 @@ export const CompanyTripsPage: React.FC = () => {
   ]);
   const [selectedTrip, setSelectedTrip] = useState<CompanyTripItem | null>(null);
   const [manifestTrip, setManifestTrip] = useState<any | null>(null);
+  const [waybillTripId, setWaybillTripId] = useState<number | string | null>(null);
 
   const toggleAutoSlot = (slot: string) => {
     setAutoSelectedSlots((prev) =>
@@ -572,6 +574,28 @@ export const CompanyTripsPage: React.FC = () => {
                       >
                         <Users size={14} />
                         <span>Khách Đi Xe</span>
+                      </button>
+
+                      <button
+                        title="[S322] Xuất Lệnh Vận Chuyển Điện Tử Chuẩn Bộ GTVT (Nghị định 10/2020/NĐ-CP & TT 12/2020/TT-BGTVT)"
+                        onClick={() => setWaybillTripId(item.id || 696)}
+                        style={{
+                          background: '#fef2f2',
+                          border: '1px solid #fecaca',
+                          cursor: 'pointer',
+                          padding: '6px 10px',
+                          color: '#dc2626',
+                          borderRadius: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          marginRight: '6px',
+                        }}
+                      >
+                        <FileText size={14} />
+                        <span>Lệnh GTVT</span>
                       </button>
 
                       <a
@@ -1317,6 +1341,15 @@ export const CompanyTripsPage: React.FC = () => {
           trip={manifestTrip}
           isOpen={Boolean(manifestTrip)}
           onClose={() => setManifestTrip(null)}
+        />
+      )}
+
+      {/* [S322] MOT Electronic Waybill Modal */}
+      {waybillTripId && (
+        <WaybillModal
+          tripId={waybillTripId}
+          isOpen={Boolean(waybillTripId)}
+          onClose={() => setWaybillTripId(null)}
         />
       )}
     </div>
