@@ -6,6 +6,7 @@ import com.traveleasy.common.exception.ErrorCode;
 import com.traveleasy.common.security.CompanySecurityService;
 import com.traveleasy.entity.*;
 import com.traveleasy.repository.BookingRepository;
+import com.traveleasy.repository.PromotionRepository;
 import com.traveleasy.repository.TicketRepository;
 import com.traveleasy.repository.TripRepository;
 import com.traveleasy.repository.TripSeatRepository;
@@ -42,6 +43,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class CompanyCancellationRefundController {
 
     private final BookingRepository bookingRepository;
+    private final PromotionRepository promotionRepository;
     private final TicketRepository ticketRepository;
     private final TripRepository tripRepository;
     private final TripSeatRepository tripSeatRepository;
@@ -314,6 +316,16 @@ public class CompanyCancellationRefundController {
             if (allCancelled) {
                 booking.setStatus(BookingStatus.CANCELLED);
                 bookingRepository.save(booking);
+
+                // HOÀN LẠI LƯỢT KHUYẾN MẠI NẾU CÓ ÁP DỤNG VOUCHER
+                if (booking.getVoucherCode() != null && !booking.getVoucherCode().isBlank()) {
+                    promotionRepository.findByCodeIgnoreCase(booking.getVoucherCode().trim()).ifPresent(promo -> {
+                        if (promo.getUsedCount() != null && promo.getUsedCount() > 0) {
+                            promo.setUsedCount(promo.getUsedCount() - 1);
+                            promotionRepository.save(promo);
+                        }
+                    });
+                }
             }
         }
 

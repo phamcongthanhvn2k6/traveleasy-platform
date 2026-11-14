@@ -99,6 +99,18 @@ public class PublicContentController {
 
         Promotion promo = promoOpt.get();
 
+        // 0. Kiểm tra thời hạn và số lượt sử dụng
+        LocalDateTime now = LocalDateTime.now();
+        if (promo.getStartDate() != null && now.isBefore(promo.getStartDate())) {
+            return ApiResponse.error("Chương trình ưu đãi '" + promo.getCode() + "' chưa bắt đầu!");
+        }
+        if (promo.getEndDate() != null && now.isAfter(promo.getEndDate())) {
+            return ApiResponse.error("Mã ưu đãi '" + promo.getCode() + "' đã hết hạn sử dụng!");
+        }
+        if (promo.getUsageLimit() != null && promo.getUsedCount() != null && promo.getUsedCount() >= promo.getUsageLimit()) {
+            return ApiResponse.error("Mã ưu đãi '" + promo.getCode() + "' đã hết số lượt áp dụng trên hệ thống!");
+        }
+
         // 1. Kiểm tra đơn hàng tối thiểu
         if (promo.getMinOrderValue() != null && amount.compareTo(promo.getMinOrderValue()) < 0) {
             return ApiResponse.error(String.format("Mã %s yêu cầu giá trị đơn tối thiểu %,d đ (Đơn hiện tại: %,d đ)",

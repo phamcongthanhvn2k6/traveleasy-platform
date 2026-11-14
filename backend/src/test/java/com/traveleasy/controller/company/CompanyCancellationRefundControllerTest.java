@@ -5,6 +5,7 @@ import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.security.CompanySecurityService;
 import com.traveleasy.entity.*;
 import com.traveleasy.repository.BookingRepository;
+import com.traveleasy.repository.PromotionRepository;
 import com.traveleasy.repository.TicketRepository;
 import com.traveleasy.repository.TripRepository;
 import com.traveleasy.repository.TripSeatRepository;
@@ -36,6 +37,9 @@ class CompanyCancellationRefundControllerTest {
 
     @Mock
     private BookingRepository bookingRepository;
+
+    @Mock
+    private PromotionRepository promotionRepository;
 
     @Mock
     private TicketRepository ticketRepository;

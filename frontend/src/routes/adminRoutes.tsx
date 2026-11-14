@@ -19,6 +19,7 @@ import { AdminBookingsPage } from '../pages/admin/bookings/AdminBookingsPage';
 import { AdminRoutesPage } from '../pages/admin/routes/AdminRoutesPage';
 import { AdminSettlementsPage } from '../pages/admin/settlements/AdminSettlementsPage';
 import AdminGpsFleetPage from '../pages/admin/tracking/AdminGpsFleetPage';
+import { AdminPromotionsPage } from '../pages/admin/promotions/AdminPromotionsPage';
 
 /**
  * =========================================================================
@@ -100,6 +101,8 @@ export const AdminRoutes: React.FC = () => {
 
                 <Route path="cancellation-policies" element={<AdminCancellationPoliciesPage />} />
                 <Route path="/cancellation-policies" element={<AdminCancellationPoliciesPage />} />
+                <Route path="promotions" element={<AdminPromotionsPage />} />
+                <Route path="/promotions" element={<AdminPromotionsPage />} />
                 <Route path="audit-logs" element={<AdminAuditLogsPage />} />
                 <Route path="/audit-logs" element={<AdminAuditLogsPage />} />
 

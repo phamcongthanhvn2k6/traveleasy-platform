@@ -32,6 +32,7 @@ public class BookingService {
     private final TripSeatRepository tripSeatRepository;
     private final PickupDropoffPointRepository pointRepository;
     private final UserRepository userRepository;
+    private final PromotionRepository promotionRepository;
     @org.springframework.context.annotation.Lazy
     private final TripService tripService;
     private final SeatRealtimeService seatRealtimeService;
@@ -135,10 +136,58 @@ public class BookingService {
             insuranceAmount = BigDecimal.valueOf(25000L * requestedSeats.size());
         }
 
-        // Tính mức giảm giá Voucher nếu có
+        // Tính mức giảm giá Voucher và áp dụng cơ chế TRỪ KHUYẾN MẠI
         BigDecimal discount = BigDecimal.ZERO;
-        if (request.getDiscountAmount() != null && request.getDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
-            discount = request.getDiscountAmount();
+        String voucherCode = request.getVoucherCode();
+        if (voucherCode != null && !voucherCode.trim().isEmpty()) {
+            voucherCode = voucherCode.trim().toUpperCase();
+            Promotion promo = promotionRepository.findByCodeIgnoreCaseAndIsActiveTrue(voucherCode)
+                    .orElseThrow(() -> new AppException(ErrorCode.VALIDATION_ERROR, "Mã ưu đãi '" + request.getVoucherCode() + "' không tồn tại hoặc đã hết hiệu lực!"));
+
+            // 1. Kiểm tra hạn sử dụng
+            LocalDateTime now = LocalDateTime.now();
+            if (promo.getStartDate() != null && now.isBefore(promo.getStartDate())) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Chương trình ưu đãi '" + promo.getCode() + "' chưa bắt đầu!");
+            }
+            if (promo.getEndDate() != null && now.isAfter(promo.getEndDate())) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Mã ưu đãi '" + promo.getCode() + "' đã hết hạn sử dụng!");
+            }
+
+            // 2. Kiểm tra giới hạn số lượt sử dụng
+            if (promo.getUsageLimit() != null && promo.getUsedCount() != null && promo.getUsedCount() >= promo.getUsageLimit()) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Mã ưu đãi '" + promo.getCode() + "' đã hết số lượt áp dụng trên hệ thống!");
+            }
+
+            // 3. Kiểm tra đơn hàng tối thiểu
+            if (promo.getMinOrderValue() != null && baseSeatTotal.compareTo(promo.getMinOrderValue()) < 0) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, String.format(
+                        "Đơn hàng cần đạt tối thiểu %,d đ để áp dụng mã %s (Đơn hiện tại: %,d đ)",
+                        promo.getMinOrderValue().longValue(), promo.getCode(), baseSeatTotal.longValue()
+                ));
+            }
+
+            // 4. Tính toán mức giảm chuẩn từ Backend (Chống can thiệp client-side)
+            if ("PERCENT".equalsIgnoreCase(promo.getDiscountType())) {
+                BigDecimal percent = promo.getDiscountValue().divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+                discount = baseSeatTotal.multiply(percent).setScale(0, java.math.RoundingMode.HALF_UP);
+                if (promo.getMaxDiscount() != null && promo.getMaxDiscount().compareTo(BigDecimal.ZERO) > 0) {
+                    if (discount.compareTo(promo.getMaxDiscount()) > 0) {
+                        discount = promo.getMaxDiscount();
+                    }
+                }
+            } else {
+                discount = promo.getDiscountValue();
+                if (discount.compareTo(baseSeatTotal) > 0) {
+                    discount = baseSeatTotal;
+                }
+            }
+
+            // 5. TRỪ LƯỢT KHUYẾN MẠI (Deduction)
+            int currentUsed = promo.getUsedCount() != null ? promo.getUsedCount() : 0;
+            promo.setUsedCount(currentUsed + 1);
+            promotionRepository.save(promo);
+            log.info("🎯 [VOUCHER APPLIED] Ma: {}, Giam: {}d, Tong luot dung: {}/{}",
+                    promo.getCode(), discount, promo.getUsedCount(), promo.getUsageLimit());
         }
 
         // Tự động kiểm thực và ghi đè giá trị chuẩn của Backend (Chống can thiệp client-side)
@@ -338,6 +387,18 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
+
+        // HOÀN LẠI LƯỢT KHUYẾN MẠI (Re-allocation / Reimbursement)
+        if (booking.getVoucherCode() != null && !booking.getVoucherCode().isBlank()) {
+            promotionRepository.findByCodeIgnoreCase(booking.getVoucherCode().trim()).ifPresent(promo -> {
+                if (promo.getUsedCount() != null && promo.getUsedCount() > 0) {
+                    promo.setUsedCount(promo.getUsedCount() - 1);
+                    promotionRepository.save(promo);
+                    log.info("🔄 [VOUCHER RESTORED] Hoàn lại 1 lượt dùng cho mã: {}, Lượt dùng còn: {}/{}",
+                            promo.getCode(), promo.getUsedCount(), promo.getUsageLimit());
+                }
+            });
+        }
 
         List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
         List<String> seatCodes = new ArrayList<>();
