@@ -165,8 +165,10 @@ public class CompanyTripManifestController {
         manifest.put("terminalConfirmation", terminalConfirmation);
 
         manifest.put("complianceNotice", isDispatched
-                ? "LỆNH ĐÃ ĐÓNG BĂNG: Chuyến xe đã xuất bến. Dữ liệu danh sách hành khách đã được chốt và gửi lên hệ thống giám sát của Cục Đường bộ Việt Nam."
-                : "LỆNH DỰ THẢO: Danh sách hành khách đang cập nhật theo thời gian thực.");
+                ? "LỆNH ĐÃ ĐÓNG BĂNG: Chuyến xe đã xuất bến. Dữ liệu danh sách hành khách đã được chốt và truyền về hệ thống giám sát của Cục Đường bộ Việt Nam."
+                : (passengers.isEmpty()
+                    ? "LỆNH CHỜ KHỞI TẠO: Chuyến xe hiện chưa có vé xuất bán (0 hành khách). Dữ liệu sẽ tự động ghi nhận khi hành khách đặt vé trên hệ thống."
+                    : "LỆNH DỰ THẢO: Danh sách hành khách đang cập nhật theo thời gian thực từ CSDL vé điện tử."));
 
         return ApiResponse.success(manifest);
     }
@@ -247,7 +249,7 @@ public class CompanyTripManifestController {
     }
 
     /**
-     * Tải danh sách hành khách đi xe từ vé thật trong CSDL; nếu chưa có thì nạp dữ liệu mẫu hợp lệ.
+     * Tải danh sách hành khách đi xe từ vé thật trong CSDL; TUYỆT ĐỐI KHÔNG DÙNG MOCKDATA.
      */
     private List<Map<String, Object>> loadTripPassengers(Long tripId, Trip trip) {
         List<Map<String, Object>> list = new ArrayList<>();
@@ -265,11 +267,17 @@ public class CompanyTripManifestController {
                     p.put("seatCode", t.getSeatNumber());
                     p.put("passengerName", b != null && b.getPassengerName() != null ? b.getPassengerName() : "Hành Khách");
                     p.put("phone", b != null && b.getPassengerPhone() != null ? maskPhone(b.getPassengerPhone()) : "0901***999");
-                    p.put("pickupPoint", b != null && b.getPickupPoint() != null ? b.getPickupPoint() : "Bến xe Miền Đông Mới");
-                    p.put("dropoffPoint", b != null && b.getDropoffPoint() != null ? b.getDropoffPoint() : "Bến xe Liên tỉnh Đà Lạt");
+
+                    String defPickup = (trip != null && trip.getRoute() != null && trip.getRoute().getDepartureLocation() != null)
+                            ? ("Bến xe " + trip.getRoute().getDepartureLocation()) : "Bến xuất phát";
+                    String defDropoff = (trip != null && trip.getRoute() != null && trip.getRoute().getArrivalLocation() != null)
+                            ? ("Bến xe " + trip.getRoute().getArrivalLocation()) : "Bến đến";
+
+                    p.put("pickupPoint", b != null && b.getPickupPoint() != null && !b.getPickupPoint().isBlank() ? b.getPickupPoint() : defPickup);
+                    p.put("dropoffPoint", b != null && b.getDropoffPoint() != null && !b.getDropoffPoint().isBlank() ? b.getDropoffPoint() : defDropoff);
                     p.put("ticketCode", t.getTicketCode());
                     p.put("bookingCode", b != null ? b.getBookingCode() : "BK-" + t.getId());
-                    p.put("price", t.getPrice() != null ? t.getPrice() : BigDecimal.valueOf(320000));
+                    p.put("price", t.getPrice() != null ? t.getPrice() : (trip != null && trip.getPrice() != null ? trip.getPrice() : BigDecimal.valueOf(320000)));
                     p.put("status", t.getStatus() != null ? t.getStatus().name() : "ISSUED");
                     list.add(p);
                 }
@@ -278,25 +286,7 @@ public class CompanyTripManifestController {
             log.warn("Could not query DB tickets for trip {}: {}", tripId, e.getMessage());
         }
 
-        if (list.isEmpty()) {
-            String routeName = trip != null && trip.getRoute() != null
-                    ? trip.getRoute().getDepartureLocation() + " - " + trip.getRoute().getArrivalLocation()
-                    : "";
-            boolean isNorth = routeName.contains("Hà Nội") || routeName.contains("Sa Pa") || routeName.contains("Lào Cai");
-
-            String p1 = isNorth ? "Bến xe Mỹ Đình" : "Bến xe Miền Đông Mới";
-            String p2 = isNorth ? "Sân bay Nội Bài" : "Ngã 4 Hàng Xanh";
-            String d1 = isNorth ? "Bến xe Trung tâm Sa Pa" : "Bến xe Liên tỉnh Đà Lạt";
-            String d2 = isNorth ? "571 Điện Biên Phủ, Sa Pa" : "Ngã 3 Finom";
-            BigDecimal defPrice = (trip != null && trip.getPrice() != null) ? trip.getPrice() : BigDecimal.valueOf(isNorth ? 450000 : 320000);
-
-            list = List.of(
-                    Map.of("stt", 1, "seatCode", "A01", "passengerName", "Nguyễn Văn An", "phone", "0901***123", "pickupPoint", p1, "dropoffPoint", d1, "ticketCode", "TK-" + tripId + "-A01", "bookingCode", "BK-202611-01", "price", defPrice, "status", "ISSUED"),
-                    Map.of("stt", 2, "seatCode", "A02", "passengerName", "Trần Thị Bình", "phone", "0912***456", "pickupPoint", p2, "dropoffPoint", d1, "ticketCode", "TK-" + tripId + "-A02", "bookingCode", "BK-202611-02", "price", defPrice, "status", "ISSUED"),
-                    Map.of("stt", 3, "seatCode", "B01", "passengerName", "Lê Hoàng Cường", "phone", "0983***789", "pickupPoint", p1, "dropoffPoint", d2, "ticketCode", "TK-" + tripId + "-B01", "bookingCode", "BK-202611-03", "price", defPrice, "status", "ISSUED"),
-                    Map.of("stt", 4, "seatCode", "B02", "passengerName", "Phạm Hải Đăng", "phone", "0977***999", "pickupPoint", p1, "dropoffPoint", d1, "ticketCode", "TK-" + tripId + "-B02", "bookingCode", "BK-202611-04", "price", defPrice, "status", "ISSUED")
-            );
-        }
+        // Dữ liệu thực tế: Nếu chuyến chưa bán được vé nào, trả về danh sách rỗng 0 khách
         return list;
     }
 

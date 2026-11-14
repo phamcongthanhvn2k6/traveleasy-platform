@@ -464,24 +464,32 @@ export const WaybillModal: React.FC<WaybillModalProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {data.passengers.map((p) => (
-                      <tr key={p.stt}>
-                        <td style={{ border: '1px solid #000', padding: '5px 4px', textAlign: 'center' }}>{p.stt}</td>
-                        <td style={{ border: '1px solid #000', padding: '5px 4px', textAlign: 'center', fontWeight: 700, color: '#c2410c' }}>
-                          {p.seatCode}
-                        </td>
-                        <td style={{ border: '1px solid #000', padding: '5px 8px', fontWeight: 600 }}>{p.passengerName}</td>
-                        <td style={{ border: '1px solid #000', padding: '5px 8px' }}>{p.phone}</td>
-                        <td style={{ border: '1px solid #000', padding: '5px 8px' }}>{p.pickupPoint}</td>
-                        <td style={{ border: '1px solid #000', padding: '5px 8px' }}>{p.dropoffPoint}</td>
-                        <td style={{ border: '1px solid #000', padding: '5px 6px', textAlign: 'right' }}>
-                          {Number(p.price).toLocaleString('vi-VN')} đ
-                        </td>
-                        <td style={{ border: '1px solid #000', padding: '5px 6px', textAlign: 'center', fontSize: '11px' }}>
-                          {p.ticketCode}
+                    {data.passengers.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} style={{ border: '1px solid #000', padding: '18px', textAlign: 'center', color: '#64748b', fontStyle: 'italic', fontSize: '13px' }}>
+                          Chuyến xe hiện chưa có hành khách đặt chỗ (0 vé đã xuất). Dữ liệu danh sách hành khách sẽ tự động đồng bộ theo thời gian thực khi có giao dịch đặt vé qua Website hoặc Quầy vé POS.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      data.passengers.map((p) => (
+                        <tr key={p.stt}>
+                          <td style={{ border: '1px solid #000', padding: '5px 4px', textAlign: 'center' }}>{p.stt}</td>
+                          <td style={{ border: '1px solid #000', padding: '5px 4px', textAlign: 'center', fontWeight: 700, color: '#c2410c' }}>
+                            {p.seatCode}
+                          </td>
+                          <td style={{ border: '1px solid #000', padding: '5px 8px', fontWeight: 600 }}>{p.passengerName}</td>
+                          <td style={{ border: '1px solid #000', padding: '5px 8px' }}>{p.phone}</td>
+                          <td style={{ border: '1px solid #000', padding: '5px 8px' }}>{p.pickupPoint}</td>
+                          <td style={{ border: '1px solid #000', padding: '5px 8px' }}>{p.dropoffPoint}</td>
+                          <td style={{ border: '1px solid #000', padding: '5px 6px', textAlign: 'right' }}>
+                            {Number(p.price).toLocaleString('vi-VN')} đ
+                          </td>
+                          <td style={{ border: '1px solid #000', padding: '5px 6px', textAlign: 'center', fontSize: '11px' }}>
+                            {p.ticketCode}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

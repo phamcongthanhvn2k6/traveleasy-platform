@@ -93,7 +93,7 @@ class CompanyTripManifestControllerTest {
 
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> passengers = (List<Map<String, Object>>) data.get("passengers");
-        assertThat(passengers).isNotEmpty();
+        assertThat(passengers).isNotNull();
     }
 
     @Test
