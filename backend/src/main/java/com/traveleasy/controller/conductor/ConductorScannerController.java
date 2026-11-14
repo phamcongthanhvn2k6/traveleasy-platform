@@ -3,9 +3,12 @@ package com.traveleasy.controller.conductor;
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.exception.ErrorCode;
-import com.traveleasy.entity.Ticket;
-import com.traveleasy.entity.TicketStatus;
+import com.traveleasy.dto.conductor.ConductorSeatManifestResponse;
+import com.traveleasy.dto.conductor.ValidateTicketResponse;
+import com.traveleasy.entity.*;
 import com.traveleasy.repository.TicketRepository;
+import com.traveleasy.repository.TripRepository;
+import com.traveleasy.repository.TripSeatRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -13,9 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * [S320] Giao Diện Điện Thoại Quét Mã QR Soát Vé Cho Phụ Xe (/conductor/scanner)
@@ -31,72 +34,231 @@ import java.util.Map;
 public class ConductorScannerController {
 
     private final TicketRepository ticketRepository;
+    private final TripRepository tripRepository;
+    private final TripSeatRepository tripSeatRepository;
 
     @GetMapping("/trips/{tripId}/manifest")
-    @Operation(summary = "Tải toàn bộ danh sách vé của chuyến xe (Trip Manifest) để lưu cache Offline vào LocalStorage điện thoại (BUG-NEW-05)")
-    public ApiResponse<Map<String, Object>> getTripManifestForOfflineScan(@PathVariable Long tripId) {
-        List<Map<String, Object>> tickets = List.of(
-                Map.of("ticketCode", "TK-696-A01", "seatNumber", "A01", "passengerName", "Nguyễn Văn An", "phone", "0901***123", "status", "ISSUED", "qrHash", "HASH-A01-SECURE"),
-                Map.of("ticketCode", "TK-696-A02", "seatNumber", "A02", "passengerName", "Trần Thị Bình", "phone", "0912***456", "status", "ISSUED", "qrHash", "HASH-A02-SECURE"),
-                Map.of("ticketCode", "TK-696-B01", "seatNumber", "B01", "passengerName", "Lê Hoàng Cường", "phone", "0983***789", "status", "USED", "qrHash", "HASH-B01-SECURE"),
-                Map.of("ticketCode", "TK-696-B02", "seatNumber", "B02", "passengerName", "Phạm Hải Đăng", "phone", "0977***999", "status", "ISSUED", "qrHash", "HASH-B02-SECURE")
-        );
+    @Transactional(readOnly = true)
+    @Operation(summary = "Tải toàn bộ danh sách vé và sơ đồ ghế của chuyến xe để lưu cache Offline vào LocalStorage (DoD & BUG-NEW-05)")
+    public ApiResponse<ConductorSeatManifestResponse> getTripManifestForOfflineScan(@PathVariable Long tripId) {
+        Trip trip = tripRepository.findByIdWithDetails(tripId).orElse(null);
+        String routeName = (trip != null && trip.getRoute() != null)
+                ? (trip.getRoute().getDepartureLocation() + " ➔ " + trip.getRoute().getArrivalLocation())
+                : "Chuyến xe #" + tripId;
+        String licensePlate = (trip != null && trip.getLicensePlate() != null) ? trip.getLicensePlate() : "51B-888.88";
 
-        Map<String, Object> manifest = new LinkedHashMap<>();
-        manifest.put("tripId", tripId);
-        manifest.put("totalSeats", 34);
-        manifest.put("issuedTicketsCount", tickets.size());
-        manifest.put("syncTimestamp", System.currentTimeMillis());
-        manifest.put("tickets", tickets);
-        manifest.put("offlineReadyNotice", "Đã nạp sẵn danh sách vé vào bộ nhớ máy. Có thể quét vé bình thường khi mất sóng 4G!");
+        List<Ticket> tickets = ticketRepository.findByBookingTripId(tripId);
+        Map<String, Ticket> ticketBySeat = new HashMap<>();
+        for (Ticket t : tickets) {
+            if (t.getSeatNumber() != null) {
+                ticketBySeat.put(t.getSeatNumber().trim().toUpperCase(), t);
+            }
+        }
 
-        return ApiResponse.success(manifest);
+        List<TripSeat> seats = tripSeatRepository.findByTripIdOrderByFloorAscSeatCodeAsc(tripId);
+        List<ConductorSeatManifestResponse.ConductorSeatItem> seatItems = new ArrayList<>();
+
+        int checkedInCount = 0;
+        int pendingCount = 0;
+
+        if (seats != null && !seats.isEmpty()) {
+            for (TripSeat s : seats) {
+                String code = s.getSeatCode().trim().toUpperCase();
+                Ticket t = ticketBySeat.get(code);
+
+                boolean occupied = (t != null && t.getStatus() != TicketStatus.CANCELLED);
+                boolean isCheckedIn = (t != null && t.getStatus() == TicketStatus.USED);
+
+                if (isCheckedIn) {
+                    checkedInCount++;
+                } else if (occupied) {
+                    pendingCount++;
+                }
+
+                String passName = (t != null && t.getBooking() != null) ? t.getBooking().getPassengerName() : null;
+                String passPhone = (t != null && t.getBooking() != null) ? t.getBooking().getPassengerPhone() : null;
+                String tCode = (t != null) ? t.getTicketCode() : null;
+
+                seatItems.add(ConductorSeatManifestResponse.ConductorSeatItem.builder()
+                        .seatCode(code)
+                        .floor(s.getFloor() != null ? s.getFloor() : 1)
+                        .seatType(s.getSeatType() != null ? s.getSeatType() : "STANDARD")
+                        .occupied(occupied)
+                        .checkedIn(isCheckedIn)
+                        .ticketCode(tCode)
+                        .passengerName(passName)
+                        .passengerPhone(passPhone)
+                        .build());
+            }
+        } else {
+            // Fallback danh sách nếu chưa sinh trip_seats
+            for (Ticket t : tickets) {
+                boolean isCheckedIn = (t.getStatus() == TicketStatus.USED);
+                if (isCheckedIn) checkedInCount++;
+                else pendingCount++;
+
+                seatItems.add(ConductorSeatManifestResponse.ConductorSeatItem.builder()
+                        .seatCode(t.getSeatNumber())
+                        .floor(1)
+                        .seatType("STANDARD")
+                        .occupied(true)
+                        .checkedIn(isCheckedIn)
+                        .ticketCode(t.getTicketCode())
+                        .passengerName(t.getBooking() != null ? t.getBooking().getPassengerName() : "Hành khách")
+                        .passengerPhone(t.getBooking() != null ? t.getBooking().getPassengerPhone() : "090***")
+                        .build());
+            }
+        }
+
+        ConductorSeatManifestResponse response = ConductorSeatManifestResponse.builder()
+                .tripId(tripId)
+                .route(routeName)
+                .licensePlate(licensePlate)
+                .totalSeats(seatItems.size())
+                .checkedInCount(checkedInCount)
+                .pendingCount(pendingCount)
+                .seats(seatItems)
+                .build();
+
+        return ApiResponse.success(response);
+    }
+
+    @PostMapping("/validate")
+    @Transactional
+    @Operation(summary = "Kiểm tra tính hợp lệ và cập nhật check_in_status = 'CHECKED_IN' (DoD S320)")
+    public ApiResponse<ValidateTicketResponse> validateTicket(
+            @RequestParam String qrCodeOrTicketCode,
+            @RequestParam(required = false) Long currentTripId) {
+
+        String rawCode = qrCodeOrTicketCode != null ? qrCodeOrTicketCode.trim() : "";
+        if (rawCode.isEmpty()) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Mã vé hoặc mã QR không được để trống!");
+        }
+
+        // Dùng phương thức có lock hoặc query chuẩn
+        Ticket ticket = ticketRepository.findByCodeOrQrHashForUpdate(rawCode)
+                .orElse(ticketRepository.findByCodeOrQrHash(rawCode).orElse(null));
+
+        if (ticket == null) {
+            ValidateTicketResponse res = ValidateTicketResponse.builder()
+                    .valid(false)
+                    .checkInStatus("NOT_FOUND")
+                    .validationColor("RED")
+                    .ticketCode(rawCode)
+                    .message("Vé không tồn tại trên hệ thống!")
+                    .build();
+            return ApiResponse.success("Vé không tồn tại", res);
+        }
+
+        Booking booking = ticket.getBooking();
+        Trip trip = (booking != null) ? booking.getTrip() : null;
+        String routeName = (trip != null && trip.getRoute() != null)
+                ? (trip.getRoute().getDepartureLocation() + " ➔ " + trip.getRoute().getArrivalLocation())
+                : "Không xác định";
+
+        String passName = (booking != null) ? booking.getPassengerName() : "Hành khách";
+        String passPhone = (booking != null) ? booking.getPassengerPhone() : "";
+        Long tripId = (trip != null) ? trip.getId() : null;
+
+        // 1. Kiểm tra nếu vé sai chuyến/sai ngày (Màu VÀNG)
+        if (currentTripId != null && tripId != null && !currentTripId.equals(tripId)) {
+            ValidateTicketResponse res = ValidateTicketResponse.builder()
+                    .valid(false)
+                    .checkInStatus("INVALID_TRIP")
+                    .validationColor("YELLOW")
+                    .ticketCode(ticket.getTicketCode())
+                    .seatNumber(ticket.getSeatNumber())
+                    .passengerName(passName)
+                    .passengerPhone(passPhone)
+                    .tripId(tripId)
+                    .tripRoute(routeName)
+                    .departureTime(trip != null ? trip.getDepartureTime() : null)
+                    .ticketPrice(ticket.getPrice())
+                    .message("CẢNH BÁO: Vé thuộc chuyến xe #" + tripId + " (" + routeName + "), không trùng khớp chuyến hiện tại (#" + currentTripId + ")!")
+                    .build();
+            return ApiResponse.success("Vé sai chuyến", res);
+        }
+
+        // 2. Kiểm tra nếu vé đã dùng / trùng lặp (Màu ĐỎ)
+        if (ticket.getStatus() == TicketStatus.USED) {
+            ValidateTicketResponse res = ValidateTicketResponse.builder()
+                    .valid(false)
+                    .checkInStatus("ALREADY_CHECKED_IN")
+                    .validationColor("RED")
+                    .ticketCode(ticket.getTicketCode())
+                    .seatNumber(ticket.getSeatNumber())
+                    .passengerName(passName)
+                    .passengerPhone(passPhone)
+                    .tripId(tripId)
+                    .tripRoute(routeName)
+                    .departureTime(trip != null ? trip.getDepartureTime() : null)
+                    .ticketPrice(ticket.getPrice())
+                    .message("CẢNH BÁO ĐỎ: Vé " + ticket.getTicketCode() + " (Ghế " + ticket.getSeatNumber() + ") ĐÃ ĐƯỢC SOÁT LÊN XE TRƯỚC ĐÓ!")
+                    .build();
+            return ApiResponse.success("Vé đã soát trước đó", res);
+        }
+
+        // 3. Kiểm tra vé bị hủy hoặc đã đổi
+        if (ticket.getStatus() == TicketStatus.CANCELLED || ticket.getStatus() == TicketStatus.EXCHANGED) {
+            ValidateTicketResponse res = ValidateTicketResponse.builder()
+                    .valid(false)
+                    .checkInStatus(ticket.getStatus().name())
+                    .validationColor("RED")
+                    .ticketCode(ticket.getTicketCode())
+                    .seatNumber(ticket.getSeatNumber())
+                    .passengerName(passName)
+                    .passengerPhone(passPhone)
+                    .tripId(tripId)
+                    .tripRoute(routeName)
+                    .departureTime(trip != null ? trip.getDepartureTime() : null)
+                    .ticketPrice(ticket.getPrice())
+                    .message("CẢNH BÁO: Vé này đã ở trạng thái " + ticket.getStatus() + ", không còn hiệu lực lên xe!")
+                    .build();
+            return ApiResponse.success("Vé không còn hiệu lực", res);
+        }
+
+        // 4. Vé hợp lệ (Màu XANH LÁ) -> Cập nhật check_in_status = 'CHECKED_IN' (TicketStatus.USED)
+        ticket.setStatus(TicketStatus.USED);
+        ticketRepository.save(ticket);
+
+        ValidateTicketResponse res = ValidateTicketResponse.builder()
+                .valid(true)
+                .checkInStatus("CHECKED_IN")
+                .validationColor("GREEN")
+                .ticketCode(ticket.getTicketCode())
+                .seatNumber(ticket.getSeatNumber())
+                .passengerName(passName)
+                .passengerPhone(passPhone)
+                .tripId(tripId)
+                .tripRoute(routeName)
+                .departureTime(trip != null ? trip.getDepartureTime() : null)
+                .ticketPrice(ticket.getPrice())
+                .message("VÉ HỢP LỆ! Đã xác nhận khách " + passName + " lên ghế " + ticket.getSeatNumber() + " thành công.")
+                .build();
+
+        return ApiResponse.success("Soát vé thành công", res);
     }
 
     @PostMapping("/verify-ticket")
     @Transactional
-    @Operation(summary = "Xác minh mã QR vé và chuyển trạng thái vé sang ĐÃ LÊN XE (USED)")
+    @Operation(summary = "Endpoint tương thích ngược cho các client cũ (chuyển tiếp sang validate)")
     public ApiResponse<Map<String, Object>> verifyTicket(
             @RequestParam String qrCodeOrTicketCode,
             @RequestParam(required = false) Long currentTripId) {
 
-        Ticket ticket = ticketRepository.findByTicketCode(qrCodeOrTicketCode).orElse(null);
-        if (ticket == null) {
-            // Mock phản hồi mẫu cho các mã test
-            return ApiResponse.success(Map.of(
-                    "valid", true,
-                    "ticketCode", qrCodeOrTicketCode,
-                    "passengerName", "Nguyễn Văn Du Khách",
-                    "seatNumber", "A05",
-                    "status", "USED",
-                    "message", "Vé hợp lệ! Đã xác nhận khách lên xe thành công."
-            ));
-        }
+        ApiResponse<ValidateTicketResponse> val = validateTicket(qrCodeOrTicketCode, currentTripId);
+        ValidateTicketResponse d = val.getData();
 
-        // Kiểm tra các trường hợp bất thường
-        if (ticket.getStatus() == TicketStatus.USED) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR,
-                    "CẢNH BÁO: Vé " + qrCodeOrTicketCode + " đã được soát lên xe trước đó rồi!");
+        if (!d.isValid()) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, d.getMessage());
         }
-        if (ticket.getStatus() == TicketStatus.CANCELLED) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR,
-                    "CẢNH BÁO: Vé " + qrCodeOrTicketCode + " đã bị HỦY trên hệ thống, không được phép lên xe!");
-        }
-        if (ticket.getStatus() == TicketStatus.EXCHANGED) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR,
-                    "CẢNH BÁO: Vé " + qrCodeOrTicketCode + " đã được ĐỔI sang chuyến khác, mã vé này không còn hiệu lực!");
-        }
-
-        // Cập nhật trạng thái vé sang USED
-        ticket.setStatus(TicketStatus.USED);
-        ticketRepository.save(ticket);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("valid", true);
-        result.put("ticketCode", ticket.getTicketCode());
-        result.put("seatNumber", ticket.getSeatNumber());
+        result.put("ticketCode", d.getTicketCode());
+        result.put("seatNumber", d.getSeatNumber());
         result.put("status", "USED");
-        result.put("message", "Vé hợp lệ! Chào mừng quý khách lên xe.");
+        result.put("message", d.getMessage());
 
         return ApiResponse.success(result);
     }
