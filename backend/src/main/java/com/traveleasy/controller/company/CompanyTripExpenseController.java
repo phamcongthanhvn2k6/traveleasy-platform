@@ -4,17 +4,19 @@ import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.exception.ErrorCode;
 import com.traveleasy.common.security.CompanySecurityService;
+import com.traveleasy.dto.company.expense.CompanyExpenseSummaryResponse;
+import com.traveleasy.dto.company.expense.SaveTripExpenseRequest;
+import com.traveleasy.dto.company.expense.TripProfitLossResponse;
 import com.traveleasy.entity.StaffRole;
+import com.traveleasy.entity.User;
+import com.traveleasy.service.company.TripExpenseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.math.BigDecimal;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * [S318] Phân Hệ Quản Lý Chi Phí Chuyến Xe & Tính Lợi Nhuận Ròng (/company/expenses)
@@ -30,62 +32,52 @@ import java.util.Map;
 public class CompanyTripExpenseController {
 
     private final CompanySecurityService securityService;
+    private final TripExpenseService tripExpenseService;
+
+    @GetMapping
+    @Operation(summary = "Lấy tổng hợp chi phí toàn đội xe (Chỉ OWNER được xem)")
+    public ApiResponse<CompanyExpenseSummaryResponse> getCompanyExpenseSummary(
+            @RequestParam(required = false) Long busCompanyId,
+            Authentication authentication) {
+
+        Long companyId = resolveCompanyId(authentication, busCompanyId);
+        CompanyExpenseSummaryResponse summary = tripExpenseService.getCompanyExpenseSummary(companyId);
+        return ApiResponse.success(summary);
+    }
 
     @GetMapping("/trips/{tripId}")
     @Operation(summary = "Lấy báo cáo chi phí và lợi nhuận ròng (Chỉ OWNER được xem)")
-    public ApiResponse<Map<String, Object>> getTripProfitLoss(
+    public ApiResponse<TripProfitLossResponse> getTripProfitLoss(
             @PathVariable Long tripId,
+            @RequestParam(required = false) Long busCompanyId,
             Authentication authentication) {
 
-        if (authentication != null && authentication.isAuthenticated()) {
-            securityService.requireStaffRole(authentication, StaffRole.OWNER);
-        }
-
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("tripId", tripId);
-        data.put("ticketRevenue", new BigDecimal("10200000.00"));
-        data.put("cargoRevenue", new BigDecimal("1500000.00"));
-        data.put("totalRevenue", new BigDecimal("11700000.00"));
-        data.put("fuelCost", new BigDecimal("3200000.00"));
-        data.put("tollBotCost", new BigDecimal("850000.00"));
-        data.put("driverSalary", new BigDecimal("1200000.00"));
-        data.put("terminalFee", new BigDecimal("450000.00"));
-        data.put("totalExpense", new BigDecimal("5700000.00"));
-        data.put("netProfit", new BigDecimal("6000000.00"));
-        data.put("profitMarginPercent", 51.3);
-        data.put("isLocked", false);
-        data.put("accessScope", "CONFIDENTIAL_OWNER_ONLY");
-        data.put("lockNotice", "Sổ chi phí còn mở. Có thể điều chỉnh hóa đơn trong vòng 48h sau chuyến đi.");
-        return ApiResponse.success(data);
+        Long companyId = resolveCompanyId(authentication, busCompanyId);
+        TripProfitLossResponse response = tripExpenseService.getTripProfitLoss(tripId, companyId);
+        return ApiResponse.success(response);
     }
 
     @PostMapping("/trips/{tripId}")
     @Operation(summary = "Lưu hoặc cập nhật chi phí vận hành chuyến xe (Chỉ OWNER được sửa & Chặn sau 48h)")
-    public ApiResponse<Map<String, Object>> saveTripExpense(
+    public ApiResponse<TripProfitLossResponse> saveTripExpense(
             @PathVariable Long tripId,
-            @RequestBody Map<String, Object> payload,
+            @RequestParam(required = false) Long busCompanyId,
+            @Valid @RequestBody SaveTripExpenseRequest request,
             Authentication authentication) {
 
-        if (authentication != null && authentication.isAuthenticated()) {
-            securityService.requireStaffRole(authentication, StaffRole.OWNER);
+        Long companyId = resolveCompanyId(authentication, busCompanyId);
+        TripProfitLossResponse response = tripExpenseService.saveTripExpense(tripId, companyId, request);
+        return ApiResponse.success(response);
+    }
+
+    private Long resolveCompanyId(Authentication authentication, Long busCompanyId) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "BẠN CẦN ĐĂNG NHẬP để truy cập sổ chi phí và báo cáo tài chính!");
         }
-
-        Boolean isLocked = Boolean.TRUE.equals(payload.get("isLocked"));
-        Object hoursSinceCompletionObj = payload.getOrDefault("hoursSinceCompletion", 12);
-        int hoursSinceCompletion = Integer.parseInt(hoursSinceCompletionObj.toString());
-
-        // Kiểm soát khóa sổ chi phí (Internal Control Guardrail)
-        if (isLocked || hoursSinceCompletion > 48) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR,
-                    "SỔ CHI PHÍ ĐÃ KHÓA: Chuyến xe đã kết thúc quá 48 giờ hoặc đã được chốt kỳ đối soát tài chính. Nghiêm cấm chỉnh sửa bổ sung chi phí!");
+        User user = securityService.requireStaffRole(authentication, StaffRole.OWNER);
+        if (user == null || user.getBusCompanyId() == null) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Tài khoản của bạn chưa được liên kết với nhà xe hợp lệ!");
         }
-
-        Map<String, Object> res = new LinkedHashMap<>();
-        res.put("tripId", tripId);
-        res.put("status", "SAVED");
-        res.put("message", "Đã lưu chi phí chuyến xe thành công và cập nhật báo cáo lãi/lỗ P&L!");
-        res.put("isLocked", false);
-
-        return ApiResponse.success(res);
+        return user.getBusCompanyId();
     }
 }

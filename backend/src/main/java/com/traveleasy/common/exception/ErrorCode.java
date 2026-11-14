@@ -20,7 +20,8 @@ public enum ErrorCode {
     SEAT_ALREADY_BOOKED("SEAT_002", "Ghế đã được đặt bởi hành khách khác", HttpStatus.CONFLICT),
     BOOKING_NOT_FOUND("BOOK_001", "Đơn đặt vé không tồn tại", HttpStatus.NOT_FOUND),
     OPERATION_NOT_ALLOWED("SYS_400", "Thao tác không được phép thực hiện", HttpStatus.BAD_REQUEST),
-    DATA_INTEGRITY_VIOLATION("SYS_409_DB", "Vi phạm ràng buộc dữ liệu hoặc dữ liệu đang được sử dụng", HttpStatus.CONFLICT);
+    DATA_INTEGRITY_VIOLATION("SYS_409_DB", "Vi phạm ràng buộc dữ liệu hoặc dữ liệu đang được sử dụng", HttpStatus.CONFLICT),
+    TOO_MANY_REQUESTS("AUTH_429", "Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.", HttpStatus.TOO_MANY_REQUESTS);
 
     private final String code;
     private final String message;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Bus, 
@@ -25,6 +25,8 @@ import {
   loginWithGoogle as firebaseLoginWithGoogle,
   sendPhoneOtp as firebaseSendPhoneOtp,
   verifyPhoneOtp as firebaseVerifyPhoneOtp,
+  resetPhoneVerification,
+  PHONE_OTP_RESEND_COOLDOWN_SECONDS,
   type AuthResponseData,
 } from '../../../services/firebaseAuthService';
 import { ForgotPasswordModal } from '../../../components/auth/ForgotPasswordModal';
@@ -115,6 +117,12 @@ export const CustomerAuthPage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
+  // Modal bổ sung số điện thoại cho tài khoản Google chưa có SĐT
+  const [googleUserMissingPhone, setGoogleUserMissingPhone] = useState<AuthResponseData | null>(null);
+  const [promptPhoneInput, setPromptPhoneInput] = useState('');
+  const [savingPromptPhone, setSavingPromptPhone] = useState(false);
+  const [promptPhoneError, setPromptPhoneError] = useState<string | null>(null);
+
   // ==================== FIREBASE SOCIAL AUTH STATE ====================
   // Google: đang xử lý popup
   const [socialLoading, setSocialLoading] = useState<'google' | 'otp' | null>(null);
@@ -122,8 +130,16 @@ export const CustomerAuthPage: React.FC = () => {
   const [otpStep, setOtpStep] = useState<'idle' | 'awaiting'>('idle'); // 'awaiting' = đã gửi SMS, chờ nhập OTP
   const [otpPhone, setOtpPhone] = useState('');      // input SĐT (E.164: +84xxxxxxxxx)
   const [otpCode, setOtpCode] = useState('');        // input mã OTP 6 số
+  const [otpCooldown, setOtpCooldown] = useState(0);
   // Container id cho RecaptchaVerifier (invisible) của Firebase Phone Auth
   const RECAPTCHA_CONTAINER_ID = 'firebase-recaptcha-container';
+
+  // Countdown dùng deadline tuyệt đối để không drift khi tab bị browser throttle.
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = window.setInterval(() => setOtpCooldown((value) => Math.max(0, value - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [otpCooldown > 0]);
 
   // Lưu JWT do backend cấp + điều hướng theo role - dùng chung cho mọi luồng đăng nhập
   const applyAuthSuccess = (authData: AuthResponseData, welcomeName: string) => {
@@ -158,6 +174,17 @@ export const CustomerAuthPage: React.FC = () => {
     setSocialLoading('google');
     try {
       const authData = await firebaseLoginWithGoogle();
+      localStorage.setItem('traveleasy_token', authData.token);
+      localStorage.setItem('traveleasy_user', JSON.stringify(authData));
+
+      if (!authData.phone) {
+        setGoogleUserMissingPhone(authData);
+        setPromptPhoneInput('');
+        setPromptPhoneError(null);
+        toast.info('Vui lòng cập nhật số điện thoại để nhà xe liên hệ gửi vé.', 'Bổ Sung Thông Tin');
+        return;
+      }
+
       applyAuthSuccess(authData, authData.fullName || authData.email || 'bạn');
     } catch (err: any) {
       console.error('Google login error:', err);
@@ -171,6 +198,46 @@ export const CustomerAuthPage: React.FC = () => {
     }
   };
 
+  const handleSavePromptPhone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!googleUserMissingPhone) return;
+
+    const cleanPhone = promptPhoneInput.trim().replace(/\s+/g, '');
+    if (!/^(0|\+84)[0-9]{9,10}$/.test(cleanPhone)) {
+      setPromptPhoneError('Số điện thoại không đúng định dạng (VD: 0988123456 hoặc +84988123456)');
+      return;
+    }
+
+    setSavingPromptPhone(true);
+    setPromptPhoneError(null);
+    try {
+      const res = await api.put('/auth/profile', {
+        fullName: googleUserMissingPhone.fullName,
+        phone: cleanPhone,
+      });
+
+      const updatedUser: AuthResponseData = {
+        ...googleUserMissingPhone,
+        phone: res.data?.data?.phone || cleanPhone,
+      };
+      setGoogleUserMissingPhone(null);
+      applyAuthSuccess(updatedUser, updatedUser.fullName || 'bạn');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Không thể cập nhật số điện thoại. Vui lòng thử lại sau.';
+      setPromptPhoneError(msg);
+      toast.error(msg, 'Lỗi Cập Nhật');
+    } finally {
+      setSavingPromptPhone(false);
+    }
+  };
+
+  const handleSkipPromptPhone = () => {
+    if (!googleUserMissingPhone) return;
+    const userToLogin = googleUserMissingPhone;
+    setGoogleUserMissingPhone(null);
+    applyAuthSuccess(userToLogin, userToLogin.fullName || 'bạn');
+  };
+
   // BƯỚC 1 Phone OTP: gửi SMS (Firebase sẽ render reCAPTCHA invisible vào container)
   const handleSendPhoneOtp = async () => {
     if (!isFirebaseConfigured) {
@@ -178,6 +245,10 @@ export const CustomerAuthPage: React.FC = () => {
       return;
     }
     const phone = otpPhone.trim();
+    if (otpCooldown > 0) {
+      toast.warning(`Vui lòng chờ ${otpCooldown} giây trước khi gửi lại mã OTP.`, 'Giới hạn gửi OTP');
+      return;
+    }
     if (!/^\+?\d{9,15}$/.test(phone.replace(/[\s.-]/g, ''))) {
       const msg = 'Số điện thoại không hợp lệ. Dùng dạng quốc tế, vd: +84912345678';
       toast.warning(msg, 'Số Điện Thoại');
@@ -191,9 +262,12 @@ export const CustomerAuthPage: React.FC = () => {
     try {
       await firebaseSendPhoneOtp(e164, RECAPTCHA_CONTAINER_ID);
       setOtpStep('awaiting');
+      setOtpCooldown(PHONE_OTP_RESEND_COOLDOWN_SECONDS);
       toast.info(`Đã gửi mã OTP tới ${e164}. Kiểm tra tin nhắn SMS của bạn.`, 'Gửi OTP');
     } catch (err: any) {
       console.error('Send OTP error:', err);
+      // Nếu Firebase reject request, cho phép thử lại sau khi reset verifier.
+      resetPhoneVerification();
       const msg = err?.message || 'Không gửi được mã OTP. Vui lòng thử lại.';
       toast.error(msg, 'Gửi OTP Thất Bại');
       setErrorMessage(msg);
@@ -994,7 +1068,7 @@ export const CustomerAuthPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleSendPhoneOtp}
-                      disabled={socialLoading !== null || otpStep === 'awaiting'}
+                      disabled={socialLoading !== null || otpCooldown > 0}
                       style={{
                         backgroundColor: '#059669',
                         color: '#ffffff',
@@ -1008,11 +1082,12 @@ export const CustomerAuthPage: React.FC = () => {
                         opacity: otpStep === 'awaiting' ? 0.6 : 1
                       }}
                     >
-                      {socialLoading === 'otp' && otpStep === 'idle' ? 'Đang gửi...' : 'GỬI MÃ OTP'}
+                      {socialLoading === 'otp' && otpStep === 'idle' ? 'Đang gửi...' : otpCooldown > 0 ? `GỬI LẠI (${otpCooldown}s)` : 'GỬI MÃ OTP'}
                     </button>
                   </div>
 
                   {otpStep === 'awaiting' && (
+                    <>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <input
                         type="text"
@@ -1052,6 +1127,10 @@ export const CustomerAuthPage: React.FC = () => {
                         {socialLoading === 'otp' && otpStep === 'awaiting' ? 'Đang xác minh...' : 'XÁC MINH →'}
                       </button>
                     </div>
+                    <div style={{ fontSize: '11px', color: otpCooldown > 0 ? '#64748b' : '#dc2626' }}>
+                      {otpCooldown > 0 ? `Bạn có thể yêu cầu mã mới sau ${otpCooldown} giây.` : 'Mã cũ có thể đã hết hạn. Bạn có thể gửi lại mã mới.'}
+                    </div>
+                    </>
                   )}
 
                   <div style={{ fontSize: '10.5px', color: '#94a3b8' }}>
@@ -1425,6 +1504,146 @@ export const CustomerAuthPage: React.FC = () => {
           setSuccessMessage('Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.');
         }}
       />
+
+      {/* MODAL BỔ SUNG SỐ ĐIỆN THOẠI SAU KHI ĐĂNG NHẬP GOOGLE */}
+      {googleUserMissingPhone && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '460px',
+              width: '100%',
+              padding: '28px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              animation: 'fadeIn 0.2s ease-out',
+            }}
+          >
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div
+                style={{
+                  width: '54px',
+                  height: '54px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ecfdf5',
+                  color: '#059669',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '24px',
+                  marginBottom: '12px',
+                }}
+              >
+                📱
+              </div>
+              <h3 style={{ margin: '0 0 6px', fontSize: '19px', fontWeight: 800, color: '#0f172a' }}>
+                Bổ sung số điện thoại
+              </h3>
+              <p style={{ margin: 0, fontSize: '13px', color: '#64748b', lineHeight: 1.5 }}>
+                Chào mừng <strong>{googleUserMissingPhone.fullName || 'bạn'}</strong>! Để nhận mã vé điện tử SMS và để tài xế liên hệ khi đón trả tận nơi, vui lòng cập nhật số điện thoại của bạn.
+              </p>
+            </div>
+
+            {promptPhoneError && (
+              <div
+                style={{
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  marginBottom: '16px',
+                  color: '#dc2626',
+                  fontSize: '12.5px',
+                  lineHeight: 1.4,
+                }}
+              >
+                {promptPhoneError}
+              </div>
+            )}
+
+            <form onSubmit={handleSavePromptPhone}>
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  SỐ ĐIỆN THOẠI DI ĐỘNG *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  autoFocus
+                  placeholder="Ví dụ: 0988123456"
+                  value={promptPhoneInput}
+                  onChange={(e) => {
+                    setPromptPhoneInput(e.target.value);
+                    if (promptPhoneError) setPromptPhoneError(null);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '11px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingPromptPhone}
+                style={{
+                  width: '100%',
+                  backgroundColor: '#059669',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '12px',
+                  fontSize: '14px',
+                  fontWeight: 800,
+                  cursor: savingPromptPhone ? 'not-allowed' : 'pointer',
+                  opacity: savingPromptPhone ? 0.75 : 1,
+                  boxShadow: '0 4px 6px -1px rgba(5, 150, 105, 0.25)',
+                }}
+              >
+                {savingPromptPhone ? 'Đang lưu số điện thoại...' : 'Lưu số điện thoại & Tiếp tục →'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSkipPromptPhone}
+                disabled={savingPromptPhone}
+                style={{
+                  width: '100%',
+                  marginTop: '10px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  padding: '8px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: '#64748b',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                }}
+              >
+                Để sau, tôi sẽ cập nhật trong Hồ sơ cá nhân
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

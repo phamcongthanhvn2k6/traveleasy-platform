@@ -27,17 +27,18 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:supabase}
   datasource:
     # Supabase Transaction Pooler (Port 6543, prepareThreshold=0 for PgBouncer compatibility):
-    url: ${SUPABASE_DB_URL:jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0}
+    url: ${SUPABASE_DB_URL:jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0&tcpKeepAlive=true&connectTimeout=10&socketTimeout=30&loginTimeout=10}
     username: ${SUPABASE_DB_USERNAME:postgres.ctvcwhdepzyvqsncbslf}
     password: ${SUPABASE_DB_PASSWORD:thanhtyou123@}
     driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
     hikari:
       pool-name: TravelEasyHikariPool
-      maximum-pool-size: 15
-      minimum-idle: 5
+      maximum-pool-size: 12
+      minimum-idle: 2
       idle-timeout: 60000
       max-lifetime: 180000
       connection-timeout: 20000
+      validation-timeout: 3000
       keepalive-time: 30000
       leak-detection-threshold: 60000
   jpa:

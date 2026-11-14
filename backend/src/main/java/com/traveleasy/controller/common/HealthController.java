@@ -1,6 +1,7 @@
 package com.traveleasy.controller.common;
 
 import com.traveleasy.common.dto.ApiResponse;
+import com.traveleasy.config.DatabaseKeepAliveWatchdog;
 import com.traveleasy.repository.TripRepository;
 import com.traveleasy.repository.UserRepository;
 import com.zaxxer.hikari.HikariDataSource;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +36,9 @@ public class HealthController {
     private final UserRepository userRepository;
     private final TripRepository tripRepository;
     private final ObjectProvider<DataSource> dataSourceProvider;
+
+    @Autowired(required = false)
+    private DatabaseKeepAliveWatchdog databaseKeepAliveWatchdog;
 
     @GetMapping
     @Operation(summary = "Kiểm tra toàn diện trạng thái hệ thống, DB pool và bộ nhớ")
@@ -60,6 +65,9 @@ public class HealthController {
 
         // Thông số DB Connection Pool (HikariCP)
         health.put("dbPool", resolveDbPoolMetrics());
+        if (databaseKeepAliveWatchdog != null) {
+            health.put("dbWatchdog", databaseKeepAliveWatchdog.getWatchdogMetrics());
+        }
 
         // Thông tin bộ nhớ JVM
         Runtime runtime = Runtime.getRuntime();

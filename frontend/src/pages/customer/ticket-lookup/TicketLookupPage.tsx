@@ -949,8 +949,18 @@ export const TicketLookupPage: React.FC = () => {
 
               <span
                 style={{
-                  backgroundColor: booking.status === 'CONFIRMED' || booking.status === 'COMPLETED' ? '#dcfce7' : '#fee2e2',
-                  color: booking.status === 'CONFIRMED' || booking.status === 'COMPLETED' ? '#15803d' : '#b91c1c',
+                  backgroundColor:
+                    booking.status === 'CONFIRMED' || booking.status === 'COMPLETED'
+                      ? '#dcfce7'
+                      : booking.status === 'PENDING'
+                      ? '#fef3c7'
+                      : '#fee2e2',
+                  color:
+                    booking.status === 'CONFIRMED' || booking.status === 'COMPLETED'
+                      ? '#15803d'
+                      : booking.status === 'PENDING'
+                      ? '#b45309'
+                      : '#b91c1c',
                   padding: '6px 14px',
                   borderRadius: '20px',
                   fontSize: '12.5px',
@@ -967,6 +977,10 @@ export const TicketLookupPage: React.FC = () => {
                 ) : booking.status === 'COMPLETED' ? (
                   <>
                     <CheckCircle2 size={14} /> HOÀN THÀNH
+                  </>
+                ) : booking.status === 'PENDING' ? (
+                  <>
+                    <Clock size={14} /> CHỜ THANH TOÁN (10 PHÚT)
                   </>
                 ) : (
                   <>

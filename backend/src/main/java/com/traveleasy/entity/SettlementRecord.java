@@ -23,8 +23,11 @@ public class SettlementRecord {
     @Column(nullable = false, unique = true, length = 50)
     private String code;
 
+    @Column(name = "period_code", length = 50)
+    private String periodCode;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id", nullable = false)
+    @JoinColumn(name = "bus_company_id", nullable = false)
     private BusCompany company;
 
     @Column(name = "period_name", nullable = false, length = 100)
@@ -39,6 +42,10 @@ public class SettlementRecord {
     @Column(name = "ticket_count", nullable = false)
     @Builder.Default
     private Integer ticketCount = 0;
+
+    @Column(name = "previous_balance", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal previousBalance = BigDecimal.ZERO;
 
     @Column(name = "gross_amount", nullable = false, precision = 15, scale = 2)
     @Builder.Default

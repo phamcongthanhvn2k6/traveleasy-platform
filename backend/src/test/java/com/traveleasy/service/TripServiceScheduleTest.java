@@ -42,6 +42,12 @@ class TripServiceScheduleTest {
     @Mock
     private com.traveleasy.service.automation.TripAutomationService tripAutomationService;
 
+    @Mock
+    private com.traveleasy.service.company.DynamicPricingService dynamicPricingService;
+
+    @Mock
+    private com.traveleasy.repository.CompanyPricingRuleRepository companyPricingRuleRepository;
+
     @InjectMocks
     private TripService tripService;
 

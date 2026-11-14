@@ -15,6 +15,65 @@ export interface AppNotification {
   meta?: Record<string, any>;
 }
 
+// Default Seed Notifications for CUSTOMER / USER (Hành khách)
+export const CUSTOMER_DEFAULT_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: 'cus-notif-1',
+    type: 'BOOKING',
+    role: 'CUSTOMER',
+    title: '🎟️ Đặt vé thành công - Mã vé BK-9812',
+    message: 'Vé xe Limousine TP.HCM đi Đà Lạt (19:00 hôm nay) đã thanh toán thành công. Mã QR lên xe đã sẵn sàng.',
+    timestamp: '5 phút trước',
+    link: '/lookup?code=BK-9812',
+    isRead: false,
+    priority: 'HIGH',
+  },
+  {
+    id: 'cus-notif-2',
+    type: 'TRIP',
+    role: 'CUSTOMER',
+    title: '⏰ Nhắc giờ khởi hành: Còn 2 tiếng nữa xe chạy',
+    message: 'Chuyến xe đi Đà Lạt khởi hành lúc 19:00 tại Bến xe Miền Đông mới. Quý khách vui lòng có mặt trước 15 phút.',
+    timestamp: '30 phút trước',
+    link: '/tracking',
+    isRead: false,
+    priority: 'HIGH',
+  },
+  {
+    id: 'cus-notif-3',
+    type: 'FINANCE',
+    role: 'CUSTOMER',
+    title: '🎁 Tặng bạn Voucher GIAM30K',
+    message: 'Mã giảm giá 30.000đ cho chuyến xe liên tỉnh cuối tuần này đã được lưu vào ví ưu đãi của bạn.',
+    timestamp: '2 giờ trước',
+    link: '/promotions',
+    isRead: false,
+    priority: 'NORMAL',
+  },
+  {
+    id: 'cus-notif-4',
+    type: 'COMPANY',
+    role: 'CUSTOMER',
+    title: '🔄 Yêu cầu đổi vé được chấp thuận',
+    message: 'Nhà xe Phương Trang đã phê duyệt đổi vé sang chuyến 21:00. Vé điện tử mới đã được cập nhật.',
+    timestamp: '5 giờ trước',
+    link: '/lookup?code=BK-9812',
+    isRead: true,
+    priority: 'NORMAL',
+  },
+  {
+    id: 'cus-notif-5',
+    type: 'REVIEW',
+    role: 'CUSTOMER',
+    title: '⭐️ Đánh giá chuyến đi nhận điểm thưởng',
+    message: 'Bạn vừa hoàn thành chuyến đi Đà Lạt. Hãy gửi cảm nhận và chấm điểm tài xế để nhận ngay 100 xu thưởng!',
+    timestamp: '1 ngày trước',
+    link: '/reviews',
+    isRead: true,
+    priority: 'NORMAL',
+  },
+];
+
 // Default Seed Notifications for OPERATOR (Nhà xe đối tác)
 export const OPERATOR_DEFAULT_NOTIFICATIONS: AppNotification[] = [
   {

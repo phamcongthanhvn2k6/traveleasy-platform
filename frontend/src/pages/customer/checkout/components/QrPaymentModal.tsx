@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QrCode, CheckCircle2, Copy, Check, AlertCircle, RefreshCw, Loader2, Zap } from 'lucide-react';
+import { QrCode, CheckCircle2, Copy, Check, AlertCircle, RefreshCw, Loader2, Zap, Clock, XCircle } from 'lucide-react';
 import { toast } from '../../../../context/ToastContext';
 import { paymentService, BankTransferDetails } from '../../../../services/paymentService';
 
@@ -9,6 +9,7 @@ interface Props {
   qrCodeUrl?: string;
   paymentUrl?: string;
   bankDetails?: BankTransferDetails;
+  expiresAt?: number;
   onSuccess: () => void;
   onClose: () => void;
 }
@@ -19,6 +20,7 @@ export const QrPaymentModal: React.FC<Props> = ({
   qrCodeUrl,
   paymentUrl,
   bankDetails,
+  expiresAt,
   onSuccess,
   onClose,
 }) => {
@@ -28,6 +30,15 @@ export const QrPaymentModal: React.FC<Props> = ({
   const [mocking, setMocking] = useState(false);
   const [checking, setChecking] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Master Timer 10 phút (600s) đồng bộ với Backend
+  const [timeLeft, setTimeLeft] = useState<number>(() => {
+    if (expiresAt && !isNaN(expiresAt)) {
+      return Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+    }
+    return 600;
+  });
+  const [isExpired, setIsExpired] = useState(false);
 
   const bankName = bankDetails?.bankName || 'MB Bank (Ngân hàng Quân Đội)';
   const accountNumber = bankDetails?.accountNumber || '0944 3543 98';
@@ -41,9 +52,32 @@ export const QrPaymentModal: React.FC<Props> = ({
       transferContent
     )}&accountName=${encodeURIComponent(accountHolder)}`;
 
-  // Real-time polling check payment status every 4 seconds
+  // Đồng hồ đếm ngược 10 phút giữ chỗ thanh toán
   useEffect(() => {
-    if (isSuccess) return;
+    if (isSuccess || isExpired) return;
+
+    const timer = setInterval(() => {
+      const remaining = expiresAt
+        ? Math.max(0, Math.floor((expiresAt - Date.now()) / 1000))
+        : null;
+
+      setTimeLeft((prev) => {
+        const next = remaining !== null ? remaining : (prev > 0 ? prev - 1 : 0);
+        if (next <= 0) {
+          setIsExpired(true);
+          clearInterval(timer);
+          toast.error('Thời hạn thanh toán 10 phút đã kết thúc! Ghế đã được tự động giải phóng.', 'Hết Hạn Giữ Chỗ');
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [expiresAt, isSuccess, isExpired]);
+
+  // Real-time polling check payment status every 4 seconds (dừng ngay khi hết hạn hoặc thành công)
+  useEffect(() => {
+    if (isSuccess || isExpired) return;
 
     const interval = setInterval(async () => {
       try {
@@ -52,6 +86,10 @@ export const QrPaymentModal: React.FC<Props> = ({
           setIsSuccess(true);
           toast.success('Hệ thống đã nhận được tiền chuyển khoản! Đang phát hành vé...', 'Thanh Toán Thành Công');
           clearInterval(interval);
+        } else if (status.bookingStatus === 'CANCELLED') {
+          setIsExpired(true);
+          clearInterval(interval);
+          toast.error('Đơn đặt vé đã bị hủy do hết hạn giữ chỗ 10 phút!', 'Đơn Đã Hủy');
         }
       } catch (err) {
         // Silent fail on polling error
@@ -59,7 +97,13 @@ export const QrPaymentModal: React.FC<Props> = ({
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [bookingCode, isSuccess, onSuccess]);
+  }, [bookingCode, isSuccess, isExpired, onSuccess]);
+
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
 
   const handleCopy = (text: string, type: 'acc' | 'content') => {
     navigator.clipboard.writeText(text);
@@ -219,6 +263,50 @@ export const QrPaymentModal: React.FC<Props> = ({
               </button>
             </div>
           </div>
+        ) : isExpired ? (
+          <div style={{ padding: '24px 10px', textAlign: 'center' }}>
+            <div
+              style={{
+                width: '72px',
+                height: '72px',
+                borderRadius: '50%',
+                backgroundColor: '#fee2e2',
+                color: '#dc2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px auto',
+              }}
+            >
+              <XCircle size={44} />
+            </div>
+            <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#991b1b', margin: '0 0 8px 0' }}>
+              Hết Thời Gian Giữ Chỗ (10 Phút)
+            </h3>
+            <p style={{ color: '#475569', fontSize: '13.5px', lineHeight: 1.6, marginBottom: '20px' }}>
+              Thời hạn giữ chỗ và thanh toán 10 phút cho đơn <strong>{bookingCode}</strong> đã kết thúc. Để đảm bảo công bằng cho các hành khách khác, hệ thống đã tự động hủy đơn và giải phóng ghế về trạng thái sẵn sàng.
+            </p>
+            <div style={{ backgroundColor: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '10px', padding: '12px 14px', marginBottom: '20px', fontSize: '13px', color: '#9a3412', textAlign: 'left' }}>
+              💡 <strong>Lưu ý:</strong> Vui lòng quay lại tìm chuyến xe để chọn lại ghế và đặt đơn mới. Nếu quý khách đã chuyển khoản sau khi hết giờ, hệ thống sẽ tự động hoàn tiền theo quy định.
+            </div>
+            <button
+              onClick={onClose}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#dc2626',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                fontWeight: 800,
+                fontSize: '14px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)'
+              }}
+            >
+              Đóng Cửa Sổ & Chọn Ghế Mới
+            </button>
+          </div>
         ) : (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '6px' }}>
@@ -228,6 +316,28 @@ export const QrPaymentModal: React.FC<Props> = ({
               <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                 Quét Mã QR Chuyển Khoản Tức Thì
               </h3>
+            </div>
+
+            {/* Đồng hồ đếm ngược Master Timer 10 phút */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: timeLeft < 180 ? '#fef2f2' : '#f0fdf4',
+                  border: `1.5px solid ${timeLeft < 180 ? '#f87171' : '#86efac'}`,
+                  color: timeLeft < 180 ? '#b91c1c' : '#166534',
+                  padding: '5px 14px',
+                  borderRadius: '20px',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  boxShadow: timeLeft < 180 ? '0 0 10px rgba(239, 68, 68, 0.2)' : 'none',
+                }}
+              >
+                <Clock size={15} />
+                <span>Thời gian giữ chỗ thanh toán còn: <strong>{formatTimer(timeLeft)}</strong></span>
+              </div>
             </div>
 
             <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px 0' }}>

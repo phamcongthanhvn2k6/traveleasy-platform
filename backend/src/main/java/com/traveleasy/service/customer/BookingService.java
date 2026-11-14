@@ -35,6 +35,7 @@ public class BookingService {
     @org.springframework.context.annotation.Lazy
     private final TripService tripService;
     private final SeatRealtimeService seatRealtimeService;
+    private final com.traveleasy.service.company.DynamicPricingService dynamicPricingService;
 
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats", "trips_search"}, allEntries = true)
@@ -77,11 +78,54 @@ public class BookingService {
             }
         }
 
+        // Kiểm tra kênh đặt vé (POS Channel Protection): Quầy bến xe bỏ qua giá động
+        // BẢO MẬT: Chỉ nhân viên nhà xe (OPERATOR) hoặc ADMIN mới có quyền tạo đơn kênh POS/COUNTER
+        boolean requestedPos = request.getBookingChannel() != null &&
+                ("POS".equalsIgnoreCase(request.getBookingChannel().trim()) ||
+                 "COUNTER".equalsIgnoreCase(request.getBookingChannel().trim()));
+
+        boolean isAuthorizedPos = false;
+        if (requestedPos) {
+            if (userEmail != null && !userEmail.isBlank()) {
+                Optional<User> callerOpt = userRepository.findByEmail(userEmail);
+                if (callerOpt.isPresent()) {
+                    Role callerRole = callerOpt.get().getRole();
+                    if (callerRole == Role.OPERATOR || callerRole == Role.ADMIN) {
+                        isAuthorizedPos = true;
+                    }
+                }
+            }
+            if (!isAuthorizedPos) {
+                log.warn("Cảnh báo bảo mật: Người dùng '{}' không có vai trò nhân viên nhà xe nhưng gửi bookingChannel='{}'. Tự động chuyển về ONLINE.",
+                        userEmail, request.getBookingChannel());
+                request.setBookingChannel("ONLINE");
+            }
+        }
+
+        boolean isPosChannel = isAuthorizedPos;
+
+        BigDecimal unitPrice;
+        if (isPosChannel) {
+            unitPrice = trip.getPrice();
+            log.info("Kênh đặt vé tại quầy (POS/COUNTER): Bỏ qua tính giá vé động, áp dụng giá gốc={}", unitPrice);
+        } else {
+            // Tái tính toán đơn giá vé động tại micro-second đặt chỗ (Anti-tampering)
+            com.traveleasy.dto.company.pricing.DynamicPricingResult dynamicPricing = (dynamicPricingService != null)
+                    ? dynamicPricingService.calculateDynamicPrice(trip, LocalDateTime.now())
+                    : null;
+
+            unitPrice = (dynamicPricing != null && dynamicPricing.isRuleApplied())
+                    ? dynamicPricing.getCalculatedPrice()
+                    : trip.getPrice();
+        }
+
         // Tính tổng tiền & Cập nhật trạng thái ghế
         BigDecimal baseSeatTotal = BigDecimal.ZERO;
+        BigDecimal rawSeatTotal = BigDecimal.ZERO;
         for (TripSeat seat : requestedSeats) {
             seat.setStatus(SeatStatus.BOOKED);
-            baseSeatTotal = baseSeatTotal.add(trip.getPrice());
+            baseSeatTotal = baseSeatTotal.add(unitPrice);
+            rawSeatTotal = rawSeatTotal.add(trip.getPrice());
         }
         tripSeatRepository.saveAll(requestedSeats);
 
@@ -97,16 +141,17 @@ public class BookingService {
             discount = request.getDiscountAmount();
         }
 
-        // Ưu tiên finalAmount từ request hợp lệ, hoặc tự động tính theo công thức
-        BigDecimal totalAmount;
-        if (request.getFinalAmount() != null && request.getFinalAmount().compareTo(BigDecimal.ZERO) >= 0) {
-            totalAmount = request.getFinalAmount();
-        } else {
-            totalAmount = baseSeatTotal.add(insuranceAmount).subtract(discount);
-            if (totalAmount.compareTo(BigDecimal.ZERO) < 0) {
-                totalAmount = BigDecimal.ZERO;
-            }
+        // Tự động kiểm thực và ghi đè giá trị chuẩn của Backend (Chống can thiệp client-side)
+        BigDecimal expectedTotal = baseSeatTotal.add(insuranceAmount).subtract(discount);
+        if (expectedTotal.compareTo(BigDecimal.ZERO) < 0) {
+            expectedTotal = BigDecimal.ZERO;
         }
+
+        if (request.getFinalAmount() != null && request.getFinalAmount().compareTo(expectedTotal) != 0) {
+            log.warn("CANH BAO AN NINH: Client gui finalAmount={} lech so voi Backend expectedTotal={}. Tu dong ghi de gia chuan cua he thong.",
+                    request.getFinalAmount(), expectedTotal);
+        }
+        BigDecimal totalAmount = expectedTotal;
 
         // Trừ ghế trống trên chuyến xe
         trip.setAvailableSeats(trip.getAvailableSeats() - requestedSeats.size());
@@ -148,10 +193,11 @@ public class BookingService {
                 .dropoffPoint(dropoffName)
                 .seatNumbers(String.join(", ", request.getSeatNumbers()))
                 .totalAmount(totalAmount)
-                .originalAmount(baseSeatTotal)
+                .originalAmount(rawSeatTotal)
                 .discountAmount(discount)
                 .insuranceAmount(insuranceAmount)
                 .voucherCode(request.getVoucherCode())
+                .bookingChannel(request.getBookingChannel() != null ? request.getBookingChannel().trim() : "ONLINE")
                 .paymentMethod(request.getPaymentMethod())
                 .status(initialStatus)
                 .build();
@@ -169,7 +215,7 @@ public class BookingService {
                     .booking(savedBooking)
                     .ticketCode(ticketCode)
                     .seatNumber(seat.getSeatCode())
-                    .price(trip.getPrice())
+                    .price(unitPrice)
                     .qrCodeHash(qrHash)
                     .status(TicketStatus.ISSUED)
                     .build();
@@ -619,8 +665,8 @@ public class BookingService {
                 .build()).collect(Collectors.toList());
 
         TripResponse tripResponse = (routePoints != null && !routePoints.isEmpty())
-                ? tripService.mapToTripResponse(b.getTrip(), routePoints)
-                : tripService.mapToTripResponse(b.getTrip());
+                ? (tripService != null ? tripService.mapToTripResponse(b.getTrip(), routePoints) : null)
+                : (tripService != null ? tripService.mapToTripResponse(b.getTrip()) : null);
 
         return BookingResponse.builder()
                 .id(b.getId())

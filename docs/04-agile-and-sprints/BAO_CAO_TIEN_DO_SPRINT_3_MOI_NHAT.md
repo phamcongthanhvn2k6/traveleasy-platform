@@ -19,22 +19,22 @@
 Sprint 3 tập trung cao độ vào **Kiểm thử tích hợp E2E (QA & Testing), Chống đặt trùng (Concurrency Pessimistic Lock), Webhook Thanh toán VNPAY, Đăng nhập Firebase Google/Phone OTP và Tối ưu hóa vận hành**.
 
 ```mermaid
-pie title Tỷ lệ hoàn thành Story Points Sprint 3 (Tổng 48 SP)
-    "Đã hoàn thành - Done Sprint 3 (42 SP - 87.5%)" : 42
-    "Đang kiểm thử - In Progress (3 SP - 6.25%)" : 3
-    "Chờ thực hiện - To Do (2 SP - 4.15%)" : 2
-    "Backlog chuyển tiếp (1 SP - 2.1%)" : 1
+pie title Tỷ lệ hoàn thành Story Points Sprint 3 (Tổng 51 SP)
+    "Đã hoàn thành - Done Sprint 3 (42 SP - 82.4%)" : 42
+    "Đang kiểm thử - In Progress (3 SP - 5.9%)" : 3
+    "Chờ thực hiện - To Do (5 SP - 9.8%)" : 5
+    "Backlog chuyển tiếp (1 SP - 1.9%)" : 1
 ```
 
 ### Bảng chỉ số đối soát thực tế Sprint 3 trên Trello:
 
 | Chỉ số theo dõi (Sprint 3 Metrics) | Kế hoạch Scrum | Thực tế trên Trello | Tỷ lệ hoàn thành | Đánh giá trạng thái |
 | :--- | :---: | :---: | :---: | :---: |
-| **Tổng số thẻ User Stories Sprint 3** | **36 thẻ** | **30 thẻ trong `Done Sprint 3`** | **83.3%** số thẻ | 🚀 Vượt tiến độ lõi |
-| **Tổng điểm Story Points Sprint 3** | **48 SP** | **42 SP Done** | **87.5%** khối lượng | 🏆 Hoàn thành xuất sắc |
-| **Thẻ đang triển khai (`In Progress`)** | - | **3 thẻ (3 SP)** | **6.25%** | 🟡 Đang hoàn thiện |
-| **Thẻ chờ thực hiện (`To Do`)** | - | **2 thẻ (2 SP)** | **4.15%** | 🔵 Sẵn sàng kiểm tra |
-| **Thẻ trong `Sprint Backlog - S3`** | - | **1 thẻ (1 SP)** | **2.1%** | ⚪ Chuẩn bị đóng gói |
+| **Tổng số thẻ User Stories Sprint 3** | **37 thẻ** | **30 thẻ trong `Done Sprint 3`** | **81.1%** số thẻ | 🚀 Vượt tiến độ lõi |
+| **Tổng điểm Story Points Sprint 3** | **51 SP** | **42 SP Done** | **82.4%** khối lượng | 🏆 Hoàn thành xuất sắc |
+| **Thẻ đang triển khai (`In Progress`)** | - | **3 thẻ (3 SP)** | **5.9%** | 🟡 Đang hoàn thiện |
+| **Thẻ chờ thực hiện (`To Do`)** | - | **3 thẻ (5 SP)** | **9.8%** | 🔵 Sẵn sàng triển khai |
+| **Thẻ trong `Sprint Backlog - S3`** | - | **1 thẻ (1 SP)** | **1.9%** | ⚪ Chuẩn bị đóng gói |
 | **Số Pull Request đã nghiệm thu & Merge** | 0 PR | **7 PRs trọng yếu** | **100% Clean** | 🟢 0 Merge Conflict, Build Pass 100% |
 
 ---

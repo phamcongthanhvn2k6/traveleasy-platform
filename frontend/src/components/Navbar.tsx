@@ -24,7 +24,8 @@ import {
   Sun,
   Moon,
   QrCode,
-  Menu
+  Menu,
+  Navigation
 } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
@@ -321,6 +322,29 @@ export const Navbar: React.FC = () => {
               }}
             >
               <Clock size={15} /> <span>Lịch Trình</span>
+            </Link>
+
+            {/* 5. Chức năng Định Vị GPS Live Tracking (Theo dõi hành trình xe chạy thời gian thực) */}
+            <Link 
+              to="/tracking" 
+              title="[S306] Theo dõi định vị GPS Live Tracking xe chạy thời gian thực"
+              style={{ 
+                textDecoration: 'none', 
+                color: location.pathname.startsWith('/tracking') ? (isDark ? '#34d399' : '#059669') : (isDark ? '#cbd5e1' : '#475569'), 
+                fontWeight: location.pathname.startsWith('/tracking') ? 700 : 600, 
+                fontSize: '13.5px',
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '5px',
+                borderBottom: location.pathname.startsWith('/tracking') ? `2px solid ${isDark ? '#34d399' : '#059669'}` : '2px solid transparent',
+                padding: '8px 0',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Navigation size={15} color="#10b981" /> <span style={{ color: location.pathname.startsWith('/tracking') ? (isDark ? '#34d399' : '#059669') : undefined }}>Định Vị GPS</span>
+              <span style={{ fontSize: '9px', fontWeight: 800, backgroundColor: isDark ? 'rgba(16, 185, 129, 0.2)' : '#ecfdf5', color: '#10b981', padding: '1px 5px', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                LIVE
+              </span>
             </Link>
 
             {/* 5. Chức năng Khuyến Mãi (Mã giảm giá, Voucher hoàn tiền) */}
@@ -795,6 +819,7 @@ export const Navbar: React.FC = () => {
                 { label: 'Tra Cứu Vé Bằng Mã / SĐT', path: '/lookup', icon: ShieldCheck },
                 { label: 'Vé Của Tôi (Lịch Sử Đặt)', path: '/my-tickets', icon: Ticket },
                 { label: 'Lịch Trình Tuyến Đường', path: '/schedule', icon: Clock },
+                { label: 'Định Vị GPS Live Tracking', path: '/tracking', icon: Navigation },
                 { label: 'Đánh Giá Từ Khách Hàng', path: '/reviews', icon: Star },
                 { label: 'Khuyến Mại & Voucher Hot', path: '/promotions', icon: Tag },
               ].map((item) => {
