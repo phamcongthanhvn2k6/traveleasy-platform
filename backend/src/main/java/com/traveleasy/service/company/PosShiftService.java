@@ -192,7 +192,7 @@ public class PosShiftService {
         List<Booking> posBookings = bookingRepository.findByPosShiftIdAndBookingChannelAndPaymentMethodAndStatusInOrderByCreatedAtAsc(
                 shift.getId(),
                 "POS_COUNTER",
-                PaymentMethod.CASH,
+                PaymentMethod.COD,
                 List.of(BookingStatus.CONFIRMED, BookingStatus.COMPLETED)
         );
         posBookings.forEach(b -> sales.add(new CashSaleResponse(
