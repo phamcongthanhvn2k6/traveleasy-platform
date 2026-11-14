@@ -5,7 +5,7 @@
  * - Tab 2: Danh sách và xử lý duyệt hoàn hủy vé (Phân bổ phạt 80/20 - BUG-NEW-03, Tự nhả ghế - BUG-NEW-04)
  * @author Nguyễn Đại Phát (daiphat)
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   RotateCcw,
   Percent,
@@ -28,7 +28,9 @@ import {
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import { useTheme } from '../../../context/ThemeContext';
-import axios from 'axios';
+import api from '../../../services/api';
+import { getStoredCompany } from '../../../utils/companyHelper';
+import { TableSkeleton } from '../../../components/common/Skeleton';
 
 interface RefundRule {
   id: number;
@@ -57,6 +59,7 @@ interface RefundRequestItem {
 
 export const CancellationRefundPage: React.FC = () => {
   const { isDark } = useTheme();
+  const currentCompany = getStoredCompany();
   const [activeTab, setActiveTab] = useState<'rules' | 'requests'>('requests');
   const [rules, setRules] = useState<RefundRule[]>([
     {
@@ -89,92 +92,49 @@ export const CancellationRefundPage: React.FC = () => {
     },
   ]);
 
-  // Danh sách yêu cầu hoàn hủy
-  const [requests, setRequests] = useState<RefundRequestItem[]>([
-    {
-      id: 101,
-      ticketCode: 'TK-20261114-A05',
-      passengerName: 'Nguyễn Văn Khách',
-      passengerPhone: '0988776655',
-      routeName: 'Bến xe Miền Đông ➔ Bến xe Đà Lạt',
-      seatNumber: 'A05',
-      originalPrice: 380000,
-      status: 'ISSUED',
-      cancellationFee: 38000,
-      refundAmount: 342000,
-      busCompanyShare: 30400,
-      platformShare: 7600,
-      departureTime: '19:00 15/11/2026',
-      requestTime: '10:15 14/11/2026',
-    },
-    {
-      id: 102,
-      ticketCode: 'TK-20261114-B02',
-      passengerName: 'Lê Hoàng Yến',
-      passengerPhone: '0912334455',
-      routeName: 'Bến xe Miền Tây ➔ Bến xe Cần Thơ',
-      seatNumber: 'B02',
-      originalPrice: 220000,
-      status: 'CANCELLED',
-      cancellationFee: 66000,
-      refundAmount: 154000,
-      busCompanyShare: 52800,
-      platformShare: 13200,
-      departureTime: '08:00 14/11/2026',
-      requestTime: '18:30 13/11/2026',
-    },
-    {
-      id: 103,
-      ticketCode: 'TK-20261114-A12',
-      passengerName: 'Trần Đình Trọng',
-      passengerPhone: '0909112233',
-      routeName: 'Hà Nội ➔ Sa Pa',
-      seatNumber: 'A12',
-      originalPrice: 450000,
-      status: 'ISSUED',
-      cancellationFee: 135000,
-      refundAmount: 315000,
-      busCompanyShare: 108000,
-      platformShare: 27000,
-      departureTime: '22:00 14/11/2026',
-      requestTime: '09:00 14/11/2026',
-    },
-  ]);
-
+  const [requests, setRequests] = useState<RefundRequestItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchCode, setSearchCode] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedTicketForCalc, setSelectedTicketForCalc] = useState<any | null>(null);
 
-  // Fetch real rules & requests from backend if available
-  useEffect(() => {
-    const fetchRealData = async () => {
-      try {
-        const token = localStorage.getItem('traveleasy_token');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        const rulesRes = await axios.get('/api/v1/company/refunds/rules', { headers });
-        if (rulesRes.data?.data && Array.isArray(rulesRes.data.data)) {
-          setRules(rulesRes.data.data);
-        }
+  // Fetch real rules & requests from backend DB
+  const fetchRealData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [rulesRes, reqRes] = await Promise.allSettled([
+        api.get('/company/refunds/rules', {
+          params: { companyId: currentCompany.id, busCompanyId: currentCompany.id },
+        }),
+        api.get('/company/refunds/requests', {
+          params: { companyId: currentCompany.id, busCompanyId: currentCompany.id },
+        }),
+      ]);
 
-        const reqRes = await axios.get('/api/v1/company/refunds/requests', { headers });
-        if (reqRes.data?.data && Array.isArray(reqRes.data.data) && reqRes.data.data.length > 0) {
-          setRequests(reqRes.data.data);
-        }
-      } catch (err) {
-        // Fallback to initial seeds gracefully
+      if (rulesRes.status === 'fulfilled' && rulesRes.value.data?.data && Array.isArray(rulesRes.value.data.data)) {
+        setRules(rulesRes.value.data.data);
       }
-    };
+
+      if (reqRes.status === 'fulfilled' && reqRes.value.data?.data && Array.isArray(reqRes.value.data.data)) {
+        setRequests(reqRes.value.data.data);
+      }
+    } catch (err) {
+      console.error('Lỗi khi tải dữ liệu hoàn hủy vé:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentCompany.id]);
+
+  useEffect(() => {
     fetchRealData();
-  }, []);
+  }, [fetchRealData]);
 
   const handleSaveRules = async () => {
     try {
-      const token = localStorage.getItem('traveleasy_token');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      await axios.put('/api/v1/company/refunds/rules', rules, { headers });
+      await api.put('/company/refunds/rules', rules);
       toast.success('Đã lưu cấu hình biểu phí hoàn hủy vé vào CSDL nhà xe!', 'Cập Nhật Biểu Phí');
-    } catch {
-      toast.success('Đã lưu cấu hình biểu phí hoàn hủy vé thành công!', 'Cập Nhật Biểu Phí');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Không thể lưu biểu phí, vui lòng thử lại!', 'Lỗi');
     }
   };
 
@@ -185,12 +145,16 @@ export const CancellationRefundPage: React.FC = () => {
     }
 
     try {
-      const token = localStorage.getItem('traveleasy_token');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await axios.post(
-        `/api/v1/company/refunds/calculate?ticketCode=${encodeURIComponent(searchCode.trim())}`,
-        {},
-        { headers }
+      const res = await api.post(
+        `/company/refunds/calculate`,
+        null,
+        {
+          params: {
+            ticketCode: searchCode.trim(),
+            companyId: currentCompany.id,
+            busCompanyId: currentCompany.id,
+          },
+        }
       );
       if (res.data?.data) {
         setSelectedTicketForCalc(res.data.data);
@@ -198,37 +162,8 @@ export const CancellationRefundPage: React.FC = () => {
         return;
       }
     } catch (err: any) {
-      // Local fallback calculation if offline or mock
-    }
-
-    // Mock search fallback
-    const found = requests.find((r) => r.ticketCode.toLowerCase() === searchCode.trim().toLowerCase());
-    if (found) {
-      setSelectedTicketForCalc({
-        ticketCode: found.ticketCode,
-        originalPrice: found.originalPrice,
-        hoursBeforeDeparture: 26,
-        cancellationFeePercent: 10,
-        cancellationFee: found.cancellationFee,
-        refundAmountToCustomer: found.refundAmount,
-        busCompanyPenaltyRevenue: found.busCompanyShare,
-        platformServiceFeeRevenue: found.platformShare,
-        tierDescription: 'Hủy trước 24h: Phạt 10%, Hoàn 90%',
-        settlementImpactNotice: `Khoản bồi hoàn ${found.busCompanyShare.toLocaleString('vi-VN')} đ sẽ được cộng vào kỳ đối soát tiếp theo của nhà xe.`,
-      });
-    } else {
-      setSelectedTicketForCalc({
-        ticketCode: searchCode.trim().toUpperCase(),
-        originalPrice: 350000,
-        hoursBeforeDeparture: 18,
-        cancellationFeePercent: 30,
-        cancellationFee: 105000,
-        refundAmountToCustomer: 245000,
-        busCompanyPenaltyRevenue: 84000,
-        platformServiceFeeRevenue: 21000,
-        tierDescription: 'Hủy từ 12h - 24h: Phạt 30%, Hoàn 70%',
-        settlementImpactNotice: 'Khoản bồi hoàn 84.000 đ sẽ được cộng vào kỳ đối soát tiếp theo của nhà xe.',
-      });
+      const errMsg = err?.response?.data?.message || `Không tìm thấy vé ${searchCode.trim()} trong hệ thống!`;
+      toast.error(errMsg, 'Lỗi Tra Cứu');
     }
   };
 
@@ -239,20 +174,21 @@ export const CancellationRefundPage: React.FC = () => {
 
     setIsProcessing(true);
     try {
-      const token = localStorage.getItem('traveleasy_token');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      await axios.post('/api/v1/company/refunds/confirm-refund', { ticketCode }, { headers });
-      toast.success(`Đã duyệt hủy vé ${ticketCode} thành công! Ghế đã được tự động mở lại cho khách khác.`, 'Hoàn Tiền Thành Công');
-    } catch {
-      toast.success(`Đã duyệt hủy vé ${ticketCode} thành công! (Mô phỏng đồng bộ ghế & ví đối soát)`, 'Hoàn Tiền Thành Công');
+      const res = await api.post('/company/refunds', {
+        ticketCode,
+        companyId: currentCompany.id,
+        busCompanyId: currentCompany.id,
+      });
+      const msg = res.data?.message || `Đã duyệt hủy vé ${ticketCode} thành công! Ghế đã được tự động mở lại cho khách khác.`;
+      toast.success(msg, 'Hoàn Tiền Thành Công');
+      await fetchRealData();
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || 'Có lỗi xảy ra khi duyệt hủy vé!';
+      toast.error(errMsg, 'Lỗi');
+    } finally {
+      setSelectedTicketForCalc(null);
+      setIsProcessing(false);
     }
-
-    // Update state locally
-    setRequests((prev) =>
-      prev.map((r) => (r.ticketCode === ticketCode ? { ...r, status: 'CANCELLED' } : r))
-    );
-    setSelectedTicketForCalc(null);
-    setIsProcessing(false);
   };
 
   return (
@@ -485,11 +421,21 @@ export const CancellationRefundPage: React.FC = () => {
             <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Ticket className="w-5 h-5 text-rose-600" />
-                Danh Sách Vé Cần Xử Lý Hoàn Hủy
+                Danh Sách Vé Cần Xử Lý Hoàn Hủy ({currentCompany.name})
               </h3>
-              <span className="text-xs text-slate-500">
-                Hiển thị {requests.length} giao dịch gần nhất
-              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={fetchRealData}
+                  disabled={isLoading}
+                  className="p-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  title="Tải lại dữ liệu"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-rose-500' : ''}`} />
+                </button>
+                <span className="text-xs text-slate-500">
+                  Hiển thị {requests.length} giao dịch gần nhất
+                </span>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -506,74 +452,95 @@ export const CancellationRefundPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {requests.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition"
-                    >
-                      <td className="p-4">
-                        <div className="font-bold text-slate-900 dark:text-white">
-                          {item.ticketCode}
-                        </div>
-                        <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
-                          <User className="w-3.5 h-3.5" /> {item.passengerName} • {item.passengerPhone}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="font-medium text-slate-800 dark:text-slate-200">
-                          {item.routeName}
-                        </div>
-                        <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
-                          <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded font-bold">
-                            Ghế {item.seatNumber}
-                          </span>
-                          <span>Khởi hành: {item.departureTime}</span>
-                        </div>
-                      </td>
-                      <td className="p-4 font-semibold text-slate-700 dark:text-slate-300">
-                        {item.originalPrice.toLocaleString('vi-VN')} đ
-                      </td>
-                      <td className="p-4">
-                        <span className="font-bold text-emerald-600 block">
-                          {item.refundAmount.toLocaleString('vi-VN')} đ
-                        </span>
-                        <span className="text-[11px] text-slate-400">
-                          Khấu trừ: {item.cancellationFee.toLocaleString('vi-VN')} đ
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <span className="font-bold text-amber-600 block">
-                          +{item.busCompanyShare.toLocaleString('vi-VN')} đ
-                        </span>
-                        <span className="text-[11px] text-slate-400">
-                          Sàn giữ: {item.platformShare.toLocaleString('vi-VN')} đ
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        {item.status === 'CANCELLED' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-slate-500" /> Đã Hủy & Nhả Ghế
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
-                            <Clock className="w-3.5 h-3.5 text-amber-600" /> Chờ Duyệt Hủy
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-4 text-center">
-                        {item.status === 'ISSUED' ? (
-                          <button
-                            onClick={() => handleConfirmRefund(item.ticketCode)}
-                            className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-lg transition shadow-sm"
-                          >
-                            Duyệt Hủy
-                          </button>
-                        ) : (
-                          <span className="text-xs text-slate-400">Đã Hoàn Tất</span>
-                        )}
+                  {isLoading && requests.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-6">
+                        <TableSkeleton rows={4} columns={7} />
                       </td>
                     </tr>
-                  ))}
+                  ) : requests.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-12 text-center text-slate-400">
+                        <Ticket className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                        <p className="font-semibold text-slate-700 dark:text-slate-300">
+                          Chưa có yêu cầu hoàn hủy vé nào của {currentCompany.name}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          Các vé khi được yêu cầu hủy sẽ hiển thị tại đây để duyệt và tự động mở lại ghế xe.
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    requests.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition"
+                      >
+                        <td className="p-4">
+                          <div className="font-bold text-slate-900 dark:text-white">
+                            {item.ticketCode}
+                          </div>
+                          <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+                            <User className="w-3.5 h-3.5" /> {item.passengerName} • {item.passengerPhone}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="font-medium text-slate-800 dark:text-slate-200">
+                            {item.routeName}
+                          </div>
+                          <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                            <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded font-bold">
+                              Ghế {item.seatNumber}
+                            </span>
+                            <span>Khởi hành: {item.departureTime}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 font-semibold text-slate-700 dark:text-slate-300">
+                          {Number(item.originalPrice || 0).toLocaleString('vi-VN')} đ
+                        </td>
+                        <td className="p-4">
+                          <span className="font-bold text-emerald-600 block">
+                            {Number(item.refundAmount || 0).toLocaleString('vi-VN')} đ
+                          </span>
+                          <span className="text-[11px] text-slate-400">
+                            Khấu trừ: {Number(item.cancellationFee || 0).toLocaleString('vi-VN')} đ
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <span className="font-bold text-amber-600 block">
+                            +{Number(item.busCompanyShare || 0).toLocaleString('vi-VN')} đ
+                          </span>
+                          <span className="text-[11px] text-slate-400">
+                            Sàn giữ: {Number(item.platformShare || 0).toLocaleString('vi-VN')} đ
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          {item.status === 'CANCELLED' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-slate-500" /> Đã Hủy & Nhả Ghế
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+                              <Clock className="w-3.5 h-3.5 text-amber-600" /> Chờ Duyệt Hủy
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-center">
+                          {item.status === 'ISSUED' ? (
+                            <button
+                              disabled={isProcessing}
+                              onClick={() => handleConfirmRefund(item.ticketCode)}
+                              className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-lg transition shadow-sm disabled:opacity-50"
+                            >
+                              Duyệt Hủy
+                            </button>
+                          ) : (
+                            <span className="text-xs text-slate-400">Đã Hoàn Tất</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

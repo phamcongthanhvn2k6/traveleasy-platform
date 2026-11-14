@@ -4,6 +4,7 @@ import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.security.CompanySecurityService;
 import com.traveleasy.entity.*;
+import com.traveleasy.repository.BookingRepository;
 import com.traveleasy.repository.TicketRepository;
 import com.traveleasy.repository.TripRepository;
 import com.traveleasy.repository.TripSeatRepository;
@@ -32,6 +33,9 @@ import static org.mockito.Mockito.*;
  */
 @ExtendWith(MockitoExtension.class)
 class CompanyCancellationRefundControllerTest {
+
+    @Mock
+    private BookingRepository bookingRepository;
 
     @Mock
     private TicketRepository ticketRepository;
@@ -67,21 +71,22 @@ class CompanyCancellationRefundControllerTest {
                 .availableSeats(20)
                 .totalSeats(34)
                 .build();
+        testTicket = Ticket.builder()
+                .id(200L)
+                .ticketCode("TK-REFUND-01")
+                .seatNumber("A05")
+                .price(BigDecimal.valueOf(400000))
+                .status(TicketStatus.ISSUED)
+                .build();
         testBooking = Booking.builder()
                 .id(50L)
                 .bookingCode("BK-REFUND-01")
                 .trip(testTrip)
                 .passengerName("Nguyễn Văn Khách")
                 .passengerPhone("0988776655")
+                .tickets(new java.util.ArrayList<>(List.of(testTicket)))
                 .build();
-        testTicket = Ticket.builder()
-                .id(200L)
-                .ticketCode("TK-REFUND-01")
-                .booking(testBooking)
-                .seatNumber("A05")
-                .price(BigDecimal.valueOf(400000))
-                .status(TicketStatus.ISSUED)
-                .build();
+        testTicket.setBooking(testBooking);
         testSeat = TripSeat.builder()
                 .id(500L)
                 .trip(testTrip)
@@ -172,6 +177,7 @@ class CompanyCancellationRefundControllerTest {
         assertEquals(SeatStatus.AVAILABLE, testSeat.getStatus());
 
         verify(ticketRepository, times(1)).save(testTicket);
+        verify(bookingRepository, times(1)).save(testBooking);
         verify(tripSeatRepository, times(1)).save(testSeat);
         verify(seatRealtimeService, times(1)).broadcastReleased(eq(100L), eq(List.of("A05")));
         verify(tripRepository, times(1)).syncAvailableSeats(eq(100L));
