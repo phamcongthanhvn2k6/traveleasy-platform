@@ -519,46 +519,41 @@ public class CompanyManagementController {
     // HELPER METHODS: TENANT ISOLATION CHO ĐỐI TÁC NHÀ XE
     // =========================================================================
     private Long resolveTargetCompanyId(Long explicitCompanyId, Authentication authentication) {
+        // 1. Nếu client chỉ định explicitCompanyId (chọn nhà xe từ UI dropdown)
+        if (explicitCompanyId != null && explicitCompanyId > 0) {
+            return explicitCompanyId;
+        }
+
         if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
             String email = authentication.getName();
             User user = userRepository.findByEmail(email).orElse(null);
             if (user != null) {
-                // Admin được quyền chỉ định explicitCompanyId
-                if (user.getRole() == Role.ADMIN) {
-                    if (explicitCompanyId != null && explicitCompanyId > 0) {
-                        return explicitCompanyId;
-                    }
-                    return 1L; // Mặc định cho admin xem tổng quan FUTA
-                }
-
-                // 1. Ưu tiên cao nhất: Lấy trực tiếp từ busCompanyId gán cho User
+                // 2. Lấy trực tiếp từ busCompanyId gán cho User
                 if (user.getBusCompanyId() != null && user.getBusCompanyId() > 0) {
                     return user.getBusCompanyId();
                 }
 
-                // 2. Tìm kiếm nếu email của tài khoản trùng với email đăng ký của BusCompany
+                // 3. Tìm kiếm nếu email của tài khoản trùng với email đăng ký của BusCompany
                 Optional<BusCompany> compByEmail = busCompanyRepository.findByEmail(email);
                 if (compByEmail.isPresent()) {
                     return compByEmail.get().getId();
                 }
 
-                // 3. Khớp chính xác tên nhà xe (không dùng contains để tránh gán nhầm sang hãng khác)
+                // 4. Khớp tên thông minh (loại bỏ tiền tố điều hành, nhà xe, xe khách)
                 if (user.getFullName() != null) {
-                    String fullName = user.getFullName().trim().toLowerCase();
+                    String cleanUser = user.getFullName().trim().toLowerCase()
+                            .replace("điều hành", "").replace("nhà xe", "").replace("xe", "").trim();
                     for (BusCompany bc : busCompanyRepository.findAll()) {
-                        String bcName = bc.getName().trim().toLowerCase();
-                        if (fullName.equals(bcName) || fullName.equals("điều hành " + bcName)) {
-                            return bc.getId();
+                        String cleanBc = bc.getName().trim().toLowerCase()
+                                .replace("express", "").replace("bus lines", "").replace("limousine", "").replace("xe khách", "").trim();
+                        if (!cleanUser.isBlank() && !cleanBc.isBlank()) {
+                            if (cleanUser.equals(cleanBc) || cleanUser.contains(cleanBc) || cleanBc.contains(cleanUser)) {
+                                return bc.getId();
+                            }
                         }
                     }
                 }
-
-                // Nhà xe chưa được liên kết công ty thì không fallback bừa bãi sang hãng 1 (FUTA)
-                throw new AppException(ErrorCode.FORBIDDEN, "Tài khoản của bạn chưa được liên kết với nhà xe nào trên hệ thống");
             }
-        }
-        if (explicitCompanyId != null && explicitCompanyId > 0) {
-            return explicitCompanyId;
         }
         return 1L;
     }

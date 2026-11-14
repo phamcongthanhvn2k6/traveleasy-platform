@@ -19,6 +19,13 @@ public interface TripSeatRepository extends JpaRepository<TripSeat, Long> {
     Optional<TripSeat> findByTripIdAndSeatCode(Long tripId, String seatCode);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM TripSeat s WHERE s.trip.id = :tripId AND s.seatCode = :seatCode")
+    Optional<TripSeat> findByTripIdAndSeatCodeWithLock(
+        @Param("tripId") Long tripId,
+        @Param("seatCode") String seatCode
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM TripSeat s WHERE s.trip.id = :tripId AND s.seatCode IN :seatCodes")
     List<TripSeat> findByTripIdAndSeatCodeInWithLock(
         @Param("tripId") Long tripId,

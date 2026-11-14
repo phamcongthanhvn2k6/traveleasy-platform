@@ -23,7 +23,8 @@ import {
   Moon,
   Menu,
   X,
-  Radio
+  Radio,
+  Tag
 } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
@@ -88,6 +89,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   ];
 
   const systemItems = [
+    { label: 'Khuyến mại & Voucher sàn', path: '/admin/promotions', icon: Tag },
     { label: 'Banner chiến dịch sàn', path: '/admin/banners', icon: Image },
     { label: 'Cổng thanh toán sàn', path: '/admin/gateways', icon: CreditCard },
     { label: 'Báo cáo đánh giá vi phạm', path: '/admin/review-reports', icon: Star },

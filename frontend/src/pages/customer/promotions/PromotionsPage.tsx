@@ -259,10 +259,10 @@ export const PromotionsPage: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-orange-500/20 text-orange-400 border border-orange-500/30 mb-2">
-                <Gift size={13} /> TRUNG TÂM VOUCHER & MÃ GIẢM GIÁ SUPABASE
+                <Gift size={13} /> TRUNG TÂM VOUCHER & MÃ GIẢM GIÁ
               </div>
               <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-                Ưu Đãi Đặc Quyền Tháng 10/2026
+                Ưu Đãi Đặc Quyền Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}
               </h2>
               <p className="text-xs md:text-sm text-slate-300 mt-1 max-w-xl font-normal">
                 Săn vé giá sốc, mã giảm giá độc quyền cho hơn 140+ chuyến xe liên tỉnh chất lượng cao trên toàn quốc.
@@ -272,7 +272,13 @@ export const PromotionsPage: React.FC = () => {
             {/* Live Count Pill */}
             <div className="flex items-center gap-2 bg-slate-800/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-700/80 text-xs text-slate-200">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-              <span>Đã có <strong className="text-white font-black text-sm">12.450+</strong> lượt áp mã thành công tuần này</span>
+              <span>
+                Đã có{' '}
+                <strong className="text-white font-black text-sm">
+                  {vouchers.reduce((acc, v) => acc + (v.usedQuantity || 0), 0).toLocaleString('vi-VN')}
+                </strong>{' '}
+                lượt áp mã thành công
+              </span>
             </div>
           </div>
 
@@ -299,7 +305,7 @@ export const PromotionsPage: React.FC = () => {
               {isLoading ? 'Đang tải voucher...' : `Tìm thấy ${filteredVouchers.length} ưu đãi khả dụng:`}
             </span>
             <span className="inline-flex items-center gap-1 text-emerald-600 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              <ShieldCheck size={12} /> Cập nhật thời gian thực từ Supabase
+              <ShieldCheck size={12} /> Cập nhật trực tiếp từ CSDL hệ thống
             </span>
           </div>
 

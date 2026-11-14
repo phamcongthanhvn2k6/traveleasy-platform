@@ -1,3 +1,4 @@
+import os
 import pg8000.native
 import ssl
 import sys
@@ -25,12 +26,22 @@ def main():
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
 
+    db_host = os.environ.get('SUPABASE_DB_HOST', 'aws-0-ap-southeast-2.pooler.supabase.com')
+    db_port = int(os.environ.get('SUPABASE_DB_PORT', '6543'))
+    db_name = os.environ.get('SUPABASE_DB_NAME', 'postgres')
+    db_user = os.environ.get('SUPABASE_DB_USER', 'postgres.ctvcwhdepzyvqsncbslf')
+    db_password = os.environ.get('SUPABASE_DB_PASSWORD')
+
+    if not db_password:
+        print("ERROR: SUPABASE_DB_PASSWORD environment variable is not set. Please set it before running this script.")
+        sys.exit(1)
+
     con = pg8000.native.Connection(
-        host='aws-0-ap-southeast-2.pooler.supabase.com',
-        port=6543,
-        database='postgres',
-        user='postgres.ctvcwhdepzyvqsncbslf',
-        password='thanhtyou123@',
+        host=db_host,
+        port=db_port,
+        database=db_name,
+        user=db_user,
+        password=db_password,
         ssl_context=ctx
     )
 

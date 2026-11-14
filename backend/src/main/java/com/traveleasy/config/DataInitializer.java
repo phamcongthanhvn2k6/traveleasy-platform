@@ -111,6 +111,19 @@ public class DataInitializer implements CommandLineRunner {
 
         busCompanyRepository.saveAll(List.of(futa, thanhBuoi, saoViet, kumho, hoaMai, hoangLong, vanMinh, cucTung, haiVan, chinNghia));
 
+        // Liên kết chuẩn xác busCompanyId cho tài khoản điều hành các nhà xe đối tác
+        opFuta.setBusCompanyId(futa.getId());
+        opThanhBuoi.setBusCompanyId(thanhBuoi.getId());
+        opSaoViet.setBusCompanyId(saoViet.getId());
+        opKumho.setBusCompanyId(kumho.getId());
+        opHoaMai.setBusCompanyId(hoaMai.getId());
+        opHoangLong.setBusCompanyId(hoangLong.getId());
+        opVanMinh.setBusCompanyId(vanMinh.getId());
+        opCucTung.setBusCompanyId(cucTung.getId());
+        opHaiVan.setBusCompanyId(haiVan.getId());
+        opChinNghia.setBusCompanyId(chinNghia.getId());
+        userRepository.saveAll(List.of(opFuta, opThanhBuoi, opSaoViet, opKumho, opHoaMai, opHoangLong, opVanMinh, opCucTung, opHaiVan, opChinNghia));
+
         // 3. Seed 14 Routes
         Route r1 = Route.builder().busCompany(futa).departureLocation("TP. Hồ Chí Minh").arrivalLocation("Đà Lạt").durationHours(BigDecimal.valueOf(6.5)).distanceKm(BigDecimal.valueOf(305.0)).build();
         Route r2 = Route.builder().busCompany(futa).departureLocation("TP. Hồ Chí Minh").arrivalLocation("Nha Trang").durationHours(BigDecimal.valueOf(8.0)).distanceKm(BigDecimal.valueOf(435.0)).build();
@@ -163,19 +176,103 @@ public class DataInitializer implements CommandLineRunner {
             seedSeatsForTrip(trip);
         }
 
-        // 6. Seed Bookings & Tickets
-        Booking b1 = Booking.builder().bookingCode("TE-2026-9812").passengerName("Nguyễn Văn Du Khách").passengerPhone("0912345678").passengerEmail("customer@gmail.com").trip(trips.get(0)).totalAmount(BigDecimal.valueOf(640000)).seatNumbers("A01, A02").status(BookingStatus.CONFIRMED).paymentMethod(PaymentMethod.VNPAY).build();
-        Booking b2 = Booking.builder().bookingCode("TE-2026-9813").passengerName("Trần Thị Bích Ngọc").passengerPhone("0987654321").passengerEmail("tranthib@gmail.com").trip(trips.get(1)).totalAmount(BigDecimal.valueOf(390000)).seatNumbers("B05").status(BookingStatus.CONFIRMED).paymentMethod(PaymentMethod.MOMO).build();
-        Booking b3 = Booking.builder().bookingCode("TE-2026-9814").passengerName("Lê Hoàng Cường").passengerPhone("0978112233").passengerEmail("lehoangc@gmail.com").trip(trips.get(2)).totalAmount(BigDecimal.valueOf(450000)).seatNumbers("A09").status(BookingStatus.PENDING).paymentMethod(PaymentMethod.VIETQR).build();
+        // 6. Seed Bookings & Tickets (Dữ liệu vé và khách hàng thực tế)
+        Booking b1 = Booking.builder()
+                .bookingCode("TE-2026-9812")
+                .passengerName("Nguyễn Văn Du Khách")
+                .passengerPhone("0912345678")
+                .passengerEmail("customer@gmail.com")
+                .trip(trips.get(0))
+                .pickupPoint("Bến xe Miền Đông mới")
+                .dropoffPoint("Bến xe Liên tỉnh Đà Lạt")
+                .totalAmount(BigDecimal.valueOf(640000))
+                .seatNumbers("A01, A02")
+                .status(BookingStatus.CONFIRMED)
+                .paymentMethod(PaymentMethod.VNPAY)
+                .build();
 
-        bookingRepository.saveAll(List.of(b1, b2, b3));
+        Booking b2 = Booking.builder()
+                .bookingCode("TE-2026-9813")
+                .passengerName("Trần Thị Bích Ngọc")
+                .passengerPhone("0987654321")
+                .passengerEmail("tranthib@gmail.com")
+                .trip(trips.get(1))
+                .pickupPoint("Trạm đón Ngã 4 Hàng Xanh")
+                .dropoffPoint("Bến xe Liên tỉnh Đà Lạt")
+                .totalAmount(BigDecimal.valueOf(390000))
+                .seatNumbers("B05")
+                .status(BookingStatus.CONFIRMED)
+                .paymentMethod(PaymentMethod.MOMO)
+                .build();
+
+        // Chuyến xe Sao Việt (Hà Nội -> Sa Pa)
+        Booking b3 = Booking.builder()
+                .bookingCode("SV-2026-1011")
+                .passengerName("Lê Hoàng Cường")
+                .passengerPhone("0978112233")
+                .passengerEmail("lehoangc@gmail.com")
+                .trip(trips.get(2))
+                .pickupPoint("Bến xe Mỹ Đình")
+                .dropoffPoint("Bến xe Trung tâm Sa Pa")
+                .totalAmount(BigDecimal.valueOf(450000))
+                .seatNumbers("A01")
+                .status(BookingStatus.CONFIRMED)
+                .paymentMethod(PaymentMethod.VIETQR)
+                .build();
+
+        Booking b4 = Booking.builder()
+                .bookingCode("SV-2026-1012")
+                .passengerName("Trần Thu Hà")
+                .passengerPhone("0915678901")
+                .passengerEmail("thuhatran@gmail.com")
+                .trip(trips.get(2))
+                .pickupPoint("Sân bay Nội Bài")
+                .dropoffPoint("Bến xe Trung tâm Sa Pa")
+                .totalAmount(BigDecimal.valueOf(450000))
+                .seatNumbers("A02")
+                .status(BookingStatus.CONFIRMED)
+                .paymentMethod(PaymentMethod.VNPAY)
+                .build();
+
+        Booking b5 = Booking.builder()
+                .bookingCode("SV-2026-1013")
+                .passengerName("Phạm Quốc Tuấn")
+                .passengerPhone("0934567890")
+                .passengerEmail("tuangiaothong@gmail.com")
+                .trip(trips.get(2))
+                .pickupPoint("Bến xe Mỹ Đình")
+                .dropoffPoint("571 Điện Biên Phủ, Sa Pa")
+                .totalAmount(BigDecimal.valueOf(450000))
+                .seatNumbers("B01")
+                .status(BookingStatus.CONFIRMED)
+                .paymentMethod(PaymentMethod.COD)
+                .build();
+
+        Booking b6 = Booking.builder()
+                .bookingCode("SV-2026-1014")
+                .passengerName("Vũ Hoàng My")
+                .passengerPhone("0982345678")
+                .passengerEmail("myhoangvu@gmail.com")
+                .trip(trips.get(2))
+                .pickupPoint("Bến xe Mỹ Đình")
+                .dropoffPoint("Bến xe Trung tâm Sa Pa")
+                .totalAmount(BigDecimal.valueOf(450000))
+                .seatNumbers("B02")
+                .status(BookingStatus.CONFIRMED)
+                .paymentMethod(PaymentMethod.MOMO)
+                .build();
+
+        bookingRepository.saveAll(List.of(b1, b2, b3, b4, b5, b6));
 
         Ticket tk1 = Ticket.builder().booking(b1).ticketCode("TK-A01-9812").seatNumber("A01").price(BigDecimal.valueOf(320000)).status(TicketStatus.ISSUED).build();
         Ticket tk2 = Ticket.builder().booking(b1).ticketCode("TK-A02-9812").seatNumber("A02").price(BigDecimal.valueOf(320000)).status(TicketStatus.ISSUED).build();
         Ticket tk3 = Ticket.builder().booking(b2).ticketCode("TK-B05-9813").seatNumber("B05").price(BigDecimal.valueOf(390000)).status(TicketStatus.ISSUED).build();
-        Ticket tk4 = Ticket.builder().booking(b3).ticketCode("TK-A09-9814").seatNumber("A09").price(BigDecimal.valueOf(450000)).status(TicketStatus.ISSUED).build();
+        Ticket tk4 = Ticket.builder().booking(b3).ticketCode("TK-A01-1011").seatNumber("A01").price(BigDecimal.valueOf(450000)).status(TicketStatus.ISSUED).build();
+        Ticket tk5 = Ticket.builder().booking(b4).ticketCode("TK-A02-1012").seatNumber("A02").price(BigDecimal.valueOf(450000)).status(TicketStatus.ISSUED).build();
+        Ticket tk6 = Ticket.builder().booking(b5).ticketCode("TK-B01-1013").seatNumber("B01").price(BigDecimal.valueOf(450000)).status(TicketStatus.ISSUED).build();
+        Ticket tk7 = Ticket.builder().booking(b6).ticketCode("TK-B02-1014").seatNumber("B02").price(BigDecimal.valueOf(450000)).status(TicketStatus.ISSUED).build();
 
-        ticketRepository.saveAll(List.of(tk1, tk2, tk3, tk4));
+        ticketRepository.saveAll(List.of(tk1, tk2, tk3, tk4, tk5, tk6, tk7));
 
         // 7. Seed Seat Types (Catalog)
         List<SeatType> seatTypes = List.of(

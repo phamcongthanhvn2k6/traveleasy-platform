@@ -3,6 +3,7 @@ import { Bus, Search, Plus, Eye, Edit2, Trash2, Calendar, User, Layers, X, Check
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { getStoredCompany } from '../../../utils/companyHelper';
+import { TableSkeleton } from '../../../components/common/Skeleton';
 
 interface VehicleItem {
   id: string | number;
@@ -25,8 +26,22 @@ export const CompanyVehiclesPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [loading, setLoading] = useState(false);
-  const [vehicles, setVehicles] = useState<VehicleItem[]>([]);
+
+  // Khởi tạo tức thì (0ms) từ cache
+  const [vehicles, setVehicles] = useState<VehicleItem[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_vehicles_cache_${currentCompany.id}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !sessionStorage.getItem(`company_vehicles_cache_${currentCompany.id}`);
+    } catch (e) {
+      return true;
+    }
+  });
 
   // Modals state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -50,7 +65,7 @@ export const CompanyVehiclesPage: React.FC = () => {
   const [viewingVehicle, setViewingVehicle] = useState<VehicleItem | null>(null);
 
   const fetchVehicles = async () => {
-    setLoading(true);
+    if (vehicles.length === 0) setLoading(true);
     try {
       const res = await api.get('/company/vehicles', {
         params: {
@@ -59,27 +74,23 @@ export const CompanyVehiclesPage: React.FC = () => {
         },
       });
       if (res.data?.data && Array.isArray(res.data.data)) {
-        const list = res.data.data
-          .filter((v: any) => {
-            // Nghiêm ngặt cách ly theo từng nhà xe đối tác
-            if (v.busCompanyId && Number(v.busCompanyId) !== currentCompany.id) return false;
-            if (v.operator && !v.operator.toLowerCase().includes(currentCompany.shortName.toLowerCase()) && !currentCompany.name.toLowerCase().includes(v.operator.toLowerCase())) return false;
-            return true;
-          })
-          .map((v: any) => ({
-            id: v.id,
-            plate: v.plate || v.plateNumber,
-            code: v.code || `v${v.id}`,
-            type: v.type || v.vehicleType || 'SLEEPER',
-            floors: v.floors || 2,
-            year: v.year || v.manufactureYear || 2023,
-            operator: v.operator || currentCompany.name,
-            status: v.status || 'ACTIVE',
-            statusLabel: (v.status || 'ACTIVE') === 'ACTIVE' ? 'Hoạt động' : 'Ngừng hoạt động',
-            seatLayout: v.seatLayout || 'Giường nằm 2 tầng 34 chỗ',
-            image: v.image || v.imageUrl,
-          }));
+        const list = res.data.data.map((v: any) => ({
+          id: v.id,
+          plate: v.plate || v.plateNumber,
+          code: v.code || `v${v.id}`,
+          type: v.type || v.vehicleType || 'SLEEPER',
+          floors: v.floors || 2,
+          year: v.year || v.manufactureYear || 2023,
+          operator: v.operator || currentCompany.name,
+          status: v.status || 'ACTIVE',
+          statusLabel: (v.status || 'ACTIVE') === 'ACTIVE' ? 'Hoạt động' : 'Ngừng hoạt động',
+          seatLayout: v.seatLayout || 'Giường nằm 2 tầng 34 chỗ',
+          image: v.image || v.imageUrl,
+        }));
         setVehicles(list);
+        try {
+          sessionStorage.setItem(`company_vehicles_cache_${currentCompany.id}`, JSON.stringify(list));
+        } catch (e) {}
       }
     } catch (err: any) {
       if (err?.response?.status === 401) return;
@@ -92,7 +103,7 @@ export const CompanyVehiclesPage: React.FC = () => {
 
   useEffect(() => {
     fetchVehicles();
-  }, []);
+  }, [currentCompany.id]);
 
   const saveToLocalAndState = (updater: (prev: VehicleItem[]) => VehicleItem[]) => {
     setVehicles((prev) => {
@@ -470,20 +481,25 @@ export const CompanyVehiclesPage: React.FC = () => {
               <th style={{ padding: '12px 18px', width: '110px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={8} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>
-                  Đang tải danh sách đội xe từ máy chủ...
-                </td>
-              </tr>
-            ) : filtered.length === 0 ? (
-              <tr>
-                <td colSpan={8} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>
-                  Không tìm thấy xe nào phù hợp bộ lọc.
-                </td>
-              </tr>
-            ) : (
+          {loading && vehicles.length === 0 ? (
+            <TableSkeleton rows={5} columns={8} />
+          ) : (
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{ padding: '48px 24px', textAlign: 'center', color: '#64748b' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '52px', height: '52px', borderRadius: '50%', backgroundColor: '#f1f5f9', marginBottom: '12px', color: '#64748b' }}>
+                      <Bus size={26} />
+                    </div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155' }}>
+                      Không tìm thấy phương tiện nào phù hợp bộ lọc
+                    </div>
+                    <div style={{ fontSize: '12.5px', color: '#94a3b8', marginTop: '4px' }}>
+                      Bấm nút "Thêm xe mới" để thêm phương tiện vào đội xe nhà xe {currentCompany.name}.
+                    </div>
+                  </td>
+                </tr>
+              ) : (
               filtered.map((v) => {
                 const isActive = v.status === 'ACTIVE';
                 return (
@@ -646,6 +662,7 @@ export const CompanyVehiclesPage: React.FC = () => {
               })
             )}
           </tbody>
+        )}
         </table>
       </div>
 
