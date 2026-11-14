@@ -48,6 +48,16 @@ public class CompanyPosShift {
     @Builder.Default
     private BigDecimal totalCashCollected = BigDecimal.ZERO;
 
+    @Column(name = "total_cash_refunds", precision = 14, scale = 2)
+    @Builder.Default
+    private BigDecimal totalCashRefunds = BigDecimal.ZERO;
+
+    @Column(name = "counted_cash_amount", precision = 14, scale = 2)
+    private BigDecimal countedCashAmount;
+
+    @Column(name = "cash_variance", precision = 14, scale = 2)
+    private BigDecimal cashVariance;
+
     @Column(name = "total_qr_collected", nullable = false, precision = 14, scale = 2)
     @Builder.Default
     private BigDecimal totalQrCollected = BigDecimal.ZERO;

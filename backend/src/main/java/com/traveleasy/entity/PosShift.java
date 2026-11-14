@@ -19,7 +19,7 @@ public class PosShift {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "company_id", nullable = false)
+    @Column(name = "bus_company_id", nullable = false)
     private Long busCompanyId;
 
     @Column(name = "staff_user_id", nullable = false)
@@ -50,7 +50,7 @@ public class PosShift {
     @Builder.Default
     private BigDecimal totalCashCollected = BigDecimal.ZERO;
 
-    @Column(name = "total_cash_refunds", nullable = false, precision = 14, scale = 2)
+    @Column(name = "total_cash_refunds", precision = 14, scale = 2)
     @Builder.Default
     private BigDecimal totalCashRefunds = BigDecimal.ZERO;
 
