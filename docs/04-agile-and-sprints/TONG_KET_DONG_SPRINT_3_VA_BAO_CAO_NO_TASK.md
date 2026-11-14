@@ -146,3 +146,4 @@ Căn cứ vào trạng thái rà soát thực tế trên Trello Board tại th�
 3. **Chữ ký xác nhận đại diện Nhóm 7**:
    - **Team Leader / System Architect**: *Phạm Công Thành* (Đã ký duyệt)
    - **Thành viên nhận nợ**: *Đoàn Nhật Cường* (Đã tiếp nhận cam kết)
+

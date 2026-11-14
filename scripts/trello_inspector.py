@@ -69,3 +69,4 @@ for l in lists:
         print(f"    - Gán (idMembers): {assignee_str}")
         if desc_member:
             print(f"    - Ghi nhận trong Desc: {desc_member}")
+

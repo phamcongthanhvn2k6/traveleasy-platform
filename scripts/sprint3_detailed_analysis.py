@@ -145,3 +145,4 @@ print(f" - Tổng nợ lại: {total_debt_tasks} tasks ({total_debt_sp} SP)")
 print(f" - Tổng phạm vi Sprint 3: {total_done_tasks + total_debt_tasks} tasks ({total_done_sp + total_debt_sp} SP)")
 print(f" - Tỷ lệ hoàn thành: {round(total_done_sp / (total_done_sp + total_debt_sp) * 100, 1)}% SP")
 print("="*80)
+
