@@ -982,3 +982,4 @@ export const AdminPromotionsPage: React.FC = () => {
 };
 
 export default AdminPromotionsPage;
+

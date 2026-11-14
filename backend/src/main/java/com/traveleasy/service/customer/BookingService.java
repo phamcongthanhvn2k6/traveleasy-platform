@@ -188,6 +188,8 @@ public class BookingService {
             promotionRepository.save(promo);
             log.info("🎯 [VOUCHER APPLIED] Ma: {}, Giam: {}d, Tong luot dung: {}/{}",
                     promo.getCode(), discount, promo.getUsedCount(), promo.getUsageLimit());
+        } else if (request.getDiscountAmount() != null && request.getDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
+            discount = request.getDiscountAmount();
         }
 
         // Tự động kiểm thực và ghi đè giá trị chuẩn của Backend (Chống can thiệp client-side)
