@@ -485,20 +485,20 @@ export const CompanyTripsPage: React.FC = () => {
           border: '1px solid #e2e8f0',
           borderRadius: '12px',
           overflow: 'hidden',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
         }}
       >
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#fafafa' }}>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>MÃ CHUYẾN</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TUYẾN ĐƯỜNG</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>BIỂN SỐ XE</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>KHỞI HÀNH</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>GIÁ VÉ</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TRỄ</th>
-              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TRẠNG THÁI</th>
-              <th style={{ padding: '12px 18px', width: '80px', textAlign: 'right' }}>THAO TÁC</th>
+              <th style={{ padding: '12px 14px', width: '110px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>MÃ CHUYẾN</th>
+              <th style={{ padding: '12px 14px', minWidth: '180px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TUYẾN ĐƯỜNG</th>
+              <th style={{ padding: '12px 14px', width: '120px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>BIỂN SỐ XE</th>
+              <th style={{ padding: '12px 14px', width: '150px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>KHỞI HÀNH</th>
+              <th style={{ padding: '12px 14px', width: '120px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>GIÁ VÉ</th>
+              <th style={{ padding: '12px 14px', width: '70px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px', textAlign: 'center' }}>TRỄ</th>
+              <th style={{ padding: '12px 14px', width: '120px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TRẠNG THÁI</th>
+              <th style={{ padding: '12px 14px', width: '280px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
           {loading && trips.length === 0 ? (
@@ -572,36 +572,43 @@ export const CompanyTripsPage: React.FC = () => {
                     key={item.id}
                     style={{
                       borderBottom: '1px solid #f1f5f9',
-                      transition: 'background-color 0.1s ease',
+                      transition: 'background-color 0.15s ease',
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
-                    <td style={{ padding: '14px 18px', fontWeight: 700, color: '#4f46e5' }}>{item.code}</td>
-                    <td style={{ padding: '14px 18px', fontWeight: 600, color: '#0f172a' }}>{item.routeName}</td>
-                    <td style={{ padding: '14px 18px', color: '#334155' }}>
-                      <span style={{ fontWeight: 600, backgroundColor: '#f1f5f9', padding: '3px 8px', borderRadius: '4px', fontSize: '12px' }}>
+                    <td style={{ padding: '10px 14px', verticalAlign: 'middle', fontWeight: 700, color: '#4f46e5', whiteSpace: 'nowrap' }}>
+                      <span style={{ backgroundColor: '#eef2ff', padding: '3px 8px', borderRadius: '6px', fontSize: '12px' }}>
+                        {item.code}
+                      </span>
+                    </td>
+                    <td style={{ padding: '10px 14px', verticalAlign: 'middle', fontWeight: 600, color: '#0f172a' }}>
+                      {item.routeName}
+                    </td>
+                    <td style={{ padding: '10px 14px', verticalAlign: 'middle', color: '#334155', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontWeight: 600, backgroundColor: '#f1f5f9', padding: '3px 8px', borderRadius: '6px', fontSize: '12px', border: '1px solid #e2e8f0' }}>
                         {item.vehiclePlate}
                       </span>
                     </td>
-                    <td style={{ padding: '14px 18px', color: '#64748b' }}>{item.departureTime}</td>
-                    <td style={{ padding: '14px 18px', fontWeight: 700, color: '#0f172a' }}>
+                    <td style={{ padding: '10px 14px', verticalAlign: 'middle', color: '#475569', whiteSpace: 'nowrap', fontSize: '12.5px' }}>
+                      {item.departureTime}
+                    </td>
+                    <td style={{ padding: '10px 14px', verticalAlign: 'middle', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap' }}>
                       {item.price ? `${item.price.toLocaleString('vi-VN')} đ` : '280.000 đ'}
                     </td>
-                    <td style={{ padding: '14px 18px', color: item.delayText !== '-' ? '#d97706' : '#94a3b8', fontWeight: item.delayText !== '-' ? 700 : 400 }}>
+                    <td style={{ padding: '10px 14px', verticalAlign: 'middle', textAlign: 'center', whiteSpace: 'nowrap' }}>
                       {item.delayText !== '-' ? (
-                        <div style={{ lineHeight: 1.15, fontSize: '12px', color: '#d97706' }}>
-                          <span style={{ backgroundColor: '#fffbeb', padding: '2px 6px', borderRadius: '4px', border: '1px solid #fde68a' }}>
-                            {item.delayText}
-                          </span>
-                        </div>
+                        <span style={{ backgroundColor: '#fffbeb', color: '#d97706', padding: '2px 6px', borderRadius: '4px', border: '1px solid #fde68a', fontSize: '11px', fontWeight: 700 }}>
+                          {item.delayText}
+                        </span>
                       ) : (
-                        <span>-</span>
+                        <span style={{ color: '#cbd5e1' }}>-</span>
                       )}
                     </td>
-                    <td style={{ padding: '14px 18px' }}>
+                    <td style={{ padding: '10px 14px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
                       <span
                         style={{
+                          display: 'inline-block',
                           padding: '3px 9px',
                           borderRadius: '6px',
                           fontSize: '11px',
@@ -614,96 +621,107 @@ export const CompanyTripsPage: React.FC = () => {
                         {item.statusLabel}
                       </span>
                     </td>
-                    <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                      <button
-                        title="Xem và Xuất danh sách hành khách đi xe"
-                        onClick={() => setManifestTrip(item)}
-                        style={{
-                          background: '#ecfdf5',
-                          border: '1px solid #a7f3d0',
-                          cursor: 'pointer',
-                          padding: '6px 10px',
-                          color: '#059669',
-                          borderRadius: '6px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          marginRight: '6px',
-                        }}
-                      >
-                        <Users size={14} />
-                        <span>Khách Đi Xe</span>
-                      </button>
+                    <td style={{ padding: '10px 14px', verticalAlign: 'middle', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+                        <button
+                          title="[S317] Xem và xuất danh sách hành khách đi xe"
+                          onClick={() => setManifestTrip(item)}
+                          style={{
+                            background: '#ecfdf5',
+                            border: '1px solid #a7f3d0',
+                            cursor: 'pointer',
+                            padding: '5px 8px',
+                            color: '#059669',
+                            borderRadius: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#d1fae5')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ecfdf5')}
+                        >
+                          <Users size={13} />
+                          <span>Khách</span>
+                        </button>
 
-                      <button
-                        title="[S322] Xuất Lệnh Vận Chuyển Điện Tử Chuẩn Bộ GTVT (Nghị định 10/2020/NĐ-CP & TT 12/2020/TT-BGTVT)"
-                        onClick={() => setWaybillTripId(item.id || 696)}
-                        style={{
-                          background: '#fef2f2',
-                          border: '1px solid #fecaca',
-                          cursor: 'pointer',
-                          padding: '6px 10px',
-                          color: '#dc2626',
-                          borderRadius: '6px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          marginRight: '6px',
-                        }}
-                      >
-                        <FileText size={14} />
-                        <span>Lệnh GTVT</span>
-                      </button>
+                        <button
+                          title="[S322] Xuất Lệnh Vận Chuyển Điện Tử Chuẩn Bộ GTVT (Nghị định 10/2020/NĐ-CP & TT 12/2020/TT-BGTVT)"
+                          onClick={() => setWaybillTripId(item.id || 696)}
+                          style={{
+                            background: '#fef2f2',
+                            border: '1px solid #fecaca',
+                            cursor: 'pointer',
+                            padding: '5px 8px',
+                            color: '#dc2626',
+                            borderRadius: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fee2e2')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
+                        >
+                          <FileText size={13} />
+                          <span>Lệnh GTVT</span>
+                        </button>
 
-                      <a
-                        href={`/tracking/${item.id || 696}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        title="[S306] Theo dõi định vị GPS Live Tracking xe chạy thời gian thực"
-                        style={{
-                          background: '#ecfdf5',
-                          border: '1px solid #a7f3d0',
-                          cursor: 'pointer',
-                          padding: '6px 9px',
-                          color: '#059669',
-                          borderRadius: '6px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          textDecoration: 'none',
-                          marginRight: '6px',
-                        }}
-                      >
-                        <Radio size={14} className="text-emerald-600" />
-                        <span>GPS Live</span>
-                      </a>
+                        <a
+                          href={`/tracking/${item.id || 696}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="[S306] Theo dõi định vị GPS Live Tracking xe chạy thời gian thực"
+                          style={{
+                            background: '#eff6ff',
+                            border: '1px solid #bfdbfe',
+                            cursor: 'pointer',
+                            padding: '5px 8px',
+                            color: '#2563eb',
+                            borderRadius: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#dbeafe')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#eff6ff')}
+                        >
+                          <Radio size={13} className="text-blue-600 animate-pulse" />
+                          <span>GPS Live</span>
+                        </a>
 
-                      <button
-                        title="Xem chi tiết & Cập nhật chuyến"
-                        onClick={() => setSelectedTrip(item)}
-                        style={{
-                          background: '#f8fafc',
-                          border: '1px solid #e2e8f0',
-                          cursor: 'pointer',
-                          padding: '6px 10px',
-                          color: '#4f46e5',
-                          borderRadius: '6px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '12px',
-                          fontWeight: 600
-                        }}
-                      >
-                        <Eye size={14} />
-                        <span>Xem</span>
-                      </button>
+                        <button
+                          title="Xem chi tiết & Quản lý chuyến xe"
+                          onClick={() => setSelectedTrip(item)}
+                          style={{
+                            background: '#f8fafc',
+                            border: '1px solid #cbd5e1',
+                            cursor: 'pointer',
+                            padding: '5px 8px',
+                            color: '#334155',
+                            borderRadius: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '11.5px',
+                            fontWeight: 600,
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
+                        >
+                          <Eye size={13} />
+                          <span>Xem</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

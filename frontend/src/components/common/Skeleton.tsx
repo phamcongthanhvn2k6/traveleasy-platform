@@ -119,3 +119,4 @@ export const CardSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => {
 };
 
 export default Skeleton;
+
