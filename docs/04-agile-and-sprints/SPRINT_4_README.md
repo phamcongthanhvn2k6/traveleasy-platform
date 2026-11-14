@@ -103,3 +103,4 @@ gantt
 - **Thứ Tư (18/11)**: **Diễn tập Demo Lần 1 (Dry Run #1)** — Cả nhóm bấm giờ 15 phút trình bày theo kịch bản mẫu.
 - **Thứ Năm (19/11)**: **Tổng duyệt Lần 2 (Dry Run #2)** — Quay video backup 15 phút, xuất file backup CSDL `.sql`, kiểm tra laptop, thiết bị di động quét QR và trang phục.
 - **Thứ Sáu (20/11) — D-DAY**: **Chính thức Báo cáo Bảo vệ Đồ án Tốt nghiệp OJT trước Hội đồng Giảng viên**.
+

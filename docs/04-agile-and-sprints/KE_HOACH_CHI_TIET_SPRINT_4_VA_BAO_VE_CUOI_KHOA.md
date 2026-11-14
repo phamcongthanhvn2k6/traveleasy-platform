@@ -110,3 +110,4 @@ Buổi bảo vệ gồm **15 phút trình bày + 10 phút trả lời phản bi�
 - [ ] **Video Backup 15 phút**: Lưu sẵn trên desktop máy tính (phòng khi mất mạng wifi trường).
 - [ ] **File Backup Database**: Xuất file `traveleasy_backup_final.sql`.
 - [ ] **Trang phục**: Áo sơ mi trắng / đồng phục trường, chỉn chu, tác phong chuyên nghiệp.
+
