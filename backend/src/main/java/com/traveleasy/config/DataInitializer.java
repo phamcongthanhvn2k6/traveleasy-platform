@@ -111,6 +111,19 @@ public class DataInitializer implements CommandLineRunner {
 
         busCompanyRepository.saveAll(List.of(futa, thanhBuoi, saoViet, kumho, hoaMai, hoangLong, vanMinh, cucTung, haiVan, chinNghia));
 
+        // Liên kết chuẩn xác busCompanyId cho tài khoản điều hành các nhà xe đối tác
+        opFuta.setBusCompanyId(futa.getId());
+        opThanhBuoi.setBusCompanyId(thanhBuoi.getId());
+        opSaoViet.setBusCompanyId(saoViet.getId());
+        opKumho.setBusCompanyId(kumho.getId());
+        opHoaMai.setBusCompanyId(hoaMai.getId());
+        opHoangLong.setBusCompanyId(hoangLong.getId());
+        opVanMinh.setBusCompanyId(vanMinh.getId());
+        opCucTung.setBusCompanyId(cucTung.getId());
+        opHaiVan.setBusCompanyId(haiVan.getId());
+        opChinNghia.setBusCompanyId(chinNghia.getId());
+        userRepository.saveAll(List.of(opFuta, opThanhBuoi, opSaoViet, opKumho, opHoaMai, opHoangLong, opVanMinh, opCucTung, opHaiVan, opChinNghia));
+
         // 3. Seed 14 Routes
         Route r1 = Route.builder().busCompany(futa).departureLocation("TP. Hồ Chí Minh").arrivalLocation("Đà Lạt").durationHours(BigDecimal.valueOf(6.5)).distanceKm(BigDecimal.valueOf(305.0)).build();
         Route r2 = Route.builder().busCompany(futa).departureLocation("TP. Hồ Chí Minh").arrivalLocation("Nha Trang").durationHours(BigDecimal.valueOf(8.0)).distanceKm(BigDecimal.valueOf(435.0)).build();

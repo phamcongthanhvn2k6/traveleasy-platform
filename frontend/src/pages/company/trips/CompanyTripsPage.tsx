@@ -4,6 +4,7 @@ import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { PassengerManifestModal } from '../../../components/PassengerManifestModal';
 import { WaybillModal } from '../../../components/WaybillModal';
+import { TableSkeleton } from '../../../components/common/Skeleton';
 import { getStoredCompany } from '../../../utils/companyHelper';
 
 export interface CompanyTripItem {
@@ -26,11 +27,25 @@ const STORAGE_KEY = 'traveleasy_company_trips';
 export const CompanyTripsPage: React.FC = () => {
   const currentCompany = getStoredCompany();
   const [activeTab, setActiveTab] = useState<string>('ALL');
-  const [trips, setTrips] = useState<CompanyTripItem[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const fetchTripsFromDb = async () => {
-    setLoading(true);
+  // Khởi tạo tức thì (0ms) từ bộ nhớ cache nếu có để tối ưu tốc độ load data
+  const [trips, setTrips] = useState<CompanyTripItem[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_trips_cache_${currentCompany.id}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    try {
+      return !sessionStorage.getItem(`company_trips_cache_${currentCompany.id}`);
+    } catch (e) {
+      return true;
+    }
+  });
+
+  const fetchTripsFromDb = async (showLoadingSpinner = true) => {
+    if (showLoadingSpinner && trips.length === 0) setLoading(true);
     try {
       const res = await api.get('/company/trips', {
         params: {
@@ -39,31 +54,28 @@ export const CompanyTripsPage: React.FC = () => {
         },
       });
       if (res.data?.data && Array.isArray(res.data.data)) {
-        const mapped: CompanyTripItem[] = res.data.data
-          .filter((item: any) => {
-            if (item.busCompanyId && Number(item.busCompanyId) !== currentCompany.id) return false;
-            if (item.busCompanyName && !item.busCompanyName.toLowerCase().includes(currentCompany.shortName.toLowerCase()) && !currentCompany.name.toLowerCase().includes(item.busCompanyName.toLowerCase())) return false;
-            return true;
-          })
-          .map((item: any) => ({
-            id: String(item.id),
-            code: item.code || `TR-${item.id}`,
-            routeName: item.routeName || (item.originCity && item.destinationCity ? `${item.originCity} - ${item.destinationCity}` : `${item.originCity || 'Hà Nội'} - ${item.destinationCity || 'Sa Pa'}`),
-            vehiclePlate: item.licensePlate || item.vehiclePlate || '29B-888.77',
-            busType: item.busType || 'Limousine VIP',
-            departureTime: item.departureTime ? formatDisplayTime(item.departureTime) : '-',
-            arrivalTime: item.arrivalTime ? formatDisplayTime(item.arrivalTime) : '-',
-            price: item.price || 350000,
-            totalSeats: item.totalSeats || 34,
-            delayText: item.delayText || '-',
-            status: item.status || 'SCHEDULED',
-            statusLabel: item.status === 'RUNNING' ? 'Đang chạy' : item.status === 'COMPLETED' ? 'Hoàn thành' : item.status === 'CANCELLED' ? 'Đã hủy' : 'Đã lên lịch',
-          }));
+        const mapped: CompanyTripItem[] = res.data.data.map((item: any) => ({
+          id: String(item.id),
+          code: item.code || `TR-${item.id}`,
+          routeName: item.routeName || (item.originCity && item.destinationCity ? `${item.originCity} - ${item.destinationCity}` : `${item.originCity || 'Hà Nội'} - ${item.destinationCity || 'Sa Pa'}`),
+          vehiclePlate: item.licensePlate || item.vehiclePlate || '29B-888.77',
+          busType: item.busType || 'Limousine VIP',
+          departureTime: item.departureTime ? formatDisplayTime(item.departureTime) : '-',
+          arrivalTime: item.arrivalTime ? formatDisplayTime(item.arrivalTime) : '-',
+          price: item.price || 350000,
+          totalSeats: item.totalSeats || 34,
+          delayText: item.delayText || '-',
+          status: item.status || 'SCHEDULED',
+          statusLabel: item.status === 'RUNNING' ? 'Đang chạy' : item.status === 'COMPLETED' ? 'Hoàn thành' : item.status === 'CANCELLED' ? 'Đã hủy' : 'Đã lên lịch',
+        }));
         setTrips(mapped);
+        try {
+          sessionStorage.setItem(`company_trips_cache_${currentCompany.id}`, JSON.stringify(mapped));
+        } catch (e) {}
       }
     } catch (err: any) {
       if (err?.response?.status === 401) return;
-      console.error('Failed to load trips from Supabase:', err);
+      console.error('Failed to load trips from database:', err);
       toast.error('Không thể tải danh sách chuyến xe từ CSDL', 'Lỗi CSDL');
     } finally {
       setLoading(false);
@@ -71,8 +83,8 @@ export const CompanyTripsPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchTripsFromDb();
-  }, []);
+    fetchTripsFromDb(trips.length === 0);
+  }, [currentCompany.id]);
 
   // Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -489,15 +501,64 @@ export const CompanyTripsPage: React.FC = () => {
               <th style={{ padding: '12px 18px', width: '80px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={8} style={{ padding: '36px', textAlign: 'center', color: '#94a3b8' }}>
-                  Không có chuyến xe nào phù hợp với bộ lọc hiện tại.
-                </td>
-              </tr>
-            ) : (
-              filtered.map((item) => {
+          {loading && trips.length === 0 ? (
+            <TableSkeleton rows={6} columns={8} />
+          ) : (
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{ padding: '48px 24px', textAlign: 'center', color: '#64748b' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '52px', height: '52px', borderRadius: '50%', backgroundColor: '#f1f5f9', marginBottom: '12px', color: '#64748b' }}>
+                      <Bus size={26} />
+                    </div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155' }}>
+                      Chưa có chuyến xe nào phù hợp với bộ lọc hiện tại
+                    </div>
+                    <div style={{ fontSize: '12.5px', color: '#94a3b8', marginTop: '4px', maxWidth: '440px', margin: '4px auto 16px' }}>
+                      Dữ liệu đang được đồng bộ. Bạn có thể bấm tạo chuyến xe mới hoặc kích hoạt cơ chế sinh lịch tự động cho {currentCompany.name}.
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                      <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#4f46e5',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <Plus size={15} /> Tạo Chuyến Ngay
+                      </button>
+                      <button
+                        onClick={() => setIsAutoModalOpen(true)}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#10b981',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <Zap size={15} /> Sinh Chuyến Tự Động
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((item) => {
                 const statusStyles = {
                   SCHEDULED: { bg: '#eff6ff', text: '#2563eb', border: '#bfdbfe' },
                   DELAYED: { bg: '#fffbeb', text: '#d97706', border: '#fde68a' },
@@ -649,6 +710,7 @@ export const CompanyTripsPage: React.FC = () => {
               })
             )}
           </tbody>
+          )}
         </table>
       </div>
 

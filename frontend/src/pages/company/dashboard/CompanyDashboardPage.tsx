@@ -4,6 +4,7 @@ import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
 import { RevenueChart } from '../../../components/RevenueChart';
 import { getStoredCompany } from '../../../utils/companyHelper';
+import { CardSkeleton, Skeleton } from '../../../components/common/Skeleton';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -17,19 +18,34 @@ interface DashboardStats {
 
 export const CompanyDashboardPage: React.FC = () => {
   const currentCompany = getStoredCompany();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalRevenue: 0,
-    totalTrips: 0,
-    scheduledTrips: 0,
-    totalBookings: 0,
-    avgRating: 0.0,
-    totalReviews: 0,
-    upcomingTrips: [],
+
+  // Khởi tạo tức thì (0ms) từ cache để trang hiển thị mượt mà không bị giật lag
+  const [stats, setStats] = useState<DashboardStats>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_stats_cache_${currentCompany.id}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return {
+      totalRevenue: 0,
+      totalTrips: 0,
+      scheduledTrips: 0,
+      totalBookings: 0,
+      avgRating: 0.0,
+      totalReviews: 0,
+      upcomingTrips: [],
+    };
   });
-  const [loading, setLoading] = useState(true);
+
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !sessionStorage.getItem(`company_stats_cache_${currentCompany.id}`);
+    } catch (e) {
+      return true;
+    }
+  });
 
   const fetchStats = async () => {
-    setLoading(true);
+    if (!stats.totalTrips && !stats.totalRevenue) setLoading(true);
     try {
       const res = await api.get('/company/dashboard/stats', {
         params: {
@@ -39,6 +55,9 @@ export const CompanyDashboardPage: React.FC = () => {
       });
       if (res.data?.data) {
         setStats(res.data.data);
+        try {
+          sessionStorage.setItem(`company_stats_cache_${currentCompany.id}`, JSON.stringify(res.data.data));
+        } catch (e) {}
       }
     } catch (err: any) {
       if (err?.response?.status === 401) return;
@@ -51,7 +70,7 @@ export const CompanyDashboardPage: React.FC = () => {
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [currentCompany.id]);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
@@ -147,14 +166,17 @@ export const CompanyDashboardPage: React.FC = () => {
       </div>
 
       {/* Row of 4 KPI Cards */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '16px',
-          marginBottom: '26px',
-        }}
-      >
+      {loading && !stats.totalTrips && !stats.totalRevenue ? (
+        <CardSkeleton count={4} />
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '16px',
+            marginBottom: '26px',
+          }}
+        >
         {kpis.map((kpi, idx) => {
           const Icon = kpi.icon;
           return (
@@ -202,6 +224,7 @@ export const CompanyDashboardPage: React.FC = () => {
           );
         })}
       </div>
+      )}
 
       {/* Visual Revenue Trend Chart */}
       <RevenueChart

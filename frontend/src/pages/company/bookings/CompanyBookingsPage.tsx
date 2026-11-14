@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, CheckCircle, XCircle, Printer, X, User, Phone, Mail, MapPin, Calendar, CreditCard, QrCode } from 'lucide-react';
+import { Search, Eye, CheckCircle, XCircle, Printer, X, User, Phone, Mail, MapPin, Calendar, CreditCard, QrCode, Ticket } from 'lucide-react';
 import { TicketScannerModal } from '../../../components/TicketScannerModal';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { getStoredCompany } from '../../../utils/companyHelper';
+import { TableSkeleton } from '../../../components/common/Skeleton';
 
 export interface CompanyBookingItem {
   id: string;
@@ -30,12 +31,26 @@ export const CompanyBookingsPage: React.FC = () => {
   const currentCompany = getStoredCompany();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<string>('ALL');
-  const [bookings, setBookings] = useState<CompanyBookingItem[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Khởi tạo tức thì (0ms) từ cache
+  const [bookings, setBookings] = useState<CompanyBookingItem[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_bookings_cache_${currentCompany.id}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !sessionStorage.getItem(`company_bookings_cache_${currentCompany.id}`);
+    } catch (e) {
+      return true;
+    }
+  });
   const [showScannerModal, setShowScannerModal] = useState(false);
 
   const fetchBookingsFromDb = async () => {
-    setLoading(true);
+    if (bookings.length === 0) setLoading(true);
     try {
       const res = await api.get('/company/bookings', {
         params: {
@@ -63,10 +78,13 @@ export const CompanyBookingsPage: React.FC = () => {
           bookingTime: b.createdAt ? new Date(b.createdAt).toLocaleDateString('vi-VN') : 'Hôm nay'
         }));
         setBookings(mapped);
+        try {
+          sessionStorage.setItem(`company_bookings_cache_${currentCompany.id}`, JSON.stringify(mapped));
+        } catch (e) {}
       }
     } catch (err: any) {
       if (err?.response?.status === 401) return;
-      console.error('Failed to load bookings from Supabase:', err);
+      console.error('Failed to load bookings from database:', err);
       toast.error('Không thể tải danh sách đơn vé từ CSDL', 'Lỗi CSDL');
     } finally {
       setLoading(false);
@@ -75,7 +93,7 @@ export const CompanyBookingsPage: React.FC = () => {
 
   useEffect(() => {
     fetchBookingsFromDb();
-  }, []);
+  }, [currentCompany.id]);
 
   const [selectedBooking, setSelectedBooking] = useState<CompanyBookingItem | null>(null);
 
@@ -346,15 +364,26 @@ export const CompanyBookingsPage: React.FC = () => {
               <th style={{ padding: '12px 18px', width: '80px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={8} style={{ padding: '36px', textAlign: 'center', color: '#94a3b8' }}>
-                  Không tìm thấy đơn đặt vé nào phù hợp.
-                </td>
-              </tr>
-            ) : (
-              filtered.map((item) => {
+          {loading && bookings.length === 0 ? (
+            <TableSkeleton rows={6} columns={8} />
+          ) : (
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{ padding: '48px 24px', textAlign: 'center', color: '#64748b' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '52px', height: '52px', borderRadius: '50%', backgroundColor: '#f1f5f9', marginBottom: '12px', color: '#64748b' }}>
+                      <Ticket size={24} />
+                    </div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155' }}>
+                      Chưa tìm thấy đơn đặt vé nào phù hợp
+                    </div>
+                    <div style={{ fontSize: '12.5px', color: '#94a3b8', marginTop: '4px' }}>
+                      Hành khách đặt vé qua website, ứng dụng hoặc tại quầy POS sẽ tự động hiển thị ở đây.
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((item) => {
                 const statusStyles = {
                   CONFIRMED: { bg: '#ecfdf5', text: '#059669', border: '#a7f3d0' },
                   PENDING: { bg: '#fffbeb', text: '#d97706', border: '#fde68a' },
@@ -445,6 +474,7 @@ export const CompanyBookingsPage: React.FC = () => {
               })
             )}
           </tbody>
+          )}
         </table>
       </div>
 

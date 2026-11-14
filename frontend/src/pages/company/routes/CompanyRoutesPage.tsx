@@ -3,6 +3,7 @@ import { Route as RouteIcon, Plus, Search, Edit2, Trash2, Clock, MapPin, Refresh
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
 import { getStoredCompany } from '../../../utils/companyHelper';
+import { TableSkeleton } from '../../../components/common/Skeleton';
 
 interface RouteItem {
   id: number;
@@ -18,8 +19,22 @@ interface RouteItem {
 
 export const CompanyRoutesPage: React.FC = () => {
   const currentCompany = getStoredCompany();
-  const [routes, setRoutes] = useState<RouteItem[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Khởi tạo tức thì (0ms) từ cache
+  const [routes, setRoutes] = useState<RouteItem[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_routes_cache_${currentCompany.id}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !sessionStorage.getItem(`company_routes_cache_${currentCompany.id}`);
+    } catch (e) {
+      return true;
+    }
+  });
   const [search, setSearch] = useState('');
 
   // Create Modal
@@ -39,7 +54,7 @@ export const CompanyRoutesPage: React.FC = () => {
   const [updating, setUpdating] = useState(false);
 
   const fetchRoutes = async () => {
-    setLoading(true);
+    if (routes.length === 0) setLoading(true);
     try {
       const res = await api.get('/company/routes', {
         params: {
@@ -48,12 +63,10 @@ export const CompanyRoutesPage: React.FC = () => {
         },
       });
       if (res.data?.data && Array.isArray(res.data.data)) {
-        const filtered = res.data.data.filter((r: any) => {
-          if (r.busCompanyId && Number(r.busCompanyId) !== currentCompany.id) return false;
-          if (r.busCompanyName && !r.busCompanyName.toLowerCase().includes(currentCompany.shortName.toLowerCase()) && !currentCompany.name.toLowerCase().includes(r.busCompanyName.toLowerCase())) return false;
-          return true;
-        });
-        setRoutes(filtered);
+        setRoutes(res.data.data);
+        try {
+          sessionStorage.setItem(`company_routes_cache_${currentCompany.id}`, JSON.stringify(res.data.data));
+        } catch (e) {}
       }
     } catch (err: any) {
       if (err?.response?.status === 401) return;
@@ -293,15 +306,11 @@ export const CompanyRoutesPage: React.FC = () => {
               </th>
             </tr>
           </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                  <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 8px', color: '#0284c7' }} />
-                  <div>Đang tải dữ liệu tuyến đường từ MySQL...</div>
-                </td>
-              </tr>
-            ) : filteredRoutes.length === 0 ? (
+          {loading && routes.length === 0 ? (
+            <TableSkeleton rows={5} columns={7} />
+          ) : (
+            <tbody>
+              {filteredRoutes.length === 0 ? (
               <tr>
                 <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                   <RouteIcon size={32} style={{ margin: '0 auto 8px', color: '#94a3b8' }} />
@@ -429,6 +438,7 @@ export const CompanyRoutesPage: React.FC = () => {
               ))
             )}
           </tbody>
+          )}
         </table>
       </div>
 
