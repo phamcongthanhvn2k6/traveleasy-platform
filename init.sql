@@ -25768,6 +25768,16 @@ BEGIN
 END $$;
 
 SET session_replication_role = 'origin';
+
+-- =====================================================================
+-- [S315] PERFORMANCE TUNING INDEXES (PostgreSQL)
+-- Đánh Index các trường thường xuyên filter nhằm tối ưu tốc độ tìm kiếm
+-- =====================================================================
+CREATE INDEX IF NOT EXISTS idx_trips_departure_route_status ON public.trips (departure_time, route_id, status);
+CREATE INDEX IF NOT EXISTS idx_trip_seats_trip_seat_code ON public.trip_seats (trip_id, seat_code);
+CREATE INDEX IF NOT EXISTS idx_trip_seats_trip_status ON public.trip_seats (trip_id, status);
+CREATE INDEX IF NOT EXISTS idx_tickets_booking_seat ON public.tickets (booking_id, seat_number);
+
 -- =====================================================================
 -- BACKUP COMPLETE
 -- =====================================================================
