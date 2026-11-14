@@ -146,3 +146,4 @@ class AdminPromotionControllerTest {
         verify(promotionRepository, times(1)).delete(testPromo);
     }
 }
+
