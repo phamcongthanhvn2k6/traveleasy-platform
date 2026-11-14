@@ -75,14 +75,20 @@ public class CompanyTripManifestController {
                 : "TP. Hồ Chí Minh ➔ Đà Lạt";
 
         String depLoc = (trip != null && trip.getRoute() != null && trip.getRoute().getDepartureLocation() != null)
-                ? trip.getRoute().getDepartureLocation() : "Bến xe Miền Đông Mới";
+                ? trip.getRoute().getDepartureLocation() : "Hà Nội";
         String arrLoc = (trip != null && trip.getRoute() != null && trip.getRoute().getArrivalLocation() != null)
-                ? trip.getRoute().getArrivalLocation() : "Bến xe Liên tỉnh Đà Lạt";
+                ? trip.getRoute().getArrivalLocation() : "Sa Pa";
 
         String depTime = (trip != null && trip.getDepartureTime() != null)
                 ? trip.getDepartureTime().format(DATE_TIME_FORMATTER) : "2026-11-14 22:00:00";
         String arrTime = (trip != null && trip.getArrivalTime() != null)
                 ? trip.getArrivalTime().format(DATE_TIME_FORMATTER) : "2026-11-15 05:00:00";
+
+        // Tự động phân bổ cơ quan cấp GPKD & khoảng cách phù hợp địa lý
+        boolean isNorthRoute = (depLoc.contains("Hà Nội") || arrLoc.contains("Sa Pa") || arrLoc.contains("Lào Cai") || (companyName != null && companyName.contains("Sao Việt")));
+        String transportLicense = isNorthRoute ? "GP-VT-01/2024/SGTVT-HN" : "GP-VT-79/2024/SGTVT-HCM";
+        int distanceKm = isNorthRoute ? 315 : 305;
+        String terminalName = isNorthRoute ? "Bến xe Mỹ Đình (Hà Nội)" : "Bến xe Miền Đông Mới (TP.HCM)";
 
         String waybillCode = "LVC-GTVT-2026-" + tripId;
 
@@ -97,7 +103,7 @@ public class CompanyTripManifestController {
         manifest.put("taxCode", taxCode);
         manifest.put("hotline", hotline);
         manifest.put("address", address);
-        manifest.put("transportLicense", "GP-VT-79/2024/SGTVT-HCM");
+        manifest.put("transportLicense", transportLicense);
 
         // Phần II: Phương tiện & Tổ lái
         manifest.put("licensePlate", licensePlate);
@@ -132,7 +138,7 @@ public class CompanyTripManifestController {
         manifest.put("arrivalLocation", arrLoc);
         manifest.put("departureTime", depTime);
         manifest.put("arrivalTime", arrTime);
-        manifest.put("distanceKm", 305);
+        manifest.put("distanceKm", distanceKm);
 
         // Phần IV: Hành khách
         manifest.put("totalPassengers", passengers.size());
@@ -152,7 +158,7 @@ public class CompanyTripManifestController {
         manifest.put("digitalSignature", digitalSignature);
 
         Map<String, Object> terminalConfirmation = new LinkedHashMap<>();
-        terminalConfirmation.put("terminalName", depLoc);
+        terminalConfirmation.put("terminalName", terminalName);
         terminalConfirmation.put("dispatcher", "Trưởng Ca Điều Hành Bến Xe");
         terminalConfirmation.put("confirmedDepartureTime", depTime);
         terminalConfirmation.put("status", isDispatched ? "DISPATCHED" : "READY_FOR_DISPATCH");
@@ -273,11 +279,22 @@ public class CompanyTripManifestController {
         }
 
         if (list.isEmpty()) {
+            String routeName = trip != null && trip.getRoute() != null
+                    ? trip.getRoute().getDepartureLocation() + " - " + trip.getRoute().getArrivalLocation()
+                    : "";
+            boolean isNorth = routeName.contains("Hà Nội") || routeName.contains("Sa Pa") || routeName.contains("Lào Cai");
+
+            String p1 = isNorth ? "Bến xe Mỹ Đình" : "Bến xe Miền Đông Mới";
+            String p2 = isNorth ? "Sân bay Nội Bài" : "Ngã 4 Hàng Xanh";
+            String d1 = isNorth ? "Bến xe Trung tâm Sa Pa" : "Bến xe Liên tỉnh Đà Lạt";
+            String d2 = isNorth ? "571 Điện Biên Phủ, Sa Pa" : "Ngã 3 Finom";
+            BigDecimal defPrice = (trip != null && trip.getPrice() != null) ? trip.getPrice() : BigDecimal.valueOf(isNorth ? 450000 : 320000);
+
             list = List.of(
-                    Map.of("stt", 1, "seatCode", "A01", "passengerName", "Nguyễn Văn An", "phone", "0901***123", "pickupPoint", "Bến xe Miền Đông Mới", "dropoffPoint", "Bến xe Liên tỉnh Đà Lạt", "ticketCode", "TK-" + tripId + "-A01", "bookingCode", "BK-202611-01", "price", 320000, "status", "ISSUED"),
-                    Map.of("stt", 2, "seatCode", "A02", "passengerName", "Trần Thị Bình", "phone", "0912***456", "pickupPoint", "Ngã 4 Hàng Xanh", "dropoffPoint", "Bến xe Liên tỉnh Đà Lạt", "ticketCode", "TK-" + tripId + "-A02", "bookingCode", "BK-202611-02", "price", 320000, "status", "ISSUED"),
-                    Map.of("stt", 3, "seatCode", "B01", "passengerName", "Lê Hoàng Cường", "phone", "0983***789", "pickupPoint", "Bến xe Miền Đông Mới", "dropoffPoint", "Ngã 3 Finom", "ticketCode", "TK-" + tripId + "-B01", "bookingCode", "BK-202611-03", "price", 320000, "status", "ISSUED"),
-                    Map.of("stt", 4, "seatCode", "B02", "passengerName", "Phạm Hải Đăng", "phone", "0977***999", "pickupPoint", "Bến xe Miền Đông Mới", "dropoffPoint", "Bến xe Liên tỉnh Đà Lạt", "ticketCode", "TK-" + tripId + "-B02", "bookingCode", "BK-202611-04", "price", 320000, "status", "ISSUED")
+                    Map.of("stt", 1, "seatCode", "A01", "passengerName", "Nguyễn Văn An", "phone", "0901***123", "pickupPoint", p1, "dropoffPoint", d1, "ticketCode", "TK-" + tripId + "-A01", "bookingCode", "BK-202611-01", "price", defPrice, "status", "ISSUED"),
+                    Map.of("stt", 2, "seatCode", "A02", "passengerName", "Trần Thị Bình", "phone", "0912***456", "pickupPoint", p2, "dropoffPoint", d1, "ticketCode", "TK-" + tripId + "-A02", "bookingCode", "BK-202611-02", "price", defPrice, "status", "ISSUED"),
+                    Map.of("stt", 3, "seatCode", "B01", "passengerName", "Lê Hoàng Cường", "phone", "0983***789", "pickupPoint", p1, "dropoffPoint", d2, "ticketCode", "TK-" + tripId + "-B01", "bookingCode", "BK-202611-03", "price", defPrice, "status", "ISSUED"),
+                    Map.of("stt", 4, "seatCode", "B02", "passengerName", "Phạm Hải Đăng", "phone", "0977***999", "pickupPoint", p1, "dropoffPoint", d1, "ticketCode", "TK-" + tripId + "-B02", "bookingCode", "BK-202611-04", "price", defPrice, "status", "ISSUED")
             );
         }
         return list;
