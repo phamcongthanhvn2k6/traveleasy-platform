@@ -217,6 +217,10 @@ public class TicketExchangeService {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe mới phải có giờ khởi hành trong tương lai.");
         }
 
+        if (oldTrip.getId().equals(newTrip.getId()) && request.getNewSeatNumber().equalsIgnoreCase(oldTicket.getSeatNumber())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Bạn đang chọn lại chính xác chuyến xe và vị trí ghế hiện tại. Vui lòng chọn chuyến xe khác hoặc vị trí ghế khác để thực hiện đổi vé.");
+        }
+
         // 4. Kiểm tra ghế mới và Concurrency protection với khóa bi quan (DoD 3, AC-S316-04, Review Point #3)
         TripSeat newSeat = tripSeatRepository.findByTripIdAndSeatCodeWithLock(newTrip.getId(), request.getNewSeatNumber())
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Ghế " + request.getNewSeatNumber() + " không tồn tại trên chuyến xe mới."));
@@ -295,6 +299,10 @@ public class TicketExchangeService {
         Long busCompanyId = oldTrip.getBusCompany() != null ? oldTrip.getBusCompany().getId() : 1L;
         Long performedByUserId = performedByUser != null ? performedByUser.getId() : null;
 
+        String exchangeReason = (request.getNote() != null && !request.getNote().isBlank())
+                ? request.getNote().trim()
+                : "Đổi vé theo yêu cầu hành khách";
+
         TicketExchangeLog logRecord = TicketExchangeLog.builder()
                 .busCompanyId(busCompanyId)
                 .originalTicketId(oldTicket.getId())
@@ -307,7 +315,7 @@ public class TicketExchangeService {
                 .surchargePaid(surcharge)
                 .refundReturned(refund)
                 .performedByUserId(performedByUserId)
-                .reason(request.getNote())
+                .reason(exchangeReason)
                 .createdAt(now)
                 .build();
         logRecord = ticketExchangeLogRepository.save(logRecord);

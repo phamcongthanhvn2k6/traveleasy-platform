@@ -81,9 +81,19 @@ public class CompanyShuttleServiceImpl implements CompanyShuttleService {
     @Transactional
     public ShuttleRequestResponse createShuttleRequest(CreateShuttleRequest request, Long busCompanyId) {
         // 1. Kiểm tra thời gian đăng ký đón trước (Lead time >= 120 phút)
-        if (request.getMinutesBeforeDeparture() != null && request.getMinutesBeforeDeparture() < 120) {
+        Long minutesBefore = request.getMinutesBeforeDeparture() != null ? request.getMinutesBeforeDeparture().longValue() : null;
+        if (minutesBefore == null && request.getMainTripId() != null && tripRepository != null) {
+            try {
+                var tripOpt = tripRepository.findById(request.getMainTripId());
+                if (tripOpt.isPresent() && tripOpt.get().getDepartureTime() != null) {
+                    minutesBefore = java.time.Duration.between(LocalDateTime.now(), tripOpt.get().getDepartureTime()).toMinutes();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        if (minutesBefore != null && minutesBefore < 120) {
             throw new AppException(ErrorCode.VALIDATION_ERROR,
-                    "KHÔNG THỂ ĐĂNG KÝ: Yêu cầu trung chuyển đón tận nhà phải được đăng ký trước giờ xe chạy tối thiểu 120 phút (Hiện tại chỉ còn " + request.getMinutesBeforeDeparture() + " phút)!");
+                    "KHÔNG THỂ ĐĂNG KÝ: Yêu cầu trung chuyển đón tận nhà phải được đăng ký trước giờ xe chạy tối thiểu 120 phút (Hiện tại chỉ còn " + minutesBefore + " phút)!");
         }
 
         // 2. Kiểm tra bán kính đón (Geofence <= 10.0km)
@@ -176,6 +186,13 @@ public class CompanyShuttleServiceImpl implements CompanyShuttleService {
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy yêu cầu trung chuyển: " + id));
 
         validateTenancy(entity, busCompanyId);
+
+        // Chặn nhảy cóc từ PENDING trực tiếp lên ARRIVED_TERMINAL hoặc COMPLETED mà chưa qua điều phối
+        if (entity.getStatus() == ShuttleRequestStatus.PENDING &&
+                (status == ShuttleRequestStatus.ARRIVED_TERMINAL || status == ShuttleRequestStatus.COMPLETED)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR,
+                    "Yêu cầu trung chuyển đang ở trạng thái CHỜ XỬ LÝ, cần gán tài xế và bắt đầu lộ trình trước khi xác nhận hoàn tất đón!");
+        }
 
         entity.setStatus(status);
         ShuttleRequest updated = shuttleRequestRepository.save(entity);

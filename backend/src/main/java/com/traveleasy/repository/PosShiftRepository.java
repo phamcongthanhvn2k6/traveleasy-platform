@@ -31,6 +31,12 @@ public interface PosShiftRepository extends JpaRepository<PosShift, Long> {
             String status
     );
 
+    boolean existsByBusCompanyIdAndStaffUserIdAndStatus(
+            Long busCompanyId,
+            Long staffUserId,
+            String status
+    );
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE PosShift s

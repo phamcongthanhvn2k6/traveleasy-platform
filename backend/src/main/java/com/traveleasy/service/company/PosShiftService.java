@@ -69,6 +69,10 @@ public class PosShiftService {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Quầy \"" + counter + "\" đang có ca chưa chốt. Hãy chốt ca đó trước.");
         }
 
+        if (posShiftRepository.existsByBusCompanyIdAndStaffUserIdAndStatus(busCompanyId, staffUserId, OPEN)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Tài khoản của bạn đang có một ca trực chưa chốt. Vui lòng kết ca hiện tại trước khi mở ca mới.");
+        }
+
         LocalDateTime now = LocalDateTime.now();
         PosShift shift = PosShift.builder()
                 .busCompanyId(busCompanyId)
