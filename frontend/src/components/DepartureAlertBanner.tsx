@@ -20,57 +20,37 @@ export const DepartureAlertBanner: React.FC = () => {
     const checkUpcomingDeparture = async () => {
       const token = localStorage.getItem('traveleasy_token');
       const now = Date.now();
+
+      // BẮT BUỘC: Chưa đăng nhập tài khoản -> Tuyệt đối không hiển thị nhắc nhở khởi hành
+      if (!token) {
+        setUpcomingBooking(null);
+        return;
+      }
+
       let targetBooking: any = null;
 
-      // Trường hợp 1: Người dùng đã đăng nhập -> Gọi API backend lấy danh sách vé thực tế
-      if (token) {
-        try {
-          const res = await api.get('/bookings/my-bookings');
-          const bookings: any[] = res.data?.data || [];
-          // Lọc các vé thực tế sắp khởi hành trong vòng 48 giờ tới
-          const upcoming = bookings
-            .filter(b => {
-              if (b.status !== 'CONFIRMED' && b.status !== 'PAID') return false;
-              if (!b.trip?.departureTime) return false;
-              const depTime = new Date(b.trip.departureTime).getTime();
-              const diff = depTime - now;
-              return diff > 0 && diff <= 48 * 3600 * 1000;
-            })
-            .sort((a, b) => new Date(a.trip.departureTime).getTime() - new Date(b.trip.departureTime).getTime());
+      // Người dùng đã đăng nhập -> Gọi API backend lấy danh sách vé thực tế của chính tài khoản này
+      try {
+        const res = await api.get('/bookings/my-bookings');
+        const bookings: any[] = res.data?.data || [];
+        // Lọc các vé thực tế sắp khởi hành trong vòng 48 giờ tới
+        const upcoming = bookings
+          .filter(b => {
+            if (b.status !== 'CONFIRMED' && b.status !== 'PAID') return false;
+            if (!b.trip?.departureTime) return false;
+            const depTime = new Date(b.trip.departureTime).getTime();
+            const diff = depTime - now;
+            return diff > 0 && diff <= 48 * 3600 * 1000;
+          })
+          .sort((a, b) => new Date(a.trip.departureTime).getTime() - new Date(b.trip.departureTime).getTime());
 
-          if (upcoming.length > 0) {
-            targetBooking = upcoming[0];
-          }
-        } catch {
-          // Bỏ qua lỗi mạng
+        if (upcoming.length > 0) {
+          targetBooking = upcoming[0];
         }
+      } catch {
+        // Bỏ qua lỗi mạng
       }
 
-      // Trường hợp 2: Nếu chưa đăng nhập, chỉ kiểm tra các vé người dùng vừa đặt thật trên thiết bị này (trong localStorage)
-      if (!targetBooking) {
-        try {
-          const cacheRaw = localStorage.getItem('traveleasy_saved_tickets');
-          if (cacheRaw) {
-            const cache = JSON.parse(cacheRaw);
-            const validLocalBookings = Object.values(cache)
-              .filter((b: any) => {
-                if (!b?.trip?.departureTime) return false;
-                const depTime = new Date(b.trip.departureTime).getTime();
-                const diff = depTime - now;
-                return diff > 0 && diff <= 48 * 3600 * 1000;
-              })
-              .sort((a: any, b: any) => new Date(a.trip.departureTime).getTime() - new Date(b.trip.departureTime).getTime());
-
-            if (validLocalBookings.length > 0) {
-              targetBooking = validLocalBookings[0];
-            }
-          }
-        } catch {
-          // Bỏ qua lỗi JSON
-        }
-      }
-
-      // Tuyệt đối không dùng dữ liệu giả lập (mock data). Nếu người dùng chưa có vé thật -> Ẩn banner.
       setUpcomingBooking(targetBooking);
     };
 
