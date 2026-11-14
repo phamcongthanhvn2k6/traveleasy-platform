@@ -90,7 +90,15 @@ export default function LiveTrackingMapPage() {
   const [myBookings, setMyBookings] = useState<UserTripBooking[]>([]);
   const [loadingBookings, setLoadingBookings] = useState<boolean>(false);
 
-  const activeTripId = Number(paramTripId) || (myBookings.length > 0 ? myBookings[0].tripId : 696);
+  // Form tra cứu vé đối với khách chưa đăng nhập / chưa có vé
+  const [lookupCode, setLookupCode] = useState<string>('');
+  const [lookupPhone, setLookupPhone] = useState<string>('');
+  const [lookupLoading, setLookupLoading] = useState<boolean>(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+
+  // Chỉ kích hoạt chuyến xe khi có param trên URL HOẶC người dùng có vé thật trong tài khoản
+  // Tuyệt đối không tự động fallback sang id 696 cho khách vãng lai
+  const activeTripId = Number(paramTripId) || (myBookings.length > 0 ? myBookings[0].tripId : 0);
 
   const [tripData, setTripData] = useState<TripGpsData | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -212,9 +220,9 @@ export default function LiveTrackingMapPage() {
   const destMarkerRef = useRef<L.Marker | null>(null);
   const geoWatchIdRef = useRef<number | null>(null);
 
-  // 1. Khởi tạo bản đồ Leaflet một lần duy nhất
+  // 1. Khởi tạo bản đồ Leaflet một lần duy nhất khi có activeTripId
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    if (!mapContainerRef.current || !activeTripId) return;
 
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
@@ -238,10 +246,11 @@ export default function LiveTrackingMapPage() {
         mapInstanceRef.current = null;
       }
     };
-  }, []);
+  }, [activeTripId]);
 
   // 2. Fetch snapshot ban đầu & Đăng ký luồng Server-Sent Events (SSE)
   useEffect(() => {
+    if (!activeTripId) return;
     let eventSource: EventSource | null = null;
 
     // Reset markers when switching trip
@@ -464,38 +473,156 @@ export default function LiveTrackingMapPage() {
     };
   }, []);
 
+  const handleLookupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!lookupCode.trim()) {
+      setLookupError('Vui lòng nhập Mã vé hoặc Mã đơn đặt');
+      return;
+    }
+    setLookupLoading(true);
+    setLookupError(null);
+    try {
+      const code = lookupCode.trim().toUpperCase();
+      let tripId: number | null = null;
+
+      try {
+        const res = await api.get(`/bookings/code/${encodeURIComponent(code)}`);
+        if (res.data?.data?.trip?.id) {
+          tripId = res.data.data.trip.id;
+        }
+      } catch {
+        try {
+          const verifyRes = await api.get(`/bookings/verify-ticket/${encodeURIComponent(code)}`);
+          if (verifyRes.data?.data?.bookingCode) {
+            const bRes = await api.get(`/bookings/code/${encodeURIComponent(verifyRes.data.data.bookingCode)}`);
+            if (bRes.data?.data?.trip?.id) {
+              tripId = bRes.data.data.trip.id;
+            }
+          }
+        } catch {
+          if (lookupPhone.trim()) {
+            const phoneRes = await api.get(`/bookings/phone/${encodeURIComponent(lookupPhone.trim())}`);
+            if (phoneRes.data?.data && phoneRes.data.data.length > 0) {
+              tripId = phoneRes.data.data[0].trip?.id;
+            }
+          }
+        }
+      }
+
+      if (tripId) {
+        navigate(`/tracking/${tripId}`);
+      } else {
+        setLookupError('Không tìm thấy chuyến xe tương ứng với mã vé này. Vui lòng kiểm tra lại!');
+      }
+    } catch {
+      setLookupError('Không tìm thấy vé hợp lệ hoặc hệ thống đang bận.');
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 bg-slate-900 min-h-screen text-slate-100 font-sans">
       <div className="max-w-7xl mx-auto space-y-5">
-        {/* BANNER TASK SPRINT 3 CHUẨN TRELLO */}
+        {/* BANNER THEO DÕI ĐỊNH VỊ GPS */}
         <div className="bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 text-white p-5 rounded-2xl shadow-xl border border-teal-700/50">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-amber-950 uppercase tracking-wide">
-                  SPRINT 3 TASK
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-slate-950 uppercase tracking-wide">
+                  GPS LIVE TRACKING
                 </span>
-                <span className="text-xs font-semibold text-emerald-200">Mã thẻ: [S306][TRACKING] • Định mức: 4 SP • Ưu tiên 2</span>
+                <span className="text-xs font-semibold text-emerald-200">Định vị hành trình xe chạy thời gian thực</span>
               </div>
               <h2 className="text-xl md:text-2xl font-bold mt-1.5 flex items-center gap-2">
                 <Radio className="w-6 h-6 text-emerald-400 animate-pulse" />
                 Bản Đồ Định Vị GPS Live Tracking Xe Chạy Thời Gian Thực
               </h2>
               <p className="text-xs md:text-sm text-emerald-200 mt-1 max-w-3xl leading-relaxed">
-                Tích hợp bản đồ Leaflet OpenStreetMap, truyền tọa độ siêu tốc qua Server-Sent Events (SSE 1s/lần), tự động ước tính thời gian đón (ETA) và hỗ trợ tài xế chia sẻ vị trí xe thực tế.
+                Tích hợp bản đồ Leaflet OpenStreetMap, truyền tọa độ siêu tốc qua Server-Sent Events (SSE 1s/lần), tự động ước tính thời gian đón (ETA) và giám sát lộ trình vận tải an toàn.
               </p>
-            </div>
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl border border-white/10 self-start md:self-auto">
-              <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-base shadow">
-                P
-              </div>
-              <div>
-                <p className="text-xs text-emerald-300">Thành viên phụ trách</p>
-                <p className="text-sm font-bold text-white">Nguyễn Đại Phát (@phatnguyn146)</p>
-              </div>
             </div>
           </div>
         </div>
+
+        {/* NẾU CHƯA CÓ CHUYẾN XE (CHƯA ĐĂNG NHẬP HOẶC CHƯA CÓ VÉ): HIỂN THỊ CỔNG XÁC THỰC MÃ VÉ */}
+        {!activeTripId ? (
+          <div className="bg-slate-800/95 border border-slate-700 rounded-2xl p-6 md:p-12 text-center max-w-2xl mx-auto shadow-2xl my-6">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
+              Tra Cứu & Theo Dõi Định Vị GPS Chuyến Xe
+            </h3>
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+              Để bảo vệ an toàn hành trình và bảo mật thông tin tài xế theo quy định, bản đồ GPS thời gian thực chỉ mở cho hành khách đã mua vé trên chuyến xe. Quý khách vui lòng nhập mã vé hoặc đăng nhập tài khoản.
+            </p>
+
+            <form
+              onSubmit={handleLookupSubmit}
+              className="space-y-3.5 bg-slate-900/80 p-5 md:p-6 rounded-xl border border-slate-700/80 text-left mb-6"
+            >
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Mã vé hoặc Mã đơn đặt (Booking Code / Ticket Code) <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: TE-2026-9812 hoặc TK-A01-1011"
+                  value={lookupCode}
+                  onChange={(e) => setLookupCode(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Số điện thoại người đi (tùy chọn)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: 0912345678"
+                  value={lookupPhone}
+                  onChange={(e) => setLookupPhone(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-600 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              {lookupError && (
+                <div className="p-2.5 bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs rounded-lg">
+                  {lookupError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={lookupLoading}
+                className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 shadow-md"
+              >
+                <Radio className="w-4 h-4 animate-pulse" />
+                {lookupLoading ? 'Đang xác thực thông tin vé...' : 'Xem Vị Trí Xe Của Tôi'}
+              </button>
+            </form>
+
+            <div className="flex items-center justify-center gap-3 text-xs text-slate-400 flex-wrap">
+              <span>Đã có tài khoản TravelEasy?</span>
+              <button
+                onClick={() => navigate('/login?redirect=/tracking')}
+                className="text-emerald-400 font-bold hover:underline cursor-pointer"
+              >
+                Đăng nhập tài khoản
+              </button>
+              <span>•</span>
+              <button
+                onClick={() => navigate('/search')}
+                className="text-sky-400 font-bold hover:underline cursor-pointer"
+              >
+                Tìm & Đặt vé chuyến mới
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
 
         {/* BANNER THÔNG TIN VÉ CỦA USER NẾU USER CÓ VÉ TRÊN CHUYẾN NÀY */}
         {currentBooking && (
@@ -831,6 +958,8 @@ export default function LiveTrackingMapPage() {
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
