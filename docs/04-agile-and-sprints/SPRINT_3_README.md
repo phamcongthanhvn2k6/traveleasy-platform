@@ -2,8 +2,8 @@
 > **Dự án:** Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy (`traveleasy-platform`)  
 > **Đơn vị:** OJT Đồ Án Tốt Nghiệp Nhóm 7 — FPT Polytechnic  
 > **Thời gian thực hiện:** Sprint 3 (Tuần Vận Hành Nâng Cao & Hoàn Thiện Nghiệp Vụ)  
-> **Trạng thái:** 🚀 **CHÍNH THỨC PHÊ DUYỆT & ĐANG THỰC HIỆN**  
-> **Quy mô Sprint 3 chính thức:** **17 User Stories & Technical Tasks | 45 Story Points | 04 Thành viên OJT Active**  
+> **Trạng thái:** 🏆 **CHÍNH THỨC ĐÓNG SPRINT 3 (14/11/2026)**  
+> **Quy mô Sprint 3 chính thức:** **21 User Stories & Technical Tasks | 63 Story Points | 18 tasks Done (55 SP) / 3 tasks Code Review (8 SP)**  
 
 ---
 
@@ -11,22 +11,23 @@
 Sprint 3 mở rộng toàn diện nhằm giải quyết bài toán vận hành thực tế của các nhà xe liên tỉnh, nâng cao năng lực bảo vệ đồ án tốt nghiệp OJT với các năng lực nghiệp vụ đỉnh cao:
 1. **Lõi Đặt Vé & Concurrency:** Khóa ghế đồng thời **Concurrency Lock 10 phút** chống trùng vé đa luồng thời gian thực qua Server-Sent Events (SSE).
 2. **Nghiệp Vụ Vé Nâng Cao:** Xử lý **Đổi vé & Chuyển chuyến xe** (`/company/ticket-exchange`), quy định bậc thang **Biểu phí hoàn hủy vé** (`/company/refunds`) và **Thiết lập giá vé động Lễ/Tết** (`/company/pricing-rules`).
-3. **Hiện Trường Bến Xe & Điều Hành:** **Phân công tổ lái & kiểm tra cồn xuất bến** (`/company/crew`), **Quản lý đón/trả trung chuyển tận nơi** (`/company/shuttles`), **WebApp di động quét QR soát vé** (`/conductor/scanner`), **Quản lý ca trực POS nộp tiền mặt** (`/company/shifts`).
+3. **Hiện Trường Bến Xe & Điều Hành:** **Phân công tổ lái & kiểm tra cồn xuất bến** (`/company/crew`), **Quản lý đón/trả trung chuyển tận nơi** (`/company/shuttles`), **WebApp di động quét QR soát vé** (`/conductor/scanner`), **Quản lý ca trực POS nộp tiền mặt** (`/company/shifts`), **Bản đồ Live GPS Tracking** (`/tracking/:tripId`).
 4. **Tài Chính & Pháp Lý:** **Sổ chi phí vận hành chuyến & lãi/lỗ P&L** (`/company/expenses`), **Xuất lệnh vận chuyển điện tử chuẩn Bộ GTVT** (PDF/Excel), **Đối soát doanh thu & Ví nhà xe** (`/company/settlements`), **Cổng thanh toán tự động Webhook**.
-5. **Bảo Mật & Xác Thực Khách Hàng:** **Quên mật khẩu & khôi phục tài khoản qua OTP Gmail** (`/forgot-password`), xác thực mã 6 số chống brute-force và cấp lại mật khẩu mới an toàn.
+5. **Bảo Mật & DevOps:** **Đóng gói Docker Compose & Deploy VPS 103.72.57.149**, **Tối ưu SWR Cache 0ms & Skeleton Loading**, **Rate Limiting SMS OTP chống Brute-force**.
 
 ---
 
-## 👥 2. PHÂN BỔ STORY POINTS THEO THÀNH VIÊN (17 TASKS / 45 SP)
+## 👥 2. PHÂN BỔ STORY POINTS THEO THÀNH VIÊN (21 TASKS / 63 SP)
 
-| STT | Thành viên | Vai trò chuyên trách | Số task | Story Points | Các Task Phụ Trách |
-|:---:|:---|:---|:---:|:---:|:---|
-| 1 | **Phạm Công Thành** | Team Leader & System Architect | 4 tasks | **13 SP** | `[S301]` (4 SP), `[S310]` (3 SP), `[S311]` (3 SP), `[AUTH-FORGOT]` (3 SP) |
-| 2 | **Trần Minh Đức** | Core Features & Pricing Engine | 4 tasks | **11 SP** | `[S307]` (3 SP), `[S316]` (3 SP), `[S317]` (3 SP), `[S318]` (2 SP) |
-| 3 | **Đoàn Nhật Cường** | Operator Hub & Mobile Scanner | 4 tasks | **11 SP** | `[S305]` (3 SP), `[S315]` (2 SP), `[S319]` (3 SP), `[S320]` (3 SP) |
-| 4 | **Nguyễn Đại Phát** | Payment Gateway, Legal & QA | 5 tasks | **10 SP** | `[S313]` (3 SP), `[S314]` (2 SP), `[S321]` (3 SP), `[S322]` (2 SP), `[S323]` (2 SP) |
-| 5 | **Phan Trung Kiên** | Thành viên | 0 task | **0 SP** | *(Miễn thực tập OJT theo quyết định đào tạo)* |
-| **TỔNG** | **Toàn đội Nhóm 7** | **Khối lượng chuẩn mực Sprint 3** | **17 tasks** | **45 SP** | **Phân bổ đồng đều giữa các thành viên active** |
+| STT | Thành viên | Vai trò chuyên trách | Số task | Story Points | Các Task Phụ Trách | Trạng thái |
+|:---:|:---|:---|:---:|:---:|:---|:---|
+| 1 | **Phạm Công Thành** | Team Leader & System Architect | 5 tasks | **16 SP** | `[S303]` (4 SP), `[S302]` (3 SP), `[S309]` (3 SP), `[S308]` (3 SP), `[S311]` (3 SP) | 100% Hoàn thành |
+| 2 | **Nguyễn Đại Phát** | Payment Gateway, Legal & QA | 6 tasks | **17 SP** | `[S306]` (4 SP), `[S310]` (3 SP), `[S321]` (3 SP), `[SMS-OTP]` (3 SP), `[S314]` (2 SP), `[S322]` (2 SP) | 100% Hoàn thành |
+| 3 | **Phạm Thanh Phong** | Core Booking & Seat Engine | 2 tasks | **8 SP** | `[S301]` (4 SP), `[S304]` (4 SP) | 100% Hoàn thành |
+| 4 | **Trần Minh Đức** | Core Features & Pricing Engine | 4 tasks | **11 SP** | `[S307]` (3 SP), `[S316]` (3 SP), `[S317]` (3 SP), `[S318]` (2 SP) | 100% Hoàn thành |
+| 5 | **Đoàn Nhật Cường** | Operator Hub & Mobile Scanner | 4 tasks | **11 SP** | `[S305]` (3 SP - Done); Nợ 3 task: `[S315]` (2 SP), `[S319]` (3 SP), `[S320]` (3 SP) tại Code Review | 27.3% Hoàn thành |
+| 6 | **Phan Trung Kiên** | Thành viên | 0 task | **0 SP** | *(Miễn thực tập OJT theo quyết định đào tạo)* | - |
+| **TỔNG** | **Toàn đội Nhóm 7** | **Khối lượng chuẩn mực Sprint 3** | **21 tasks** | **63 SP** | **18 tasks Hoàn thành (55 SP) / 3 tasks Ghi nợ (8 SP)** | **87.3% Hoàn thành** |
 
 ---
 

@@ -107,7 +107,16 @@ Cung cấp tài liệu tích hợp API, đóng gói triển khai và cẩm nang 
 Tài liệu quản lý tiến độ, ma trận phân bổ công việc và kịch bản bảo vệ tốt nghiệp OJT:
 
 * 📄 [BAO_CAO_CHI_TIET_TASK_TRELLO_THEO_SPRINT_VA_THANH_VIEN.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/BAO_CAO_CHI_TIET_TASK_TRELLO_THEO_SPRINT_VA_THANH_VIEN.md) *(Bản Chuẩn SSOT - Khuyên đọc)*  
-  * **Nội dung**: Báo cáo pháp lý và thẩm định toàn diện 84 thẻ Trello của 3 Sprint (149 SP chuẩn mực theo tiến độ Tuần 3 của môn học), đối soát chi tiết công việc của các thành viên (Thành, Phát, Phong, Đức, Cường), danh sách link Trello trực tiếp từng thẻ và checklist nghiệm thu DoD 5 tiêu chí.
+  * **Nội dung**: Báo cáo pháp lý và thẩm định toàn diện 95 thẻ Trello của 3 Sprint (254 SP chuẩn mực với 246 SP đã hoàn thành), đối soát chi tiết công việc của các thành viên (Thành, Phát, Phong, Đức, Cường), danh sách link Trello trực tiếp từng thẻ và checklist nghiệm thu DoD 5 tiêu chí.
+
+* 📄 [BAO_CAO_TIEN_DO_SPRINT_3_MOI_NHAT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/BAO_CAO_TIEN_DO_SPRINT_3_MOI_NHAT.md) *(Biên bản chốt sổ Sprint 3)*  
+  * **Nội dung**: Báo cáo chốt sổ đóng Sprint 3 ngày 14/11/2026 đồng bộ 100% thời gian thực với Trello Board `AA5BYoe1` (18 tasks Done - 55 SP, 3 tasks nợ Code Review - 8 SP).
+
+* 📄 [TONG_KET_DONG_SPRINT_3_VA_BAO_CAO_NO_TASK.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/TONG_KET_DONG_SPRINT_3_VA_BAO_CAO_NO_TASK.md)  
+  * **Nội dung**: Sổ cái ghi nhận nợ kỹ thuật (Technical Debt Ledger) và biện pháp kiểm soát rủi ro chuyển giao Sprint.
+
+* 📄 [KE_HOACH_CHI_TIET_SPRINT_4_VA_BAO_VE_CUOI_KHOA.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/KE_HOACH_CHI_TIET_SPRINT_4_VA_BAO_VE_CUOI_KHOA.md) *(Kế hoạch Sprint 4 & D-Day)*  
+  * **Nội dung**: Kế hoạch tổng lực Sprint 4 chuẩn bị cho ngày bảo vệ chính thức (20/11/2026), phân công nhiệm vụ 10 tasks S401-S410 và bộ dữ liệu D-Day chuẩn hóa.
 
 * 📄 [KE_HOACH_CHI_TIET_SPRINT_3_VA_BAO_VE_OJT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/KE_HOACH_CHI_TIET_SPRINT_3_VA_BAO_VE_OJT.md) *(Master Action Plan)*  
   * **Nội dung**: Kế hoạch tổng lực Sprint 3 mở rộng (16 User Stories & Technical Tasks - 42 SP), lộ trình thực hiện phân chia đồng đều 4 thành viên (Thành 10, Đức 11, Cường 11, Phát 10), ma trận RACI và kịch bản trình diễn 15 phút bảo vệ tốt nghiệp OJT.
@@ -127,7 +136,8 @@ Tài liệu quản lý tiến độ, ma trận phân bổ công việc và kịc
 * 📄 **Chi Tiết Báo Cáo Từng Sprint**:
   * [SPRINT_1_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_1_README.md): Nền tảng Core, Xác thực JWT, CSDL chuẩn Supabase và Quản trị Danh mục (35 thẻ | Done).
   * [SPRINT_2_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_2_README.md): Tìm kiếm vé xe đa tiêu chí, Chọn sơ đồ ghế 2 tầng, Thanh toán VNPAY & VietQR, Soát vé camera (39 thẻ | Done).
-  * [SPRINT_3_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_3_README.md): Khóa ghế Realtime Concurrency, Đổi vé & chuyển chuyến, Đón trả trung chuyển, Sổ chi phí P&L, Tổ lái & kiểm tra cồn xuất bến, Soát vé QR di động, Lệnh vận chuyển GTVT, Biểu phí hoàn hủy (16 thẻ | 42 SP — Đang triển khai chính thức).
+  * [SPRINT_3_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_3_README.md): Khóa ghế Realtime Concurrency, Đổi vé & chuyển chuyến, Đón trả trung chuyển, Sổ chi phí P&L, Tổ lái & kiểm tra cồn xuất bến, Soát vé QR di động, Lệnh vận chuyển GTVT, Biểu phí hoàn hủy, GPS Live Tracking, POS quầy vé, Báo cáo lấp đầy (21 thẻ | 63 SP — Đã đóng Sprint 3 với 18 thẻ Done / 55 SP, 3 thẻ Code Review nợ chuyển tiếp).
+  * [SPRINT_4_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_4_README.md): Kế hoạch hoàn thiện đồ án, tối ưu hóa toàn diện, tổng duyệt kịch bản bảo vệ D-Day (10 thẻ | 30 SP — Chuẩn bị cho D-Day 20/11/2026).
 
 ---
 
