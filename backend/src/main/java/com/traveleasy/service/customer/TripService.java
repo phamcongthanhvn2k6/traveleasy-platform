@@ -236,8 +236,18 @@ public class TripService {
     @Transactional(readOnly = true)
     public RouteScheduleResponse getSchedule(String origin, String destination) {
         // 1. Chuẩn hóa điểm đi & điểm đến mặc định nếu không truyền
-        String from = (origin != null && !origin.trim().isEmpty()) ? origin.trim() : "TP. Hồ Chí Minh";
-        String to = (destination != null && !destination.trim().isEmpty()) ? destination.trim() : "Đà Lạt";
+        String rawFrom = (origin != null && !origin.trim().isEmpty()) ? origin.trim() : "TP. Hồ Chí Minh";
+        String rawTo = (destination != null && !destination.trim().isEmpty()) ? destination.trim() : "Đà Lạt";
+
+        if (rawFrom.equalsIgnoreCase("Sài Gòn") || rawFrom.equalsIgnoreCase("TPHCM") || rawFrom.equalsIgnoreCase("TP.HCM") || rawFrom.equalsIgnoreCase("Hồ Chí Minh")) {
+            rawFrom = "TP. Hồ Chí Minh";
+        }
+        if (rawTo.equalsIgnoreCase("Sài Gòn") || rawTo.equalsIgnoreCase("TPHCM") || rawTo.equalsIgnoreCase("TP.HCM") || rawTo.equalsIgnoreCase("Hồ Chí Minh")) {
+            rawTo = "TP. Hồ Chí Minh";
+        }
+
+        final String from = rawFrom;
+        final String to = rawTo;
 
         // 2. Lấy danh sách điểm đi / đến có sẵn trong CSDL
         List<String> origins = routeRepository.findDistinctDepartureLocations();
