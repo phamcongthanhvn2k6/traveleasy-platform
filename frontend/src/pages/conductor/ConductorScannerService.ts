@@ -37,6 +37,7 @@ export interface ValidateTicketResponse {
 }
 
 const OFFLINE_MANIFEST_PREFIX = 'traveleasy_conductor_manifest_';
+const OFFLINE_SYNC_QUEUE_KEY = 'traveleasy_conductor_offline_sync_queue';
 
 export const ConductorScannerService = {
   getTripManifest: async (tripId: number): Promise<ConductorSeatManifestResponse> => {
@@ -95,11 +96,13 @@ export const ConductorScannerService = {
     const manifest: ConductorSeatManifestResponse = JSON.parse(raw);
     const clean = code.trim().toUpperCase();
 
+    // Bắt buộc phải khớp mã vé (Ticket Code hoặc hậu tố mã vé), tuyệt đối không cho phép dùng mã ghế để vượt rào
     const seat = manifest.seats.find(
       (s) =>
-        (s.ticketCode && s.ticketCode.toUpperCase() === clean) ||
-        s.seatCode.toUpperCase() === clean ||
-        (clean.length <= 4 && s.seatCode.toUpperCase().endsWith(clean))
+        s.ticketCode &&
+        (s.ticketCode.toUpperCase() === clean ||
+         s.ticketCode.toUpperCase().endsWith(clean) ||
+         clean.includes(s.ticketCode.toUpperCase()))
     );
 
     if (!seat) {
@@ -132,6 +135,16 @@ export const ConductorScannerService = {
     manifest.pendingCount = Math.max(0, (manifest.pendingCount || 1) - 1);
     localStorage.setItem(OFFLINE_MANIFEST_PREFIX + currentTripId, JSON.stringify(manifest));
 
+    // Thêm vào hàng đợi Sync Queue để đồng bộ lên máy chủ ngay khi có sóng 4G/Wifi trở lại
+    try {
+      const queueRaw = localStorage.getItem(OFFLINE_SYNC_QUEUE_KEY);
+      const queue: { tripId: number; ticketCode: string; time: number }[] = queueRaw ? JSON.parse(queueRaw) : [];
+      queue.push({ tripId: currentTripId, ticketCode: seat.ticketCode || code, time: Date.now() });
+      localStorage.setItem(OFFLINE_SYNC_QUEUE_KEY, JSON.stringify(queue));
+    } catch (e) {
+      console.warn('Lỗi ghi hàng đợi đồng bộ offline', e);
+    }
+
     return {
       valid: true,
       checkInStatus: 'CHECKED_IN',
@@ -161,6 +174,33 @@ export const ConductorScannerService = {
       }
     } catch (e) {
       console.warn('Lỗi update offline cache', e);
+    }
+  },
+
+  syncOfflineQueue: async (): Promise<number> => {
+    try {
+      const queueRaw = localStorage.getItem(OFFLINE_SYNC_QUEUE_KEY);
+      if (!queueRaw) return 0;
+      const queue: { tripId: number; ticketCode: string; time: number }[] = JSON.parse(queueRaw);
+      if (!Array.isArray(queue) || queue.length === 0) return 0;
+
+      let syncedCount = 0;
+      const remaining: typeof queue = [];
+      for (const item of queue) {
+        try {
+          await api.post('/conductor/scanner/validate', null, {
+            params: { qrCodeOrTicketCode: item.ticketCode, currentTripId: item.tripId }
+          });
+          syncedCount++;
+        } catch (e) {
+          remaining.push(item);
+        }
+      }
+      localStorage.setItem(OFFLINE_SYNC_QUEUE_KEY, JSON.stringify(remaining));
+      return syncedCount;
+    } catch (e) {
+      console.warn('Lỗi đồng bộ offline queue', e);
+      return 0;
     }
   }
 };

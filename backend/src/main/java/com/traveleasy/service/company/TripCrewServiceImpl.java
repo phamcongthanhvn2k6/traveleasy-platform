@@ -34,13 +34,33 @@ public class TripCrewServiceImpl implements TripCrewService {
     @Override
     @Transactional(readOnly = true)
     public List<TripCrewResponse> getCrewAssignments(Long busCompanyId, String date) {
-        List<Trip> trips = tripRepository.findByBusCompanyIdWithDetails(busCompanyId);
+        List<Trip> trips;
+        if (date != null && !date.isBlank()) {
+            try {
+                java.time.LocalDate localDate = java.time.LocalDate.parse(date.trim());
+                LocalDateTime startTime = localDate.atStartOfDay();
+                LocalDateTime endTime = localDate.plusDays(1).atStartOfDay();
+                trips = tripRepository.findByBusCompanyIdAndDepartureTimeBetweenWithDetails(busCompanyId, startTime, endTime);
+            } catch (Exception ex) {
+                log.warn("[TripCrew] Không thể parse định dạng ngày '{}', sử dụng truy vấn mặc định", date);
+                trips = tripRepository.findByBusCompanyIdWithDetails(busCompanyId);
+            }
+        } else {
+            trips = tripRepository.findByBusCompanyIdWithDetails(busCompanyId);
+        }
+
+        if (trips.isEmpty()) {
+            return List.of();
+        }
+
+        // Khử triệt để N+1 query: nạp toàn bộ tổ lái của danh sách chuyến trong 1 câu query IN
+        List<Long> tripIds = trips.stream().map(Trip::getId).toList();
+        java.util.Map<Long, TripCrew> crewMap = tripCrewRepository.findByTripIdIn(tripIds).stream()
+                .filter(c -> c.getTrip() != null)
+                .collect(Collectors.toMap(c -> c.getTrip().getId(), c -> c, (a, b) -> a));
 
         return trips.stream()
-                .map(trip -> {
-                    TripCrew crew = tripCrewRepository.findByTripId(trip.getId()).orElse(null);
-                    return mapToResponse(trip, crew);
-                })
+                .map(trip -> mapToResponse(trip, crewMap.get(trip.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -143,6 +163,12 @@ public class TripCrewServiceImpl implements TripCrewService {
         if (crew.getAlcoholReading() != null && crew.getAlcoholReading().compareTo(BigDecimal.ZERO) > 0) {
             throw new AppException(ErrorCode.VALIDATION_ERROR,
                     "CẢNH BÁO ĐỎ: Phát hiện nồng độ cồn (" + crew.getAlcoholReading() + " mg/L). Đình chỉ xuất bến theo quy định an toàn!");
+        }
+
+        // Đảm bảo tính bất biến (Idempotency) - Nếu đã ký lệnh trước đó, trả về luôn lệnh đã cấp
+        if (crew.getDispatchPermitCode() != null && "DISPATCH_PERMIT_SIGNED".equals(crew.getStatus())) {
+            log.info("[TripCrew] Chuyến xe #{} đã được ký lệnh xuất bến điện tử trước đó: {}", tripId, crew.getDispatchPermitCode());
+            return mapToResponse(trip, crew);
         }
 
         // Tạo mã Lệnh xuất bến điện tử

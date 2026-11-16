@@ -28,8 +28,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/company/crew")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
-@Tag(name = "Company Trip Crew Operations", description = "[S319] Phân công tổ lái, tài xế phụ và kiểm soát giờ lái xe an toàn - Đoàn Nhật Cường")
+@Tag(name = "Company Trip Crew Operations", description = "[S319] Phân công tổ lái, tài xế phụ và kiểm soát giờ lái xe an toàn")
 public class CompanyTripCrewController {
 
     private final CompanySecurityService securityService;
@@ -72,16 +71,21 @@ public class CompanyTripCrewController {
     }
 
     private Long resolveCompanyId(Authentication authentication, Long busCompanyId) {
-        if (authentication != null && authentication.isAuthenticated()) {
-            User user = securityService.requireStaffRole(authentication, StaffRole.OWNER, StaffRole.DISPATCHER);
-            if (user != null && user.getBusCompanyId() != null) {
-                return user.getBusCompanyId();
-            }
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Vui lòng đăng nhập để thực hiện quản lý điều hành tổ lái!");
         }
-        if (busCompanyId != null) {
+
+        // Kiểm tra xem có phải ADMIN hệ thống không
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin && busCompanyId != null) {
             return busCompanyId;
         }
-        // Fallback demo company ID nếu chạy môi trường test không phân quyền
-        return 14L;
+
+        User user = securityService.requireStaffRole(authentication, StaffRole.OWNER, StaffRole.DISPATCHER);
+        if (user == null || user.getBusCompanyId() == null) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Tài khoản của bạn không được gán quyền điều hành nhà xe!");
+        }
+        return user.getBusCompanyId();
     }
 }

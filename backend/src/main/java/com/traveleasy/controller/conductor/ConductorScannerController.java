@@ -29,8 +29,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/conductor/scanner")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
-@Tag(name = "Conductor Ticket Scanner", description = "[S320] Quét mã QR soát vé khách lên xe thời gian thực - Đoàn Nhật Cường")
+@Tag(name = "Conductor Ticket Scanner", description = "[S320] Quét mã QR soát vé khách lên xe thời gian thực")
 public class ConductorScannerController {
 
     private final TicketRepository ticketRepository;
@@ -40,7 +39,13 @@ public class ConductorScannerController {
     @GetMapping("/trips/{tripId}/manifest")
     @Transactional(readOnly = true)
     @Operation(summary = "Tải toàn bộ danh sách vé và sơ đồ ghế của chuyến xe để lưu cache Offline vào LocalStorage (DoD & BUG-NEW-05)")
-    public ApiResponse<ConductorSeatManifestResponse> getTripManifestForOfflineScan(@PathVariable Long tripId) {
+    public ApiResponse<ConductorSeatManifestResponse> getTripManifestForOfflineScan(
+            @PathVariable Long tripId,
+            org.springframework.security.core.Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Vui lòng đăng nhập tài khoản nhân viên/phụ xe để tải danh sách hành khách!");
+        }
         Trip trip = tripRepository.findByIdWithDetails(tripId).orElse(null);
         String routeName = (trip != null && trip.getRoute() != null)
                 ? (trip.getRoute().getDepartureLocation() + " ➔ " + trip.getRoute().getArrivalLocation())
@@ -134,10 +139,14 @@ public class ConductorScannerController {
         if (rawCode.isEmpty()) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Mã vé hoặc mã QR không được để trống!");
         }
+        String upperCode = rawCode.toUpperCase();
 
-        // Dùng phương thức có lock hoặc query chuẩn
-        Ticket ticket = ticketRepository.findByCodeOrQrHashForUpdate(rawCode)
-                .orElse(ticketRepository.findByCodeOrQrHash(rawCode).orElse(null));
+        // Dùng phương thức có lock tối ưu hóa tận dụng B-Tree Index (không ép UPPER trong SQL)
+        Ticket ticket = ticketRepository.findByCodeOrQrHashForUpdate(upperCode)
+                .or(() -> ticketRepository.findByCodeOrQrHashForUpdate(rawCode))
+                .or(() -> ticketRepository.findByCodeOrQrHash(upperCode))
+                .or(() -> ticketRepository.findByCodeOrQrHash(rawCode))
+                .orElse(null);
 
         if (ticket == null) {
             ValidateTicketResponse res = ValidateTicketResponse.builder()
@@ -177,6 +186,25 @@ public class ConductorScannerController {
                     .message("CẢNH BÁO: Vé thuộc chuyến xe #" + tripId + " (" + routeName + "), không trùng khớp chuyến hiện tại (#" + currentTripId + ")!")
                     .build();
             return ApiResponse.success("Vé sai chuyến", res);
+        }
+
+        // 2. Kiểm tra trạng thái thanh toán của đơn đặt vé (Chống thất thoát doanh thu nghiêm trọng)
+        if (booking == null || (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.COMPLETED)) {
+            ValidateTicketResponse res = ValidateTicketResponse.builder()
+                    .valid(false)
+                    .checkInStatus("UNPAID")
+                    .validationColor("RED")
+                    .ticketCode(ticket.getTicketCode())
+                    .seatNumber(ticket.getSeatNumber())
+                    .passengerName(passName)
+                    .passengerPhone(passPhone)
+                    .tripId(tripId)
+                    .tripRoute(routeName)
+                    .departureTime(trip != null ? trip.getDepartureTime() : null)
+                    .ticketPrice(ticket.getPrice())
+                    .message("CẢNH BÁO ĐỎ: Đơn đặt vé này CHƯA HOÀN TẤT THANH TOÁN (Trạng thái đơn: " + (booking != null ? booking.getStatus() : "NULL") + ")! Yêu cầu thanh toán trước khi lên xe.")
+                    .build();
+            return ApiResponse.success("Vé chưa thanh toán", res);
         }
 
         // 2. Kiểm tra nếu vé đã dùng / trùng lặp (Màu ĐỎ)

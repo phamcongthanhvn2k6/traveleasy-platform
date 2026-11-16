@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface TripCrewRepository extends JpaRepository<TripCrew, Long> {
     Optional<TripCrew> findByTripId(Long tripId);
+    List<TripCrew> findByTripIdIn(java.util.Collection<Long> tripIds);
     List<TripCrew> findByBusCompanyIdOrderByCreatedAtDesc(Long busCompanyId);
     boolean existsByTripId(Long tripId);
 }
