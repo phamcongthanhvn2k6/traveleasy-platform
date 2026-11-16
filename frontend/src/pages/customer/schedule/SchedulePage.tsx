@@ -1611,6 +1611,17 @@ export const SchedulePage: React.FC = () => {
   const [durationOption, setDurationOption] = useState('3N2Đ');
   const [travelVibe, setTravelVibe] = useState<TravelVibe>('CHILL');
   const [budgetTier, setBudgetTier] = useState<BudgetTier>('STANDARD');
+  const [isCustomCity, setIsCustomCity] = useState(false);
+
+  // Đồng bộ searchParams URL với destinationInput
+  useEffect(() => {
+    const qDest = searchParams.get('destination');
+    if (qDest && qDest !== destinationInput) {
+      setDestinationInput(qDest);
+      const from = searchParams.get('origin') || getSmartOriginForDestination(qDest);
+      setOriginInput(from);
+    }
+  }, [searchParams]);
 
   // Lắng nghe thay đổi kịch bản từ trang Admin Real-time
   const [templateVersion, setTemplateVersion] = useState(0);
@@ -1633,6 +1644,52 @@ export const SchedulePage: React.FC = () => {
         selectedDays = selectedDays.slice(0, 2);
       } else if (durationOption === '3N2Đ' && selectedDays.length > 3) {
         selectedDays = selectedDays.slice(0, 3);
+      } else if (durationOption === '4N3Đ' && selectedDays.length === 3) {
+        selectedDays = [
+          ...selectedDays,
+          {
+            dayNumber: 4,
+            title: `Ngày 4: Khám phá mở rộng, Mua sắm đặc sản & Chuẩn bị khởi hành về`,
+            stops: [
+              {
+                id: `${adminTemplate.id}-4-1`,
+                time: '08:00',
+                period: 'MORNING' as const,
+                title: 'Ăn sáng đặc sản địa phương & Thưởng thức cà phê thư giãn',
+                category: 'FOOD' as const,
+                duration: '60 phút',
+                price: '45.000đ',
+                imageUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80',
+                localTip: 'Thưởng thức bữa sáng thong thả, ngắm cảnh phố phường sớm mai.',
+                coords: { x: 50, y: 50 }
+              },
+              {
+                id: `${adminTemplate.id}-4-2`,
+                time: '10:00',
+                period: 'MORNING' as const,
+                title: 'Mua quà lưu niệm & Đặc sản làm quà tại chợ địa phương',
+                category: 'CULTURE' as const,
+                duration: '90 phút',
+                price: 'Tùy chọn',
+                imageUrl: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=500&auto=format&fit=crop&q=80',
+                localTip: 'Đóng gói quà cẩn thận để tiện mang lên khoang hành lý xe khách.',
+                coords: { x: 52, y: 48 }
+              },
+              {
+                id: `${adminTemplate.id}-4-3`,
+                time: '14:30',
+                period: 'AFTERNOON' as const,
+                title: 'Check-out khách sạn, gửi hành lý & Ra bến xe đón chuyến xe về',
+                category: 'EXPERIENCE' as const,
+                duration: '60 phút',
+                price: 'Miễn phí',
+                imageUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=500&auto=format&fit=crop&q=80',
+                localTip: 'Có mặt tại bến hoặc văn phòng nhà xe trước 30 phút giờ xuất bến.',
+                coords: { x: 45, y: 55 }
+              }
+            ]
+          }
+        ];
       }
 
       return {
@@ -2269,8 +2326,35 @@ export const SchedulePage: React.FC = () => {
       {/* HERO EXPLORE BAR */}
       <div style={{ background: 'linear-gradient(135deg, #091c3e 0%, #173873 50%, #1e3a8a 100%)', color: '#fff', padding: '36px 20px 48px', position: 'relative' }}>
         <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.12)', padding: '5px 14px', borderRadius: '20px', width: 'fit-content', fontSize: '13px', fontWeight: 700, marginBottom: '14px' }}>
-            <Sparkles size={15} style={{ color: '#fbbf24' }} /> CÔNG CỤ LẬP KẾ HOẠCH DU LỊCH & ĐỀ XUẤT XE KHÁCH THÔNG MINH
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.12)', padding: '5px 14px', borderRadius: '20px', width: 'fit-content', fontSize: '13px', fontWeight: 700 }}>
+              <Sparkles size={15} style={{ color: '#fbbf24' }} /> CÔNG CỤ LẬP KẾ HOẠCH DU LỊCH & ĐỀ XUẤT XE KHÁCH THÔNG MINH
+            </div>
+
+            <a
+              href="/admin/itineraries"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '20px',
+                backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                border: '1px solid rgba(255, 255, 255, 0.35)',
+                color: '#fff',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                textDecoration: 'none',
+                backdropFilter: 'blur(4px)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Compass size={14} style={{ color: '#38bdf8' }} />
+              ⚙️ Quản lý kịch bản du lịch (Admin)
+              <ExternalLink size={12} />
+            </a>
           </div>
 
           <h1 style={{ fontSize: '28px', fontWeight: 800, margin: '0 0 10px 0', letterSpacing: '-0.5px' }}>
@@ -2283,53 +2367,101 @@ export const SchedulePage: React.FC = () => {
           {/* Explore Search Controls Card */}
           <div className="no-print" style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '18px 24px', boxShadow: '0 12px 36px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
             <form onSubmit={handleSearchExplore} style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-              {/* Destination Input with Datalist */}
-              <div style={{ flex: '1 1 240px', minWidth: '200px' }}>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>
-                  📍 Điểm Đến Du Lịch
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    list="destinations-explore"
-                    value={destinationInput}
-                    onChange={(e) => setDestinationInput(e.target.value)}
-                    placeholder="Chọn hoặc nhập: Đà Lạt, Sa Pa, Nha Trang..."
+              {/* Destination Select / Input */}
+              <div style={{ flex: '1 1 280px', minWidth: '240px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '11.5px', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>
+                    📍 Điểm Đến Du Lịch
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomCity(!isCustomCity)}
                     style={{
-                      width: '100%',
-                      padding: '11px 14px 11px 36px',
-                      borderRadius: '10px',
-                      border: '1.5px solid #cbd5e1',
-                      fontSize: '14.5px',
+                      background: 'none',
+                      border: 'none',
+                      color: '#2563eb',
+                      fontSize: '11.5px',
                       fontWeight: 700,
-                      color: '#0f172a',
-                      outline: 'none',
-                      boxSizing: 'border-box'
+                      cursor: 'pointer',
+                      padding: 0,
+                      textDecoration: 'underline'
                     }}
-                  />
-                  <datalist id="destinations-explore">
-                    <option value="Đà Lạt" />
-                    <option value="Sa Pa" />
-                    <option value="Đà Nẵng" />
-                    <option value="Nha Trang" />
-                    <option value="Quy Nhơn" />
-                    <option value="Ninh Bình" />
-                    <option value="Hà Giang" />
-                    <option value="Vũng Tàu" />
-                    <option value="Măng Đen" />
-                    <option value="Huế" />
-                    <option value="Phan Thiết" />
-                    <option value="Phú Quốc" />
-                    <option value="Hạ Long" />
-                    <option value="Cần Thơ" />
-                    <option value="Hải Phòng" />
-                  </datalist>
-                  <MapPin size={17} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#ef4444' }} />
+                  >
+                    {isCustomCity ? 'Chọn từ danh sách có sẵn' : '✏️ Nhập điểm khác'}
+                  </button>
+                </div>
+
+                <div style={{ position: 'relative' }}>
+                  {isCustomCity ? (
+                    <input
+                      type="text"
+                      autoFocus
+                      value={destinationInput}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setDestinationInput(val);
+                        const from = getSmartOriginForDestination(val);
+                        setOriginInput(from);
+                        setSearchParams({ origin: from, destination: val });
+                      }}
+                      placeholder="Gõ tỉnh/thành phố bất kỳ..."
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px 11px 36px',
+                        borderRadius: '10px',
+                        border: '1.5px solid #2563eb',
+                        fontSize: '14.5px',
+                        fontWeight: 700,
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        backgroundColor: '#fff'
+                      }}
+                    />
+                  ) : (
+                    <select
+                      value={destinationInput}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setDestinationInput(val);
+                        const from = getSmartOriginForDestination(val);
+                        setOriginInput(from);
+                        setSearchParams({ origin: from, destination: val });
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px 11px 36px',
+                        borderRadius: '10px',
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        backgroundColor: '#fff',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="Đà Lạt">🌲 Đà Lạt (Lâm Đồng) - Săn mây & Cafe thung lũng</option>
+                      <option value="Sa Pa">⛰️ Sa Pa (Lào Cai) - Nóc nhà Fansipan & Ruộng bậc thang</option>
+                      <option value="Nha Trang">🏖️ Nha Trang (Khánh Hòa) - Vịnh biển ngọc & Lặn san hô</option>
+                      <option value="Đà Nẵng">🌉 Đà Nẵng - Hội An - Cầu Rồng & Phố cổ đèn lồng</option>
+                      <option value="Vũng Tàu">🌊 Vũng Tàu - Phố biển cuối tuần gần Sài Gòn</option>
+                      <option value="Quy Nhơn">🏝️ Quy Nhơn (Bình Định) - Kỳ Co, Eo Gió hoang sơ</option>
+                      <option value="Ninh Bình">🛶 Ninh Bình - Non nước Tràng An & Đỉnh Hang Múa</option>
+                      <option value="Hà Giang">🏍️ Hà Giang - Cung đường Hạnh Phúc & Sông Nho Quế</option>
+                      <option value="Phú Quốc">🌅 Phú Quốc (Kiên Giang) - Đảo Ngọc & Sunset Sanato</option>
+                      <option value="Huế">🏯 Huế - Cố đô di sản thâm nghiêm & Sông Hương</option>
+                      <option value="Măng Đen">🍃 Măng Đen (Kon Tum) - Nàng thơ đại ngàn Tây Nguyên</option>
+                      <option value="Phan Thiết">🏜️ Phan Thiết - Mũi Né - Đồi cát bay & Làng chài</option>
+                    </select>
+                  )}
+                  <MapPin size={17} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#ef4444', pointerEvents: 'none' }} />
                 </div>
               </div>
 
               {/* Duration Select */}
-              <div style={{ flex: '0 1 180px', minWidth: '150px' }}>
+              <div style={{ flex: '0 1 200px', minWidth: '170px' }}>
                 <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>
                   ⏱ Thời Lượng Chuyến Đi
                 </label>
@@ -2350,10 +2482,10 @@ export const SchedulePage: React.FC = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  <option value="2N1Đ">2 Ngày 1 Đêm (Cuối tuần)</option>
-                  <option value="3N2Đ">3 Ngày 2 Đêm (Tiêu chuẩn)</option>
-                  <option value="4N3Đ">4 Ngày 3 Đêm (Trọn vẹn)</option>
-                  <option value="Trong ngày">Trong ngày (Quick Trip)</option>
+                  <option value="Trong ngày">⚡ Trong ngày (Quick Trip - 24h)</option>
+                  <option value="2N1Đ">🌴 2 Ngày 1 Đêm (Cuối tuần)</option>
+                  <option value="3N2Đ">⭐ 3 Ngày 2 Đêm (Tiêu chuẩn)</option>
+                  <option value="4N3Đ">🗺️ 4 Ngày 3 Đêm (Trọn vẹn)</option>
                 </select>
               </div>
 
@@ -2432,21 +2564,23 @@ export const SchedulePage: React.FC = () => {
                   key={city}
                   type="button"
                   onClick={() => {
+                    setIsCustomCity(false);
                     setDestinationInput(city);
                     const from = getSmartOriginForDestination(city);
                     setOriginInput(from);
                     setSearchParams({ origin: from, destination: city });
                   }}
                   style={{
-                    background: destinationInput === city ? '#eff6ff' : '#f8fafc',
-                    color: destinationInput === city ? '#2563eb' : '#475569',
-                    border: destinationInput === city ? '1.5px solid #93c5fd' : '1px solid #e2e8f0',
-                    borderRadius: '16px',
-                    padding: '4px 12px',
+                    background: destinationInput === city ? '#2563eb' : '#f8fafc',
+                    color: destinationInput === city ? '#ffffff' : '#334155',
+                    border: destinationInput === city ? '1.5px solid #1d4ed8' : '1px solid #cbd5e1',
+                    borderRadius: '18px',
+                    padding: '5px 14px',
                     fontSize: '12px',
-                    fontWeight: 700,
+                    fontWeight: destinationInput === city ? 800 : 600,
                     cursor: 'pointer',
-                    transition: 'all 0.15s'
+                    boxShadow: destinationInput === city ? '0 2px 8px rgba(37,99,235,0.3)' : 'none',
+                    transition: 'all 0.15s ease'
                   }}
                 >
                   {city}
