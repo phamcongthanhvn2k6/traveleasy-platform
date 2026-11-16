@@ -316,6 +316,14 @@ public class AdminManagementController {
         return ApiResponse.success("Tạo banner thành công", adminManagementService.createBanner(request));
     }
 
+    @PutMapping("/banners/{id}")
+    @Operation(summary = "Cập nhật thông tin banner quảng cáo")
+    public ApiResponse<Banner> updateBanner(
+            @PathVariable Long id,
+            @Valid @RequestBody BannerRequest request) {
+        return ApiResponse.success("Cập nhật banner thành công", adminManagementService.updateBanner(id, request));
+    }
+
     @PatchMapping("/banners/{id}/status")
     @Operation(summary = "Bật/Tắt hiển thị banner (ACTIVE <-> INACTIVE)")
     public ApiResponse<Banner> toggleBannerStatus(@PathVariable Long id) {
@@ -473,6 +481,21 @@ public class AdminManagementController {
             @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails != null ? userDetails.getUsername() : "admin@traveleasy.vn";
         return ApiResponse.success("Đã xác nhận giải ngân thành công", adminManagementService.paySettlement(id, payoutTxHash, note, email));
+    }
+
+    // ==========================================
+    // 13. DASHBOARD METRICS & REVENUE TREND (/admin/dashboard/*)
+    // ==========================================
+    @GetMapping("/dashboard/stats")
+    @Operation(summary = "Lấy tổng hợp chỉ số KPI Dashboard trực tiếp từ CSDL")
+    public ApiResponse<DashboardStatsResponse> getDashboardStats() {
+        return ApiResponse.success(adminManagementService.getDashboardStats());
+    }
+
+    @GetMapping("/dashboard/revenue-trend")
+    @Operation(summary = "Lấy dữ liệu chuỗi thời gian doanh thu 7 ngày gần nhất cho biểu đồ RevenueChart")
+    public ApiResponse<List<DailyRevenueDto>> getRevenueTrend() {
+        return ApiResponse.success(adminManagementService.getRevenueTrend());
     }
 }
 

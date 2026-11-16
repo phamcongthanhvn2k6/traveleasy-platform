@@ -14,16 +14,18 @@ export const AdminDashboardPage: React.FC = () => {
   });
 
   const [upcomingTrips, setUpcomingTrips] = useState<any[]>([]);
+  const [revenueTrend, setRevenueTrend] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        const [statsRes, companiesRes, tripsRes] = await Promise.allSettled([
+        const [statsRes, companiesRes, tripsRes, trendRes] = await Promise.allSettled([
           api.get('/admin/dashboard/stats'),
           api.get('/admin/bus-companies'),
           api.get('/admin/trips'),
+          api.get('/admin/dashboard/revenue-trend'),
         ]);
 
         let revenueFormatted = '0 đ';
@@ -62,6 +64,14 @@ export const AdminDashboardPage: React.FC = () => {
             badgeColor: t.status === 'SCHEDULED' ? '#2563eb' : t.status === 'CANCELLED' ? '#ef4444' : '#16a34a',
             badgeBg: t.status === 'SCHEDULED' ? '#eff6ff' : t.status === 'CANCELLED' ? '#fef2f2' : '#f0fdf4',
             badgeBorder: t.status === 'SCHEDULED' ? '#bfdbfe' : t.status === 'CANCELLED' ? '#fecaca' : '#bbf7d0',
+          })));
+        }
+
+        if (trendRes.status === 'fulfilled' && Array.isArray(trendRes.value.data?.data)) {
+          setRevenueTrend(trendRes.value.data.data.map((item: any) => ({
+            label: item.label,
+            revenue: Number(item.revenue) || 0,
+            bookings: item.bookings || 0
           })));
         }
 
@@ -201,6 +211,7 @@ export const AdminDashboardPage: React.FC = () => {
             title="Biểu Đồ Doanh Thu Toàn Hệ Thống Sàn"
             subtitle="Phân tích tăng trưởng giao dịch và tổng doanh số đối soát"
             accentColor="#2563eb"
+            data={revenueTrend.length > 0 ? revenueTrend : undefined}
           />
         </div>
 

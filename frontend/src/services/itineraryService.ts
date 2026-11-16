@@ -8,6 +8,8 @@
  * =========================================================================
  */
 
+import api from './api';
+
 export interface ItineraryStop {
   id: string;
   time: string;
@@ -1613,6 +1615,96 @@ export const DEFAULT_ITINERARY_TEMPLATES: ItineraryTemplate[] = [
   }
 ];
 
+export function templateToEntity(t: ItineraryTemplate) {
+  return {
+    id: t.id,
+    city: t.city,
+    duration: t.duration,
+    vibe: t.vibe,
+    title: t.title,
+    tagline: t.tagline,
+    weather: t.weather,
+    season: t.season,
+    transportInfo: t.transportInfo,
+    distanceFromMajor: t.distanceFromMajor,
+    recommendedDepartureTime: t.recommendedDepartureTime,
+    recommendedDepartureReason: t.recommendedDepartureReason,
+    checklist: JSON.stringify(t.checklist || []),
+    budget: JSON.stringify(t.budget || {}),
+    days: JSON.stringify(t.days || []),
+    isActive: t.isActive !== false,
+    updatedAt: t.updatedAt || new Date().toISOString(),
+  };
+}
+
+export function entityToTemplate(e: any): ItineraryTemplate {
+  let checklist: string[] = [];
+  try {
+    checklist = typeof e.checklist === 'string' ? JSON.parse(e.checklist || '[]') : (e.checklist || []);
+  } catch (err) {
+    checklist = [];
+  }
+
+  let budget: any = { standard: { bus: 0, stay: 0, bike: 0, food: 0, total: 0 }, budget: { bus: 0, stay: 0, bike: 0, food: 0, total: 0 }, vip: { bus: 0, stay: 0, bike: 0, food: 0, total: 0 } };
+  try {
+    budget = typeof e.budget === 'string' ? JSON.parse(e.budget || '{}') : (e.budget || budget);
+  } catch (err) {
+    // fallback
+  }
+
+  let days: any[] = [];
+  try {
+    days = typeof e.days === 'string' ? JSON.parse(e.days || '[]') : (e.days || []);
+  } catch (err) {
+    days = [];
+  }
+
+  return {
+    id: e.id,
+    city: e.city,
+    duration: e.duration,
+    vibe: e.vibe,
+    title: e.title,
+    tagline: e.tagline || '',
+    weather: e.weather || '',
+    season: e.season || '',
+    transportInfo: e.transportInfo || '',
+    distanceFromMajor: e.distanceFromMajor || '',
+    recommendedDepartureTime: e.recommendedDepartureTime || '',
+    recommendedDepartureReason: e.recommendedDepartureReason || '',
+    checklist,
+    budget,
+    days,
+    isActive: e.isActive !== false,
+    updatedAt: e.updatedAt,
+  };
+}
+
+/**
+ * Đồng bộ dữ liệu kịch bản với CSDL Supabase PostgreSQL qua Backend API
+ */
+export async function syncItinerariesWithApi(): Promise<ItineraryTemplate[]> {
+  try {
+    const res = await api.get('/itineraries');
+    if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+      const parsed = res.data.data.map(entityToTemplate);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      window.dispatchEvent(new Event(EVENT_NAME));
+      return parsed;
+    } else {
+      // CSDL chưa có dữ liệu -> Tự động Bulk Sync 12 kịch bản chuẩn lên Supabase
+      const entities = DEFAULT_ITINERARY_TEMPLATES.map(templateToEntity);
+      await api.post('/itineraries/bulk-sync', entities);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_ITINERARY_TEMPLATES));
+      window.dispatchEvent(new Event(EVENT_NAME));
+      return DEFAULT_ITINERARY_TEMPLATES;
+    }
+  } catch (err) {
+    console.warn('Không thể đồng bộ CSDL itineraries, sử dụng bộ nhớ cache cục bộ:', err);
+    return getAllItineraryTemplates();
+  }
+}
+
 /**
  * Tải toàn bộ danh sách kịch bản (kết hợp LocalStorage và mặc định)
  */
@@ -1661,7 +1753,7 @@ export function getItineraryTemplate(city: string, duration?: string): Itinerary
 }
 
 /**
- * Lưu hoặc cập nhật một kịch bản lịch trình
+ * Lưu hoặc cập nhật một kịch bản lịch trình (Đồng bộ Optimistic UI + CSDL Supabase)
  */
 export function saveItineraryTemplate(template: ItineraryTemplate): void {
   const all = getAllItineraryTemplates();
@@ -1680,19 +1772,28 @@ export function saveItineraryTemplate(template: ItineraryTemplate): void {
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
   window.dispatchEvent(new Event(EVENT_NAME));
+
+  // Ghi nhận trực tiếp vào CSDL backend
+  api.post('/itineraries', templateToEntity(updatedItem)).catch(err => {
+    console.warn('Lỗi ghi CSDL itinerary:', err);
+  });
 }
 
 /**
- * Xóa một kịch bản lịch trình theo ID
+ * Xóa một kịch bản lịch trình theo ID (Đồng bộ Optimistic UI + CSDL Supabase)
  */
 export function deleteItineraryTemplate(id: string): void {
   const all = getAllItineraryTemplates().filter(t => t.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
   window.dispatchEvent(new Event(EVENT_NAME));
+
+  api.delete(`/itineraries/${id}`).catch(err => {
+    console.warn('Lỗi xóa CSDL itinerary:', err);
+  });
 }
 
 /**
- * Bật / Tắt trạng thái kích hoạt của kịch bản
+ * Bật / Tắt trạng thái kích hoạt của kịch bản (Đồng bộ Optimistic UI + CSDL Supabase)
  */
 export function toggleItineraryTemplateStatus(id: string): void {
   const all = getAllItineraryTemplates();
@@ -1702,15 +1803,23 @@ export function toggleItineraryTemplateStatus(id: string): void {
     item.updatedAt = new Date().toISOString();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
     window.dispatchEvent(new Event(EVENT_NAME));
+
+    api.patch(`/itineraries/${id}/status`).catch(err => {
+      console.warn('Lỗi đổi trạng thái CSDL itinerary:', err);
+    });
   }
 }
 
 /**
- * Khôi phục về danh sách kịch bản mẫu chuẩn ban đầu
+ * Khôi phục về danh sách kịch bản mẫu chuẩn ban đầu (Đồng bộ CSDL Supabase)
  */
 export function resetToDefaultItineraryTemplates(): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_ITINERARY_TEMPLATES));
   window.dispatchEvent(new Event(EVENT_NAME));
+
+  api.post('/itineraries/bulk-sync', DEFAULT_ITINERARY_TEMPLATES.map(templateToEntity)).catch(err => {
+    console.warn('Lỗi bulk-sync reset itinerary:', err);
+  });
 }
 
 /**
@@ -1724,5 +1833,10 @@ export function subscribeToItineraryChanges(callback: () => void): () => void {
     window.removeEventListener(EVENT_NAME, handler);
     window.removeEventListener('storage', handler);
   };
+}
+
+// Tự động đồng bộ CSDL Supabase khi khởi chạy ứng dụng
+if (typeof window !== 'undefined') {
+  syncItinerariesWithApi().catch(() => {});
 }
 

@@ -22,8 +22,11 @@ import {
   Building2,
   Eye,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  Play
 } from 'lucide-react';
+import api from '../../../services/api';
+import { toast } from '../../../context/ToastContext';
 
 interface FleetVehicle {
   tripId: number;
@@ -110,14 +113,104 @@ export const AdminGpsFleetPage: React.FC = () => {
     }
   ]);
 
+  const [loading, setLoading] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [simulatingTripId, setSimulatingTripId] = useState<number | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
-  const [selectedVehicle, setSelectedVehicle] = useState<FleetVehicle | null>(vehicles[0]);
+  const [selectedVehicle, setSelectedVehicle] = useState<FleetVehicle | null>(null);
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
+
+  // Tải snapshot đội xe trực tiếp từ CSDL & RAM GPS Realtime Service
+  const fetchFleetVehicles = async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
+    try {
+      const res = await api.get('/tracking/fleet-snapshot');
+      if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        const mapped: FleetVehicle[] = res.data.data.map((item: any) => {
+          const speed = item.speed !== undefined && item.speed !== null ? item.speed : 60;
+          const status = speed > 80 ? 'OVERSPEED' : speed === 0 ? 'STOPPED' : 'RUNNING';
+          return {
+            tripId: item.tripId,
+            licensePlate: item.licensePlate || '51B-888.99',
+            companyName: item.busCompanyName || 'Nhà xe đối tác',
+            route: item.routeName || `${item.originCity || 'Điểm đi'} ➔ ${item.destinationCity || 'Điểm đến'}`,
+            driverName: item.driverName || 'Tài xế phân công',
+            driverPhone: item.driverPhone || '0909 123 456',
+            speed: Math.round(speed),
+            latitude: item.latitude || 10.8231,
+            longitude: item.longitude || 106.6297,
+            heading: item.heading || 0,
+            status,
+            alcoholTested: item.alcoholTested ?? true,
+            etaMinutes: item.etaMinutes || 45,
+            lastPing: item.updatedAt ? new Date(item.updatedAt).toLocaleTimeString('vi-VN') : 'Vừa xong'
+          };
+        });
+
+        setVehicles(mapped);
+        setSelectedVehicle((prev) => {
+          if (!prev) return mapped[0];
+          const found = mapped.find(v => v.tripId === prev.tripId);
+          return found || mapped[0];
+        });
+      }
+    } catch (err) {
+      console.warn('Could not fetch live fleet snapshot, keeping verified fleet cache:', err);
+    } finally {
+      if (!isSilent) setLoading(false);
+    }
+  };
+
+  // Nạp dữ liệu lần đầu
+  useEffect(() => {
+    fetchFleetVehicles();
+  }, []);
+
+  // Tự động làm mới radar mỗi 5 giây nếu autoRefresh = true
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const timer = setInterval(() => {
+      fetchFleetVehicles(true);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [autoRefresh]);
+
+  // Kích hoạt mô phỏng di chuyển bước tiếp theo cho xe đang chọn
+  const handleSimulateStep = async (tripId: number) => {
+    setSimulatingTripId(tripId);
+    try {
+      const res = await api.post(`/tracking/${tripId}/simulate-step`);
+      if (res.data?.data) {
+        const item = res.data.data;
+        setVehicles(prev => prev.map(v => {
+          if (v.tripId === tripId) {
+            const speed = Math.round(item.speed || v.speed);
+            return {
+              ...v,
+              latitude: item.latitude,
+              longitude: item.longitude,
+              speed,
+              heading: item.heading || v.heading,
+              status: speed > 80 ? 'OVERSPEED' : speed === 0 ? 'STOPPED' : 'RUNNING',
+              etaMinutes: item.etaMinutes || v.etaMinutes,
+              lastPing: 'Vừa xong'
+            };
+          }
+          return v;
+        }));
+        toast.success(`Đã mô phỏng bước di chuyển cho xe #${tripId}! Tọa độ & Vận tốc đã cập nhật.`, 'Live GPS Radar');
+      }
+    } catch (err: any) {
+      toast.error('Không thể mô phỏng bước di chuyển', 'Lỗi Radar');
+    } finally {
+      setSimulatingTripId(null);
+    }
+  };
 
   // Khởi tạo bản đồ bao quát Việt Nam
   useEffect(() => {
@@ -181,6 +274,9 @@ export const AdminGpsFleetPage: React.FC = () => {
     });
   }, [vehicles, selectedCompany, selectedStatus, searchKeyword, selectedVehicle]);
 
+  // Danh sách nhà xe duy nhất được trích xuất động từ CSDL
+  const uniqueCompanies = Array.from(new Set(vehicles.map((v) => v.companyName))).filter(Boolean).sort();
+
   // Bộ lọc
   const filteredVehicles = vehicles.filter((v) => {
     const matchCompany = selectedCompany === 'ALL' || v.companyName === selectedCompany;
@@ -219,19 +315,23 @@ export const AdminGpsFleetPage: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => {
-              // Mô phỏng reload dữ liệu live
-              setVehicles((prev) =>
-                prev.map((v) => ({
-                  ...v,
-                  speed: v.status === 'STOPPED' ? 0 : Math.floor(50 + Math.random() * 35),
-                  lastPing: 'Vừa xong'
-                }))
-              );
-            }}
+            type="button"
+            onClick={() => setAutoRefresh(!autoRefresh)}
+            className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow ${
+              autoRefresh ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300 border border-slate-600'
+            }`}
+          >
+            <Radio className={`w-3.5 h-3.5 ${autoRefresh ? 'animate-pulse text-white' : 'text-slate-400'}`} />
+            {autoRefresh ? 'Quét Tự Động (5s): BẬT' : 'Quét Tự Động: TẮT'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => fetchFleetVehicles(false)}
+            disabled={loading}
             className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Quét Tín Hiệu Radar Mới
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Quét Tín Hiệu Radar Mới
           </button>
         </div>
       </div>
@@ -290,9 +390,12 @@ export const AdminGpsFleetPage: React.FC = () => {
             onChange={(e) => setSelectedCompany(e.target.value)}
             className="bg-slate-900 border border-slate-700 text-xs text-slate-200 px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500"
           >
-            <option value="ALL">Tất cả nhà xe đối tác</option>
-            <option value="Cúc Tùng Limousine">Cúc Tùng Limousine</option>
-            <option value="Sao Việt">Sao Việt</option>
+            <option value="ALL">Tất cả nhà xe đối tác ({uniqueCompanies.length})</option>
+            {uniqueCompanies.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </select>
 
           <select
@@ -386,16 +489,29 @@ export const AdminGpsFleetPage: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                onClick={() => {
-                  if (mapInstanceRef.current) {
-                    mapInstanceRef.current.setView([selectedVehicle.latitude, selectedVehicle.longitude], 13);
-                  }
-                }}
-                className="w-full mt-2 py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow"
-              >
-                <Eye className="w-3.5 h-3.5" /> Định Vị Tâm Bản Đồ Vào Xe Này
-              </button>
+              <div className="flex flex-col gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (mapInstanceRef.current) {
+                      mapInstanceRef.current.setView([selectedVehicle.latitude, selectedVehicle.longitude], 13);
+                    }
+                  }}
+                  className="w-full py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow"
+                >
+                  <Eye className="w-3.5 h-3.5" /> Định Vị Tâm Bản Đồ Vào Xe Này
+                </button>
+
+                <button
+                  type="button"
+                  disabled={simulatingTripId === selectedVehicle.tripId}
+                  onClick={() => handleSimulateStep(selectedVehicle.tripId)}
+                  className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow"
+                >
+                  <Play className={`w-3.5 h-3.5 ${simulatingTripId === selectedVehicle.tripId ? 'animate-spin' : ''}`} />
+                  {simulatingTripId === selectedVehicle.tripId ? 'Đang mô phỏng di chuyển...' : 'Mô Phỏng Bước Di Chuyển (Test GPS Live)'}
+                </button>
+              </div>
             </div>
           ) : (
             <p className="text-slate-400 text-xs">Vui lòng chọn 1 phương tiện trên bản đồ hoặc bảng danh sách bên dưới.</p>

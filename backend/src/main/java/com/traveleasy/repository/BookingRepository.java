@@ -81,4 +81,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("busCompanyId") Long busCompanyId,
             @Param("start") java.time.LocalDateTime start,
             @Param("end") java.time.LocalDateTime end);
+
+    @Query("SELECT b FROM Booking b WHERE b.status IN (com.traveleasy.entity.BookingStatus.CONFIRMED, com.traveleasy.entity.BookingStatus.COMPLETED) AND b.createdAt >= :startDate")
+    List<Booking> findRecentConfirmedBookings(@Param("startDate") java.time.LocalDateTime startDate);
 }
