@@ -1,106 +1,103 @@
-# 🎓 SPRINT 4 README — SPRINT CUỐI CÙNG: HOÀN THIỆN HỆ THỐNG, TẬP DƯỢT DEMO & BẢO VỆ OJT
+# 🎓 SPRINT 4 README — SPRINT CUỐI CÙNG: TỐI ƯU HÓA HỆ THỐNG, SỬA LỖI & CHUẨN BỊ BẢO VỆ OJT
 > **Dự án:** Nền Tảng Đặt Vé Xe Khách & Điều Hành Vận Tải Liên Tỉnh TravelEasy (`traveleasy-platform`)  
 > **Đơn vị:** OJT Đồ Án Tốt Nghiệp Nhóm 7 — FPT Polytechnic  
 > **Thời gian thực hiện:** **14/11/2026 – 20/11/2026** *(Đúng 1 tuần — Kết thúc vào Thứ Sáu 20/11)*  
-> **Trạng thái:** 🚀 **CHÍNH THỨC KHỞI ĐỘNG (FINAL RELEASE & DEFENSE SPRINT)**  
-> **Quy mô Sprint 4:** **10 Tasks nhẹ nhàng | 29 Story Points | Toàn bộ 6 thành viên sẵn sàng bảo vệ**
+> **Trạng thái:** 🚀 **CHÍNH THỨC KHỞI ĐỘNG (STABILIZATION & SYSTEM POLISH SPRINT)**  
+> **Quy mô Sprint 4:** **16 Tasks kỹ thuật | 34 Story Points | Toàn bộ 6 thành viên tham gia code, tối ưu & sửa lỗi**
 
 ---
 
-## 🎯 1. ĐỊNH HƯỚNG CHIẾN LƯỢC SPRINT 4: "LÀM NHẸ NHÀNG — AN TOÀN TUYỆT ĐỐI — TỰ TIN BẢO VỆ"
+## 🎯 1. ĐỊNH HƯỚNG SPRINT 4: "CHỈ TẬP TRUNG TỐI ƯU HÓA, SỬA LỖI & HOÀN THIỆN TÍNH NĂNG"
 
-Vì Sprint 4 là **Sprint cuối cùng** và sự kiện quan trọng nhất là **Buổi Báo Cáo Bảo Vệ Đồ Án OJT vào Thứ Sáu (20/11/2026)**, toàn đội thống nhất nguyên tắc hành động:
-
-> 🛡️ **3 NGUYÊN TẮC VÀNG CỦA SPRINT 4:**
-> 1. **CODE FREEZE (ĐÓNG BĂNG TÍNH NĂNG MỚI)**: Tuyệt đối không phát triển thêm bất kỳ tính năng phức tạp nào mới để tránh rủi ro vỡ hệ thống hoặc phát sinh bug không kiểm soát được trước ngày bảo vệ.
-> 2. **XỬ LÝ DỨT ĐIỂM NỢ CŨ**: Trả sạch 3 task nợ của Sprint 3 (8 SP) trong 48 giờ đầu tiên.
-> 3. **TẬP TRUNG TỐI ĐA CHO BUỔI BẢO VỆ**: Tinh chỉnh dữ liệu mẫu thực tế, chạy thử nghiệm kịch bản Demo Hub 15 phút, hoàn thiện Slide 25 trang, chuẩn bị video demo dự phòng offline (phòng ngừa rủi ro mạng chập chờn trước Hội đồng).
+Toàn bộ 6 thành viên đều có nhiệm vụ kỹ thuật cụ thể (lập trình, tối ưu hóa truy vấn, sửa lỗi giao diện, chuẩn hóa dữ liệu và validation). Không tạo các task hành chính/soạn kịch bản, mỗi task có điểm Story Point nhỏ (1 - 2 SP) để hoàn thành nhanh chóng, dứt điểm.
 
 ---
 
-## 👥 2. MA TRẬN PHÂN BỔ STORY POINTS SPRINT 4 (TỔNG 29 SP)
+## 👥 2. MA TRẬN PHÂN BỔ STORY POINTS SPRINT 4
 
-| STT | Thành viên | Username | Vai trò trong Sprint 4 | Task phụ trách | Story Points |
+| STT | Thành viên | Username | Trách nhiệm kỹ thuật Sprint 4 | Danh sách Task phụ trách | Tổng SP |
 | :---: | :--- | :--- | :--- | :--- | :---: |
-| 1 | **Phạm Công Thành** | `@thanhphmcong1` | Team Leader / Điều phối Demo / Hạ tầng | `[S401]`, `[S402]` | **5 SP** |
-| 2 | **Nguyễn Đại Phát** | `@phatnguyn146` | Admin & Thanh toán / Kịch bản VNPAY & GPS | `[S403]`, `[S404]` | **5 SP** |
-| 3 | **Phạm Thanh Phong** | `@phmthanhphong17` | Backend Core / Demo Concurrency & POS Quầy | `[S405]`, `[S406]` | **4 SP** |
-| 4 | **Trần Minh Đức** | `@minhdctrn13` | Fullstack / Seed Data Thực tế & Đổi Vé, P&L | `[S407]`, `[S408]` | **4 SP** |
-| 5 | **Đoàn Nhật Cường** | `@joshliam` | Mobile & Hiện trường / Trả dứt điểm nợ Sprint 3 | `[S315]`, `[S319]`, `[S320]` | **8 SP** |
-| 6 | **Phan Trung Kiên** | `@kienphantrung8` | QA & BA / Slide thuyết trình & Hồ sơ đồ án | `[S409]`, `[S410]` | **3 SP** |
-| **TỔNG** | **TOÀN ĐỘI NHÓM 7** | - | **Sprint nhẹ nhàng, hướng đến điểm 10 Bảo vệ** | **10 Tasks** | **29 SP** |
+| 1 | **Phạm Công Thành** | `@thanhphmcong1` | DevOps & Hạ tầng / Bảo mật API / Nén bundle | `[S401]`, `[S402]`, `[S403]` | **5 SP** |
+| 2 | **Nguyễn Đại Phát** | `@phatnguyn146` | Admin Portal / Bộ lọc tìm kiếm / Form Voucher | `[S404]`, `[S405]`, `[S406]` | **5 SP** |
+| 3 | **Phạm Thanh Phong** | `@phmthanhphong17` | Backend Core / Redis Cache / Concurrency Lock / POS | `[S407]`, `[S408]`, `[S409]` | **5 SP** |
+| 4 | **Trần Minh Đức** | `@minhdctrn13` | Fullstack / Đổi vé / Header Login State / In vé QR | `[S410]`, `[S411]`, `[S412]` | **5 SP** |
+| 5 | **Phan Trung Kiên** | `@kienphantrung8` | Fullstack / Tối ưu Reviews / Validate SĐT-CCCD / Skeleton | `[S413]`, `[S414]`, `[S415]` | **5 SP** |
+| 6 | **Đoàn Nhật Cường** | `@joshliam` | Mobile & Safety / Trả nợ Sprint 3 / Tối ưu Bản đồ GPS | `[S315]`, `[S319]`, `[S320]`, `[S416]` | **9 SP** |
+| **TỔNG** | **TOÀN ĐỘI NHÓM 7** | - | **Tập trung tối ưu hóa & sửa lỗi dứt điểm** | **16 Tasks** | **34 SP** |
 
 ---
 
-## 📋 3. DANH MỤC CÔNG VIỆC CHI TIẾT (SPRINT 4 BACKLOG)
+## 📋 3. DANH MỤC CHI TIẾT 16 TASKS SPRINT 4
 
-### ⚡ Nhóm 1: Trả Dứt Điểm Nợ Tồn Đọng Sprint 3 (Đoàn Nhật Cường — 8 SP)
-1. **`[S315]` Code Review & Tối Ưu Hóa Hiệu Năng Truy Vấn CSDL (2 SP)**:
-   - Chạy `EXPLAIN ANALYZE` trên các câu truy vấn tìm chuyến, khóa ghế và tra cứu vé.
-   - Thêm Index PostgreSQL cho các cột tìm kiếm thường xuyên (`departure_time`, `route_id`, `seat_code`).
-2. **`[S319]` Phân Công Tổ Lái & Kiểm Tra Điều Kiện Xuất Bến (3 SP)**:
-   - Nối logic form điều hành tổ lái với backend: kiểm tra tài xế có nồng độ cồn = 0.00 mg/L và giờ lái xe liên tục < 4 giờ thì mới kích hoạt nút "Ký Duyệt Lệnh Xuất Bến".
-3. **`[S320]` WebApp Quét QR Soát Vé & Điểm Danh Hành Khách Lên Xe (3 SP)**:
-   - Kiểm thử camera quét mã QR vé trên điện thoại thật qua mạng nội bộ / HTTPS. Cung cấp fallback nhập mã vé 6 ký tự tức thì khi camera không khả dụng.
-
----
-
-### 🎨 Nhóm 2: Chuẩn Hóa Dữ Liệu Demo & Giao Diện Thực Tế (Trần Minh Đức & Nguyễn Đại Phát — 9 SP)
-4. **`[S407]` Dọn Dẹp Fixtures Dữ Liệu Mẫu Thực Tế (Không Dùng MockData) (2 SP — Đức)**:
-   - Nạp dữ liệu 5 tuyến xe trọng điểm: Sài Gòn - Đà Lạt, Sài Gòn - Nha Trang, Hà Nội - Sa Pa, Sài Gòn - Cần Thơ, Hà Nội - Đà Nẵng với thông tin thực tế (tên nhà xe Sao Việt, Futa; biển kiểm soát 51B, 54B; tên tài xế, trạm dừng chân).
-5. **`[S408]` Kịch Bản Demo Đổi Vé Chuyển Chuyến & Báo Cáo P&L (2 SP — Đức)**:
-   - Thiết lập sẵn vé mẫu để thực hiện đổi vé trực tiếp trên sân khấu bảo vệ, minh họa cơ chế phụ thu chênh lệch giá vé và cập nhật sổ chi phí P&L.
-6. **`[S403]` Rà Soát UAT & Tối Ưu Cổng Quản Trị Admin & Voucher Khuyến Mại (3 SP — Phát)**:
-   - Kiểm tra trơn tru quy trình Admin duyệt nhà xe, quản lý kho voucher khuyến mại, cấp thêm lượt dùng và kiểm tra lịch sử biến động số dư ví.
-7. **`[S404]` Kịch Bản Demo Thanh Toán Webhook VNPAY & GPS Live Tracking (2 SP — Phát)**:
-   - Chuẩn bị sẵn QR VNPAY test và mô phỏng xe chạy phát tín hiệu SSE thời gian thực mượt mà trên bản đồ Leaflet.
+### 1️⃣ Phạm Công Thành (DevOps & Backend System — 5 SP)
+- **`[S401]` Tối ưu hóa bundle Vite & Cấu hình Gzip/Brotli compression cho Frontend (1 SP)**:
+  - Loại bỏ các package thừa, chia chunk nhỏ (`vendor-chunk`), tối ưu thời gian First Contentful Paint (FCP) dưới 1.2s.
+- **`[S402]` Tối ưu cơ chế kiểm tra kết nối HikariCP Pool & Bổ sung Graceful Shutdown (2 SP)**:
+  - Cấu hình timeout pool (`connectionTimeout: 20000ms`, `maxLifetime: 1800000ms`), xử lý giải phóng connection sạch khi đóng ứng dụng.
+- **`[S403]` Tối ưu bảo mật CORS, Content-Security-Policy (CSP) headers & Rate Limiting IP (2 SP)**:
+  - Giới hạn origin CORS an toàn, thêm Security Headers chống XSS/Clickjacking và cấu hình bộ lọc Bucket4j chống spam brute-force.
 
 ---
 
-### 🏆 Nhóm 3: Sức Khỏe Hệ Thống, Concurrency & In Vé Bến Xe (Phạm Công Thành & Phạm Thanh Phong — 9 SP)
-8. **`[S401]` Tổng Duyệt Hạ Tầng Docker VPS, Demo Hub & Bộ Đo Sức Khỏe (3 SP — Thành)**:
-   - Đảm bảo trang `/demo` hoạt động 1-click: kiểm tra kết nối HikariCP, bộ nhớ JVM, trạng thái Redis và chuyển đổi nhanh 3 vai trò (Khách, Nhà xe, Admin).
-9. **`[S402]` Video Demo Dự Phòng Offline & Đóng Gói Release GitHub (2 SP — Thành)**:
-   - Quay video Full HD 15 phút mô phỏng toàn bộ luồng demo không lỗi để backup nếu ngày bảo vệ gặp sự cố mạng wifi trường học. Đóng gói release tag `v1.0.0-final`.
-10. **`[S405]` Kịch Bản Demo Khóa Ghế Concurrency Lock 10:00 Đa Luồng (2 SP — Phong)**:
-    - Thiết lập 2 trình duyệt song song bấm cùng 1 ghế để hội đồng chứng kiến tận mắt 1 bên chọn được ghế (đồng hồ đếm ngược 10:00), 1 bên lập tức khóa màu vàng qua SSE.
-11. **`[S406]` Kịch Bản Demo Bán Vé POS Tại Quầy & In Vé Nhiệt Khổ 80mm (2 SP — Phong)**:
-    - Trình diễn giao diện POS bến xe bán vé tốc hành dưới 10 giây, xem trước bản in vé nhiệt có mã QR soát vé.
+### 2️⃣ Nguyễn Đại Phát (Admin Portal & Promotions — 5 SP)
+- **`[S404]` Tối ưu bộ lọc tìm kiếm & Phân trang Server-side tại Admin Trips & Bookings (2 SP)**:
+  - Hỗ trợ lọc theo mã đặt vé, số điện thoại khách hàng, khoảng ngày xuất bến mượt mà không bị reload lại trang.
+- **`[S405]` Sửa lỗi hiển thị & Hoàn thiện bảng biến động số dư hoàn tiền tại `CancellationRefundPage` (1 SP)**:
+  - Hiển thị chính xác tỷ lệ hoàn tiền (90%, 70%, 0%) tương ứng thời gian khách hủy vé, cập nhật trạng thái hoàn tiền minh bạch.
+- **`[S406]` Tối ưu UX/UI form nhập Voucher khuyến mại & Bổ sung Validation mã giảm giá (2 SP)**:
+  - Tự động convert mã voucher thành chữ in hoa (`uppercase`), kiểm tra điều kiện giá trị đơn tối thiểu (`min_order_value`) trước khi áp dụng.
 
 ---
 
-### 📑 Nhóm 4: Slide Thuyết Trình, Hồ Sơ Đồ Án & Diễn Tập (Phan Trung Kiên — 3 SP)
-12. **`[S409]` Hoàn Thiện Slide Bảo Vệ OJT 25 Trang Chuẩn Nhận Diện TravelEasy (2 SP — Kiên)**:
-    - Căn chỉnh slide PowerPoint, tích hợp biểu đồ kiến trúc hệ thống, thống kê Agile Trello và các màn hình then chốt.
-13. **`[S410]` Đóng Gói Bộ Hồ Sơ Nghiệm Thu & In Ấn Thuyết Minh Đồ Án (1 SP — Kiên)**:
-    - Đóng bìa tài liệu đồ án, biên bản bàn giao, danh sách mã nguồn và bảng điểm tự đánh giá nộp thư ký hội đồng.
+### 3️⃣ Phạm Thanh Phong (Core Backend & Concurrency — 5 SP)
+- **`[S407]` Tối ưu thời gian phản hồi API tìm chuyến `/api/v1/trips/search` bằng Redis Cache (2 SP)**:
+  - Cache kết quả tìm kiếm các tuyến trọng điểm với TTL 60 giây, tự động xóa cache khi có sự thay đổi lịch trình hoặc đặt vé.
+- **`[S408]` Xử lý ngoại lệ tranh chấp ghế (Concurrency Race Condition) trả về HTTP 409 Conflict chuẩn (2 SP)**:
+  - Bắt lỗi khi 2 khách cùng bấm 1 ghế trong cùng mili-giây, trả về thông điệp tiếng Việt thân thiện: *"Ghế này vừa được chọn bởi khách hàng khác"*.
+- **`[S409]` Tối ưu form bán vé nhanh tại quầy `PosTerminalPage`: Tính tiền thừa trả khách & Phím tắt nhanh (1 SP)**:
+  - Bổ sung ô nhập tiền khách đưa, tự động tính tiền thối trả lại, phím tắt `Enter` để hoàn tất thanh toán trong 5 giây.
 
 ---
 
-## 📅 4. LỊCH TRÌNH THỰC THI TỪ THỨ BẢY ĐẾN THỨ SÁU BẢO VỆ
+### 4️⃣ Trần Minh Đức (Fullstack Booking & Tickets — 5 SP)
+- **`[S410]` Tối ưu hóa luồng Đổi vé (`TicketExchangePage`): Validate chênh lệch giá & Cập nhật sơ đồ ghế (2 SP)**:
+  - Tính toán chính xác số tiền phụ thu khi đổi từ xe thường lên Limousine VIP, trả lại ghế cũ về `AVAILABLE` ngay lập tức.
+- **`[S411]` Sửa lỗi đồng bộ trạng thái đăng nhập trên Header & Tự động ẩn banner nhắc nhở khi quá giờ (1 SP)**:
+  - Đồng bộ state giữa các tab qua `storage event`, ẩn thanh nhắc nhở khởi hành màu vàng nếu thời gian xuất bến đã trôi qua.
+- **`[S412]` Tối ưu giao diện xem chi tiết vé & In vé PDF/SVG mã QR sắc nét trên di động tại `MyTicketsPage` (2 SP)**:
+  - Hiển thị QR Code rõ nét chuẩn ISO/IEC 18004, nút tải vé về máy hoặc in ấn trực tiếp không bị vỡ layout trên điện thoại.
+
+---
+
+### 5️⃣ Phan Trung Kiên (Fullstack / Data & UI Optimization — 5 SP)
+- **`[S413]` Tối ưu UI/UX bảng đánh giá nhà xe (`ReviewsPage`): Bộ lọc sao, loại bỏ fake review & Nhãn xác thực (2 SP)**:
+  - Thêm bộ lọc đánh giá 1-5 sao, hiển thị nhãn xanh *"Khách đã đi chuyến này"*, loại bỏ dữ liệu thử nghiệm không phù hợp.
+- **`[S414]` Sửa lỗi & Bổ sung Validation toàn diện số điện thoại chuẩn Việt Nam và CCCD/Email (1 SP)**:
+  - Kiểm tra regex đầu số di động Việt Nam (`03, 05, 07, 08, 09` đủ 10 số), định dạng CCCD 12 chữ số, hiển thị thông báo lỗi màu đỏ ngay dưới ô nhập.
+- **`[S415]` Tối ưu hiệu năng tải trang tĩnh & Thêm Skeleton Loading mượt mà khi fetch chuyến xe tại `TripSearchPage` (2 SP)**:
+  - Thay thế vòng quay loading thông thường bằng hiệu ứng khung xương (Skeleton loader), loại bỏ hiện tượng giật giật (layout shift) khi kết quả API trả về.
+
+---
+
+### 6️⃣ Đoàn Nhật Cường (Mobile & Driver Safety — 9 SP)
+- **`[S315]` Code Review & Tối ưu hóa Index PostgreSQL các truy vấn tìm chuyến & ghế (2 SP — Nợ Sprint 3)**:
+  - Chạy `EXPLAIN ANALYZE` và đánh composite index cho `(departure_time, route_id, status)` trên bảng `trips`.
+- **`[S319]` Hoàn thiện Form phân công tổ lái & Kiểm định điều kiện xuất bến (3 SP — Nợ Sprint 3)**:
+  - Nối form điều hành với backend: Chỉ cho phép duyệt xuất bến khi nồng độ cồn = `0.00 mg/L` và thời gian lái xe liên tục `< 4 giờ`.
+- **`[S320]` WebApp Quét mã QR soát vé & Điểm danh hành khách bằng camera di động (3 SP — Nợ Sprint 3)**:
+  - Xử lý quét camera trên điện thoại, hỗ trợ fallback gõ mã vé 6 ký tự tức thì khi môi trường không hỗ trợ camera.
+- **`[S416]` Tối ưu bản đồ `LiveTrackingMapPage`: Bổ sung nút "Tự động căn chỉnh xe về tâm bản đồ" (Re-center) (1 SP)**:
+  - Thêm nút floating button cho phép người dùng click để đưa vị trí xe đang chạy `51B-889.99` về chính giữa màn hình bản đồ Leaflet.
+
+---
+
+## 📅 4. KẾ HOẠCH TRIỂN KHAI THEO NGÀY
 
 ```mermaid
-gantt
-    title Lộ trình Sprint 4 (14/11 - 20/11/2026)
-    dateFormat  YYYY-MM-DD
-    section Trả Nợ Cũ & Data
-    Cường trả dứt điểm 3 task nợ (S315, S319, S320) :active, 2026-11-14, 2d
-    Đức & Phát chuẩn hóa Seed Data thực tế :2026-11-14, 2d
-    section Code Freeze & UAT
-    Code Freeze toàn hệ thống :milestone, 2026-11-16, 0d
-    UAT kiểm thử người dùng & sửa lỗi giao diện nhỏ :2026-11-16, 2d
-    section Diễn Tập Demo
-    Diễn tập Demo Lần 1 (Bấm giờ 15 phút) :2026-11-18, 1d
-    Diễn tập Demo Lần 2 (Tổng duyệt với Slide) :2026-11-19, 1d
-    Quay Video Backup & Backup Database :2026-11-19, 1d
-    section BẢO VỆ OJT
-    BÁO CÁO BẢO VỆ TRƯỚC HỘI ĐỒNG :crit, 2026-11-20, 1d
+flowchart TD
+    D1["Thứ 7 - CN (14-15/11): Cường trả 3 task nợ S315, S319, S320"] --> D2["Thứ Hai (16/11): Thành, Phát, Phong, Đức, Kiên hoàn thiện các task tối ưu backend & API"]
+    D2 --> D3["Thứ Ba (17/11): Hoàn thiện các task tối ưu giao diện, validation, skeleton loader & in vé"]
+    D3 --> D4["Thứ Tư (18/11): Tổng kiểm thử tích hợp toàn bộ 16 tasks trên môi trường thật"]
+    D4 --> D5["Thứ Năm (19/11): Tổng duyệt nghiệm thu hệ thống, backup database & khóa code"]
+    D5 --> D6["Thứ Sáu (20/11): CHÍNH THỨC BẢO VỆ ĐỒ ÁN OJT TRƯỚC HỘI ĐỒNG"]
 ```
-
-- **Thứ 7 – Chủ Nhật (14/11 – 15/11)**: Hoàn tất 3 task nợ của Cường; Chuẩn hóa bộ dữ liệu mẫu 5 tuyến xe trọng điểm.
-- **Thứ Hai (16/11)**: **CHÍNH THỨC CODE FREEZE**. Nghiệm thu chuyển 3 task nợ của Cường vào Done. Không commit tính năng mới.
-- **Thứ Ba (17/11)**: Rà soát UAT, kiểm tra tính thẩm mỹ giao diện, hoàn tất Slide thuyết trình 25 trang.
-- **Thứ Tư (18/11)**: **Diễn tập Demo Lần 1 (Dry Run #1)** — Cả nhóm bấm giờ 15 phút trình bày theo kịch bản mẫu.
-- **Thứ Năm (19/11)**: **Tổng duyệt Lần 2 (Dry Run #2)** — Quay video backup 15 phút, xuất file backup CSDL `.sql`, kiểm tra laptop, thiết bị di động quét QR và trang phục.
-- **Thứ Sáu (20/11) — D-DAY**: **Chính thức Báo cáo Bảo vệ Đồ án Tốt nghiệp OJT trước Hội đồng Giảng viên**.
-
