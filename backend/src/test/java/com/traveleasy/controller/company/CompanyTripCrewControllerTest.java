@@ -17,6 +17,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -60,6 +63,11 @@ class CompanyTripCrewControllerTest {
     @Test
     @DisplayName("Lấy danh sách phân công tổ lái thành công qua API /api/v1/company/crew/assignments")
     void getCrewAssignments_Success() throws Exception {
+        Authentication auth = new UsernamePasswordAuthenticationToken("owner@haivan.com", "pass",
+                List.of(new SimpleGrantedAuthority("ROLE_COMPANY")));
+        User staffUser = User.builder().id(2L).busCompanyId(14L).email("owner@haivan.com").build();
+        when(securityService.requireStaffRole(any(), eq(StaffRole.OWNER), eq(StaffRole.DISPATCHER))).thenReturn(staffUser);
+
         TripCrewResponse crewResponse = TripCrewResponse.builder()
                 .id(1L)
                 .tripId(696L)
@@ -83,6 +91,7 @@ class CompanyTripCrewControllerTest {
         when(tripCrewService.getCrewAssignments(eq(14L), any())).thenReturn(List.of(crewResponse));
 
         mockMvc.perform(get("/api/v1/company/crew/assignments")
+                        .principal(auth)
                         .param("busCompanyId", "14"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -95,6 +104,11 @@ class CompanyTripCrewControllerTest {
     @Test
     @DisplayName("Phân công tổ lái thành công khi đáp ứng đầy đủ điều kiện an toàn")
     void assignCrew_Success() throws Exception {
+        Authentication auth = new UsernamePasswordAuthenticationToken("owner@haivan.com", "pass",
+                List.of(new SimpleGrantedAuthority("ROLE_COMPANY")));
+        User staffUser = User.builder().id(2L).busCompanyId(14L).email("owner@haivan.com").build();
+        when(securityService.requireStaffRole(any(), eq(StaffRole.OWNER), eq(StaffRole.DISPATCHER))).thenReturn(staffUser);
+
         AssignCrewRequest request = AssignCrewRequest.builder()
                 .tripId(696L)
                 .primaryDriverName("Nguyễn Văn Hùng")
@@ -123,6 +137,7 @@ class CompanyTripCrewControllerTest {
         when(tripCrewService.assignCrew(eq(14L), any(AssignCrewRequest.class))).thenReturn(crewResponse);
 
         mockMvc.perform(post("/api/v1/company/crew/assignments")
+                        .principal(auth)
                         .param("busCompanyId", "14")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -135,6 +150,11 @@ class CompanyTripCrewControllerTest {
     @Test
     @DisplayName("Ký lệnh xuất bến thành công khi đã xác nhận kiểm tra nồng độ cồn")
     void signDispatchPermit_Success() throws Exception {
+        Authentication auth = new UsernamePasswordAuthenticationToken("owner@haivan.com", "pass",
+                List.of(new SimpleGrantedAuthority("ROLE_COMPANY")));
+        User staffUser = User.builder().id(2L).busCompanyId(14L).email("owner@haivan.com").build();
+        when(securityService.requireStaffRole(any(), eq(StaffRole.OWNER), eq(StaffRole.DISPATCHER))).thenReturn(staffUser);
+
         TripCrewResponse crewResponse = TripCrewResponse.builder()
                 .id(1L)
                 .tripId(696L)
@@ -148,6 +168,7 @@ class CompanyTripCrewControllerTest {
         when(tripCrewService.signDispatchPermit(eq(14L), eq(696L))).thenReturn(crewResponse);
 
         mockMvc.perform(post("/api/v1/company/crew/trips/696/dispatch-permit")
+                        .principal(auth)
                         .param("busCompanyId", "14"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))

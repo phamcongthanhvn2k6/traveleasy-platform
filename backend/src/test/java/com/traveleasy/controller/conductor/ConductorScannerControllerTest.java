@@ -12,6 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -70,6 +73,7 @@ class ConductorScannerControllerTest {
                 .trip(sampleTrip)
                 .passengerName("Nguyễn Văn An")
                 .passengerPhone("0901234567")
+                .status(BookingStatus.CONFIRMED)
                 .build();
 
         sampleTicket = Ticket.builder()
@@ -149,7 +153,11 @@ class ConductorScannerControllerTest {
         TripSeat seat2 = TripSeat.builder().seatCode("A02").floor(1).seatType("STANDARD").build();
         when(tripSeatRepository.findByTripIdOrderByFloorAscSeatCodeAsc(696L)).thenReturn(List.of(seat1, seat2));
 
-        mockMvc.perform(get("/api/v1/conductor/scanner/trips/696/manifest"))
+        Authentication auth = new UsernamePasswordAuthenticationToken("staff@haivan.com", "pass",
+                List.of(new SimpleGrantedAuthority("ROLE_STAFF")));
+
+        mockMvc.perform(get("/api/v1/conductor/scanner/trips/696/manifest")
+                        .principal(auth))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.tripId").value(696))
