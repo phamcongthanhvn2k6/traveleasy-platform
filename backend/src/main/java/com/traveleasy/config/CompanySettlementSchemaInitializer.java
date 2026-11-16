@@ -144,6 +144,36 @@ public class CompanySettlementSchemaInitializer implements CommandLineRunner {
                 "updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP)"
             );
             jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS trip_crews (" +
+                "id BIGSERIAL PRIMARY KEY, " +
+                "trip_id BIGINT NOT NULL, " +
+                "bus_company_id BIGINT NOT NULL, " +
+                "primary_driver_name VARCHAR(100) NOT NULL, " +
+                "primary_driver_phone VARCHAR(20) NOT NULL, " +
+                "primary_driver_license VARCHAR(50), " +
+                "secondary_driver_name VARCHAR(100), " +
+                "secondary_driver_phone VARCHAR(20), " +
+                "conductor_name VARCHAR(100), " +
+                "conductor_phone VARCHAR(20), " +
+                "continuous_drive_hours NUMERIC(4, 1) DEFAULT 0, " +
+                "alcohol_tested BOOLEAN NOT NULL DEFAULT FALSE, " +
+                "alcohol_reading NUMERIC(5, 2) DEFAULT 0.00, " +
+                "dispatch_permit_code VARCHAR(50), " +
+                "dispatched_at TIMESTAMP WITHOUT TIME ZONE, " +
+                "status VARCHAR(30) NOT NULL DEFAULT 'COMPLIANT', " +
+                "notes TEXT, " +
+                "created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP, " +
+                "updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP)"
+            );
+            try {
+                jdbcTemplate.execute("ALTER TABLE trip_crews ADD COLUMN IF NOT EXISTS alcohol_tested BOOLEAN NOT NULL DEFAULT FALSE");
+                jdbcTemplate.execute("ALTER TABLE trip_crews ADD COLUMN IF NOT EXISTS alcohol_reading NUMERIC(5, 2) DEFAULT 0.00");
+                jdbcTemplate.execute("ALTER TABLE trip_crews ADD COLUMN IF NOT EXISTS dispatch_permit_code VARCHAR(50)");
+                jdbcTemplate.execute("ALTER TABLE trip_crews ADD COLUMN IF NOT EXISTS dispatched_at TIMESTAMP WITHOUT TIME ZONE");
+            } catch (Exception ex) {
+                // Ignore column add errors if already exist
+            }
+            jdbcTemplate.execute(
                 "CREATE TABLE IF NOT EXISTS shuttle_requests (" +
                 "id BIGSERIAL PRIMARY KEY, " +
                 "bus_company_id BIGINT NOT NULL, " +
