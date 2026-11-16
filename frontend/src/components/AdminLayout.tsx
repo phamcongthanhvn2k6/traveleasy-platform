@@ -24,7 +24,8 @@ import {
   Menu,
   X,
   Radio,
-  Tag
+  Tag,
+  Compass
 } from 'lucide-react';
 import { AuthUser } from '../types';
 import { toast } from '../context/ToastContext';
@@ -86,6 +87,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { label: 'Loại ghế chuẩn hóa', path: '/admin/seat-catalog/types', icon: Armchair },
     { label: 'Mẫu sơ đồ ghế master', path: '/admin/seat-catalog/templates', icon: Grid },
     { label: 'Địa điểm & Bến xe master', path: '/admin/locations', icon: MapPin },
+    { label: 'Cẩm nang & Lịch trình du lịch', path: '/admin/itineraries', icon: Compass },
   ];
 
   const systemItems = [
@@ -111,6 +113,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       return true;
     }
     if (path === '/admin/review-reports' && (location.pathname === '/admin/review-reports' || location.pathname === '/admin/reviews')) {
+      return true;
+    }
+    if (path === '/admin/itineraries' && (location.pathname === '/admin/itineraries' || location.pathname === '/admin/schedules')) {
       return true;
     }
     return location.pathname === path;

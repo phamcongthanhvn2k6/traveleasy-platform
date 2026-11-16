@@ -16,7 +16,8 @@ import {
   Link as LinkIcon,
   Layers,
   Sparkles,
-  RotateCcw
+  RotateCcw,
+  Edit2
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
@@ -43,6 +44,7 @@ export const AdminBannersPage: React.FC = () => {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingBannerId, setEditingBannerId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -55,6 +57,32 @@ export const AdminBannersPage: React.FC = () => {
     link: '/promotions',
     status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
   });
+
+  const handleOpenCreateModal = () => {
+    setEditingBannerId(null);
+    setFormData({
+      title: '',
+      imagePath: '',
+      position: 'Trang chu - Top',
+      duration: '07:00 01/10/2026 - 23:59 31/12/2026',
+      link: '/promotions',
+      status: 'ACTIVE',
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleEditBanner = (b: BannerItem) => {
+    setEditingBannerId(b.id);
+    setFormData({
+      title: b.title,
+      imagePath: b.imagePath,
+      position: b.position,
+      duration: b.duration,
+      link: b.link || '',
+      status: b.status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE',
+    });
+    setIsModalOpen(true);
+  };
 
   // Lightbox
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
@@ -170,22 +198,26 @@ export const AdminBannersPage: React.FC = () => {
 
     setIsSaving(true);
     try {
-      const res = await api.post('/admin/banners', formData);
-      if (res.data?.data) {
-        toast.success(`Tạo banner "${formData.title}" thành công trên Supabase!`, 'Thành Công');
-        setIsModalOpen(false);
-        setFormData({
-          title: '',
-          imagePath: '',
-          position: 'Trang chu - Top',
-          duration: '07:00 01/10/2026 - 23:59 31/12/2026',
-          link: '/promotions',
-          status: 'ACTIVE',
-        });
-        fetchBanners();
+      if (editingBannerId) {
+        await api.put(`/admin/banners/${editingBannerId}`, formData);
+        toast.success(`Cập nhật banner "${formData.title}" thành công trên CSDL Supabase!`, 'Thành Công');
+      } else {
+        await api.post('/admin/banners', formData);
+        toast.success(`Tạo banner "${formData.title}" thành công trên CSDL Supabase!`, 'Thành Công');
       }
+      setIsModalOpen(false);
+      setEditingBannerId(null);
+      setFormData({
+        title: '',
+        imagePath: '',
+        position: 'Trang chu - Top',
+        duration: '07:00 01/10/2026 - 23:59 31/12/2026',
+        link: '/promotions',
+        status: 'ACTIVE',
+      });
+      fetchBanners();
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || 'Không thể tạo banner';
+      const msg = err.response?.data?.message || err.message || 'Không thể lưu banner';
       toast.error(msg, 'Lỗi Lưu Banner');
     } finally {
       setIsSaving(false);
@@ -217,7 +249,7 @@ export const AdminBannersPage: React.FC = () => {
 
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenCreateModal}
             style={{
               backgroundColor: '#f97316',
               color: '#ffffff',
@@ -475,6 +507,26 @@ export const AdminBannersPage: React.FC = () => {
                             <span>{b.status === 'ACTIVE' ? 'Ẩn' : 'Hiện'}</span>
                           </button>
                           <button
+                            onClick={() => handleEditBanner(b)}
+                            title="Chỉnh sửa nội dung và thông tin banner"
+                            style={{
+                              backgroundColor: '#eff6ff',
+                              border: '1px solid #bfdbfe',
+                              cursor: 'pointer',
+                              padding: '5px 8px',
+                              color: '#2563eb',
+                              display: 'flex',
+                              alignItems: 'center',
+                              borderRadius: '6px',
+                              gap: '4px',
+                              fontSize: '12px',
+                              fontWeight: 600
+                            }}
+                          >
+                            <Edit2 size={13} />
+                            <span>Sửa</span>
+                          </button>
+                          <button
                             onClick={() => handleDeleteBanner(b.id, b.title)}
                             title="Xóa mềm banner (Bảo toàn lịch sử chiến dịch)"
                             style={{
@@ -549,7 +601,7 @@ export const AdminBannersPage: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Sparkles size={18} color="#f97316" />
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  Thêm Mới Banner Chiến Dịch & Khuyến Mại
+                  {editingBannerId ? 'Chỉnh Sửa Chiến Dịch Banner' : 'Thêm Mới Banner Chiến Dịch & Khuyến Mại'}
                 </h3>
               </div>
               <button
@@ -835,7 +887,7 @@ export const AdminBannersPage: React.FC = () => {
                   ) : (
                     <>
                       <Check size={16} />
-                      <span>Lưu Banner Lên Supabase</span>
+                      <span>{editingBannerId ? 'Cập Nhật Thay Đổi' : 'Lưu Banner Lên Supabase'}</span>
                     </>
                   )}
                 </button>

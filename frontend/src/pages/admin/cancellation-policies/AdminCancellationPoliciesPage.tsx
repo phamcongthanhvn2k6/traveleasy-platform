@@ -18,6 +18,7 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
   const [companyFilter, setCompanyFilter] = useState('ALL');
   const [loading, setLoading] = useState(false);
   const [policies, setPolicies] = useState<PolicyItem[]>([]);
+  const [selectedPolicy, setSelectedPolicy] = useState<PolicyItem | null>(null);
 
   // Create Modal
   const [showModal, setShowModal] = useState(false);
@@ -178,12 +179,13 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>MÔ TẢ QUY TẮC</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>SỐ BẬC HOÀN</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>LOẠI CHÍNH SÁCH</th>
+              <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
+                <td colSpan={6} style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
                   Đang tải chính sách hủy...
                 </td>
               </tr>
@@ -238,11 +240,33 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
                       {item.isDefault ? 'MẶC ĐỊNH TOÀN SÀN' : 'RIÊNG NHÀ XE'}
                     </span>
                   </td>
+                  <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPolicy(item)}
+                      style={{
+                        padding: '6px 12px',
+                        backgroundColor: '#eff6ff',
+                        color: '#2563eb',
+                        border: '1px solid #bfdbfe',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      <Eye size={13} />
+                      <span>Xem quy tắc</span>
+                    </button>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={5} style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
+                <td colSpan={6} style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
                   Không tìm thấy chính sách hủy phù hợp
                 </td>
               </tr>
@@ -365,6 +389,121 @@ export const AdminCancellationPoliciesPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Modal: Chi tiết quy tắc hoàn tiền */}
+      {selectedPolicy && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '16px',
+          }}
+          onClick={() => setSelectedPolicy(null)}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: 'min(580px, 94vw)',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Shield size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    {selectedPolicy.name}
+                  </h3>
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: '2px 0 0 0' }}>
+                    Áp dụng cho: <strong>{selectedPolicy.companyName}</strong> • {selectedPolicy.isDefault ? 'Mặc định sàn' : 'Riêng đối tác'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedPolicy(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ backgroundColor: '#f8fafc', borderRadius: '12px', padding: '16px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '12.5px', color: '#475569', lineHeight: 1.5, marginBottom: '8px' }}>
+                <strong>Mô tả chính sách:</strong> {selectedPolicy.description}
+              </div>
+              <div style={{ fontSize: '11px', color: '#0284c7', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Info size={14} /> Hệ thống tự động tính toán số tiền hoàn dựa trên mốc thời gian khách gửi yêu cầu hủy vé.
+              </div>
+            </div>
+
+            <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', marginBottom: '10px' }}>
+              Bảng Phân Bậc Tỷ Lệ Hoàn Tiền Theo Mốc Thời Gian
+            </h4>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '8px', backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#065f46' }}>Trước khởi hành trên 24 giờ</div>
+                  <div style={{ fontSize: '11.5px', color: '#047857' }}>Hủy vé sớm, không ảnh hưởng điều phối xe</div>
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: 800, color: '#059669' }}>
+                  Hoàn 100%
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '8px', backgroundColor: '#fffbeb', border: '1px solid #fde68a' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#92400e' }}>Trước khởi hành từ 12 đến 24 giờ</div>
+                  <div style={{ fontSize: '11.5px', color: '#b45309' }}>Khấu trừ phí giữ chỗ và điều vận chuyến</div>
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: 800, color: '#d97706' }}>
+                  Hoàn 70%
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '8px', backgroundColor: '#fef2f2', border: '1px solid #fecaca' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#991b1b' }}>Trước khởi hành dưới 12 giờ hoặc đã xuất bến</div>
+                  <div style={{ fontSize: '11.5px', color: '#b91c1c' }}>Không áp dụng hoàn hủy do sát giờ lăn bánh</div>
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: 800, color: '#dc2626' }}>
+                  Hoàn 0%
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setSelectedPolicy(null)}
+                style={{
+                  padding: '9px 20px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#2563eb',
+                  color: '#fff',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Đã Hiểu & Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}

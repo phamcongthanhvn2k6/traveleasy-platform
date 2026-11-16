@@ -144,6 +144,36 @@ public class CompanySettlementSchemaInitializer implements CommandLineRunner {
                 "updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP)"
             );
             jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS trip_crews (" +
+                "id BIGSERIAL PRIMARY KEY, " +
+                "trip_id BIGINT NOT NULL, " +
+                "bus_company_id BIGINT NOT NULL, " +
+                "primary_driver_name VARCHAR(100) NOT NULL, " +
+                "primary_driver_phone VARCHAR(20) NOT NULL, " +
+                "primary_driver_license VARCHAR(50), " +
+                "secondary_driver_name VARCHAR(100), " +
+                "secondary_driver_phone VARCHAR(20), " +
+                "conductor_name VARCHAR(100), " +
+                "conductor_phone VARCHAR(20), " +
+                "continuous_drive_hours NUMERIC(4, 1) DEFAULT 0, " +
+                "alcohol_tested BOOLEAN NOT NULL DEFAULT FALSE, " +
+                "alcohol_reading NUMERIC(5, 2) DEFAULT 0.00, " +
+                "dispatch_permit_code VARCHAR(50), " +
+                "dispatched_at TIMESTAMP WITHOUT TIME ZONE, " +
+                "status VARCHAR(30) NOT NULL DEFAULT 'COMPLIANT', " +
+                "notes TEXT, " +
+                "created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP, " +
+                "updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP)"
+            );
+            try {
+                jdbcTemplate.execute("ALTER TABLE trip_crews ADD COLUMN IF NOT EXISTS alcohol_tested BOOLEAN NOT NULL DEFAULT FALSE");
+                jdbcTemplate.execute("ALTER TABLE trip_crews ADD COLUMN IF NOT EXISTS alcohol_reading NUMERIC(5, 2) DEFAULT 0.00");
+                jdbcTemplate.execute("ALTER TABLE trip_crews ADD COLUMN IF NOT EXISTS dispatch_permit_code VARCHAR(50)");
+                jdbcTemplate.execute("ALTER TABLE trip_crews ADD COLUMN IF NOT EXISTS dispatched_at TIMESTAMP WITHOUT TIME ZONE");
+            } catch (Exception ex) {
+                // Ignore column add errors if already exist
+            }
+            jdbcTemplate.execute(
                 "CREATE TABLE IF NOT EXISTS shuttle_requests (" +
                 "id BIGSERIAL PRIMARY KEY, " +
                 "bus_company_id BIGINT NOT NULL, " +
@@ -169,6 +199,19 @@ public class CompanySettlementSchemaInitializer implements CommandLineRunner {
                 "UPDATE users SET bus_company_id = 9 WHERE (email = 'haivan@gmail.com' OR email = 'dieuhanh@haivan.com') AND bus_company_id IS NULL; " +
                 "UPDATE users SET bus_company_id = 14 WHERE email = 'phamcongt56@gmail.com' AND bus_company_id IS NULL;"
             );
+            // [S315 & S320] Đánh Index tối ưu hóa truy vấn CSDL cho PostgreSQL / Supabase
+            try {
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_trips_route_status_departure ON trips (route_id, status, departure_time)");
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_trip_seats_trip_seat_code ON trip_seats (trip_id, seat_code)");
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_trip_seats_trip_status ON trip_seats (trip_id, status)");
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_tickets_booking_seat ON tickets (booking_id, seat_number)");
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_tickets_qr_code_hash ON tickets (qr_code_hash)");
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_tickets_ticket_code ON tickets (ticket_code)");
+                log.info("[S315/S320 PERFORMANCE] Database indexes verified and optimized successfully.");
+            } catch (Exception ex) {
+                log.debug("[S315/S320 PERFORMANCE] Index creation skipped or already present: {}", ex.getMessage());
+            }
+
             log.info("[SETTLEMENT SCHEMA] Verified all Sprint 3 schema, payout_requests, POS shifts, and partner company associations.");
         } catch (Exception e) {
             log.warn("[SETTLEMENT SCHEMA] Bỏ qua khởi tạo DDL (có thể đang chạy H2/test hoặc thiếu quyền): {}", e.getMessage());

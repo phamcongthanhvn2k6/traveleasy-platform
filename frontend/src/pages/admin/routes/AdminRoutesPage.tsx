@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Search, Clock, Navigation, Bus, RefreshCw, X, Eye, ShieldCheck, AlertCircle, Building2 } from 'lucide-react';
+import { MapPin, Search, Clock, Navigation, Bus, RefreshCw, X, Eye, ShieldCheck, AlertCircle, Building2, Plus, Edit2, Trash2 } from 'lucide-react';
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
 
@@ -20,13 +20,36 @@ export const AdminRoutesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedRoute, setSelectedRoute] = useState<RouteItem | null>(null);
+  const [companies, setCompanies] = useState<any[]>([]);
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRouteId, setEditingRouteId] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    busCompanyId: 1,
+    departureLocation: '',
+    arrivalLocation: '',
+    durationHours: 6.0,
+    distanceKm: 300,
+  });
 
   const fetchRoutes = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/admin/routes');
-      if (res.data?.data && Array.isArray(res.data.data)) {
-        setRoutes(res.data.data);
+      const [routesRes, compRes] = await Promise.allSettled([
+        api.get('/admin/routes'),
+        api.get('/admin/bus-companies'),
+      ]);
+
+      if (routesRes.status === 'fulfilled' && routesRes.value.data?.data && Array.isArray(routesRes.value.data.data)) {
+        setRoutes(routesRes.value.data.data);
+      }
+      if (compRes.status === 'fulfilled' && compRes.value.data?.data && Array.isArray(compRes.value.data.data)) {
+        setCompanies(compRes.value.data.data);
+        if (compRes.value.data.data.length > 0) {
+          setFormData(prev => ({ ...prev, busCompanyId: compRes.value.data.data[0].id }));
+        }
       }
     } catch (err: any) {
       if (err?.response?.status === 401) return;
@@ -40,6 +63,76 @@ export const AdminRoutesPage: React.FC = () => {
   useEffect(() => {
     fetchRoutes();
   }, []);
+
+  const handleOpenCreateRoute = () => {
+    setEditingRouteId(null);
+    setFormData({
+      busCompanyId: companies[0]?.id || 1,
+      departureLocation: '',
+      arrivalLocation: '',
+      durationHours: 6.0,
+      distanceKm: 300,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleEditRoute = (r: RouteItem) => {
+    setEditingRouteId(r.id);
+    setFormData({
+      busCompanyId: r.busCompanyId || (companies[0]?.id || 1),
+      departureLocation: r.departureLocation,
+      arrivalLocation: r.arrivalLocation,
+      durationHours: Number(r.durationHours) || 6.0,
+      distanceKm: Number(r.distanceKm) || 300,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteRoute = async (id: number, routeName: string) => {
+    if (!window.confirm(`XÁC NHẬN XÓA TUYẾN ĐƯỜNG:\n\nBạn có chắc chắn muốn xóa tuyến "${routeName}" khỏi hệ thống sàn?`)) {
+      return;
+    }
+    try {
+      await api.delete(`/admin/routes/${id}`);
+      setRoutes(prev => prev.filter(r => r.id !== id));
+      toast.success(`Đã xóa tuyến đường "${routeName}" thành công!`, 'Xóa Tuyến Đường');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Không thể xóa tuyến đường', 'Thất Bại');
+    }
+  };
+
+  const handleSubmitRoute = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.departureLocation.trim() || !formData.arrivalLocation.trim()) {
+      toast.warning('Vui lòng nhập đầy đủ điểm đi và điểm đến!', 'Thiếu Thông Tin');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const payload = {
+        busCompanyId: Number(formData.busCompanyId),
+        departureLocation: formData.departureLocation.trim(),
+        arrivalLocation: formData.arrivalLocation.trim(),
+        durationHours: Number(formData.durationHours),
+        distanceKm: Number(formData.distanceKm),
+      };
+
+      if (editingRouteId) {
+        await api.put(`/admin/routes/${editingRouteId}`, payload);
+        toast.success(`Cập nhật tuyến đường thành công trên CSDL!`, 'Thành Công');
+      } else {
+        await api.post('/admin/routes', payload);
+        toast.success(`Tạo mới tuyến đường thành công trên CSDL!`, 'Thành Công');
+      }
+      setIsModalOpen(false);
+      fetchRoutes();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Lỗi khi lưu tuyến đường', 'Thất Bại');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const filteredRoutes = routes.filter(r => {
     if (!search) return true;
@@ -68,6 +161,25 @@ export const AdminRoutesPage: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={handleOpenCreateRoute}
+            style={{
+              backgroundColor: '#2563eb',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '9px 16px',
+              fontSize: '13px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(37,99,235,0.2)',
+            }}
+          >
+            <Plus size={15} /> Tạo Tuyến Đường Master
+          </button>
           <button
             onClick={fetchRoutes}
             style={{
@@ -208,26 +320,68 @@ export const AdminRoutesPage: React.FC = () => {
                       </span>
                     </td>
                     <td style={{ padding: '14px 18px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <button
-                        onClick={() => setSelectedRoute(r)}
-                        title="Xem chi tiết lộ trình tuyến đường"
-                        style={{
-                          backgroundColor: '#eff6ff',
-                          color: '#2563eb',
-                          border: '1px solid #bfdbfe',
-                          padding: '6px 12px',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        <Eye size={13} /> Chi Tiết Lộ Trình
-                      </button>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <button
+                          onClick={() => setSelectedRoute(r)}
+                          title="Xem chi tiết lộ trình tuyến đường"
+                          style={{
+                            backgroundColor: '#eff6ff',
+                            color: '#2563eb',
+                            border: '1px solid #bfdbfe',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <Eye size={13} /> Lộ Trình
+                        </button>
+                        <button
+                          onClick={() => handleEditRoute(r)}
+                          title="Chỉnh sửa thông số tuyến đường"
+                          style={{
+                            backgroundColor: '#f0fdf4',
+                            color: '#16a34a',
+                            border: '1px solid #bbf7d0',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <Edit2 size={13} /> Sửa
+                        </button>
+                        <button
+                          onClick={() => handleDeleteRoute(r.id, `${r.departureLocation} → ${r.arrivalLocation}`)}
+                          title="Xóa tuyến đường khỏi hệ thống"
+                          style={{
+                            backgroundColor: '#fee2e2',
+                            color: '#dc2626',
+                            border: '1px solid #fecaca',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <Trash2 size={13} /> Xóa
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -420,6 +574,232 @@ export const AdminRoutesPage: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Modal: Thêm / Sửa Tuyến Đường Master */}
+      {isModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '560px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)',
+              overflow: 'hidden',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                padding: '18px 24px',
+                borderBottom: '1px solid #e2e8f0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backgroundColor: '#f8fafc',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    backgroundColor: '#eff6ff',
+                    color: '#2563eb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Navigation size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
+                    {editingRouteId ? `Cập Nhật Tuyến Đường #${editingRouteId}` : 'Tạo Mới Tuyến Đường Master'}
+                  </h3>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>
+                    {editingRouteId ? 'Điều chỉnh cự ly và thời gian lộ trình' : 'Khai báo tuyến đường kết nối liên tỉnh trên sàn'}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitRoute} style={{ padding: '24px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Đơn vị nhà xe khai thác *
+                </label>
+                <select
+                  value={formData.busCompanyId}
+                  onChange={(e) => setFormData({ ...formData, busCompanyId: Number(e.target.value) })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    backgroundColor: '#ffffff',
+                  }}
+                >
+                  {companies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} (Mã: NX-{c.id})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Điểm khởi hành *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="VD: Bến xe Miền Đông, TP.HCM"
+                    value={formData.departureLocation}
+                    onChange={(e) => setFormData({ ...formData, departureLocation: e.target.value })}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Điểm đến *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="VD: Bến xe Liên Tỉnh Đà Lạt"
+                    value={formData.arrivalLocation}
+                    onChange={(e) => setFormData({ ...formData, arrivalLocation: e.target.value })}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Thời gian chạy dự kiến (giờ) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0.5"
+                    value={formData.durationHours}
+                    onChange={(e) => setFormData({ ...formData, durationHours: Number(e.target.value) })}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Cự ly toàn tuyến (km) *
+                  </label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="1"
+                    value={formData.distanceKm}
+                    onChange={(e) => setFormData({ ...formData, distanceKm: Number(e.target.value) })}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  style={{
+                    padding: '9px 18px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: '#f1f5f9',
+                    color: '#475569',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  style={{
+                    padding: '9px 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#2563eb',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {isSaving ? 'Đang lưu...' : editingRouteId ? 'Lưu Cập Nhật' : 'Tạo Tuyến Đường'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

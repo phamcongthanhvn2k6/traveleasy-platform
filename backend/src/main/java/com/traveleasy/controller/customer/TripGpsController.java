@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import java.util.List;
 
 /**
  * [S306][TRACKING] Controller Định Vị GPS Live Tracking Xe Chạy Thời Gian Thực
@@ -29,6 +30,12 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class TripGpsController {
 
     private final TripGpsRealtimeService tripGpsRealtimeService;
+
+    @GetMapping("/fleet-snapshot")
+    @Operation(summary = "Lấy snapshot toàn bộ đội xe đang vận hành cho Admin Telematics Radar")
+    public ApiResponse<List<TripGpsLocationDto>> getFleetSnapshot() {
+        return ApiResponse.success(tripGpsRealtimeService.getFleetSnapshot());
+    }
 
     @GetMapping("/{tripId}/current")
     @Operation(summary = "Lấy snapshot tọa độ GPS hiện tại và thông tin tổ lái của chuyến xe")

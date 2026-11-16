@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -681,6 +682,36 @@ public class AdminManagementService {
     }
 
     @Transactional
+    public Banner updateBanner(Long id, BannerRequest request) {
+        Banner banner = bannerRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy banner #" + id));
+
+        String before = "{\"title\": \"" + banner.getTitle() + "\"}";
+        if (request.getTitle() != null && !request.getTitle().isBlank()) {
+            banner.setTitle(request.getTitle().trim());
+        }
+        if (request.getImagePath() != null && !request.getImagePath().isBlank()) {
+            banner.setImagePath(request.getImagePath().trim());
+        }
+        if (request.getPosition() != null && !request.getPosition().isBlank()) {
+            banner.setPosition(request.getPosition().trim());
+        }
+        if (request.getDuration() != null && !request.getDuration().isBlank()) {
+            banner.setDuration(request.getDuration().trim());
+        }
+        if (request.getLink() != null) {
+            banner.setLink(request.getLink().trim());
+        }
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            banner.setStatus(request.getStatus().toUpperCase());
+        }
+
+        Banner saved = bannerRepository.save(banner);
+        logAction("admin@traveleasy.vn", "UPDATE_BANNER", "banners #" + id, before, "{\"title\": \"" + saved.getTitle() + "\"}");
+        return saved;
+    }
+
+    @Transactional
     public Banner toggleBannerStatus(Long id) {
         Banner banner = bannerRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy banner"));
@@ -1184,5 +1215,63 @@ public class AdminManagementService {
         } catch (Exception e) {
             log.error("Failed to write audit log: {}", e.getMessage());
         }
+    }
+
+    // ==========================================
+    // 13. DASHBOARD METRICS & REVENUE TREND
+    // ==========================================
+    @Transactional(readOnly = true)
+    public DashboardStatsResponse getDashboardStats() {
+        long totalTrips = tripRepository.count();
+        long scheduledTrips = tripRepository.countByStatus(com.traveleasy.entity.TripStatus.SCHEDULED);
+        long totalBookings = bookingRepository.count();
+        long confirmedBookings = bookingRepository.countByStatus(com.traveleasy.entity.BookingStatus.CONFIRMED);
+        BigDecimal totalRevenue = bookingRepository.sumTotalRevenue();
+        if (totalRevenue == null) {
+            totalRevenue = BigDecimal.ZERO;
+        }
+        long totalUsers = userRepository.count();
+
+        return DashboardStatsResponse.builder()
+                .totalTrips(totalTrips)
+                .scheduledTrips(scheduledTrips)
+                .totalBookings(totalBookings)
+                .confirmedBookings(confirmedBookings)
+                .totalRevenue(totalRevenue)
+                .totalUsers(totalUsers)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<DailyRevenueDto> getRevenueTrend() {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDateTime sevenDaysAgo = today.minusDays(6).atStartOfDay();
+
+        List<Booking> bookings = bookingRepository.findRecentConfirmedBookings(sevenDaysAgo);
+
+        Map<java.time.LocalDate, List<Booking>> grouped = bookings.stream()
+                .filter(b -> b.getCreatedAt() != null)
+                .collect(java.util.stream.Collectors.groupingBy(b -> b.getCreatedAt().toLocalDate()));
+
+        List<DailyRevenueDto> result = new ArrayList<>();
+        java.time.format.DateTimeFormatter labelFmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM");
+        java.time.format.DateTimeFormatter dateFmt = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        for (int i = 6; i >= 0; i--) {
+            java.time.LocalDate d = today.minusDays(i);
+            List<Booking> dayBookings = grouped.getOrDefault(d, java.util.Collections.emptyList());
+            BigDecimal dayRevenue = dayBookings.stream()
+                    .map(b -> b.getTotalAmount() != null ? b.getTotalAmount() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            result.add(DailyRevenueDto.builder()
+                    .label(d.format(labelFmt))
+                    .date(d.format(dateFmt))
+                    .revenue(dayRevenue)
+                    .bookings(dayBookings.size())
+                    .build());
+        }
+
+        return result;
     }
 }

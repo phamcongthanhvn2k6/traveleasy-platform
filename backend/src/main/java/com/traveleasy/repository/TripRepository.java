@@ -54,6 +54,12 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Query("SELECT t FROM Trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE bc.id = :busCompanyId ORDER BY t.departureTime DESC")
     List<Trip> findByBusCompanyIdWithDetails(@Param("busCompanyId") Long busCompanyId);
 
+    @Query("SELECT t FROM Trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE bc.id = :busCompanyId AND t.departureTime >= :startTime AND t.departureTime < :endTime ORDER BY t.departureTime ASC")
+    List<Trip> findByBusCompanyIdAndDepartureTimeBetweenWithDetails(
+            @Param("busCompanyId") Long busCompanyId,
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
+
     List<Trip> findByBusCompanyId(Long busCompanyId);
     long countByBusCompanyId(Long busCompanyId);
     long countByBusCompanyIdAndStatus(Long busCompanyId, TripStatus status);

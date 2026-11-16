@@ -1,9 +1,12 @@
 server:
   port: 8080
+  shutdown: graceful
   servlet:
     context-path: /
 
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   main:
     allow-circular-references: true
   application:
@@ -36,7 +39,7 @@ spring:
       maximum-pool-size: 12
       minimum-idle: 2
       idle-timeout: 60000
-      max-lifetime: 180000
+      max-lifetime: 1800000
       connection-timeout: 20000
       validation-timeout: 3000
       keepalive-time: 30000

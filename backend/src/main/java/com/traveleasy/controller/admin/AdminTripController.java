@@ -73,10 +73,4 @@ public class AdminTripController {
     public ApiResponse<TripResponse> updateStatus(@PathVariable Long id, @RequestParam TripStatus status) {
         return ApiResponse.success("Cập nhật trạng thái thành công", adminTripService.updateTripStatus(id, status));
     }
-
-    @GetMapping("/dashboard/stats")
-    @Operation(summary = "Thống kê tổng quan Dashboard: Doanh thu, số chuyến, số vé, số hành khách")
-    public ApiResponse<DashboardStatsResponse> getDashboardStats() {
-        return ApiResponse.success(adminTripService.getDashboardStats());
-    }
 }

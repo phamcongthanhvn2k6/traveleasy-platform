@@ -348,6 +348,22 @@ public class TripGpsRealtimeService {
     }
 
     /**
+     * Lấy danh sách snapshot tọa độ toàn bộ đội xe đang vận hành trên sàn
+     */
+    public List<TripGpsLocationDto> getFleetSnapshot() {
+        List<Trip> trips = tripRepository.findAllByOrderByDepartureTimeDesc();
+        List<TripGpsLocationDto> fleet = new ArrayList<>();
+        if (trips != null) {
+            for (Trip t : trips) {
+                if (t.getStatus() != com.traveleasy.entity.TripStatus.CANCELLED) {
+                    fleet.add(getCurrentLocation(t.getId()));
+                }
+            }
+        }
+        return fleet;
+    }
+
+    /**
      * Tính góc la bàn giữa 2 tọa độ (0 - 360 độ)
      */
     private double calculateBearing(double lat1, double lon1, double lat2, double lon2) {
