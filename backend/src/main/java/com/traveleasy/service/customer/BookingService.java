@@ -105,6 +105,16 @@ public class BookingService {
 
         boolean isPosChannel = isAuthorizedPos;
 
+        // BẢO VỆ NGHIỆP VỤ: Kênh online đóng bán trước giờ khởi hành 15 phút (Cut-off Booking Window)
+        if (!isPosChannel && trip.getDepartureTime() != null) {
+            LocalDateTime now = LocalDateTime.now();
+            long minutesUntilDeparture = java.time.Duration.between(now, trip.getDepartureTime()).toMinutes();
+            if (minutesUntilDeparture < 15 && minutesUntilDeparture >= 0) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR,
+                        "Chuyến xe sắp khởi hành trong vòng " + minutesUntilDeparture + " phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, vui lòng mua vé trực tiếp tại quầy bến xe!");
+            }
+        }
+
         BigDecimal unitPrice;
         if (isPosChannel) {
             unitPrice = trip.getPrice();

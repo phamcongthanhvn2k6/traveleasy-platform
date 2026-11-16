@@ -33,5 +33,7 @@ public class ConductorSeatManifestResponse {
         private String ticketCode;
         private String passengerName;
         private String passengerPhone;
+        private String pickupPoint;
+        private String dropoffPoint;
     }
 }

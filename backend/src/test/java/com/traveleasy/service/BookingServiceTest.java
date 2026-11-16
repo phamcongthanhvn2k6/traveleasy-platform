@@ -142,6 +142,26 @@ class BookingServiceTest {
     }
 
     @Test
+    @DisplayName("Ném ngoại lệ VALIDATION_ERROR khi khách đặt online sát giờ khởi hành (< 15 phút)")
+    void testCreateBooking_OnlineChannel_WithinCutoffWindow() {
+        sampleTrip.setDepartureTime(java.time.LocalDateTime.now().plusMinutes(10));
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(sampleTrip));
+
+        TripSeat s1 = new TripSeat(); s1.setSeatCode("A01"); s1.setStatus(SeatStatus.AVAILABLE);
+        TripSeat s2 = new TripSeat(); s2.setSeatCode("A02"); s2.setStatus(SeatStatus.AVAILABLE);
+        when(tripSeatRepository.findByTripIdAndSeatCodeInWithLock(eq(1L), anyList())).thenReturn(List.of(s1, s2));
+
+        bookingRequest.setBookingChannel("ONLINE");
+
+        AppException ex = assertThrows(AppException.class, () ->
+                bookingService.createBooking(bookingRequest, null)
+        );
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("< 15 phút"));
+    }
+
+    @Test
     @DisplayName("Ném ngoại lệ VALIDATION_ERROR khi hủy đơn vé của chuyến xe đã khởi hành")
     void testCancelBooking_TripAlreadyDeparted() {
         Booking booking = new Booking();
