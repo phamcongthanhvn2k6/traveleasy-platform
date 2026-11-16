@@ -1,5 +1,5 @@
-import React from 'react';
-import { User, Phone, Mail, MessageSquare, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { User, Phone, Mail, MessageSquare, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export interface PassengerInfo {
   fullName: string;
@@ -10,6 +10,40 @@ export interface PassengerInfo {
   termsAccepted: boolean;
 }
 
+// Regex chuẩn số điện thoại Việt Nam: bắt đầu bằng 03, 05, 07, 08, 09 và đủ đúng 10 chữ số
+export const VN_PHONE_REGEX = /^(03|05|07|08|09)\d{8}$/;
+
+// Regex chuẩn định dạng email (RFC 5322 compatible pattern, ngăn liên tiếp dấu chấm ở domain)
+export const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9]+([.-][a-zA-Z0-9]+)*\.[a-zA-Z]{2,}$/;
+
+export const validateVNPhone = (phone: string): { isValid: boolean; message: string } => {
+  const cleanPhone = phone.replace(/[\s.-]/g, '');
+  if (!cleanPhone) {
+    return { isValid: false, message: 'Vui lòng nhập số điện thoại' };
+  }
+  if (!VN_PHONE_REGEX.test(cleanPhone)) {
+    return {
+      isValid: false,
+      message: 'Số điện thoại không hợp lệ (Phải đúng 10 số và bắt đầu bằng 03, 05, 07, 08, 09)',
+    };
+  }
+  return { isValid: true, message: '' };
+};
+
+export const validateEmail = (email: string): { isValid: boolean; message: string } => {
+  const cleanEmail = email.trim();
+  if (!cleanEmail) {
+    return { isValid: false, message: 'Vui lòng nhập email nhận vé' };
+  }
+  if (!EMAIL_REGEX.test(cleanEmail)) {
+    return {
+      isValid: false,
+      message: 'Định dạng email không hợp lệ (Ví dụ: hotro@traveleasy.vn)',
+    };
+  }
+  return { isValid: true, message: '' };
+};
+
 interface Props {
   info: PassengerInfo;
   onChange: (info: PassengerInfo) => void;
@@ -17,6 +51,8 @@ interface Props {
 }
 
 export const PassengerInfoForm: React.FC<Props> = ({ info, onChange, seatCount }) => {
+  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+
   const [frequentTravelers, setFrequentTravelers] = React.useState<any[]>(() => {
     try {
       const saved = localStorage.getItem('traveleasy_frequent_travelers');
@@ -32,7 +68,14 @@ export const PassengerInfoForm: React.FC<Props> = ({ info, onChange, seatCount }
     }
   });
 
+  const phoneValidation = validateVNPhone(info.phone);
+  const emailValidation = validateEmail(info.email);
+
+  const phoneError = (touched.phone || info.phone.length > 0) && !phoneValidation.isValid ? phoneValidation.message : '';
+  const emailError = (touched.email || info.email.length > 0) && !emailValidation.isValid ? emailValidation.message : '';
+
   const handleSelectFrequentTraveler = (traveler: any) => {
+    setTouched({ phone: true, email: true });
     onChange({
       ...info,
       fullName: traveler.name || info.fullName,
@@ -46,6 +89,10 @@ export const PassengerInfoForm: React.FC<Props> = ({ info, onChange, seatCount }
       ...info,
       [field]: value,
     });
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
   const insuranceFeePerSeat = 25000;
@@ -174,26 +221,45 @@ export const PassengerInfoForm: React.FC<Props> = ({ info, onChange, seatCount }
             <input
               type="tel"
               required
-              placeholder="Ví dụ: 0912 345 678"
+              placeholder="Ví dụ: 0912345678"
               value={info.phone}
               onChange={(e) => updateField('phone', e.target.value)}
+              onBlur={() => handleBlur('phone')}
               style={{
                 width: '100%',
                 padding: '11px 14px 11px 38px',
                 borderRadius: '8px',
-                border: '1px solid #cbd5e1',
+                border: phoneError ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+                backgroundColor: phoneError ? '#fef2f2' : '#ffffff',
                 fontSize: '14px',
                 fontWeight: 600,
                 boxSizing: 'border-box',
                 outline: 'none',
+                transition: 'border-color 0.2s, background-color 0.2s',
               }}
             />
             <Phone
               size={16}
-              color="#94a3b8"
+              color={phoneError ? '#ef4444' : '#94a3b8'}
               style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
             />
           </div>
+          {phoneError && (
+            <div
+              style={{
+                color: '#dc2626',
+                fontSize: '12px',
+                fontWeight: 600,
+                marginTop: '5px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <AlertCircle size={14} />
+              <span>{phoneError}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -209,23 +275,42 @@ export const PassengerInfoForm: React.FC<Props> = ({ info, onChange, seatCount }
             placeholder="Ví dụ: hotro@traveleasy.vn"
             value={info.email}
             onChange={(e) => updateField('email', e.target.value)}
+            onBlur={() => handleBlur('email')}
             style={{
               width: '100%',
               padding: '11px 14px 11px 38px',
               borderRadius: '8px',
-              border: '1px solid #cbd5e1',
+              border: emailError ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+              backgroundColor: emailError ? '#fef2f2' : '#ffffff',
               fontSize: '14px',
               fontWeight: 600,
               boxSizing: 'border-box',
               outline: 'none',
+              transition: 'border-color 0.2s, background-color 0.2s',
             }}
           />
           <Mail
             size={16}
-            color="#94a3b8"
+            color={emailError ? '#ef4444' : '#94a3b8'}
             style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
           />
         </div>
+        {emailError && (
+          <div
+            style={{
+              color: '#dc2626',
+              fontSize: '12px',
+              fontWeight: 600,
+              marginTop: '5px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <AlertCircle size={14} />
+            <span>{emailError}</span>
+          </div>
+        )}
       </div>
 
       {/* Note */}
@@ -310,4 +395,5 @@ export const PassengerInfoForm: React.FC<Props> = ({ info, onChange, seatCount }
     </div>
   );
 };
+
 

@@ -4,7 +4,7 @@ import api from '../../../services/api';
 import { paymentService, PaymentInitResponse } from '../../../services/paymentService';
 import { Trip, Booking } from '../../../types';
 import { CheckoutTimer } from './components/CheckoutTimer';
-import { PassengerInfoForm, PassengerInfo } from './components/PassengerInfoForm';
+import { PassengerInfoForm, PassengerInfo, validateVNPhone, validateEmail } from './components/PassengerInfoForm';
 import { PaymentMethodSelector, PaymentMethodType } from './components/PaymentMethodSelector';
 import { OrderSummaryPanel } from './components/OrderSummaryPanel';
 import { QrPaymentModal } from './components/QrPaymentModal';
@@ -287,12 +287,14 @@ export const CheckoutPage: React.FC = () => {
       toast.warning('Vui lòng điền họ và tên hành khách!', 'Thiếu Thông Tin');
       return false;
     }
-    if (!passengerInfo.phone.trim()) {
-      toast.warning('Vui lòng điền số điện thoại nhận vé!', 'Thiếu Thông Tin');
+    const phoneVal = validateVNPhone(passengerInfo.phone);
+    if (!phoneVal.isValid) {
+      toast.warning(phoneVal.message, 'Số Điện Thoại Không Hợp Lệ');
       return false;
     }
-    if (!passengerInfo.email.trim()) {
-      toast.warning('Vui lòng điền email nhận hóa đơn điện tử!', 'Thiếu Thông Tin');
+    const emailVal = validateEmail(passengerInfo.email);
+    if (!emailVal.isValid) {
+      toast.warning(emailVal.message, 'Email Không Hợp Lệ');
       return false;
     }
     if (!passengerInfo.termsAccepted) {
@@ -714,7 +716,12 @@ export const CheckoutPage: React.FC = () => {
               onApplyVoucher={handleApplyVoucher}
               onSubmit={handleCheckoutSubmit}
               loading={loading}
-              disabled={!passengerInfo.termsAccepted}
+              disabled={
+                !passengerInfo.termsAccepted ||
+                !passengerInfo.fullName.trim() ||
+                !validateVNPhone(passengerInfo.phone).isValid ||
+                !validateEmail(passengerInfo.email).isValid
+              }
             />
           </div>
         </div>
