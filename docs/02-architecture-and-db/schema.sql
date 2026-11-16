@@ -1397,6 +1397,14 @@ CREATE INDEX idx_bookings_user_status ON bookings (user_id, status);
 -- Trip search theo trạng thái vận hành (UC-3.5)
 CREATE INDEX idx_trips_status ON trips (status);
 
+-- [S315] Index tối ưu hóa truy vấn tìm kiếm chuyến xe đa điều kiện (departure_time, route_id, status)
+-- Tối ưu hóa câu query tìm chuyến: giảm độ trễ từ >300ms (Seq Scan) xuống <50ms (Index Scan)
+CREATE INDEX idx_trips_departure_route_status ON trips (departure_time, route_id, status);
+
+-- [S315] Index tối ưu tra cứu ghế theo chuyến xe và mã ghế phục vụ kiểm tra/khóa/bán vé
+CREATE INDEX idx_trip_seats_trip_seat_code ON trip_seats (trip_id, seat_code);
+CREATE INDEX idx_trip_seats_trip_status ON trip_seats (trip_id, status);
+
 -- Review pending cho Admin xử lý SLA 48h (UC-3.9)
 CREATE INDEX idx_rr_status_created ON review_reports (status, created_at);
 

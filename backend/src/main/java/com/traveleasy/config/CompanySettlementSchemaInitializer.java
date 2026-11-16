@@ -169,6 +169,17 @@ public class CompanySettlementSchemaInitializer implements CommandLineRunner {
                 "UPDATE users SET bus_company_id = 9 WHERE (email = 'haivan@gmail.com' OR email = 'dieuhanh@haivan.com') AND bus_company_id IS NULL; " +
                 "UPDATE users SET bus_company_id = 14 WHERE email = 'phamcongt56@gmail.com' AND bus_company_id IS NULL;"
             );
+            // [S315] Đánh Index tối ưu hóa truy vấn CSDL cho PostgreSQL / Supabase
+            try {
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_trips_departure_route_status ON trips (departure_time, route_id, status)");
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_trip_seats_trip_seat_code ON trip_seats (trip_id, seat_code)");
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_trip_seats_trip_status ON trip_seats (trip_id, status)");
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_tickets_booking_seat ON tickets (booking_id, seat_number)");
+                log.info("[S315 PERFORMANCE] S315 database indexes verified successfully.");
+            } catch (Exception ex) {
+                log.debug("[S315 PERFORMANCE] Index creation skipped or already present: {}", ex.getMessage());
+            }
+
             log.info("[SETTLEMENT SCHEMA] Verified all Sprint 3 schema, payout_requests, POS shifts, and partner company associations.");
         } catch (Exception e) {
             log.warn("[SETTLEMENT SCHEMA] Bỏ qua khởi tạo DDL (có thể đang chạy H2/test hoặc thiếu quyền): {}", e.getMessage());
