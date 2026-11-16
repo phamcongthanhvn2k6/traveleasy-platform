@@ -2,8 +2,8 @@
 > **Dự án:** Nền Tảng Đặt Vé Xe Khách & Quản Lý Nhà Xe Liên Tỉnh TravelEasy (`traveleasy-platform`)  
 > **Đơn vị:** OJT Đồ Án Tốt Nghiệp Nhóm 7 — FPT Polytechnic  
 > **Thời gian thực hiện:** Sprint 3 (Tuần Vận Hành Nâng Cao & Hoàn Thiện Nghiệp Vụ)  
-> **Trạng thái:** 🏆 **CHÍNH THỨC ĐÓNG SPRINT 3 (14/11/2026)**  
-> **Quy mô Sprint 3 chính thức:** **21 User Stories & Technical Tasks | 63 Story Points | 18 tasks Done (55 SP) / 3 tasks Code Review (8 SP)**  
+> **Trạng thái:** 🏆 **CHÍNH THỨC HOÀN TẤT & ĐÓNG SPRINT 3 (100% HOÀN THÀNH NGHIỆM THU NGÀY 16/11/2026)**  
+> **Quy mô Sprint 3 chính thức:** **21 User Stories & Technical Tasks | 63 Story Points | 21 tasks Done (63 SP) / 0 tasks nợ**  
 
 ---
 
@@ -25,9 +25,9 @@ Sprint 3 mở rộng toàn diện nhằm giải quyết bài toán vận hành t
 | 2 | **Nguyễn Đại Phát** | Payment Gateway, Legal & QA | 6 tasks | **17 SP** | `[S306]` (4 SP), `[S310]` (3 SP), `[S321]` (3 SP), `[SMS-OTP]` (3 SP), `[S314]` (2 SP), `[S322]` (2 SP) | 100% Hoàn thành |
 | 3 | **Phạm Thanh Phong** | Core Booking & Seat Engine | 2 tasks | **8 SP** | `[S301]` (4 SP), `[S304]` (4 SP) | 100% Hoàn thành |
 | 4 | **Trần Minh Đức** | Core Features & Pricing Engine | 4 tasks | **11 SP** | `[S307]` (3 SP), `[S316]` (3 SP), `[S317]` (3 SP), `[S318]` (2 SP) | 100% Hoàn thành |
-| 5 | **Đoàn Nhật Cường** | Operator Hub & Mobile Scanner | 4 tasks | **11 SP** | `[S305]` (3 SP - Done); Nợ 3 task: `[S315]` (2 SP), `[S319]` (3 SP), `[S320]` (3 SP) tại Code Review | 27.3% Hoàn thành |
+| 5 | **Đoàn Nhật Cường** | Operator Hub & Mobile Scanner | 4 tasks | **11 SP** | `[S305]` (3 SP), `[S315]` (2 SP), `[S319]` (3 SP), `[S320]` (3 SP) | 100% Hoàn thành (Đã nghiệm thu & tất toán nợ ngày 16/11) |
 | 6 | **Phan Trung Kiên** | Thành viên | 0 task | **0 SP** | *(Miễn thực tập OJT theo quyết định đào tạo)* | - |
-| **TỔNG** | **Toàn đội Nhóm 7** | **Khối lượng chuẩn mực Sprint 3** | **21 tasks** | **63 SP** | **18 tasks Hoàn thành (55 SP) / 3 tasks Ghi nợ (8 SP)** | **87.3% Hoàn thành** |
+| **TỔNG** | **Toàn đội Nhóm 7** | **Khối lượng chuẩn mực Sprint 3** | **21 tasks** | **63 SP** | **21 tasks Hoàn thành (63 SP) / 0 tasks Ghi nợ** | **100% Hoàn thành** |
 
 ---
 
@@ -73,12 +73,12 @@ Sprint 3 mở rộng toàn diện nhằm giải quyết bài toán vận hành t
   - Mở ca với tiền mặt đầu ca, ghi nhận doanh thu trong ca, kết ca đếm tiền và xuất báo cáo Z-Report nộp quỹ.
   - Route: `/company/shifts`.
 - **`[Ưu tiên: 3] [2 SP] [S315]` Code Review & Tối Ưu Hóa Hiệu Năng Truy Vấn CSDL:**
-  - Rà soát N+1 JPA Query, bổ sung Index tối ưu hóa tốc độ tìm kiếm chuyến xe xuống dưới 50ms.
+  - Rà soát N+1 JPA Query, bổ sung Composite Index ESR `(route_id, status, departure_time)` và `qr_code_hash` tối ưu hóa tốc độ tìm kiếm chuyến xe xuống dưới 5ms. Đã nghiệm thu & merge PR #66.
 - **`[Ưu tiên: 2] [3 SP] [S319]` Phân Công Tổ Lái & Kiểm Tra Điều Kiện Xuất Bến:**
-  - Phân công Lái chính, Lái phụ, Phụ xe; kiểm tra nồng độ cồn bắt buộc 0.00 mg/L và GPLX trước khi lăn bánh.
+  - Phân công Lái chính, Lái phụ, Phụ xe; kiểm tra nồng độ cồn bắt buộc 0.00 mg/L và GPLX trước khi lăn bánh; chặn IDOR bảo mật phân quyền. Đã nghiệm thu & merge PR #67.
   - Route: `/company/crew`. Bảng CSDL: `trip_crews`.
 - **`[Ưu tiên: 2] [3 SP] [S320]` WebApp Quét QR Soát Vé & Điểm Danh Hành Khách Lên Xe:**
-  - Ứng dụng di động quét mã QR vé tại cửa xe, âm thanh thông báo vé hợp lệ/trùng lặp, điểm danh sơ đồ ghế.
+  - Ứng dụng di động quét mã QR vé tại cửa xe, âm thanh thông báo vé hợp lệ/trùng lặp, điểm danh sơ đồ ghế; chặn quét vé chưa thanh toán và bảo vệ PII. Đã nghiệm thu & merge PR #69.
   - Route: `/conductor/scanner`.
 
 ### 3.4. Phân hệ Thanh Toán, Pháp Lý Chuẩn Bộ GTVT & QA Testing — Nguyễn Đại Phát (10 SP)

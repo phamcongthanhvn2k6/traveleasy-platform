@@ -147,3 +147,16 @@ Căn cứ vào trạng thái rà soát thực tế trên Trello Board tại th�
    - **Team Leader / System Architect**: *Phạm Công Thành* (Đã ký duyệt)
    - **Thành viên nhận nợ**: *Đoàn Nhật Cường* (Đã tiếp nhận cam kết)
 
+---
+
+## 🏆 PHỤ LỤC: BIÊN BẢN TẤT TOÁN NỢ KỸ THUẬT SPRINT 3
+*Thời điểm thực hiện: 16/11/2026*  
+*Đại diện nghiệm thu: Phạm Công Thành (Team Leader)*
+
+- **Kết quả nghiệm thu thực tế**:
+  1. `[S315]` (PR #66): Đã tối ưu hóa B-Tree ESR Composite Index `(route_id, status, departure_time)` và `idx_tickets_qr_code_hash`, thời gian truy vấn giảm còn 4.82ms. Đã chuyển `Done Sprint 3`.
+  2. `[S319]` (PR #67): Đã vá lỗ hổng IDOR/Auth bypass, tích hợp kiểm soát nồng độ cồn = 0.00 mg/L và GPLX chuẩn quy định Bộ GTVT, sinh mã lệnh xuất bến điện tử `DP-xxxxx`. Đã chuyển `Done Sprint 3`.
+  3. `[S320]` (PR #69): Đã vá lỗi quét vé đơn hàng chưa thanh toán, bảo vệ PII thông tin hành khách, tối ưu hóa locking không gây deadlock, hoàn tất WebApp quét QR và điểm danh sơ đồ ghế. Đã chuyển `Done Sprint 3`.
+- **Tổng kết**: Toàn bộ **3 tasks (8 Story Points)** nợ kỹ thuật đã được **TẤT TOÁN 100%**. Sprint 3 chính thức khép lại với kết quả **21/21 tasks hoàn thành (63/63 SP - Đạt 100% cam kết)**.
+
+

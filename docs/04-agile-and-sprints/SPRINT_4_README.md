@@ -3,7 +3,7 @@
 > **Đơn vị:** OJT Đồ Án Tốt Nghiệp Nhóm 7 — FPT Polytechnic  
 > **Thời gian thực hiện:** **14/11/2026 – 20/11/2026** *(Đúng 1 tuần — Kết thúc vào Thứ Sáu 20/11)*  
 > **Trạng thái:** 🚀 **CHÍNH THỨC KHỞI ĐỘNG (STABILIZATION & SYSTEM POLISH SPRINT)**  
-> **Quy mô Sprint 4:** **19 Tasks kỹ thuật | 35 Story Points | 5 Thành viên chính thức thực hiện OJT**
+> **Quy mô Sprint 4:** **19 Tasks kỹ thuật | 35 Story Points (gồm 16 Tasks Tối ưu hóa mới [27 SP] + 3 Tasks Trả nợ Sprint 3 [8 SP] đã nghiệm thu xong ngày 16/11)**
 
 ---
 
@@ -23,7 +23,7 @@
 | 2 | **Nguyễn Đại Phát** | `@phatnguyn146` | Admin Portal / Bộ lọc tìm kiếm / Form Voucher / Responsive Dashboard | `[S405]`, `[S406]`, `[S407]`, `[S408]` | **6 SP** |
 | 3 | **Phạm Thanh Phong** | `@phmthanhphong17` | Backend Core / Redis Cache / Concurrency Lock / POS / SQL N+1 | `[S409]`, `[S410]`, `[S411]`, `[S412]` | **6 SP** |
 | 4 | **Trần Minh Đức** | `@minhdctrn13` | Fullstack / Đổi vé / Header Login State / In vé QR / Bảng Reviews | `[S413]`, `[S414]`, `[S415]`, `[S416]` | **6 SP** |
-| 5 | **Đoàn Nhật Cường** | `@joshliam` | Mobile & Safety / Trả nợ Sprint 3 / Validate SĐT / Skeleton / GPS | `[S315]`, `[S319]`, `[S320]`, `[S417]`, `[S418]`, `[S419]` | **11 SP** |
+| 5 | **Đoàn Nhật Cường** | `@joshliam` | Mobile & Safety / Trả nợ Sprint 3 / Validate SĐT / Skeleton / GPS | `[S315]`, `[S319]`, `[S320]` *(Đã Done S3 ngày 16/11)*, `[S417]`, `[S418]`, `[S419]` | **11 SP** *(8 SP nợ + 3 SP S4)* |
 | **TỔNG** | **5 THÀNH VIÊN OJT** | - | **Tập trung tối ưu hóa & sửa lỗi dứt điểm** | **19 Tasks** | **35 SP** |
 
 ---
@@ -85,12 +85,12 @@
   - Thay thế vòng quay loading thông thường bằng hiệu ứng khung xương (Skeleton loader), loại bỏ hiện tượng giật giật (layout shift) khi kết quả API trả về.
 - **`[S419]` Tối ưu bản đồ `LiveTrackingMapPage`: Bổ sung nút "Tự động căn chỉnh xe về tâm bản đồ" (Re-center) (1 SP)**:
   - Thêm nút floating button cho phép người dùng click để đưa vị trí xe đang chạy `51B-889.99` về chính giữa màn hình bản đồ Leaflet.
-- **`[S315]` Code Review & Tối ưu hóa Index PostgreSQL các truy vấn tìm chuyến & ghế (2 SP — Nợ Sprint 3)**:
-  - Chạy `EXPLAIN ANALYZE` và đánh composite index cho `(departure_time, route_id, status)` trên bảng `trips`.
-- **`[S319]` Hoàn thiện Form phân công tổ lái & Kiểm định điều kiện xuất bến (3 SP — Nợ Sprint 3)**:
-  - Nối form điều hành với backend: Chỉ cho phép duyệt xuất bến khi nồng độ cồn = `0.00 mg/L` và thời gian lái xe liên tục `< 4 giờ`.
-- **`[S320]` WebApp Quét mã QR soát vé & Điểm danh hành khách bằng camera di động (3 SP — Nợ Sprint 3)**:
-  - Xử lý quét camera trên điện thoại, hỗ trợ fallback gõ mã vé 6 ký tự tức thì khi môi trường không hỗ trợ camera.
+- **`[S315]` Code Review & Tối ưu hóa Index PostgreSQL các truy vấn tìm chuyến & ghế (2 SP — Nợ Sprint 3 - ĐÃ XONG & MERGE NGÀY 16/11)**:
+  - Đánh composite index chuẩn ESR `(route_id, status, departure_time)` trên bảng `trips` và `(qr_code_hash)` trên bảng `tickets`.
+- **`[S319]` Hoàn thiện Form phân công tổ lái & Kiểm định điều kiện xuất bến (3 SP — Nợ Sprint 3 - ĐÃ XONG & MERGE NGÀY 16/11)**:
+  - Nối form điều hành với backend: Kiểm soát nồng độ cồn = `0.00 mg/L`, bằng lái Hạng D/E, chặn IDOR bảo mật và cấp mã lệnh `DP-xxxxx`.
+- **`[S320]` WebApp Quét mã QR soát vé & Điểm danh hành khách bằng camera di động (3 SP — Nợ Sprint 3 - ĐÃ XONG & MERGE NGÀY 16/11)**:
+  - Xử lý quét camera trên điện thoại, hỗ trợ fallback mã vé 6 ký tự, chặn vé chưa thanh toán và bảo vệ PII khách hàng.
 
 ---
 
@@ -98,7 +98,7 @@
 
 ```mermaid
 flowchart TD
-    D1["Thứ 7 - CN (14-15/11): Cường trả 3 task nợ S315, S319, S320"] --> D2["Thứ Hai (16/11): Thành, Phát, Phong, Đức, Cường hoàn thiện các task tối ưu backend & API"]
+    D1["14-16/11: Cường hoàn tất nghiệm thu & merge 3 task nợ S315, S319, S320"] --> D2["Thứ Hai (16/11): Thành, Phát, Phong, Đức, Cường triển khai 16 task tối ưu backend & API"]
     D2 --> D3["Thứ Ba (17/11): Hoàn thiện các task tối ưu giao diện, validation, skeleton loader & in vé"]
     D3 --> D4["Thứ Tư (18/11): Tổng kiểm thử tích hợp toàn bộ 19 tasks trên môi trường thật"]
     D4 --> D5["Thứ Năm (19/11): Tổng duyệt nghiệm thu hệ thống, backup database & khóa code"]

@@ -14,12 +14,12 @@
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Sprint 1** | Nền tảng Core, CSDL Supabase, Stateless JWT, Cổng Admin & Cổng Nhà xe | Tuần 1 | 35 thẻ | **93 SP** | 93 SP (35 thẻ) | 0 SP | **100%** ✅ |
 | **Sprint 2** | Tìm kiếm SWR Cache, Sơ đồ 34 ghế VIP, Khóa ghế Concurrency & Thanh toán | Tuần 2 | 39 thẻ | **98 SP** | 98 SP (39 thẻ) | 0 SP | **100%** ✅ |
-| **Sprint 3** | Khóa ghế Realtime, Email B2B, CI/CD VPS, POS Bến xe, GPS Tracking & Báo cáo Nhà xe | Tuần 3 | 21 thẻ | **63 SP** | 55 SP (18 thẻ) | 8 SP (3 thẻ Code Review) | **87.3%** (Đóng Sprint 3) 🏆 |
-| **TỔNG CỘNG** | **Toàn bộ hệ sinh thái Sàn Đặt Vé Xe Khách TravelEasy** | **3 Tuần** | **95 thẻ cốt lõi** | **254 SP** | **246 SP (92 thẻ)** | **8 SP (3 thẻ Code Review)** | **96.9% Đã xong** |
+| **Sprint 3** | Khóa ghế Realtime, Email B2B, CI/CD VPS, POS Bến xe, GPS Tracking & Báo cáo Nhà xe | Tuần 3 | 21 thẻ | **63 SP** | 63 SP (21 thẻ) | 0 SP | **100%** (Đã nghiệm thu nợ 16/11) 🏆 |
+| **TỔNG CỘNG** | **Toàn bộ hệ sinh thái Sàn Đặt Vé Xe Khách TravelEasy** | **3 Tuần** | **95 thẻ cốt lõi** | **254 SP** | **254 SP (95 thẻ)** | **0 SP** | **100% Đã xong** |
 
 > [!NOTE]
 > **Quy chuẩn chuẩn hóa Story Points (Scrum Calibration)**:
-> Danh mục công việc chính thức toàn bộ dự án gồm **95 User Stories & Technical Tasks cốt lõi** cho đúng **3 tuần làm việc (3 Sprints, mỗi Sprint 1 tuần)** theo chuẩn mực tiến độ môn học/OJT của trường. Nhóm đã đóng chính thức Sprint 3 với 55/63 SP hoàn thành (87.3%), 3 thẻ nợ kỹ thuật tại cột `Code Review` (8 SP) được ghi nhận chi tiết để hoàn thiện nghiệm thu bảo vệ.
+> Danh mục công việc chính thức toàn bộ dự án gồm **95 User Stories & Technical Tasks cốt lõi** cho đúng **3 tuần làm việc (3 Sprints, mỗi Sprint 1 tuần)** theo chuẩn mực tiến độ môn học/OJT của trường. Nhóm đã hoàn tất 100% 95 thẻ cốt lõi (254/254 SP), 3 thẻ nợ kỹ thuật tại cột `Code Review` (8 SP) đã được giải ngân và nghiệm thu sang `Done Sprint 3` vào ngày 16/11/2026.
 
 ---
 
@@ -31,7 +31,7 @@
 | 2 | **Nguyễn Đại Phát** | `@phatnguyn146` | Admin Lead & Financial Settlement | 9 thẻ | 11 thẻ | 6 thẻ | **26 thẻ** | Hoàn thành S1, S2, S3 (17 SP S3) |
 | 3 | **Phạm Thanh Phong** | `@phmthanhphong17` | Core Booking & Seat Engine Specialist | 7 thẻ | 7 thẻ | 2 thẻ | **16 thẻ** | Hoàn thành S1, S2, S3 (8 SP S3) |
 | 4 | **Trần Minh Đức** | `@minhdctrn13` | Customer Portal & Performance | 4 thẻ | 7 thẻ | 4 thẻ | **15 thẻ** | Hoàn thành S1, S2, S3 (11 SP S3) |
-| 5 | **Đoàn Nhật Cường** | `@joshliam` | Mobile Specialist & Operator POS | 4 thẻ | 10 thẻ | 4 thẻ | **18 thẻ** | Xong 1 thẻ (3 SP); Nợ 3 thẻ (8 SP) tại Code Review |
+| 5 | **Đoàn Nhật Cường** | `@joshliam` | Mobile Specialist & Operator POS | 4 thẻ | 10 thẻ | 4 thẻ | **18 thẻ** | Hoàn thành 4/4 thẻ S3 (11 SP) (Đã nghiệm thu nợ 16/11) |
 | 6 | **Phan Trung Kiên** | `@kienphantrung8` | Sinh viên (Miễn thực tập OJT) | 0 thẻ | 0 thẻ | 0 thẻ | **0 thẻ** | Miễn OJT theo quy chế |
 
 ---
@@ -144,14 +144,14 @@
 | 16 | [[Ưu tiên: 2] [4 SP] [S304][POS] Giao diện & API Bán Vé Nhanh Tại Quầy Bến Xe POS (/company/pos) & In Vé Nhiệt 80mm](https://trello.com/c/ozO2O42W) | **4 SP** | `Done Sprint 3` | Phạm Thanh Phong |
 | 17 | [[Ưu tiên: 2] [4 SP] [S306][TRACKING] Bản Đồ Định Vị GPS Live Tracking Xe Chạy Thời Gian Thực (/tracking/:tripId)](https://trello.com/c/H0eznKRj) | **4 SP** | `Done Sprint 3` | Nguyễn Đại Phát |
 | 18 | [[Ưu tiên: 2] [3 SP] [S305][SHIFTS] Quản Lý Ca Trực & Bàn Giao Tiền Mặt Quầy Bến Xe (/company/shifts)](https://trello.com/c/aaBDHuvQ) | **3 SP** | `Done Sprint 3` | Đoàn Nhật Cường |
-| 19 | [[Ưu tiên: 3] [2 SP] [S315] Code Review & Tối Ưu Hóa Hiệu Năng Truy Vấn CSDL](https://trello.com/c/PPepgpHT) | **2 SP** | `Code Review` | Đoàn Nhật Cường |
-| 20 | [[Ưu tiên: 2] [3 SP] [S319] Phân Công Tổ Lái & Kiểm Tra Điều Kiện Xuất Bến](https://trello.com/c/pUHzFrYX) | **3 SP** | `Code Review` | Đoàn Nhật Cường |
-| 21 | [[Ưu tiên: 2] [3 SP] [S320] WebApp Quét QR Soát Vé & Điểm Danh Hành Khách Lên Xe](https://trello.com/c/YUmiEe90) | **3 SP** | `Code Review` | Đoàn Nhật Cường |
+| 19 | [[Ưu tiên: 3] [2 SP] [S315] Code Review & Tối Ưu Hóa Hiệu Năng Truy Vấn CSDL](https://trello.com/c/PPepgpHT) | **2 SP** | `Done Sprint 3` | Đoàn Nhật Cường |
+| 20 | [[Ưu tiên: 2] [3 SP] [S319] Phân Công Tổ Lái & Kiểm Tra Điều Kiện Xuất Bến](https://trello.com/c/pUHzFrYX) | **3 SP** | `Done Sprint 3` | Đoàn Nhật Cường |
+| 21 | [[Ưu tiên: 2] [3 SP] [S320] WebApp Quét QR Soát Vé & Điểm Danh Hành Khách Lên Xe](https://trello.com/c/YUmiEe90) | **3 SP** | `Done Sprint 3` | Đoàn Nhật Cường |
 
 ---
 
 ## 🏆 4. TỔNG KẾT & CHỈ SỐ NGHIỆM THU CUỐI SPRINT 3
-- **Tổng số công việc đã nghiệm thu đạt chuẩn DoD**: **18 tasks (55 SP)** trong cột `Done Sprint 3`.
-- **Tổng số công việc nợ kỹ thuật**: **3 tasks (8 SP)** trong cột `Code Review` (phụ trách bởi Đoàn Nhật Cường).
-- **Trạng thái Sprint 3**: **CHÍNH THỨC ĐÓNG SPRINT 3 (14/11/2026)** với 87.3% khối lượng công việc hoàn thành.
+- **Tổng số công việc đã nghiệm thu đạt chuẩn DoD**: **21 tasks (63 SP)** trong cột `Done Sprint 3`.
+- **Tổng số công việc nợ kỹ thuật**: **0 tasks (0 SP)** (3 task của Đoàn Nhật Cường đã hoàn tất nghiệm thu & tất toán nợ ngày 16/11/2026).
+- **Trạng thái Sprint 3**: **HOÀN THÀNH TOÀN DIỆN 100% SPRINT 3** với 63/63 SP.
 - **Tình trạng hệ thống**: 242/242 Unit & Integration Tests Passed, Build sạch không cảnh báo, Deploy Production trên VPS `103.72.57.149` hoạt động ổn định.
