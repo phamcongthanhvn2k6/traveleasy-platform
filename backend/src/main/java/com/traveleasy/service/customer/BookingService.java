@@ -382,9 +382,23 @@ public class BookingService {
         if (booking.getStatus() == BookingStatus.COMPLETED) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé đã hoàn thành chuyến đi, không thể hủy");
         }
-        if (booking.getTrip() != null && booking.getTrip().getDepartureTime() != null &&
-                booking.getTrip().getDepartureTime().isBefore(LocalDateTime.now())) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe đã khởi hành, không thể hủy vé trực tuyến");
+        if (booking.getTrip() != null && booking.getTrip().getDepartureTime() != null) {
+            LocalDateTime depTime = booking.getTrip().getDepartureTime();
+            LocalDateTime now = LocalDateTime.now();
+            if (depTime.isBefore(now)) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe đã khởi hành, không thể hủy vé trực tuyến");
+            }
+            long hoursUntilDeparture = java.time.Duration.between(now, depTime).toHours();
+            if (hoursUntilDeparture < 4) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR,
+                        "Chuyến xe khởi hành trong vòng " + hoursUntilDeparture + " giờ nữa (< 4 tiếng). Theo quy định vận tải, không thể hủy vé trực tuyến sát giờ chạy!");
+            }
+        }
+
+        List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
+        boolean hasUsedTicket = tickets.stream().anyMatch(t -> t.getStatus() == TicketStatus.USED);
+        if (hasUsedTicket) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé này đã có vé được soát lên xe (USED). Không thể thực hiện hủy vé!");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
@@ -402,7 +416,6 @@ public class BookingService {
             });
         }
 
-        List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
         List<String> seatCodes = new ArrayList<>();
         for (Ticket ticket : tickets) {
             ticket.setStatus(TicketStatus.CANCELLED);
@@ -439,12 +452,25 @@ public class BookingService {
         if (booking.getStatus() == BookingStatus.COMPLETED) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé đã hoàn thành chuyến đi, không thể hủy vé");
         }
-        if (booking.getTrip() != null && booking.getTrip().getDepartureTime() != null &&
-                booking.getTrip().getDepartureTime().isBefore(LocalDateTime.now())) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe đã khởi hành, không thể hủy vé trực tuyến");
+        if (booking.getTrip() != null && booking.getTrip().getDepartureTime() != null) {
+            LocalDateTime depTime = booking.getTrip().getDepartureTime();
+            LocalDateTime now = LocalDateTime.now();
+            if (depTime.isBefore(now)) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe đã khởi hành, không thể hủy vé trực tuyến");
+            }
+            long hoursUntilDeparture = java.time.Duration.between(now, depTime).toHours();
+            if (hoursUntilDeparture < 4) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR,
+                        "Chuyến xe khởi hành trong vòng " + hoursUntilDeparture + " giờ nữa (< 4 tiếng). Theo quy định vận tải, không thể hủy vé trực tuyến sát giờ chạy!");
+            }
         }
 
         List<Ticket> allTickets = ticketRepository.findByBookingId(booking.getId());
+        for (Ticket ticket : allTickets) {
+            if (ticketIds.contains(ticket.getId()) && ticket.getStatus() == TicketStatus.USED) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Vé " + ticket.getTicketCode() + " đã được soát lên xe (USED), không thể hủy!");
+            }
+        }
         List<String> releasedSeats = new ArrayList<>();
 
         for (Ticket ticket : allTickets) {

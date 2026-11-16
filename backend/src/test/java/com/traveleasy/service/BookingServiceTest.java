@@ -161,6 +161,50 @@ class BookingServiceTest {
     }
 
     @Test
+    @DisplayName("Ném ngoại lệ VALIDATION_ERROR khi hủy vé sát giờ khởi hành (< 4 tiếng)")
+    void testCancelBooking_CloseToDeparture() {
+        Booking booking = new Booking();
+        booking.setId(10L);
+        booking.setStatus(BookingStatus.CONFIRMED);
+        sampleTrip.setDepartureTime(java.time.LocalDateTime.now().plusHours(2));
+        booking.setTrip(sampleTrip);
+
+        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+
+        AppException ex = assertThrows(AppException.class, () ->
+                bookingService.cancelBooking(10L, null)
+        );
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("< 4 tiếng"));
+    }
+
+    @Test
+    @DisplayName("Ném ngoại lệ VALIDATION_ERROR khi hủy đơn vé đã có vé soát lên xe (USED)")
+    void testCancelBooking_TicketAlreadyUsed() {
+        Booking booking = new Booking();
+        booking.setId(10L);
+        booking.setStatus(BookingStatus.CONFIRMED);
+        sampleTrip.setDepartureTime(java.time.LocalDateTime.now().plusDays(2));
+        booking.setTrip(sampleTrip);
+
+        Ticket usedTicket = new Ticket();
+        usedTicket.setId(100L);
+        usedTicket.setSeatNumber("A01");
+        usedTicket.setStatus(TicketStatus.USED);
+
+        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+        when(ticketRepository.findByBookingId(10L)).thenReturn(List.of(usedTicket));
+
+        AppException ex = assertThrows(AppException.class, () ->
+                bookingService.cancelBooking(10L, null)
+        );
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("USED"));
+    }
+
+    @Test
     @DisplayName("Ném ngoại lệ VALIDATION_ERROR khi đổi vé sang trùng chuyến và ghế hiện tại")
     void testRescheduleTicket_SameTripAndSeat() {
         Booking booking = new Booking();
