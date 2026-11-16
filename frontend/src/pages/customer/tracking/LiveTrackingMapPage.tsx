@@ -30,7 +30,9 @@ import {
   Ticket,
   QrCode,
   UserCheck,
-  Share2
+  Share2,
+  Crosshair,
+  LocateFixed
 } from 'lucide-react';
 
 export interface UserTripBooking {
@@ -399,7 +401,21 @@ export default function LiveTrackingMapPage() {
     }
   };
 
-  // 4. Kích hoạt xe di chuyển 1 bước (Mô phỏng Test & Demo)
+  // Hàm Re-center: Đưa xe 51B-889.99 về chính giữa tâm bản đồ
+  const handleRecenterBus = () => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const lat = tripData?.latitude ?? 10.8231;
+    const lng = tripData?.longitude ?? 106.6297;
+    const busPos: [number, number] = [lat, lng];
+
+    map.panTo(busPos, { animate: true, duration: 1.0 });
+
+    if (busMarkerRef.current) {
+      busMarkerRef.current.openPopup();
+    }
+  };
   const handleSimulateStep = async () => {
     try {
       setSimulating(true);
@@ -837,11 +853,32 @@ export default function LiveTrackingMapPage() {
               </div>
             </div>
 
-            <div
-              ref={mapContainerRef}
-              className="w-full h-[520px] bg-slate-950 z-0 relative"
-              style={{ minHeight: '480px' }}
-            />
+            <div className="relative">
+              <div
+                ref={mapContainerRef}
+                className="w-full h-[520px] bg-slate-950 z-0 relative"
+                style={{ minHeight: '480px' }}
+              />
+
+              {/* Floating Action Button: Tự động căn chỉnh xe về tâm (Re-center) */}
+              <div className="absolute right-4 bottom-4 z-[400] flex flex-col items-end group">
+                {/* Tooltip hướng dẫn thân thiện khi hover */}
+                <div className="hidden group-hover:flex items-center gap-1.5 px-3 py-1.5 mb-2 rounded-lg bg-slate-900/95 text-emerald-400 text-xs font-semibold shadow-xl border border-emerald-500/30 backdrop-blur-sm whitespace-nowrap animate-in fade-in slide-in-from-bottom-1 duration-200">
+                  <LocateFixed className="w-3.5 h-3.5" />
+                  <span>Căn giữa xe {tripData?.licensePlate || '51B-889.99'}</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleRecenterBus}
+                  className="w-12 h-12 rounded-xl bg-slate-900/90 hover:bg-emerald-600 text-slate-100 hover:text-white border border-slate-700 hover:border-emerald-500 flex items-center justify-center shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 group-hover:shadow-emerald-500/20"
+                  aria-label={`Tự động căn chỉnh xe ${tripData?.licensePlate || '51B-889.99'} về tâm`}
+                  title={`Căn giữa xe ${tripData?.licensePlate || '51B-889.99'}`}
+                >
+                  <Crosshair className="w-6 h-6 text-emerald-400 group-hover:text-white transition-colors" />
+                </button>
+              </div>
+            </div>
 
             <div className="p-3 bg-slate-850 border-t border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
