@@ -6,6 +6,7 @@ import { TripSearchHeader } from './components/TripSearchHeader';
 import { FilterSidebar, FilterState } from './components/FilterSidebar';
 import { SortTabBar, SortOption } from './components/SortTabBar';
 import { TripResultCard } from './components/TripResultCard';
+import { TripCardSkeleton } from './components/TripCardSkeleton';
 import { Pagination } from '../../../components/Pagination';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { toast } from '../../../context/ToastContext';
@@ -847,25 +848,9 @@ export const TripSearchPage: React.FC = () => {
           />
 
           {loading ? (
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                padding: '60px 20px',
-                textAlign: 'center',
-                color: '#64748b',
-              }}
-            >
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Đang tìm kiếm chuyến xe tốt nhất cho bạn...
-              </div>
-              <div style={{ fontSize: '13px' }}>
-                Vui lòng đợi trong giây lát để hệ thống kết nối với các đối tác nhà xe.
-              </div>
-            </div>
+            <TripCardSkeleton count={3} />
           ) : paginatedTrips.length > 0 ? (
-            <div>
+            <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
               {paginatedTrips.map((trip) => (
                 <TripResultCard key={trip.id} trip={trip} onBook={handleOpenBooking} />
               ))}
