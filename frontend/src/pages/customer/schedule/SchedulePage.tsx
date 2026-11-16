@@ -1899,6 +1899,7 @@ export const SchedulePage: React.FC = () => {
     const temp = originInput;
     setOriginInput(destinationInput);
     setDestinationInput(temp);
+    setDirectionTab('OUTBOUND');
     setSearchParams({ origin: destinationInput, destination: temp });
   };
 

@@ -271,19 +271,20 @@ export default function LiveTrackingMapPage() {
       destMarkerRef.current = null;
     }
 
-    // Fetch snapshot
-    fetch(`/api/v1/tracking/${activeTripId}/current`)
-      .then((res) => res.json())
+    // Fetch snapshot qua axios API instance (chuẩn hóa baseUrl & header)
+    api.get(`/tracking/${activeTripId}/current`)
       .then((res) => {
-        if (res.data) {
-          updateGpsState(res.data);
+        if (res.data?.data) {
+          updateGpsState(res.data.data);
         }
       })
       .catch((err) => console.error('Lỗi tải snapshot tọa độ:', err));
 
     // Đăng ký SSE Stream 1 giây/lần
     try {
-      eventSource = new EventSource(`/api/v1/tracking/${activeTripId}/stream`);
+      const apiBase = api.defaults.baseURL || '/api/v1';
+      const streamUrl = `${apiBase.replace(/\/$/, '')}/tracking/${activeTripId}/stream`;
+      eventSource = new EventSource(streamUrl);
 
       eventSource.onopen = () => {
         setIsConnected(true);
