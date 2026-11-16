@@ -20,6 +20,7 @@ import { AdminRoutesPage } from '../pages/admin/routes/AdminRoutesPage';
 import { AdminSettlementsPage } from '../pages/admin/settlements/AdminSettlementsPage';
 import AdminGpsFleetPage from '../pages/admin/tracking/AdminGpsFleetPage';
 import { AdminPromotionsPage } from '../pages/admin/promotions/AdminPromotionsPage';
+import { AdminItinerariesPage } from '../pages/admin/itineraries/AdminItinerariesPage';
 
 /**
  * =========================================================================
@@ -85,6 +86,12 @@ export const AdminRoutes: React.FC = () => {
 
                 <Route path="locations" element={<AdminLocationsPage />} />
                 <Route path="/locations" element={<AdminLocationsPage />} />
+
+                {/* Nhóm Cẩm nang & Lịch trình du lịch */}
+                <Route path="itineraries" element={<AdminItinerariesPage />} />
+                <Route path="/itineraries" element={<AdminItinerariesPage />} />
+                <Route path="schedules" element={<AdminItinerariesPage />} />
+                <Route path="/schedules" element={<AdminItinerariesPage />} />
 
                 {/* Nhóm Hệ thống */}
                 <Route path="banners" element={<AdminBannersPage />} />

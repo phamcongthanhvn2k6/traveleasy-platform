@@ -42,6 +42,7 @@ import {
   ExternalLink,
   Map
 } from 'lucide-react';
+import { getItineraryTemplate, subscribeToItineraryChanges } from '../../../services/itineraryService';
 
 type PageViewMode = 'PLANNER' | 'TIMETABLE';
 type DirectionTab = 'OUTBOUND' | 'INBOUND';
@@ -1611,10 +1612,63 @@ export const SchedulePage: React.FC = () => {
   const [travelVibe, setTravelVibe] = useState<TravelVibe>('CHILL');
   const [budgetTier, setBudgetTier] = useState<BudgetTier>('STANDARD');
 
-  // Active Destination Template (Tìm trong 12 template chuyên sâu hoặc tự động sinh theo địa phương bất kỳ)
+  // Lắng nghe thay đổi kịch bản từ trang Admin Real-time
+  const [templateVersion, setTemplateVersion] = useState(0);
+  useEffect(() => {
+    const unsub = subscribeToItineraryChanges(() => {
+      setTemplateVersion(v => v + 1);
+    });
+    return unsub;
+  }, []);
+
+  // Active Destination Template (Đồng bộ với Admin & Kịch bản đa thời lượng)
   const activeTemplate: DestinationData = useMemo(() => {
-    return DESTINATION_TEMPLATES[destinationInput] || generateDynamicDestinationTemplate(destinationInput);
-  }, [destinationInput]);
+    // 1. Kiểm tra từ itineraryService (kho quản lý Admin + preset mẫu đa thời lượng)
+    const adminTemplate = getItineraryTemplate(destinationInput, durationOption);
+    if (adminTemplate) {
+      let selectedDays = adminTemplate.days;
+      if (durationOption === 'Trong ngày' && selectedDays.length > 1) {
+        selectedDays = [selectedDays[0]];
+      } else if (durationOption === '2N1Đ' && selectedDays.length > 2) {
+        selectedDays = selectedDays.slice(0, 2);
+      } else if (durationOption === '3N2Đ' && selectedDays.length > 3) {
+        selectedDays = selectedDays.slice(0, 3);
+      }
+
+      return {
+        city: adminTemplate.city,
+        tagline: adminTemplate.tagline,
+        weather: adminTemplate.weather,
+        season: adminTemplate.season,
+        transportInfo: adminTemplate.transportInfo,
+        distanceFromMajor: adminTemplate.distanceFromMajor,
+        recommendedDepartureTime: adminTemplate.recommendedDepartureTime,
+        recommendedDepartureReason: adminTemplate.recommendedDepartureReason,
+        checklist: adminTemplate.checklist,
+        budget: adminTemplate.budget,
+        days: selectedDays.map((d, dIdx) => ({
+          dayNumber: dIdx + 1,
+          title: d.title,
+          stops: d.stops.map(s => ({
+            ...s,
+            coords: s.coords || { x: 50, y: 50 }
+          }))
+        }))
+      };
+    }
+
+    // 2. Fallback sang DESTINATION_TEMPLATES mặc định
+    const base = DESTINATION_TEMPLATES[destinationInput] || generateDynamicDestinationTemplate(destinationInput);
+    let days = base.days;
+    if (durationOption === 'Trong ngày' && days.length > 1) {
+      days = [days[0]];
+    } else if (durationOption === '2N1Đ' && days.length > 2) {
+      days = days.slice(0, 2);
+    } else if (durationOption === '3N2Đ' && days.length > 3) {
+      days = days.slice(0, 3);
+    }
+    return { ...base, days };
+  }, [destinationInput, durationOption, templateVersion]);
 
   // Active Day in Planner
   const [activeDayIndex, setActiveDayIndex] = useState(0);
