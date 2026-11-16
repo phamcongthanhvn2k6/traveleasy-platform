@@ -87,3 +87,4 @@ Bảng thống kê toàn diện điểm tích lũy qua 4 Sprint từ đầu kỳ
 - **Thứ Tư (18/11)**: Chạy thử nghiệm toàn diện (Integration Testing) 19 tasks trên môi trường thật với dữ liệu Supabase ngày 20/11/2026.
 - **Thứ Năm (19/11)**: Khóa code toàn diện (Code Freeze), kiểm tra máy tính thuyết trình, thiết bị di động quét QR và sao lưu file database.
 - **Thứ Sáu (20/11) — D-DAY**: **Chính thức Báo cáo Bảo vệ Đồ án Tốt nghiệp OJT trước Hội đồng Giảng viên**.
+

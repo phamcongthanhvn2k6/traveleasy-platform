@@ -290,3 +290,4 @@ for t in TASKS:
         print(f"  ~ Thẻ {t['code']} đã tồn tại, bỏ qua.")
 
 print(f"\n✅ HOÀN TẤT ĐỒNG BỘ TRELLO! Đã tạo mới {created_count} thẻ kỹ thuật + 1 thẻ SPRINT GOAL.")
+

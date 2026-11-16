@@ -1738,6 +1738,258 @@ export const SchedulePage: React.FC = () => {
     });
   };
 
+  // Add a new day to custom itinerary
+  const handleAddDay = () => {
+    setCustomDays(prev => {
+      const nextDayNum = prev.length + 1;
+      return [
+        ...prev,
+        {
+          dayNumber: nextDayNum,
+          title: `Ngày ${nextDayNum}: Tự Do Khám Phá & Check-in Bản Địa`,
+          stops: [
+            {
+              id: `custom-stop-${Date.now()}-1`,
+              time: '08:30',
+              period: 'MORNING',
+              title: `Thưởng thức cafe sáng & ngắm cảnh ${destinationInput}`,
+              category: 'FOOD',
+              duration: '60 phút',
+              price: '45.000đ',
+              imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop&q=80',
+              localTip: 'Bắt đầu ngày mới thong thả tại một góc quán thoáng đãng.',
+              coords: { x: 50, y: 50 }
+            },
+            {
+              id: `custom-stop-${Date.now()}-2`,
+              time: '14:30',
+              period: 'AFTERNOON',
+              title: `Khám phá các điểm check-in độc đáo tại ${destinationInput}`,
+              category: 'CHECKIN',
+              duration: '90 phút',
+              price: '60.000đ',
+              imageUrl: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=500&auto=format&fit=crop&q=80',
+              localTip: 'Khung giờ chiều ánh sáng vàng ấm chụp ảnh kỷ niệm tuyệt đẹp.',
+              coords: { x: 55, y: 55 }
+            }
+          ]
+        }
+      ];
+    });
+    setActiveDayIndex(customDays.length);
+  };
+
+  // Remove a day from custom itinerary
+  const handleDeleteDay = (indexToDelete: number) => {
+    if (customDays.length <= 1) return;
+    setCustomDays(prev => {
+      const filtered = prev.filter((_, idx) => idx !== indexToDelete);
+      return filtered.map((d, idx) => ({
+        ...d,
+        dayNumber: idx + 1
+      }));
+    });
+    setActiveDayIndex(prev => Math.max(0, Math.min(prev, customDays.length - 2)));
+  };
+
+  // Move a stop up or down in the day's timeline
+  const handleMoveStop = (stopIndex: number, direction: 'UP' | 'DOWN') => {
+    setCustomDays(prev => {
+      const copy = [...prev];
+      if (!copy[activeDayIndex]) return prev;
+      const currentStops = [...copy[activeDayIndex].stops];
+      const targetIndex = direction === 'UP' ? stopIndex - 1 : stopIndex + 1;
+      if (targetIndex < 0 || targetIndex >= currentStops.length) return prev;
+      
+      const temp = currentStops[stopIndex];
+      currentStops[stopIndex] = currentStops[targetIndex];
+      currentStops[targetIndex] = temp;
+      copy[activeDayIndex].stops = currentStops;
+      return copy;
+    });
+  };
+
+  // Quick add a stop preset into current active day
+  const handleQuickAddStop = (preset: { title: string; category: 'FOOD' | 'CHECKIN' | 'CULTURE' | 'EXPERIENCE'; price: string; tip: string; defaultTime: string; imageUrl?: string }) => {
+    const newStop: ItineraryStop = {
+      id: `quick-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      time: preset.defaultTime,
+      period: parseInt(preset.defaultTime.split(':')[0]) < 12 ? 'MORNING' : 'AFTERNOON',
+      title: preset.title,
+      category: preset.category,
+      duration: '60 phút',
+      price: preset.price,
+      imageUrl: preset.imageUrl || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&auto=format&fit=crop&q=80',
+      localTip: preset.tip,
+      coords: { x: 50, y: 50 }
+    };
+
+    setCustomDays(prev => {
+      const copy = [...prev];
+      if (copy[activeDayIndex]) {
+        copy[activeDayIndex].stops = [...copy[activeDayIndex].stops, newStop].sort((a, b) => a.time.localeCompare(b.time));
+      }
+      return copy;
+    });
+  };
+
+  // Popular Quick Suggestions for the active destination
+  const quickSuggestions = useMemo(() => {
+    const seen = new Set<string>();
+    const list: Array<{ title: string; category: 'FOOD' | 'CHECKIN' | 'CULTURE' | 'EXPERIENCE'; price: string; tip: string; defaultTime: string; imageUrl?: string }> = [];
+    
+    // Extract from activeTemplate stops
+    activeTemplate.days.forEach(d => {
+      d.stops.forEach(s => {
+        if (!seen.has(s.title)) {
+          seen.add(s.title);
+          list.push({
+            title: s.title,
+            category: s.category,
+            price: s.price,
+            tip: s.localTip,
+            defaultTime: s.time,
+            imageUrl: s.imageUrl
+          });
+        }
+      });
+    });
+
+    return list.slice(0, 8);
+  }, [activeTemplate]);
+
+  // SMART RECOMMENDATION ENGINE: Analyzes custom itinerary in real-time
+  const smartRecommendations = useMemo(() => {
+    // 1. Phân tích hoạt động đầu tiên của Ngày 1 (Outbound trip)
+    const firstDay = customDays[0];
+    const firstStop = firstDay?.stops?.[0];
+    const firstStopTime = firstStop ? firstStop.time : '08:00';
+    const firstHour = parseInt(firstStopTime.split(':')[0]) || 8;
+
+    let outboundBusTitle = 'Chuyến Xe Limousine Sáng (06:00)';
+    let outboundBusTime = '06:00';
+    let outboundBusReason = `Hoạt động đầu tiên của bạn lúc ${firstStopTime} (${firstStop?.title || 'Khám phá'}), xuất phát 06:00 sáng giúp bạn đến nơi kịp ăn trưa và check-in khách sạn.`;
+    let outboundBusPrice = 320000;
+    let outboundCompany = 'Thành Bưởi VIP';
+    let isEarlyMorning = false;
+
+    if (firstHour <= 7) {
+      isEarlyMorning = true;
+      outboundBusTitle = 'Chuyến Xe Đêm Limousine Giường Nằm (22:30 hôm trước) ⭐';
+      outboundBusTime = '22:30';
+      outboundBusReason = `Vì hoạt động đầu tiên Ngày 1 diễn ra rất sớm lúc ${firstStopTime} (${firstStop?.title || 'Săn mây / Đón bình minh'}), chuyến xe đêm 22:30 hôm trước giúp bạn ngủ tròn giấc trên xe, 04:30 sáng tới bến vừa kịp giờ và tiết kiệm 1 đêm khách sạn!`;
+      outboundBusPrice = 390000;
+      outboundCompany = 'Phương Trang (FUTA)';
+    } else if (firstHour > 12) {
+      outboundBusTitle = 'Chuyến Xe Buổi Sáng Thong Thả (08:30)';
+      outboundBusTime = '08:30';
+      outboundBusReason = `Hoạt động đầu tiên bắt đầu vào buổi chiều (${firstStopTime}), xuất phát lúc 08:30 sáng là thời gian vừa vặn và thoải mái nhất.`;
+      outboundBusPrice = 320000;
+      outboundCompany = 'Phương Trang (FUTA)';
+    }
+
+    // 2. Phân tích hoạt động cuối cùng của Ngày cuối (Return trip)
+    const lastDay = customDays[customDays.length - 1];
+    const lastStop = lastDay?.stops?.[lastDay?.stops?.length - 1];
+    const lastStopTime = lastStop ? lastStop.time : '17:00';
+    const lastHour = parseInt(lastStopTime.split(':')[0]) || 17;
+
+    let returnBusTitle = 'Chuyến Xe Chiều Về (18:30)';
+    let returnBusTime = '18:30';
+    let returnBusReason = `Lịch trình ngày cuối kết thúc vào buổi chiều (${lastStopTime}), xe xuất bến 18:30 giúp bạn có mặt tại nhà vào buổi tối.`;
+    let returnBusPrice = 320000;
+    let returnCompany = 'Phương Trang (FUTA)';
+
+    if (lastHour >= 18) {
+      returnBusTitle = 'Chuyến Xe Tối Về Lại Thành Phố (21:00) ⭐';
+      returnBusTime = '21:00';
+      returnBusReason = `Lịch trình ngày cuối kết thúc lúc ${lastStopTime} (${lastStop?.title || 'Ăn tối / Dạo chợ'}). Chuyến xe đêm 21:00 giúp bạn vui chơi trọn vẹn buổi tối rồi lên xe ngủ về lại thành phố sáng hôm sau!`;
+      returnBusPrice = 390000;
+      returnCompany = 'Thành Bưởi Limousine';
+    }
+
+    // 3. Phân tích phương tiện nội thành (Local mobility)
+    const totalStopsCount = customDays.reduce((acc, d) => acc + (d.stops?.length || 0), 0);
+    const avgStopsPerDay = totalStopsCount / (customDays.length || 1);
+    const isFarDistance = customDays.some(d => d.stops?.some(s => 
+      s.title.toLowerCase().includes('cầu đất') || 
+      s.title.toLowerCase().includes('thác') || 
+      s.title.toLowerCase().includes('trại mát') || 
+      s.title.toLowerCase().includes('đèo') ||
+      s.title.toLowerCase().includes('fansipan')
+    ));
+
+    let mobility = {
+      type: 'SCOOTER',
+      title: `Thuê Xe Máy Giao Tận Nơi (${customDays.length} Ngày)`,
+      desc: isFarDistance ? 'Lịch trình có các cung đồi dốc ngắm cảnh: Thuê xe máy tay ga/xe số giúp bạn tự do luồn lách qua các con dốc và săn mây.' : 'Các điểm tham quan trung tâm: Xe máy là lựa chọn linh hoạt và tiết kiệm nhất (rẻ hơn 50% so với taxi).',
+      dailyRate: 120000,
+      totalCost: 120000 * customDays.length,
+      cta: 'Đặt Xe Máy Giao Tận Khách Sạn'
+    };
+
+    if (customDays.length >= 4 || avgStopsPerDay >= 5) {
+      mobility = {
+        type: 'CHARTER',
+        title: `Thuê Xe Hợp Đồng Du Lịch ${customDays.length} Ngày (Có Tài Xế)`,
+        desc: 'Lịch trình nhiều điểm đến phong phú: Thuê xe hợp đồng trọn gói 4-7 chỗ kèm tài xế bản địa giúp cả nhóm nghỉ ngơi thoải mái không lo lạc đường.',
+        dailyRate: 850000,
+        totalCost: 850000 * customDays.length,
+        cta: 'Yêu Cầu Báo Giá Xe Hợp Đồng'
+      };
+    }
+
+    // 4. Giải cứu hành lý (Luggage Gap)
+    const hasLateCheckoutGap = lastHour >= 14;
+
+    // 5. Dự toán chi phí & Voucher combo
+    const busTotal = outboundBusPrice + returnBusPrice;
+    const mobilityTotal = mobility.totalCost;
+    const rawAttractions = customDays.reduce((acc, d) => {
+      return acc + d.stops.reduce((sAcc, stop) => {
+        const match = stop.price.match(/\d+[\d.]*/);
+        if (match) {
+          const num = parseInt(match[0].replace(/\./g, ''));
+          return sAcc + (isNaN(num) ? 0 : (num < 1000 ? num * 1000 : num));
+        }
+        return sAcc;
+      }, 0);
+    }, 0);
+
+    const subtotal = busTotal + mobilityTotal + (rawAttractions || 350000);
+    const voucherDiscount = Math.round(subtotal * 0.12); // Ưu đãi 12% combo
+    const finalTotal = subtotal - voucherDiscount;
+
+    return {
+      outboundBus: {
+        title: outboundBusTitle,
+        time: outboundBusTime,
+        reason: outboundBusReason,
+        price: outboundBusPrice,
+        company: outboundCompany,
+        isEarlyMorning
+      },
+      returnBus: {
+        title: returnBusTitle,
+        time: returnBusTime,
+        reason: returnBusReason,
+        price: returnBusPrice,
+        company: returnCompany
+      },
+      mobility,
+      hasLateCheckoutGap,
+      pricing: {
+        busTotal,
+        mobilityTotal,
+        attractionsCost: rawAttractions || 350000,
+        subtotal,
+        voucherCode: 'COMBO12',
+        voucherDiscount,
+        finalTotal
+      }
+    };
+  }, [customDays, destinationInput]);
+
   // Google Calendar Sync Link Generator
   const generateGoogleCalendarUrl = () => {
     const title = encodeURIComponent(`Du lịch ${destinationInput} cùng TravelEasy (${durationOption})`);
@@ -2216,29 +2468,75 @@ export const SchedulePage: React.FC = () => {
             
             {/* CỘT TRÁI (65%): TIMELINE & CẨM NANG CHI TIẾT */}
             <div>
-              {/* Day Tab Switcher */}
+              {/* Day Tab Switcher & Interactive Day Manager */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   {customDays.map((d, idx) => (
+                    <div key={d.dayNumber} style={{ position: 'relative', display: 'inline-flex' }}>
+                      <button
+                        type="button"
+                        onClick={() => setActiveDayIndex(idx)}
+                        style={{
+                          padding: '10px 18px',
+                          borderRadius: '10px',
+                          border: activeDayIndex === idx ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                          backgroundColor: activeDayIndex === idx ? '#eff6ff' : '#fff',
+                          color: activeDayIndex === idx ? '#1d4ed8' : '#475569',
+                          fontSize: '14px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Ngày {d.dayNumber}
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Add Day Button */}
+                  <button
+                    type="button"
+                    onClick={handleAddDay}
+                    title="Thêm 1 ngày mới vào lịch trình"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '9px 14px',
+                      borderRadius: '10px',
+                      border: '1.5px dashed #3b82f6',
+                      backgroundColor: '#f0fdf4',
+                      color: '#15803d',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Plus size={15} /> Thêm Ngày
+                  </button>
+
+                  {customDays.length > 1 && (
                     <button
-                      key={d.dayNumber}
                       type="button"
-                      onClick={() => setActiveDayIndex(idx)}
+                      onClick={() => handleDeleteDay(activeDayIndex)}
+                      title={`Xóa Ngày ${activeDayIndex + 1}`}
                       style={{
-                        padding: '10px 20px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '9px 12px',
                         borderRadius: '10px',
-                        border: activeDayIndex === idx ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                        backgroundColor: activeDayIndex === idx ? '#eff6ff' : '#fff',
-                        color: activeDayIndex === idx ? '#1d4ed8' : '#475569',
-                        fontSize: '14px',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease'
+                        border: '1px solid #fecaca',
+                        backgroundColor: '#fff',
+                        color: '#ef4444',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer'
                       }}
                     >
-                      Ngày {d.dayNumber}
+                      <Trash2 size={13} /> Xóa Ngày Này
                     </button>
-                  ))}
+                  )}
                 </div>
 
                 <button
@@ -2260,9 +2558,65 @@ export const SchedulePage: React.FC = () => {
                     boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
                   }}
                 >
-                  <Plus size={16} /> Thêm Địa Điểm Vào Ngày Này
+                  <Plus size={16} /> Thêm Địa Điểm Tùy Chỉnh
                 </button>
               </div>
+
+              {/* Quick Add Suggestion Chips */}
+              {quickSuggestions.length > 0 && (
+                <div style={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  marginBottom: '16px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                    <Sparkles size={15} style={{ color: '#2563eb' }} />
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#334155', textTransform: 'uppercase' }}>
+                      Gợi Ý Nhanh Điểm Nổi Bật Tại {destinationInput} (Bấm 1-chạm để thêm vào Ngày {activeDayIndex + 1}):
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {quickSuggestions.map((item) => (
+                      <button
+                        key={item.title}
+                        type="button"
+                        onClick={() => handleQuickAddStop(item)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          backgroundColor: '#fff',
+                          border: '1px solid #cbd5e1',
+                          padding: '5px 11px',
+                          borderRadius: '20px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          color: '#1e293b',
+                          cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                          transition: 'all 0.15s'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = '#2563eb';
+                          e.currentTarget.style.backgroundColor = '#eff6ff';
+                          e.currentTarget.style.color = '#2563eb';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = '#cbd5e1';
+                          e.currentTarget.style.backgroundColor = '#fff';
+                          e.currentTarget.style.color = '#1e293b';
+                        }}
+                      >
+                        <Plus size={12} style={{ color: '#10b981' }} />
+                        <span>{item.title.split(':')[0].trim()}</span>
+                        <span style={{ fontSize: '10.5px', color: '#64748b' }}>({item.defaultTime})</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Day Title Banner */}
               <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '14px 20px', border: '1px solid #e2e8f0', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -2342,15 +2696,61 @@ export const SchedulePage: React.FC = () => {
                               </span>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteStop(stop.id)}
-                              className="no-print"
-                              title="Xóa địa điểm này"
-                              style={{ backgroundColor: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '2px' }}
-                            >
-                              <Trash2 size={15} />
-                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }} className="no-print">
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={() => handleMoveStop(idx, 'UP')}
+                                title="Đổi thứ tự lên trước"
+                                style={{
+                                  backgroundColor: '#f1f5f9',
+                                  border: 'none',
+                                  color: idx === 0 ? '#cbd5e1' : '#475569',
+                                  borderRadius: '6px',
+                                  cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                                  padding: '4px 6px',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}
+                              >
+                                <ChevronUp size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idx === currentDayStops.length - 1}
+                                onClick={() => handleMoveStop(idx, 'DOWN')}
+                                title="Đổi thứ tự xuống sau"
+                                style={{
+                                  backgroundColor: '#f1f5f9',
+                                  border: 'none',
+                                  color: idx === currentDayStops.length - 1 ? '#cbd5e1' : '#475569',
+                                  borderRadius: '6px',
+                                  cursor: idx === currentDayStops.length - 1 ? 'not-allowed' : 'pointer',
+                                  padding: '4px 6px',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}
+                              >
+                                <ChevronDown size={15} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteStop(stop.id)}
+                                title="Xóa địa điểm này"
+                                style={{
+                                  backgroundColor: '#fef2f2',
+                                  border: '1px solid #fee2e2',
+                                  color: '#ef4444',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  padding: '4px 7px',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           </div>
 
                           <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px 0', lineHeight: 1.35 }}>
@@ -2807,147 +3207,269 @@ export const SchedulePage: React.FC = () => {
                 )}
               </div>
 
-              {/* 2. 🚌 GỢI Ý CHUYẾN XE KHÁCH PHÙ HỢP NHẤT (SMART TRANSPORT BRIDGE) */}
+              {/* 2. 🤖 TRỢ LÝ ĐỀ XUẤT DỊCH VỤ THÔNG MINH THEO LỊCH TRÌNH (SMART CONTEXT ASSISTANT) */}
               <div style={{
                 backgroundColor: '#fff',
-                borderRadius: '14px',
+                borderRadius: '16px',
                 padding: '20px',
-                border: '1.5px solid #bfdbfe',
-                boxShadow: '0 4px 16px rgba(37, 99, 235, 0.08)',
-                position: 'relative'
+                border: '1.5px solid #93c5fd',
+                boxShadow: '0 6px 20px rgba(37, 99, 235, 0.1)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
               }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', backgroundColor: '#dbeafe', color: '#1d4ed8', fontSize: '11px', fontWeight: 800, padding: '3px 10px', borderRadius: '12px', marginBottom: '10px' }}>
-                  <Sparkles size={12} /> CẦU NỐI DI CHUYỂN THÔNG MINH
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: '#eff6ff', color: '#1d4ed8', fontSize: '12px', fontWeight: 800, padding: '4px 10px', borderRadius: '12px' }}>
+                    <Sparkles size={14} /> TRỢ LÝ DỊCH VỤ THÔNG MINH
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Tự động đồng bộ theo lịch</span>
                 </div>
 
-                <h3 style={{ fontSize: '15.5px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
-                  Chuyến Xe Tối Ưu Cho Lịch Trình Này
-                </h3>
-
-                <p style={{ fontSize: '12.5px', color: '#334155', lineHeight: 1.5, backgroundColor: '#f8fafc', padding: '10px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', margin: '0 0 14px 0' }}>
-                  {activeTemplate.recommendedDepartureReason}
-                </p>
-
-                {/* Ticket Recommendation Card */}
-                {recommendedTrip ? (
-                  <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '12px 14px', marginBottom: '14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 800, color: '#14532d' }}>{recommendedTrip.busCompanyName}</span>
-                      <span style={{ fontSize: '14px', fontWeight: 900, color: '#15803d' }}>{recommendedTrip.price.toLocaleString('vi-VN')} đ</span>
-                    </div>
-
-                    <div style={{ fontSize: '12px', color: '#166534', marginBottom: '4px' }}>
-                      ⏰ Giờ chạy: <strong>{recommendedTrip.departureTimeFormatted || '22:30'}</strong> ➔ Đến nơi: <strong>{recommendedTrip.arrivalTimeFormatted || '05:00'}</strong>
-                    </div>
-
-                    <div style={{ fontSize: '11.5px', color: '#15803d' }}>
-                      💺 {recommendedTrip.busTypeName || 'Limousine 34 Phòng VIP'} • Còn <strong>{recommendedTrip.availableSeats} chỗ</strong>
-                    </div>
+                {/* THẺ 1: VÉ XE CHIỀU ĐI */}
+                <div style={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '12px',
+                  padding: '14px',
+                  position: 'relative'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#2563eb', backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>
+                      🚌 1. VÉ XE CHIỀU ĐI (Khớp với Ngày 1)
+                    </span>
+                    <span style={{ fontSize: '13.5px', fontWeight: 900, color: '#059669' }}>
+                      {smartRecommendations.outboundBus.price.toLocaleString('vi-VN')} đ
+                    </span>
                   </div>
-                ) : (
-                  <div style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic', marginBottom: '14px' }}>
-                    Đang tìm kiếm chuyến xe đêm phù hợp nhất trong hệ thống...
+
+                  <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
+                    {smartRecommendations.outboundBus.title}
+                  </div>
+
+                  <div style={{ fontSize: '11.5px', color: '#334155', backgroundColor: '#fff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '10px', lineHeight: 1.45 }}>
+                    💡 {smartRecommendations.outboundBus.reason}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748b', marginBottom: '10px' }}>
+                    <span>Hãng: <strong style={{ color: '#0f172a' }}>{smartRecommendations.outboundBus.company}</strong></span>
+                    <span>Xuất bến: <strong style={{ color: '#2563eb' }}>{smartRecommendations.outboundBus.time}</strong></span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const depDateStr = (recommendedTrip?.departureTime && !recommendedTrip.departureTime.startsWith('2026-10-21'))
+                        ? recommendedTrip.departureTime.split('T')[0]
+                        : '2026-11-20';
+                      navigate(`/search?origin=${encodeURIComponent(originInput)}&destination=${encodeURIComponent(destinationInput)}&date=${depDateStr}`);
+                    }}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#2563eb',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '9px',
+                      borderRadius: '8px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Ticket size={14} /> Đặt Vé Chiều Đi Này
+                  </button>
+                </div>
+
+                {/* THẺ 2: VÉ XE CHIỀU VỀ */}
+                <div style={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '12px',
+                  padding: '14px',
+                  position: 'relative'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#7c3aed', backgroundColor: '#ede9fe', padding: '2px 8px', borderRadius: '4px' }}>
+                      🚌 2. VÉ XE CHIỀU VỀ (Khớp Ngày {customDays.length})
+                    </span>
+                    <span style={{ fontSize: '13.5px', fontWeight: 900, color: '#059669' }}>
+                      {smartRecommendations.returnBus.price.toLocaleString('vi-VN')} đ
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
+                    {smartRecommendations.returnBus.title}
+                  </div>
+
+                  <div style={{ fontSize: '11.5px', color: '#334155', backgroundColor: '#fff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '10px', lineHeight: 1.45 }}>
+                    💡 {smartRecommendations.returnBus.reason}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748b', marginBottom: '10px' }}>
+                    <span>Hãng: <strong style={{ color: '#0f172a' }}>{smartRecommendations.returnBus.company}</strong></span>
+                    <span>Xuất bến: <strong style={{ color: '#7c3aed' }}>{smartRecommendations.returnBus.time}</strong></span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate(`/search?origin=${encodeURIComponent(destinationInput)}&destination=${encodeURIComponent(originInput)}&date=2026-11-22`);
+                    }}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#7c3aed',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '9px',
+                      borderRadius: '8px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <ArrowLeftRight size={14} /> Ghép Vé Chiều Về (Khứ Hồi)
+                  </button>
+                </div>
+
+                {/* THẺ 3: PHƯƠNG TIỆN NỘI THÀNH */}
+                <div style={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '12px',
+                  padding: '14px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#b45309', backgroundColor: '#fef3c7', padding: '2px 8px', borderRadius: '4px' }}>
+                      🛵 3. DI CHUYỂN NỘI THÀNH
+                    </span>
+                    <span style={{ fontSize: '13.5px', fontWeight: 900, color: '#059669' }}>
+                      {smartRecommendations.mobility.totalCost.toLocaleString('vi-VN')} đ
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
+                    {smartRecommendations.mobility.title}
+                  </div>
+
+                  <p style={{ fontSize: '11.5px', color: '#475569', margin: '0 0 10px 0', lineHeight: 1.4 }}>
+                    {smartRecommendations.mobility.desc}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      alert(`Đã thêm dịch vụ: ${smartRecommendations.mobility.title}! Đối tác vận tải TravelEasy sẽ liên hệ giao xe tận khách sạn trước giờ nhận phòng.`);
+                    }}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#d97706',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '9px',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Navigation size={13} /> {smartRecommendations.mobility.cta}
+                  </button>
+                </div>
+
+                {/* THẺ 4: GIẢI CỨU HÀNH LÝ KHI CHECK-OUT MUỘN */}
+                {smartRecommendations.hasLateCheckoutGap && (
+                  <div style={{
+                    backgroundColor: '#fffbeb',
+                    border: '1px solid #fde68a',
+                    borderRadius: '12px',
+                    padding: '12px 14px'
+                  }}>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#92400e', marginBottom: '4px' }}>
+                      🧳 Tiện Ích Rảnh Tay: Giữ Hành Lý Check-out
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#78350f', lineHeight: 1.45 }}>
+                      Khách sạn thường trả phòng lúc 12:00 trưa nhưng xe về lúc {smartRecommendations.returnBus.time}: Bạn có thể đặt <strong>Gửi hành lý tại bến xe TravelEasy (30k)</strong> để thoải mái dạo phố rảnh tay, hoặc gửi đồ về nhà trước qua <strong>Dịch vụ Ký gửi Cargo</strong>!
+                    </div>
                   </div>
                 )}
 
-                {/* Big Booking CTA Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const depDateStr = (recommendedTrip?.departureTime && !recommendedTrip.departureTime.startsWith('2026-10-21'))
-                      ? recommendedTrip.departureTime.split('T')[0]
-                      : new Date().toISOString().split('T')[0];
-                    navigate(`/search?origin=${encodeURIComponent(originInput)}&destination=${encodeURIComponent(destinationInput)}&date=${depDateStr}`);
-                  }}
-                  style={{
-                    width: '100%',
-                    backgroundColor: '#2563eb',
-                    color: '#fff',
-                    border: 'none',
-                    padding: '12px',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <Ticket size={16} /> Xem Chuyến & Đặt Vé Tuyến Này <ArrowRight size={16} />
-                </button>
-              </div>
-
-              {/* 3. 💰 DỰ TOÁN NGÂN SÁCH CHUYẾN ĐI (TRIP BUDGET ESTIMATOR) */}
-              <div style={{ backgroundColor: '#fff', borderRadius: '14px', padding: '20px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>
-                    <DollarSign size={17} style={{ color: '#059669' }} /> Dự Toán Ngân Sách ({durationOption})
-                  </div>
-                  <span style={{ fontSize: '11px', color: '#64748b' }}>/ 1 người</span>
-                </div>
-
-                {/* Budget Tier Selector */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', marginBottom: '14px' }}>
-                  {[
-                    { key: 'BUDGET', label: 'Tiết kiệm' },
-                    { key: 'STANDARD', label: 'Tiêu chuẩn' },
-                    { key: 'VIP', label: 'Nghỉ dưỡng' }
-                  ].map(tier => (
-                    <button
-                      key={tier.key}
-                      type="button"
-                      onClick={() => setBudgetTier(tier.key as BudgetTier)}
-                      style={{
-                        padding: '6px 4px',
-                        borderRadius: '6px',
-                        border: budgetTier === tier.key ? '1.5px solid #2563eb' : '1px solid #e2e8f0',
-                        backgroundColor: budgetTier === tier.key ? '#eff6ff' : '#f8fafc',
-                        color: budgetTier === tier.key ? '#2563eb' : '#64748b',
-                        fontSize: '11.5px',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {tier.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Cost Breakdown */}
-                {(() => {
-                  const b = budgetTier === 'BUDGET' ? activeTemplate.budget.budget : budgetTier === 'VIP' ? activeTemplate.budget.vip : activeTemplate.budget.standard;
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
-                        <span>🎟️ Vé xe khách (Khứ hồi 2 chiều)</span>
-                        <strong>{b.bus.toLocaleString('vi-VN')} đ</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
-                        <span>🏨 Khách sạn / Homestay</span>
-                        <strong>{b.stay.toLocaleString('vi-VN')} đ</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
-                        <span>🛵 Thuê xe máy & xăng xe</span>
-                        <strong>{b.bike.toLocaleString('vi-VN')} đ</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
-                        <span>🍜 Ăn uống & vé tham quan</span>
-                        <strong>{b.food.toLocaleString('vi-VN')} đ</strong>
-                      </div>
-
-                      <div style={{ borderTop: '1.5px dashed #cbd5e1', paddingTop: '10px', marginTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>TỔNG KINH PHÍ:</span>
-                        <span style={{ fontSize: '18px', fontWeight: 900, color: '#059669' }}>
-                          ~{b.total.toLocaleString('vi-VN')} đ
-                        </span>
-                      </div>
+                {/* THẺ 5: DỰ TOÁN TỔNG CHI PHÍ & VOUCHER COMBO */}
+                <div style={{
+                  backgroundColor: '#f0fdf4',
+                  border: '1.5px solid #86efac',
+                  borderRadius: '12px',
+                  padding: '16px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#166534' }}>
+                      💰 TỔNG DỰ TOÁN COMBO LỊCH TRÌNH
                     </div>
-                  );
-                })()}
+                    <span style={{ fontSize: '10.5px', backgroundColor: '#dcfce7', color: '#15803d', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+                      Tiết kiệm 12%
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: '#334155', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>🎟️ Vé xe khách khứ hồi (2 chiều):</span>
+                      <strong>{smartRecommendations.pricing.busTotal.toLocaleString('vi-VN')} đ</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>🛵 Phương tiện nội thành ({customDays.length} ngày):</span>
+                      <strong>{smartRecommendations.pricing.mobilityTotal.toLocaleString('vi-VN')} đ</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>🍜 Điểm ăn uống & tham quan:</span>
+                      <strong>~{smartRecommendations.pricing.attractionsCost.toLocaleString('vi-VN')} đ</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#dc2626' }}>
+                      <span>🎁 Voucher COMBO12 (-12%):</span>
+                      <strong>-{smartRecommendations.pricing.voucherDiscount.toLocaleString('vi-VN')} đ</strong>
+                    </div>
+                    <div style={{ borderTop: '1px dashed #86efac', paddingTop: '8px', marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#14532d' }}>TỔNG THANH TOÁN DỰ TÍNH:</span>
+                      <span style={{ fontSize: '17px', fontWeight: 900, color: '#15803d' }}>
+                        {smartRecommendations.pricing.finalTotal.toLocaleString('vi-VN')} đ
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate(`/search?origin=${encodeURIComponent(originInput)}&destination=${encodeURIComponent(destinationInput)}&date=2026-11-20`);
+                    }}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#16a34a',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '12px',
+                      borderRadius: '10px',
+                      fontSize: '13.5px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)'
+                    }}
+                  >
+                    <Sparkles size={16} /> Đặt Trọn Gói Combo Lịch Trình Này <ArrowRight size={16} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
