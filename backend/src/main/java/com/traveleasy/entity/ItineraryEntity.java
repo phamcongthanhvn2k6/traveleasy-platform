@@ -71,3 +71,4 @@ public class ItineraryEntity {
     @Builder.Default
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 }
+

@@ -11,3 +11,4 @@ public interface ItineraryRepository extends JpaRepository<ItineraryEntity, Stri
     List<ItineraryEntity> findByCityIgnoreCaseAndIsActiveTrue(String city);
     List<ItineraryEntity> findByIsActiveTrue();
 }
+

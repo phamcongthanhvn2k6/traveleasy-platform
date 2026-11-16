@@ -30,3 +30,4 @@ for c in in_progress:
             print(f"  Checklist: {chk['name']}")
             for item in chk.get('checkItems', []):
                 print(f"    [{'X' if item['state'] == 'complete' else ' '}] {item['name']} (ID: {item['id']})")
+

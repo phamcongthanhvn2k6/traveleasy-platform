@@ -16,3 +16,4 @@ public class DailyRevenueDto {
     private BigDecimal revenue;
     private long bookings;
 }
+
