@@ -15,11 +15,19 @@ import java.util.Optional;
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
     Optional<Ticket> findByTicketCode(String ticketCode);
+    Optional<Ticket> findByQrCodeHash(String qrCodeHash);
+
+    @Query("SELECT t FROM Ticket t WHERE UPPER(t.ticketCode) = UPPER(:code) OR (t.qrCodeHash IS NOT NULL AND t.qrCodeHash = :code)")
+    Optional<Ticket> findByCodeOrQrHash(@Param("code") String code);
 
     // ponytail: pessimistic write lock for atomic check-in prevention
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT t FROM Ticket t WHERE t.ticketCode = :ticketCode")
     Optional<Ticket> findByTicketCodeForUpdate(@Param("ticketCode") String ticketCode);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT t FROM Ticket t WHERE UPPER(t.ticketCode) = UPPER(:code) OR (t.qrCodeHash IS NOT NULL AND t.qrCodeHash = :code)")
+    Optional<Ticket> findByCodeOrQrHashForUpdate(@Param("code") String code);
 
     List<Ticket> findByBookingId(Long bookingId);
     List<Ticket> findByBookingIdIn(Collection<Long> bookingIds);
