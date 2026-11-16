@@ -46,6 +46,20 @@ public class SecurityConfig {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers
+                        .contentTypeOptions(Customizer.withDefaults())
+                        .frameOptions(frame -> frame.deny())
+                        .xssProtection(Customizer.withDefaults())
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'self'; " +
+                                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com; " +
+                                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; " +
+                                "font-src 'self' https://fonts.gstatic.com data:; " +
+                                "img-src 'self' data: https: blob:; " +
+                                "connect-src 'self' http: https: ws: wss:; " +
+                                "frame-ancestors 'none';"
+                        ))
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
@@ -93,11 +107,26 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        // Cấu hình danh sách tên miền CORS nghiêm ngặt cho môi trường Local Dev & Production
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+                "http://localhost:8080",
+                "https://traveleasy.vn",
+                "https://www.traveleasy.vn"
+        ));
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "https://*.traveleasy.vn",
+                "http://localhost:[*]",
+                "http://127.0.0.1:[*]"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "X-Correlation-Id"));
         configuration.setExposedHeaders(Arrays.asList("X-Correlation-Id"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

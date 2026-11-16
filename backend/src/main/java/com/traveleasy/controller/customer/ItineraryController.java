@@ -32,7 +32,7 @@ public class ItineraryController {
     public ApiResponse<ItineraryEntity> getItineraryById(@PathVariable String id) {
         return itineraryRepository.findById(id)
                 .map(ApiResponse::success)
-                .orElseGet(() -> ApiResponse.error(404, "Không tìm thấy lịch trình"));
+                .orElseGet(() -> ApiResponse.error("Không tìm thấy lịch trình"));
     }
 
     @PostMapping
@@ -67,7 +67,7 @@ public class ItineraryController {
             itineraryRepository.deleteById(id);
             return ApiResponse.success("Đã xóa kịch bản lịch trình", null);
         }
-        return ApiResponse.error(404, "Không tìm thấy kịch bản lịch trình");
+        return ApiResponse.error("Không tìm thấy kịch bản lịch trình");
     }
 
     @PatchMapping("/{id}/status")
@@ -79,6 +79,6 @@ public class ItineraryController {
                     entity.setUpdatedAt(OffsetDateTime.now());
                     return ApiResponse.success("Đã cập nhật trạng thái", itineraryRepository.save(entity));
                 })
-                .orElseGet(() -> ApiResponse.error(404, "Không tìm thấy kịch bản"));
+                .orElseGet(() -> ApiResponse.error("Không tìm thấy kịch bản"));
     }
 }

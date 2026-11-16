@@ -36,6 +36,7 @@ public class AuthController {
     private final FirebaseAuthService firebaseAuthService;
     private final FirebaseAuthRateLimitService firebaseAuthRateLimitService;
     private final PasswordResetService passwordResetService;
+    private final com.traveleasy.security.LoginAttemptService loginAttemptService;
 
     @PostMapping("/register")
     @Operation(summary = "Đăng ký tài khoản hành khách mới")
@@ -45,8 +46,25 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Đăng nhập bằng Email hoặc Số điện thoại")
-    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ApiResponse.success("Đăng nhập thành công", authService.login(request));
+    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest) {
+        String clientIp = servletRequest.getHeader("X-Forwarded-For");
+        if (clientIp == null || clientIp.isBlank() || "unknown".equalsIgnoreCase(clientIp)) {
+            clientIp = servletRequest.getRemoteAddr();
+        } else {
+            clientIp = clientIp.split(",")[0].trim();
+        }
+        String identifier = request.getIdentifier() != null ? request.getIdentifier().trim().toLowerCase() : "unknown";
+        String rateLimitKey = clientIp + ":" + identifier;
+
+        loginAttemptService.checkBlocked(rateLimitKey);
+        try {
+            AuthResponse response = authService.login(request);
+            loginAttemptService.loginSucceeded(rateLimitKey);
+            return ApiResponse.success("Đăng nhập thành công", response);
+        } catch (Exception ex) {
+            loginAttemptService.loginFailed(rateLimitKey);
+            throw ex;
+        }
     }
 
     @GetMapping("/me")
