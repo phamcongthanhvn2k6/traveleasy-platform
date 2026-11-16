@@ -310,15 +310,11 @@ public class DataInitializer implements CommandLineRunner {
         );
         bannerRepository.saveAll(banners);
 
-        // 11. Seed Gateway Configs
+        // 11. Seed Gateway Configs (Chỉ 2 cổng thanh toán trực tuyến chính thức PayOS & VNPAY + 1 phương thức Tiền mặt COD)
         List<GatewayConfig> gateways = List.of(
-                GatewayConfig.builder().provider("VNPAY").displayName("Cổng thanh toán VNPay (ATM / QR / Visa)").category("PAYMENT").status("ACTIVE").isSandbox(true).build(),
-                GatewayConfig.builder().provider("MOMO").displayName("Ví điện tử MoMo").category("PAYMENT").status("ACTIVE").isSandbox(true).build(),
-                GatewayConfig.builder().provider("ZALOPAY").displayName("Ví điện tử ZaloPay").category("PAYMENT").status("ACTIVE").isSandbox(true).build(),
-                GatewayConfig.builder().provider("VIETQR").displayName("Chuyển khoản ngân hàng tự động VietQR").category("PAYMENT").status("ACTIVE").isSandbox(false).build(),
-                GatewayConfig.builder().provider("TELEGRAM").displayName("Bot thông báo tức thì Telegram").category("NOTIFICATION").status("ACTIVE").isSandbox(false).build(),
-                GatewayConfig.builder().provider("TWILIO").displayName("Cổng gửi SMS OTP Twilio").category("NOTIFICATION").status("ACTIVE").isSandbox(true).build(),
-                GatewayConfig.builder().provider("SENDGRID").displayName("Cổng gửi Email vé điện tử SendGrid").category("NOTIFICATION").status("ACTIVE").isSandbox(false).build()
+                GatewayConfig.builder().provider("PAYOS").displayName("Cổng Thanh Toán PayOS (VietQR Napas 24/7)").category("VIETQR").status("ACTIVE").isSandbox(true).build(),
+                GatewayConfig.builder().provider("VNPAY").displayName("Cổng Thanh Toán Quốc Gia VNPAY-QR").category("GATEWAY").status("ACTIVE").isSandbox(true).build(),
+                GatewayConfig.builder().provider("COD").displayName("Thanh toán Tiền mặt tại quầy / khi lên xe").category("OFFLINE").status("ACTIVE").isSandbox(false).build()
         );
         gatewayConfigRepository.saveAll(gateways);
 
