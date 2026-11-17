@@ -40,7 +40,18 @@ export const TripCard: React.FC<Props> = ({ trip, onBook }) => {
     setExpanded(!expanded);
   };
 
+  const now = Date.now();
+  const depTime = trip.departureTime ? new Date(trip.departureTime).getTime() : 0;
+  const minutesUntilDep = Math.floor((depTime - now) / 60000);
+  const isCutoff = depTime > 0 && minutesUntilDep < 15 && minutesUntilDep >= 0;
+  const isDeparted = depTime > 0 && minutesUntilDep < 0;
+  const isTripClosed = trip.status === 'CLOSED' || trip.status === 'COMPLETED' || trip.status === 'DEPARTED' || trip.status === 'CANCELLED';
+  const isBookingClosed = isCutoff || isDeparted || isTripClosed;
+
   const handleToggleSeat = (seatNumber: string) => {
+    if (isBookingClosed) {
+      return;
+    }
     if (selectedSeats.includes(seatNumber)) {
       setSelectedSeats(selectedSeats.filter(s => s !== seatNumber));
     } else {
@@ -180,8 +191,10 @@ export const TripCard: React.FC<Props> = ({ trip, onBook }) => {
               {/* Sơ đồ ghế */}
               <BusSeatMap 
                 seats={tripDetail.seats} 
-                selectedSeatNumbers={selectedSeats} 
+                selectedSeatNumbers={isBookingClosed ? [] : selectedSeats} 
                 onToggleSeat={handleToggleSeat} 
+                disabled={isBookingClosed}
+                disabledMessage={isCutoff ? `Chuyến xe khởi hành trong vòng ${minutesUntilDep} phút nữa (< 15p). Kênh trực tuyến đã đóng bán vé, khóa chọn ghế.` : 'Chuyến xe đã đóng bán vé trực tuyến.'}
               />
 
               {/* Thanh thanh toán nhanh */}

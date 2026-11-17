@@ -573,33 +573,35 @@ export const AdminPromotionsPage: React.FC = () => {
 
                       {/* Actions */}
                       <td className="p-4 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
+                        <div className="flex items-center justify-center gap-2">
                           {/* Cấp thêm lượt */}
                           <button
                             onClick={() => handleOpenQuotaModal(promo)}
-                            className="px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 rounded-lg text-xs font-bold transition flex items-center gap-1"
+                            className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800/40 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm"
                             title="Cấp thêm lượt dùng cho voucher"
                           >
                             <PlusCircle className="w-3.5 h-3.5" />
-                            +Lượt
+                            <span>+Lượt</span>
                           </button>
 
                           {/* Chỉnh sửa */}
                           <button
                             onClick={() => handleOpenEdit(promo)}
-                            className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition"
+                            className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800/40 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm"
                             title="Chỉnh sửa voucher"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>Sửa</span>
                           </button>
 
                           {/* Xóa */}
                           <button
                             onClick={() => handleDeletePromo(promo)}
-                            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 rounded-lg transition"
+                            className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800/40 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm"
                             title="Xóa voucher"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Xóa</span>
                           </button>
                         </div>
                       </td>
