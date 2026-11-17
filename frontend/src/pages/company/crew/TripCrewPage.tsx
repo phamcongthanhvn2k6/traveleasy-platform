@@ -4,7 +4,7 @@
  * @author Đoàn Nhật Cường (CuongLiam)
  * @role Frontline Operations & Driver Management
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users,
   UserCheck,
@@ -23,11 +23,29 @@ import {
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import { TripCrewService, TripCrewResponse, AssignCrewRequest } from './TripCrewService';
+import { Pagination } from '../../../components/Pagination';
+import { getStoredCompany } from '../../../utils/companyHelper';
+import { TableSkeleton } from '../../../components/common/Skeleton';
 
 export const TripCrewPage: React.FC = () => {
-  const [assignments, setAssignments] = useState<TripCrewResponse[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const currentCompany = getStoredCompany();
+  const [assignments, setAssignments] = useState<TripCrewResponse[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_crew_cache_${currentCompany.id}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    try {
+      return !sessionStorage.getItem(`company_crew_cache_${currentCompany.id}`);
+    } catch (e) {
+      return true;
+    }
+  });
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(20);
 
   // Modal phân công
   const [selectedCrew, setSelectedCrew] = useState<TripCrewResponse | null>(null);
@@ -51,10 +69,13 @@ export const TripCrewPage: React.FC = () => {
   });
 
   const fetchAssignments = async () => {
+    if (assignments.length === 0) setLoading(true);
     try {
-      setLoading(true);
-      const data = await TripCrewService.getCrewAssignments();
+      const data = await TripCrewService.getCrewAssignments(currentCompany.id);
       setAssignments(data);
+      try {
+        sessionStorage.setItem(`company_crew_cache_${currentCompany.id}`, JSON.stringify(data));
+      } catch (e) {}
     } catch (err: any) {
       console.error(err);
       toast.error('Không thể tải danh sách phân công tổ lái từ hệ thống.');
@@ -65,7 +86,7 @@ export const TripCrewPage: React.FC = () => {
 
   useEffect(() => {
     fetchAssignments();
-  }, []);
+  }, [currentCompany.id]);
 
   const handleOpenAssignModal = (crew: TripCrewResponse) => {
     setSelectedCrew(crew);
@@ -119,15 +140,28 @@ export const TripCrewPage: React.FC = () => {
     }
   };
 
-  const filteredAssignments = assignments.filter((a) => {
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const filteredAssignments = useMemo(() => {
     const q = searchTerm.toLowerCase();
-    return (
-      a.route.toLowerCase().includes(q) ||
-      a.tripCode.toLowerCase().includes(q) ||
-      (a.licensePlate && a.licensePlate.toLowerCase().includes(q)) ||
-      (a.primaryDriverName && a.primaryDriverName.toLowerCase().includes(q))
-    );
-  });
+    return assignments.filter((a) => {
+      return (
+        a.route.toLowerCase().includes(q) ||
+        a.tripCode.toLowerCase().includes(q) ||
+        (a.licensePlate && a.licensePlate.toLowerCase().includes(q)) ||
+        (a.primaryDriverName && a.primaryDriverName.toLowerCase().includes(q))
+      );
+    });
+  }, [assignments, searchTerm]);
+
+  const totalPages = Math.ceil(filteredAssignments.length / pageSize) || 1;
+
+  const paginatedAssignments = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredAssignments.slice(startIndex, startIndex + pageSize);
+  }, [filteredAssignments, currentPage, pageSize]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -142,8 +176,8 @@ export const TripCrewPage: React.FC = () => {
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Phân Công Tổ Lái & Kiểm Tra Điều Kiện Xuất Bến
               </h1>
-              <span className="px-2.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 rounded-full">
-                Task S319 - CuongLiam
+              <span className="px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-full">
+                Tiêu Chuẩn An Toàn GTVT
               </span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -212,23 +246,19 @@ export const TripCrewPage: React.FC = () => {
                 <th className="py-3 px-4 text-right">Lệnh Xuất Bến / Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-10 text-slate-400">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-600" />
-                    Đang tải dữ liệu phân công tổ lái...
-                  </td>
-                </tr>
-              ) : filteredAssignments.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-10 text-slate-400">
-                    Không tìm thấy chuyến xe nào.
-                  </td>
-                </tr>
-              ) : (
-                filteredAssignments.map((c) => (
-                  <tr key={c.tripId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+            {loading && assignments.length === 0 ? (
+              <TableSkeleton rows={8} columns={6} />
+            ) : (
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                {filteredAssignments.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10 text-slate-400">
+                      Không tìm thấy chuyến xe nào.
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedAssignments.map((c) => (
+                    <tr key={c.tripId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
                     <td className="py-3 px-4">
                       <p className="font-bold text-slate-900 dark:text-white">{c.route}</p>
                       <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
@@ -331,8 +361,28 @@ export const TripCrewPage: React.FC = () => {
                 ))
               )}
             </tbody>
-          </table>
+          )}
+        </table>
         </div>
+
+        {/* Phân trang (Pagination) 20 chuyến / trang */}
+        {!loading && filteredAssignments.length > 0 && (
+          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredAssignments.length}
+              pageSize={pageSize}
+              onPageChange={(page) => setCurrentPage(page)}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+              pageSizeOptions={[10, 20, 30, 50]}
+              itemLabel="chuyến xe"
+            />
+          </div>
+        )}
       </div>
 
       {/* Modal Phân Công Tổ Lái & Test Cồn */}

@@ -19,3 +19,4 @@ public class NotificationResponse {
     private boolean isRead;
     private String priority;
 }
+

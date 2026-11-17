@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Clock,
   ShieldCheck,
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
+import { Pagination } from '../../../components/Pagination';
 
 export interface AuditLogItem {
   id: number;
@@ -48,6 +49,14 @@ export const AdminAuditLogsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [actionFilter, setActionFilter] = useState('ALL');
   const [search, setSearch] = useState('');
+
+  // Phân trang (Pagination: mặc định 20 hàng / trang theo yêu cầu)
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(20);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, actionFilter]);
 
   // Trạng thái phòng vệ an ninh & công tắc khẩn cấp
   const [defenseStatus, setDefenseStatus] = useState<SystemDefenseStatus>({
@@ -216,6 +225,13 @@ export const AdminAuditLogsPage: React.FC = () => {
     }
     return true;
   });
+
+  // Phân trang dữ liệu (Pagination: 20 hàng / trang)
+  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / pageSize));
+  const paginatedLogs = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredLogs.slice(start, start + pageSize);
+  }, [filteredLogs, currentPage, pageSize]);
 
   // Đếm theo nhóm
   const securityLogsCount = logs.filter((l) =>
@@ -631,7 +647,7 @@ export const AdminAuditLogsPage: React.FC = () => {
                 </td>
               </tr>
             ) : (
-              filteredLogs.map((log) => {
+              paginatedLogs.map((log) => {
                 const isEmergency = log.action.includes('LOCKDOWN') || log.action.includes('NORMAL');
                 return (
                   <tr
@@ -771,6 +787,25 @@ export const AdminAuditLogsPage: React.FC = () => {
           </tbody>
         </table>
         </div>
+
+        {/* Thanh phân trang Pagination (20 hàng / trang theo tổng số trang) */}
+        {!loading && filteredLogs.length > 0 && (
+          <div style={{ borderTop: '1px solid #e2e8f0', padding: '12px 18px', backgroundColor: '#f8fafc' }}>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredLogs.length}
+              pageSize={pageSize}
+              onPageChange={(page) => setCurrentPage(page)}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+              pageSizeOptions={[10, 20, 30, 50, 100]}
+              itemLabel="bản ghi nhật ký"
+            />
+          </div>
+        )}
       </div>
 
       {/* ========================================================================= */}

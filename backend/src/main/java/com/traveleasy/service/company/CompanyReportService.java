@@ -49,21 +49,7 @@ public class CompanyReportService {
         BusCompany company = busCompanyRepository.findById(busCompanyId).orElse(null);
         String companyName = company != null ? company.getName() : ("Nhà Xe #" + busCompanyId);
 
-        // 1. LẤY TOÀN BỘ CHUYẾN XE VÀ ĐẶT VÉ THỰC TẾ CỦA HÃNG TỪ DATABASE
-        List<Trip> allTrips = tripRepository.findByBusCompanyIdWithDetails(busCompanyId);
-        List<Booking> allCompanyBookings = bookingRepository.findByBusCompanyIdWithTripDetails(busCompanyId);
-
-        // Lọc các booking hợp lệ (đã thanh toán hoặc hoàn thành)
-        List<Booking> validBookings = allCompanyBookings.stream()
-                .filter(b -> b.getStatus() == BookingStatus.CONFIRMED || b.getStatus() == BookingStatus.COMPLETED)
-                .collect(Collectors.toList());
-
-        // Gom nhóm booking theo tripId để đối soát doanh thu thực tế từng chuyến
-        Map<Long, List<Booking>> bookingsByTrip = validBookings.stream()
-                .filter(b -> b.getTrip() != null)
-                .collect(Collectors.groupingBy(b -> b.getTrip().getId()));
-
-        // 2. XÁC ĐỊNH KHOẢNG THỜI GIAN LỌC
+        // 2. XÁC ĐỊNH KHOẢNG THỜI GIAN LỌC trước — dùng để query DB hiệu quả
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime filterStart;
         LocalDateTime filterEnd = now.plusDays(60);
@@ -84,6 +70,16 @@ public class CompanyReportService {
                 filterStart = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
                 break;
         }
+
+        // 1. [P3 PERF] LẤY BOOKING HỢP LỆ THEO PERIOD TỪ DB — không load toàn bộ
+        // Chỉ lấy CONFIRMED + COMPLETED từ filterStart, giảm data transfer đáng kể
+        List<Trip> allTrips = tripRepository.findByBusCompanyIdWithDetails(busCompanyId);
+        List<Booking> validBookings = bookingRepository.findValidBookingsByBusCompanyAndPeriod(busCompanyId, filterStart);
+
+        // Gom nhóm booking theo tripId để đối soát doanh thu thực tế từng chuyến
+        Map<Long, List<Booking>> bookingsByTrip = validBookings.stream()
+                .filter(b -> b.getTrip() != null)
+                .collect(Collectors.groupingBy(b -> b.getTrip().getId()));
 
         // Lọc các chuyến trong kỳ
         List<Trip> targetTrips = allTrips.stream()

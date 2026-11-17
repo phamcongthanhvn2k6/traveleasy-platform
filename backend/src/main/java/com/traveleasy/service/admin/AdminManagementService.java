@@ -1223,6 +1223,7 @@ public class AdminManagementService {
     // 13. DASHBOARD METRICS & REVENUE TREND
     // ==========================================
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "admin_dashboard_stats")
     public DashboardStatsResponse getDashboardStats() {
         long totalTrips = tripRepository.count();
         long scheduledTrips = tripRepository.countByStatus(com.traveleasy.entity.TripStatus.SCHEDULED);
@@ -1245,6 +1246,7 @@ public class AdminManagementService {
     }
 
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "admin_revenue_trend")
     public List<DailyRevenueDto> getRevenueTrend() {
         java.time.LocalDate today = java.time.LocalDate.now();
         java.time.LocalDateTime sevenDaysAgo = today.minusDays(6).atStartOfDay();

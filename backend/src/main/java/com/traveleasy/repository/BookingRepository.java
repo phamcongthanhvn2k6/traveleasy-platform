@@ -56,6 +56,20 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.trip.busCompany.id = :busCompanyId ORDER BY b.createdAt DESC")
     List<Booking> findByBusCompanyIdOrderByCreatedAtDesc(@Param("busCompanyId") Long busCompanyId);
 
+    /**
+     * [P3 PERF] Lấy booking hợp lệ của nhà xe trong khoảng thời gian từ DB — tránh load toàn bộ.
+     * Chỉ lấy CONFIRMED + COMPLETED, từ startDate trở đi, giảm data transfer đáng kể.
+     */
+    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.trip t LEFT JOIN FETCH t.busCompany bc LEFT JOIN FETCH t.route r " +
+           "WHERE t.busCompany.id = :busCompanyId " +
+           "AND b.status IN (com.traveleasy.entity.BookingStatus.CONFIRMED, com.traveleasy.entity.BookingStatus.COMPLETED) " +
+           "AND b.createdAt >= :startDate " +
+           "ORDER BY b.createdAt DESC")
+    List<Booking> findValidBookingsByBusCompanyAndPeriod(
+            @Param("busCompanyId") Long busCompanyId,
+            @Param("startDate") java.time.LocalDateTime startDate
+    );
+
     @Query("SELECT COALESCE(SUM(COALESCE(b.originalAmount, b.totalAmount)), 0) FROM Booking b WHERE b.trip.busCompany.id = :busCompanyId AND b.status = com.traveleasy.entity.BookingStatus.CONFIRMED")
     BigDecimal sumTotalRevenueByBusCompanyId(@Param("busCompanyId") Long busCompanyId);
 
