@@ -51,18 +51,38 @@ export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('traveleasy_user');
-      setUser(saved ? JSON.parse(saved) : null);
-    } catch {
-      setUser(null);
-    }
+    const syncAuth = () => {
+      try {
+        const saved = localStorage.getItem('traveleasy_user');
+        setUser(saved ? JSON.parse(saved) : null);
+      } catch {
+        setUser(null);
+      }
+    };
+
+    syncAuth();
+
+    // S414: Lắng nghe window.addEventListener("storage") để đồng bộ auth state giữa các tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.key || e.key === 'traveleasy_user' || e.key === 'traveleasy_token') {
+        syncAuth();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('traveleasy_auth_change', syncAuth);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('traveleasy_auth_change', syncAuth);
+    };
   }, [location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem('traveleasy_token');
     localStorage.removeItem('traveleasy_user');
     setUser(null);
+    window.dispatchEvent(new Event('traveleasy_auth_change'));
     toast.info('Bạn đã đăng xuất khỏi hệ thống thành công.', 'Đăng Xuất');
     navigate('/');
   };
