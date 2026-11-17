@@ -54,6 +54,19 @@ public class CompanySettlementSchemaInitializer implements CommandLineRunner {
                 "ALTER TABLE settlement_records ADD COLUMN IF NOT EXISTS previous_balance NUMERIC(15, 2) NOT NULL DEFAULT 0"
             );
             jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS notifications (" +
+                "id BIGSERIAL PRIMARY KEY, " +
+                "recipient_email VARCHAR(100), " +
+                "target_role VARCHAR(20) NOT NULL DEFAULT 'ALL', " +
+                "type VARCHAR(50) NOT NULL, " +
+                "title VARCHAR(150) NOT NULL, " +
+                "message TEXT, " +
+                "link VARCHAR(255), " +
+                "is_read BOOLEAN DEFAULT FALSE, " +
+                "priority VARCHAR(20) DEFAULT 'NORMAL', " +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+            );
+            jdbcTemplate.execute(
                 "CREATE TABLE IF NOT EXISTS payout_requests (" +
                 "id BIGSERIAL PRIMARY KEY, " +
                 "request_code VARCHAR(50) NOT NULL UNIQUE, " +
