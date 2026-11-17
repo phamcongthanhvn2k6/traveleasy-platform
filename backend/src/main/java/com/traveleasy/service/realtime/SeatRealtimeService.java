@@ -1,6 +1,7 @@
 package com.traveleasy.service.realtime;
 
 import com.traveleasy.common.exception.AppException;
+import com.traveleasy.common.exception.CustomSeatHoldException;
 import com.traveleasy.common.exception.ErrorCode;
 import com.traveleasy.dto.trip.SeatUpdateEvent;
 import com.traveleasy.entity.SeatStatus;
@@ -176,7 +177,10 @@ public class SeatRealtimeService {
 
         for (TripSeat seat : seats) {
             if (seat.getStatus() == SeatStatus.BOOKED) {
-                throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED, "Ghế " + seat.getSeatCode() + " đã có người mua vé!");
+                throw new CustomSeatHoldException(
+                        seat.getSeatCode(),
+                        "Ghế này vừa được chọn bởi khách hàng khác (Ghế " + seat.getSeatCode() + " đã có người mua vé!)"
+                );
             }
             if (seat.getStatus() == SeatStatus.LOCKED) {
                 String key = getHolderKey(tripId, seat.getSeatCode());
@@ -194,7 +198,10 @@ public class SeatRealtimeService {
                             || (userEmail != null && !userEmail.isBlank() && existingHolder.equalsIgnoreCase(userEmail.trim()))
                             || (sessionId != null && !sessionId.isBlank() && existingHolder.equalsIgnoreCase(sessionId.trim()));
                     if (!isSameHolder) {
-                        throw new AppException(ErrorCode.VALIDATION_ERROR, "Ghế " + seat.getSeatCode() + " đang được một khách hàng khác giữ chỗ thanh toán (thời hạn 10 phút)!");
+                        throw new CustomSeatHoldException(
+                                seat.getSeatCode(),
+                                "Ghế này vừa được chọn bởi khách hàng khác (Ghế " + seat.getSeatCode() + " đang được giữ chỗ thanh toán 10 phút!)"
+                        );
                     }
                 }
             }
