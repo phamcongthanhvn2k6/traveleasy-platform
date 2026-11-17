@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import { paymentService, PaymentInitResponse } from '../../../services/paymentService';
@@ -281,6 +281,15 @@ export const CheckoutPage: React.FC = () => {
     setDiscountAmount(amount);
     setAppliedVoucherCode(code);
   };
+
+  const isFormValid = useMemo(() => {
+    return (
+      passengerInfo.termsAccepted &&
+      Boolean(passengerInfo.fullName.trim()) &&
+      validateVNPhone(passengerInfo.phone).isValid &&
+      validateEmail(passengerInfo.email).isValid
+    );
+  }, [passengerInfo.termsAccepted, passengerInfo.fullName, passengerInfo.phone, passengerInfo.email]);
 
   const validateForm = () => {
     if (!passengerInfo.fullName.trim()) {
@@ -716,12 +725,7 @@ export const CheckoutPage: React.FC = () => {
               onApplyVoucher={handleApplyVoucher}
               onSubmit={handleCheckoutSubmit}
               loading={loading}
-              disabled={
-                !passengerInfo.termsAccepted ||
-                !passengerInfo.fullName.trim() ||
-                !validateVNPhone(passengerInfo.phone).isValid ||
-                !validateEmail(passengerInfo.email).isValid
-              }
+              disabled={!isFormValid}
             />
           </div>
         </div>

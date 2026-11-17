@@ -17,14 +17,15 @@ export const VN_PHONE_REGEX = /^(03|05|07|08|09)\d{8}$/;
 export const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9]+([.-][a-zA-Z0-9]+)*\.[a-zA-Z]{2,}$/;
 
 export const validateVNPhone = (phone: string): { isValid: boolean; message: string } => {
-  const cleanPhone = phone.replace(/[\s.-]/g, '');
+  // Chuẩn hóa: xóa khoảng trắng, gạch nối và chuyển đầu +84 hoặc 84 về số 0 (hỗ trợ Autofill Safari/Chrome)
+  const cleanPhone = phone.replace(/[\s.-]/g, '').replace(/^(\+84|84)/, '0');
   if (!cleanPhone) {
     return { isValid: false, message: 'Vui lòng nhập số điện thoại' };
   }
   if (!VN_PHONE_REGEX.test(cleanPhone)) {
     return {
       isValid: false,
-      message: 'Số điện thoại không hợp lệ (Phải đúng 10 số và bắt đầu bằng 03, 05, 07, 08, 09)',
+      message: 'Số điện thoại không hợp lệ (Phải đúng 10 số, ví dụ: 0912345678 hoặc +84912345678)',
     };
   }
   return { isValid: true, message: '' };
