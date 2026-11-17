@@ -347,46 +347,42 @@ export const Navbar: React.FC = () => {
             {/* 5. Chức năng Định Vị GPS Live Tracking (Theo dõi hành trình xe chạy thời gian thực) */}
             <Link 
               to="/tracking" 
-              title="[S306] Theo dõi định vị GPS Live Tracking xe chạy thời gian thực"
+              title="Theo dõi định vị GPS Live Tracking xe chạy thời gian thực"
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname.startsWith('/tracking') ? (isDark ? '#34d399' : '#059669') : (isDark ? '#cbd5e1' : '#475569'), 
+                color: location.pathname.startsWith('/tracking') ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#cbd5e1' : '#475569'), 
                 fontWeight: location.pathname.startsWith('/tracking') ? 700 : 600, 
                 fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '5px',
-                borderBottom: location.pathname.startsWith('/tracking') ? `2px solid ${isDark ? '#34d399' : '#059669'}` : '2px solid transparent',
+                whiteSpace: 'nowrap',
+                borderBottom: location.pathname.startsWith('/tracking') ? `2px solid ${isDark ? '#38bdf8' : '#2563eb'}` : '2px solid transparent',
                 padding: '8px 0',
                 transition: 'all 0.15s ease'
               }}
             >
-              <Navigation size={15} color="#10b981" /> <span style={{ color: location.pathname.startsWith('/tracking') ? (isDark ? '#34d399' : '#059669') : undefined }}>Định Vị GPS</span>
-              <span style={{ fontSize: '9px', fontWeight: 800, backgroundColor: isDark ? 'rgba(16, 185, 129, 0.2)' : '#ecfdf5', color: '#10b981', padding: '1px 5px', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                LIVE
-              </span>
+              <Navigation size={15} /> <span>Định Vị GPS</span>
             </Link>
 
-            {/* 5. Chức năng Khuyến Mãi (Mã giảm giá, Voucher hoàn tiền) */}
+            {/* 6. Chức năng Khuyến Mãi (Mã giảm giá, Voucher hoàn tiền) */}
             <Link 
               to="/promotions" 
               style={{ 
                 textDecoration: 'none', 
-                color: location.pathname === '/promotions' ? '#f87171' : (isDark ? '#cbd5e1' : '#475569'), 
+                color: location.pathname === '/promotions' ? (isDark ? '#38bdf8' : '#2563eb') : (isDark ? '#cbd5e1' : '#475569'), 
                 fontWeight: location.pathname === '/promotions' ? 700 : 600, 
                 fontSize: '13.5px',
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '5px',
-                borderBottom: location.pathname === '/promotions' ? '2px solid #ef4444' : '2px solid transparent',
+                whiteSpace: 'nowrap',
+                borderBottom: location.pathname === '/promotions' ? `2px solid ${isDark ? '#38bdf8' : '#2563eb'}` : '2px solid transparent',
                 padding: '8px 0',
                 transition: 'all 0.15s ease'
               }}
             >
-              <Tag size={15} color="#ef4444" /> <span style={{ color: '#ef4444', fontWeight: 700 }}>Khuyến Mãi</span>
-              <span style={{ fontSize: '9px', fontWeight: 800, backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fef2f2', color: '#ef4444', padding: '1px 5px', borderRadius: '4px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-                HOT
-              </span>
+              <Tag size={15} /> <span>Khuyến Mãi</span>
             </Link>
 
             {/* 6. Chức năng Đánh Giá (Nhận xét và xếp hạng chất lượng nhà xe) */}

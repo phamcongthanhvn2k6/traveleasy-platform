@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
+import { Skeleton } from '../../../components/common/Skeleton';
 
 interface TicketData {
   ticketId: number;
@@ -361,6 +362,20 @@ export const TicketExchangePage: React.FC = () => {
           </button>
         </form>
 
+        {loadingLookup && (
+          <div className="mt-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {ticketData && (
           <div className="mt-6 space-y-4">
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -424,10 +439,7 @@ export const TicketExchangePage: React.FC = () => {
               Chuyến xe mới muốn đổi sang
             </label>
             {loadingTrips ? (
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center gap-2 text-sm text-slate-500">
-                <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
-                Đang tải danh sách chuyến xe thực tế...
-              </div>
+              <Skeleton className="h-11 w-full rounded-xl" />
             ) : trips.length > 0 ? (
               <select
                 value={selectedTripId || ''}

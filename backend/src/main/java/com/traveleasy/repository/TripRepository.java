@@ -2,6 +2,7 @@ package com.traveleasy.repository;
 
 import com.traveleasy.entity.Trip;
 import com.traveleasy.entity.TripStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -54,6 +55,13 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Query("SELECT t FROM Trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE bc.id = :busCompanyId ORDER BY t.departureTime DESC")
     List<Trip> findByBusCompanyIdWithDetails(@Param("busCompanyId") Long busCompanyId);
 
+    /**
+     * [P2 PERF] Lấy top N chuyến xe mới nhất của nhà xe với LIMIT từ DB — tránh load toàn bộ.
+     * Dùng cho Dashboard (top 5) và các tính năng cần phân trang nhỏ.
+     */
+    @Query("SELECT t FROM Trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE bc.id = :busCompanyId ORDER BY t.departureTime DESC")
+    List<Trip> findTopNByBusCompanyId(@Param("busCompanyId") Long busCompanyId, Pageable pageable);
+
     @Query("SELECT t FROM Trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE bc.id = :busCompanyId AND t.departureTime >= :startTime AND t.departureTime < :endTime ORDER BY t.departureTime ASC")
     List<Trip> findByBusCompanyIdAndDepartureTimeBetweenWithDetails(
             @Param("busCompanyId") Long busCompanyId,
@@ -72,3 +80,4 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Query("UPDATE Trip t SET t.availableSeats = (SELECT CAST(COUNT(s) AS int) FROM TripSeat s WHERE s.trip.id = :tripId AND s.status = com.traveleasy.entity.SeatStatus.AVAILABLE) WHERE t.id = :tripId")
     int syncAvailableSeats(@Param("tripId") Long tripId);
 }
+

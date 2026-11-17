@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import { getStoredCompany } from '../../../utils/companyHelper';
+import { TableSkeleton } from '../../../components/common/Skeleton';
 import {
   Shift,
   listShifts,
@@ -283,7 +284,20 @@ const STORAGE_KEY = 'traveleasy_company_shifts';
 export const CompanyShiftsPage: React.FC = () => {
   const company = getStoredCompany();
 
-  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [shifts, setShifts] = useState<Shift[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_shifts_cache_${company.id}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    try {
+      return !sessionStorage.getItem(`company_shifts_cache_${company.id}`);
+    } catch (e) {
+      return true;
+    }
+  });
   const [tab, setTab] = useState<TabKey>('ALL');
   const [search, setSearch] = useState('');
 
@@ -308,13 +322,19 @@ export const CompanyShiftsPage: React.FC = () => {
   const [saleNote, setSaleNote] = useState('');
 
   const reload = async () => {
+    if (shifts.length === 0) setLoading(true);
     try {
       const list = await listShifts(company.id);
       setShifts(list);
+      try {
+        sessionStorage.setItem(`company_shifts_cache_${company.id}`, JSON.stringify(list));
+      } catch (e) {}
       // đồng bộ lại ca đang xem (nếu có)
       setViewing((cur) => (cur ? list.find((s) => s.id === cur.id) || null : cur));
     } catch (e) {
       console.error('Lỗi tải danh sách ca:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -564,17 +584,20 @@ export const CompanyShiftsPage: React.FC = () => {
               <th style={{ ...thStyle, textAlign: 'right', width: '150px' }}>THAO TÁC</th>
             </tr>
           </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={8} style={{ padding: '36px', textAlign: 'center', color: '#94a3b8' }}>
-                  {shifts.length === 0
-                    ? 'Chưa có ca trực nào. Bấm "Mở Ca Mới" để bắt đầu ca đầu tiên.'
-                    : 'Không có ca trực phù hợp bộ lọc.'}
-                </td>
-              </tr>
-            ) : (
-              filtered.map((s) => {
+          {loading && shifts.length === 0 ? (
+            <TableSkeleton rows={5} columns={8} />
+          ) : (
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{ padding: '36px', textAlign: 'center', color: '#94a3b8' }}>
+                    {shifts.length === 0
+                      ? 'Chưa có ca trực nào. Bấm "Mở Ca Mới" để bắt đầu ca đầu tiên.'
+                      : 'Không có ca trực phù hợp bộ lọc.'}
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((s) => {
                 const isOpen = s.status === 'OPEN';
                 const vi = varianceInfo(s.variance || 0);
                 return (
@@ -647,7 +670,8 @@ export const CompanyShiftsPage: React.FC = () => {
               })
             )}
           </tbody>
-        </table>
+        )}
+      </table>
       </div>
 
       <div style={{ marginTop: '12px', fontSize: '12px', color: '#64748b' }}>

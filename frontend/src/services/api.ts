@@ -213,27 +213,42 @@ api.get = (async (url: string, config?: any): Promise<any> => {
 }) as any;
 
 // Tự động xóa cache tương ứng khi người dùng thực hiện tạo mới / sửa / xóa dữ liệu
+// [P6 PERF] Smart invalidation: chỉ xóa cache liên quan thay vì clearApiCache() toàn bộ
+const getResourceKeyword = (url: string): string | undefined => {
+  // Trích xuất resource chính từ URL để invalidate có chọn lọc
+  // Ví dụ: '/company/trips/123' -> 'trips', '/company/reviews' -> 'reviews'
+  const segments = url.replace(/^\/api\/v1/, '').split('/').filter(Boolean);
+  // Ưu tiên segment có nghĩa (không phải số, không phải 'api', 'v1', 'company', 'admin')
+  const skipWords = new Set(['api', 'v1', 'company', 'admin', 'status', 'auto-generate']);
+  for (const seg of segments) {
+    if (!skipWords.has(seg) && isNaN(Number(seg))) {
+      return seg; // Ví dụ: 'trips', 'bookings', 'reviews', 'vehicles'
+    }
+  }
+  return undefined;
+};
+
 api.post = (async (url: string, data?: any, config?: any): Promise<any> => {
   const res = await originalPost(url, data, config);
-  clearApiCache();
+  clearApiCache(getResourceKeyword(url));
   return res;
 }) as any;
 
 api.put = (async (url: string, data?: any, config?: any): Promise<any> => {
   const res = await originalPut(url, data, config);
-  clearApiCache();
+  clearApiCache(getResourceKeyword(url));
   return res;
 }) as any;
 
 api.patch = (async (url: string, data?: any, config?: any): Promise<any> => {
   const res = await originalPatch(url, data, config);
-  clearApiCache();
+  clearApiCache(getResourceKeyword(url));
   return res;
 }) as any;
 
 api.delete = (async (url: string, config?: any): Promise<any> => {
   const res = await originalDelete(url, config);
-  clearApiCache();
+  clearApiCache(getResourceKeyword(url));
   return res;
 }) as any;
 

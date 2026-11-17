@@ -14,6 +14,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +36,7 @@ public class CompanyTripCrewController {
     private final CompanySecurityService securityService;
     private final TripCrewService tripCrewService;
 
+    @Cacheable(value = "company_crew_assignments", key = "(#busCompanyId != null ? #busCompanyId : 1L) + '-' + (#date != null ? #date : 'all')")
     @GetMapping("/assignments")
     @Operation(summary = "Lấy danh sách phân công tổ lái theo chuyến xe (OWNER & DISPATCHER)")
     public ApiResponse<List<TripCrewResponse>> getCrewAssignments(
@@ -46,6 +49,7 @@ public class CompanyTripCrewController {
         return ApiResponse.success(list);
     }
 
+    @CacheEvict(value = "company_crew_assignments", allEntries = true)
     @PostMapping("/assignments")
     @Operation(summary = "Phân công hoặc cập nhật tổ lái (Chỉ OWNER & DISPATCHER)")
     public ApiResponse<TripCrewResponse> assignCrew(
@@ -58,6 +62,7 @@ public class CompanyTripCrewController {
         return ApiResponse.success("Phân công tổ lái thành công và đáp ứng đầy đủ điều kiện an toàn xuất bến!", response);
     }
 
+    @CacheEvict(value = "company_crew_assignments", allEntries = true)
     @PostMapping("/trips/{tripId}/dispatch-permit")
     @Operation(summary = "Ký duyệt biên bản / Lệnh xuất bến điện tử (Chặn nếu chưa test cồn)")
     public ApiResponse<TripCrewResponse> signDispatchPermit(

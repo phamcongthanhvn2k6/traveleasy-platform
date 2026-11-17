@@ -795,7 +795,11 @@ export const AdminBookingsPage: React.FC = () => {
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
+                            justifyContent: 'center',
                             gap: '4px',
+                            minWidth: '78px',
+                            height: '28px',
+                            boxSizing: 'border-box',
                             transition: 'all 0.15s ease',
                           }}
                         >
@@ -818,7 +822,11 @@ export const AdminBookingsPage: React.FC = () => {
                               cursor: 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center',
+                              justifyContent: 'center',
                               gap: '4px',
+                              minWidth: '82px',
+                              height: '28px',
+                              boxSizing: 'border-box',
                               transition: 'all 0.15s ease',
                             }}
                           >
@@ -841,7 +849,11 @@ export const AdminBookingsPage: React.FC = () => {
                               cursor: 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center',
+                              justifyContent: 'center',
                               gap: '4px',
+                              minWidth: '82px',
+                              height: '28px',
+                              boxSizing: 'border-box',
                               transition: 'all 0.15s ease',
                             }}
                           >
@@ -852,13 +864,23 @@ export const AdminBookingsPage: React.FC = () => {
                         {b.status === 'CANCELLED' && (
                           <span
                             style={{
-                              fontSize: '11px',
+                              backgroundColor: '#f8fafc',
                               color: '#94a3b8',
-                              fontStyle: 'italic',
-                              padding: '0 4px',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '6px',
+                              padding: '5px 10px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '4px',
+                              minWidth: '82px',
+                              height: '28px',
+                              boxSizing: 'border-box',
                             }}
                           >
-                            Đã giải phóng
+                            <Ban size={13} color="#94a3b8" /> Đã hủy
                           </span>
                         )}
                       </div>

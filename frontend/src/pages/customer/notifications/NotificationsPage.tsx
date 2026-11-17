@@ -545,3 +545,4 @@ export const NotificationsPage: React.FC = () => {
 };
 
 export default NotificationsPage;
+

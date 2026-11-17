@@ -18,6 +18,7 @@ import {
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { getStoredCompany } from '../../../utils/companyHelper';
+import { TableSkeleton, Skeleton } from '../../../components/common/Skeleton';
 
 interface PartnerSettlementRecord {
   id: string;
@@ -71,9 +72,27 @@ const MIN_PAYOUT_VND = 500000;
 
 export const CompanySettlementsPage: React.FC = () => {
   const currentCompany = getStoredCompany();
-  const [settlements, setSettlements] = useState<PartnerSettlementRecord[]>([]);
-  const [wallet, setWallet] = useState<WalletData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [settlements, setSettlements] = useState<PartnerSettlementRecord[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_settlements_cache_${currentCompany.id}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+  const [wallet, setWallet] = useState<WalletData | null>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_wallet_cache_${currentCompany.id}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return null;
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !sessionStorage.getItem(`company_settlements_cache_${currentCompany.id}`);
+    } catch (e) {
+      return true;
+    }
+  });
   const [selectedRecord, setSelectedRecord] = useState<PartnerSettlementRecord | null>(null);
 
   // Withdrawal request modal
@@ -83,7 +102,7 @@ export const CompanySettlementsPage: React.FC = () => {
   const [submittingWithdraw, setSubmittingWithdraw] = useState(false);
 
   const fetchSettlements = async () => {
-    setLoading(true);
+    if (settlements.length === 0) setLoading(true);
     try {
       const [settRes, walletRes] = await Promise.all([
         api.get('/company/settlements', {
@@ -98,9 +117,15 @@ export const CompanySettlementsPage: React.FC = () => {
       ]);
       if (settRes.data?.data && Array.isArray(settRes.data.data)) {
         setSettlements(settRes.data.data);
+        try {
+          sessionStorage.setItem(`company_settlements_cache_${currentCompany.id}`, JSON.stringify(settRes.data.data));
+        } catch (e) {}
       }
       if (walletRes.data?.data) {
         setWallet(walletRes.data.data);
+        try {
+          sessionStorage.setItem(`company_wallet_cache_${currentCompany.id}`, JSON.stringify(walletRes.data.data));
+        } catch (e) {}
       }
     } catch (err: any) {
       if (err?.response?.status === 401) return;
@@ -382,22 +407,19 @@ export const CompanySettlementsPage: React.FC = () => {
               <th style={{ padding: '12px 18px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                  Đang tải dữ liệu quyết toán từ CSDL...
-                </td>
-              </tr>
-            ) : settlements.length === 0 ? (
-              <tr>
-                <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-                  Chưa có hồ sơ đối soát nào.
-                </td>
-              </tr>
-            ) : (
-              settlements.map(s => (
-                <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+          {loading && settlements.length === 0 ? (
+            <TableSkeleton rows={5} columns={8} />
+          ) : (
+            <tbody>
+              {settlements.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                    Chưa có hồ sơ đối soát nào.
+                  </td>
+                </tr>
+              ) : (
+                settlements.map(s => (
+                  <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '14px 18px' }}>
                     <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#1e3a8a', backgroundColor: '#eff6ff', padding: '2px 7px', borderRadius: '5px', border: '1px solid #bfdbfe' }}>
                       {s.code}
@@ -486,7 +508,8 @@ export const CompanySettlementsPage: React.FC = () => {
               ))
             )}
           </tbody>
-        </table>
+        )}
+      </table>
       </div>
 
       {/* 4b. Lịch sử lệnh rút tiền (Payout Requests) */}

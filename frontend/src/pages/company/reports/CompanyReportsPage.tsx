@@ -41,6 +41,7 @@ import {
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { getStoredCompany } from '../../../utils/companyHelper';
+import { CardSkeleton, TableSkeleton } from '../../../components/common/Skeleton';
 
 interface ChartPoint {
   label: string;
@@ -108,30 +109,41 @@ export const CompanyReportsPage: React.FC = () => {
   const [chartMode, setChartMode] = useState<'REVENUE' | 'OCCUPANCY'>('REVENUE');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterLevel, setFilterLevel] = useState<'ALL' | 'PEAK' | 'LOW'>('ALL');
-  const [loading, setLoading] = useState<boolean>(true);
+  const cacheKey = `company_reports_cache_${currentCompany.id}_${dateRange}`;
+  const [loading, setLoading] = useState<boolean>(() => {
+    try {
+      return !sessionStorage.getItem(`company_reports_cache_${currentCompany.id}_${dateRange}`);
+    } catch { return true; }
+  });
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  const [report, setReport] = useState<ReportSummary>({
-    busCompanyId: currentCompany.id || 14,
-    companyName: currentCompany.name || 'Nhà Xe Đối Tác',
-    period: 'MONTH',
-    totalGrossRevenue: 0,
-    platformFeeRate: 8.0,
-    totalPlatformFee: 0,
-    totalNetRevenue: 0,
-    totalTickets: 0,
-    totalTrips: 0,
-    avgOccupancyRate: 0,
-    peakTripsCount: 0,
-    lowTripsCount: 0,
-    chartData: [],
-    routePerformances: [],
-    tripPerformances: []
+  const [report, setReport] = useState<ReportSummary>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_reports_cache_${currentCompany.id}_${dateRange}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return {
+      busCompanyId: currentCompany.id || 14,
+      companyName: currentCompany.name || 'Nhà Xe Đối Tác',
+      period: 'MONTH',
+      totalGrossRevenue: 0,
+      platformFeeRate: 8.0,
+      totalPlatformFee: 0,
+      totalNetRevenue: 0,
+      totalTickets: 0,
+      totalTrips: 0,
+      avgOccupancyRate: 0,
+      peakTripsCount: 0,
+      lowTripsCount: 0,
+      chartData: [],
+      routePerformances: [],
+      tripPerformances: []
+    };
   });
 
   const fetchReportData = async (showToast = false) => {
     if (showToast) setRefreshing(true);
-    else setLoading(true);
+    else if (report.totalTrips === 0) setLoading(true);
 
     try {
       // 100% GỌI BACKEND API TÍNH TOÁN DỮ LIỆU THỰC TẾ TỪ CSDL SUPABASE
@@ -144,6 +156,9 @@ export const CompanyReportsPage: React.FC = () => {
 
       if (res.data?.data) {
         setReport(res.data.data);
+        try {
+          sessionStorage.setItem(`company_reports_cache_${currentCompany.id}_${dateRange}`, JSON.stringify(res.data.data));
+        } catch (e) {}
         if (showToast) toast.success('Đã đồng bộ số liệu đối soát thời gian thực từ CSDL!');
       }
     } catch (err: any) {
@@ -319,72 +334,76 @@ export const CompanyReportsPage: React.FC = () => {
         </div>
 
         {/* 3. CÁC THẺ KPI CHỈ SỐ TÀI CHÍNH THỰC TẾ (4 KPI CARDS) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Tổng Doanh Thu */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors">
-            <div className="flex items-center justify-between text-slate-500 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider">Tổng Doanh Thu Bán Vé</span>
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                <DollarSign className="w-4 h-4" />
+        {loading && report.totalTrips === 0 ? (
+          <CardSkeleton count={4} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Tổng Doanh Thu */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors">
+              <div className="flex items-center justify-between text-slate-500 mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider">Tổng Doanh Thu Bán Vé</span>
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                  <DollarSign className="w-4 h-4" />
+                </div>
               </div>
+              <p className="text-2xl font-bold text-slate-900">{formatVND(report.totalGrossRevenue)}</p>
+              <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                {report.totalTickets} vé đã thanh toán thành công
+              </p>
             </div>
-            <p className="text-2xl font-bold text-slate-900">{formatVND(report.totalGrossRevenue)}</p>
-            <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              {report.totalTickets} vé đã thanh toán thành công
-            </p>
-          </div>
 
-          {/* Chiết Khấu Sàn (8%) */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-amber-300 transition-colors">
-            <div className="flex items-center justify-between text-slate-500 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider">Hoa Hồng Sàn (8%)</span>
-              <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
-                <Percent className="w-4 h-4" />
+            {/* Chiết Khấu Sàn (8%) */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-amber-300 transition-colors">
+              <div className="flex items-center justify-between text-slate-500 mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider">Hoa Hồng Sàn (8%)</span>
+                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                  <Percent className="w-4 h-4" />
+                </div>
               </div>
+              <p className="text-2xl font-bold text-amber-600">-{formatVND(report.totalPlatformFee)}</p>
+              <p className="text-xs text-slate-400 mt-1.5">Khấu trừ tự động 8% theo điều khoản sàn</p>
             </div>
-            <p className="text-2xl font-bold text-amber-600">-{formatVND(report.totalPlatformFee)}</p>
-            <p className="text-xs text-slate-400 mt-1.5">Khấu trừ tự động 8% theo điều khoản sàn</p>
-          </div>
 
-          {/* Thực Nhận Nhà Xe */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-300 transition-colors">
-            <div className="flex items-center justify-between text-slate-500 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider">Thực Nhận Nhà Xe (92%)</span>
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <ShieldCheck className="w-4 h-4" />
+            {/* Thực Nhận Nhà Xe */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-300 transition-colors">
+              <div className="flex items-center justify-between text-slate-500 mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider">Thực Nhận Nhà Xe (92%)</span>
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
               </div>
+              <p className="text-2xl font-bold text-emerald-600">{formatVND(report.totalNetRevenue)}</p>
+              <p className="text-xs text-emerald-700 font-medium mt-1.5 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                Đã sẵn sàng tạo lệnh rút tiền
+              </p>
             </div>
-            <p className="text-2xl font-bold text-emerald-600">{formatVND(report.totalNetRevenue)}</p>
-            <p className="text-xs text-emerald-700 font-medium mt-1.5 flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              Đã sẵn sàng tạo lệnh rút tiền
-            </p>
-          </div>
 
-          {/* Tỷ Lệ Lấp Đầy Trung Bình */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-colors">
-            <div className="flex items-center justify-between text-slate-500 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider">Tỷ Lệ Lấp Đầy TB</span>
-              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-                <TrendingUp className="w-4 h-4" />
+            {/* Tỷ Lệ Lấp Đầy Trung Bình */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 transition-colors">
+              <div className="flex items-center justify-between text-slate-500 mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider">Tỷ Lệ Lấp Đầy TB</span>
+                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-blue-600">{report.avgOccupancyRate}%</p>
+                <span className="text-xs font-medium text-slate-500">({report.totalTrips} chuyến)</span>
+              </div>
+              <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500">
+                <span className="flex items-center gap-0.5 text-emerald-600 font-medium">
+                  <Flame className="w-3.5 h-3.5" /> {report.peakTripsCount} cao điểm
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-0.5 text-rose-500 font-medium">
+                  <ArrowDownRight className="w-3.5 h-3.5" /> {report.lowTripsCount} thấp điểm
+                </span>
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold text-blue-600">{report.avgOccupancyRate}%</p>
-              <span className="text-xs font-medium text-slate-500">({report.totalTrips} chuyến)</span>
-            </div>
-            <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500">
-              <span className="flex items-center gap-0.5 text-emerald-600 font-medium">
-                <Flame className="w-3.5 h-3.5" /> {report.peakTripsCount} cao điểm
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-0.5 text-rose-500 font-medium">
-                <ArrowDownRight className="w-3.5 h-3.5" /> {report.lowTripsCount} thấp điểm
-              </span>
-            </div>
           </div>
-        </div>
+        )}
 
         {/* 4. BIỂU ĐỒ TRỰC QUAN RECHARTS (DỮ LIỆU THỰC TẾ TỪ CSDL) */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
@@ -595,24 +614,20 @@ export const CompanyReportsPage: React.FC = () => {
                     <th className="py-3.5 px-4 text-center">Phân Loại</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-sm">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={9} className="py-12 text-center text-slate-500">
-                        <RefreshCw className="w-6 h-6 animate-spin mx-auto text-indigo-600 mb-2" />
-                        <p className="text-xs text-slate-400">Đang tổng hợp dữ liệu chuyến xe từ CSDL Supabase...</p>
-                      </td>
-                    </tr>
-                  ) : filteredTrips.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="py-12 text-center text-slate-500">
-                        <BarChart3 className="w-8 h-8 mx-auto text-slate-300 mb-2" />
-                        <p className="font-semibold text-slate-700">Không tìm thấy chuyến xe nào phù hợp điều kiện lọc</p>
-                        <p className="text-xs text-slate-400 mt-1">Vui lòng điều chỉnh lại từ khóa tìm kiếm hoặc mức độ lấp đầy.</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredTrips.map((row) => (
+                {loading && report.tripPerformances.length === 0 ? (
+                  <TableSkeleton rows={5} columns={9} />
+                ) : (
+                  <tbody className="divide-y divide-slate-100 text-sm">
+                    {filteredTrips.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="py-12 text-center text-slate-500">
+                          <BarChart3 className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                          <p className="font-semibold text-slate-700">Không tìm thấy chuyến xe nào phù hợp điều kiện lọc</p>
+                          <p className="text-xs text-slate-400 mt-1">Vui lòng điều chỉnh lại từ khóa tìm kiếm hoặc mức độ lấp đầy.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredTrips.map((row) => (
                       <tr key={row.tripId} className="hover:bg-slate-50/60 transition-colors">
                         <td className="py-3.5 px-4">
                           <p className="font-bold text-slate-900">{row.tripCode}</p>
@@ -676,6 +691,7 @@ export const CompanyReportsPage: React.FC = () => {
                     ))
                   )}
                 </tbody>
+              )}
               </table>
             </div>
           )}
@@ -695,7 +711,10 @@ export const CompanyReportsPage: React.FC = () => {
                     <th className="py-3.5 px-4 text-right">Thực Nhận Nhà Xe</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-sm">
+                {loading && report.routePerformances.length === 0 ? (
+                  <TableSkeleton rows={5} columns={7} />
+                ) : (
+                  <tbody className="divide-y divide-slate-100 text-sm">
                   {report.routePerformances.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="py-12 text-center text-slate-500">
@@ -745,6 +764,7 @@ export const CompanyReportsPage: React.FC = () => {
                     ))
                   )}
                 </tbody>
+              )}
               </table>
             </div>
           )}

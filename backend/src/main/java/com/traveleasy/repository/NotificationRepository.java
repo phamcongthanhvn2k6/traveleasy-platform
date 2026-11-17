@@ -30,3 +30,4 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             "(:role IS NOT NULL AND (n.targetRole = :role OR n.targetRole = 'ALL'))")
     void markAllAsReadForUser(@Param("email") String email, @Param("role") String role);
 }
+
