@@ -44,4 +44,9 @@ public interface TripSeatRepository extends JpaRepository<TripSeat, Long> {
     @org.springframework.transaction.annotation.Transactional
     @Query("UPDATE TripSeat s SET s.status = com.traveleasy.entity.SeatStatus.AVAILABLE WHERE s.status = com.traveleasy.entity.SeatStatus.LOCKED")
     int resetAllLockedSeatsToAvailable();
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("UPDATE TripSeat s SET s.status = com.traveleasy.entity.SeatStatus.AVAILABLE WHERE s.status = com.traveleasy.entity.SeatStatus.LOCKED AND s.trip.id IN (SELECT t.id FROM Trip t WHERE t.departureTime <= :cutoffTime)")
+    int releaseLockedSeatsOnCutoffTrips(@Param("cutoffTime") java.time.LocalDateTime cutoffTime);
 }

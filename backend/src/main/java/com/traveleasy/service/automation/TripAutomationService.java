@@ -135,9 +135,16 @@ public class TripAutomationService {
     @Scheduled(fixedDelay = 60000)
     public void cleanupExpiredBookingsJob() {
         try {
-            // Thiết lập ngưỡng 12 phút (Grace Period Buffer 2 phút) so với đồng hồ 10 phút của Frontend,
+            // 1. Thiết lập ngưỡng 12 phút (Grace Period Buffer 2 phút) so với đồng hồ 10 phút của Frontend,
             // đảm bảo nếu khách chuyển tiền ở giây 599 thì Webhook từ Ngân hàng vẫn kịp đến trước khi ghế bị giải phóng.
             bookingServiceProvider.ifAvailable(bs -> bs.cleanupExpiredPendingBookings(12));
+
+            // 2. Tự động giải phóng các ghế LOCKED online trên các chuyến xe đã bước vào khung giờ chốt lệnh xuất bến (< 15 phút)
+            // Nhường lại ghế trống AVAILABLE cho nhân viên quầy bến xe (POS) bán trực tiếp cho khách tại bến
+            int releasedCutoff = tripSeatRepository.releaseLockedSeatsOnCutoffTrips(LocalDateTime.now().plusMinutes(15));
+            if (releasedCutoff > 0) {
+                log.info("⏰ [Cut-off Auto-Release] Đã tự động giải phóng {} ghế LOCKED của các chuyến xe xuất bến trong < 15 phút về AVAILABLE cho quầy bến xe.", releasedCutoff);
+            }
         } catch (Exception e) {
             log.warn("Lỗi khi tự động giải phóng ghế quá hạn: {}", e.getMessage());
         }

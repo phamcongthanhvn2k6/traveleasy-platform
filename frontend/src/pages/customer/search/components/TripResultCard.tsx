@@ -440,7 +440,16 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
   const totalPrice = selectedSeats.length * trip.price;
 
+  const now = Date.now();
+  const depTime = trip.departureTime ? new Date(trip.departureTime).getTime() : 0;
+  const minutesUntilDep = Math.floor((depTime - now) / 60000);
+  const isCutoff = depTime > 0 && minutesUntilDep < 15 && minutesUntilDep >= 0;
+
   const handleProceedBooking = () => {
+    if (isCutoff) {
+      toast.warning(`Chuyến xe sắp khởi hành trong vòng ${minutesUntilDep} phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, quý khách vui lòng mua vé trực tiếp tại quầy bến xe!`, 'Đóng Bán Trực Tuyến');
+      return;
+    }
     onBook(trip, selectedSeats, {
       pickup: selectedPickup,
       dropoff: selectedDropoff,
@@ -605,11 +614,13 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
             <div style={{
               fontSize: '12px',
-              color: displayAvailableSeats === 0 ? '#ef4444' : (displayAvailableSeats < 10 ? '#ea580c' : '#16a34a'),
+              color: isCutoff ? '#ea580c' : (displayAvailableSeats === 0 ? '#ef4444' : (displayAvailableSeats < 10 ? '#ea580c' : '#16a34a')),
               fontWeight: 700,
               margin: '4px 0 10px 0'
             }}>
-              {displayAvailableSeats > 0 ? `Còn ${displayAvailableSeats} chỗ trống` : 'Hết vé'}
+              {isCutoff
+                ? `⚡ Sắp chạy (${minutesUntilDep}p) - Bán tại quầy`
+                : (displayAvailableSeats > 0 ? `Còn ${displayAvailableSeats} chỗ trống` : 'Hết vé')}
             </div>
 
             <button
@@ -618,15 +629,19 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
               style={{
                 backgroundColor: displayAvailableSeats === 0
                   ? (isDark ? '#334155' : '#cbd5e1')
-                  : (expanded
-                    ? (isDark ? '#1e293b' : '#f1f5f9')
-                    : '#2563eb'),
+                  : (isCutoff
+                    ? (isDark ? '#1e293b' : '#fff7ed')
+                    : (expanded
+                      ? (isDark ? '#1e293b' : '#f1f5f9')
+                      : '#2563eb')),
                 color: displayAvailableSeats === 0
                   ? (isDark ? '#94a3b8' : '#64748b')
-                  : (expanded
-                    ? (isDark ? '#f8fafc' : '#1e293b')
-                    : '#ffffff'),
-                border: expanded ? `1px solid ${isDark ? '#334155' : '#cbd5e1'}` : 'none',
+                  : (isCutoff
+                    ? '#ea580c'
+                    : (expanded
+                      ? (isDark ? '#f8fafc' : '#1e293b')
+                      : '#ffffff')),
+                border: expanded || isCutoff ? `1px solid ${isDark ? '#ea580c' : '#fed7aa'}` : 'none',
                 padding: '9px 20px',
                 borderRadius: '8px',
                 fontWeight: 700,
@@ -638,7 +653,11 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                 transition: 'all 0.15s ease',
               }}
             >
-              {displayAvailableSeats === 0 ? 'Hết vé' : (expanded ? 'Đóng' : 'Chọn chuyến')}
+              {displayAvailableSeats === 0
+                ? 'Hết vé'
+                : (isCutoff
+                  ? (expanded ? 'Đóng' : 'Bán tại quầy')
+                  : (expanded ? 'Đóng' : 'Chọn chuyến'))}
               {displayAvailableSeats === 0 ? null : (expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
             </button>
           </div>
@@ -1229,20 +1248,27 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
                       <button
                         onClick={handleProceedBooking}
+                        disabled={isCutoff}
                         style={{
-                          backgroundColor: localStorage.getItem('traveleasy_token') ? '#f97316' : '#2563eb',
+                          backgroundColor: isCutoff
+                            ? (isDark ? '#334155' : '#94a3b8')
+                            : (localStorage.getItem('traveleasy_token') ? '#f97316' : '#2563eb'),
                           color: '#ffffff',
                           border: 'none',
                           padding: '12px 28px',
                           borderRadius: '8px',
                           fontWeight: 800,
                           fontSize: '15px',
-                          cursor: 'pointer',
-                          boxShadow: localStorage.getItem('traveleasy_token') ? '0 4px 6px -1px rgba(249, 115, 22, 0.4)' : '0 4px 6px -1px rgba(37, 99, 235, 0.4)',
+                          cursor: isCutoff ? 'not-allowed' : 'pointer',
+                          boxShadow: isCutoff
+                            ? 'none'
+                            : (localStorage.getItem('traveleasy_token') ? '0 4px 6px -1px rgba(249, 115, 22, 0.4)' : '0 4px 6px -1px rgba(37, 99, 235, 0.4)'),
                           transition: 'all 0.15s ease',
                         }}
                       >
-                        {localStorage.getItem('traveleasy_token') ? 'Tiếp Tục Đặt Vé ->' : 'Đăng Nhập Để Đặt Vé ->'}
+                        {isCutoff
+                          ? 'Đã Đóng Bán Trực Tuyến (< 15p)'
+                          : (localStorage.getItem('traveleasy_token') ? 'Tiếp Tục Đặt Vé ->' : 'Đăng Nhập Để Đặt Vé ->')}
                       </button>
                     </div>
                   )}
