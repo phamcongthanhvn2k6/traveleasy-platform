@@ -20,6 +20,7 @@ import {
   Info,
   Zap,
   Radio,
+  Lock,
 } from 'lucide-react';
 
 interface Props {
@@ -415,6 +416,17 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
   };
 
   const handleToggleSeat = (seatNumber: string) => {
+    if (isBookingClosed) {
+      toast.warning(
+        isDeparted
+          ? 'Chuyến xe đã khởi hành. Kênh trực tuyến đã đóng bán vé, khóa tính năng chọn ghế!'
+          : isCutoff
+          ? `Chuyến xe khởi hành trong vòng ${minutesUntilDep} phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, khóa hoàn toàn tính năng chọn ghế!`
+          : 'Chuyến xe đã đóng bán vé trực tuyến. Quý khách chỉ có thể xem thông tin lộ trình và sơ đồ xe.',
+        'Đã Đóng Bán Vé'
+      );
+      return;
+    }
     if (selectedSeats.includes(seatNumber)) {
       setSelectedSeats(selectedSeats.filter((s) => s !== seatNumber));
     } else {
@@ -457,10 +469,27 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
   const depTime = trip.departureTime ? new Date(trip.departureTime).getTime() : 0;
   const minutesUntilDep = Math.floor((depTime - now) / 60000);
   const isCutoff = depTime > 0 && minutesUntilDep < 15 && minutesUntilDep >= 0;
+  const isDeparted = depTime > 0 && minutesUntilDep < 0;
+  const isTripClosed = trip.status === 'CLOSED' || trip.status === 'COMPLETED' || trip.status === 'DEPARTED' || trip.status === 'CANCELLED';
+  const isBookingClosed = isCutoff || isDeparted || isTripClosed;
+
+  // Tự động hủy mọi ghế đã chọn nếu chuyến xe đóng bán vé trực tuyến
+  useEffect(() => {
+    if (isBookingClosed && selectedSeats.length > 0) {
+      setSelectedSeats([]);
+    }
+  }, [isBookingClosed]);
 
   const handleProceedBooking = () => {
-    if (isCutoff) {
-      toast.warning(`Chuyến xe sắp khởi hành trong vòng ${minutesUntilDep} phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, quý khách vui lòng mua vé trực tiếp tại quầy bến xe!`, 'Đóng Bán Trực Tuyến');
+    if (isBookingClosed) {
+      toast.warning(
+        isDeparted
+          ? 'Chuyến xe đã khởi hành, không thể đặt vé!'
+          : isCutoff
+          ? `Chuyến xe sắp khởi hành trong vòng ${minutesUntilDep} phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, quý khách vui lòng mua vé trực tiếp tại quầy bến xe!`
+          : 'Chuyến xe đã đóng bán vé trực tuyến!',
+        'Đóng Bán Trực Tuyến'
+      );
       return;
     }
     onBook(trip, selectedSeats, {
@@ -627,39 +656,44 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
             <div style={{
               fontSize: '12px',
-              color: isCutoff ? '#ea580c' : (displayAvailableSeats === 0 ? '#ef4444' : (displayAvailableSeats < 10 ? '#ea580c' : '#16a34a')),
+              color: isDeparted
+                ? '#ef4444'
+                : isCutoff
+                ? '#ea580c'
+                : (displayAvailableSeats === 0 ? '#ef4444' : (displayAvailableSeats < 10 ? '#ea580c' : '#16a34a')),
               fontWeight: 700,
               margin: '4px 0 10px 0'
             }}>
-              {isCutoff
+              {isDeparted
+                ? 'Đã xuất bến (Ngừng bán online)'
+                : isCutoff
                 ? `⚡ Sắp chạy (${minutesUntilDep}p) - Bán tại quầy`
                 : (displayAvailableSeats > 0 ? `Còn ${displayAvailableSeats} chỗ trống` : 'Hết vé')}
             </div>
 
             <button
-              onClick={displayAvailableSeats === 0 ? undefined : toggleExpand}
-              disabled={displayAvailableSeats === 0}
+              onClick={toggleExpand}
               style={{
                 backgroundColor: displayAvailableSeats === 0
                   ? (isDark ? '#334155' : '#cbd5e1')
-                  : (isCutoff
+                  : (isBookingClosed
                     ? (isDark ? '#1e293b' : '#fff7ed')
                     : (expanded
                       ? (isDark ? '#1e293b' : '#f1f5f9')
                       : '#2563eb')),
                 color: displayAvailableSeats === 0
                   ? (isDark ? '#94a3b8' : '#64748b')
-                  : (isCutoff
+                  : (isBookingClosed
                     ? '#ea580c'
                     : (expanded
                       ? (isDark ? '#f8fafc' : '#1e293b')
                       : '#ffffff')),
-                border: expanded || isCutoff ? `1px solid ${isDark ? '#ea580c' : '#fed7aa'}` : 'none',
+                border: expanded || isBookingClosed ? `1px solid ${isDark ? '#ea580c' : '#fed7aa'}` : 'none',
                 padding: '9px 20px',
                 borderRadius: '8px',
                 fontWeight: 700,
                 fontSize: '14px',
-                cursor: displayAvailableSeats === 0 ? 'not-allowed' : 'pointer',
+                cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
@@ -667,11 +701,11 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
               }}
             >
               {displayAvailableSeats === 0
-                ? 'Hết vé'
-                : (isCutoff
-                  ? (expanded ? 'Đóng' : 'Bán tại quầy')
-                  : (expanded ? 'Đóng' : 'Chọn chuyến'))}
-              {displayAvailableSeats === 0 ? null : (expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
+                ? (expanded ? 'Đóng chi tiết' : 'Hết vé (Xem TT)')
+                : (isBookingClosed
+                  ? (expanded ? 'Đóng chi tiết' : (isDeparted ? 'Đã chạy (Xem TT)' : 'Bán tại quầy (Xem TT)'))
+                  : (expanded ? 'Đóng chi tiết' : 'Chọn chuyến'))}
+              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
           </div>
         </div>
@@ -889,8 +923,12 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                       gap: '8px',
                     }}
                   >
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a' }}>
-                      Chọn vị trí ghế (Tối đa 6 vé/lần đặt)
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: isBookingClosed ? (isDark ? '#fb923c' : '#c2410c') : (isDark ? '#f8fafc' : '#0f172a') }}>
+                      {isBookingClosed
+                        ? (isDeparted
+                          ? 'Sơ đồ vị trí ghế (Chế độ chỉ xem - Chuyến xe đã xuất bến)'
+                          : `Sơ đồ vị trí ghế (Chế độ chỉ xem - Đã đóng bán vé < 15p)`)
+                        : 'Chọn vị trí ghế (Tối đa 6 vé/lần đặt)'}
                     </div>
 
                     {/* Live SSE Status Badge */}
@@ -925,153 +963,163 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                     <SeatMapSkeleton isDark={isDark} totalSeats={trip.totalSeats} />
                   ) : (
                     <>
-                      {/* Interactive Demo Simulation Toolbar */}
-                      <div
-                        style={{
-                          backgroundColor: isDark ? '#111827' : '#f8fafc',
-                          border: isDark ? '1px dashed #334155' : '1px dashed #cbd5e1',
-                          borderRadius: '10px',
-                          padding: '10px 14px',
-                          marginBottom: '12px',
-                        }}
-                      >
+                      {/* Interactive Demo Simulation Toolbar (Chỉ hiển thị khi chuyến xe còn mở bán) */}
+                      {!isBookingClosed && (
                         <div
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
+                            backgroundColor: isDark ? '#111827' : '#f8fafc',
+                            border: isDark ? '1px dashed #334155' : '1px dashed #cbd5e1',
+                            borderRadius: '10px',
+                            padding: '10px 14px',
+                            marginBottom: '12px',
                           }}
                         >
-                          <span
-                            style={{
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              color: isDark ? '#f8fafc' : '#1e293b',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '5px',
-                            }}
-                          >
-                            <Zap size={14} color="#f59e0b" />
-                            Thử Nghiệm Real-time (Đổi màu Vàng / Xám trực tiếp)
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setShowSimPanel(!showSimPanel)}
-                            style={{
-                              border: 'none',
-                              background: 'transparent',
-                              fontSize: '11.5px',
-                              fontWeight: 700,
-                              color: isDark ? '#38bdf8' : '#2563eb',
-                              cursor: 'pointer',
-                              textDecoration: 'underline',
-                            }}
-                          >
-                            {showSimPanel ? '[-] Đóng bảng thử' : '[+] Bật giả lập kiểm thử'}
-                          </button>
-                        </div>
-
-                        {showSimPanel && (
                           <div
                             style={{
-                              marginTop: '10px',
-                              paddingTop: '8px',
-                              borderTop: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '8px',
-                              flexWrap: 'wrap',
+                              justifyContent: 'space-between',
                             }}
                           >
-                            <span style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#475569', fontWeight: 600 }}>
-                              Chọn ghế thử:
-                            </span>
-                            <select
-                              value={simSeatNumber}
-                              onChange={(e) => setSimSeatNumber(e.target.value)}
+                            <span
                               style={{
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
                                 fontSize: '12px',
                                 fontWeight: 700,
-                                backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                                color: isDark ? '#f8fafc' : '#0f172a',
+                                color: isDark ? '#f8fafc' : '#1e293b',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
                               }}
                             >
-                              {tripDetail.seats.map((s) => (
-                                <option key={s.id} value={s.seatNumber}>
-                                  Ghế {s.seatNumber} ({s.status === 'AVAILABLE' ? 'Trống' : s.status === 'LOCKED' ? 'Vàng' : 'Xám'})
-                                </option>
-                              ))}
-                            </select>
-
+                              <Zap size={14} color="#f59e0b" />
+                              Thử Nghiệm Real-time (Đổi màu Vàng / Xám trực tiếp)
+                            </span>
                             <button
                               type="button"
-                              disabled={simulating}
-                              onClick={() => handleSimulateAction('HOLD')}
-                              title="Giả lập khách khác đang ở bước thanh toán giữ ghế"
+                              onClick={() => setShowSimPanel(!showSimPanel)}
                               style={{
-                                padding: '5px 10px',
-                                borderRadius: '6px',
-                                border: '1px solid #f59e0b',
-                                backgroundColor: isDark ? '#451a03' : '#fef3c7',
-                                color: isDark ? '#fbbf24' : '#b45309',
-                                fontSize: '11px',
+                                border: 'none',
+                                background: 'transparent',
+                                fontSize: '11.5px',
                                 fontWeight: 700,
-                                cursor: simulating ? 'not-allowed' : 'pointer',
+                                color: isDark ? '#38bdf8' : '#2563eb',
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
                               }}
                             >
-                              [Vàng] Đổi Vàng (Đang TT)
-                            </button>
-
-                            <button
-                              type="button"
-                              disabled={simulating}
-                              onClick={() => handleSimulateAction('BOOK')}
-                              title="Giả lập khách khác đã thanh toán vé thành công"
-                              style={{
-                                padding: '5px 10px',
-                                borderRadius: '6px',
-                                border: isDark ? '1px solid #475569' : '1px solid #94a3b8',
-                                backgroundColor: isDark ? '#334155' : '#cbd5e1',
-                                color: isDark ? '#cbd5e1' : '#334155',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                cursor: simulating ? 'not-allowed' : 'pointer',
-                              }}
-                            >
-                              [Bán] Đổi Xám (Đã Bán)
-                            </button>
-
-                            <button
-                              type="button"
-                              disabled={simulating}
-                              onClick={() => handleSimulateAction('RELEASE')}
-                              title="Mở lại ghế về trống"
-                              style={{
-                                padding: '5px 10px',
-                                borderRadius: '6px',
-                                border: isDark ? '1px solid #1d4ed8' : '1px solid #3b82f6',
-                                backgroundColor: isDark ? 'rgba(30,58,138,0.3)' : '#eff6ff',
-                                color: isDark ? '#93c5fd' : '#1d4ed8',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                cursor: simulating ? 'not-allowed' : 'pointer',
-                              }}
-                            >
-                              [Trống] Trả Về Trống
+                              {showSimPanel ? '[-] Đóng bảng thử' : '[+] Bật giả lập kiểm thử'}
                             </button>
                           </div>
-                        )}
-                      </div>
+
+                          {showSimPanel && (
+                            <div
+                              style={{
+                                marginTop: '10px',
+                                paddingTop: '8px',
+                                borderTop: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              <span style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#475569', fontWeight: 600 }}>
+                                Chọn ghế thử:
+                              </span>
+                              <select
+                                value={simSeatNumber}
+                                onChange={(e) => setSimSeatNumber(e.target.value)}
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                                  color: isDark ? '#f8fafc' : '#0f172a',
+                                }}
+                              >
+                                {tripDetail.seats.map((s) => (
+                                  <option key={s.id} value={s.seatNumber}>
+                                    Ghế {s.seatNumber} ({s.status === 'AVAILABLE' ? 'Trống' : s.status === 'LOCKED' ? 'Vàng' : 'Xám'})
+                                  </option>
+                                ))}
+                              </select>
+
+                              <button
+                                type="button"
+                                disabled={simulating}
+                                onClick={() => handleSimulateAction('HOLD')}
+                                title="Giả lập khách khác đang ở bước thanh toán giữ ghế"
+                                style={{
+                                  padding: '5px 10px',
+                                  borderRadius: '6px',
+                                  border: '1px solid #f59e0b',
+                                  backgroundColor: isDark ? '#451a03' : '#fef3c7',
+                                  color: isDark ? '#fbbf24' : '#b45309',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: simulating ? 'not-allowed' : 'pointer',
+                                }}
+                              >
+                                [Vàng] Đổi Vàng (Đang TT)
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={simulating}
+                                onClick={() => handleSimulateAction('BOOK')}
+                                title="Giả lập khách khác đã thanh toán vé thành công"
+                                style={{
+                                  padding: '5px 10px',
+                                  borderRadius: '6px',
+                                  border: isDark ? '1px solid #475569' : '1px solid #94a3b8',
+                                  backgroundColor: isDark ? '#334155' : '#cbd5e1',
+                                  color: isDark ? '#cbd5e1' : '#334155',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: simulating ? 'not-allowed' : 'pointer',
+                                }}
+                              >
+                                [Bán] Đổi Xám (Đã Bán)
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={simulating}
+                                onClick={() => handleSimulateAction('RELEASE')}
+                                title="Mở lại ghế về trống"
+                                style={{
+                                  padding: '5px 10px',
+                                  borderRadius: '6px',
+                                  border: isDark ? '1px solid #1d4ed8' : '1px solid #3b82f6',
+                                  backgroundColor: isDark ? 'rgba(30,58,138,0.3)' : '#eff6ff',
+                                  color: isDark ? '#93c5fd' : '#1d4ed8',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: simulating ? 'not-allowed' : 'pointer',
+                                }}
+                              >
+                                [Trống] Trả Về Trống
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       <BusSeatMap
                         seats={tripDetail.seats}
-                        selectedSeatNumbers={selectedSeats}
+                        selectedSeatNumbers={isBookingClosed ? [] : selectedSeats}
                         onToggleSeat={handleToggleSeat}
                         myHeldSeats={myHeldSeatsCombined}
+                        disabled={isBookingClosed}
+                        disabledMessage={
+                          isDeparted
+                            ? 'Chuyến xe đã khởi hành. Sơ đồ ghế đang ở chế độ CHỈ XEM, hệ thống đã khóa hoàn toàn tính năng chọn ghế.'
+                            : isCutoff
+                            ? `Chuyến xe khởi hành trong vòng ${minutesUntilDep} phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, khóa chọn ghế hoàn toàn (chỉ xem thông tin). Quý khách vui lòng mua vé tại quầy bến xe!`
+                            : 'Chuyến xe đã đóng bán vé trực tuyến. Sơ đồ ghế đang ở chế độ CHỈ XEM.'
+                        }
                       />
                     </>
                   )}
@@ -1161,8 +1209,69 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
 
 
-                  {/* Bottom Action Footer for Selected Seats */}
-                  {selectedSeats.length > 0 && (
+                  {/* Bottom Action Footer */}
+                  {isBookingClosed ? (
+                    <div
+                      style={{
+                        backgroundColor: isDark ? '#1e293b' : '#fff7ed',
+                        border: `1.5px dashed ${isDark ? '#ea580c' : '#f97316'}`,
+                        borderRadius: '12px',
+                        padding: '16px 20px',
+                        marginTop: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '14px',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div
+                          style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '50%',
+                            backgroundColor: isDark ? 'rgba(234, 88, 12, 0.2)' : '#fed7aa',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Lock size={20} color="#ea580c" />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '15px', fontWeight: 800, color: isDark ? '#fb923c' : '#c2410c' }}>
+                            {isDeparted
+                              ? 'Chuyến Xe Đã Xuất Bến - Đã Đóng Bán Trực Tuyến'
+                              : `Chuyến Xe Đã Đóng Bán Vé Trực Tuyến (< 15 phút trước giờ chạy)`}
+                          </div>
+                          <div style={{ fontSize: '12.5px', color: isDark ? '#cbd5e1' : '#64748b', marginTop: '3px' }}>
+                            Hệ thống đã khóa toàn bộ thao tác chọn ghế và đặt vé online. Quý khách chỉ có thể xem thông tin lộ trình, điểm đón trả và chính sách.
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          backgroundColor: isDark ? '#334155' : '#cbd5e1',
+                          color: isDark ? '#94a3b8' : '#475569',
+                          padding: '12px 24px',
+                          borderRadius: '8px',
+                          fontWeight: 800,
+                          fontSize: '14px',
+                          cursor: 'not-allowed',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          userSelect: 'none',
+                        }}
+                      >
+                        <Lock size={16} />
+                        {isDeparted ? 'Đã Xuất Bến' : 'Đã Đóng Bán Trực Tuyến'}
+                      </div>
+                    </div>
+                  ) : selectedSeats.length > 0 ? (
                     <div
                       style={{
                         backgroundColor: isDark ? '#1e293b' : '#ffffff',
@@ -1197,30 +1306,23 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
 
                       <button
                         onClick={handleProceedBooking}
-                        disabled={isCutoff}
                         style={{
-                          backgroundColor: isCutoff
-                            ? (isDark ? '#334155' : '#94a3b8')
-                            : (localStorage.getItem('traveleasy_token') ? '#f97316' : '#2563eb'),
+                          backgroundColor: localStorage.getItem('traveleasy_token') ? '#f97316' : '#2563eb',
                           color: '#ffffff',
                           border: 'none',
                           padding: '12px 28px',
                           borderRadius: '8px',
                           fontWeight: 800,
                           fontSize: '15px',
-                          cursor: isCutoff ? 'not-allowed' : 'pointer',
-                          boxShadow: isCutoff
-                            ? 'none'
-                            : (localStorage.getItem('traveleasy_token') ? '0 4px 6px -1px rgba(249, 115, 22, 0.4)' : '0 4px 6px -1px rgba(37, 99, 235, 0.4)'),
+                          cursor: 'pointer',
+                          boxShadow: localStorage.getItem('traveleasy_token') ? '0 4px 6px -1px rgba(249, 115, 22, 0.4)' : '0 4px 6px -1px rgba(37, 99, 235, 0.4)',
                           transition: 'all 0.15s ease',
                         }}
                       >
-                        {isCutoff
-                          ? 'Đã Đóng Bán Trực Tuyến (< 15p)'
-                          : (localStorage.getItem('traveleasy_token') ? 'Tiếp Tục Đặt Vé ->' : 'Đăng Nhập Để Đặt Vé ->')}
+                        {localStorage.getItem('traveleasy_token') ? 'Tiếp Tục Đặt Vé ->' : 'Đăng Nhập Để Đặt Vé ->'}
                       </button>
                     </div>
-                  )}
+                  ) : null}
             </div>
           )}
 

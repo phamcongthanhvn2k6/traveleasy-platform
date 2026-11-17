@@ -106,7 +106,7 @@ export const Navbar: React.FC = () => {
         borderBottom: isDark ? '1px solid #1e293b' : '1px solid rgba(255,255,255,0.1)',
         transition: 'all 0.25s ease'
       }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ maxWidth: '1360px', margin: '0 auto', padding: '0 20px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ backgroundColor: '#fbbf24', color: '#1e3a8a', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 800 }}>MỚI</span>
             <span style={{ fontSize: '12.5px', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -250,8 +250,8 @@ export const Navbar: React.FC = () => {
       </div>
 
       {/* Main Branding & Navigation Bar */}
-      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+      <div style={{ maxWidth: '1360px', margin: '0 auto', padding: '0 20px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <div style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', padding: '8px', borderRadius: '10px', color: '#fff', display: 'flex', boxShadow: '0 2px 6px rgba(37,99,235,0.3)' }}>
               <Bus size={24} />
@@ -267,7 +267,7 @@ export const Navbar: React.FC = () => {
             </div>
           </Link>
 
-          <nav className="hide-on-tablet hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <nav className="hide-on-tablet hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             {/* 1. Chức năng Đặt Vé Xe */}
             <Link 
               to="/search" 

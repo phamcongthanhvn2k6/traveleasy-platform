@@ -28,6 +28,7 @@ public class AdminTripService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final PickupDropoffPointRepository pointRepository;
+    private final CompanyPricingRuleRepository pricingRuleRepository;
     private final TripService tripService;
 
     @Transactional
@@ -118,10 +119,26 @@ public class AdminTripService {
             }
         }
 
+        // BATCH EVALUATION: Nạp toàn bộ quy tắc giá vé động trong 1 truy vấn duy nhất để xóa bỏ hoàn toàn N+1 Network Query
+        Map<Long, List<CompanyPricingRule>> rulesByCompany = new HashMap<>();
+        if (pricingRuleRepository != null) {
+            List<CompanyPricingRule> activeRules = pricingRuleRepository.findByStatusOrderByPriorityDesc(PricingRuleStatus.ACTIVE);
+            for (CompanyPricingRule r : activeRules) {
+                if (r.getBusCompany() != null && r.getBusCompany().getId() != null) {
+                    rulesByCompany.computeIfAbsent(r.getBusCompany().getId(), k -> new ArrayList<>()).add(r);
+                }
+            }
+        }
+
         return trips.stream()
                 .map(t -> {
                     Long rId = t.getRoute() != null ? t.getRoute().getId() : null;
-                    return tripService.mapToTripResponse(t, routePointsMap.getOrDefault(rId, Collections.emptyList()));
+                    Long cId = t.getBusCompany() != null ? t.getBusCompany().getId() : null;
+                    return tripService.mapToTripResponse(
+                            t,
+                            routePointsMap.getOrDefault(rId, Collections.emptyList()),
+                            rulesByCompany.getOrDefault(cId, Collections.emptyList())
+                    );
                 })
                 .collect(java.util.stream.Collectors.toList());
     }

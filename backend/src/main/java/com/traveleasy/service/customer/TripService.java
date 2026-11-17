@@ -382,6 +382,10 @@ public class TripService {
     }
 
     public TripResponse mapToTripResponse(Trip trip, List<PickupDropoffPoint> routePoints) {
+        return mapToTripResponse(trip, routePoints, null);
+    }
+
+    public TripResponse mapToTripResponse(Trip trip, List<PickupDropoffPoint> routePoints, List<com.traveleasy.entity.CompanyPricingRule> rules) {
         List<PointResponse> pickups = routePoints != null ? routePoints.stream()
                 .filter(p -> p.getPointType() == PointType.PICKUP)
                 .map(this::mapToPointResponse)
@@ -393,7 +397,7 @@ public class TripService {
                 .collect(Collectors.toList()) : Collections.emptyList();
 
         com.traveleasy.dto.company.pricing.DynamicPricingResult pricing = (dynamicPricingService != null)
-                ? dynamicPricingService.calculateDynamicPrice(trip, LocalDateTime.now())
+                ? (rules != null ? dynamicPricingService.calculateDynamicPriceWithRules(trip, LocalDateTime.now(), rules) : dynamicPricingService.calculateDynamicPrice(trip, LocalDateTime.now()))
                 : com.traveleasy.dto.company.pricing.DynamicPricingResult.builder()
                         .originalPrice(trip.getPrice())
                         .calculatedPrice(trip.getPrice())

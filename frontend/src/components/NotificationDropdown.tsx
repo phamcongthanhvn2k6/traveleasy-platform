@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { toast } from '../context/ToastContext';
+import api from '../services/api';
 import {
   AppNotification,
   CUSTOMER_DEFAULT_NOTIFICATIONS,
@@ -78,6 +79,40 @@ export const NotificationDropdown: React.FC = () => {
     } catch {}
   };
 
+  // Fetch real notifications from Database API
+  const fetchBackendNotifications = async () => {
+    try {
+      const role = currentUser?.role || (isAdmin ? 'ADMIN' : isOperator ? 'OPERATOR' : 'CUSTOMER');
+      const res: any = await api.get('/notifications', { params: { role } });
+      const data = res?.data?.data || res?.data;
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped: AppNotification[] = data.map((d: any) => ({
+          id: String(d.id),
+          type: d.type || 'BOOKING',
+          role: d.role || role,
+          title: d.title,
+          message: d.message,
+          timestamp: d.timestamp || 'Vừa xong',
+          link: d.link || '/',
+          isRead: Boolean(d.isRead),
+          priority: d.priority || 'NORMAL',
+        }));
+        setNotifications(mapped);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(mapped));
+        } catch {}
+      }
+    } catch {
+      // Keep local cache if offline or unauthenticated
+    }
+  };
+
+  useEffect(() => {
+    fetchBackendNotifications();
+    const interval = setInterval(fetchBackendNotifications, 25000);
+    return () => clearInterval(interval);
+  }, [currentUser?.role, storageKey]);
+
   // Listen to real-time notification events
   useEffect(() => {
     const handleNewNotification = (e: any) => {
@@ -132,10 +167,14 @@ export const NotificationDropdown: React.FC = () => {
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  const handleMarkAllAsRead = () => {
+  const handleMarkAllAsRead = async () => {
     const updated = notifications.map((n) => ({ ...n, isRead: true }));
     saveNotifs(updated);
     toast.success('Đã đánh dấu tất cả là đã đọc', 'Thông Báo');
+    try {
+      const role = currentUser?.role || (isAdmin ? 'ADMIN' : isOperator ? 'OPERATOR' : 'CUSTOMER');
+      await api.patch('/notifications/read-all', null, { params: { role } });
+    } catch {}
   };
 
   const handleClearAll = () => {
@@ -143,15 +182,44 @@ export const NotificationDropdown: React.FC = () => {
     toast.info('Đã xóa tất cả thông báo', 'Thông Báo');
   };
 
-  const handleClickItem = (item: AppNotification) => {
+  const handleClickItem = async (item: AppNotification) => {
     const updated = notifications.map((n) => (n.id === item.id ? { ...n, isRead: true } : n));
     saveNotifs(updated);
     setIsOpen(false);
     navigate(item.link);
+    try {
+      if (!item.id.startsWith('cus-') && !item.id.startsWith('admin-') && !item.id.startsWith('op-')) {
+        await api.patch(`/notifications/${item.id}/read`);
+      }
+    } catch {}
   };
 
-  // Demo simulation trigger
-  const handleTriggerLiveDemo = () => {
+  // Demo simulation trigger (Persists directly to Database API + Audio chime)
+  const handleTriggerLiveDemo = async () => {
+    const role = currentUser?.role || (isAdmin ? 'ADMIN' : isOperator ? 'OPERATOR' : 'CUSTOMER');
+    try {
+      const res: any = await api.post('/notifications/test-live', null, { params: { role } });
+      const created = res?.data?.data || res?.data;
+      if (created && created.title) {
+        const liveItem: AppNotification = {
+          id: String(created.id || Date.now()),
+          type: created.type || 'BOOKING',
+          role: created.role || role,
+          title: created.title,
+          message: created.message,
+          timestamp: created.timestamp || 'Vừa xong',
+          link: created.link || '/',
+          isRead: false,
+          priority: created.priority || 'HIGH',
+        };
+        sendAppNotification(liveItem);
+        playNotificationChime();
+        return;
+      }
+    } catch {
+      // Fallback to local live generator if backend unreachable
+    }
+
     const demoItems = isOperator
       ? [
           {
@@ -193,7 +261,7 @@ export const NotificationDropdown: React.FC = () => {
             type: 'COMPANY' as const,
             role: 'ADMIN' as const,
             title: '🏢 Hồ sơ mở tuyến mới chờ phê duyệt',
-            message: 'Nhà xe Thành Bưởi vừa bổ sung giấy phép kinh doanh vận tải cho tuyến TP.HCM - Cần Thơ.',
+            message: 'Nhà xe Thành Bưởi vừa bổ sung giấy phép kinhdong vận tải cho tuyến TP.HCM - Cần Thơ.',
             link: '/admin/bus-companies',
             priority: 'NORMAL' as const,
           },
@@ -680,6 +748,37 @@ export const NotificationDropdown: React.FC = () => {
                 );
               })
             )}
+          </div>
+
+          {/* Footer Link to /notifications */}
+          <div
+            style={{
+              padding: '10px 16px',
+              borderTop: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+              backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+              textAlign: 'center',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/notifications');
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: isDark ? '#38bdf8' : '#2563eb',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              Xem tất cả thông báo của bạn <ChevronRight size={14} />
+            </button>
           </div>
         </div>
       )}
