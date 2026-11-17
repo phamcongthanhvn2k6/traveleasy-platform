@@ -1,0 +1,78 @@
+version: 2.1
+
+jobs:
+  backend-test-and-build:
+    docker:
+      - image: cimg/openjdk:21.0
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2"
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Gradle cache
+          keys:
+            - gradle-cache-v1-{{ checksum "backend/build.gradle" }}
+            - gradle-cache-v1-
+      - run:
+          name: Grant Gradle execute permission
+          command: |
+            cd backend
+            chmod +x gradlew
+      - run:
+          name: Run Backend Unit & Integration Tests (Spring Boot)
+          command: |
+            cd backend
+            ./gradlew test --no-daemon
+      - run:
+          name: Build Backend JAR (bootJar)
+          command: |
+            cd backend
+            ./gradlew bootJar --no-daemon -x test
+      - save_cache:
+          name: Save Gradle cache
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+          key: gradle-cache-v1-{{ checksum "backend/build.gradle" }}
+      - store_test_results:
+          path: backend/build/test-results/test
+      - store_artifacts:
+          path: backend/build/libs
+          destination: backend-artifacts
+
+  frontend-test-and-build:
+    docker:
+      - image: cimg/node:20.18
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore NPM cache
+          keys:
+            - node-deps-v1-{{ checksum "frontend/package-lock.json" }}
+            - node-deps-v1-
+      - run:
+          name: Install Frontend Dependencies
+          command: |
+            cd frontend
+            npm ci || npm install --include=optional
+      - save_cache:
+          name: Save NPM cache
+          paths:
+            - frontend/node_modules
+          key: node-deps-v1-{{ checksum "frontend/package-lock.json" }}
+      - run:
+          name: TypeCheck & Build Frontend (React Vite)
+          command: |
+            cd frontend
+            npm run build
+      - store_artifacts:
+          path: frontend/dist
+          destination: frontend-dist
+
+workflows:
+  version: 2
+  traveleasy-ci-pipeline:
+    jobs:
+      - backend-test-and-build
+      - frontend-test-and-build
