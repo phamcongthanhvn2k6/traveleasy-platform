@@ -119,6 +119,8 @@ public class SecurityConfig {
         ));
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "https://*.traveleasy.vn",
+                "https://*.workers.dev",
+                "https://*.nip.io",
                 "http://localhost:[*]",
                 "http://127.0.0.1:[*]"
         ));
