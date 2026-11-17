@@ -31,8 +31,8 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
                 {review.userName.charAt(0)}
               </div>
             )}
-            {review.verifiedBooking && (
-              <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5 border-2 border-white shadow-sm">
+            {(review.verifiedBooking || Boolean(review.bookingCode)) && (
+              <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5 border-2 border-white shadow-sm" title="Khách đã hoàn thành chuyến đi">
                 <CheckCircle size={12} />
               </div>
             )}
@@ -67,10 +67,10 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
         </div>
 
         {/* Verified Trip Badge */}
-        {review.verifiedBooking && (
+        {(review.verifiedBooking || Boolean(review.bookingCode)) && (
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shrink-0 self-start sm:self-center">
             <CheckCircle size={14} className="text-emerald-600 shrink-0" />
-            <span>Đã đi tuyến {review.route} ({review.companyName})</span>
+            <span>Khách đã hoàn thành chuyến đi {review.bookingCode ? `• Mã vé: ${review.bookingCode}` : `(${review.companyName})`}</span>
           </div>
         )}
       </div>
