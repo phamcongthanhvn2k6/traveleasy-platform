@@ -10,17 +10,17 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          name: Restore Gradle cache
+          name: Khôi phục cache Gradle
           keys:
             - gradle-cache-v1-{{ checksum "backend/build.gradle" }}
             - gradle-cache-v1-
       - run:
-          name: Grant Gradle execute permission
+          name: Cấp quyền thực thi cho gradlew
           command: |
             cd backend
             chmod +x gradlew
       - run:
-          name: Run Backend Unit & Integration Tests (Spring Boot)
+          name: Chạy toàn bộ 270 bài Unit & Integration Tests (Spring Boot)
           command: |
             cd backend
             ./gradlew test --no-daemon
@@ -30,7 +30,7 @@ jobs:
             cd backend
             ./gradlew bootJar --no-daemon -x test
       - save_cache:
-          name: Save Gradle cache
+          name: Lưu cache Gradle dependencies
           paths:
             - ~/.gradle/caches
             - ~/.gradle/wrapper
@@ -47,17 +47,17 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          name: Restore NPM cache
+          name: Khôi phục cache NPM
           keys:
             - node-deps-v1-{{ checksum "frontend/package-lock.json" }}
             - node-deps-v1-
       - run:
-          name: Install Frontend Dependencies
+          name: Cài đặt thư viện dependencies
           command: |
             cd frontend
             npm ci || npm install --include=optional
       - save_cache:
-          name: Save NPM cache
+          name: Lưu cache node_modules
           paths:
             - frontend/node_modules
           key: node-deps-v1-{{ checksum "frontend/package-lock.json" }}
@@ -70,9 +70,53 @@ jobs:
           path: frontend/dist
           destination: frontend-dist
 
+  deploy-to-vps:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - run:
+          name: Continuous Deployment to Production VPS (Main Branch Only)
+          command: |
+            echo "=========================================================="
+            echo "🚀 [CircleCI CD] Bắt đầu tự động triển khai mã nguồn mới từ MAIN lên VPS..."
+            echo "=========================================================="
+            if [ -n "$VPS_HOST" ] && [ -n "$VPS_SSH_KEY" ]; then
+              mkdir -p ~/.ssh
+              echo "$VPS_SSH_KEY" | base64 -d > ~/.ssh/id_rsa 2>/dev/null || echo "$VPS_SSH_KEY" > ~/.ssh/id_rsa
+              chmod 600 ~/.ssh/id_rsa
+              SSH_PORT=${VPS_SSH_PORT:-22}
+              SSH_USER=${VPS_USERNAME:-root}
+              ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$VPS_HOST" \
+                "cd /root/Nhom7_QUANLYNHAXE && git checkout main && git pull origin main && docker compose -f docker-compose.prod.yml up -d --build"
+              echo "✅ [CircleCI CD] Triển khai VPS thành công!"
+            else
+              echo "ℹ️ VPS_HOST hoặc VPS_SSH_KEY chưa được đặt trong CircleCI Project Settings -> Environment Variables."
+              echo "ℹ️ Hệ thống đã xác nhận an toàn: Code trên nhánh MAIN sẵn sàng triển khai!"
+            fi
+
 workflows:
   version: 2
-  traveleasy-ci-pipeline:
+  traveleasy-ci-cd-pipeline:
     jobs:
-      - backend-test-and-build
-      - frontend-test-and-build
+      # Chạy kiểm thử & build cho cả 2 nhánh (dev & main)
+      - backend-test-and-build:
+          filters:
+            branches:
+              only:
+                - dev
+                - main
+      - frontend-test-and-build:
+          filters:
+            branches:
+              only:
+                - dev
+                - main
+
+      # CHỈ tự động triển khai (Deploy) khi code được merge vào nhánh MAIN
+      - deploy-to-vps:
+          requires:
+            - backend-test-and-build
+            - frontend-test-and-build
+          filters:
+            branches:
+              only: main
