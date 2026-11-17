@@ -18,7 +18,7 @@ export const BusSeatMap: React.FC<Props> = ({ seats, selectedSeatNumbers, onTogg
   const renderSeat = (seat: TripSeat) => {
     const isMyHeld = myHeldSeats.includes(seat.seatNumber);
     const isSelected = selectedSeatNumbers.includes(seat.seatNumber);
-    const isBooked = seat.status === 'BOOKED';
+    const isBooked = seat.status === 'BOOKED' && !isMyHeld;
     const isLocked = seat.status === 'LOCKED' && !isMyHeld;
 
     let bg = isDark ? '#1e293b' : '#ffffff';

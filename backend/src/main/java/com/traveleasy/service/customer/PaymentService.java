@@ -35,6 +35,35 @@ public class PaymentService {
     private final VnPayConfig vnPayConfig;
     private final PayOsConfig payOsConfig;
     private final PayOsService payOsService;
+    private final com.traveleasy.repository.TripSeatRepository tripSeatRepository;
+    private final com.traveleasy.service.realtime.SeatRealtimeService seatRealtimeService;
+
+    private void finalizeSeatsAndTickets(Booking booking) {
+        booking.setStatus(BookingStatus.CONFIRMED);
+        bookingRepository.save(booking);
+
+        List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
+        tickets.forEach(t -> t.setStatus(TicketStatus.ISSUED));
+        ticketRepository.saveAll(tickets);
+
+        if (booking.getSeatNumbers() != null && booking.getTrip() != null && tripSeatRepository != null) {
+            List<String> seatCodes = Arrays.stream(booking.getSeatNumbers().split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+            if (!seatCodes.isEmpty()) {
+                List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(booking.getTrip().getId(), seatCodes);
+                for (TripSeat s : seats) {
+                    s.setStatus(SeatStatus.BOOKED);
+                }
+                tripSeatRepository.saveAll(seats);
+                if (seatRealtimeService != null) {
+                    seatRealtimeService.broadcastBooked(booking.getTrip().getId(), seatCodes);
+                    seatRealtimeService.removeSeatHolders(booking.getTrip().getId(), seatCodes);
+                }
+            }
+        }
+    }
 
     @Transactional
     public PaymentInitResponse initiatePayment(PaymentInitRequest request, String ipAddress) {
@@ -238,13 +267,8 @@ public class PaymentService {
             transaction.setPayDate(LocalDateTime.now());
             paymentTransactionRepository.save(transaction);
 
-            // Kích hoạt vé & Đơn đặt vé
-            booking.setStatus(BookingStatus.CONFIRMED);
-            bookingRepository.save(booking);
-
-            List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
-            tickets.forEach(t -> t.setStatus(TicketStatus.ISSUED));
-            ticketRepository.saveAll(tickets);
+            // Kích hoạt vé, Đơn đặt vé & Chuyển ghế sang BOOKED
+            finalizeSeatsAndTickets(booking);
 
             log.info("VNPAY Callback: Thanh toán thành công cho đơn {}", booking.getBookingCode());
 
@@ -343,13 +367,8 @@ public class PaymentService {
         transaction.setPayDate(LocalDateTime.now());
         paymentTransactionRepository.save(transaction);
 
-        // Kích hoạt vé
-        booking.setStatus(BookingStatus.CONFIRMED);
-        bookingRepository.save(booking);
-
-        List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
-        tickets.forEach(t -> t.setStatus(TicketStatus.ISSUED));
-        ticketRepository.saveAll(tickets);
+        // Kích hoạt vé, Đơn đặt vé & Chuyển ghế sang BOOKED
+        finalizeSeatsAndTickets(booking);
 
         log.info("VietQR Confirm: Xác nhận thanh toán thành công cho đơn {}", bookingCode);
 
@@ -428,14 +447,9 @@ public class PaymentService {
         transaction.setPayDate(LocalDateTime.now());
         paymentTransactionRepository.save(transaction);
 
-        // Kích hoạt trạng thái đơn đặt vé
-        booking.setStatus(BookingStatus.CONFIRMED);
+        // Kích hoạt trạng thái đơn đặt vé & Chuyển ghế sang BOOKED
         booking.setPaymentMethod(method);
-        bookingRepository.save(booking);
-
-        List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
-        tickets.forEach(t -> t.setStatus(TicketStatus.ISSUED));
-        ticketRepository.saveAll(tickets);
+        finalizeSeatsAndTickets(booking);
 
         log.info("Mock Payment Demo: Giao dịch giả lập thành công cho đơn {} qua cổng {}", bookingCode, method);
 

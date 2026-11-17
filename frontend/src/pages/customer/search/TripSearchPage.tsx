@@ -609,9 +609,16 @@ export const TripSearchPage: React.FC = () => {
       }
       sessionStorage.removeItem('traveleasy_checkout_data');
       sessionStorage.removeItem('traveleasy_hold_expiry');
+      sessionStorage.removeItem('traveleasy_pending_booking');
+      sessionStorage.removeItem('traveleasy_payment_init');
       localStorage.removeItem('traveleasy_checkout_data');
       localStorage.removeItem('traveleasy_hold_expiry');
+      localStorage.removeItem('traveleasy_pending_booking');
+      localStorage.removeItem('traveleasy_payment_init');
       setGlobalHold(null);
+      // Xóa client cache tìm kiếm và làm mới danh sách chuyến ngay lập tức
+      tripSearchClientCache.clear();
+      fetchTrips(origin, destination, date);
     }
   };
 

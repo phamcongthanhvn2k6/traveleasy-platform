@@ -23,8 +23,16 @@ import java.util.*;
 public class PayOsService {
 
     private final PayOsConfig payOsConfig;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = createRestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static RestTemplate createRestTemplate() {
+        org.springframework.http.client.SimpleClientHttpRequestFactory factory =
+                new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(2500); // 2.5s connect timeout
+        factory.setReadTimeout(3000);    // 3.0s read timeout
+        return new RestTemplate(factory);
+    }
 
     private static final String PAYOS_CREATE_PAYMENT_URL = "https://api-merchant.payos.vn/v2/payment-requests";
 
