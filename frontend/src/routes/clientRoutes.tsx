@@ -7,6 +7,7 @@ import { TicketLookupPage } from '../pages/customer/ticket-lookup/TicketLookupPa
 import { CustomerAuthPage } from '../pages/customer/auth/CustomerAuthPage';
 import { MyTicketsPage } from '../pages/customer/my-tickets/MyTicketsPage';
 import { UserProfilePage } from '../pages/customer/profile/UserProfilePage';
+import { NotificationsPage } from '../pages/customer/notifications/NotificationsPage';
 import { PolicyPage } from '../pages/customer/policy/PolicyPage';
 import { SchedulePage } from '../pages/customer/schedule/SchedulePage';
 import { PromotionsPage } from '../pages/customer/promotions/PromotionsPage';
@@ -49,6 +50,7 @@ export const ClientRoutes: React.FC = () => {
 
       {/* Chức năng 8: Hồ sơ cá nhân & Sổ tay hành khách thân quen */}
       <Route path="/profile" element={<UserProfilePage />} />
+      <Route path="/notifications" element={<NotificationsPage />} />
 
       {/* Chính sách, Quy chế hoạt động & Câu hỏi thường gặp */}
       <Route path="/policy" element={<PolicyPage />} />

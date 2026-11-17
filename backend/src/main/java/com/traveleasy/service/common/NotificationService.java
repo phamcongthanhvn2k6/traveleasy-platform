@@ -49,9 +49,15 @@ public class NotificationService {
 
     @Transactional
     public NotificationResponse createNotification(String type, String targetRole, String title, String message, String link, String priority) {
+        return createNotification(type, targetRole, null, title, message, link, priority);
+    }
+
+    @Transactional
+    public NotificationResponse createNotification(String type, String targetRole, String recipientEmail, String title, String message, String link, String priority) {
         Notification notification = Notification.builder()
                 .type(type != null ? type : "SYSTEM")
                 .targetRole(targetRole != null ? targetRole : "ALL")
+                .recipientEmail(recipientEmail != null && !recipientEmail.isBlank() ? recipientEmail.trim().toLowerCase() : null)
                 .title(title)
                 .message(message)
                 .link(link != null ? link : "/")
@@ -62,6 +68,13 @@ public class NotificationService {
 
         Notification saved = notificationRepository.save(notification);
         return mapToResponse(saved);
+    }
+
+    @Transactional
+    public void deleteNotification(Long id) {
+        if (id != null && notificationRepository.existsById(id)) {
+            notificationRepository.deleteById(id);
+        }
     }
 
     @Transactional

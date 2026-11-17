@@ -4,7 +4,7 @@
 
 export interface AppNotification {
   id: string;
-  type: 'SECURITY' | 'COMPANY' | 'FINANCE' | 'REVIEW' | 'BOOKING' | 'CHECKIN' | 'TRIP';
+  type: 'SECURITY' | 'COMPANY' | 'FINANCE' | 'REVIEW' | 'BOOKING' | 'CHECKIN' | 'TRIP' | 'SYSTEM' | string;
   role: 'ALL' | 'OPERATOR' | 'ADMIN' | 'CUSTOMER';
   title: string;
   message: string;

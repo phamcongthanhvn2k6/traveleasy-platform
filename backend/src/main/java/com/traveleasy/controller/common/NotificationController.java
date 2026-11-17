@@ -52,4 +52,26 @@ public class NotificationController {
             @RequestParam(defaultValue = "ADMIN") String role) {
         return ApiResponse.success("Bắn thông báo test live thành công", notificationService.createTestNotification(role));
     }
+
+    @PostMapping("/send")
+    @Operation(summary = "Quản trị viên gửi thông báo đến người dùng hoặc toàn hệ thống")
+    public ApiResponse<NotificationResponse> sendNotification(@RequestBody com.traveleasy.dto.notification.SendNotificationRequest request) {
+        NotificationResponse res = notificationService.createNotification(
+                request.getType(),
+                request.getTargetRole(),
+                request.getRecipientEmail(),
+                request.getTitle(),
+                request.getMessage(),
+                request.getLink(),
+                request.getPriority()
+        );
+        return ApiResponse.success("Đã gửi thông báo thành công", res);
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Xóa thông báo")
+    public ApiResponse<Void> deleteNotification(@PathVariable Long id) {
+        notificationService.deleteNotification(id);
+        return ApiResponse.success("Đã xóa thông báo", null);
+    }
 }

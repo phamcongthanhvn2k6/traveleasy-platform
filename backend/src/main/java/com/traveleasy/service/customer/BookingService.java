@@ -38,6 +38,7 @@ public class BookingService {
     private final TripService tripService;
     private final SeatRealtimeService seatRealtimeService;
     private final com.traveleasy.service.company.DynamicPricingService dynamicPricingService;
+    private final com.traveleasy.service.common.NotificationService notificationService;
 
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats", "trips_search"}, allEntries = true)
@@ -316,6 +317,26 @@ public class BookingService {
         List<String> bookedCodes = requestedSeats.stream().map(TripSeat::getSeatCode).collect(Collectors.toList());
         seatRealtimeService.broadcastBooked(trip.getId(), bookedCodes);
 
+        // Tự động lưu thông báo đặt vé thành công cho khách hàng
+        if (notificationService != null && user != null && user.getEmail() != null) {
+            try {
+                String origin = trip.getRoute() != null ? trip.getRoute().getDepartureLocation() : "";
+                String dest = trip.getRoute() != null ? trip.getRoute().getArrivalLocation() : "";
+                notificationService.createNotification(
+                        "BOOKING",
+                        "CUSTOMER",
+                        user.getEmail(),
+                        "🎟️ Đặt vé thành công - Mã đơn " + bookingCode,
+                        String.format("Đơn vé %s (%d vé, ghế: %s) tuyến %s đi %s đã được ghi nhận thành công.",
+                                bookingCode, requestedSeats.size(), String.join(", ", bookedCodes), origin, dest),
+                        "/lookup?code=" + bookingCode,
+                        "HIGH"
+                );
+            } catch (Exception e) {
+                log.warn("Không thể lưu thông báo đặt vé: {}", e.getMessage());
+            }
+        }
+
         return mapToBookingResponse(savedBooking, tickets);
     }
 
@@ -476,6 +497,26 @@ public class BookingService {
         // Broadcast thời gian thực ghế đã được giải phóng (Màu Trắng - AVAILABLE)
         seatRealtimeService.broadcastReleased(trip.getId(), seatCodes);
         seatRealtimeService.removeSeatHolders(trip.getId(), seatCodes);
+
+        // Tự động lưu thông báo hủy vé cho khách hàng
+        if (notificationService != null && booking.getUser() != null && booking.getUser().getEmail() != null) {
+            try {
+                String origin = trip.getRoute() != null ? trip.getRoute().getDepartureLocation() : "";
+                String dest = trip.getRoute() != null ? trip.getRoute().getArrivalLocation() : "";
+                notificationService.createNotification(
+                        "BOOKING",
+                        "CUSTOMER",
+                        booking.getUser().getEmail(),
+                        "🔄 Hủy vé thành công - Mã đơn " + booking.getBookingCode(),
+                        String.format("Đơn vé %s tuyến %s - %s đã được hủy thành công. Hệ thống đã giải phóng ghế %s.",
+                                booking.getBookingCode(), origin, dest, String.join(", ", seatCodes)),
+                        "/lookup?code=" + booking.getBookingCode(),
+                        "NORMAL"
+                );
+            } catch (Exception e) {
+                log.warn("Không thể lưu thông báo hủy vé: {}", e.getMessage());
+            }
+        }
 
         return mapToBookingResponse(booking, tickets);
     }

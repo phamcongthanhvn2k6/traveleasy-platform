@@ -749,6 +749,37 @@ export const NotificationDropdown: React.FC = () => {
               })
             )}
           </div>
+
+          {/* Footer Link to /notifications */}
+          <div
+            style={{
+              padding: '10px 16px',
+              borderTop: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+              backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+              textAlign: 'center',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/notifications');
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: isDark ? '#38bdf8' : '#2563eb',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              Xem tất cả thông báo của bạn <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
       )}
     </div>
