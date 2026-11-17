@@ -42,23 +42,29 @@ export const BoardingPassModal: React.FC<BoardingPassModalProps> = ({
     window.print();
   };
 
-  // S415: Tải ảnh vé / mã QR về máy (hỗ trợ mobile & desktop)
-  const handleDownloadQr = (ticketCode: string, qrUrl: string) => {
-    fetch(qrUrl)
-      .then(res => res.blob())
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Ve-QR-${ticketCode}.svg`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      })
-      .catch(() => {
-        window.open(qrUrl, '_blank');
-      });
+  // S415 Fix: Tải ảnh vé / mã QR về máy (hỗ trợ mobile & desktop, tránh popup blocker)
+  const handleDownloadQr = async (ticketCode: string, qrUrl: string) => {
+    try {
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `Ve-Xe-TravelEasy-${ticketCode}.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {
+      // Fallback không dùng window.open để tránh bị popup blocker trên mobile Safari/Chrome
+      const link = document.createElement('a');
+      link.href = qrUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (
@@ -247,10 +253,10 @@ export const BoardingPassModal: React.FC<BoardingPassModalProps> = ({
           }}
         >
           {ticketsToRender.map((ticket, idx) => {
-            // S415: Mã QR render chuẩn kích thước 200x200px với mã hash bảo mật
-            const qrHash = ticket.qrCodeHash || `SEC-${ticket.ticketCode}-${ticket.seatNumber}`;
-            const qrData = `TRAVELEASY:${booking.bookingCode}:${ticket.ticketCode}:${ticket.seatNumber}:${qrHash}`;
-            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&format=svg&color=0-0-0&bgcolor=255-255-255&data=${encodeURIComponent(qrData)}`;
+            // S415 Fix: Dùng trực tiếp hash hoặc mã vé để Backend findByCodeOrQrHash tìm thấy ngay lập tức khi soát vé
+            const qrCodeValue = ticket.qrCodeHash || ticket.ticketCode;
+            const qrHash = qrCodeValue;
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&format=svg&color=0-0-0&bgcolor=255-255-255&data=${encodeURIComponent(qrCodeValue)}`;
 
             return (
               <div
