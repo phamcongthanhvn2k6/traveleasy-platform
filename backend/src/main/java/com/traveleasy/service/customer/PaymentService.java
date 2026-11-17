@@ -143,10 +143,9 @@ public class PaymentService {
 
             case COD:
             default:
-                // Thanh toán tiền mặt khi lên xe
+                // Thanh toán tiền mặt khi lên xe: Xác nhận đơn, kích hoạt vé và cập nhật ghế BOOKED
                 transaction.setStatus(PaymentStatus.PENDING);
-                booking.setStatus(BookingStatus.CONFIRMED);
-                bookingRepository.save(booking);
+                finalizeSeatsAndTickets(booking);
                 break;
         }
 

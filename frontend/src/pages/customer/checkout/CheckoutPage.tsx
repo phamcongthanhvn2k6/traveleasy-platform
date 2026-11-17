@@ -766,7 +766,13 @@ export const CheckoutPage: React.FC = () => {
           bankDetails={paymentInitData?.bankDetails}
           expiresAt={holdExpiryTimestamp}
           onSuccess={handleQrSuccess}
-          onClose={() => setShowQrModal(false)}
+          onClose={() => {
+            setShowQrModal(false);
+            if (Date.now() >= holdExpiryTimestamp) {
+              cleanupPendingSession();
+              navigate('/search');
+            }
+          }}
         />
       )}
 

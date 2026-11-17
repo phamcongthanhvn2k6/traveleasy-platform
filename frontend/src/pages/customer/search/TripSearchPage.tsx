@@ -623,6 +623,14 @@ export const TripSearchPage: React.FC = () => {
   };
 
   const handleOpenBooking = (trip: Trip, seats: string[], points: any) => {
+    // Nếu khách đang có phiên giữ chỗ trên một chuyến khác, tự động nhả ghế chuyến cũ
+    if (globalHold && globalHold.trip.id !== trip.id) {
+      api.post(`/trips/${globalHold.trip.id}/seats/release`, {
+        seatCodes: globalHold.seats,
+      }).catch(() => {});
+      setGlobalHold(null);
+    }
+
     const token = localStorage.getItem('traveleasy_token');
     const expiryTimestamp = Date.now() + 600 * 1000;
     const checkoutPayload = { trip, selectedSeats: seats, points, holdExpiry: expiryTimestamp };
