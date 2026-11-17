@@ -646,8 +646,30 @@ public class BookingService {
             }
         }
 
+        Set<Long> routeIds = bookings.stream()
+                .map(b -> b.getTrip() != null && b.getTrip().getRoute() != null ? b.getTrip().getRoute().getId() : null)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, List<PickupDropoffPoint>> routePointsMap = new HashMap<>();
+        if (!routeIds.isEmpty() && pointRepository != null) {
+            List<PickupDropoffPoint> allPoints = pointRepository.findByRouteIdInOrderByDisplayOrderAsc(routeIds);
+            for (PickupDropoffPoint p : allPoints) {
+                if (p.getRoute() != null && p.getRoute().getId() != null) {
+                    routePointsMap.computeIfAbsent(p.getRoute().getId(), k -> new ArrayList<>()).add(p);
+                }
+            }
+        }
+
         return bookings.stream()
-                .map(b -> mapToBookingResponse(b, ticketsByBooking.getOrDefault(b.getId(), Collections.emptyList())))
+                .map(b -> {
+                    Long rId = b.getTrip() != null && b.getTrip().getRoute() != null ? b.getTrip().getRoute().getId() : null;
+                    return mapToBookingResponse(
+                            b,
+                            ticketsByBooking.getOrDefault(b.getId(), Collections.emptyList()),
+                            routePointsMap.getOrDefault(rId, Collections.emptyList())
+                    );
+                })
                 .collect(Collectors.toList());
     }
 
@@ -667,8 +689,30 @@ public class BookingService {
             }
         }
 
+        Set<Long> routeIds = bookings.stream()
+                .map(b -> b.getTrip() != null && b.getTrip().getRoute() != null ? b.getTrip().getRoute().getId() : null)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, List<PickupDropoffPoint>> routePointsMap = new HashMap<>();
+        if (!routeIds.isEmpty() && pointRepository != null) {
+            List<PickupDropoffPoint> allPoints = pointRepository.findByRouteIdInOrderByDisplayOrderAsc(routeIds);
+            for (PickupDropoffPoint p : allPoints) {
+                if (p.getRoute() != null && p.getRoute().getId() != null) {
+                    routePointsMap.computeIfAbsent(p.getRoute().getId(), k -> new ArrayList<>()).add(p);
+                }
+            }
+        }
+
         return bookings.stream()
-                .map(b -> mapToBookingResponse(b, ticketsByBooking.getOrDefault(b.getId(), Collections.emptyList())))
+                .map(b -> {
+                    Long rId = b.getTrip() != null && b.getTrip().getRoute() != null ? b.getTrip().getRoute().getId() : null;
+                    return mapToBookingResponse(
+                            b,
+                            ticketsByBooking.getOrDefault(b.getId(), Collections.emptyList()),
+                            routePointsMap.getOrDefault(rId, Collections.emptyList())
+                    );
+                })
                 .collect(Collectors.toList());
     }
 

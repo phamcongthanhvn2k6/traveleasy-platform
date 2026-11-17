@@ -631,7 +631,9 @@ public class AdminManagementService {
         if (request.getAddress() != null) loc.setAddress(request.getAddress());
         if (request.getRoutesCount() != null) loc.setRoutesCount(request.getRoutesCount());
         if (request.getStatus() != null) loc.setStatus(request.getStatus().toUpperCase());
-        return locationRepository.save(loc);
+        Location saved = locationRepository.save(loc);
+        logAction("admin@traveleasy.vn", "UPDATE_LOCATION", "locations #" + id, "-", "{\"name\": \"" + saved.getName() + "\", \"status\": \"" + saved.getStatus() + "\"}");
+        return saved;
     }
 
     @Transactional

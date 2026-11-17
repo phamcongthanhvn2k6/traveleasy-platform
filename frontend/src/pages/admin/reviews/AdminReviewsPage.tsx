@@ -77,7 +77,7 @@ export const AdminReviewsPage: React.FC = () => {
   }, []);
 
   // Xử lý cập nhật trạng thái báo cáo (APPROVED, REJECTED, RESOLVED)
-  const handleUpdateStatus = async (id: number, nextStatus: 'APPROVED' | 'REJECTED' | 'RESOLVED') => {
+  const handleUpdateStatus = async (id: number, nextStatus: 'APPROVED' | 'REJECTED' | 'RESOLVED' | 'PENDING') => {
     setUpdatingId(id);
     try {
       await api.patch(`/admin/review-reports/${id}/status?status=${nextStatus}`);
@@ -98,6 +98,11 @@ export const AdminReviewsPage: React.FC = () => {
         toast.warning(
           `Đã bác bỏ báo cáo #${id}: Xác nhận bài đánh giá hợp lệ, giữ nguyên hiển thị.`,
           'Đã Bác Bỏ Báo Cáo'
+        );
+      } else if (nextStatus === 'PENDING') {
+        toast.info(
+          `Đã chuyển báo cáo #${id} về trạng thái chờ xử lý.`,
+          'Khôi Phục Trạng Thái'
         );
       } else {
         toast.success(
@@ -676,53 +681,73 @@ export const AdminReviewsPage: React.FC = () => {
                         <Eye size={13} /> Xem chi tiết
                       </button>
 
-                      {/* Nút Duyệt ẩn (nếu chưa duyệt) */}
-                      {item.status !== 'APPROVED' && (
-                        <button
-                          disabled={updatingId === item.id}
-                          onClick={() => handleUpdateStatus(item.id, 'APPROVED')}
-                          title="Duyệt báo cáo & Ẩn đánh giá vi phạm này"
-                          style={{
-                            backgroundColor: '#faf5ff',
-                            color: '#7e22ce',
-                            border: '1px solid #e9d5ff',
-                            padding: '6px 8px',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
-                          <ShieldAlert size={13} /> Ẩn vi phạm
-                        </button>
-                      )}
+                      {/* Nút Ẩn vi phạm / Bỏ ẩn */}
+                      <button
+                        disabled={updatingId === item.id}
+                        onClick={() => handleUpdateStatus(item.id, item.status === 'APPROVED' ? 'PENDING' : 'APPROVED')}
+                        title={item.status === 'APPROVED' ? 'Bỏ ẩn vi phạm (Khôi phục hiển thị đánh giá)' : 'Duyệt báo cáo & Ẩn đánh giá vi phạm này'}
+                        style={{
+                          backgroundColor: item.status === 'APPROVED' ? '#ecfdf5' : '#faf5ff',
+                          color: item.status === 'APPROVED' ? '#059669' : '#7e22ce',
+                          border: `1px solid ${item.status === 'APPROVED' ? '#a7f3d0' : '#e9d5ff'}`,
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          height: '32px',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.15s ease',
+                          boxSizing: 'border-box'
+                        }}
+                      >
+                        {item.status === 'APPROVED' ? (
+                          <>
+                            <Check size={13} /> Bỏ ẩn
+                          </>
+                        ) : (
+                          <>
+                            <ShieldAlert size={13} /> Ẩn vi phạm
+                          </>
+                        )}
+                      </button>
 
-                      {/* Nút Bác bỏ (nếu chưa bác bỏ) */}
-                      {item.status !== 'REJECTED' && (
-                        <button
-                          disabled={updatingId === item.id}
-                          onClick={() => handleUpdateStatus(item.id, 'REJECTED')}
-                          title="Bác bỏ báo cáo (Đánh giá hợp lệ, giữ nguyên)"
-                          style={{
-                            backgroundColor: '#f1f5f9',
-                            color: '#475569',
-                            border: '1px solid #cbd5e1',
-                            padding: '6px 8px',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                          }}
-                        >
-                          <XCircle size={13} /> Bác bỏ
-                        </button>
-                      )}
+                      {/* Nút Bác bỏ / Bỏ bác bỏ */}
+                      <button
+                        disabled={updatingId === item.id}
+                        onClick={() => handleUpdateStatus(item.id, item.status === 'REJECTED' ? 'PENDING' : 'REJECTED')}
+                        title={item.status === 'REJECTED' ? 'Bỏ bác bỏ (Đưa về trạng thái chờ kiểm duyệt)' : 'Bác bỏ báo cáo (Đánh giá hợp lệ, giữ nguyên)'}
+                        style={{
+                          backgroundColor: item.status === 'REJECTED' ? '#eff6ff' : '#f1f5f9',
+                          color: item.status === 'REJECTED' ? '#2563eb' : '#475569',
+                          border: `1px solid ${item.status === 'REJECTED' ? '#bfdbfe' : '#cbd5e1'}`,
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          height: '32px',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.15s ease',
+                          boxSizing: 'border-box'
+                        }}
+                      >
+                        {item.status === 'REJECTED' ? (
+                          <>
+                            <Check size={13} /> Bỏ bác bỏ
+                          </>
+                        ) : (
+                          <>
+                            <XCircle size={13} /> Bác bỏ
+                          </>
+                        )}
+                      </button>
                     </div>
                   </td>
                 </tr>
