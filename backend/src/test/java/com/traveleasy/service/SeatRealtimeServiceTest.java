@@ -28,6 +28,9 @@ class SeatRealtimeServiceTest {
     @Mock
     private TripSeatRepository tripSeatRepository;
 
+    @Mock
+    private com.traveleasy.repository.TripRepository tripRepository;
+
     @InjectMocks
     private SeatRealtimeService seatRealtimeService;
 

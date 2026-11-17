@@ -20,15 +20,6 @@ export const PaymentMethodSelector: React.FC<Props> = ({ selectedMethod, onChang
       iconBg: '#ecfdf5',
     },
     {
-      id: 'VNPAY' as PaymentMethodType,
-      name: 'Cổng VNPAY (Thẻ ATM nội địa, Thẻ quốc tế Visa/Master, VNPAY-QR)',
-      desc: 'Cổng thanh toán điện tử chuẩn Ngân hàng Nhà nước. Hỗ trợ thẻ ATM nội địa 36 ngân hàng và thẻ Visa/MasterCard bảo mật 3D-Secure OTP.',
-      badge: 'Cổng Quốc Gia',
-      icon: CreditCard,
-      iconColor: '#dc2626',
-      iconBg: '#fef2f2',
-    },
-    {
       id: 'COD' as PaymentMethodType,
       name: 'Thanh toán tiền mặt khi lên xe',
       desc: 'Nhận mã đặt vé trước, xuất trình mã vé điện tử và thanh toán trực tiếp cho tài xế hoặc phụ xe khi có mặt tại điểm đón.',

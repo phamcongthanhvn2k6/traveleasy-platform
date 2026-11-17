@@ -69,23 +69,6 @@ public class BookingService {
             throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Một số ghế không tồn tại trên chuyến này");
         }
 
-        for (TripSeat seat : requestedSeats) {
-            if (seat.getStatus() == SeatStatus.BOOKED) {
-                throw new CustomSeatHoldException(
-                        seat.getSeatCode(),
-                        "Ghế này vừa được chọn bởi khách hàng khác (Ghế " + seat.getSeatCode() + " vừa được người khác đặt mua!)"
-                );
-            }
-            if (seat.getStatus() == SeatStatus.LOCKED) {
-                if (!seatRealtimeService.isSeatHeldBy(trip.getId(), seat.getSeatCode(), userEmail, request.getSessionId())) {
-                    throw new CustomSeatHoldException(
-                            seat.getSeatCode(),
-                            "Ghế này vừa được chọn bởi khách hàng khác (Ghế " + seat.getSeatCode() + " đang được giữ chỗ thanh toán 10 phút!)"
-                    );
-                }
-            }
-        }
-
         // Kiểm tra kênh đặt vé (POS Channel Protection): Quầy bến xe bỏ qua giá động
         // BẢO MẬT: Chỉ nhân viên nhà xe (OPERATOR) hoặc ADMIN mới có quyền tạo đơn kênh POS/COUNTER
         boolean requestedPos = request.getBookingChannel() != null &&
@@ -119,6 +102,37 @@ public class BookingService {
             if (minutesUntilDeparture < 15 && minutesUntilDeparture >= 0) {
                 throw new AppException(ErrorCode.VALIDATION_ERROR,
                         "Chuyến xe sắp khởi hành trong vòng " + minutesUntilDeparture + " phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, vui lòng mua vé trực tiếp tại quầy bến xe!");
+            }
+        }
+
+        for (TripSeat seat : requestedSeats) {
+            if (seat.getStatus() == SeatStatus.BOOKED) {
+                throw new CustomSeatHoldException(
+                        seat.getSeatCode(),
+                        "Ghế này vừa được chọn bởi khách hàng khác (Ghế " + seat.getSeatCode() + " vừa được người khác đặt mua!)"
+                );
+            }
+            if (seat.getStatus() == SeatStatus.LOCKED) {
+                if (!seatRealtimeService.isSeatHeldBy(trip.getId(), seat.getSeatCode(), userEmail, request.getSessionId())) {
+                    // CẢI TIẾN NGHIỆP VỤ (POS OVERRIDE): Kênh POS/COUNTER tại quầy bến xe được quyền OVERRIDE ghế LOCKED
+                    // khi chuyến xe đã rơi vào khung giờ sắp khởi hành (< 15 phút) vì khách online không thể thanh toán được nữa.
+                    boolean canPosOverride = false;
+                    if (isPosChannel && trip.getDepartureTime() != null) {
+                        LocalDateTime now = LocalDateTime.now();
+                        long minutesUntilDeparture = java.time.Duration.between(now, trip.getDepartureTime()).toMinutes();
+                        if (minutesUntilDeparture < 15) {
+                            canPosOverride = true;
+                            log.info("⚡ [POS OVERRIDE] Quầy bến xe ghi đè ghế LOCKED '{}' trên chuyến {} vì xe xuất bến trong {} phút (< 15 phút).",
+                                    seat.getSeatCode(), trip.getId(), minutesUntilDeparture);
+                        }
+                    }
+                    if (!canPosOverride) {
+                        throw new CustomSeatHoldException(
+                                seat.getSeatCode(),
+                                "Ghế này vừa được chọn bởi khách hàng khác (Ghế " + seat.getSeatCode() + " đang được giữ chỗ thanh toán 10 phút!)"
+                        );
+                    }
+                }
             }
         }
 
