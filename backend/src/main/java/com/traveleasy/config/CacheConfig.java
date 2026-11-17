@@ -12,13 +12,25 @@ import java.util.List;
 @Configuration
 public class CacheConfig {
 
+    public static final String TRIPS_SEARCH_CACHE = "trips_search";
+    public static final long TRIPS_SEARCH_TTL_SECONDS = 60L;
+
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        
-        // Cấu hình bộ nhớ đệm Caffeine in-memory: TTL 10 phút, kích thước tối đa 500 mục
-        // Không giới hạn cứng danh sách cacheNames để hệ thống tự động khởi tạo cache động (dynamic)
-        // cho bất kỳ @Cacheable nào (popular_routes, banners_list, trips_search, promotions_list...)
+
+        // [S409] Cache kết quả tìm kiếm chuyến xe (/api/v1/trips/search) với TTL chuẩn 60 giây
+        cacheManager.registerCustomCache(
+            TRIPS_SEARCH_CACHE,
+            Caffeine.newBuilder()
+                .initialCapacity(50)
+                .maximumSize(500)
+                .expireAfterWrite(Duration.ofSeconds(TRIPS_SEARCH_TTL_SECONDS))
+                .recordStats()
+                .build()
+        );
+
+        // Cấu hình bộ nhớ đệm mặc định cho các cache động khác (popular_routes, banners_list, promotions_list...): TTL 10 phút
         cacheManager.setCaffeine(
             Caffeine.newBuilder()
                 .initialCapacity(50)

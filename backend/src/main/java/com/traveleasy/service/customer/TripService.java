@@ -37,7 +37,16 @@ public class TripService {
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
+    @org.springframework.cache.annotation.CacheEvict(value = "trips_search", allEntries = true)
+    public void evictTripsSearchCache() {
+        log.debug("Đã xóa bộ nhớ đệm tìm kiếm chuyến xe (trips_search)");
+    }
+
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(
+            value = "trips_search",
+            key = "(#origin != null ? #origin.trim().toLowerCase() : 'ALL') + '_' + (#destination != null ? #destination.trim().toLowerCase() : 'ALL') + '_' + (#departureDate != null ? #departureDate.toString() : 'ANY')"
+    )
     public List<TripResponse> searchTrips(String origin, String destination, LocalDate departureDate) {
         long t0 = System.currentTimeMillis();
         LocalDateTime now = LocalDateTime.now();
