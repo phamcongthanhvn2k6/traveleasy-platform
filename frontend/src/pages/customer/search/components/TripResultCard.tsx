@@ -243,16 +243,29 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
       }
       sessionStorage.removeItem('traveleasy_checkout_data');
       sessionStorage.removeItem('traveleasy_hold_expiry');
+      sessionStorage.removeItem('traveleasy_pending_booking');
+      sessionStorage.removeItem('traveleasy_payment_init');
       localStorage.removeItem('traveleasy_checkout_data');
       localStorage.removeItem('traveleasy_hold_expiry');
+      localStorage.removeItem('traveleasy_pending_booking');
+      localStorage.removeItem('traveleasy_payment_init');
       setActiveHold(null);
+      setSelectedSeats([]);
+      setActiveTab('SEATS');
       setTripDetail((prev) => {
         if (!prev) return prev;
         const updated = prev.seats.map((s) =>
-          activeHold.seats.includes(s.seatNumber) ? { ...s, status: 'AVAILABLE' as const } : s
+          activeHold.seats.includes(s.seatNumber) ? { ...s, status: 'AVAILABLE' as const, isHeldByMe: false } : s
         );
         return { ...prev, seats: updated };
       });
+      try {
+        const sid = sessionStorage.getItem('traveleasy_session_id') || localStorage.getItem('traveleasy_session_id');
+        const freshRes = await api.get(`/trips/${trip.id}`, { params: { sessionId: sid } });
+        if (freshRes.data?.data) {
+          setTripDetail(freshRes.data.data);
+        }
+      } catch (ignored) {}
     }
   };
 
@@ -1146,71 +1159,7 @@ export const TripResultCard: React.FC<Props> = ({ trip, onBook }) => {
                     </div>
                   </div>
 
-                  {/* Bottom Action Footer for Active Hold Session */}
-                  {activeHold && remainingHoldSeconds > 0 && selectedSeats.length === 0 && (
-                    <div
-                      style={{
-                        backgroundColor: isDark ? '#1e293b' : '#eff6ff',
-                        border: `1.5px solid ${isDark ? '#3b82f6' : '#2563eb'}`,
-                        borderRadius: '12px',
-                        padding: '16px 20px',
-                        marginTop: '20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        boxShadow: '0 4px 12px rgba(37,99,235,0.15)',
-                        flexWrap: 'wrap',
-                        gap: '12px',
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: '13px', color: isDark ? '#93c5fd' : '#1e40af', fontWeight: 700 }}>
-                          Bạn đang giữ chỗ các ghế: <strong style={{ color: '#2563eb', fontSize: '15px' }}>{activeHold.seats.join(', ')}</strong> ({activeHold.seats.length} vé)
-                        </div>
-                        <div style={{ fontSize: '13px', color: isDark ? '#cbd5e1' : '#475569', marginTop: '2px' }}>
-                          Thời gian giữ chỗ còn lại: <strong style={{ color: '#dc2626', fontFamily: 'monospace', fontSize: '14px' }}>
-                            {Math.floor(remainingHoldSeconds / 60)}:{(remainingHoldSeconds % 60).toString().padStart(2, '0')}
-                          </strong>
-                        </div>
-                      </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <button
-                          type="button"
-                          onClick={handleResumeCheckout}
-                          style={{
-                            backgroundColor: '#2563eb',
-                            color: '#ffffff',
-                            border: 'none',
-                            padding: '12px 24px',
-                            borderRadius: '8px',
-                            fontWeight: 800,
-                            fontSize: '15px',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.4)',
-                          }}
-                        >
-                          Tiếp Tục Đặt Vé {'->'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleCancelActiveHold}
-                          style={{
-                            backgroundColor: 'transparent',
-                            color: '#ef4444',
-                            border: '1px solid #fca5a5',
-                            padding: '10px 16px',
-                            borderRadius: '8px',
-                            fontWeight: 600,
-                            fontSize: '13px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Hủy giữ chỗ
-                        </button>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Bottom Action Footer for Selected Seats */}
                   {selectedSeats.length > 0 && (

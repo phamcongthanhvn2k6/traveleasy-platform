@@ -212,7 +212,7 @@ public class S309ApiIntegrationTest {
         mockMvc.perform(post("/api/v1/trips/{tripId}/seats/hold", sampleTrip.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(conflictingBatch)))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message", containsString("A02")));
 

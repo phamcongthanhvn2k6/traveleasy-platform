@@ -26,6 +26,7 @@ public class SeatRealtimeService {
 
     private final TripSeatRepository tripSeatRepository;
     private final com.traveleasy.repository.TripRepository tripRepository;
+    private final com.traveleasy.repository.BookingRepository bookingRepository;
 
     // Map chứa các SseEmitter theo tripId
     private final ConcurrentHashMap<Long, CopyOnWriteArrayList<SseEmitter>> tripEmitters = new ConcurrentHashMap<>();
@@ -426,25 +427,66 @@ public class SeatRealtimeService {
 
         List<String> sortedCodes = new ArrayList<>(seatCodes);
         Collections.sort(sortedCodes);
+
+        // Luôn xóa trạng thái giữ chỗ trong bộ nhớ cho các ghế này
+        for (String seatCode : sortedCodes) {
+            String key = getHolderKey(tripId, seatCode);
+            seatHolders.remove(key);
+            seatHoldTimes.remove(key);
+        }
+
         List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(tripId, sortedCodes);
         for (TripSeat seat : seats) {
-            if (seat.getStatus() == SeatStatus.LOCKED) {
+            boolean shouldRelease = (seat.getStatus() == SeatStatus.LOCKED);
+            if (!shouldRelease && seat.getStatus() == SeatStatus.BOOKED && bookingRepository != null) {
+                // Kiểm tra xem ghế có thuộc về đơn đặt vé PENDING chưa thanh toán không
+                boolean isPendingBookingSeat = bookingRepository.findByTripId(tripId).stream()
+                        .filter(b -> b.getStatus() == com.traveleasy.entity.BookingStatus.PENDING)
+                        .anyMatch(b -> b.getSeatNumbers() != null && Arrays.asList(b.getSeatNumbers().split("\\s*,\\s*")).contains(seat.getSeatCode()));
+                if (isPendingBookingSeat) {
+                    shouldRelease = true;
+                }
+            }
+
+            if (shouldRelease) {
                 seat.setStatus(SeatStatus.AVAILABLE);
-                String key = getHolderKey(tripId, seat.getSeatCode());
-                seatHolders.remove(key);
-                seatHoldTimes.remove(key);
                 broadcastSeatUpdate(tripId, seat.getSeatCode(), SeatStatus.AVAILABLE,
                         "Ghế " + seat.getSeatCode() + " đã được mở lại cho khách khác đặt", null);
             }
         }
         tripSeatRepository.saveAllAndFlush(seats);
 
+        // Hủy bất kỳ đơn đặt vé PENDING nào liên quan đến các ghế này trên chuyến
+        if (bookingRepository != null) {
+            try {
+                List<com.traveleasy.entity.Booking> pendingBookings = bookingRepository.findByTripId(tripId).stream()
+                        .filter(b -> b.getStatus() == com.traveleasy.entity.BookingStatus.PENDING)
+                        .toList();
+                for (com.traveleasy.entity.Booking pb : pendingBookings) {
+                    if (pb.getSeatNumbers() != null) {
+                        List<String> pbSeats = Arrays.asList(pb.getSeatNumbers().split("\\s*,\\s*"));
+                        boolean overlap = pbSeats.stream().anyMatch(sortedCodes::contains);
+                        if (overlap) {
+                            pb.setStatus(com.traveleasy.entity.BookingStatus.CANCELLED);
+                            bookingRepository.save(pb);
+                            log.info("⚡ [CANCEL PENDING] Tự động hủy đơn PENDING {} do khách hủy giữ chỗ ghế {}",
+                                    pb.getBookingCode(), pb.getSeatNumbers());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Không thể hủy đơn PENDING trên trip {}: {}", tripId, e.getMessage());
+            }
+        }
+
         try {
-            tripRepository.findById(tripId).ifPresent(trip -> {
-                long availableCount = tripSeatRepository.countByTripIdAndStatus(tripId, SeatStatus.AVAILABLE);
-                trip.setAvailableSeats((int) availableCount);
-                tripRepository.saveAndFlush(trip);
-            });
+            if (tripRepository != null) {
+                tripRepository.findById(tripId).ifPresent(trip -> {
+                    long availableCount = tripSeatRepository.countByTripIdAndStatus(tripId, SeatStatus.AVAILABLE);
+                    trip.setAvailableSeats((int) availableCount);
+                    tripRepository.saveAndFlush(trip);
+                });
+            }
         } catch (Exception e) {
             log.warn("Không thể cập nhật availableSeats sau khi release trên trip {}: {}", tripId, e.getMessage());
         }
@@ -518,25 +560,35 @@ public class SeatRealtimeService {
             List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeIn(tripId, seatCodes);
             List<TripSeat> seatsToSave = new ArrayList<>();
             for (TripSeat seat : seats) {
-                if (seat.getStatus() == SeatStatus.LOCKED) {
+                boolean shouldRelease = (seat.getStatus() == SeatStatus.LOCKED);
+                if (!shouldRelease && seat.getStatus() == SeatStatus.BOOKED && bookingRepository != null) {
+                    boolean isPendingBookingSeat = bookingRepository.findByTripId(tripId).stream()
+                            .filter(b -> b.getStatus() == com.traveleasy.entity.BookingStatus.PENDING)
+                            .anyMatch(b -> b.getSeatNumbers() != null && Arrays.asList(b.getSeatNumbers().split("\\s*,\\s*")).contains(seat.getSeatCode()));
+                    if (isPendingBookingSeat) {
+                        shouldRelease = true;
+                    }
+                }
+
+                if (shouldRelease) {
                     seat.setStatus(SeatStatus.AVAILABLE);
-                    String key = getHolderKey(tripId, seat.getSeatCode());
-                    seatHolders.remove(key);
-                    seatHoldTimes.remove(key);
                     seatsToSave.add(seat);
                     broadcastSeatUpdate(tripId, seat.getSeatCode(), SeatStatus.AVAILABLE,
                             "Ghế " + seat.getSeatCode() + " đã hết hạn giữ chỗ 10 phút và tự động mở lại", null);
                 }
+                String key = getHolderKey(tripId, seat.getSeatCode());
+                seatHolders.remove(key);
+                seatHoldTimes.remove(key);
             }
             if (!seatsToSave.isEmpty()) {
                 tripSeatRepository.saveAllAndFlush(seatsToSave);
-                try {
+                if (tripRepository != null) {
                     tripRepository.findById(tripId).ifPresent(trip -> {
                         long availableCount = tripSeatRepository.countByTripIdAndStatus(tripId, SeatStatus.AVAILABLE);
                         trip.setAvailableSeats((int) availableCount);
                         tripRepository.saveAndFlush(trip);
                     });
-                } catch (Exception ignored) {}
+                }
             }
         } catch (Exception e) {
             log.error("Lỗi khi tự động giải phóng ghế hết hạn giữ chỗ cho tripId {}: {}", tripId, e.getMessage());

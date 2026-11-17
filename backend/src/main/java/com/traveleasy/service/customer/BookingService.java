@@ -151,7 +151,7 @@ public class BookingService {
                     : trip.getPrice();
         }
 
-        // Tính tổng tiền & Cập nhật trạng thái ghế
+        // Tính tổng tiền & Cập nhật trạng thái ghế (Chuyển sang BOOKED để bảo vệ nguyên tử chống double booking)
         BigDecimal baseSeatTotal = BigDecimal.ZERO;
         BigDecimal rawSeatTotal = BigDecimal.ZERO;
         for (TripSeat seat : requestedSeats) {
@@ -413,7 +413,7 @@ public class BookingService {
         if (booking.getStatus() == BookingStatus.COMPLETED) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé đã hoàn thành chuyến đi, không thể hủy");
         }
-        if (booking.getTrip() != null && booking.getTrip().getDepartureTime() != null) {
+        if (booking.getStatus() != BookingStatus.PENDING && booking.getTrip() != null && booking.getTrip().getDepartureTime() != null) {
             LocalDateTime depTime = booking.getTrip().getDepartureTime();
             LocalDateTime now = LocalDateTime.now();
             if (depTime.isBefore(now)) {
@@ -468,6 +468,7 @@ public class BookingService {
 
         // Broadcast thời gian thực ghế đã được giải phóng (Màu Trắng - AVAILABLE)
         seatRealtimeService.broadcastReleased(trip.getId(), seatCodes);
+        seatRealtimeService.removeSeatHolders(trip.getId(), seatCodes);
 
         return mapToBookingResponse(booking, tickets);
     }
@@ -483,7 +484,7 @@ public class BookingService {
         if (booking.getStatus() == BookingStatus.COMPLETED) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé đã hoàn thành chuyến đi, không thể hủy vé");
         }
-        if (booking.getTrip() != null && booking.getTrip().getDepartureTime() != null) {
+        if (booking.getStatus() != BookingStatus.PENDING && booking.getTrip() != null && booking.getTrip().getDepartureTime() != null) {
             LocalDateTime depTime = booking.getTrip().getDepartureTime();
             LocalDateTime now = LocalDateTime.now();
             if (depTime.isBefore(now)) {

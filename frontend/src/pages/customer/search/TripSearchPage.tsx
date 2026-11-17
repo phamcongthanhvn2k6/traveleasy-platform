@@ -609,13 +609,28 @@ export const TripSearchPage: React.FC = () => {
       }
       sessionStorage.removeItem('traveleasy_checkout_data');
       sessionStorage.removeItem('traveleasy_hold_expiry');
+      sessionStorage.removeItem('traveleasy_pending_booking');
+      sessionStorage.removeItem('traveleasy_payment_init');
       localStorage.removeItem('traveleasy_checkout_data');
       localStorage.removeItem('traveleasy_hold_expiry');
+      localStorage.removeItem('traveleasy_pending_booking');
+      localStorage.removeItem('traveleasy_payment_init');
       setGlobalHold(null);
+      // Xóa client cache tìm kiếm và làm mới danh sách chuyến ngay lập tức
+      tripSearchClientCache.clear();
+      fetchTrips(origin, destination, date);
     }
   };
 
   const handleOpenBooking = (trip: Trip, seats: string[], points: any) => {
+    // Nếu khách đang có phiên giữ chỗ trên một chuyến khác, tự động nhả ghế chuyến cũ
+    if (globalHold && globalHold.trip.id !== trip.id) {
+      api.post(`/trips/${globalHold.trip.id}/seats/release`, {
+        seatCodes: globalHold.seats,
+      }).catch(() => {});
+      setGlobalHold(null);
+    }
+
     const token = localStorage.getItem('traveleasy_token');
     const expiryTimestamp = Date.now() + 600 * 1000;
     const checkoutPayload = { trip, selectedSeats: seats, points, holdExpiry: expiryTimestamp };
