@@ -13,7 +13,7 @@ import java.util.List;
 public class CacheConfig {
 
     public static final String TRIPS_SEARCH_CACHE = "trips_search";
-    public static final long TRIPS_SEARCH_TTL_SECONDS = 60L;
+    public static final long TRIPS_SEARCH_TTL_SECONDS = 30L;
 
     @Bean
     public CacheManager cacheManager() {

@@ -13,7 +13,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/trips")
@@ -40,7 +42,13 @@ public class TripController {
             @RequestParam(required = false) String origin,
             @RequestParam(required = false) String destination,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate) {
-        return ApiResponse.success(tripService.searchTrips(origin, destination, departureDate));
+        LocalDateTime now = LocalDateTime.now();
+        List<TripResponse> cachedTrips = tripService.searchTrips(origin, destination, departureDate);
+        // [S409] Hậu xử lý: luôn lọc bỏ các chuyến đã quá giờ khởi hành trước khi trả về client dù lấy từ Cache
+        List<TripResponse> activeTrips = cachedTrips.stream()
+                .filter(t -> t.getDepartureTime() == null || !t.getDepartureTime().isBefore(now))
+                .collect(Collectors.toList());
+        return ApiResponse.success(activeTrips);
     }
 
     @GetMapping("/schedule")

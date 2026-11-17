@@ -116,9 +116,9 @@ public class S409TripSearchCacheTest {
             CompanyPricingRuleRepository ruleRepository = ctx.getBean(CompanyPricingRuleRepository.class);
             CacheManager cacheManager = ctx.getBean(CacheManager.class);
 
-            assertEquals(60L, CacheConfig.TRIPS_SEARCH_TTL_SECONDS);
+            assertEquals(30L, CacheConfig.TRIPS_SEARCH_TTL_SECONDS);
             Cache tripsSearchCache = cacheManager.getCache(CacheConfig.TRIPS_SEARCH_CACHE);
-            assertNotNull(tripsSearchCache, "Cache 'trips_search' phải được khởi tạo sẵn với TTL 60 giây");
+            assertNotNull(tripsSearchCache, "Cache 'trips_search' phải được khởi tạo sẵn với TTL 30 giây");
 
             BusCompany company = BusCompany.builder()
                     .id(1L)

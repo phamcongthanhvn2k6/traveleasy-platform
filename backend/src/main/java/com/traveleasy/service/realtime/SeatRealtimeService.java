@@ -142,6 +142,7 @@ public class SeatRealtimeService {
      * Khóa giữ chỗ ghế tạm thời khi khách chuyển sang bước thanh toán (đổi màu VÀNG - LOCKED)
      */
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "trips_search", allEntries = true)
     public List<SeatUpdateEvent> holdSeats(Long tripId, List<String> seatCodes, String sessionId) {
         return holdSeats(tripId, seatCodes, sessionId, null);
     }
@@ -150,6 +151,7 @@ public class SeatRealtimeService {
      * Khóa giữ chỗ ghế tạm thời với thông tin định danh người dùng (userEmail hoặc sessionId)
      */
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "trips_search", allEntries = true)
     public List<SeatUpdateEvent> holdSeats(Long tripId, List<String> seatCodes, String sessionId, String userEmail) {
         if (seatCodes == null || seatCodes.isEmpty()) {
             return Collections.emptyList();
@@ -428,6 +430,7 @@ public class SeatRealtimeService {
      * Hủy giữ chỗ ghế và trả về trạng thái TRỐNG (AVAILABLE)
      */
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "trips_search", allEntries = true)
     public void releaseSeats(Long tripId, List<String> seatCodes) {
         if (seatCodes == null || seatCodes.isEmpty()) {
             return;
