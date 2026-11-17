@@ -1,6 +1,7 @@
 package com.traveleasy.service.customer;
 
 import com.traveleasy.common.exception.AppException;
+import com.traveleasy.common.exception.CustomSeatHoldException;
 import com.traveleasy.common.exception.ErrorCode;
 import com.traveleasy.dto.booking.BookingResponse;
 import com.traveleasy.dto.booking.CreateBookingRequest;
@@ -70,11 +71,17 @@ public class BookingService {
 
         for (TripSeat seat : requestedSeats) {
             if (seat.getStatus() == SeatStatus.BOOKED) {
-                throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED, "Ghế " + seat.getSeatCode() + " vừa được người khác đặt mua. Vui lòng chọn ghế khác!");
+                throw new CustomSeatHoldException(
+                        seat.getSeatCode(),
+                        "Ghế này vừa được chọn bởi khách hàng khác (Ghế " + seat.getSeatCode() + " vừa được người khác đặt mua!)"
+                );
             }
             if (seat.getStatus() == SeatStatus.LOCKED) {
                 if (!seatRealtimeService.isSeatHeldBy(trip.getId(), seat.getSeatCode(), userEmail, request.getSessionId())) {
-                    throw new AppException(ErrorCode.VALIDATION_ERROR, "Ghế " + seat.getSeatCode() + " đang được một khách hàng khác giữ chỗ thanh toán (thời hạn 10 phút). Vui lòng chọn ghế khác!");
+                    throw new CustomSeatHoldException(
+                            seat.getSeatCode(),
+                            "Ghế này vừa được chọn bởi khách hàng khác (Ghế " + seat.getSeatCode() + " đang được giữ chỗ thanh toán 10 phút!)"
+                    );
                 }
             }
         }

@@ -113,16 +113,29 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Đường dẫn API hoặc tài nguyên không tồn tại: " + ex.getResourcePath()));
     }
 
+    @ExceptionHandler(CustomSeatHoldException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCustomSeatHoldConflict(CustomSeatHoldException ex) {
+        log.warn("Seat hold conflict [409]: {}", ex.getMessage());
+        String message = (ex.getMessage() != null && !ex.getMessage().isBlank())
+                ? ex.getMessage()
+                : CustomSeatHoldException.DEFAULT_CONFLICT_MESSAGE;
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(message));
+    }
+
     @ExceptionHandler({
+            org.springframework.dao.OptimisticLockingFailureException.class,
+            org.springframework.orm.ObjectOptimisticLockingFailureException.class,
             org.springframework.dao.CannotAcquireLockException.class,
             org.springframework.dao.PessimisticLockingFailureException.class,
             org.springframework.transaction.TransactionSystemException.class,
-            org.springframework.orm.ObjectOptimisticLockingFailureException.class
+            jakarta.persistence.OptimisticLockException.class,
+            jakarta.persistence.PessimisticLockException.class
     })
     public ResponseEntity<ApiResponse<Void>> handleLockingConflict(Exception ex) {
-        log.warn("Database lock or concurrency collision: {}", ex.getMessage());
+        log.warn("Database lock or concurrency collision [409]: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error("Ghế này đang được người khác giữ chỗ hoặc hệ thống đang xử lý, vui lòng chọn ghế khác!"));
+                .body(ApiResponse.error(CustomSeatHoldException.DEFAULT_CONFLICT_MESSAGE));
     }
 
     @ExceptionHandler({CannotCreateTransactionException.class, DataAccessResourceFailureException.class})
