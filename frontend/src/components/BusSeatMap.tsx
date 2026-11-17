@@ -8,23 +8,33 @@ interface Props {
   selectedSeatNumbers: string[];
   onToggleSeat: (seatNumber: string) => void;
   myHeldSeats?: string[];
+  disabled?: boolean;
+  disabledMessage?: string;
 }
 
-export const BusSeatMap: React.FC<Props> = ({ seats, selectedSeatNumbers, onToggleSeat, myHeldSeats = [] }) => {
+export const BusSeatMap: React.FC<Props> = ({
+  seats,
+  selectedSeatNumbers,
+  onToggleSeat,
+  myHeldSeats = [],
+  disabled = false,
+  disabledMessage,
+}) => {
   const { isDark } = useTheme();
   const deck1Seats = seats.filter((s) => s.deck === 1);
   const deck2Seats = seats.filter((s) => s.deck === 2);
 
   const renderSeat = (seat: TripSeat) => {
     const isMyHeld = myHeldSeats.includes(seat.seatNumber);
-    const isSelected = selectedSeatNumbers.includes(seat.seatNumber);
+    const isSelected = !disabled && selectedSeatNumbers.includes(seat.seatNumber);
     const isBooked = seat.status === 'BOOKED' && !isMyHeld;
     const isLocked = seat.status === 'LOCKED' && !isMyHeld;
+    const isSeatDisabled = isBooked || isLocked || disabled;
 
     let bg = isDark ? '#1e293b' : '#ffffff';
     let borderColor = isDark ? '#38bdf8' : '#3b82f6';
     let textColor = isDark ? '#38bdf8' : '#1e3a8a';
-    let cursor = 'pointer';
+    let cursor = disabled ? 'not-allowed' : 'pointer';
     let subText = `${seat.price / 1000}k`;
 
     if (isBooked) {
@@ -37,7 +47,7 @@ export const BusSeatMap: React.FC<Props> = ({ seats, selectedSeatNumbers, onTogg
       bg = isDark ? '#1e3a8a' : '#dbeafe';
       borderColor = isDark ? '#60a5fa' : '#2563eb';
       textColor = isDark ? '#93c5fd' : '#1d4ed8';
-      cursor = 'pointer';
+      cursor = disabled ? 'not-allowed' : 'pointer';
       subText = 'Ghế của bạn';
     } else if (isLocked) {
       bg = isDark ? '#451a03' : '#fef3c7';
@@ -55,10 +65,15 @@ export const BusSeatMap: React.FC<Props> = ({ seats, selectedSeatNumbers, onTogg
     return (
       <button
         key={seat.id}
-        disabled={isBooked || isLocked}
-        onClick={() => onToggleSeat(seat.seatNumber)}
+        disabled={isSeatDisabled}
+        onClick={() => {
+          if (disabled) return;
+          onToggleSeat(seat.seatNumber);
+        }}
         title={
-          isBooked
+          disabled
+            ? `Ghế ${seat.seatNumber} (Đã khóa chọn ghế - Chuyến xe đóng bán trực tuyến)`
+            : isBooked
             ? `Ghế ${seat.seatNumber} đã có người mua`
             : isLocked
             ? `Ghế ${seat.seatNumber} đang được giữ chỗ trong 10 phút`
@@ -81,11 +96,13 @@ export const BusSeatMap: React.FC<Props> = ({ seats, selectedSeatNumbers, onTogg
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           boxShadow: isSelected ? '0 4px 6px -1px rgba(249, 115, 22, 0.4)' : 'none',
           position: 'relative',
+          opacity: disabled && !isBooked && !isLocked ? 0.78 : 1,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
           <span>{seat.seatNumber}</span>
           {isLocked && <Lock size={10} color={isDark ? '#fbbf24' : '#b45309'} />}
+          {disabled && !isBooked && !isLocked && <Lock size={9} style={{ opacity: 0.7 }} />}
         </div>
         <span style={{ fontSize: '9px', fontWeight: 600, opacity: 0.9, marginTop: '1px' }}>
           {subText}
@@ -105,6 +122,31 @@ export const BusSeatMap: React.FC<Props> = ({ seats, selectedSeatNumbers, onTogg
         transition: 'all 0.25s ease',
       }}
     >
+      {/* Alert Banner when Seat Map is in Read-Only / Disabled mode */}
+      {disabled && (
+        <div
+          style={{
+            backgroundColor: isDark ? 'rgba(239, 68, 68, 0.12)' : '#fef2f2',
+            border: `1px solid ${isDark ? '#ef4444' : '#fca5a5'}`,
+            borderRadius: '10px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            color: isDark ? '#f87171' : '#b91c1c',
+            fontSize: '12.5px',
+            fontWeight: 700,
+            lineHeight: 1.5,
+          }}
+        >
+          <Lock size={18} style={{ flexShrink: 0 }} />
+          <span>
+            {disabledMessage ||
+              'Chuyến xe đã đóng bán vé trực tuyến. Sơ đồ ghế đang ở chế độ CHỈ XEM, hệ thống đã khóa hoàn toàn tính năng chọn ghế.'}
+          </span>
+        </div>
+      )}
       {/* Status Legend */}
       <div
         style={{

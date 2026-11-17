@@ -95,13 +95,20 @@ public class BookingService {
 
         boolean isPosChannel = isAuthorizedPos;
 
-        // BẢO VỆ NGHIỆP VỤ: Kênh online đóng bán trước giờ khởi hành 15 phút (Cut-off Booking Window)
-        if (!isPosChannel && trip.getDepartureTime() != null) {
-            LocalDateTime now = LocalDateTime.now();
-            long minutesUntilDeparture = java.time.Duration.between(now, trip.getDepartureTime()).toMinutes();
-            if (minutesUntilDeparture < 15 && minutesUntilDeparture >= 0) {
-                throw new AppException(ErrorCode.VALIDATION_ERROR,
-                        "Chuyến xe sắp khởi hành trong vòng " + minutesUntilDeparture + " phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, vui lòng mua vé trực tiếp tại quầy bến xe!");
+        // BẢO VỆ NGHIỆP VỤ: Kênh online đóng bán trước giờ khởi hành 15 phút (Cut-off Booking Window) hoặc khi chuyến đã xuất bến
+        if (!isPosChannel) {
+            if (trip.getStatus() != null && trip.getStatus() != TripStatus.SCHEDULED) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe này hiện không mở bán trực tuyến!");
+            }
+            if (trip.getDepartureTime() != null) {
+                LocalDateTime now = LocalDateTime.now();
+                long minutesUntilDeparture = java.time.Duration.between(now, trip.getDepartureTime()).toMinutes();
+                if (minutesUntilDeparture < 15) {
+                    throw new AppException(ErrorCode.VALIDATION_ERROR,
+                            minutesUntilDeparture < 0
+                                    ? "Chuyến xe đã khởi hành, không thể đặt vé trực tuyến!"
+                                    : "Chuyến xe sắp khởi hành trong vòng " + minutesUntilDeparture + " phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, vui lòng mua vé trực tiếp tại quầy bến xe!");
+                }
             }
         }
 
