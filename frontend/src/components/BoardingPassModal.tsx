@@ -42,6 +42,31 @@ export const BoardingPassModal: React.FC<BoardingPassModalProps> = ({
     window.print();
   };
 
+  // S415 Fix: Tải ảnh vé / mã QR về máy (hỗ trợ mobile & desktop, tránh popup blocker)
+  const handleDownloadQr = async (ticketCode: string, qrUrl: string) => {
+    try {
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `Ve-Xe-TravelEasy-${ticketCode}.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {
+      // Fallback không dùng window.open để tránh bị popup blocker trên mobile Safari/Chrome
+      const link = document.createElement('a');
+      link.href = qrUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   return (
     <div
       className="no-print-overlay"
@@ -86,6 +111,40 @@ export const BoardingPassModal: React.FC<BoardingPassModalProps> = ({
             border: 1.5px solid #0f172a !important;
             page-break-inside: avoid !important;
             margin-bottom: 24px !important;
+          }
+        }
+
+        /* S415: Responsive hoàn hảo trên màn hình iPhone / Android */
+        @media (max-width: 640px) {
+          .no-print-overlay {
+            padding: 8px !important;
+          }
+          .boarding-card {
+            flex-direction: column !important;
+            border-radius: 12px !important;
+          }
+          .boarding-card-left {
+            border-right: none !important;
+            border-bottom: 2px dashed #cbd5e1 !important;
+            padding: 16px !important;
+            width: 100% !important;
+            flex: 1 1 100% !important;
+          }
+          .boarding-card-right {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            padding: 18px 14px !important;
+          }
+          .perforation-circle {
+            display: none !important;
+          }
+          .modal-top-bar {
+            padding: 12px 16px !important;
+          }
+          .qr-image-container {
+            width: 100% !important;
+            max-width: 220px !important;
+            margin: 0 auto !important;
           }
         }
       `}</style>
@@ -194,8 +253,10 @@ export const BoardingPassModal: React.FC<BoardingPassModalProps> = ({
           }}
         >
           {ticketsToRender.map((ticket, idx) => {
-            const qrData = `TRAVELEASY:${booking.bookingCode}:${ticket.ticketCode}:${ticket.seatNumber}`;
-            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData)}`;
+            // S415 Fix: Dùng trực tiếp hash hoặc mã vé để Backend findByCodeOrQrHash tìm thấy ngay lập tức khi soát vé
+            const qrCodeValue = ticket.qrCodeHash || ticket.ticketCode;
+            const qrHash = qrCodeValue;
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&format=svg&color=0-0-0&bgcolor=255-255-255&data=${encodeURIComponent(qrCodeValue)}`;
 
             return (
               <div
@@ -213,9 +274,10 @@ export const BoardingPassModal: React.FC<BoardingPassModalProps> = ({
                 }}
               >
                 {/* LEFT: MAIN PASS (70%) */}
-                <div style={{ flex: '1 1 68%', padding: '24px', borderRight: '2px dashed #cbd5e1', position: 'relative' }}>
+                <div className="boarding-card-left" style={{ flex: '1 1 68%', padding: '24px', borderRight: '2px dashed #cbd5e1', position: 'relative' }}>
                   {/* Decorative semicircles for perforation illusion */}
                   <div
+                    className="perforation-circle"
                     style={{
                       position: 'absolute',
                       right: '-12px',
@@ -229,6 +291,7 @@ export const BoardingPassModal: React.FC<BoardingPassModalProps> = ({
                     }}
                   />
                   <div
+                    className="perforation-circle"
                     style={{
                       position: 'absolute',
                       right: '-12px',
@@ -392,6 +455,7 @@ export const BoardingPassModal: React.FC<BoardingPassModalProps> = ({
 
                 {/* RIGHT: TICKET STUB / QR CODE (32%) */}
                 <div
+                  className="boarding-card-right"
                   style={{
                     flex: '0 0 32%',
                     backgroundColor: '#fafafa',
@@ -411,25 +475,55 @@ export const BoardingPassModal: React.FC<BoardingPassModalProps> = ({
                       {ticket.ticketCode}
                     </div>
 
-                    {/* QR Code */}
+                    {/* QR Code 200x200px SVG chuẩn bảo mật cao */}
                     <div
+                      className="qr-image-container"
                       style={{
                         backgroundColor: '#ffffff',
-                        padding: '10px',
+                        padding: '12px',
                         borderRadius: '12px',
-                        border: '1px solid #e2e8f0',
+                        border: '2px solid #0f172a',
                         display: 'inline-block',
-                        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
+                        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.08)',
                       }}
                     >
                       <img
                         src={qrImageUrl}
-                        alt={`QR Code ${ticket.ticketCode}`}
-                        style={{ width: '130px', height: '130px', display: 'block' }}
+                        alt={`Mã QR vé xe ${ticket.ticketCode} (200x200)`}
+                        style={{ width: '200px', height: '200px', display: 'block', maxWidth: '100%', aspectRatio: '1/1' }}
                       />
                     </div>
-                    <div style={{ fontSize: '10px', color: '#64748b', marginTop: '6px' }}>
-                      Quét mã QR khi lên xe
+                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
+                      Quét mã QR khi lên xe (200x200 SVG)
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#0f172a', marginTop: '2px', fontFamily: 'monospace' }}>
+                      Hash: <strong style={{ color: '#2563eb' }}>{qrHash}</strong>
+                    </div>
+
+                    {/* S415: Nút tải ảnh vé về máy */}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px', width: '100%', justifyContent: 'center' }}>
+                      <button
+                        onClick={() => handleDownloadQr(ticket.ticketCode, qrImageUrl)}
+                        className="no-print"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          backgroundColor: '#eff6ff',
+                          color: '#1d4ed8',
+                          border: '1px solid #bfdbfe',
+                          padding: '7px 12px',
+                          borderRadius: '8px',
+                          fontWeight: 700,
+                          fontSize: '11.5px',
+                          cursor: 'pointer',
+                          width: '100%',
+                          maxWidth: '200px',
+                        }}
+                      >
+                        <Download size={13} /> Tải ảnh vé (SVG)
+                      </button>
                     </div>
                   </div>
 

@@ -104,3 +104,46 @@ flowchart TD
     D4 --> D5["Thứ Năm (19/11): Tổng duyệt nghiệm thu hệ thống, backup database & khóa code"]
     D5 --> D6["Thứ Sáu (20/11): CHÍNH THỨC BẢO VỆ ĐỒ ÁN OJT TRƯỚC HỘI ĐỒNG"]
 ```
+
+---
+
+## 🌟 5. TÍNH NĂNG CẢI TIẾN NGHIỆP VỤ CAO CẤP: CƠ CHẾ CUT-OFF BOOKING & CHỐNG KHÓA GHẾ MA (PHANTOM LOCK RESOLUTION)
+
+> **Bối cảnh thực tế:** Trong vận tải liên tỉnh, nhà xe bắt buộc phải đóng kênh bán vé trực tuyến trước giờ khởi hành 15 phút để in Lệnh xuất bến, kiểm tra nồng độ cồn và chốt danh sách hành khách. Tuy nhiên, nếu không xử lý concurrency đồng bộ, sẽ nảy sinh lỗi **"Khóa ghế ma" (Phantom Lock)**: Ghế bị giữ chỗ online nhưng khách online bị chặn thanh toán, trong khi khách vãng lai mua vé trực tiếp tại quầy bến xe cũng bị hệ thống báo lỗi không mua được do ghế đang kẹt trạng thái `LOCKED`.
+
+Hệ thống đã triển khai giải pháp kỹ thuật 3 tầng (3-Tier Synchronization Architecture) giải quyết triệt để vấn đề:
+
+```mermaid
+flowchart LR
+    A["Khách tìm chuyến (TripSearch)"] -->|"< 15p xuất bến"| B["Khóa nút đặt, hiển thị 'Bán tại quầy'"]
+    C["Khách đang ở Checkout"] -->|"Đồng hồ giữ chỗ"| D["Cắt ngắn timer = min(10p, mốc đóng vé)"]
+    D -->|"Phát sinh lỗi sát giờ"| E["Rescue Modal: Gợi ý chuyến kế tiếp cùng tuyến"]
+    F["Tại quầy bến xe (POS)"] -->|"Ghế còn kẹt LOCKED online"| G["POS Override: Quầy ghi đè & in vé ngay cho khách"]
+    H["Scheduler ngầm (60s)"] -->|"Quét chuyến < 15p"| I["Cut-off Auto-Release: Trả ghế về AVAILABLE"]
+```
+
+### Chi tiết giải pháp 3 tầng:
+
+1. **Tầng 1 — Cảnh Báo Sớm Tại Cửa Ngõ (Early Cut-off Detection tại TripSearch & SeatPicker):**
+   - File: `frontend/src/pages/customer/search/components/TripResultCard.tsx`
+   - Tính toán `minutesUntilDeparture = departureTime - now`. Nếu `< 15 phút`:
+     - Tự động đổi trạng thái sang: `⚡ Sắp chạy ({x}p) - Bán tại quầy`.
+     - Vô hiệu hóa nút đặt vé online, ngăn chặn khách hàng mất thời gian nhập liệu thông tin cá nhân.
+   - File: `backend/src/main/java/com/traveleasy/service/realtime/SeatRealtimeService.java`
+     - Chặn giữ chỗ `holdSeats` nếu chuyến xe đã bước vào khung giờ < 15 phút xuất bến.
+
+2. **Tầng 2 — Đồng Bộ Giữ Chỗ & Modal Cứu Cánh Tại Checkout (Dynamic Hold Timer & Rescue Modal):**
+   - File: `frontend/src/pages/customer/checkout/CheckoutPage.tsx`
+   - **Dynamic Hold Timer:** Đồng hồ đếm ngược giữ chỗ không fix cứng 10 phút mà tự động co ngắn: `expiry = min(10 phút, thời gian đến mốc đóng vé 15 phút)`.
+   - **Rescue Modal (Modal cứu cánh):** Khi chuyến xe rơi vào mốc đóng vé hoặc backend từ chối, hệ thống kích hoạt hộp thoại hướng dẫn thân thiện, tự động dọn dẹp phiên giữ chỗ cũ và cung cấp 2 nút điều hướng:
+     - `[Tìm Chuyến Khác Cùng Tuyến]`: Tự động điền lại Nơi đi → Nơi đến để khách chọn chuyến giờ kế tiếp.
+     - `[Về Trang Chủ]`: Quay về trang chủ an toàn.
+
+3. **Tầng 3 — Xử Lý Tranh Chấp Concurrency & POS Override Tại Backend:**
+   - File: `backend/src/main/java/com/traveleasy/repository/TripSeatRepository.java`
+     - Bổ sung query JPQL hiệu năng cao: `releaseLockedSeatsOnCutoffTrips(LocalDateTime cutoffTime)` tự động giải phóng toàn bộ ghế `LOCKED` của các chuyến xe xuất bến trong vòng 15 phút về `AVAILABLE`.
+   - File: `backend/src/main/java/com/traveleasy/service/automation/TripAutomationService.java`
+     - Background Scheduler chạy định kỳ mỗi 60 giây, kích hoạt giải phóng ghế tự động, đảm bảo bến xe luôn có ghế trống để phục vụ khách mua vé gấp.
+   - File: `backend/src/main/java/com/traveleasy/service/customer/BookingService.java`
+     - **Quyền ưu tiên POS Override:** Nhân viên tại quầy bến xe (`bookingChannel=POS/COUNTER`) được phép ghi đè (Override) ghế đang kẹt trạng thái `LOCKED` nếu chuyến xe đã trong khung < 15 phút, giải quyết dứt điểm rủi ro xe chạy ghế trống.
+

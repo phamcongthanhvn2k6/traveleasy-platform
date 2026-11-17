@@ -51,8 +51,12 @@ export const CheckoutModal: React.FC<Props> = ({ trip, selectedSeats, points, on
           isHeldRef.current = true;
         }
       } catch (err: any) {
-        const msg = err.response?.data?.message || 'Một số ghế bạn chọn vừa được khách khác giữ chỗ!';
-        toast.error(msg, 'Ghế Đã Có Người Đặt');
+        const status = err.response?.status;
+        const msg =
+          status === 409
+            ? err.response?.data?.message || 'Ghế này vừa được chọn bởi khách hàng khác'
+            : err.response?.data?.message || 'Một số ghế bạn chọn vừa được khách khác giữ chỗ!';
+        toast.error(msg, status === 409 ? 'Tranh Chấp Ghế (409)' : 'Ghế Đã Có Người Đặt');
         onCloseRef.current();
       }
     };
@@ -113,8 +117,12 @@ export const CheckoutModal: React.FC<Props> = ({ trip, selectedSeats, points, on
       toast.success(`Đặt vé thành công! Mã đơn của bạn là: ${res.data.data.bookingCode}`, 'Đặt Vé Thành Công');
       onSuccess(res.data.data);
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Có lỗi xảy ra khi đặt vé. Vui lòng thử lại!';
-      toast.error(msg, 'Đặt Vé Thất Bại');
+      const status = err.response?.status;
+      const msg =
+        status === 409
+          ? err.response?.data?.message || 'Ghế này vừa được chọn bởi khách hàng khác'
+          : err.response?.data?.message || 'Có lỗi xảy ra khi đặt vé. Vui lòng thử lại!';
+      toast.error(msg, status === 409 ? 'Tranh Chấp Ghế (409)' : 'Đặt Vé Thất Bại');
       setError(msg);
     } finally {
       setLoading(false);

@@ -101,6 +101,14 @@ export const TicketExchangePage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [exchangeResult, setExchangeResult] = useState<ExchangeResult | null>(null);
 
+  // State chênh lệch giá vé từ máy chủ
+  const [serverPriceDiff, setServerPriceDiff] = useState<{
+    requiresSurcharge: boolean;
+    surchargeAmount: number;
+    refundAmount: number;
+    priceDifference: number;
+  } | null>(null);
+
   // Tải danh sách chuyến xe thực tế từ Backend
   const fetchTrips = async () => {
     setLoadingTrips(true);
@@ -167,13 +175,44 @@ export const TicketExchangePage: React.FC = () => {
     fetchTripSeats();
   }, [selectedTripId]);
 
-  // Tính toán chênh lệch giá
+  // Tính toán chênh lệch giá vé từ API máy chủ (AC-S316-05, DoD 1)
+  useEffect(() => {
+    if (!ticketData?.ticketCode || !selectedTripId) {
+      setServerPriceDiff(null);
+      return;
+    }
+
+    api.post('/company/ticket-exchange/calculate-difference', null, {
+      params: {
+        oldTicketCode: ticketData.ticketCode,
+        newTripId: selectedTripId
+      }
+    }).then((res) => {
+      if (res.data && res.data.success && res.data.data) {
+        const d = res.data.data;
+        setServerPriceDiff({
+          requiresSurcharge: Boolean(d.requiresSurcharge),
+          surchargeAmount: Number(d.surchargeAmount || 0),
+          refundAmount: Number(d.refundAmount || 0),
+          priceDifference: Number(d.priceDifference || 0)
+        });
+      }
+    }).catch((err) => {
+      console.warn('Lỗi gọi API /calculate-difference:', err);
+    });
+  }, [ticketData?.ticketCode, selectedTripId]);
+
+  // Tính toán chênh lệch giá (ưu tiên kết quả API máy chủ, dự phòng tính toán cục bộ)
   const currentTrip = trips.find((t) => t.id === selectedTripId);
   const oldPrice = ticketData?.price || 0;
   const newPrice = currentTrip?.price || 0;
-  const priceDifference = newPrice - oldPrice;
-  const surchargeAmount = priceDifference > 0 ? priceDifference : 0;
-  const refundAmount = priceDifference < 0 ? Math.abs(priceDifference) : 0;
+  const rawPriceDiff = newPrice - oldPrice;
+  const rawSurcharge = rawPriceDiff > 0 ? rawPriceDiff : 0;
+  const rawRefund = rawPriceDiff < 0 ? Math.abs(rawPriceDiff) : 0;
+
+  const priceDifference = serverPriceDiff !== null ? serverPriceDiff.priceDifference : rawPriceDiff;
+  const surchargeAmount = serverPriceDiff !== null ? serverPriceDiff.surchargeAmount : rawSurcharge;
+  const refundAmount = serverPriceDiff !== null ? serverPriceDiff.refundAmount : rawRefund;
 
   // Tra cứu vé gốc từ API
   const handleSearch = async (e: React.FormEvent) => {
@@ -240,6 +279,16 @@ export const TicketExchangePage: React.FC = () => {
       if (res.data && res.data.success && res.data.data) {
         setExchangeResult(res.data.data);
         toast.success('Đổi vé thành công! Mã vé mới và đơn mới đã được phát hành.', 'Thành Công');
+        // Đồng bộ lại sơ đồ ghế của chuyến xe mới sau khi đổi vé
+        if (selectedTripId) {
+          api.get(`/trips/${selectedTripId}`).then((seatRes) => {
+            const seats: any[] = seatRes.data?.data?.seats || [];
+            const available = seats
+              .filter((s: any) => s.status === 'AVAILABLE')
+              .map((s: any) => s.seatNumber || s.seatCode);
+            setAvailableSeats(available);
+          }).catch(() => {});
+        }
       } else {
         const msg = res.data?.message || 'Không thể thực hiện đổi vé!';
         toast.error(msg, 'Thao Tác Thất Bại');

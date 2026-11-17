@@ -1651,9 +1651,10 @@ export const SchedulePage: React.FC = () => {
   const [viewMode, setViewMode] = useState<PageViewMode>('PLANNER');
 
   // Query Parameters
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   const paramDestination = searchParams.get('destination') || 'Đà Lạt';
   const paramOrigin = searchParams.get('origin') || getSmartOriginForDestination(paramDestination);
-  const paramDate = searchParams.get('date') || '2026-11-20';
+  const paramDate = searchParams.get('date') || todayStr;
 
   const [destinationInput, setDestinationInput] = useState(paramDestination);
   const [originInput, setOriginInput] = useState(paramOrigin);
@@ -1662,14 +1663,17 @@ export const SchedulePage: React.FC = () => {
   const [travelVibe, setTravelVibe] = useState<TravelVibe>('CHILL');
   const [budgetTier, setBudgetTier] = useState<BudgetTier>('STANDARD');
   const [isCustomCity, setIsCustomCity] = useState(false);
+  const [isCustomOrigin, setIsCustomOrigin] = useState(false);
 
-  // Đồng bộ searchParams URL với destinationInput và startDate
+  // Đồng bộ searchParams URL với destinationInput, originInput và startDate
   useEffect(() => {
     const qDest = searchParams.get('destination');
+    const qOrigin = searchParams.get('origin');
     if (qDest && qDest !== destinationInput) {
       setDestinationInput(qDest);
-      const from = searchParams.get('origin') || getSmartOriginForDestination(qDest);
-      setOriginInput(from);
+    }
+    if (qOrigin && qOrigin !== originInput) {
+      setOriginInput(qOrigin);
     }
     const qDate = searchParams.get('date');
     if (qDate && qDate !== startDate) {
@@ -1890,16 +1894,17 @@ export const SchedulePage: React.FC = () => {
   const handleSearchExplore = (e: React.FormEvent) => {
     e.preventDefault();
     if (!destinationInput) return;
-    const resolvedOrigin = getSmartOriginForDestination(destinationInput);
-    setOriginInput(resolvedOrigin);
-    setSearchParams({ origin: resolvedOrigin, destination: destinationInput });
+    const finalOrigin = originInput || getSmartOriginForDestination(destinationInput);
+    setSearchParams({ origin: finalOrigin, destination: destinationInput, date: startDate });
   };
 
   const handleSwapCities = () => {
     const temp = originInput;
     setOriginInput(destinationInput);
     setDestinationInput(temp);
-    setSearchParams({ origin: destinationInput, destination: temp });
+    setDirectionTab('OUTBOUND');
+    setSearchParams({ origin: destinationInput, destination: temp, date: startDate });
+    toast.info(`Đã đổi chiều hành trình: ${destinationInput} ➔ ${temp}`, 'Đổi Tuyến');
   };
 
   // Add stop to current day
@@ -2480,20 +2485,136 @@ export const SchedulePage: React.FC = () => {
           </div>
 
           <h1 style={{ fontSize: '28px', fontWeight: 800, margin: '0 0 10px 0', letterSpacing: '-0.5px' }}>
-            Cẩm Nang Du Lịch & Lịch Trình Khám Phá: {destinationInput}
+            {viewMode === 'TIMETABLE' 
+              ? `Tra Cứu Bảng Giờ Chạy Xe & Lịch Trình: ${originInput} ➔ ${destinationInput}`
+              : `Cẩm Nang Du Lịch & Lịch Trình Khám Phá: ${destinationInput}`}
           </h1>
           <p style={{ margin: '0 0 24px 0', opacity: 0.9, fontSize: '15px', maxWidth: '780px', lineHeight: 1.5 }}>
-            {activeTemplate.tagline}
+            {viewMode === 'TIMETABLE'
+              ? (timetableData ? `Tuyến đường liên tỉnh ${timetableData.originCity} ➔ ${timetableData.destinationCity} dài ${timetableData.distanceKm} km • Thời gian chạy ~${timetableData.durationHours} giờ • ${timetableData.frequency}` : 'Tra cứu toàn bộ lịch trình xuất bến hàng ngày của các hãng xe khách uy tín')
+              : activeTemplate.tagline}
           </p>
 
           {/* Explore Search Controls Card */}
           <div className="no-print" style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '18px 24px', boxShadow: '0 12px 36px rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
             <form onSubmit={handleSearchExplore} style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-              {/* Destination Select / Input */}
-              <div style={{ flex: '1 1 280px', minWidth: '240px' }}>
+              {/* Origin Select / Input */}
+              <div style={{ flex: '1 1 240px', minWidth: '200px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <label style={{ fontSize: '11.5px', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>
-                    📍 Điểm Đến Du Lịch
+                    🚩 Nơi Xuất Phát
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomOrigin(!isCustomOrigin)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#2563eb',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      padding: 0,
+                      textDecoration: 'underline'
+                    }}
+                  >
+                    {isCustomOrigin ? 'Chọn có sẵn' : '✏️ Nhập khác'}
+                  </button>
+                </div>
+
+                <div style={{ position: 'relative' }}>
+                  {isCustomOrigin ? (
+                    <input
+                      type="text"
+                      value={originInput}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setOriginInput(val);
+                        setSearchParams({ origin: val, destination: destinationInput, date: startDate });
+                      }}
+                      placeholder="Gõ nơi xuất phát..."
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px 11px 36px',
+                        borderRadius: '10px',
+                        border: '1.5px solid #2563eb',
+                        fontSize: '14.5px',
+                        fontWeight: 700,
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        backgroundColor: '#fff'
+                      }}
+                    />
+                  ) : (
+                    <select
+                      value={originInput}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setOriginInput(val);
+                        setSearchParams({ origin: val, destination: destinationInput, date: startDate });
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px 11px 36px',
+                        borderRadius: '10px',
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        backgroundColor: '#fff',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {(timetableData?.availableOrigins && timetableData.availableOrigins.length > 0
+                        ? Array.from(new Set([...timetableData.availableOrigins, 'TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Vũng Tàu', 'Đà Lạt']))
+                        : ['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Vũng Tàu', 'Đà Lạt', 'Nha Trang', 'Hải Phòng']
+                      ).map(org => (
+                        <option key={org} value={org}>🚩 {org}</option>
+                      ))}
+                    </select>
+                  )}
+                  <Navigation size={17} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#2563eb', pointerEvents: 'none' }} />
+                </div>
+              </div>
+
+              {/* Nút Hoán Đổi Chiều Tuyến Xe */}
+              <div style={{ alignSelf: 'flex-end', marginBottom: '2px' }}>
+                <button
+                  type="button"
+                  onClick={handleSwapCities}
+                  title="Hoán đổi Nơi xuất phát và Điểm đến"
+                  style={{
+                    padding: '11px 13px',
+                    borderRadius: '10px',
+                    border: '1.5px solid #cbd5e1',
+                    backgroundColor: '#f8fafc',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#dbeafe';
+                    e.currentTarget.style.borderColor = '#2563eb';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f8fafc';
+                    e.currentTarget.style.borderColor = '#cbd5e1';
+                  }}
+                >
+                  <ArrowLeftRight size={17} style={{ color: '#2563eb' }} />
+                </button>
+              </div>
+
+              {/* Destination Select / Input */}
+              <div style={{ flex: '1 1 240px', minWidth: '200px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '11.5px', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>
+                    📍 Điểm Đến
                   </label>
                   <button
                     type="button"
@@ -2522,9 +2643,7 @@ export const SchedulePage: React.FC = () => {
                       onChange={(e) => {
                         const val = e.target.value;
                         setDestinationInput(val);
-                        const from = getSmartOriginForDestination(val);
-                        setOriginInput(from);
-                        setSearchParams({ origin: from, destination: val });
+                        setSearchParams({ origin: originInput, destination: val, date: startDate });
                       }}
                       placeholder="Gõ tỉnh/thành phố bất kỳ..."
                       style={{
@@ -2546,9 +2665,7 @@ export const SchedulePage: React.FC = () => {
                       onChange={(e) => {
                         const val = e.target.value;
                         setDestinationInput(val);
-                        const from = getSmartOriginForDestination(val);
-                        setOriginInput(from);
-                        setSearchParams({ origin: from, destination: val });
+                        setSearchParams({ origin: originInput, destination: val, date: startDate });
                       }}
                       style={{
                         width: '100%',
@@ -2590,6 +2707,7 @@ export const SchedulePage: React.FC = () => {
                 <input
                   type="date"
                   value={startDate}
+                  min={todayStr}
                   onChange={(e) => {
                     const val = e.target.value;
                     setStartDate(val);
@@ -2721,9 +2839,8 @@ export const SchedulePage: React.FC = () => {
                   onClick={() => {
                     setIsCustomCity(false);
                     setDestinationInput(city);
-                    const from = getSmartOriginForDestination(city);
-                    setOriginInput(from);
-                    setSearchParams({ origin: from, destination: city });
+                    const from = originInput || getSmartOriginForDestination(city);
+                    setSearchParams({ origin: from, destination: city, date: startDate });
                   }}
                   style={{
                     background: destinationInput === city ? '#2563eb' : '#f8fafc',
@@ -3980,67 +4097,167 @@ export const SchedulePage: React.FC = () => {
             ) : (
               <div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {paginatedTimetableTrips.map(trip => (
-                    <div
-                      key={trip.id}
-                      style={{
-                        backgroundColor: '#fff',
-                        borderRadius: '12px',
-                        border: '1px solid #e2e8f0',
-                        padding: '18px 22px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        flexWrap: 'wrap',
-                        gap: '14px'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>
-                          {trip.departureTimeFormatted}
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700 }}>{trip.durationFormatted}</span>
-                          <ArrowRight size={14} style={{ color: '#2563eb' }} />
-                        </div>
-                        <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>
-                          {trip.arrivalTimeFormatted}
-                        </div>
-                      </div>
-
-                      <div>
-                        <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{trip.busCompanyName}</div>
-                        <div style={{ fontSize: '12px', color: '#64748b' }}>{trip.busTypeName} • Còn {trip.availableSeats} chỗ</div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#2563eb' }}>
-                          {trip.price.toLocaleString('vi-VN')} đ
-                        </div>
-                        <button
-                          onClick={() => {
-                            const tripDate = trip.departureTime ? trip.departureTime.split('T')[0] : '';
-                            const dStr = (tripDate && tripDate >= new Date().toISOString().split('T')[0])
-                              ? tripDate
-                              : new Date().toISOString().split('T')[0];
-                            navigate(`/search?origin=${encodeURIComponent(trip.originCity)}&destination=${encodeURIComponent(trip.destinationCity)}&date=${dStr}`);
-                          }}
+                  {paginatedTimetableTrips.map(trip => {
+                    const isExpanded = expandedTripId === trip.id;
+                    return (
+                      <div
+                        key={trip.id}
+                        style={{
+                          backgroundColor: '#fff',
+                          borderRadius: '12px',
+                          border: isExpanded ? '1.5px solid #3b82f6' : '1px solid #e2e8f0',
+                          padding: '18px 22px',
+                          boxShadow: isExpanded ? '0 4px 16px rgba(37,99,235,0.08)' : 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div
                           style={{
-                            backgroundColor: '#2563eb',
-                            color: '#fff',
-                            border: 'none',
-                            padding: '10px 18px',
-                            borderRadius: '8px',
-                            fontSize: '13px',
-                            fontWeight: 700,
-                            cursor: 'pointer'
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '14px'
                           }}
                         >
-                          Đặt Chuyến ➔
-                        </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>
+                              {trip.departureTimeFormatted}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700 }}>{trip.durationFormatted}</span>
+                              <ArrowRight size={14} style={{ color: '#2563eb' }} />
+                            </div>
+                            <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a' }}>
+                              {trip.arrivalTimeFormatted}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span>{trip.busCompanyName}</span>
+                              {trip.busCompanyRating && (
+                                <span style={{ fontSize: '12px', color: '#d97706', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: 700 }}>
+                                  <Star size={12} fill="#f59e0b" color="#f59e0b" /> {trip.busCompanyRating}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                              {trip.busTypeName} • Còn <strong style={{ color: '#16a34a' }}>{trip.availableSeats}</strong> chỗ
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ fontSize: '18px', fontWeight: 800, color: '#2563eb' }}>
+                              {trip.price.toLocaleString('vi-VN')} đ
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setExpandedTripId(isExpanded ? null : trip.id)}
+                              style={{
+                                backgroundColor: isExpanded ? '#eff6ff' : 'transparent',
+                                color: isExpanded ? '#1d4ed8' : '#64748b',
+                                border: '1px solid #cbd5e1',
+                                padding: '9px 12px',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                              <span>{isExpanded ? 'Đóng' : 'Chi tiết'}</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                const tripDate = trip.departureTime ? trip.departureTime.split('T')[0] : '';
+                                const dStr = (tripDate && tripDate >= new Date().toISOString().split('T')[0])
+                                  ? tripDate
+                                  : new Date().toISOString().split('T')[0];
+                                navigate(`/search?origin=${encodeURIComponent(trip.originCity)}&destination=${encodeURIComponent(trip.destinationCity)}&date=${dStr}`);
+                              }}
+                              style={{
+                                backgroundColor: '#2563eb',
+                                color: '#fff',
+                                border: 'none',
+                                padding: '10px 18px',
+                                borderRadius: '8px',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'background-color 0.15s ease'
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+                              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
+                            >
+                              Đặt Chuyến ➔
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Chi tiết lộ trình, điểm đón/trả và tiện ích mở rộng */}
+                        {isExpanded && (
+                          <div
+                            style={{
+                              marginTop: '16px',
+                              paddingTop: '16px',
+                              borderTop: '1px dashed #e2e8f0',
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                              gap: '14px'
+                            }}
+                          >
+                            <div style={{ backgroundColor: '#f0fdf4', padding: '12px 14px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                              <div style={{ fontSize: '12px', fontWeight: 700, color: '#15803d', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                <MapPin size={14} /> Điểm đón khách chính:
+                              </div>
+                              <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>
+                                {trip.mainPickupPoint || 'Bến xe trung tâm thành phố'}
+                              </div>
+                              {trip.pickupPoints && trip.pickupPoints.length > 0 && (
+                                <div style={{ marginTop: '6px', fontSize: '11.5px', color: '#475569', lineHeight: 1.4 }}>
+                                  Trạm đón: {trip.pickupPoints.map(p => p.name).join(' • ')}
+                                </div>
+                              )}
+                            </div>
+
+                            <div style={{ backgroundColor: '#fef2f2', padding: '12px 14px', borderRadius: '8px', border: '1px solid #fecaca' }}>
+                              <div style={{ fontSize: '12px', fontWeight: 700, color: '#b91c1c', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                <MapPin size={14} /> Điểm trả khách chính:
+                              </div>
+                              <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>
+                                {trip.mainDropoffPoint || 'Bến xe liên tỉnh điểm đến'}
+                              </div>
+                              {trip.dropoffPoints && trip.dropoffPoints.length > 0 && (
+                                <div style={{ marginTop: '6px', fontSize: '11.5px', color: '#475569', lineHeight: 1.4 }}>
+                                  Trạm trả: {trip.dropoffPoints.map(p => p.name).join(' • ')}
+                                </div>
+                              )}
+                            </div>
+
+                            <div style={{ backgroundColor: '#eff6ff', padding: '12px 14px', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+                              <div style={{ fontSize: '12px', fontWeight: 700, color: '#1d4ed8', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                                <Sparkles size={14} /> Tiện ích dịch vụ trên xe:
+                              </div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px', color: '#1e40af' }}>
+                                <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '10px' }}>📶 WiFi 5G</span>
+                                <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '10px' }}>🔌 Cổng sạc USB</span>
+                                <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '10px' }}>💧 Nước uống</span>
+                                <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '10px' }}>❄️ Điều hòa</span>
+                                <span style={{ backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '10px' }}>🛡️ Bảo hiểm hành khách</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Timetable Pagination (20 chuyến / trang, chia theo tổng số) */}

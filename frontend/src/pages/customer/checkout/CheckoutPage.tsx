@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import { paymentService, PaymentInitResponse } from '../../../services/paymentService';
 import { Trip, Booking } from '../../../types';
 import { CheckoutTimer } from './components/CheckoutTimer';
-import { PassengerInfoForm, PassengerInfo } from './components/PassengerInfoForm';
+import { PassengerInfoForm, PassengerInfo, validateVNPhone, validateEmail } from './components/PassengerInfoForm';
 import { PaymentMethodSelector, PaymentMethodType } from './components/PaymentMethodSelector';
 import { OrderSummaryPanel } from './components/OrderSummaryPanel';
 import { QrPaymentModal } from './components/QrPaymentModal';
 import { VnPayModal } from './components/VnPayModal';
 import { toast } from '../../../context/ToastContext';
-import { Check, ChevronRight, ShieldCheck, ArrowLeft, Lock, QrCode, RefreshCw } from 'lucide-react';
+import { Check, ChevronRight, ShieldCheck, ArrowLeft, Lock, QrCode, RefreshCw, Clock } from 'lucide-react';
 
 export const CheckoutPage: React.FC = () => {
   const location = useLocation();
@@ -97,15 +97,31 @@ export const CheckoutPage: React.FC = () => {
   // QR Modal & Payment State
   const [showQrModal, setShowQrModal] = useState(false);
   const [showVnPayModal, setShowVnPayModal] = useState(false);
+  const [cutoffModalData, setCutoffModalData] = useState<{ open: boolean; message: string } | null>(null);
 
-  // Master Expiry Timestamp (10 phút = 600s)
+  // Master Expiry Timestamp: Giới hạn tối đa 10 phút VÀ không vượt quá mốc 15 phút trước giờ khởi hành
   const [holdExpiryTimestamp] = useState<number>(() => {
     try {
       const holdExpiryKey = 'traveleasy_hold_expiry';
       const savedExpiry = sessionStorage.getItem(holdExpiryKey);
       let expiry = savedExpiry ? Number(savedExpiry) : null;
-      if (!expiry || isNaN(expiry) || expiry <= Date.now()) {
-        expiry = Date.now() + 600 * 1000;
+      const normalHold = Date.now() + 600 * 1000;
+      let maxAllowed = normalHold;
+
+      const rawDepTime = checkoutData?.trip?.departureTime;
+      if (rawDepTime) {
+        const depTime = new Date(rawDepTime).getTime();
+        // Mốc cutoff đóng bán online: 15 phút trước giờ xuất bến
+        const cutoffTime = depTime - 15 * 60 * 1000;
+        if (cutoffTime > Date.now()) {
+          maxAllowed = Math.min(normalHold, cutoffTime);
+        } else {
+          maxAllowed = Date.now(); // Đã bước vào khung < 15 phút
+        }
+      }
+
+      if (!expiry || isNaN(expiry) || expiry <= Date.now() || expiry > maxAllowed) {
+        expiry = maxAllowed;
         sessionStorage.setItem(holdExpiryKey, String(expiry));
       }
       return expiry;
@@ -113,6 +129,21 @@ export const CheckoutPage: React.FC = () => {
       return Date.now() + 600 * 1000;
     }
   });
+
+  // Tự động kiểm tra ngay khi vào trang nếu chuyến xe đã bước vào khung giờ < 15 phút
+  useEffect(() => {
+    if (checkoutData?.trip?.departureTime) {
+      const depTime = new Date(checkoutData.trip.departureTime).getTime();
+      const minsUntil = Math.floor((depTime - Date.now()) / 60000);
+      if (minsUntil < 15 && minsUntil >= 0) {
+        setCutoffModalData({
+          open: true,
+          message: `Chuyến xe sắp khởi hành trong vòng ${minsUntil} phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé để chốt lệnh xuất bến, quý khách vui lòng mua vé trực tiếp tại quầy bến xe!`
+        });
+        cleanupPendingSession();
+      }
+    }
+  }, [checkoutData?.trip?.departureTime]);
 
   // Tái sử dụng đơn đặt vé PENDING đang còn hiệu lực 10 phút nếu khách quay lại
   const [createdBooking, setCreatedBooking] = useState<Booking | null>(() => {
@@ -282,17 +313,28 @@ export const CheckoutPage: React.FC = () => {
     setAppliedVoucherCode(code);
   };
 
+  const isFormValid = useMemo(() => {
+    return (
+      passengerInfo.termsAccepted &&
+      Boolean(passengerInfo.fullName.trim()) &&
+      validateVNPhone(passengerInfo.phone).isValid &&
+      validateEmail(passengerInfo.email).isValid
+    );
+  }, [passengerInfo.termsAccepted, passengerInfo.fullName, passengerInfo.phone, passengerInfo.email]);
+
   const validateForm = () => {
     if (!passengerInfo.fullName.trim()) {
       toast.warning('Vui lòng điền họ và tên hành khách!', 'Thiếu Thông Tin');
       return false;
     }
-    if (!passengerInfo.phone.trim()) {
-      toast.warning('Vui lòng điền số điện thoại nhận vé!', 'Thiếu Thông Tin');
+    const phoneVal = validateVNPhone(passengerInfo.phone);
+    if (!phoneVal.isValid) {
+      toast.warning(phoneVal.message, 'Số Điện Thoại Không Hợp Lệ');
       return false;
     }
-    if (!passengerInfo.email.trim()) {
-      toast.warning('Vui lòng điền email nhận hóa đơn điện tử!', 'Thiếu Thông Tin');
+    const emailVal = validateEmail(passengerInfo.email);
+    if (!emailVal.isValid) {
+      toast.warning(emailVal.message, 'Email Không Hợp Lệ');
       return false;
     }
     if (!passengerInfo.termsAccepted) {
@@ -374,7 +416,12 @@ export const CheckoutPage: React.FC = () => {
       }
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Có lỗi xảy ra trong quá trình đặt vé. Vui lòng thử lại!';
-      toast.error(msg, 'Thất Bại');
+      if (typeof msg === 'string' && (msg.includes('< 15 phút') || msg.includes('đóng bán vé'))) {
+        setCutoffModalData({ open: true, message: msg });
+        cleanupPendingSession();
+      } else {
+        toast.error(msg, 'Thất Bại');
+      }
     } finally {
       setLoading(false);
     }
@@ -714,7 +761,7 @@ export const CheckoutPage: React.FC = () => {
               onApplyVoucher={handleApplyVoucher}
               onSubmit={handleCheckoutSubmit}
               loading={loading}
-              disabled={!passengerInfo.termsAccepted}
+              disabled={!isFormValid}
             />
           </div>
         </div>
@@ -730,7 +777,13 @@ export const CheckoutPage: React.FC = () => {
           bankDetails={paymentInitData?.bankDetails}
           expiresAt={holdExpiryTimestamp}
           onSuccess={handleQrSuccess}
-          onClose={() => setShowQrModal(false)}
+          onClose={() => {
+            setShowQrModal(false);
+            if (Date.now() >= holdExpiryTimestamp) {
+              cleanupPendingSession();
+              navigate('/search');
+            }
+          }}
         />
       )}
 
@@ -744,6 +797,104 @@ export const CheckoutPage: React.FC = () => {
           onSuccess={handleVnPaySuccess}
           onClose={() => setShowVnPayModal(false)}
         />
+      )}
+
+      {/* Cut-off Booking Window Rescue Modal (Cứu cánh khi chuyến xe đã đóng bán online) */}
+      {cutoffModalData?.open && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px',
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            maxWidth: '480px',
+            width: '100%',
+            padding: '28px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+            textAlign: 'center',
+            border: '1px solid #fed7aa',
+          }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              backgroundColor: '#fff7ed',
+              color: '#ea580c',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px auto',
+            }}>
+              <Clock size={32} />
+            </div>
+
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: '0 0 10px 0' }}>
+              Chuyến Xe Đã Đóng Bán Trực Tuyến
+            </h3>
+
+            <p style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.6, margin: '0 0 24px 0' }}>
+              {cutoffModalData.message}
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setCutoffModalData(null);
+                  const orig = trip.originCity || '';
+                  const dest = trip.destinationCity || '';
+                  navigate(`/search?origin=${encodeURIComponent(orig)}&destination=${encodeURIComponent(dest)}`);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 20px',
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span>Tìm Chuyến Khác Cùng Tuyến ({trip.originCity} → {trip.destinationCity})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCutoffModalData(null);
+                  navigate('/');
+                }}
+                style={{
+                  width: '100%',
+                  padding: '11px 20px',
+                  backgroundColor: '#f1f5f9',
+                  color: '#475569',
+                  fontWeight: 600,
+                  fontSize: '13.5px',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  cursor: 'pointer',
+                }}
+              >
+                Về Trang Chủ
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

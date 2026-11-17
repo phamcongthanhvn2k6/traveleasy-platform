@@ -13,6 +13,7 @@ export interface ICriteriaScores {
 
 export interface IReview {
   id: string;
+  bookingCode?: string; // Mã đặt vé xác thực
   userName: string;     // Che bảo mật ví dụ: "Trần *** An"
   userAvatar?: string;
   userRank?: 'Thành viên mới' | 'Thành viên Bạc' | 'Thành viên Vàng' | 'Thành viên Kim Cương';
@@ -47,5 +48,5 @@ export interface IReviewSummary {
   };
 }
 
-export type ReviewStarFilter = 'ALL' | '5' | '4' | 'HAS_IMAGES';
+export type ReviewStarFilter = 'ALL' | '5' | '4' | '3' | 'HAS_IMAGES';
 

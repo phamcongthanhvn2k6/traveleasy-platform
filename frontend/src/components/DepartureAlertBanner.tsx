@@ -19,11 +19,12 @@ export const DepartureAlertBanner: React.FC = () => {
 
     const checkUpcomingDeparture = async () => {
       const token = localStorage.getItem('traveleasy_token');
-      const now = Date.now();
+      const now = new Date().getTime();
 
       // BẮT BUỘC: Chưa đăng nhập tài khoản -> Tuyệt đối không hiển thị nhắc nhở khởi hành
       if (!token) {
         setUpcomingBooking(null);
+        setTimeLeft(null);
         return;
       }
 
@@ -33,7 +34,8 @@ export const DepartureAlertBanner: React.FC = () => {
       try {
         const res = await api.get('/bookings/my-bookings');
         const bookings: any[] = res.data?.data || [];
-        // Lọc các vé thực tế sắp khởi hành trong vòng 48 giờ tới
+        // S414: So sánh departure_time của vé với new Date() hiện tại
+        // Ẩn banner nhắc nhở nếu thời gian khởi hành đã trôi qua (diff <= 0)
         const upcoming = bookings
           .filter(b => {
             if (b.status !== 'CONFIRMED' && b.status !== 'PAID') return false;
@@ -55,6 +57,21 @@ export const DepartureAlertBanner: React.FC = () => {
     };
 
     checkUpcomingDeparture();
+
+    // S414: Lắng nghe window.addEventListener("storage") để đồng bộ auth state giữa các tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.key || e.key === 'traveleasy_token' || e.key === 'traveleasy_user') {
+        checkUpcomingDeparture();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('traveleasy_auth_change', checkUpcomingDeparture);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('traveleasy_auth_change', checkUpcomingDeparture);
+    };
   }, []);
 
   // Hiệu ứng đếm ngược thời gian thực
@@ -64,11 +81,13 @@ export const DepartureAlertBanner: React.FC = () => {
     const targetDate = new Date(upcomingBooking.trip.departureTime).getTime();
 
     const updateTimer = () => {
-      const now = Date.now();
+      const now = new Date().getTime();
       const diff = targetDate - now;
 
+      // S414: Tự động ẩn banner nhắc nhở nếu chuyến xe đã quá giờ xuất bến
       if (diff <= 0) {
-        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+        setTimeLeft(null);
+        setUpcomingBooking(null);
         return;
       }
 

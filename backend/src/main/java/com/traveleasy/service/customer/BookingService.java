@@ -1,6 +1,7 @@
 package com.traveleasy.service.customer;
 
 import com.traveleasy.common.exception.AppException;
+import com.traveleasy.common.exception.CustomSeatHoldException;
 import com.traveleasy.common.exception.ErrorCode;
 import com.traveleasy.dto.booking.BookingResponse;
 import com.traveleasy.dto.booking.CreateBookingRequest;
@@ -68,17 +69,6 @@ public class BookingService {
             throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Một số ghế không tồn tại trên chuyến này");
         }
 
-        for (TripSeat seat : requestedSeats) {
-            if (seat.getStatus() == SeatStatus.BOOKED) {
-                throw new AppException(ErrorCode.SEAT_ALREADY_BOOKED, "Ghế " + seat.getSeatCode() + " vừa được người khác đặt mua. Vui lòng chọn ghế khác!");
-            }
-            if (seat.getStatus() == SeatStatus.LOCKED) {
-                if (!seatRealtimeService.isSeatHeldBy(trip.getId(), seat.getSeatCode(), userEmail, request.getSessionId())) {
-                    throw new AppException(ErrorCode.VALIDATION_ERROR, "Ghế " + seat.getSeatCode() + " đang được một khách hàng khác giữ chỗ thanh toán (thời hạn 10 phút). Vui lòng chọn ghế khác!");
-                }
-            }
-        }
-
         // Kiểm tra kênh đặt vé (POS Channel Protection): Quầy bến xe bỏ qua giá động
         // BẢO MẬT: Chỉ nhân viên nhà xe (OPERATOR) hoặc ADMIN mới có quyền tạo đơn kênh POS/COUNTER
         boolean requestedPos = request.getBookingChannel() != null &&
@@ -105,6 +95,47 @@ public class BookingService {
 
         boolean isPosChannel = isAuthorizedPos;
 
+        // BẢO VỆ NGHIỆP VỤ: Kênh online đóng bán trước giờ khởi hành 15 phút (Cut-off Booking Window)
+        if (!isPosChannel && trip.getDepartureTime() != null) {
+            LocalDateTime now = LocalDateTime.now();
+            long minutesUntilDeparture = java.time.Duration.between(now, trip.getDepartureTime()).toMinutes();
+            if (minutesUntilDeparture < 15 && minutesUntilDeparture >= 0) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR,
+                        "Chuyến xe sắp khởi hành trong vòng " + minutesUntilDeparture + " phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, vui lòng mua vé trực tiếp tại quầy bến xe!");
+            }
+        }
+
+        for (TripSeat seat : requestedSeats) {
+            if (seat.getStatus() == SeatStatus.BOOKED) {
+                throw new CustomSeatHoldException(
+                        seat.getSeatCode(),
+                        "Ghế này vừa được chọn bởi khách hàng khác (Ghế " + seat.getSeatCode() + " vừa được người khác đặt mua!)"
+                );
+            }
+            if (seat.getStatus() == SeatStatus.LOCKED) {
+                if (!seatRealtimeService.isSeatHeldBy(trip.getId(), seat.getSeatCode(), userEmail, request.getSessionId())) {
+                    // CẢI TIẾN NGHIỆP VỤ (POS OVERRIDE): Kênh POS/COUNTER tại quầy bến xe được quyền OVERRIDE ghế LOCKED
+                    // khi chuyến xe đã rơi vào khung giờ sắp khởi hành (< 15 phút) vì khách online không thể thanh toán được nữa.
+                    boolean canPosOverride = false;
+                    if (isPosChannel && trip.getDepartureTime() != null) {
+                        LocalDateTime now = LocalDateTime.now();
+                        long minutesUntilDeparture = java.time.Duration.between(now, trip.getDepartureTime()).toMinutes();
+                        if (minutesUntilDeparture < 15) {
+                            canPosOverride = true;
+                            log.info("⚡ [POS OVERRIDE] Quầy bến xe ghi đè ghế LOCKED '{}' trên chuyến {} vì xe xuất bến trong {} phút (< 15 phút).",
+                                    seat.getSeatCode(), trip.getId(), minutesUntilDeparture);
+                        }
+                    }
+                    if (!canPosOverride) {
+                        throw new CustomSeatHoldException(
+                                seat.getSeatCode(),
+                                "Ghế này vừa được chọn bởi khách hàng khác (Ghế " + seat.getSeatCode() + " đang được giữ chỗ thanh toán 10 phút!)"
+                        );
+                    }
+                }
+            }
+        }
+
         BigDecimal unitPrice;
         if (isPosChannel) {
             unitPrice = trip.getPrice();
@@ -120,7 +151,7 @@ public class BookingService {
                     : trip.getPrice();
         }
 
-        // Tính tổng tiền & Cập nhật trạng thái ghế
+        // Tính tổng tiền & Cập nhật trạng thái ghế (Chuyển sang BOOKED để bảo vệ nguyên tử chống double booking)
         BigDecimal baseSeatTotal = BigDecimal.ZERO;
         BigDecimal rawSeatTotal = BigDecimal.ZERO;
         for (TripSeat seat : requestedSeats) {
@@ -382,9 +413,23 @@ public class BookingService {
         if (booking.getStatus() == BookingStatus.COMPLETED) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé đã hoàn thành chuyến đi, không thể hủy");
         }
-        if (booking.getTrip() != null && booking.getTrip().getDepartureTime() != null &&
-                booking.getTrip().getDepartureTime().isBefore(LocalDateTime.now())) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe đã khởi hành, không thể hủy vé trực tuyến");
+        if (booking.getStatus() != BookingStatus.PENDING && booking.getTrip() != null && booking.getTrip().getDepartureTime() != null) {
+            LocalDateTime depTime = booking.getTrip().getDepartureTime();
+            LocalDateTime now = LocalDateTime.now();
+            if (depTime.isBefore(now)) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe đã khởi hành, không thể hủy vé trực tuyến");
+            }
+            long hoursUntilDeparture = java.time.Duration.between(now, depTime).toHours();
+            if (hoursUntilDeparture < 4) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR,
+                        "Chuyến xe khởi hành trong vòng " + hoursUntilDeparture + " giờ nữa (< 4 tiếng). Theo quy định vận tải, không thể hủy vé trực tuyến sát giờ chạy!");
+            }
+        }
+
+        List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
+        boolean hasUsedTicket = tickets.stream().anyMatch(t -> t.getStatus() == TicketStatus.USED);
+        if (hasUsedTicket) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé này đã có vé được soát lên xe (USED). Không thể thực hiện hủy vé!");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
@@ -402,7 +447,6 @@ public class BookingService {
             });
         }
 
-        List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
         List<String> seatCodes = new ArrayList<>();
         for (Ticket ticket : tickets) {
             ticket.setStatus(TicketStatus.CANCELLED);
@@ -424,6 +468,7 @@ public class BookingService {
 
         // Broadcast thời gian thực ghế đã được giải phóng (Màu Trắng - AVAILABLE)
         seatRealtimeService.broadcastReleased(trip.getId(), seatCodes);
+        seatRealtimeService.removeSeatHolders(trip.getId(), seatCodes);
 
         return mapToBookingResponse(booking, tickets);
     }
@@ -439,12 +484,25 @@ public class BookingService {
         if (booking.getStatus() == BookingStatus.COMPLETED) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé đã hoàn thành chuyến đi, không thể hủy vé");
         }
-        if (booking.getTrip() != null && booking.getTrip().getDepartureTime() != null &&
-                booking.getTrip().getDepartureTime().isBefore(LocalDateTime.now())) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe đã khởi hành, không thể hủy vé trực tuyến");
+        if (booking.getStatus() != BookingStatus.PENDING && booking.getTrip() != null && booking.getTrip().getDepartureTime() != null) {
+            LocalDateTime depTime = booking.getTrip().getDepartureTime();
+            LocalDateTime now = LocalDateTime.now();
+            if (depTime.isBefore(now)) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe đã khởi hành, không thể hủy vé trực tuyến");
+            }
+            long hoursUntilDeparture = java.time.Duration.between(now, depTime).toHours();
+            if (hoursUntilDeparture < 4) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR,
+                        "Chuyến xe khởi hành trong vòng " + hoursUntilDeparture + " giờ nữa (< 4 tiếng). Theo quy định vận tải, không thể hủy vé trực tuyến sát giờ chạy!");
+            }
         }
 
         List<Ticket> allTickets = ticketRepository.findByBookingId(booking.getId());
+        for (Ticket ticket : allTickets) {
+            if (ticketIds.contains(ticket.getId()) && ticket.getStatus() == TicketStatus.USED) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Vé " + ticket.getTicketCode() + " đã được soát lên xe (USED), không thể hủy!");
+            }
+        }
         List<String> releasedSeats = new ArrayList<>();
 
         for (Ticket ticket : allTickets) {

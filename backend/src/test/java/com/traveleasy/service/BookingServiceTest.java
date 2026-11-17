@@ -142,6 +142,26 @@ class BookingServiceTest {
     }
 
     @Test
+    @DisplayName("Ném ngoại lệ VALIDATION_ERROR khi khách đặt online sát giờ khởi hành (< 15 phút)")
+    void testCreateBooking_OnlineChannel_WithinCutoffWindow() {
+        sampleTrip.setDepartureTime(java.time.LocalDateTime.now().plusMinutes(10));
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(sampleTrip));
+
+        TripSeat s1 = new TripSeat(); s1.setSeatCode("A01"); s1.setStatus(SeatStatus.AVAILABLE);
+        TripSeat s2 = new TripSeat(); s2.setSeatCode("A02"); s2.setStatus(SeatStatus.AVAILABLE);
+        when(tripSeatRepository.findByTripIdAndSeatCodeInWithLock(eq(1L), anyList())).thenReturn(List.of(s1, s2));
+
+        bookingRequest.setBookingChannel("ONLINE");
+
+        AppException ex = assertThrows(AppException.class, () ->
+                bookingService.createBooking(bookingRequest, null)
+        );
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("< 15 phút"));
+    }
+
+    @Test
     @DisplayName("Ném ngoại lệ VALIDATION_ERROR khi hủy đơn vé của chuyến xe đã khởi hành")
     void testCancelBooking_TripAlreadyDeparted() {
         Booking booking = new Booking();
@@ -158,6 +178,50 @@ class BookingServiceTest {
 
         assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
         assertTrue(ex.getMessage().contains("đã khởi hành"));
+    }
+
+    @Test
+    @DisplayName("Ném ngoại lệ VALIDATION_ERROR khi hủy vé sát giờ khởi hành (< 4 tiếng)")
+    void testCancelBooking_CloseToDeparture() {
+        Booking booking = new Booking();
+        booking.setId(10L);
+        booking.setStatus(BookingStatus.CONFIRMED);
+        sampleTrip.setDepartureTime(java.time.LocalDateTime.now().plusHours(2));
+        booking.setTrip(sampleTrip);
+
+        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+
+        AppException ex = assertThrows(AppException.class, () ->
+                bookingService.cancelBooking(10L, null)
+        );
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("< 4 tiếng"));
+    }
+
+    @Test
+    @DisplayName("Ném ngoại lệ VALIDATION_ERROR khi hủy đơn vé đã có vé soát lên xe (USED)")
+    void testCancelBooking_TicketAlreadyUsed() {
+        Booking booking = new Booking();
+        booking.setId(10L);
+        booking.setStatus(BookingStatus.CONFIRMED);
+        sampleTrip.setDepartureTime(java.time.LocalDateTime.now().plusDays(2));
+        booking.setTrip(sampleTrip);
+
+        Ticket usedTicket = new Ticket();
+        usedTicket.setId(100L);
+        usedTicket.setSeatNumber("A01");
+        usedTicket.setStatus(TicketStatus.USED);
+
+        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+        when(ticketRepository.findByBookingId(10L)).thenReturn(List.of(usedTicket));
+
+        AppException ex = assertThrows(AppException.class, () ->
+                bookingService.cancelBooking(10L, null)
+        );
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, ex.getErrorCode());
+        assertTrue(ex.getMessage().contains("USED"));
     }
 
     @Test

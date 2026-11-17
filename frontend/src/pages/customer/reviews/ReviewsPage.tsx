@@ -83,6 +83,7 @@ export const ReviewsPage: React.FC = () => {
 
             return {
               id: `rev-${r.id}`,
+              bookingCode: r.bookingCode || r.booking_code || r.ticketCode || undefined,
               userName: r.customerName || 'Hành khách ẩn danh',
               userAvatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(r.customerName || 'KH')}`,
               userRank: r.rating >= 5 ? 'Thành viên Kim Cương' : 'Thành viên Vàng',
@@ -91,7 +92,7 @@ export const ReviewsPage: React.FC = () => {
               companyName: r.busCompanyName || 'TravelEasy Express',
               tripDate: r.createdAt ? new Date(r.createdAt).toLocaleDateString('vi-VN') : 'Mới đây',
               createdAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString('vi-VN') : 'Vừa xong',
-              verifiedBooking: true,
+              verifiedBooking: Boolean(r.bookingCode || r.booking_code || r.bookingId || r.verifiedBooking),
               comment: r.comment || '',
               images: rawImages,
               criteriaScores: {
@@ -161,9 +162,18 @@ export const ReviewsPage: React.FC = () => {
     loadDataFromSupabase();
   }, [loadDataFromSupabase]);
 
+  // Spam filter keywords
+  const SPAM_KEYWORDS = ['test', 'demo', 'asdf', 'spam', 'thử nghiệm', 'thu nghiem', 'abcxyz', '123456'];
+
   // Filter & Sort Logic
   const filteredReviews = useMemo(() => {
     let result = [...reviews];
+
+    // Remove spam / fake test reviews
+    result = result.filter((r) => {
+      const combined = `${r.comment || ''} ${r.userName || ''}`.toLowerCase();
+      return !SPAM_KEYWORDS.some((kw) => combined.includes(kw));
+    });
 
     // Filter by Company
     if (selectedCompany !== 'ALL') {
@@ -175,6 +185,8 @@ export const ReviewsPage: React.FC = () => {
       result = result.filter((r) => r.rating === 5);
     } else if (starFilter === '4') {
       result = result.filter((r) => r.rating === 4);
+    } else if (starFilter === '3') {
+      result = result.filter((r) => r.rating === 3);
     } else if (starFilter === 'HAS_IMAGES') {
       result = result.filter((r) => r.images && r.images.length > 0);
     }

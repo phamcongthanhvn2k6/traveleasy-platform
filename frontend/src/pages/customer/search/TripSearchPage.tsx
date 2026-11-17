@@ -6,6 +6,7 @@ import { TripSearchHeader } from './components/TripSearchHeader';
 import { FilterSidebar, FilterState } from './components/FilterSidebar';
 import { SortTabBar, SortOption } from './components/SortTabBar';
 import { TripResultCard } from './components/TripResultCard';
+import { TripCardSkeleton } from './components/TripCardSkeleton';
 import { Pagination } from '../../../components/Pagination';
 import { CheckoutModal } from '../../../components/CheckoutModal';
 import { toast } from '../../../context/ToastContext';
@@ -608,13 +609,28 @@ export const TripSearchPage: React.FC = () => {
       }
       sessionStorage.removeItem('traveleasy_checkout_data');
       sessionStorage.removeItem('traveleasy_hold_expiry');
+      sessionStorage.removeItem('traveleasy_pending_booking');
+      sessionStorage.removeItem('traveleasy_payment_init');
       localStorage.removeItem('traveleasy_checkout_data');
       localStorage.removeItem('traveleasy_hold_expiry');
+      localStorage.removeItem('traveleasy_pending_booking');
+      localStorage.removeItem('traveleasy_payment_init');
       setGlobalHold(null);
+      // Xóa client cache tìm kiếm và làm mới danh sách chuyến ngay lập tức
+      tripSearchClientCache.clear();
+      fetchTrips(origin, destination, date);
     }
   };
 
   const handleOpenBooking = (trip: Trip, seats: string[], points: any) => {
+    // Nếu khách đang có phiên giữ chỗ trên một chuyến khác, tự động nhả ghế chuyến cũ
+    if (globalHold && globalHold.trip.id !== trip.id) {
+      api.post(`/trips/${globalHold.trip.id}/seats/release`, {
+        seatCodes: globalHold.seats,
+      }).catch(() => {});
+      setGlobalHold(null);
+    }
+
     const token = localStorage.getItem('traveleasy_token');
     const expiryTimestamp = Date.now() + 600 * 1000;
     const checkoutPayload = { trip, selectedSeats: seats, points, holdExpiry: expiryTimestamp };
@@ -847,25 +863,9 @@ export const TripSearchPage: React.FC = () => {
           />
 
           {loading ? (
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                padding: '60px 20px',
-                textAlign: 'center',
-                color: '#64748b',
-              }}
-            >
-              <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Đang tìm kiếm chuyến xe tốt nhất cho bạn...
-              </div>
-              <div style={{ fontSize: '13px' }}>
-                Vui lòng đợi trong giây lát để hệ thống kết nối với các đối tác nhà xe.
-              </div>
-            </div>
+            <TripCardSkeleton count={3} />
           ) : paginatedTrips.length > 0 ? (
-            <div>
+            <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
               {paginatedTrips.map((trip) => (
                 <TripResultCard key={trip.id} trip={trip} onBook={handleOpenBooking} />
               ))}

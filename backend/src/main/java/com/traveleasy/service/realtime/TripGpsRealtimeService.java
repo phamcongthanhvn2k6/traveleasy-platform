@@ -3,6 +3,8 @@ package com.traveleasy.service.realtime;
 import com.traveleasy.dto.tracking.TripGpsLocationDto;
 import com.traveleasy.dto.tracking.UpdateTripGpsRequest;
 import com.traveleasy.entity.Trip;
+import com.traveleasy.entity.TripCrew;
+import com.traveleasy.repository.TripCrewRepository;
 import com.traveleasy.repository.TripRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class TripGpsRealtimeService {
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     private final TripRepository tripRepository;
+    private final TripCrewRepository tripCrewRepository;
 
     // Bộ nhớ đệm tọa độ thời gian thực (Microsecond access)
     private final ConcurrentHashMap<Long, TripGpsLocationDto> currentGpsCache = new ConcurrentHashMap<>();
@@ -312,11 +315,28 @@ public class TripGpsRealtimeService {
 
         double[] startCoord = routeCoords.get(0);
 
-        // Thông tin tài xế và kiểm định an toàn
-        String driverName = "Nguyễn Văn Hùng (Tài chính)";
-        String driverPhone = "0912 345 678";
-        String driverLicense = "GPLX Hạng E (079090012345)";
+        // Thông tin tài xế và kiểm định an toàn (Tự động đồng bộ từ phân công tổ lái TripCrew)
+        String driverName = "Đội ngũ tài xế chuyên nghiệp";
+        String driverPhone = "1900 6868";
+        String driverLicense = "GPLX Hạng E";
         boolean alcoholTested = true;
+
+        if (tripCrewRepository != null) {
+            Optional<TripCrew> crewOpt = tripCrewRepository.findByTripId(tripId);
+            if (crewOpt.isPresent()) {
+                TripCrew crew = crewOpt.get();
+                if (crew.getPrimaryDriverName() != null && !crew.getPrimaryDriverName().isBlank()) {
+                    driverName = crew.getPrimaryDriverName();
+                }
+                if (crew.getPrimaryDriverPhone() != null && !crew.getPrimaryDriverPhone().isBlank()) {
+                    driverPhone = crew.getPrimaryDriverPhone();
+                }
+                if (crew.getPrimaryDriverLicense() != null && !crew.getPrimaryDriverLicense().isBlank()) {
+                    driverLicense = crew.getPrimaryDriverLicense();
+                }
+                alcoholTested = Boolean.TRUE.equals(crew.getAlcoholTested());
+            }
+        }
 
         return TripGpsLocationDto.builder()
                 .tripId(tripId)

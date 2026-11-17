@@ -157,4 +157,37 @@ class CompanyTicketExchangeControllerTest {
         assertEquals(ErrorCode.FORBIDDEN, ex.getErrorCode());
         verify(ticketExchangeService, never()).exchangeTicket(any(), any());
     }
+
+    @Test
+    @DisplayName("API POST /confirm: Thực hiện đổi vé alias thành công và trả về thông tin vé mới")
+    void testConfirmExchange_Success() {
+        Map<String, Object> body = Map.of(
+                "oldTicketCode", "TK-01",
+                "newTripId", 102L,
+                "newSeatNumber", "B02",
+                "note", "Đổi vé tại quầy"
+        );
+
+        TicketExchangeResponse mockResponse = TicketExchangeResponse.builder()
+                .exchangeId(999L)
+                .status("SUCCESS")
+                .oldTicketCode("TK-01")
+                .newTicketCode("TK-EX-CONFIRM-123")
+                .newSeatCode("B02")
+                .newTripId(102L)
+                .build();
+
+        when(securityService.requireStaffRole(authentication, StaffRole.OWNER, StaffRole.CASHIER))
+                .thenReturn(cashierUser);
+        when(ticketExchangeService.exchangeTicket(any(TicketExchangeRequest.class), eq(cashierUser)))
+                .thenReturn(mockResponse);
+
+        ApiResponse<TicketExchangeResponse> response = controller.confirmExchange(body, authentication);
+
+        assertTrue(response.isSuccess());
+        assertEquals("SUCCESS", response.getData().getStatus());
+        assertEquals("TK-EX-CONFIRM-123", response.getData().getNewTicketCode());
+        verify(securityService).requireStaffRole(authentication, StaffRole.OWNER, StaffRole.CASHIER);
+        verify(ticketExchangeService, times(1)).exchangeTicket(any(TicketExchangeRequest.class), eq(cashierUser));
+    }
 }

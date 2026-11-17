@@ -82,6 +82,8 @@ public class ConductorScannerController {
 
                 String passName = (t != null && t.getBooking() != null) ? t.getBooking().getPassengerName() : null;
                 String passPhone = (t != null && t.getBooking() != null) ? t.getBooking().getPassengerPhone() : null;
+                String pickup = (t != null && t.getBooking() != null) ? t.getBooking().getPickupPoint() : null;
+                String dropoff = (t != null && t.getBooking() != null) ? t.getBooking().getDropoffPoint() : null;
                 String tCode = (t != null) ? t.getTicketCode() : null;
 
                 seatItems.add(ConductorSeatManifestResponse.ConductorSeatItem.builder()
@@ -93,6 +95,8 @@ public class ConductorScannerController {
                         .ticketCode(tCode)
                         .passengerName(passName)
                         .passengerPhone(passPhone)
+                        .pickupPoint(pickup)
+                        .dropoffPoint(dropoff)
                         .build());
             }
         } else {
@@ -111,6 +115,8 @@ public class ConductorScannerController {
                         .ticketCode(t.getTicketCode())
                         .passengerName(t.getBooking() != null ? t.getBooking().getPassengerName() : "Hành khách")
                         .passengerPhone(t.getBooking() != null ? t.getBooking().getPassengerPhone() : "090***")
+                        .pickupPoint(t.getBooking() != null ? t.getBooking().getPickupPoint() : null)
+                        .dropoffPoint(t.getBooking() != null ? t.getBooking().getDropoffPoint() : null)
                         .build());
             }
         }
