@@ -192,7 +192,10 @@ export default function PosTerminalPage() {
   const baseTotal = unitPrice * seatCount;
   const insuranceTotal = hasInsurance ? seatCount * 25000 : 0;
   const finalTotal = baseTotal + insuranceTotal;
-  const numericCashReceived = cashReceivedInput.trim() !== '' ? Number(cashReceivedInput) : finalTotal;
+  const numericCashReceived =
+    cashReceivedInput.trim() !== '' ? Math.max(0, Number(cashReceivedInput) || 0) : finalTotal;
+  const isCashInsufficient = paymentMethod === 'CASH' && cashReceivedInput.trim() !== '' && numericCashReceived < finalTotal;
+  const cashShortageAmount = isCashInsufficient ? finalTotal - numericCashReceived : 0;
   const changeAmount = paymentMethod === 'CASH' ? Math.max(0, numericCashReceived - finalTotal) : 0;
 
   const buildDefaultSeatMap = (): SeatCell[] => {
@@ -366,6 +369,10 @@ export default function PosTerminalPage() {
       setShowOpenShiftModal(true);
       return;
     }
+    if (isCashInsufficient) {
+      toast.warning(`Tiền khách đưa chưa đủ, còn thiếu ${formatVnd(cashShortageAmount)}!`, 'Thiếu Tiền Mặt');
+      return;
+    }
 
     setIssuingTicket(true);
     try {
@@ -432,6 +439,8 @@ export default function PosTerminalPage() {
     selectedTerminal,
     currentCompany.id,
     numericCashReceived,
+    isCashInsufficient,
+    cashShortageAmount,
     hasInsurance,
     fetchShiftAndRecentData,
     loadTripSeats
@@ -486,9 +495,34 @@ export default function PosTerminalPage() {
     }
   };
 
-  // Phím tắt toàn cục F1 - F9 + ESC quay lại bước trước
+  // Phím tắt toàn cục F1 - F9, Enter chốt vé / in nhanh + ESC quay lại bước trước
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        const target = e.target as HTMLElement | null;
+        const tag = target?.tagName?.toUpperCase();
+        // Không cướp Enter khi đang bấm nút khác hoặc nhập ở màn hình tìm kiếm
+        if (tag === 'TEXTAREA' || tag === 'BUTTON') return;
+        if (showOpenShiftModal || showCloseShiftModal || showShortcutGuide) return;
+
+        if (activeReceiptModal) {
+          e.preventDefault();
+          window.print();
+          return;
+        }
+        if (activeStep === 2 && selectedSeats.length > 0) {
+          e.preventDefault();
+          setActiveStep(3);
+          return;
+        }
+        if (activeStep === 3 && selectedSeats.length > 0) {
+          e.preventDefault();
+          handleIssueAndPrintTicket();
+          return;
+        }
+        return;
+      }
+
       if (e.key === 'Escape') {
         if (activeReceiptModal) {
           setActiveReceiptModal(null);
@@ -1691,10 +1725,10 @@ export default function PosTerminalPage() {
                 <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <label htmlFor="pos-cash-received" className="text-sm font-semibold text-slate-700">
-                      Khách đưa
+                      Tiền khách đưa (VNĐ)
                     </label>
                     <div className="flex gap-1.5">
-                      {[finalTotal, 500000, 1000000].map((amt, idx) => (
+                      {[finalTotal, 200000, 500000, 1000000].map((amt, idx) => (
                         <button
                           key={idx}
                           type="button"
@@ -1709,15 +1743,27 @@ export default function PosTerminalPage() {
                   <input
                     id="pos-cash-received"
                     type="number"
+                    min={0}
+                    step={1000}
                     value={cashReceivedInput}
                     onChange={(e) => setCashReceivedInput(e.target.value)}
-                    placeholder={String(finalTotal)}
-                    className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-base font-mono-pos font-bold text-slate-900"
+                    placeholder={`Mặc định: ${finalTotal.toLocaleString('vi-VN')} đ`}
+                    className={`w-full px-3.5 py-2.5 bg-white border rounded-xl text-base font-mono-pos font-bold focus:outline-none focus:ring-2 ${
+                      isCashInsufficient
+                        ? 'border-rose-400 text-rose-700 focus:ring-rose-500'
+                        : 'border-slate-300 text-slate-900 focus:ring-indigo-500'
+                    }`}
                   />
-                  <div className="flex items-center justify-between text-sm pt-1.5 border-t border-slate-200">
-                    <span className="text-slate-600">Tiền thối:</span>
-                    <span className="font-mono-pos font-bold text-emerald-700 text-base">
-                      {formatVnd(changeAmount)}
+                  <div className="flex items-center justify-between text-sm pt-2 border-t border-slate-200">
+                    <span className="text-slate-600 font-medium">
+                      {isCashInsufficient ? 'Khách đưa còn thiếu:' : 'Tiền thừa thối lại khách:'}
+                    </span>
+                    <span
+                      className={`font-mono-pos font-bold text-lg ${
+                        isCashInsufficient ? 'text-rose-600' : 'text-emerald-700'
+                      }`}
+                    >
+                      {isCashInsufficient ? `-${formatVnd(cashShortageAmount)}` : formatVnd(changeAmount)}
                     </span>
                   </div>
                 </div>
@@ -1735,12 +1781,12 @@ export default function PosTerminalPage() {
               </button>
               <button
                 type="button"
-                disabled={issuingTicket}
+                disabled={issuingTicket || isCashInsufficient}
                 onClick={handleIssueAndPrintTicket}
                 className="flex-1 py-3.5 px-5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-400 text-white font-bold rounded-xl shadow-md transition cursor-pointer flex items-center justify-center gap-2 text-sm"
               >
                 <Printer className="w-5 h-5" />
-                <span>{issuingTicket ? 'Đang xuất vé...' : 'Xuất Vé & In 80mm (F9)'}</span>
+                <span>{issuingTicket ? 'Đang xuất vé...' : 'Xuất Vé & In 80mm (Enter / F9)'}</span>
               </button>
             </div>
           </div>
@@ -2008,7 +2054,7 @@ export default function PosTerminalPage() {
                 className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 cursor-pointer shadow"
               >
                 <Printer className="w-4 h-4" />
-                <span>In Nhiệt 80mm</span>
+                <span>In Nhiệt 80mm (Enter)</span>
               </button>
               <button
                 type="button"
