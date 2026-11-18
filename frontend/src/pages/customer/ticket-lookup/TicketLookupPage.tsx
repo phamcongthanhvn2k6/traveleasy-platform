@@ -150,10 +150,10 @@ export const TicketLookupPage: React.FC = () => {
       try {
         res = await api.get(`/bookings/code/${encodeURIComponent(rawClean)}`);
       } catch (e: any) {
-        // If not found as bookingCode, might be a TicketCode (TK-...)
-        if (rawClean.startsWith('TK-') || rawClean.includes('-TK-')) {
+        // Fallback: If not found as bookingCode, might be a TicketCode (TK-...) or a QR Hash (32 chars)
+        try {
           const verifyRes = await api.get(`/bookings/verify-ticket/${encodeURIComponent(rawClean)}`);
-          if (verifyRes.data?.data) {
+          if (verifyRes.data?.data && verifyRes.data.data.validationStatus !== 'INVALID') {
             const vData = verifyRes.data.data;
             setVerifiedTicketStatus({
               status: vData.validationStatus,
@@ -163,8 +163,10 @@ export const TicketLookupPage: React.FC = () => {
             if (vData.bookingCode) {
               res = await api.get(`/bookings/code/${encodeURIComponent(vData.bookingCode)}`);
             }
+          } else {
+            throw e;
           }
-        } else {
+        } catch {
           throw e;
         }
       }
@@ -1043,11 +1045,26 @@ export const TicketLookupPage: React.FC = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                   {booking.tickets.map(t => (
                     <div key={t.id} style={{ backgroundColor: '#fff', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                      <QrCode size={48} color="#2563eb" style={{ margin: '0 auto 8px auto' }} />
+                      <div style={{ width: '130px', height: '130px', margin: '0 auto 8px auto', padding: '6px', background: '#ffffff', borderRadius: '8px', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&format=svg&color=0-0-0&bgcolor=255-255-255&data=${encodeURIComponent(t.qrCodeHash || t.ticketCode)}`}
+                          alt={`Mã QR ${t.ticketCode}`}
+                          style={{ width: '100%', height: '100%', display: 'block', objectFit: 'contain' }}
+                        />
+                      </div>
                       <div style={{ fontSize: '11px', color: '#64748b' }}>Mã vé: {t.ticketCode}</div>
                       <div style={{ fontSize: '18px', fontWeight: 800, color: '#f97316', margin: '4px 0' }}>Ghế {t.seatNumber}</div>
                       <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{t.price?.toLocaleString('vi-VN')} đ</div>
-                      <span style={{ display: 'inline-block', marginTop: '6px', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', backgroundColor: '#dcfce7', color: '#166534' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        marginTop: '6px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        backgroundColor: t.status === 'CANCELLED' ? '#fee2e2' : t.status === 'USED' ? '#f1f5f9' : '#dcfce7',
+                        color: t.status === 'CANCELLED' ? '#b91c1c' : t.status === 'USED' ? '#475569' : '#166534'
+                      }}>
                         {t.status}
                       </span>
                     </div>

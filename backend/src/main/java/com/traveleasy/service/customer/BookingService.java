@@ -377,7 +377,9 @@ public class BookingService {
     @Transactional(readOnly = true)
     public BookingResponse getBookingByCode(String bookingCode) {
         Booking booking = bookingRepository.findByBookingCode(bookingCode)
-                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy mã đơn vé: " + bookingCode));
+                .orElseGet(() -> ticketRepository.findByCodeOrQrHash(bookingCode)
+                        .map(Ticket::getBooking)
+                        .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy mã đơn vé: " + bookingCode)));
         List<Ticket> tickets = ticketRepository.findByBookingId(booking.getId());
         BookingResponse res = mapToBookingResponse(booking, tickets);
         res.setCustomerPhone(maskPhone(res.getCustomerPhone()));
@@ -922,7 +924,7 @@ public class BookingService {
             }
         }
 
-        java.util.Optional<Ticket> ticketOpt = ticketRepository.findByTicketCode(cleanCode);
+        java.util.Optional<Ticket> ticketOpt = ticketRepository.findByCodeOrQrHash(cleanCode);
         if (ticketOpt.isPresent()) {
             Ticket ticket = ticketOpt.get();
             Booking booking = ticket.getBooking();
@@ -948,7 +950,7 @@ public class BookingService {
     @Transactional
     public com.traveleasy.dto.booking.VerifiedTicketResponse checkInTicket(String ticketCode) {
         // ponytail: pessimistic lock prevents concurrent double check-in
-        Ticket ticket = ticketRepository.findByTicketCodeForUpdate(ticketCode)
+        Ticket ticket = ticketRepository.findByCodeOrQrHashForUpdate(ticketCode)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy mã vé " + ticketCode));
 
         if (ticket.getStatus() == TicketStatus.CANCELLED) {

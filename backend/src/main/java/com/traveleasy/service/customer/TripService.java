@@ -37,10 +37,20 @@ public class TripService {
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
+    @org.springframework.cache.annotation.CacheEvict(value = "trips_search", allEntries = true)
+    public void evictTripsSearchCache() {
+        log.debug("Đã xóa bộ nhớ đệm tìm kiếm chuyến xe (trips_search)");
+    }
+
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(
+            value = "trips_search",
+            key = "(#origin != null ? #origin.trim().toLowerCase() : 'ALL') + '_' + (#destination != null ? #destination.trim().toLowerCase() : 'ALL') + '_' + (#departureDate != null ? #departureDate.toString() : 'ANY')"
+    )
     public List<TripResponse> searchTrips(String origin, String destination, LocalDate departureDate) {
         long t0 = System.currentTimeMillis();
-        LocalDateTime now = LocalDateTime.now();
+        java.time.ZoneId vnZone = java.time.ZoneId.of("Asia/Ho_Chi_Minh");
+        LocalDateTime now = LocalDateTime.now(vnZone);
         LocalDateTime startTime = null;
         LocalDateTime endTime = null;
 
@@ -60,12 +70,17 @@ public class TripService {
             // On-demand: Tự động đảm bảo sinh chuyến nếu ngày tìm kiếm chưa có chuyến nào
             tripAutomationServiceProvider.ifAvailable(tas -> tas.ensureTripsForRouteAndDate(origin, destination, departureDate));
         } else {
-            // Không truyền ngày: Mặc định hiển thị các chuyến mở bán trong 3 ngày tới nếu chưa lọc tuyến (hoặc 7 ngày nếu đã chọn tuyến) để phản hồi siêu tốc
+            // Không truyền ngày: Mặc định hiển thị các chuyến mở bán trong 3 ngày tới nếu chưa lọc tuyến (hoặc 7 ngày nếu đã chọn tuyến)
             startTime = now;
             endTime = (origin == null && destination == null) ? now.plusDays(3) : now.plusDays(7);
         }
 
-        List<Trip> trips = tripRepository.searchTrips(origin, destination, startTime, endTime, TripStatus.SCHEDULED);
+        List<Trip> rawTrips = tripRepository.searchTrips(origin, destination, startTime, endTime, TripStatus.SCHEDULED);
+        // LOẠI BỎ TRIỆT ĐỂ: Các chuyến xe đã quá giờ xuất bến so với giờ thực tế Việt Nam
+        List<Trip> trips = rawTrips.stream()
+                .filter(t -> t.getDepartureTime() != null && t.getDepartureTime().isAfter(now))
+                .filter(t -> t.getStatus() == TripStatus.SCHEDULED)
+                .collect(Collectors.toList());
         long t1 = System.currentTimeMillis();
 
         // TỐI ƯU HÓA: Thay vì duyệt vòng lặp N+1 gửi 20-30 query riêng lẻ qua Internet đến Supabase,

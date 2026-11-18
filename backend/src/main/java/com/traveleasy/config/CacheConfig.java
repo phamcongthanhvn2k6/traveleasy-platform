@@ -17,6 +17,9 @@ import java.time.Duration;
 @Configuration
 public class CacheConfig {
 
+    public static final String TRIPS_SEARCH_CACHE = "trips_search";
+    public static final long TRIPS_SEARCH_TTL_SECONDS = 30L;
+
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
@@ -57,7 +60,7 @@ public class CacheConfig {
                 .recordStats()
                 .build());
 
-        // Admin trips và search — TTL 5 phút
+        // Admin trips — TTL 5 phút
         cacheManager.registerCustomCache("admin_all_trips",
             Caffeine.newBuilder()
                 .initialCapacity(30)
@@ -66,13 +69,16 @@ public class CacheConfig {
                 .recordStats()
                 .build());
 
-        cacheManager.registerCustomCache("trips_search",
+        // [S409] Cache kết quả tìm kiếm chuyến xe (/api/v1/trips/search) với TTL 30 giây
+        cacheManager.registerCustomCache(
+            TRIPS_SEARCH_CACHE,
             Caffeine.newBuilder()
                 .initialCapacity(50)
-                .maximumSize(300)
-                .expireAfterWrite(Duration.ofMinutes(5))
+                .maximumSize(500)
+                .expireAfterWrite(Duration.ofSeconds(TRIPS_SEARCH_TTL_SECONDS))
                 .recordStats()
-                .build());
+                .build()
+        );
 
         // Cấu hình mặc định cho tất cả cache còn lại (TTL 10 phút — giữ nguyên hành vi cũ)
         cacheManager.setCaffeine(
