@@ -33,6 +33,9 @@ const ROUTE_MESSAGES: Record<string, string> = {
 
 export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
+  // These admin tables already show loading while their URL filters change.
+  const hasTableLoading = /^\/admin\/(trips|bookings)\/?$/i.test(location.pathname);
+  const transitionSearch = hasTableLoading ? '' : location.search;
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [progress, setProgress] = useState(0);
@@ -106,7 +109,7 @@ export const LoadingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (minTimerRef.current) clearTimeout(minTimerRef.current);
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
     };
-  }, [location.pathname, location.search]);
+  }, [location.pathname, transitionSearch]);
 
   return (
     <LoadingContext.Provider value={{ isLoading, message, showLoading, hideLoading, progress }}>

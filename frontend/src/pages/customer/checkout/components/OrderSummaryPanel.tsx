@@ -16,6 +16,8 @@ interface Props {
   disabled: boolean;
 }
 
+const normalizeVoucherCode = (code: string) => code.trim().toUpperCase();
+
 export const OrderSummaryPanel: React.FC<Props> = ({
   trip,
   selectedSeats,
@@ -52,7 +54,7 @@ export const OrderSummaryPanel: React.FC<Props> = ({
   }, [baseTicketPrice]);
 
   const applyVoucherByCode = async (code: string) => {
-    const cleanCode = code.trim().toUpperCase();
+    const cleanCode = normalizeVoucherCode(code);
     if (!cleanCode) {
       toast.warning('Vui lòng nhập mã giảm giá!', 'Voucher');
       return;
@@ -230,7 +232,7 @@ export const OrderSummaryPanel: React.FC<Props> = ({
             type="text"
             placeholder="Mã giảm giá (VD: TRAVELEASY)"
             value={voucherCode}
-            onChange={(e) => setVoucherCode(e.target.value)}
+            onChange={(e) => setVoucherCode(normalizeVoucherCode(e.target.value))}
             style={{
               width: '100%',
               padding: '9px 12px 9px 32px',

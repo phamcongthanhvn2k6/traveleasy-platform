@@ -7,6 +7,8 @@ import com.traveleasy.entity.BusCompany;
 import com.traveleasy.entity.PayoutRequest;
 import com.traveleasy.entity.SettlementRecord;
 import com.traveleasy.repository.AuditLogRepository;
+import com.traveleasy.repository.TicketRepository;
+import com.traveleasy.entity.Ticket;
 import com.traveleasy.repository.BookingRepository;
 import com.traveleasy.repository.BusCompanyRepository;
 import com.traveleasy.repository.PayoutRequestRepository;
@@ -40,6 +42,7 @@ public class CompanySettlementService {
     private final BusCompanyRepository busCompanyRepository;
     private final BookingRepository bookingRepository;
     private final AuditLogRepository auditLogRepository;
+    private final TicketRepository ticketRepository;
 
     /**
      * Tự động chốt kỳ đối soát vào 00:05 ngày 01 và ngày 15 hàng tháng.
@@ -148,6 +151,9 @@ public class CompanySettlementService {
         wallet.put("availableBalance", availableBalance);
         wallet.put("bankAccount", buildBankInfo(company));
         wallet.put("payoutRequests", payoutRequests.stream().map(this::toPayoutMap).toList());
+        wallet.put("refundMovements", ticketRepository
+                .findByBookingTripBusCompanyIdAndRefundRecordedAtIsNotNullOrderByRefundRecordedAtDesc(companyId)
+                .stream().map(this::toRefundMovement).toList());
         return wallet;
     }
 
@@ -360,6 +366,18 @@ public class CompanySettlementService {
         map.put("payoutTxHash", r.getPayoutTxHash());
         map.put("payoutNote", r.getPayoutNote());
         return map;
+    }
+
+    private Map<String, Object> toRefundMovement(Ticket ticket) {
+        Map<String, Object> movement = new LinkedHashMap<>();
+        movement.put("ticketCode", ticket.getTicketCode());
+        movement.put("originalPrice", ticket.getCancellationFee().add(ticket.getRefundAmount()));
+        movement.put("cancellationFee", ticket.getCancellationFee());
+        movement.put("refundAmount", ticket.getRefundAmount());
+        movement.put("partnerCredit", ticket.getRefundPartnerCredit());
+        movement.put("recordedAt", ticket.getRefundRecordedAt().format(DT_FMT));
+        movement.put("transferCode", ticket.getRefundTransferCode());
+        return movement;
     }
 
     private Map<String, Object> toPayoutMap(PayoutRequest p) {

@@ -4,6 +4,7 @@ import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.exception.ErrorCode;
 import com.traveleasy.dto.admin.CreateTripRequest;
 import com.traveleasy.dto.admin.DashboardStatsResponse;
+import com.traveleasy.dto.admin.S405TripSummary;
 import com.traveleasy.dto.trip.TripResponse;
 import com.traveleasy.entity.*;
 import com.traveleasy.repository.*;
@@ -11,6 +12,10 @@ import com.traveleasy.service.customer.TripService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -122,6 +127,56 @@ public class AdminTripService {
                         .status(t.getStatus())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * S405 admin listing. Bounds are local departure times [from, toExclusive).
+     * The same method can be called page-by-page for bounded export batches.
+     */
+    @Transactional(readOnly = true)
+    public Page<TripResponse> getS405Trips(String search, Long busCompanyId, Long routeId,
+                                            java.time.LocalDateTime from, java.time.LocalDateTime toExclusive,
+                                            TripStatus status, Pageable pageable) {
+        if (pageable == null || pageable.isUnpaged() || pageable.getPageNumber() < 0 ||
+                pageable.getPageSize() < 1 || pageable.getPageSize() > 100) {
+            throw new IllegalArgumentException("Trang hoặc kích thước trang không hợp lệ (1–100)");
+        }
+        if ((busCompanyId != null && busCompanyId <= 0) || (routeId != null && routeId <= 0)) {
+            throw new IllegalArgumentException("Mã nhà xe và tuyến đường phải lớn hơn 0");
+        }
+        if (from != null && toExclusive != null && !from.isBefore(toExclusive)) {
+            throw new IllegalArgumentException("Khoảng thời gian xuất bến không hợp lệ");
+        }
+
+        // ! is the explicit LIKE escape character; input %, _, and ! remain literal.
+        String pattern = search == null || search.isEmpty() ? null : "%" + search.toLowerCase(Locale.ROOT)
+                .replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
+        Pageable stablePage = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                Sort.by(Sort.Order.desc("departureTime"), Sort.Order.desc("id")));
+        return tripRepository.findS405Trips(pattern, busCompanyId, routeId, from, toExclusive, status, stablePage)
+                .map(t -> TripResponse.builder()
+                        .id(t.getId())
+                        .busCompanyId(t.getBusCompany() != null ? t.getBusCompany().getId() : null)
+                        .busCompanyName(t.getBusCompany() != null ? t.getBusCompany().getName() : "")
+                        .busCompanyLogo(t.getBusCompany() != null ? t.getBusCompany().getLogoUrl() : "")
+                        .routeId(t.getRoute() != null ? t.getRoute().getId() : null)
+                        .originCity(t.getRoute() != null ? t.getRoute().getDepartureLocation() : "")
+                        .destinationCity(t.getRoute() != null ? t.getRoute().getArrivalLocation() : "")
+                        .departureTime(t.getDepartureTime())
+                        .arrivalTime(t.getArrivalTime())
+                        .busType(t.getBusType())
+                        .price(t.getPrice())
+                        .originalPrice(t.getPrice())
+                        .totalSeats(t.getTotalSeats())
+                        .availableSeats(t.getAvailableSeats())
+                        .status(t.getStatus())
+                        .build());
+    }
+
+    /** Global metrics, deliberately unaffected by list filters and isActive. */
+    @Transactional(readOnly = true)
+    public S405TripSummary getS405TripSummary() {
+        return tripRepository.getS405TripSummary();
     }
 
     public List<TripResponse> mapTripsWithPointsBatch(List<Trip> trips) {

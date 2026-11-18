@@ -140,13 +140,19 @@ export const FilterSidebar: React.FC<Props> = ({
   }, []);
 
   const handleTimeRangeChange = (index: 0 | 1, value: number) => {
-    const next: [number, number] = [...filters.timeRange];
+    let [min, max] = filters.timeRange;
     if (index === 0) {
-      next[0] = Math.min(value, next[1]);
+      min = value;
+      if (min > max) {
+        max = min; // Tự động đẩy mốc Đến lên bằng mốc Từ, tuyệt đối không clamp kẹt người dùng
+      }
     } else {
-      next[1] = Math.max(value, next[0]);
+      max = value;
+      if (max < min) {
+        min = max; // Tự động kéo mốc Từ xuống bằng mốc Đến
+      }
     }
-    onChange({ ...filters, timeRange: next, timeSlots: [] });
+    onChange({ ...filters, timeRange: [min, max], timeSlots: [] });
   };
 
   const toggleTimeSlot = (slot: string) => {
@@ -160,7 +166,9 @@ export const FilterSidebar: React.FC<Props> = ({
       nextSlots = [...filters.timeSlots, slot];
     }
 
-    if (nextSlots.length === 1) {
+    if (nextSlots.length === 0) {
+      nextRange = [0, 24]; // Bỏ chọn hết -> quay về toàn bộ cả ngày
+    } else if (nextSlots.length === 1) {
       if (nextSlots[0] === 'EARLY') nextRange = [0, 6];
       else if (nextSlots[0] === 'MORNING') nextRange = [6, 12];
       else if (nextSlots[0] === 'AFTERNOON') nextRange = [12, 18];
@@ -378,9 +386,35 @@ export const FilterSidebar: React.FC<Props> = ({
 
         {openSections.time && (
           <div>
-            {/* Visual Dual Slider Track */}
+            {/* Visual Dual Slider Track (Có dải màu xanh hiển thị trực quan và không bị chồng chặn thumb) */}
             <div style={{ padding: '0 4px', marginBottom: '14px' }}>
               <div style={{ position: 'relative', height: '24px', display: 'flex', alignItems: 'center' }}>
+                {/* Background Track (Màu xám) */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    width: '100%',
+                    height: '6px',
+                    backgroundColor: isDark ? '#334155' : '#e2e8f0',
+                    borderRadius: '9999px',
+                    zIndex: 1,
+                  }}
+                />
+
+                {/* Highlight Track (Màu xanh dương hiển thị đúng dải giờ đang chọn) */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: `${(filters.timeRange[0] / 24) * 100}%`,
+                    width: `${Math.max(0, ((filters.timeRange[1] - filters.timeRange[0]) / 24) * 100)}%`,
+                    height: '6px',
+                    backgroundColor: '#2563eb',
+                    borderRadius: '9999px',
+                    zIndex: 2,
+                  }}
+                />
+
+                {/* Min Slider Input ("Từ") */}
                 <input
                   type="range"
                   min="0"
@@ -388,14 +422,13 @@ export const FilterSidebar: React.FC<Props> = ({
                   step="0.5"
                   value={filters.timeRange[0]}
                   onChange={(e) => handleTimeRangeChange(0, parseFloat(e.target.value))}
+                  className="traveleasy-dual-range"
                   style={{
-                    position: 'absolute',
-                    width: '100%',
-                    accentColor: '#2563eb',
-                    cursor: 'pointer',
-                    zIndex: filters.timeRange[0] > 18 ? 5 : 3,
+                    zIndex: filters.timeRange[0] > 12 ? 5 : 3,
                   }}
                 />
+
+                {/* Max Slider Input ("Đến") */}
                 <input
                   type="range"
                   min="0"
@@ -403,12 +436,9 @@ export const FilterSidebar: React.FC<Props> = ({
                   step="0.5"
                   value={filters.timeRange[1]}
                   onChange={(e) => handleTimeRangeChange(1, parseFloat(e.target.value))}
+                  className="traveleasy-dual-range"
                   style={{
-                    position: 'absolute',
-                    width: '100%',
-                    accentColor: '#2563eb',
-                    cursor: 'pointer',
-                    zIndex: 4,
+                    zIndex: filters.timeRange[0] > 12 ? 3 : 5,
                   }}
                 />
               </div>
@@ -488,12 +518,16 @@ export const FilterSidebar: React.FC<Props> = ({
             {/* Quick Preset Pills */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
               {[
-                { id: 'EARLY', label: 'Sáng sớm (00-06h)', count: facetCounts.earlyCount },
-                { id: 'MORNING', label: 'Buổi sáng (06-12h)', count: facetCounts.morningCount },
-                { id: 'AFTERNOON', label: 'Buổi chiều (12-18h)', count: facetCounts.afternoonCount },
-                { id: 'EVENING', label: 'Buổi tối (18-24h)', count: facetCounts.eveningCount },
+                { id: 'EARLY', label: 'Sáng sớm (00-06h)', min: 0, max: 6, count: facetCounts.earlyCount },
+                { id: 'MORNING', label: 'Buổi sáng (06-12h)', min: 6, max: 12, count: facetCounts.morningCount },
+                { id: 'AFTERNOON', label: 'Buổi chiều (12-18h)', min: 12, max: 18, count: facetCounts.afternoonCount },
+                { id: 'EVENING', label: 'Buổi tối (18-24h)', min: 18, max: 24, count: facetCounts.eveningCount },
               ].map((slot) => {
-                const isActive = filters.timeSlots.includes(slot.id);
+                const isActive =
+                  filters.timeSlots.includes(slot.id) ||
+                  (filters.timeSlots.length === 0 &&
+                    filters.timeRange[0] === slot.min &&
+                    filters.timeRange[1] === slot.max);
                 return (
                   <button
                     type="button"
@@ -506,9 +540,10 @@ export const FilterSidebar: React.FC<Props> = ({
                       backgroundColor: isActive ? '#eff6ff' : '#f8fafc',
                       color: isActive ? '#1d4ed8' : '#475569',
                       fontSize: '11px',
-                      fontWeight: 600,
+                      fontWeight: 700,
                       cursor: 'pointer',
                       textAlign: 'center',
+                      transition: 'all 0.15s ease',
                     }}
                   >
                     {slot.label} {slot.count > 0 && `(${slot.count})`}

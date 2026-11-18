@@ -49,13 +49,30 @@ interface RefundRequestItem {
   seatNumber: string;
   originalPrice: number;
   status: string;
-  cancellationFee: number;
-  refundAmount: number;
-  busCompanyShare: number;
-  platformShare: number;
+  cancellationFeePercent: number | null;
+  cancellationFee: number | null;
+  refundAmount: number | null;
+  busCompanyShare: number | null;
+  platformShare: number | null;
+  refundStatus: string;
+  canConfirmTransfer: boolean;
+  refundTransferCode: string | null;
   departureTime: string;
   requestTime: string;
 }
+
+type RefundPreview = RefundRequestItem & { hoursBeforeDeparture: number | null };
+
+const formatAmount = (amount: number | null) =>
+  amount == null ? '—' : amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+
+const refundLabels: Record<string, string> = {
+  REFUNDED: 'Đã hoàn tiền',
+  PENDING: 'Chờ chuyển khoản',
+  NO_REFUND: 'Không hoàn tiền',
+  REJECTED: 'Từ chối hoàn tiền',
+  UNKNOWN: 'Chưa xác minh được',
+};
 
 export const CancellationRefundPage: React.FC = () => {
   const { isDark } = useTheme();
@@ -96,7 +113,7 @@ export const CancellationRefundPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchCode, setSearchCode] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedTicketForCalc, setSelectedTicketForCalc] = useState<any | null>(null);
+  const [selectedTicketForCalc, setSelectedTicketForCalc] = useState<RefundPreview | null>(null);
 
   // Fetch real rules & requests from backend DB
   const fetchRealData = useCallback(async () => {
@@ -168,7 +185,7 @@ export const CancellationRefundPage: React.FC = () => {
   };
 
   const handleConfirmRefund = async (ticketCode: string) => {
-    if (!window.confirm(`Xác nhận duyệt hủy vé ${ticketCode}? Ghế sẽ được mở lại ngay lập tức và tính toán hoàn tiền cho khách.`)) {
+    if (isLoading || isProcessing || !window.confirm(`Xác nhận duyệt hủy vé ${ticketCode}? Ghế sẽ được mở lại ngay lập tức và tính toán hoàn tiền cho khách.`)) {
       return;
     }
 
@@ -180,13 +197,36 @@ export const CancellationRefundPage: React.FC = () => {
         busCompanyId: currentCompany.id,
       });
       const msg = res.data?.message || `Đã duyệt hủy vé ${ticketCode} thành công! Ghế đã được tự động mở lại cho khách khác.`;
-      toast.success(msg, 'Hoàn Tiền Thành Công');
-      await fetchRealData();
+      setRequests(prev => prev.map(item => item.ticketCode === ticketCode ? { ...item, ...res.data.data } : item));
+      setSelectedTicketForCalc(prev => prev?.ticketCode === ticketCode
+        ? { ...prev, ...res.data.data, hoursBeforeDeparture: null }
+        : prev);
+      toast.success(msg, 'Đã duyệt hủy vé');
     } catch (err: any) {
       const errMsg = err?.response?.data?.message || 'Có lỗi xảy ra khi duyệt hủy vé!';
       toast.error(errMsg, 'Lỗi');
     } finally {
-      setSelectedTicketForCalc(null);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleConfirmTransfer = async (ticketCode: string) => {
+    if (isLoading || isProcessing) return;
+    const txCode = window.prompt('Nhập mã giao dịch của khoản tiền đã chuyển cho khách')?.trim();
+    if (!txCode) return;
+
+    setIsProcessing(true);
+    try {
+      const { data } = await api.post<{ data: Partial<RefundRequestItem> }>('/company/refunds/confirm-transfer', {
+        ticketCode,
+        txCode,
+      });
+      setRequests(prev => prev.map(item => item.ticketCode === ticketCode ? { ...item, ...data.data } : item));
+      setSelectedTicketForCalc(prev => prev?.ticketCode === ticketCode ? { ...prev, ...data.data } : prev);
+      toast.success('Đã xác nhận chuyển khoản hoàn tiền');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Không thể xác nhận chuyển khoản');
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -260,12 +300,12 @@ export const CancellationRefundPage: React.FC = () => {
 
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-            Tổng Tiền Hoàn Khách
+            Tổng tiền hoàn theo danh sách
           </span>
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold text-emerald-600">
               {requests
-                .reduce((acc, cur) => acc + cur.refundAmount, 0)
+                .reduce((acc, cur) => acc + (cur.refundAmount ?? 0), 0)
                 .toLocaleString('vi-VN')}{' '}
               đ
             </span>
@@ -274,7 +314,7 @@ export const CancellationRefundPage: React.FC = () => {
             </div>
           </div>
           <span className="text-xs text-emerald-600 mt-2 block font-medium">
-            Tự động trả về thẻ / ví khách
+            Gồm cả khoản dự kiến và đã chốt
           </span>
         </div>
 
@@ -285,7 +325,7 @@ export const CancellationRefundPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold text-amber-600">
               {requests
-                .reduce((acc, cur) => acc + cur.busCompanyShare, 0)
+                .reduce((acc, cur) => acc + (cur.busCompanyShare ?? 0), 0)
                 .toLocaleString('vi-VN')}{' '}
               đ
             </span>
@@ -305,7 +345,7 @@ export const CancellationRefundPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold text-indigo-600">
               {requests
-                .reduce((acc, cur) => acc + cur.platformShare, 0)
+                .reduce((acc, cur) => acc + (cur.platformShare ?? 0), 0)
                 .toLocaleString('vi-VN')}{' '}
               đ
             </span>
@@ -314,7 +354,7 @@ export const CancellationRefundPage: React.FC = () => {
             </div>
           </div>
           <span className="text-xs text-indigo-600 mt-2 block font-medium">
-            Khấu trừ vào bảng đối soát sàn
+            Phần phí hủy thuộc về sàn
           </span>
         </div>
       </div>
@@ -357,15 +397,12 @@ export const CancellationRefundPage: React.FC = () => {
                     <span className="text-xs text-slate-400">Kết quả tính toán cho mã vé:</span>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       {selectedTicketForCalc.ticketCode}
-                      <span className="px-2 py-0.5 text-xs bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 rounded font-bold">
-                        {selectedTicketForCalc.tierDescription}
-                      </span>
                     </h3>
                   </div>
                   <div className="text-right">
                     <span className="text-xs text-slate-400 block">Thời gian trước giờ chạy:</span>
                     <span className="font-bold text-slate-700 dark:text-slate-300">
-                      {selectedTicketForCalc.hoursBeforeDeparture} tiếng
+                      {selectedTicketForCalc.hoursBeforeDeparture == null ? '—' : `${selectedTicketForCalc.hoursBeforeDeparture} tiếng`}
                     </span>
                   </div>
                 </div>
@@ -374,43 +411,52 @@ export const CancellationRefundPage: React.FC = () => {
                   <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
                     <span className="text-xs text-slate-400 block">Giá vé gốc:</span>
                     <span className="font-bold text-slate-900 dark:text-white text-base">
-                      {Number(selectedTicketForCalc.originalPrice).toLocaleString('vi-VN')} đ
+                      {formatAmount(selectedTicketForCalc.originalPrice)}
                     </span>
                   </div>
                   <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
                     <span className="text-xs text-rose-500 block">
-                      Phí khấu trừ ({selectedTicketForCalc.cancellationFeePercent}%):
+                      Phí khấu trừ {selectedTicketForCalc.cancellationFeePercent != null && `(${selectedTicketForCalc.cancellationFeePercent}%)`}
                     </span>
                     <span className="font-bold text-rose-600 text-base">
-                      -{Number(selectedTicketForCalc.cancellationFee).toLocaleString('vi-VN')} đ
+                      {formatAmount(selectedTicketForCalc.cancellationFee)}
                     </span>
                   </div>
                   <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
-                    <span className="text-xs text-emerald-600 block">Khách thực nhận:</span>
+                    <span className="text-xs text-emerald-600 block">{selectedTicketForCalc.refundStatus === 'REFUNDED' ? 'Đã chuyển cho khách' : 'Số tiền hoàn lại'}</span>
                     <span className="font-bold text-emerald-600 text-base">
-                      {Number(selectedTicketForCalc.refundAmountToCustomer).toLocaleString('vi-VN')} đ
+                      {formatAmount(selectedTicketForCalc.refundAmount)}
                     </span>
                   </div>
                   <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                     <span className="text-xs text-amber-600 block">Nhà xe nhận (80% phạt):</span>
                     <span className="font-bold text-amber-600 text-base">
-                      +{Number(selectedTicketForCalc.busCompanyPenaltyRevenue).toLocaleString('vi-VN')} đ
+                      {formatAmount(selectedTicketForCalc.busCompanyShare)}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    💡 {selectedTicketForCalc.settlementImpactNotice}
-                  </p>
-                  <button
-                    disabled={isProcessing}
-                    onClick={() => handleConfirmRefund(selectedTicketForCalc.ticketCode)}
-                    className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 shadow-sm"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    Xác Nhận Hủy Vé & Mở Lại Ghế Trống
-                  </button>
+                  {selectedTicketForCalc.status === 'ISSUED' && (
+                    <button
+                      disabled={isProcessing || isLoading}
+                      onClick={() => handleConfirmRefund(selectedTicketForCalc.ticketCode)}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      Xác Nhận Hủy Vé & Mở Lại Ghế Trống
+                    </button>
+                  )}
+                  {selectedTicketForCalc.canConfirmTransfer && (
+                    <button
+                      disabled={isProcessing || isLoading}
+                      onClick={() => handleConfirmTransfer(selectedTicketForCalc.ticketCode)}
+                      className="rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
+                    >
+                      Xác nhận chuyển khoản hoàn tiền
+                    </button>
+                  )}
+                  {refundLabels[selectedTicketForCalc.refundStatus]}
                 </div>
               </div>
             )}
@@ -426,7 +472,7 @@ export const CancellationRefundPage: React.FC = () => {
               <div className="flex items-center gap-3">
                 <button
                   onClick={fetchRealData}
-                  disabled={isLoading}
+                  disabled={isProcessing || isLoading}
                   className="p-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                   title="Tải lại dữ liệu"
                 >
@@ -444,8 +490,9 @@ export const CancellationRefundPage: React.FC = () => {
                   <tr>
                     <th className="p-4">Mã Vé & Hành Khách</th>
                     <th className="p-4">Tuyến Xe & Số Ghế</th>
-                    <th className="p-4">Giá Vé Gốc</th>
-                    <th className="p-4">Tiền Hoàn Khách</th>
+                    <th className="p-4">Số tiền gốc</th>
+                    <th className="p-4">Phí phạt hủy</th>
+                    <th className="p-4">Số tiền hoàn lại</th>
                     <th className="p-4">Phạt Nhà Xe (80%)</th>
                     <th className="p-4">Trạng Thái</th>
                     <th className="p-4 text-center">Thao Tác</th>
@@ -454,13 +501,13 @@ export const CancellationRefundPage: React.FC = () => {
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {isLoading && requests.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-6">
-                        <TableSkeleton rows={4} columns={7} />
+                      <td colSpan={8} className="p-6">
+                        <TableSkeleton rows={4} columns={8} />
                       </td>
                     </tr>
                   ) : requests.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-12 text-center text-slate-400">
+                      <td colSpan={8} className="p-12 text-center text-slate-400">
                         <Ticket className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
                         <p className="font-semibold text-slate-700 dark:text-slate-300">
                           Chưa có yêu cầu hoàn hủy vé nào của {currentCompany.name}
@@ -496,46 +543,45 @@ export const CancellationRefundPage: React.FC = () => {
                           </div>
                         </td>
                         <td className="p-4 font-semibold text-slate-700 dark:text-slate-300">
-                          {Number(item.originalPrice || 0).toLocaleString('vi-VN')} đ
+                          {formatAmount(item.originalPrice)}
                         </td>
-                        <td className="p-4">
-                          <span className="font-bold text-emerald-600 block">
-                            {Number(item.refundAmount || 0).toLocaleString('vi-VN')} đ
-                          </span>
-                          <span className="text-[11px] text-slate-400">
-                            Khấu trừ: {Number(item.cancellationFee || 0).toLocaleString('vi-VN')} đ
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <span className="font-bold text-amber-600 block">
-                            +{Number(item.busCompanyShare || 0).toLocaleString('vi-VN')} đ
-                          </span>
-                          <span className="text-[11px] text-slate-400">
-                            Sàn giữ: {Number(item.platformShare || 0).toLocaleString('vi-VN')} đ
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          {item.status === 'CANCELLED' ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-slate-500" /> Đã Hủy & Nhả Ghế
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
-                              <Clock className="w-3.5 h-3.5 text-amber-600" /> Chờ Duyệt Hủy
-                            </span>
+                        <td className="p-4 text-rose-600">
+                          {formatAmount(item.cancellationFee)}
+                          {item.cancellationFeePercent != null && (
+                            <span className="block text-xs font-bold">{item.cancellationFeePercent}%</span>
                           )}
+                        </td>
+                        <td className="p-4 font-bold text-emerald-600">
+                          {formatAmount(item.refundAmount)}
+                          {item.status === 'ISSUED' && <span className="block text-xs font-normal text-slate-500">Dự kiến</span>}
+                        </td>
+                        <td className="p-4">
+                          <span className="font-bold text-amber-600 block">{formatAmount(item.busCompanyShare)}</span>
+                          <span className="text-[11px] text-slate-500">Sàn giữ {formatAmount(item.platformShare)}</span>
+                        </td>
+                        <td className="p-4 text-xs">
+                          <span className={item.refundStatus === 'REFUNDED' ? 'font-bold text-emerald-600' : 'font-semibold'}>
+                            {refundLabels[item.refundStatus] ?? (item.status === 'ISSUED' ? 'Chờ duyệt hủy' : 'Đã hủy vé')}
+                          </span>
+                          {item.refundTransferCode && <span className="block text-slate-500">{item.refundTransferCode}</span>}
                         </td>
                         <td className="p-4 text-center">
                           {item.status === 'ISSUED' ? (
                             <button
-                              disabled={isProcessing}
+                              disabled={isProcessing || isLoading}
                               onClick={() => handleConfirmRefund(item.ticketCode)}
                               className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-lg transition shadow-sm disabled:opacity-50"
                             >
                               Duyệt Hủy
                             </button>
-                          ) : (
-                            <span className="text-xs text-slate-400">Đã Hoàn Tất</span>
+                          ) : item.canConfirmTransfer && (
+                            <button
+                              disabled={isProcessing || isLoading}
+                              onClick={() => handleConfirmTransfer(item.ticketCode)}
+                              className="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+                            >
+                              Xác nhận chuyển khoản hoàn tiền
+                            </button>
                           )}
                         </td>
                       </tr>
@@ -597,7 +643,7 @@ export const CancellationRefundPage: React.FC = () => {
                     <span className="font-bold text-rose-600 text-base">{rule.feePercent}%</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs text-slate-500 block">Khách thực nhận:</span>
+                    <span className="text-xs text-slate-500 block">Tỷ lệ hoàn lại</span>
                     <span className="font-bold text-emerald-600 text-lg">{rule.refundPercent}%</span>
                   </div>
                 </div>

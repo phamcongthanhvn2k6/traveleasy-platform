@@ -87,6 +87,9 @@ export const AdminPromotionsPage: React.FC = () => {
     isActive: true,
   };
   const [formData, setFormData] = useState(initialFormState);
+  const hasInvalidDateRange = Boolean(
+    formData.startDate && formData.endDate && formData.endDate < formData.startDate
+  );
 
   // Fetch Promotions from Backend
   const fetchPromotions = useCallback(async () => {
@@ -150,6 +153,7 @@ export const AdminPromotionsPage: React.FC = () => {
   // Submit Create or Edit
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (hasInvalidDateRange) return;
     if (!formData.code.trim()) {
       toast.error('Vui lòng nhập mã khuyến mại!', 'Thiếu Thông Tin');
       return;
@@ -843,8 +847,15 @@ export const AdminPromotionsPage: React.FC = () => {
                     type="datetime-local"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    aria-invalid={hasInvalidDateRange}
+                    aria-describedby={hasInvalidDateRange ? 'promotion-end-date-error' : undefined}
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:text-white"
                   />
+                  {hasInvalidDateRange && (
+                    <p id="promotion-end-date-error" className="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                      Ngày hết hạn không được sớm hơn ngày bắt đầu.
+                    </p>
+                  )}
                 </div>
               </div>
 

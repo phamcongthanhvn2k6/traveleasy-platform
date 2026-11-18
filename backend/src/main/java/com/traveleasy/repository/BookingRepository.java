@@ -2,6 +2,9 @@ package com.traveleasy.repository;
 
 import com.traveleasy.entity.Booking;
 import com.traveleasy.entity.BookingStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +16,42 @@ import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Booking b WHERE b.id = :id")
+    Optional<Booking> findByIdForUpdate(@Param("id") Long id);
+
+    @EntityGraph(attributePaths = {"user", "trip", "trip.busCompany", "trip.route"})
+    @Query(value = """
+            SELECT b FROM Booking b LEFT JOIN b.trip t LEFT JOIN t.busCompany c LEFT JOIN t.route r
+            WHERE (:search IS NULL OR LOWER(b.bookingCode) LIKE :search ESCAPE '!'
+                   OR LOWER(b.passengerName) LIKE :search ESCAPE '!'
+                   OR LOWER(b.passengerPhone) LIKE :search ESCAPE '!'
+                   OR LOWER(b.passengerEmail) LIKE :search ESCAPE '!')
+              AND (:busCompanyId IS NULL OR c.id = :busCompanyId)
+              AND (:routeId IS NULL OR r.id = :routeId)
+              AND (CAST(:departureFrom AS java.time.LocalDateTime) IS NULL OR t.departureTime >= :departureFrom)
+              AND (CAST(:departureToExclusive AS java.time.LocalDateTime) IS NULL OR t.departureTime < :departureToExclusive)
+              AND (:status IS NULL OR b.status = :status)
+            """, countQuery = """
+            SELECT COUNT(b) FROM Booking b LEFT JOIN b.trip t LEFT JOIN t.busCompany c LEFT JOIN t.route r
+            WHERE (:search IS NULL OR LOWER(b.bookingCode) LIKE :search ESCAPE '!'
+                   OR LOWER(b.passengerName) LIKE :search ESCAPE '!'
+                   OR LOWER(b.passengerPhone) LIKE :search ESCAPE '!'
+                   OR LOWER(b.passengerEmail) LIKE :search ESCAPE '!')
+              AND (:busCompanyId IS NULL OR c.id = :busCompanyId)
+              AND (:routeId IS NULL OR r.id = :routeId)
+              AND (CAST(:departureFrom AS java.time.LocalDateTime) IS NULL OR t.departureTime >= :departureFrom)
+              AND (CAST(:departureToExclusive AS java.time.LocalDateTime) IS NULL OR t.departureTime < :departureToExclusive)
+              AND (:status IS NULL OR b.status = :status)
+            """)
+    Page<Booking> findS405Page(@Param("search") String search,
+                               @Param("busCompanyId") Long busCompanyId,
+                               @Param("routeId") Long routeId,
+                               @Param("departureFrom") java.time.LocalDateTime departureFrom,
+                               @Param("departureToExclusive") java.time.LocalDateTime departureToExclusive,
+                               @Param("status") BookingStatus status,
+                               Pageable pageable);
+
     @Query("SELECT b FROM Booking b JOIN FETCH b.trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE b.status IN (com.traveleasy.entity.BookingStatus.CONFIRMED, com.traveleasy.entity.BookingStatus.COMPLETED) ORDER BY b.createdAt DESC")
     List<Booking> findRecentCompletedEligibleBookings();
 

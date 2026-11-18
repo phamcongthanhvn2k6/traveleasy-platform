@@ -54,6 +54,16 @@ interface PayoutRequestItem {
   createdAt?: string;
 }
 
+interface RefundMovement {
+  ticketCode: string;
+  originalPrice: number;
+  cancellationFee: number;
+  refundAmount: number;
+  partnerCredit: number;
+  recordedAt: string;
+  transferCode: string | null;
+}
+
 interface WalletData {
   commissionRate: number;
   minPayoutAmount: number;
@@ -66,7 +76,13 @@ interface WalletData {
     accountHolder: string;
   };
   payoutRequests: PayoutRequestItem[];
+  refundMovements?: RefundMovement[];
 }
+
+const formatRefundVnd = (amount: number) => amount.toLocaleString('vi-VN', {
+  style: 'currency',
+  currency: 'VND',
+});
 
 const MIN_PAYOUT_VND = 500000;
 
@@ -513,6 +529,44 @@ export const CompanySettlementsPage: React.FC = () => {
       </div>
 
       {/* 4b. Lịch sử lệnh rút tiền (Payout Requests) */}
+      {wallet && (
+        <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+          <h2 className="mb-4 text-lg font-semibold">Lịch sử biến động do hoàn tiền</h2>
+          {wallet.refundMovements?.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 dark:bg-slate-800">
+                  <tr>
+                    <th className="p-3">Mã vé</th>
+                    <th className="p-3">Số tiền gốc</th>
+                    <th className="p-3">Phí phạt hủy</th>
+                    <th className="p-3">Số tiền hoàn lại</th>
+                    <th className="p-3">Phần phí nhà xe</th>
+                    <th className="p-3">Thời điểm ghi nhận</th>
+                    <th className="p-3">Mã giao dịch</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {wallet.refundMovements.map(movement => (
+                    <tr key={movement.ticketCode} className="border-t border-slate-200 dark:border-slate-700">
+                      <td className="p-3">{movement.ticketCode}</td>
+                      <td className="p-3">{formatRefundVnd(movement.originalPrice)}</td>
+                      <td className="p-3">{formatRefundVnd(movement.cancellationFee)}</td>
+                      <td className="p-3">{formatRefundVnd(movement.refundAmount)}</td>
+                      <td className="p-3">{formatRefundVnd(movement.partnerCredit)}</td>
+                      <td className="p-3">{movement.recordedAt}</td>
+                      <td className="p-3">{movement.transferCode ?? 'Không phát sinh chuyển khoản'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">Chưa có biến động hoàn tiền.</p>
+          )}
+        </section>
+      )}
+
       {wallet?.payoutRequests && wallet.payoutRequests.length > 0 && (
         <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', marginTop: '24px' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

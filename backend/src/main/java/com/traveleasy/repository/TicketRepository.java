@@ -30,6 +30,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     Optional<Ticket> findByCodeOrQrHashForUpdate(@Param("code") String code);
 
     List<Ticket> findByBookingId(Long bookingId);
+
+    List<Ticket> findByBookingTripBusCompanyId(Long companyId);
+
+    List<Ticket> findByBookingTripBusCompanyIdAndRefundRecordedAtIsNotNullOrderByRefundRecordedAtDesc(Long companyId);
     List<Ticket> findByBookingIdIn(Collection<Long> bookingIds);
     List<Ticket> findByBookingTripId(Long tripId);
 }
