@@ -109,6 +109,7 @@ public class AdminPromotionController {
         if (promo.getCreatedAt() == null) promo.setCreatedAt(LocalDateTime.now());
         if (promo.getStartDate() == null) promo.setStartDate(LocalDateTime.now());
         if (promo.getEndDate() == null) promo.setEndDate(LocalDateTime.now().plusMonths(3));
+        validateDateRange(promo.getStartDate(), promo.getEndDate());
         if (promo.getCategory() == null || promo.getCategory().isBlank()) promo.setCategory("ALL");
 
         Promotion saved = promotionRepository.save(promo);
@@ -122,6 +123,10 @@ public class AdminPromotionController {
     public ApiResponse<Promotion> updatePromotion(@PathVariable Long id, @RequestBody Promotion updateData) {
         Promotion promo = promotionRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy chương trình khuyến mại #" + id));
+
+        LocalDateTime startDate = updateData.getStartDate() == null ? promo.getStartDate() : updateData.getStartDate();
+        LocalDateTime endDate = updateData.getEndDate() == null ? promo.getEndDate() : updateData.getEndDate();
+        validateDateRange(startDate, endDate);
 
         if (updateData.getCode() != null && !updateData.getCode().isBlank()) {
             String newCode = updateData.getCode().trim().toUpperCase();
@@ -137,8 +142,8 @@ public class AdminPromotionController {
         if (updateData.getDiscountValue() != null) promo.setDiscountValue(updateData.getDiscountValue());
         if (updateData.getMinOrderValue() != null) promo.setMinOrderValue(updateData.getMinOrderValue());
         if (updateData.getMaxDiscount() != null) promo.setMaxDiscount(updateData.getMaxDiscount());
-        if (updateData.getStartDate() != null) promo.setStartDate(updateData.getStartDate());
-        if (updateData.getEndDate() != null) promo.setEndDate(updateData.getEndDate());
+        promo.setStartDate(startDate);
+        promo.setEndDate(endDate);
         if (updateData.getUsageLimit() != null) promo.setUsageLimit(updateData.getUsageLimit());
         if (updateData.getCategory() != null) promo.setCategory(updateData.getCategory());
         if (updateData.getApplicableOrigin() != null) promo.setApplicableOrigin(updateData.getApplicableOrigin());
@@ -150,6 +155,12 @@ public class AdminPromotionController {
         Promotion updated = promotionRepository.save(promo);
         log.info("📝 [ADMIN PROMO UPDATED] Ma: {}", updated.getCode());
         return ApiResponse.success("Đã cập nhật chương trình khuyến mại!", updated);
+    }
+
+    private void validateDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Ngày hết hạn không được sớm hơn ngày bắt đầu.");
+        }
     }
 
     @CacheEvict(value = "promotions_list", allEntries = true)
