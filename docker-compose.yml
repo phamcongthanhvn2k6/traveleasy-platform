@@ -9,7 +9,7 @@ services:
       MYSQL_USER: ${MYSQL_USER:-traveleasy_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-traveleasy_password}
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "${MYSQL_PORT:-3307}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -26,13 +26,18 @@ services:
     container_name: traveleasy-backend
     restart: always
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-traveleasy_db}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-traveleasy_user}
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-traveleasy_password}
-      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
-      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
+      # Mặc định sử dụng Supabase PostgreSQL (đồng bộ toàn bộ 36 bảng và dữ liệu mẫu của nhóm)
+      # Nếu muốn chạy offline với MySQL local container, bỏ comment các dòng SPRING_DATASOURCE bên dưới
+      # SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-traveleasy_db}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      # SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-traveleasy_user}
+      # SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-traveleasy_password}
+      # SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      # SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-supabase}
       JWT_SECRET: ${JWT_SECRET:-TravelEasyDevSecretKeyForLocalDevelopmentOnlyDoNotUseInProduction2026}
       SPRING_AI_OPENAI_API_KEY: ${SPRING_AI_OPENAI_API_KEY:-mock_key}
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:-http://otel-collector:4318/v1/traces}
+      OTEL_SERVICE_NAME: traveleasy-backend
     ports:
       - "8080:8080"
     depends_on:
@@ -52,3 +57,8 @@ services:
 
 volumes:
   mysql_data:
+
+networks:
+  default:
+    name: traveleasy-network
+
