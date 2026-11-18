@@ -1,8 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Bus, TrendingUp, Ticket, Calendar, ArrowUpRight, CheckCircle2, Clock } from 'lucide-react';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import api from '../../../services/api';
-import { RevenueChart } from '../../../components/RevenueChart';
+import { RevenueChart, type ChartDataPoint } from '../../../components/RevenueChart';
 import { Skeleton, CardSkeleton } from '../../../components/common/Skeleton';
+
+const revenueFormatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
+const formatRevenue = (value: number) => `${revenueFormatter.format(value)} đ`;
+
+const renderRevenuePlot = (data: ChartDataPoint[], accentColor: string) => (
+  <ResponsiveContainer width="100%" aspect={2} minHeight={180} maxHeight={320}>
+    <AreaChart data={data} margin={{ top: 12, right: 8, bottom: 0, left: 8 }}>
+      <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="4 4" />
+      <XAxis
+        dataKey="label"
+        padding={{ left: 20, right: 20 }}
+        minTickGap={12}
+        tick={{ fontSize: 11, fill: '#64748b' }}
+        tickLine={false}
+        axisLine={false}
+      />
+      <Tooltip content={({ active, label, payload }) => {
+        const point = payload?.[0]?.payload as ChartDataPoint | undefined;
+        if (!active || !point) return null;
+
+        return (
+          <div style={{ backgroundColor: '#0f172a', color: '#fff', padding: '8px 12px', borderRadius: 8, fontSize: 12 }}>
+            <div>Thời điểm: {label}</div>
+            <strong>{formatRevenue(point.revenue)}</strong>
+            <div>Số vé bán: {point.bookings} vé</div>
+          </div>
+        );
+      }} />
+      <Area
+        type="linear"
+        dataKey="revenue"
+        stroke={accentColor}
+        strokeWidth={3}
+        fill={accentColor}
+        fillOpacity={0.15}
+        dot={{ r: 3 }}
+        isAnimationActive={false}
+      />
+    </AreaChart>
+  </ResponsiveContainer>
+);
 
 export const AdminDashboardPage: React.FC = () => {
   const getCachedDashboard = () => {
@@ -20,7 +62,7 @@ export const AdminDashboardPage: React.FC = () => {
     userCount: initialCache?.stats?.userCount ?? 0,
     busCompanyCount: initialCache?.stats?.busCompanyCount ?? 0,
     pendingCompanies: initialCache?.stats?.pendingCompanies ?? 0,
-    revenue: initialCache?.stats?.revenue ?? '0 đ',
+    revenue: initialCache?.stats?.revenue?.replace(/\s*₫$/, ' đ') ?? formatRevenue(0),
     confirmedBookings: initialCache?.stats?.confirmedBookings ?? 0,
     totalTrips: initialCache?.stats?.totalTrips ?? 0,
   });
@@ -40,7 +82,7 @@ export const AdminDashboardPage: React.FC = () => {
           api.get('/admin/dashboard/revenue-trend'),
         ]);
 
-        let revenueFormatted = '0 đ';
+        let revenueFormatted = formatRevenue(0);
         let confirmedCount = 0;
         let uCount = 0;
         let tCount = 0;
@@ -51,7 +93,7 @@ export const AdminDashboardPage: React.FC = () => {
           confirmedCount = d.confirmedBookings ?? 0;
           tCount = d.totalTrips ?? 0;
           if (d.totalRevenue !== undefined) {
-            revenueFormatted = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(d.totalRevenue);
+            revenueFormatted = formatRevenue(d.totalRevenue);
           }
         }
 
@@ -73,7 +115,7 @@ export const AdminDashboardPage: React.FC = () => {
             }),
             status: t.status,
             availableSeats: t.availableSeats,
-            price: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(t.price),
+            price: formatRevenue(t.price),
             badgeColor: t.status === 'SCHEDULED' ? '#2563eb' : t.status === 'CANCELLED' ? '#ef4444' : '#16a34a',
             badgeBg: t.status === 'SCHEDULED' ? '#eff6ff' : t.status === 'CANCELLED' ? '#fef2f2' : '#f0fdf4',
             badgeBorder: t.status === 'SCHEDULED' ? '#bfdbfe' : t.status === 'CANCELLED' ? '#fecaca' : '#bbf7d0',
@@ -236,12 +278,14 @@ export const AdminDashboardPage: React.FC = () => {
       {/* 2. MAIN CONTENT (Responsive Grid: Chart & Real Upcoming Trips) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))', gap: '20px', marginBottom: '24px' }}>
         {/* Left Column: Interactive Revenue Trend Chart */}
-        <div>
+        <div style={{ minWidth: 0 }}>
           <RevenueChart
             title="Biểu Đồ Doanh Thu Toàn Hệ Thống Sàn"
             subtitle="Phân tích tăng trưởng giao dịch và tổng doanh số đối soát"
             accentColor="#2563eb"
             data={revenueTrend.length > 0 ? revenueTrend : undefined}
+            renderChart={renderRevenuePlot}
+            formatRevenue={formatRevenue}
           />
         </div>
 
@@ -297,7 +341,7 @@ export const AdminDashboardPage: React.FC = () => {
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#2563eb' }}>
-                      {trip.price}
+                      {trip.price.replace(/\s*₫$/, ' đ')}
                     </span>
                     <span
                       style={{
