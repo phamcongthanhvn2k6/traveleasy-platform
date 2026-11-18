@@ -124,13 +124,13 @@ public class S412EntityGraphQueryOptimizationTest {
     }
 
     @Test
-    @DisplayName("[S412] findAllByOrderByDepartureTimeDesc & findAll nạp sẵn busCompany và route trong 1 câu SQL")
+    @DisplayName("[S412] findAllWithDetails nạp sẵn busCompany và route trong 1 câu SQL")
     void testFindAllTrips_EliminatesNPlusOneQueriesWithEntityGraph() {
         seedMultipleCompaniesAndTrips();
         Statistics stats = getHibernateStatistics();
         stats.clear();
 
-        List<Trip> trips = tripRepository.findAll();
+        List<Trip> trips = tripRepository.findAllWithDetails();
         assertTrue(trips.size() >= 5);
 
         for (Trip trip : trips) {
@@ -139,6 +139,6 @@ public class S412EntityGraphQueryOptimizationTest {
         }
 
         assertEquals(1L, stats.getPrepareStatementCount(),
-                "findAll() phải nạp sẵn busCompany & route chỉ với 1 câu SQL SELECT");
+                "findAllWithDetails() phải nạp sẵn busCompany & route chỉ với 1 câu SQL SELECT");
     }
 }

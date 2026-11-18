@@ -15,9 +15,9 @@ import java.util.Optional;
 
 @Repository
 public interface TripRepository extends JpaRepository<Trip, Long> {
-    @Override
     @EntityGraph(attributePaths = {"busCompany", "route"})
-    List<Trip> findAll();
+    @Query("SELECT t FROM Trip t")
+    List<Trip> findAllWithDetails();
 
     @EntityGraph(attributePaths = {"busCompany", "route"})
     @Query("SELECT t FROM Trip t WHERE t.id = :id")
@@ -26,14 +26,12 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @EntityGraph(attributePaths = {"busCompany", "route"})
     @Query("""
         SELECT t FROM Trip t
-        JOIN t.route r
-        JOIN t.busCompany c
-        WHERE (:origin IS NULL OR :origin = '' OR LOWER(r.departureLocation) LIKE CONCAT('%', LOWER(:origin), '%'))
-          AND (:destination IS NULL OR :destination = '' OR LOWER(r.arrivalLocation) LIKE CONCAT('%', LOWER(:destination), '%'))
+        WHERE (:origin IS NULL OR :origin = '' OR LOWER(t.route.departureLocation) LIKE CONCAT('%', LOWER(:origin), '%'))
+          AND (:destination IS NULL OR :destination = '' OR LOWER(t.route.arrivalLocation) LIKE CONCAT('%', LOWER(:destination), '%'))
           AND (CAST(:startTime AS java.time.LocalDateTime) IS NULL OR t.departureTime >= :startTime)
           AND (CAST(:endTime AS java.time.LocalDateTime) IS NULL OR t.departureTime <= :endTime)
           AND (:status IS NULL OR t.status = :status)
-          AND (c.status IS NULL OR UPPER(c.status) = 'ACTIVE')
+          AND (t.busCompany.status IS NULL OR UPPER(t.busCompany.status) = 'ACTIVE')
         ORDER BY t.departureTime ASC
     """)
     List<Trip> searchTrips(
@@ -62,11 +60,11 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     @EntityGraph(attributePaths = {"busCompany", "route"})
     @Query("SELECT t FROM Trip t WHERE t.busCompany.id = :busCompanyId ORDER BY t.departureTime DESC")
-    List<Trip> findByBusCompanyIdOrderByDepartureTimeDesc(@Param("busCompanyId") Long busCompanyId);
-
-    @EntityGraph(attributePaths = {"busCompany", "route"})
-    @Query("SELECT t FROM Trip t WHERE t.busCompany.id = :busCompanyId ORDER BY t.departureTime DESC")
     List<Trip> findByBusCompanyIdWithDetails(@Param("busCompanyId") Long busCompanyId);
+
+    default List<Trip> findByBusCompanyIdOrderByDepartureTimeDesc(Long busCompanyId) {
+        return findByBusCompanyIdWithDetails(busCompanyId);
+    }
 
     /**
      * [P2 PERF] Lấy top N chuyến xe mới nhất của nhà xe với LIMIT từ DB — tránh load toàn bộ.
