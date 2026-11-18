@@ -54,3 +54,8 @@ backend/src/main/resources/fir-traveleasy-platform-firebase-adminsdk-fbsvc-7e745
 
 test-results/
 playwright-report/
+
+# Wrangler & Diffs
+.wrangler/
+*.diff
+
