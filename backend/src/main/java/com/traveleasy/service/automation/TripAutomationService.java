@@ -157,13 +157,19 @@ public class TripAutomationService {
         ensureTripsForDateRange(LocalDate.now(), LocalDate.now().plusDays(30));
     }
 
+    @Scheduled(cron = "0 0/15 * * * ?") // Dọn dẹp tự động định kỳ mỗi 15 phút
+    public void periodicExpirePastTrips() {
+        expirePastTrips();
+    }
+
     /**
      * Cập nhật trạng thái các chuyến có giờ khởi hành trong quá khứ thành COMPLETED
      * Tối ưu hóa: Dùng câu lệnh JPQL UPDATE trực tiếp thay vì load toàn bộ Entity về RAM
      */
     @Transactional
     public int expirePastTrips() {
-        LocalDateTime now = LocalDateTime.now();
+        java.time.ZoneId vnZone = java.time.ZoneId.of("Asia/Ho_Chi_Minh");
+        LocalDateTime now = LocalDateTime.now(vnZone);
         int updated = tripRepository.markPastTripsAsCompleted(now);
         if (updated > 0) {
             log.info("✅ [TripAutomationService] Đã tự động cập nhật {} chuyến xe quá hạn thành COMPLETED (JPQL Batch)", updated);
