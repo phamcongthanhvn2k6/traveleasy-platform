@@ -1,0 +1,83 @@
+// Grafana Alloy - collect Docker container logs for the TravelEasy stack and
+// ship them to Loki with low-cardinality stream labels.
+
+discovery.docker "containers" {
+	host = "unix:///var/run/docker.sock"
+}
+
+// Only watch containers that belong to the TravelEasy platform so the local
+// Docker socket does not flood Loki with unrelated workloads.
+discovery.relabel "traveleasy_logs" {
+	targets = discovery.docker.containers.targets
+
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/traveleasy-.*"
+		action        = "keep"
+	}
+
+	rule {
+		source_labels = ["__meta_docker_compose_service"]
+		target_label  = "service_name"
+	}
+
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/(.*)"
+		target_label  = "container"
+	}
+}
+
+loki.source.docker "traveleasy" {
+	host          = "unix:///var/run/docker.sock"
+	targets       = discovery.relabel.traveleasy_logs.output
+	labels        = { environment = "local", job = "docker" }
+	relabel_rules = discovery.relabel.traveleasy_logs.rules
+	forward_to    = [loki.process.traveleasy.receiver]
+}
+
+// Parse the JSON log produced by logstash-logback-encoder.
+loki.process "traveleasy" {
+	stage.json {
+		expressions = {
+			level         = "level",
+			message       = "message",
+			logger_name   = "logger_name",
+			correlationId = "correlationId",
+			traceId       = "traceId",
+			spanId        = "spanId",
+			service_name  = "\"service.name\"",
+		}
+	}
+
+	// Keep only low-cardinality values as Loki stream labels.
+	stage.labels {
+		values = {
+			level        = "",
+			service_name = "",
+		}
+	}
+
+	// Correlation and trace identifiers are high-cardinality: store them as
+	// structured metadata so they stay searchable without index explosion.
+	stage.structured_metadata {
+		values = {
+			correlationId = "",
+			traceId       = "",
+			spanId        = "",
+			logger_name   = "",
+		}
+	}
+
+	stage.output {
+		source = "message"
+	}
+
+	forward_to = [loki.write.traveleasy.receiver]
+}
+
+loki.write "traveleasy" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}

@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["prometheus:9090"]
+
+  - job_name: "traveleasy-backend"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      # Mặc định kết nối backend container qua Docker network ("backend:8080")
+      # Nếu chạy backend trực tiếp ngoài host (IDE/Gradle), đổi target thành "host.docker.internal:8080"
+      - targets: ["backend:8080"]
+        labels:
+          application: "traveleasy-backend"
+          environment: "local"
