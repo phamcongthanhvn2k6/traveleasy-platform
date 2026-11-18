@@ -2,6 +2,8 @@ package com.traveleasy.repository;
 
 import com.traveleasy.entity.Trip;
 import com.traveleasy.entity.TripStatus;
+import com.traveleasy.dto.admin.S405TripSummary;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +17,53 @@ import java.util.Optional;
 
 @Repository
 public interface TripRepository extends JpaRepository<Trip, Long> {
+    @EntityGraph(attributePaths = {"busCompany", "route"})
+    @Query(value = """
+        SELECT t FROM Trip t
+        LEFT JOIN t.busCompany c LEFT JOIN t.route r
+        WHERE (:searchPattern IS NULL OR
+               LOWER(c.name) LIKE :searchPattern ESCAPE '!' OR
+               LOWER(r.departureLocation) LIKE :searchPattern ESCAPE '!' OR
+               LOWER(r.arrivalLocation) LIKE :searchPattern ESCAPE '!' OR
+               CAST(t.id AS string) LIKE :searchPattern ESCAPE '!')
+          AND (:busCompanyId IS NULL OR c.id = :busCompanyId)
+          AND (:routeId IS NULL OR r.id = :routeId)
+          AND (CAST(:fromTime AS java.time.LocalDateTime) IS NULL OR t.departureTime >= :fromTime)
+          AND (CAST(:toExclusive AS java.time.LocalDateTime) IS NULL OR t.departureTime < :toExclusive)
+          AND (:status IS NULL OR t.status = :status)
+        """, countQuery = """
+        SELECT COUNT(t) FROM Trip t
+        LEFT JOIN t.busCompany c LEFT JOIN t.route r
+        WHERE (:searchPattern IS NULL OR
+               LOWER(c.name) LIKE :searchPattern ESCAPE '!' OR
+               LOWER(r.departureLocation) LIKE :searchPattern ESCAPE '!' OR
+               LOWER(r.arrivalLocation) LIKE :searchPattern ESCAPE '!' OR
+               CAST(t.id AS string) LIKE :searchPattern ESCAPE '!')
+          AND (:busCompanyId IS NULL OR c.id = :busCompanyId)
+          AND (:routeId IS NULL OR r.id = :routeId)
+          AND (CAST(:fromTime AS java.time.LocalDateTime) IS NULL OR t.departureTime >= :fromTime)
+          AND (CAST(:toExclusive AS java.time.LocalDateTime) IS NULL OR t.departureTime < :toExclusive)
+          AND (:status IS NULL OR t.status = :status)
+        """)
+    Page<Trip> findS405Trips(@Param("searchPattern") String searchPattern,
+                              @Param("busCompanyId") Long busCompanyId,
+                              @Param("routeId") Long routeId,
+                              @Param("fromTime") LocalDateTime fromTime,
+                              @Param("toExclusive") LocalDateTime toExclusive,
+                              @Param("status") TripStatus status,
+                              Pageable pageable);
+
+    @Query("""
+        SELECT new com.traveleasy.dto.admin.S405TripSummary(
+            COUNT(t),
+            COALESCE(SUM(CASE WHEN t.status = com.traveleasy.entity.TripStatus.SCHEDULED THEN 1L ELSE 0L END), 0L),
+            COALESCE(SUM(CASE WHEN t.status = com.traveleasy.entity.TripStatus.CANCELLED THEN 1L ELSE 0L END), 0L),
+            COALESCE(SUM(COALESCE(t.totalSeats, 0)), 0L),
+            COALESCE(SUM(COALESCE(t.totalSeats, 0) - COALESCE(t.availableSeats, 0)), 0L))
+        FROM Trip t
+        """)
+    S405TripSummary getS405TripSummary();
+
     @EntityGraph(attributePaths = {"busCompany", "route"})
     @Query("SELECT t FROM Trip t")
     List<Trip> findAllWithDetails();

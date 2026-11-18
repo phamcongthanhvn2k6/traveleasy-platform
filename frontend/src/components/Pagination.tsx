@@ -7,6 +7,7 @@ export interface PaginationProps {
   totalItems: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  resetOnPageSizeChange?: boolean;
   onPageSizeChange?: (size: number) => void;
   pageSizeOptions?: number[];
   itemLabel?: string; // e.g. "chuyến xe", "vé", "đơn hàng"
@@ -19,12 +20,13 @@ export const Pagination: React.FC<PaginationProps> = ({
   pageSize,
   onPageChange,
   onPageSizeChange,
+  resetOnPageSizeChange = true,
   pageSizeOptions = [10, 20, 30, 50],
   itemLabel = 'chuyến xe',
 }) => {
   const [jumpPage, setJumpPage] = useState<string>('');
 
-  if (totalItems === 0 || totalPages <= 1 && (!pageSizeOptions || pageSizeOptions.length <= 1)) {
+  if (totalItems === 0 || (totalPages <= 1 && (!onPageSizeChange || pageSizeOptions.length <= 1))) {
     return null;
   }
 
@@ -68,7 +70,8 @@ export const Pagination: React.FC<PaginationProps> = ({
   const pages = getPageNumbers();
 
   return (
-    <div
+    <nav
+      aria-label="Phân trang"
       style={{
         backgroundColor: '#ffffff',
         border: '1px solid #e2e8f0',
@@ -105,7 +108,7 @@ export const Pagination: React.FC<PaginationProps> = ({
               value={pageSize}
               onChange={(e) => {
                 onPageSizeChange(Number(e.target.value));
-                onPageChange(1);
+                if (resetOnPageSizeChange) onPageChange(1);
               }}
               style={{
                 padding: '4px 8px',
@@ -207,7 +210,8 @@ export const Pagination: React.FC<PaginationProps> = ({
             <button
               type="button"
               key={`page-${pageNum}`}
-              onClick={() => onPageChange(pageNum)}
+              aria-current={isActive ? 'page' : undefined}
+              onClick={() => { if (!isActive) onPageChange(pageNum); }}
               style={{
                 minWidth: '32px',
                 height: '32px',
@@ -285,6 +289,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}
           >
             <input
+              aria-label="Số trang cần đến"
               type="number"
               min="1"
               max={totalPages}
@@ -321,7 +326,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           </form>
         )}
       </div>
-    </div>
+    </nav>
   );
 };
 
