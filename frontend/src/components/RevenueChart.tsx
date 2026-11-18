@@ -13,13 +13,19 @@ interface RevenueChartProps {
   accentColor?: string;
   currencyPrefix?: string;
   data?: ChartDataPoint[];
+  renderChart?: (data: ChartDataPoint[], accentColor: string) => React.ReactNode;
+  formatRevenue?: (value: number) => string;
 }
+
+const currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
 
 export const RevenueChart: React.FC<RevenueChartProps> = ({
   title = 'Biểu Đồ Xu Hướng Doanh Thu Thực Tế',
   subtitle = 'Dữ liệu đối soát vé bán thành công theo thời gian thực',
   accentColor = '#2563eb',
   data: customData,
+  renderChart,
+  formatRevenue = (value) => currencyFormatter.format(value),
 }) => {
   const [timeRange, setTimeRange] = useState<'7D' | '30D' | 'MONTHLY'>('7D');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -52,7 +58,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
 
   // Calculate coordinates
   const points = data.map((d, i) => {
-    const x = paddingX + (i / (data.length - 1)) * chartW;
+    const x = paddingX + (i / Math.max(1, data.length - 1)) * chartW;
     const y = paddingY + chartH - (d.revenue / maxRevenue) * chartH;
     return { x, y, ...d };
   });
@@ -104,7 +110,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
           <div style={{ textAlign: 'right', display: 'none', smDisplay: 'block' } as any}>
             <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Tổng doanh thu kỳ:</div>
             <div style={{ fontSize: '16px', fontWeight: 900, color: '#16a34a' }}>
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPeriodRevenue)}
+              {formatRevenue(totalPeriodRevenue)}
             </div>
           </div>
 
@@ -143,7 +149,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
       </div>
 
       {/* SVG Interactive Chart Canvas */}
-      <div style={{ position: 'relative', width: '100%', overflowX: 'auto' }}>
+      {renderChart ? renderChart(data, accentColor) : <div style={{ position: 'relative', width: '100%', overflowX: 'auto' }}>
         <svg
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
           style={{ width: '100%', height: 'auto', display: 'block', minWidth: '480px' }}
@@ -232,14 +238,14 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
               Thời điểm: {points[hoveredIndex].label}
             </div>
             <div style={{ fontWeight: 800, fontSize: '13.5px', color: '#4ade80' }}>
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(points[hoveredIndex].revenue)}
+              {formatRevenue(points[hoveredIndex].revenue)}
             </div>
             <div style={{ fontSize: '11px', color: '#cbd5e1', marginTop: '2px' }}>
               Số vé bán: <strong>{points[hoveredIndex].bookings} vé</strong>
             </div>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Footer KPI Breakdown */}
       <div
@@ -256,7 +262,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
         <div style={{ backgroundColor: '#f8fafc', padding: '10px', borderRadius: '8px' }}>
           <div style={{ fontSize: '11px', color: '#64748b' }}>Doanh thu kỳ này</div>
           <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>
-            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPeriodRevenue)}
+            {formatRevenue(totalPeriodRevenue)}
           </div>
         </div>
 
@@ -270,7 +276,7 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({
         <div style={{ backgroundColor: '#f8fafc', padding: '10px', borderRadius: '8px' }}>
           <div style={{ fontSize: '11px', color: '#64748b' }}>Giá trị trung bình/vé</div>
           <div style={{ fontSize: '14px', fontWeight: 800, color: '#16a34a', marginTop: '2px' }}>
-            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+            {formatRevenue(
               totalPeriodBookings > 0 ? Math.round(totalPeriodRevenue / totalPeriodBookings) : 0
             )}
           </div>
