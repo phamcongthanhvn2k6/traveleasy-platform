@@ -147,9 +147,7 @@ class TripGpsRealtimeServiceTest {
                 .status(TripStatus.CANCELLED)
                 .build();
 
-        when(tripRepository.findAllByOrderByDepartureTimeDesc()).thenReturn(List.of(testTrip, cancelledTrip));
-        when(tripRepository.findByIdWithDetails(101L)).thenReturn(Optional.of(testTrip));
-        when(tripCrewRepository.findByTripId(101L)).thenReturn(Optional.empty());
+        when(tripRepository.findActiveFleetTrips(any(), any())).thenReturn(List.of(testTrip, cancelledTrip));
 
         List<TripGpsLocationDto> fleet = tripGpsRealtimeService.getFleetSnapshot();
 
