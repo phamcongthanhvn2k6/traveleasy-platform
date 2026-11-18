@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Tag, Check, Copy, Clock, Sparkles, Percent, Gift, ChevronRight, Wallet, CheckCircle2, AlertOctagon } from 'lucide-react';
 import { toast } from '../context/ToastContext';
 import { VoucherWalletService } from '../services/voucherWalletService';
+import api from '../services/api';
 
 export interface VoucherItem {
   code: string;
@@ -93,9 +94,35 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
 }) => {
   const [modalTab, setModalTab] = useState<'MY_WALLET' | 'ALL'>('MY_WALLET');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [voucherList, setVoucherList] = useState<VoucherItem[]>(AVAILABLE_VOUCHERS);
 
   // Danh sách mã voucher người dùng đã lưu trong ví
   const ownedCodes = useMemo(() => VoucherWalletService.getOwnedVoucherCodes(), [isOpen]);
+
+  // Đồng bộ danh sách voucher thời gian thực từ CSDL hệ thống
+  useEffect(() => {
+    if (!isOpen) return;
+    api.get('/promotions')
+      .then((res) => {
+        if (res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          const mapped: VoucherItem[] = res.data.data.map((v: any) => ({
+            code: v.code,
+            title: v.title,
+            description: v.description || 'Ưu đãi đặt vé xe khách từ TravelEasy',
+            discountType: (v.discountType === 'PERCENT' || v.discountType === 'percentage') ? 'PERCENT' : 'FIXED',
+            discountValue: Number(v.discountValue || 0),
+            minOrderValue: Number(v.minOrderValue || 0),
+            maxDiscount: v.maxDiscount ? Number(v.maxDiscount) : undefined,
+            expiryDate: v.endDate ? new Date(v.endDate).toLocaleDateString('vi-VN') : '31/12/2026',
+            badge: v.badgeText || (v.discountType === 'PERCENT' ? `GIẢM ${v.discountValue}%` : `GIẢM ${(Number(v.discountValue) / 1000).toFixed(0)}K`),
+          }));
+          setVoucherList(mapped);
+        }
+      })
+      .catch((err) => {
+        console.warn('Sử dụng danh sách voucher cục bộ do lỗi tải CSDL:', err);
+      });
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -129,8 +156,8 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
 
   // Lọc voucher hiển thị theo tab
   const displayedVouchers = modalTab === 'MY_WALLET'
-    ? AVAILABLE_VOUCHERS.filter((v) => ownedCodes.includes(v.code.toUpperCase()))
-    : AVAILABLE_VOUCHERS;
+    ? voucherList.filter((v) => ownedCodes.includes(v.code.toUpperCase()))
+    : voucherList;
 
   return (
     <div
@@ -245,7 +272,7 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
             }}
           >
             <Wallet size={15} color={modalTab === 'MY_WALLET' ? '#059669' : '#64748b'} />
-            <span>Ví Của Tôi ({AVAILABLE_VOUCHERS.filter(v => ownedCodes.includes(v.code.toUpperCase())).length})</span>
+            <span>Ví Của Tôi ({voucherList.filter(v => ownedCodes.includes(v.code.toUpperCase())).length})</span>
           </button>
 
           <button
@@ -270,7 +297,7 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
             }}
           >
             <Tag size={15} color={modalTab === 'ALL' ? '#ea580c' : '#64748b'} />
-            <span>Tất Cả Ưu Đãi ({AVAILABLE_VOUCHERS.length})</span>
+            <span>Tất Cả Ưu Đãi ({voucherList.length})</span>
           </button>
         </div>
 
