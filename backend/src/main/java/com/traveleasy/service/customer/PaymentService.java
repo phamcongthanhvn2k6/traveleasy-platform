@@ -220,6 +220,7 @@ public class PaymentService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"trips_search", "company_dashboard_stats", "admin_all_bookings"}, allEntries = true)
     public PaymentStatusResponse processVnPayCallback(Map<String, String> params) {
         String vnpSecureHash = params.get("vnp_SecureHash");
         Map<String, String> fields = new HashMap<>(params);

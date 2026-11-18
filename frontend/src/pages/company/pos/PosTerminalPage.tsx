@@ -543,10 +543,9 @@ export default function PosTerminalPage() {
       if (e.key === 'Enter') {
         const target = e.target as HTMLElement | null;
         const tag = target?.tagName?.toUpperCase();
-        // Không cướp Enter khi đang focus trong bất kỳ ô nhập liệu hoặc nút bấm nào (chống xuất vé sớm / máy quét mã vạch)
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SELECT') return;
         if (showOpenShiftModal || showCloseShiftModal || showShortcutGuide) return;
 
+        // 1. Khi đang hiển thị phiếu in nhiệt 80mm: Enter lần 1 để in, Enter lần 2 để chuyển sang bán tiếp chuyến này
         if (activeReceiptModal) {
           e.preventDefault();
           if (!hasPrintedActiveReceipt) {
@@ -558,11 +557,17 @@ export default function PosTerminalPage() {
           }
           return;
         }
+
+        // 2. Bước 2: Bấm Enter sang Bước 3 kể cả khi vừa click vào nút ghế (tag === 'BUTTON')
         if (activeStep === 2 && selectedSeats.length > 0) {
           e.preventDefault();
           setActiveStep(3);
           return;
         }
+
+        // 3. Bước 3: Chặn Enter khi đang focus trong bất kỳ ô nhập liệu hoặc nút bấm nào (tránh máy quét mã vạch xuất vé non)
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SELECT') return;
+
         if (activeStep === 3 && selectedSeats.length > 0) {
           if (issuingTicket || isCashInsufficient) return;
           e.preventDefault();

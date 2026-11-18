@@ -611,26 +611,9 @@ public class SeatRealtimeService {
             return;
         }
         org.springframework.cache.Cache cache = cacheManager.getCache("trips_search");
-        if (cache == null) {
-            return;
+        if (cache != null) {
+            cache.clear();
         }
-
-        String origin = (trip.getRoute() != null && trip.getRoute().getDepartureLocation() != null)
-                ? trip.getRoute().getDepartureLocation().trim().toLowerCase()
-                : "ALL";
-        String destination = (trip.getRoute() != null && trip.getRoute().getArrivalLocation() != null)
-                ? trip.getRoute().getArrivalLocation().trim().toLowerCase()
-                : "ALL";
-        String date = trip.getDepartureTime() != null
-                ? trip.getDepartureTime().toLocalDate().toString()
-                : "ANY";
-
-        cache.evict(origin + "_" + destination + "_" + date);
-        cache.evict(origin + "_" + destination + "_ANY");
-        cache.evict(origin + "_ALL_" + date);
-        cache.evict("ALL_" + destination + "_" + date);
-        cache.evict("ALL_ALL_" + date);
-        cache.evict("ALL_ALL_ANY");
     }
 }
 
