@@ -5,11 +5,13 @@ import com.traveleasy.entity.AuditLog;
 import com.traveleasy.entity.BusCompany;
 import com.traveleasy.entity.PayoutRequest;
 import com.traveleasy.entity.SettlementRecord;
+import com.traveleasy.entity.Ticket;
 import com.traveleasy.repository.AuditLogRepository;
 import com.traveleasy.repository.BookingRepository;
 import com.traveleasy.repository.BusCompanyRepository;
 import com.traveleasy.repository.PayoutRequestRepository;
 import com.traveleasy.repository.SettlementRecordRepository;
+import com.traveleasy.repository.TicketRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +51,9 @@ class CompanySettlementServiceTest {
 
     @Mock
     private AuditLogRepository auditLogRepository;
+
+    @Mock
+    private TicketRepository ticketRepository;
 
     @InjectMocks
     private CompanySettlementService settlementService;
@@ -211,5 +217,31 @@ class CompanySettlementServiceTest {
 
         var prevOf1 = CompanySettlementService.resolvePreviousPeriod(LocalDate.of(2026, 11, 1));
         assertEquals("DS-202610-P2", prevOf1.codePrefix());
+    }
+
+    @Test
+    void walletShowsRecordedRefundMovementsForCompany() {
+        Ticket ticket = Ticket.builder()
+                .ticketCode("TK-REFUND-01")
+                .cancellationFee(new BigDecimal("40000.00"))
+                .refundAmount(new BigDecimal("360000.00"))
+                .refundPartnerCredit(new BigDecimal("32000.00"))
+                .refundRecordedAt(LocalDateTime.of(2026, 11, 18, 10, 0))
+                .refundTransferCode("BANK-123")
+                .build();
+        when(busCompanyRepository.findById(1L)).thenReturn(Optional.of(futaCompany));
+        when(ticketRepository.findByBookingTripBusCompanyIdAndRefundRecordedAtIsNotNullOrderByRefundRecordedAtDesc(1L))
+                .thenReturn(List.of(ticket));
+
+        Object movements = settlementService.getCompanyWallet(1L).get("refundMovements");
+
+        assertEquals(List.of(Map.of(
+                "ticketCode", "TK-REFUND-01",
+                "originalPrice", new BigDecimal("400000.00"),
+                "cancellationFee", new BigDecimal("40000.00"),
+                "refundAmount", new BigDecimal("360000.00"),
+                "partnerCredit", new BigDecimal("32000.00"),
+                "recordedAt", "18/11/2026 10:00",
+                "transferCode", "BANK-123")), movements);
     }
 }

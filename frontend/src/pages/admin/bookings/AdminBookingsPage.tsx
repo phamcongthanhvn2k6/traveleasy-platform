@@ -1155,7 +1155,7 @@ export const AdminBookingsPage: React.FC = () => {
                     <div>
                       <span style={{ color: '#64748b' }}>Số tiền hoàn (90%):</span>{' '}
                       <strong style={{ color: '#ea580c', fontSize: '14px' }}>
-                        {(detailBooking.refundAmount || Math.round(detailBooking.totalAmount * 0.9)).toLocaleString('vi-VN')} đ
+                        {(detailBooking.refundAmount ?? 0).toLocaleString('vi-VN')} đ
                       </strong>
                     </div>
                     {detailBooking.refundTxCode && (
@@ -1180,7 +1180,7 @@ export const AdminBookingsPage: React.FC = () => {
                     </div>
                   )}
 
-                  {detailBooking.refundStatus !== 'REFUNDED' && (
+                  {detailBooking.refundStatus === 'PENDING' && (
                     <button
                       onClick={() => handleConfirmRefund(detailBooking.id)}
                       style={{

@@ -22,6 +22,21 @@ public class CompanySettlementSchemaInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         try {
+            jdbcTemplate.execute("""
+                ALTER TABLE tickets
+                  ADD COLUMN IF NOT EXISTS cancellation_fee_percent INTEGER,
+                  ADD COLUMN IF NOT EXISTS cancellation_fee NUMERIC(12, 2),
+                  ADD COLUMN IF NOT EXISTS refund_amount NUMERIC(12, 2),
+                  ADD COLUMN IF NOT EXISTS refund_partner_credit NUMERIC(12, 2),
+                  ADD COLUMN IF NOT EXISTS refund_recorded_at TIMESTAMP,
+                  ADD COLUMN IF NOT EXISTS refund_transfer_code VARCHAR(100),
+                  ADD COLUMN IF NOT EXISTS refund_recorded_by VARCHAR(150)
+                """);
+        } catch (Exception ex) {
+            log.warn("Refund schema initialization skipped: {}", ex.getMessage());
+        }
+
+        try {
             jdbcTemplate.execute(
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS staff_role VARCHAR(30) DEFAULT 'OWNER'"
             );
