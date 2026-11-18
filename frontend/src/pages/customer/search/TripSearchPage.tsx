@@ -17,6 +17,21 @@ import { getLocalNextDayString } from '../../../utils/dateUtils';
 // Bộ nhớ đệm Client-side SWR: Giữ kết quả tìm kiếm trong RAM và SessionStorage để hiển thị tức thì (0ms)
 const tripSearchClientCache = new Map<string, { data: Trip[]; timestamp: number }>();
 
+// Hàm lọc loại bỏ hoàn toàn các chuyến xe đã xuất bến (quá giờ khởi hành) hoặc đã đóng/hủy
+export const filterActiveUpcomingTrips = (tripList: Trip[]): Trip[] => {
+  const now = Date.now();
+  return tripList.filter((t) => {
+    const depTime = t.departureTime ? new Date(t.departureTime).getTime() : 0;
+    // Chuyến xe đã quá giờ khởi hành so với thời gian thực -> LOẠI BỎ HOÀN TOÀN
+    if (depTime > 0 && depTime <= now) return false;
+    // Chuyến xe có trạng thái đã hoàn thành, đã chạy, hủy hoặc đóng bán -> LOẠI BỎ
+    if (t.status === 'CLOSED' || t.status === 'COMPLETED' || t.status === 'DEPARTED' || t.status === 'CANCELLED') {
+      return false;
+    }
+    return true;
+  });
+};
+
 const getSessionSearchCache = (key: string): { data: Trip[]; timestamp: number } | null => {
   try {
     const raw = sessionStorage.getItem(`trip_search_${key}`);
@@ -46,7 +61,7 @@ export const TripSearchPage: React.FC = () => {
   const initialCacheKey = `${origin}_${destination}_${date}`;
   const initialCached = tripSearchClientCache.get(initialCacheKey) || getSessionSearchCache(initialCacheKey);
 
-  const [trips, setTrips] = useState<Trip[]>(() => (initialCached ? initialCached.data : []));
+  const [trips, setTrips] = useState<Trip[]>(() => (initialCached ? filterActiveUpcomingTrips(initialCached.data) : []));
   const [loading, setLoading] = useState<boolean>(() => !initialCached);
 
   // Sorting and Filtering State
@@ -101,7 +116,7 @@ export const TripSearchPage: React.FC = () => {
 
     // Stale-While-Revalidate: Hiển thị ngay nếu có cache, đồng thời luôn gọi API để cập nhật số ghế mới nhất
     if (cached) {
-      setTrips(cached.data);
+      setTrips(filterActiveUpcomingTrips(cached.data));
       setLoading(false);
     } else {
       setLoading(true);
@@ -115,7 +130,8 @@ export const TripSearchPage: React.FC = () => {
 
       const res = await api.get('/trips/search', { params });
 
-      const data = res.data?.data || [];
+      const rawData = res.data?.data || [];
+      const data = filterActiveUpcomingTrips(rawData);
       setTrips(data);
       const cacheItem = { data, timestamp: Date.now() };
       tripSearchClientCache.set(cacheKey, cacheItem);
@@ -311,8 +327,16 @@ export const TripSearchPage: React.FC = () => {
 
   // Filter and Sort Trips
   const filteredAndSortedTrips = useMemo(() => {
+    const now = Date.now();
     return trips
       .filter((t) => {
+        // 0. LOẠI BỎ TRIỆT ĐỂ CHUYẾN XE ĐÃ XUẤT BẾN HOẶC ĐÃ ĐÓNG BÁN
+        const depTime = t.departureTime ? new Date(t.departureTime).getTime() : 0;
+        if (depTime > 0 && depTime <= now) return false;
+        if (t.status === 'CLOSED' || t.status === 'COMPLETED' || t.status === 'DEPARTED' || t.status === 'CANCELLED') {
+          return false;
+        }
+
         // 1. Time filter (Preset Slots OR Time Range Slider)
         try {
           const d = new Date(t.departureTime);
