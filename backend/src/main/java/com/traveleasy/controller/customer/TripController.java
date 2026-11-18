@@ -5,6 +5,7 @@ import com.traveleasy.dto.trip.RouteOptionResponse;
 import com.traveleasy.dto.trip.RouteScheduleResponse;
 import com.traveleasy.dto.trip.TripDetailResponse;
 import com.traveleasy.dto.trip.TripResponse;
+import com.traveleasy.entity.TripStatus;
 import com.traveleasy.service.customer.TripService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,7 +14,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/trips")
@@ -40,7 +44,14 @@ public class TripController {
             @RequestParam(required = false) String origin,
             @RequestParam(required = false) String destination,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate departureDate) {
-        return ApiResponse.success(tripService.searchTrips(origin, destination, departureDate));
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        List<TripResponse> cachedTrips = tripService.searchTrips(origin, destination, departureDate);
+        // [S409] Hậu xử lý: luôn lọc bỏ các chuyến đã quá giờ khởi hành (theo giờ Việt Nam) hoặc không còn mở bán dù lấy từ Cache
+        List<TripResponse> activeTrips = cachedTrips.stream()
+                .filter(t -> t.getDepartureTime() != null && t.getDepartureTime().isAfter(now))
+                .filter(t -> t.getStatus() == TripStatus.SCHEDULED)
+                .collect(Collectors.toList());
+        return ApiResponse.success(activeTrips);
     }
 
     @GetMapping("/schedule")
