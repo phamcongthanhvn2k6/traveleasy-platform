@@ -343,25 +343,28 @@ export const TripSearchPage: React.FC = () => {
 
         // 1. Time filter (Preset Slots OR Time Range Slider)
         try {
-          const d = new Date(t.departureTime);
-          const h = d.getHours() + d.getMinutes() / 60;
+          const safeTime = t.departureTime ? (t.departureTime.includes('T') ? t.departureTime : t.departureTime.replace(' ', 'T')) : '';
+          const d = new Date(safeTime);
+          if (!isNaN(d.getTime())) {
+            const h = d.getHours() + d.getMinutes() / 60;
 
-          if (filters.timeSlots.length > 0) {
-            const isEarly = h >= 0 && h < 6;
-            const isMorning = h >= 6 && h < 12;
-            const isAfternoon = h >= 12 && h < 18;
-            const isEvening = h >= 18 && h <= 24;
+            if (filters.timeSlots.length > 0) {
+              const isEarly = h >= 0 && h < 6;
+              const isMorning = h >= 6 && h < 12;
+              const isAfternoon = h >= 12 && h < 18;
+              const isEvening = h >= 18 && h <= 24;
 
-            const matchesSlot =
-              (filters.timeSlots.includes('EARLY') && isEarly) ||
-              (filters.timeSlots.includes('MORNING') && isMorning) ||
-              (filters.timeSlots.includes('AFTERNOON') && isAfternoon) ||
-              (filters.timeSlots.includes('EVENING') && isEvening);
+              const matchesSlot =
+                (filters.timeSlots.includes('EARLY') && isEarly) ||
+                (filters.timeSlots.includes('MORNING') && isMorning) ||
+                (filters.timeSlots.includes('AFTERNOON') && isAfternoon) ||
+                (filters.timeSlots.includes('EVENING') && isEvening);
 
-            if (!matchesSlot) return false;
-          } else {
-            if (h < filters.timeRange[0] || h > filters.timeRange[1]) {
-              return false;
+              if (!matchesSlot) return false;
+            } else {
+              if (h < filters.timeRange[0] || h > filters.timeRange[1]) {
+                return false;
+              }
             }
           }
         } catch {}
