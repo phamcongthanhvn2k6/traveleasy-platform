@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState } from 'react';
 import { 
   Calendar, Search, Ban, CheckCircle, Clock, MapPin, Bus, RefreshCw, X, 
   Users, ShieldCheck, AlertCircle, ArrowRight, Download, Filter, 
   BarChart3, AlertTriangle, Sparkles, Building2
 } from 'lucide-react';
 import api from '../../../services/api';
+import { useAdminPagedList } from '../shared/useAdminPagedList';
+import { AdminDepartureFilters } from '../shared/AdminDepartureFilters';
 import { toast } from '../../../context/ToastContext';
 import { PassengerManifestModal } from '../../../components/PassengerManifestModal';
 import { Pagination } from '../../../components/Pagination';
@@ -26,64 +28,30 @@ interface TripItem {
   status: 'SCHEDULED' | 'DEPARTED' | 'CANCELLED';
 }
 
+interface TripSummary {
+  total: number;
+  scheduled: number;
+  cancelled: number;
+  totalCapacity: number;
+  totalBooked: number;
+}
+
 export const AdminTripsPage: React.FC = () => {
-  const getCachedTrips = (): TripItem[] | null => {
-    try {
-      const raw = sessionStorage.getItem('traveleasy_admin_trips_cache');
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const initialCache = getCachedTrips();
-
-  const [trips, setTrips] = useState<TripItem[]>(initialCache || []);
-  const [loading, setLoading] = useState(!initialCache);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'SCHEDULED' | 'DEPARTED' | 'CANCELLED'>('ALL');
-  const [selectedCompany, setSelectedCompany] = useState<string>('ALL');
-
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(15);
-
-  // Modal Manifest / Dispatch
+  const list = useAdminPagedList<TripItem, TripSummary>('trips', 15);
+  const { page, summary, loading, filters, search, currentPage, pageSize, refresh } = list;
+  const paginatedTrips = page?.items ?? [];
+  const totalItems = page?.totalElements ?? 0;
+  const totalPages = page?.totalPages ?? 0;
+  const totalTrips = summary?.total ?? 0;
+  const scheduledCount = summary?.scheduled ?? 0;
+  const cancelledCount = summary?.cancelled ?? 0;
+  const totalBooked = summary?.totalBooked ?? 0;
+  const totalCapacity = summary?.totalCapacity ?? 0;
+  const avgOccupancy = totalCapacity > 0 ? Math.round((totalBooked / totalCapacity) * 100) : 0;
+  const statusFilter = filters.status ?? 'ALL';
+  const selectedCompany = filters.busCompanyId?.toString() ?? 'ALL';
   const [manifestTrip, setManifestTrip] = useState<TripItem | null>(null);
-
-  const fetchTrips = async () => {
-    if (!initialCache) setLoading(true);
-    try {
-      const res = await api.get('/admin/trips');
-      if (res.data?.data && Array.isArray(res.data.data)) {
-        setTrips(res.data.data);
-        try {
-          sessionStorage.setItem('traveleasy_admin_trips_cache', JSON.stringify(res.data.data));
-        } catch {
-          // Bỏ qua nếu quota vượt quá, state trong RAM vẫn lưu đủ dữ liệu
-        }
-      }
-    } catch (err: any) {
-      if (err?.response?.status === 401) return;
-      console.error('Failed to load trips from API:', err);
-      toast.error('Không thể tải danh sách chuyến xe từ CSDL', 'Lỗi Kết Nối');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTrips();
-  }, []);
-
-  // Danh sách nhà xe đối tác duy nhất để hiển thị dropdown lọc
-  const companyOptions = useMemo(() => {
-    const set = new Set<string>();
-    trips.forEach(t => {
-      if (t.busCompanyName) set.add(t.busCompanyName);
-    });
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [trips]);
+  const [exporting, setExporting] = useState(false);
 
   const handleToggleTripStatus = async (trip: TripItem) => {
     const willCancel = trip.status === 'SCHEDULED';
@@ -103,7 +71,7 @@ export const AdminTripsPage: React.FC = () => {
         params: { status: nextStatus },
       });
 
-      setTrips(prev => prev.map(t => (t.id === trip.id ? { ...t, status: nextStatus } : t)));
+      refresh();
 
       if (nextStatus === 'CANCELLED') {
         toast.warning(
@@ -122,73 +90,25 @@ export const AdminTripsPage: React.FC = () => {
     }
   };
 
-  // Xuất file CSV báo cáo điều phối chuyến xe
-  const handleExportCSV = () => {
-    if (filteredTrips.length === 0) {
-      toast.warning('Không có dữ liệu chuyến xe để xuất!', 'Thông Báo');
-      return;
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      const { data } = await api.get<Blob>('/admin/trips/export', { params: filters, responseType: 'blob' });
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `traveleasy_dieu_phoi_chuyen_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success('Đã xuất báo cáo chuyến xe ra file CSV!');
+    } catch {
+      toast.error('Không thể xuất báo cáo chuyến xe.');
+    } finally {
+      setExporting(false);
     }
-    const headers = ['Mã chuyến', 'Nhà xe', 'Điểm đi', 'Điểm đến', 'Giờ xuất bến', 'Giờ đến', 'Dòng xe', 'Giá niêm yết (VNĐ)', 'Tổng ghế', 'Ghế trống', 'Đã đặt', 'Tỷ lệ lấp đầy (%)', 'Trạng thái'];
-    const rows = filteredTrips.map(t => [
-      t.id,
-      `"${t.busCompanyName.replace(/"/g, '""')}"`,
-      `"${t.originCity.replace(/"/g, '""')}"`,
-      `"${t.destinationCity.replace(/"/g, '""')}"`,
-      `"${t.departureTime}"`,
-      `"${t.arrivalTime}"`,
-      `"${t.busType}"`,
-      t.price,
-      t.totalSeats,
-      t.availableSeats,
-      t.totalSeats - t.availableSeats,
-      Math.round(((t.totalSeats - t.availableSeats) / t.totalSeats) * 100),
-      t.status === 'SCHEDULED' ? 'Mở bán' : t.status === 'CANCELLED' ? 'Tạm hủy' : 'Đã khởi hành'
-    ]);
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `traveleasy_dieu_phoi_chuyen_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`Đã xuất báo cáo ${filteredTrips.length} chuyến xe ra file Excel CSV!`, 'Xuất Báo Cáo');
   };
-
-  const filteredTrips = useMemo(() => {
-    return trips.filter(t => {
-      if (statusFilter !== 'ALL' && t.status !== statusFilter) return false;
-      if (selectedCompany !== 'ALL' && t.busCompanyName !== selectedCompany) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        const matchCity = t.originCity.toLowerCase().includes(q) || t.destinationCity.toLowerCase().includes(q);
-        const matchCompany = t.busCompanyName.toLowerCase().includes(q);
-        const matchId = t.id.toString().includes(q);
-        if (!matchCity && !matchCompany && !matchId) return false;
-      }
-      return true;
-    });
-  }, [trips, statusFilter, selectedCompany, search]);
-
-  // Phân trang
-  const totalPages = Math.ceil(filteredTrips.length / pageSize) || 1;
-  const paginatedTrips = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredTrips.slice(start, start + pageSize);
-  }, [filteredTrips, currentPage, pageSize]);
-
-  // Đặt lại trang 1 khi đổi bộ lọc
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, statusFilter, selectedCompany, pageSize]);
-
-  // KPI Metrics
-  const scheduledCount = trips.filter(t => t.status === 'SCHEDULED').length;
-  const cancelledCount = trips.filter(t => t.status === 'CANCELLED').length;
-  const totalCapacity = trips.reduce((acc, t) => acc + (t.totalSeats || 0), 0);
-  const totalBooked = trips.reduce((acc, t) => acc + ((t.totalSeats || 0) - (t.availableSeats || 0)), 0);
-  const avgOccupancy = totalCapacity > 0 ? Math.round((totalBooked / totalCapacity) * 100) : 0;
 
   const getBusTypeBadge = (type: string) => {
     switch (type) {
@@ -217,13 +137,14 @@ export const AdminTripsPage: React.FC = () => {
             </span>
           </h1>
           <div style={{ fontSize: '13.5px', color: '#64748b', marginTop: '4px' }}>
-            Hệ thống giám sát thời gian thực {trips.length} chuyến xe liên tỉnh kết nối với cơ sở dữ liệu Supabase
+            Hệ thống giám sát thời gian thực {totalTrips} chuyến xe liên tỉnh kết nối với cơ sở dữ liệu Supabase
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button
             onClick={handleExportCSV}
+            disabled={exporting || loading || list.failed || totalItems === 0}
             style={{
               backgroundColor: '#ffffff',
               color: '#0f172a',
@@ -240,11 +161,11 @@ export const AdminTripsPage: React.FC = () => {
               transition: 'all 0.15s ease',
             }}
           >
-            <Download size={14} color="#059669" /> Xuất Excel CSV ({filteredTrips.length})
+            <Download size={14} color="#059669" /> Xuất Excel CSV ({totalItems})
           </button>
 
           <button
-            onClick={fetchTrips}
+            onClick={refresh}
             style={{
               backgroundColor: '#2563eb',
               color: '#ffffff',
@@ -267,7 +188,7 @@ export const AdminTripsPage: React.FC = () => {
       </div>
 
       {/* KPI Command Bar */}
-      {loading && trips.length === 0 ? (
+      {loading && !summary ? (
         <CardSkeleton count={4} />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px', marginBottom: '20px' }}>
@@ -278,7 +199,7 @@ export const AdminTripsPage: React.FC = () => {
                 <Bus size={18} />
               </div>
             </div>
-            <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a' }}>{trips.length}</div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a' }}>{totalTrips}</div>
             <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Trên toàn bộ mạng lưới tuyến liên tỉnh</div>
           </div>
 
@@ -346,7 +267,7 @@ export const AdminTripsPage: React.FC = () => {
             type="text"
             placeholder="Tìm theo mã chuyến #, nhà xe, điểm đi hoặc điểm đến (Phương Trang, Hà Nội, Đà Lạt...)"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => list.setFilter('search', e.target.value)}
             style={{
               width: '100%',
               padding: '10px 14px 10px 38px',
@@ -361,7 +282,7 @@ export const AdminTripsPage: React.FC = () => {
           <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           {search && (
             <button
-              onClick={() => setSearch('')}
+              onClick={() => list.setFilter('search', '')}
               style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8' }}
             >
               <X size={15} />
@@ -373,7 +294,7 @@ export const AdminTripsPage: React.FC = () => {
         <div style={{ position: 'relative', minWidth: '220px' }}>
           <select
             value={selectedCompany}
-            onChange={e => setSelectedCompany(e.target.value)}
+            onChange={e => list.setFilter('busCompanyId', e.target.value === 'ALL' ? '' : e.target.value)}
             style={{
               width: '100%',
               padding: '10px 14px 10px 36px',
@@ -388,13 +309,18 @@ export const AdminTripsPage: React.FC = () => {
               appearance: 'auto',
             }}
           >
-            <option value="ALL">Tất cả nhà xe đối tác ({companyOptions.length})</option>
-            {companyOptions.map(comp => (
-              <option key={comp} value={comp}>{comp}</option>
+            <option value="ALL">Tất cả nhà xe đối tác ({list.companies.length})</option>
+            {selectedCompany !== 'ALL' && !list.companies.some(company => String(company.id) === selectedCompany) && (
+              <option value={selectedCompany}>Nhà xe #{selectedCompany}</option>
+            )}
+            {list.companies.map(comp => (
+              <option key={comp.id} value={comp.id}>{comp.name}</option>
             ))}
           </select>
           <Building2 size={16} color="#64748b" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
         </div>
+
+        <AdminDepartureFilters list={list} />
 
         {/* Status Tabs */}
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
@@ -408,7 +334,7 @@ export const AdminTripsPage: React.FC = () => {
             return (
               <button
                 key={tab.key}
-                onClick={() => setStatusFilter(tab.key)}
+                onClick={() => list.setFilter('status', tab.key)}
                 style={{
                   backgroundColor: isActive ? '#2563eb' : '#ffffff',
                   color: isActive ? '#ffffff' : '#64748b',
@@ -440,7 +366,7 @@ export const AdminTripsPage: React.FC = () => {
         }}
       >
         <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-          <table style={{ width: '100%', minWidth: '1100px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+          <table aria-busy={loading} style={{ width: '100%', minWidth: '1100px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: '#f8fafc' }}>
                 <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: 700, fontSize: '11.5px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>MÃ CHUYẾN</th>
@@ -454,11 +380,15 @@ export const AdminTripsPage: React.FC = () => {
                 <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: 700, fontSize: '11.5px', letterSpacing: '0.5px', textAlign: 'right', whiteSpace: 'nowrap' }}>ĐIỀU PHỐI SÀN</th>
               </tr>
             </thead>
-            {loading && trips.length === 0 ? (
+            {loading && !page ? (
               <TableSkeleton rows={8} columns={9} />
             ) : (
               <tbody>
-                {paginatedTrips.length === 0 ? (
+                {list.dateError || list.failed ? (
+                  <tr><td colSpan={9} style={{ padding: 24, textAlign: 'center' }} role="alert">
+                    {list.dateError || 'Không thể tải danh sách chuyến xe.'}
+                  </td></tr>
+                ) : paginatedTrips.length === 0 ? (
                   <tr>
                     <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
                       Không tìm thấy chuyến xe nào phù hợp với bộ lọc hiện tại.
@@ -647,16 +577,17 @@ export const AdminTripsPage: React.FC = () => {
         </div>
 
         {/* Pagination Toolbar */}
-        {!loading && filteredTrips.length > 0 && (
+        {totalItems > 0 && (
           <div style={{ borderTop: '1px solid #f1f5f9', padding: '12px 18px', backgroundColor: '#fafafa' }}>
             <Pagination
-              currentPage={currentPage}
+              currentPage={Math.min(currentPage, totalPages)}
               totalPages={totalPages}
-              totalItems={filteredTrips.length}
+              totalItems={totalItems}
               pageSize={pageSize}
-              onPageChange={page => setCurrentPage(page)}
-              onPageSizeChange={size => setPageSize(size)}
-              pageSizeOptions={[10, 15, 25, 50, 100]}
+              onPageChange={list.setCurrentPage}
+              onPageSizeChange={list.setPageSize}
+              resetOnPageSizeChange={false}
+              pageSizeOptions={list.pageSizes}
               itemLabel="chuyến xe"
             />
           </div>

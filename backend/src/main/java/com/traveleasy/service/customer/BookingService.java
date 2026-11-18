@@ -4,6 +4,11 @@ import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.exception.CustomSeatHoldException;
 import com.traveleasy.common.exception.ErrorCode;
 import com.traveleasy.dto.booking.BookingResponse;
+import com.traveleasy.dto.admin.S405BookingSummary;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import com.traveleasy.dto.booking.CancelBookingRequest;
 import com.traveleasy.dto.booking.CancelPartialRequest;
 import com.traveleasy.dto.booking.CreateBookingRequest;
@@ -41,6 +46,8 @@ public class BookingService {
     private final SeatRealtimeService seatRealtimeService;
     private final com.traveleasy.service.company.DynamicPricingService dynamicPricingService;
     private final com.traveleasy.service.common.NotificationService notificationService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private CompanyPricingRuleRepository s405PricingRuleRepository;
 
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats", "trips_search"}, allEntries = true)
@@ -835,6 +842,61 @@ public class BookingService {
         return mapToBookingResponse(savedNewBooking, List.of(newTicket));
     }
 
+    /** S405: paged admin bookings; departureToExclusive is an exclusive upper bound. */
+    @Transactional(readOnly = true)
+    public Page<BookingResponse> getS405BookingPage(String search, Long busCompanyId, Long routeId,
+            LocalDateTime from, LocalDateTime toExclusive, BookingStatus status, Pageable pageable) {
+        if (pageable == null || pageable.isUnpaged() || pageable.getPageSize() < 1 || pageable.getPageSize() > 100) {
+            throw new IllegalArgumentException("Kích thước trang phải từ 1 đến 100");
+        }
+        if ((busCompanyId != null && busCompanyId <= 0) || (routeId != null && routeId <= 0)) {
+            throw new IllegalArgumentException("Mã nhà xe và tuyến đường phải lớn hơn 0");
+        }
+        if (from != null && toExclusive != null && !from.isBefore(toExclusive)) {
+            throw new IllegalArgumentException("Khoảng ngày xuất bến không hợp lệ");
+        }
+        String pattern = null;
+        if (search != null && !search.isEmpty()) {
+            pattern = "%" + search.toLowerCase(Locale.ROOT).replace("!", "!!")
+                    .replace("%", "!%").replace("_", "!_") + "%";
+        }
+        Pageable stablePage = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")));
+        Page<Booking> page = bookingRepository.findS405Page(pattern, busCompanyId, routeId, from, toExclusive, status, stablePage);
+        if (page.isEmpty()) return page.map(b -> (BookingResponse) null);
+
+        List<Long> bookingIds = page.getContent().stream().map(Booking::getId).toList();
+        Map<Long, List<Ticket>> ticketsByBooking = ticketRepository.findByBookingIdIn(bookingIds).stream()
+                .collect(Collectors.groupingBy(t -> t.getBooking().getId()));
+        Set<Long> routeIds = page.getContent().stream().map(b -> b.getTrip().getRoute().getId()).collect(Collectors.toSet());
+        Map<Long, List<PickupDropoffPoint>> pointsByRoute = pointRepository.findByRouteIdInOrderByDisplayOrderAsc(routeIds).stream()
+                .collect(Collectors.groupingBy(p -> p.getRoute().getId()));
+        Set<Long> companyIds = page.getContent().stream().map(b -> b.getTrip().getBusCompany().getId()).collect(Collectors.toSet());
+        Map<Long, List<CompanyPricingRule>> rulesByCompany = s405PricingRuleRepository
+                .findByBusCompanyIdInAndStatusOrderByPriorityDesc(companyIds, PricingRuleStatus.ACTIVE).stream()
+                .collect(Collectors.groupingBy(r -> r.getBusCompany().getId()));
+        return page.map(b -> mapS405BookingResponse(b, ticketsByBooking.getOrDefault(b.getId(), Collections.emptyList()),
+                pointsByRoute.getOrDefault(b.getTrip().getRoute().getId(), Collections.emptyList()),
+                rulesByCompany.getOrDefault(b.getTrip().getBusCompany().getId(), Collections.emptyList())));
+    }
+
+    private BookingResponse mapS405BookingResponse(Booking b, List<Ticket> tickets,
+            List<PickupDropoffPoint> points, List<CompanyPricingRule> rules) {
+        List<TicketResponse> ticketResponses = tickets.stream().map(t -> TicketResponse.builder()
+                .id(t.getId()).ticketCode(t.getTicketCode()).seatNumber(t.getSeatNumber()).price(t.getPrice())
+                .qrCodeHash(t.getQrCodeHash()).status(t.getStatus()).createdAt(t.getCreatedAt()).build()).toList();
+        TripResponse trip = tripService.mapToTripResponse(b.getTrip(), points, rules);
+        return buildBookingResponse(b, trip, ticketResponses);
+    }
+
+    /** S405: unfiltered global KPIs; the confirmed revenue definition is unchanged. */
+    @Transactional(readOnly = true)
+    public S405BookingSummary getS405BookingSummary() {
+        return new S405BookingSummary(bookingRepository.count(), bookingRepository.countByStatus(BookingStatus.CONFIRMED),
+                bookingRepository.countByStatus(BookingStatus.PENDING), bookingRepository.countByStatus(BookingStatus.CANCELLED),
+                bookingRepository.sumTotalRevenue());
+    }
+
     @Transactional(readOnly = true)
     @org.springframework.cache.annotation.Cacheable("admin_all_bookings")
     public List<BookingResponse> getAllBookings() {
@@ -1063,6 +1125,10 @@ public class BookingService {
                 ? (tripService != null ? tripService.mapToTripResponse(b.getTrip(), routePoints) : null)
                 : (tripService != null ? tripService.mapToTripResponse(b.getTrip()) : null);
 
+        return buildBookingResponse(b, tripResponse, ticketResponses);
+    }
+
+    private BookingResponse buildBookingResponse(Booking b, TripResponse tripResponse, List<TicketResponse> ticketResponses) {
         return BookingResponse.builder()
                 .id(b.getId())
                 .bookingCode(b.getBookingCode())

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   Ticket,
   Search,
@@ -12,8 +12,6 @@ import {
   Eye,
   AlertTriangle,
   FileText,
-  ChevronLeft,
-  ChevronRight,
   Calendar,
   MapPin,
   Building2,
@@ -25,6 +23,9 @@ import {
   Copy,
 } from 'lucide-react';
 import api from '../../../services/api';
+import { Pagination } from '../../../components/Pagination';
+import { useAdminPagedList } from '../shared/useAdminPagedList';
+import { AdminDepartureFilters } from '../shared/AdminDepartureFilters';
 import { toast } from '../../../context/ToastContext';
 
 interface TicketItem {
@@ -79,12 +80,27 @@ interface BookingItem {
   refundedAt?: string;
 }
 
+interface BookingSummary {
+  total: number;
+  confirmed: number;
+  pending: number;
+  cancelled: number;
+  confirmedRevenue: number;
+}
+
 export const AdminBookingsPage: React.FC = () => {
-  const [bookings, setBookings] = useState<BookingItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'CONFIRMED' | 'PENDING' | 'CANCELLED'>('ALL');
-  const [companyFilter, setCompanyFilter] = useState<string>('ALL');
+  const list = useAdminPagedList<BookingItem, BookingSummary>('bookings', 10);
+  const { page, summary, loading, filters, search, currentPage, pageSize, refresh } = list;
+  const paginatedBookings = page?.items ?? [];
+  const totalItems = page?.totalElements ?? 0;
+  const totalPages = page?.totalPages ?? 0;
+  const totalBookings = summary?.total ?? 0;
+  const confirmedCount = summary?.confirmed ?? 0;
+  const pendingCount = summary?.pending ?? 0;
+  const cancelledCount = summary?.cancelled ?? 0;
+  const confirmedRevenue = summary?.confirmedRevenue ?? 0;
+  const statusFilter = filters.status ?? 'ALL';
+  const companyFilter = filters.busCompanyId?.toString() ?? 'ALL';
 
   // Modal states
   const [detailBooking, setDetailBooking] = useState<BookingItem | null>(null);
@@ -99,32 +115,8 @@ export const AdminBookingsPage: React.FC = () => {
   const [adminRefundAccount, setAdminRefundAccount] = useState('');
   const [adminRefundHolder, setAdminRefundHolder] = useState('');
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
-
   // Copy indicator
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-
-  const fetchBookings = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get('/admin/bookings');
-      if (res.data?.data && Array.isArray(res.data.data)) {
-        setBookings(res.data.data);
-      }
-    } catch (err: any) {
-      if (err?.response?.status === 401) return;
-      console.error('Failed to load bookings from API:', err);
-      toast.error('Không thể tải danh sách đơn đặt vé từ CSDL', 'Lỗi Kết Nối');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBookings();
-  }, []);
 
   // Copy helper
   const handleCopyCode = (code: string) => {
@@ -150,13 +142,11 @@ export const AdminBookingsPage: React.FC = () => {
     const tx = prompt('Nhập mã đối soát / mã giao dịch chuyển khoản ngân hàng (Audit Code):', 'VIETQR-' + Date.now().toString().slice(-6));
     if (tx === null) return;
     try {
-      await api.post(`/admin/bookings/${bookingId}/confirm-refund`, null, {
+      const { data } = await api.post<{ data: BookingItem }>(`/admin/bookings/${bookingId}/confirm-refund`, null, {
         params: { txCode: tx || 'VIETQR-MANUAL' }
       });
-      setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, refundStatus: 'REFUNDED', refundTxCode: tx || 'VIETQR-MANUAL' } : b));
-      if (detailBooking && detailBooking.id === bookingId) {
-        setDetailBooking(prev => prev ? { ...prev, refundStatus: 'REFUNDED', refundTxCode: tx || 'VIETQR-MANUAL' } : null);
-      }
+      refresh();
+      setDetailBooking(prev => prev?.id === bookingId ? data.data : prev);
       toast.success('Đã xác nhận chuyển khoản hoàn tiền thành công cho khách hàng!', 'Hoàn Tiền Hoàn Tất');
     } catch (err: any) {
       toast.error('Không thể xác nhận hoàn tiền: ' + (err?.response?.data?.message || err.message));
@@ -182,41 +172,16 @@ export const AdminBookingsPage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      await api.patch(`/admin/bookings/${interventionBooking.id}/status`, null, {
+      const { data } = await api.patch<{ data: BookingItem }>(`/admin/bookings/${interventionBooking.id}/status`, null, {
         params: {
           status: interventionTarget,
           reason: fullReason,
         },
       });
 
-      // Update state locally
-      setBookings(prev =>
-        prev.map(b =>
-          b.id === interventionBooking.id
-            ? {
-                ...b,
-                status: interventionTarget,
-                refundBankName: adminRefundBank,
-                refundAccountNumber: adminRefundAccount.trim() || b.refundAccountNumber,
-                refundAccountHolder: adminRefundHolder.trim().toUpperCase() || b.refundAccountHolder,
-                refundStatus: interventionTarget === 'CANCELLED' ? 'PENDING' : b.refundStatus,
-                refundAmount: interventionTarget === 'CANCELLED' ? (b.refundAmount || Math.round(b.totalAmount * 0.9)) : b.refundAmount,
-              }
-            : b
-        )
-      );
+      refresh();
 
-      if (detailBooking && detailBooking.id === interventionBooking.id) {
-        setDetailBooking(prev => prev ? {
-          ...prev,
-          status: interventionTarget,
-          refundBankName: adminRefundBank,
-          refundAccountNumber: adminRefundAccount.trim() || prev.refundAccountNumber,
-          refundAccountHolder: adminRefundHolder.trim().toUpperCase() || prev.refundAccountHolder,
-          refundStatus: interventionTarget === 'CANCELLED' ? 'PENDING' : prev.refundStatus,
-          refundAmount: interventionTarget === 'CANCELLED' ? (prev.refundAmount || Math.round(prev.totalAmount * 0.9)) : prev.refundAmount,
-        } : null);
-      }
+      setDetailBooking(prev => prev?.id === interventionBooking.id ? data.data : prev);
 
       if (interventionTarget === 'CANCELLED') {
         toast.warning(
@@ -241,52 +206,6 @@ export const AdminBookingsPage: React.FC = () => {
     }
   };
 
-  // Distinct bus company list for filter dropdown
-  const busCompanies = useMemo(() => {
-    const names = new Set<string>();
-    bookings.forEach(b => {
-      if (b.trip?.busCompanyName) names.add(b.trip.busCompanyName);
-    });
-    return Array.from(names);
-  }, [bookings]);
-
-  // Filtered list
-  const filteredBookings = useMemo(() => {
-    return bookings.filter(b => {
-      if (statusFilter !== 'ALL' && b.status !== statusFilter) return false;
-      if (companyFilter !== 'ALL' && b.trip?.busCompanyName !== companyFilter) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        const matchCode = b.bookingCode?.toLowerCase().includes(q);
-        const matchName = b.customerName?.toLowerCase().includes(q);
-        const matchPhone = b.customerPhone?.includes(q);
-        const matchEmail = b.customerEmail?.toLowerCase().includes(q);
-        if (!matchCode && !matchName && !matchPhone && !matchEmail) return false;
-      }
-      return true;
-    });
-  }, [bookings, statusFilter, companyFilter, search]);
-
-  // Reset page when filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, statusFilter, companyFilter]);
-
-  // Pagination calculation
-  const totalPages = Math.ceil(filteredBookings.length / pageSize) || 1;
-  const paginatedBookings = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredBookings.slice(start, start + pageSize);
-  }, [filteredBookings, currentPage, pageSize]);
-
-  // Statistics
-  const confirmedCount = bookings.filter(b => b.status === 'CONFIRMED').length;
-  const pendingCount = bookings.filter(b => b.status === 'PENDING').length;
-  const cancelledCount = bookings.filter(b => b.status === 'CANCELLED').length;
-  const confirmedRevenue = bookings
-    .filter(b => b.status === 'CONFIRMED')
-    .reduce((sum, b) => sum + (b.totalAmount || 0), 0);
-
   return (
     <div style={{ maxWidth: '1440px', margin: '0 auto', paddingBottom: '40px' }}>
       {/* 1. Header & Navigation Breadcrumb */}
@@ -305,7 +224,7 @@ export const AdminBookingsPage: React.FC = () => {
         </div>
 
         <button
-          onClick={fetchBookings}
+          onClick={refresh}
           style={{
             backgroundColor: '#ffffff',
             color: '#1e3a8a',
@@ -365,10 +284,10 @@ export const AdminBookingsPage: React.FC = () => {
           <div>
             <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>TỔNG ĐƠN ĐẶT VÉ</div>
             <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>
-              {bookings.length} <span style={{ fontSize: '13px', fontWeight: 500, color: '#64748b' }}>đơn</span>
+              {totalBookings} <span style={{ fontSize: '13px', fontWeight: 500, color: '#64748b' }}>đơn</span>
             </div>
             <div style={{ fontSize: '11px', color: '#16a34a', marginTop: '2px', fontWeight: 600 }}>
-              {confirmedCount} đơn thành công ({bookings.length > 0 ? Math.round((confirmedCount / bookings.length) * 100) : 0}%)
+              {confirmedCount} đơn thành công ({totalBookings > 0 ? Math.round((confirmedCount / totalBookings) * 100) : 0}%)
             </div>
           </div>
         </div>
@@ -510,7 +429,7 @@ export const AdminBookingsPage: React.FC = () => {
             type="text"
             placeholder="Tìm theo Mã đơn (BK-...), Khách hàng, SĐT hoặc Email..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => list.setFilter('search', e.target.value)}
             style={{
               width: '100%',
               padding: '9px 12px 9px 36px',
@@ -525,7 +444,7 @@ export const AdminBookingsPage: React.FC = () => {
           <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           {search && (
             <button
-              onClick={() => setSearch('')}
+              onClick={() => list.setFilter('search', '')}
               style={{
                 position: 'absolute',
                 right: '10px',
@@ -547,7 +466,7 @@ export const AdminBookingsPage: React.FC = () => {
           <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: 600 }}>Nhà xe:</span>
           <select
             value={companyFilter}
-            onChange={e => setCompanyFilter(e.target.value)}
+            onChange={e => list.setFilter('busCompanyId', e.target.value === 'ALL' ? '' : e.target.value)}
             style={{
               padding: '8px 12px',
               borderRadius: '8px',
@@ -560,26 +479,29 @@ export const AdminBookingsPage: React.FC = () => {
               cursor: 'pointer',
             }}
           >
-            <option value="ALL">Tất cả nhà xe ({busCompanies.length})</option>
-            {busCompanies.map(name => (
-              <option key={name} value={name}>
-                {name}
-              </option>
+            <option value="ALL">Tất cả nhà xe ({list.companies.length})</option>
+            {companyFilter !== 'ALL' && !list.companies.some(company => String(company.id) === companyFilter) && (
+              <option value={companyFilter}>Nhà xe #{companyFilter}</option>
+            )}
+            {list.companies.map(company => (
+              <option key={company.id} value={company.id}>{company.name}</option>
             ))}
           </select>
         </div>
 
+        <AdminDepartureFilters list={list} />
+
         {/* Status Tabs */}
         <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '8px', overflowX: 'auto', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
           {[
-            { key: 'ALL', label: `Tất cả (${bookings.length})` },
+            { key: 'ALL', label: `Tất cả (${totalBookings})` },
             { key: 'CONFIRMED', label: `Đã thanh toán (${confirmedCount})` },
             { key: 'PENDING', label: `Chờ thanh toán (${pendingCount})` },
             { key: 'CANCELLED', label: `Đã hủy (${cancelledCount})` },
           ].map(tab => (
             <button
               key={tab.key}
-              onClick={() => setStatusFilter(tab.key as any)}
+              onClick={() => list.setFilter('status', tab.key)}
               style={{
                 backgroundColor: statusFilter === tab.key ? '#ffffff' : 'transparent',
                 color: statusFilter === tab.key ? '#1e3a8a' : '#64748b',
@@ -611,7 +533,7 @@ export const AdminBookingsPage: React.FC = () => {
         }}
       >
         <div style={{ overflowX: 'auto', width: '100%' }}>
-          <table style={{ width: '100%', minWidth: '1180px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+          <table aria-busy={loading} style={{ width: '100%', minWidth: '1180px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
             <thead>
               <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
                 <th style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>MÃ ĐƠN & THỜI GIAN</th>
@@ -624,7 +546,7 @@ export const AdminBookingsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {loading && !page ? (
                 <tr>
                   <td colSpan={7} style={{ padding: '50px', textAlign: 'center', color: '#64748b' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
@@ -633,6 +555,10 @@ export const AdminBookingsPage: React.FC = () => {
                     </div>
                   </td>
                 </tr>
+              ) : list.dateError || list.failed ? (
+                <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center' }} role="alert">
+                  {list.dateError || 'Không thể tải danh sách đơn đặt vé.'}
+                </td></tr>
               ) : paginatedBookings.length === 0 ? (
                 <tr>
                   <td colSpan={7} style={{ padding: '45px', textAlign: 'center', color: '#94a3b8' }}>
@@ -949,75 +875,17 @@ export const AdminBookingsPage: React.FC = () => {
           </table>
         </div>
 
-        {/* 5. Pagination Footer */}
-        {!loading && filteredBookings.length > 0 && (
-          <div
-            style={{
-              padding: '12px 18px',
-              borderTop: '1px solid #e2e8f0',
-              backgroundColor: '#f8fafc',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '10px',
-            }}
-          >
-            <div style={{ fontSize: '12.5px', color: '#64748b' }}>
-              Hiển thị{' '}
-              <strong>
-                {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredBookings.length)}
-              </strong>{' '}
-              trên tổng số <strong>{filteredBookings.length}</strong> đơn vé
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                style={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  padding: '5px 10px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: currentPage === 1 ? '#94a3b8' : '#334155',
-                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                <ChevronLeft size={14} /> Trước
-              </button>
-
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#1e3a8a', padding: '0 8px' }}>
-                Trang {currentPage} / {totalPages}
-              </div>
-
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                style={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  padding: '5px 10px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: currentPage === totalPages ? '#94a3b8' : '#334155',
-                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                Sau <ChevronRight size={14} />
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination
+          currentPage={Math.min(currentPage, totalPages)}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={list.setCurrentPage}
+          onPageSizeChange={list.setPageSize}
+          resetOnPageSizeChange={false}
+          pageSizeOptions={list.pageSizes}
+          itemLabel="đơn vé"
+        />
       </div>
 
       {/* ========================================================================= */}
