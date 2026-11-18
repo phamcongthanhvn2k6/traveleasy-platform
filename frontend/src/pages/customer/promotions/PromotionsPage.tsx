@@ -336,7 +336,7 @@ export const PromotionsPage: React.FC = () => {
     <div className="min-h-screen bg-slate-50 font-sans pb-20">
       {/* 1. HERO SECTION & PROMO CAROUSEL */}
       <section className="bg-slate-900 text-white pt-8 pb-14 px-4 border-b border-slate-800">
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto space-y-6">
           {/* Section Subheading */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -373,7 +373,7 @@ export const PromotionsPage: React.FC = () => {
       </section>
 
       {/* 2. MAIN VOUCHER DISCOVERY SECTION */}
-      <main className="max-w-6xl mx-auto px-4 -mt-6 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 -mt-6 space-y-8">
         {/* Filter and Search Bar Card */}
         <VoucherFilter
           activeTab={activeTab}
@@ -409,7 +409,7 @@ export const PromotionsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Voucher Cards Grid (3 Cột Desktop, 1 Cột Mobile) */}
+        {/* Voucher Cards Grid (2 Cột trên màn hình laptop/tablet, 3 Cột trên màn lớn) */}
         {isLoading ? (
           <div className="py-20 text-center bg-white rounded-3xl border border-slate-200">
             <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto mb-3" />
@@ -454,7 +454,7 @@ export const PromotionsPage: React.FC = () => {
             </div>
           )
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {filteredVouchers.map((voucher) => {
               const isOwned = ownedCodes.includes(voucher.code.toUpperCase());
               return (
