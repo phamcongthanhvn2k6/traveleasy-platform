@@ -85,13 +85,12 @@ public class CompanyCancellationRefundController {
             @RequestParam(required = false) Long companyId,
             @RequestParam(required = false) String keyword,
             Authentication authentication) {
-        Long targetCompanyId = resolveCompanyId(authentication, busCompanyId != null ? busCompanyId : companyId);
+        User staff = requireCompanyStaff(authentication);
+        Long targetCompanyId = staff.getBusCompanyId();
 
-        List<Ticket> tickets = ticketRepository.findAll().stream()
+        List<Ticket> tickets = ticketRepository.findByBookingTripBusCompanyId(targetCompanyId).stream()
                 .filter(t -> {
-                    if (t.getBooking() == null || t.getBooking().getTrip() == null) return false;
-                    Trip trip = t.getBooking().getTrip();
-                    if (targetCompanyId != null && trip.getBusCompany() != null && !targetCompanyId.equals(trip.getBusCompany().getId())) {
+                    if (t.getStatus() != TicketStatus.CANCELLED && t.getStatus() != TicketStatus.ISSUED) {
                         return false;
                     }
                     if (keyword != null && !keyword.isBlank()) {
@@ -101,9 +100,10 @@ public class CompanyCancellationRefundController {
                         boolean matchPhone = t.getBooking().getPassengerPhone() != null && t.getBooking().getPassengerPhone().contains(kw);
                         return matchCode || matchName || matchPhone;
                     }
-                    return t.getStatus() == TicketStatus.CANCELLED || t.getStatus() == TicketStatus.ISSUED;
+                    return true;
                 })
-                .sorted(Comparator.comparing(Ticket::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .sorted(Comparator.comparing((Ticket t) -> !isAwaitingTransfer(t))
+                        .thenComparing(Ticket::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .limit(20)
                 .toList();
 
@@ -114,31 +114,7 @@ public class CompanyCancellationRefundController {
                     ? trip.getRoute().getDepartureLocation() + " ➔ " + trip.getRoute().getArrivalLocation()
                     : "Chuyến xe #" + trip.getId();
 
-            BigDecimal price = t.getPrice() != null ? t.getPrice() : BigDecimal.valueOf(350000);
-
-            // Tính toán % phí hủy động theo thời gian xuất bến thực tế
-            int hours = 24;
-            if (trip.getDepartureTime() != null) {
-                LocalDateTime now = LocalDateTime.now();
-                if (trip.getDepartureTime().isAfter(now)) {
-                    hours = (int) Duration.between(now, trip.getDepartureTime()).toHours();
-                } else {
-                    hours = 0;
-                }
-            }
-            int feePct = 10;
-            if (hours < 2) {
-                feePct = 100;
-            } else if (hours < 12) {
-                feePct = 50;
-            } else if (hours < 24) {
-                feePct = 30;
-            }
-
-            BigDecimal fee = price.multiply(BigDecimal.valueOf(feePct)).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-            BigDecimal refund = price.subtract(fee);
-            BigDecimal companyPenalty = fee.multiply(new BigDecimal("0.80")).setScale(2, RoundingMode.HALF_UP);
-            BigDecimal platformFee = fee.subtract(companyPenalty);
+            RefundAmounts amounts = displayAmounts(t);
 
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("id", t.getId());
@@ -147,13 +123,8 @@ public class CompanyCancellationRefundController {
             item.put("passengerPhone", t.getBooking().getPassengerPhone());
             item.put("routeName", routeName);
             item.put("seatNumber", t.getSeatNumber());
-            item.put("originalPrice", price);
-            item.put("status", t.getStatus().name());
-            item.put("cancellationFeePercent", feePct);
-            item.put("cancellationFee", fee);
-            item.put("refundAmount", refund);
-            item.put("busCompanyShare", companyPenalty);
-            item.put("platformShare", platformFee);
+            addRefundFields(item, t, amounts);
+            item.put("canConfirmTransfer", canConfirmTransfer(staff) && isAwaitingTransfer(t));
             item.put("departureTime", trip.getDepartureTime());
             item.put("requestTime", t.getCreatedAt());
             result.add(item);
@@ -172,63 +143,24 @@ public class CompanyCancellationRefundController {
         Ticket ticket = ticketRepository.findByTicketCode(ticketCode.trim())
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy vé với mã: " + ticketCode));
 
-        Long targetCompanyId = resolveCompanyId(authentication, null);
-        if (targetCompanyId != null && ticket.getBooking() != null && ticket.getBooking().getTrip() != null) {
-            Trip trip = ticket.getBooking().getTrip();
-            if (trip.getBusCompany() != null && !targetCompanyId.equals(trip.getBusCompany().getId())) {
-                throw new AppException(ErrorCode.FORBIDDEN, "Bạn không có quyền thao tác trên vé của nhà xe khác!");
-            }
+        User staff = requireCompanyStaff(authentication);
+        Long targetCompanyId = staff.getBusCompanyId();
+        BusCompany company = ticket.getBooking().getTrip().getBusCompany();
+        if (company == null || !targetCompanyId.equals(company.getId())) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Vé không thuộc nhà xe của bạn");
         }
 
-        BigDecimal originalPrice = ticket.getPrice() != null ? ticket.getPrice() : BigDecimal.valueOf(350000);
-
-        // Tính số giờ trước khởi hành thực tế
-        int hours = 24;
-        if (hoursBeforeDeparture != null) {
-            hours = hoursBeforeDeparture;
-        } else if (ticket.getBooking() != null && ticket.getBooking().getTrip() != null && ticket.getBooking().getTrip().getDepartureTime() != null) {
-            LocalDateTime depTime = ticket.getBooking().getTrip().getDepartureTime();
-            LocalDateTime now = LocalDateTime.now();
-            if (depTime.isAfter(now)) {
-                hours = (int) Duration.between(now, depTime).toHours();
-            } else {
-                hours = 0;
-            }
-        }
-
-        // Xác định tỷ lệ phạt hủy theo bậc thang quy định
-        int feePercent = 10;
-        String tierDesc = "Hủy trước 24h: Phạt 10%, Hoàn 90%";
-        if (hours < 2) {
-            feePercent = 100;
-            tierDesc = "Hủy dưới 2h: Phạt 100% (Không hoàn tiền)";
-        } else if (hours < 12) {
-            feePercent = 50;
-            tierDesc = "Hủy từ 2h - 12h: Phạt 50%, Hoàn 50%";
-        } else if (hours < 24) {
-            feePercent = 30;
-            tierDesc = "Hủy từ 12h - 24h: Phạt 30%, Hoàn 70%";
-        }
-
-        BigDecimal cancellationFee = originalPrice.multiply(BigDecimal.valueOf(feePercent))
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        BigDecimal refundToCustomer = originalPrice.subtract(cancellationFee);
-
-        // Phân bổ tiền phạt hủy (Khắc phục BUG-NEW-03: 80% Nhà xe, 20% Sàn)
-        BigDecimal busCompanyShare = cancellationFee.multiply(new BigDecimal("0.80")).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal platformShare = cancellationFee.subtract(busCompanyShare);
-
+        int hours = hoursBeforeDeparture != null ? hoursBeforeDeparture : hoursBeforeDeparture(ticket);
+        RefundAmounts amounts = ticket.getStatus() == TicketStatus.CANCELLED
+                ? displayAmounts(ticket) : calculateAmounts(ticket, hours);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("ticketCode", ticket.getTicketCode());
-        result.put("originalPrice", originalPrice);
-        result.put("hoursBeforeDeparture", hours);
-        result.put("cancellationFeePercent", feePercent);
-        result.put("cancellationFee", cancellationFee);
-        result.put("refundAmountToCustomer", refundToCustomer);
-        result.put("busCompanyPenaltyRevenue", busCompanyShare); // 80% bù đắp rủi ro ghế trống
-        result.put("platformServiceFeeRevenue", platformShare);   // 20% phí xử lý sàn
-        result.put("tierDescription", tierDesc);
-        result.put("settlementImpactNotice", "Khoản bồi hoàn " + busCompanyShare + " đ sẽ được cộng vào kỳ đối soát tiếp theo của nhà xe.");
+        addRefundFields(result, ticket, amounts);
+        result.put("canConfirmTransfer", canConfirmTransfer(staff) && isAwaitingTransfer(ticket));
+        result.put("hoursBeforeDeparture", ticket.getStatus() == TicketStatus.CANCELLED ? null : hours);
+        result.put("refundAmountToCustomer", amounts.refund());
+        result.put("busCompanyPenaltyRevenue", amounts.partnerShare());
+        result.put("platformServiceFeeRevenue", result.get("platformShare"));
 
         return ApiResponse.success(result);
     }
@@ -244,106 +176,51 @@ public class CompanyCancellationRefundController {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Mã vé không được để trống!");
         }
 
-        Ticket ticket = ticketRepository.findByTicketCode(ticketCode.trim())
-                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy vé: " + ticketCode));
-
-        Long explicitCompanyId = null;
-        if (payload.get("companyId") != null) {
-            explicitCompanyId = Long.valueOf(payload.get("companyId").toString());
-        } else if (payload.get("busCompanyId") != null) {
-            explicitCompanyId = Long.valueOf(payload.get("busCompanyId").toString());
-        }
-
-        Long targetCompanyId = resolveCompanyId(authentication, explicitCompanyId);
-        if (targetCompanyId != null && ticket.getBooking() != null && ticket.getBooking().getTrip() != null) {
-            Trip trip = ticket.getBooking().getTrip();
-            if (trip.getBusCompany() != null && !targetCompanyId.equals(trip.getBusCompany().getId())) {
-                throw new AppException(ErrorCode.FORBIDDEN, "Bạn không có quyền thao tác trên vé của nhà xe khác!");
-            }
-        }
+        User staff = requireCompanyStaff(authentication);
+        Ticket ticket = lockCompanyTicket(ticketCode, staff);
+        Booking booking = ticket.getBooking();
 
         if (ticket.getStatus() == TicketStatus.CANCELLED) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Vé " + ticketCode + " đã bị hủy trước đó!");
         }
-        if (ticket.getStatus() == TicketStatus.USED) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR, "Vé " + ticketCode + " đã được soát lên xe (USED), không thể hủy!");
+        if (ticket.getStatus() != TicketStatus.ISSUED) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Vé " + ticketCode + " không ở trạng thái cho phép hủy");
         }
 
-        BigDecimal originalPrice = ticket.getPrice() != null ? ticket.getPrice() : BigDecimal.valueOf(350000);
-
-        // Tính toán số giờ trước khởi hành thực tế
-        Trip trip = ticket.getBooking() != null ? ticket.getBooking().getTrip() : null;
-        int hours = 24;
-        if (trip != null && trip.getDepartureTime() != null) {
-            LocalDateTime now = LocalDateTime.now();
-            if (trip.getDepartureTime().isAfter(now)) {
-                hours = (int) Duration.between(now, trip.getDepartureTime()).toHours();
-            } else {
-                hours = 0;
-            }
-        }
-
-        // Bậc thang tính phí hủy vé theo quy định
-        int feePercent = 10;
-        String tierDesc = "Hủy trước 24h: Phạt 10%, Hoàn 90%";
-        if (hours < 2) {
-            feePercent = 100;
-            tierDesc = "Hủy dưới 2h: Phạt 100% (Không hoàn tiền)";
-        } else if (hours < 12) {
-            feePercent = 50;
-            tierDesc = "Hủy từ 2h - 12h: Phạt 50%, Hoàn 50%";
-        } else if (hours < 24) {
-            feePercent = 30;
-            tierDesc = "Hủy từ 12h - 24h: Phạt 30%, Hoàn 70%";
-        }
-
-        BigDecimal cancellationFee = originalPrice.multiply(BigDecimal.valueOf(feePercent))
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        BigDecimal refundAmount = originalPrice.subtract(cancellationFee);
-
-        // Phân bổ 80% cho Nhà xe, 20% cho Sàn (BUG-NEW-03)
-        BigDecimal busCompanyShare = cancellationFee.multiply(new BigDecimal("0.80")).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal platformShare = cancellationFee.subtract(busCompanyShare);
-
-        // 1. Chuyển trạng thái vé sang CANCELLED
+        Trip trip = booking.getTrip();
+        RefundAmounts amounts = calculateAmounts(ticket, hoursBeforeDeparture(ticket));
         ticket.setStatus(TicketStatus.CANCELLED);
+        ticket.setCancellationFeePercent(amounts.percent());
+        ticket.setCancellationFee(amounts.fee());
+        ticket.setRefundAmount(amounts.refund());
+        if (amounts.refund().signum() == 0) {
+            recordPartnerMovement(ticket, null, authentication);
+        }
         ticketRepository.save(ticket);
 
-        // 2. Cập nhật booking & đồng bộ trạng thái hoàn tiền sang REFUNDED
-        Booking booking = ticket.getBooking();
-        if (booking != null) {
-            booking.setRefundStatus("REFUNDED");
-            booking.setRefundedAt(LocalDateTime.now());
-            BigDecimal curRefund = booking.getRefundAmount() != null ? booking.getRefundAmount() : BigDecimal.ZERO;
-            booking.setRefundAmount(curRefund.add(refundAmount));
-            BigDecimal curFee = booking.getRefundFee() != null ? booking.getRefundFee() : BigDecimal.ZERO;
-            booking.setRefundFee(curFee.add(cancellationFee));
-            booking.setRefundTxCode("COMPANY-REFUND-" + ticket.getTicketCode());
-
-            if (booking.getTickets() != null) {
-                boolean allCancelled = booking.getTickets().stream()
-                        .allMatch(t -> t.getId().equals(ticket.getId()) || t.getStatus() == TicketStatus.CANCELLED);
-                if (allCancelled) {
-                    booking.setStatus(BookingStatus.CANCELLED);
-                    // HOÀN LẠI LƯỢT KHUYẾN MẠI NẾU CÓ ÁP DỤNG VOUCHER
-                    if (booking.getVoucherCode() != null && !booking.getVoucherCode().isBlank()) {
-                        promotionRepository.findByCodeIgnoreCase(booking.getVoucherCode().trim()).ifPresent(promo -> {
-                            if (promo.getUsedCount() != null && promo.getUsedCount() > 0) {
-                                promo.setUsedCount(promo.getUsedCount() - 1);
-                                promotionRepository.save(promo);
-                            }
-                        });
-                    }
+        if (booking.getTickets() != null) {
+            boolean allCancelled = booking.getTickets().stream()
+                    .allMatch(t -> t.getStatus() == TicketStatus.CANCELLED);
+            if (allCancelled) {
+                booking.setStatus(BookingStatus.CANCELLED);
+                // HOÀN LẠI LƯỢT KHUYẾN MẠI NẾU CÓ ÁP DỤNG VOUCHER
+                if (booking.getVoucherCode() != null && !booking.getVoucherCode().isBlank()) {
+                    promotionRepository.findByCodeIgnoreCase(booking.getVoucherCode().trim()).ifPresent(promo -> {
+                        if (promo.getUsedCount() != null && promo.getUsedCount() > 0) {
+                            promo.setUsedCount(promo.getUsedCount() - 1);
+                            promotionRepository.save(promo);
+                        }
+                    });
                 }
-                List<String> remaining = booking.getTickets().stream()
-                        .filter(t -> !t.getId().equals(ticket.getId()) && t.getStatus() != TicketStatus.CANCELLED)
-                        .map(Ticket::getSeatNumber)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-                booking.setSeatNumbers(String.join(", ", remaining));
             }
-            bookingRepository.save(booking);
+            List<String> remaining = booking.getTickets().stream()
+                    .filter(t -> !t.getId().equals(ticket.getId()) && t.getStatus() != TicketStatus.CANCELLED)
+                    .map(Ticket::getSeatNumber)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            booking.setSeatNumbers(String.join(", ", remaining));
         }
+        bookingRepository.save(booking);
 
         // 3. Mở lại ghế trống về AVAILABLE trên bảng trip_seats và phát WebSocket SSE (DoD & BUG-NEW-04)
         Long tripId = trip != null ? trip.getId() : null;
@@ -359,37 +236,168 @@ public class CompanyCancellationRefundController {
             tripRepository.syncAvailableSeats(tripId);
         }
 
-        Map<String, Object> res = new LinkedHashMap<>();
-        res.put("status", "SUCCESS");
-        res.put("message", "Đã duyệt hủy vé và hoàn tiền thành công! Ghế " + ticket.getSeatNumber() + " đã được mở lại cho khách khác đặt mua.");
-        res.put("ticketCode", ticketCode);
-        res.put("seatNumber", ticket.getSeatNumber());
-        res.put("ticketStatus", "CANCELLED");
-        res.put("originalPrice", originalPrice);
-        res.put("hoursBeforeDeparture", hours);
-        res.put("cancellationFeePercent", feePercent);
-        res.put("cancellationFee", cancellationFee);
-        res.put("refundAmount", refundAmount);
-        res.put("refundAmountToCustomer", refundAmount);
-        res.put("busCompanyPenaltyRevenue", busCompanyShare);
-        res.put("platformServiceFeeRevenue", platformShare);
-        res.put("tierDescription", tierDesc);
-        res.put("settlementImpactNotice", "Khoản bồi hoàn " + busCompanyShare + " đ sẽ được cộng vào kỳ đối soát tiếp theo của nhà xe.");
-
-        return ApiResponse.success(res);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("ticketCode", ticket.getTicketCode());
+        result.put("seatNumber", ticket.getSeatNumber());
+        result.put("ticketStatus", ticket.getStatus().name());
+        addRefundFields(result, ticket, amounts);
+        result.put("canConfirmTransfer", canConfirmTransfer(staff) && isAwaitingTransfer(ticket));
+        return ApiResponse.success("Đã hủy vé và cập nhật ghế", result);
     }
 
-    private Long resolveCompanyId(Authentication authentication, Long explicitId) {
-        if (explicitId != null) {
-            return explicitId;
+    @PostMapping("/confirm-transfer")
+    @Transactional
+    public ApiResponse<Map<String, Object>> confirmTransfer(
+            @RequestBody Map<String, String> payload, Authentication authentication) {
+        String txCode = Objects.toString(payload.get("txCode"), "").trim();
+        if (txCode.isBlank() || txCode.length() > 100) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Mã giao dịch phải có từ 1 đến 100 ký tự");
         }
-        if (authentication != null && authentication.isAuthenticated()) {
-            User user = securityService.requireStaffRole(authentication, StaffRole.OWNER, StaffRole.CASHIER, StaffRole.DISPATCHER);
-            if (user != null && user.getBusCompanyId() != null) {
-                return user.getBusCompanyId();
+        User staff = securityService.requireStaffRole(authentication, StaffRole.OWNER, StaffRole.CASHIER);
+        Ticket ticket = lockCompanyTicket(payload.get("ticketCode"), staff);
+        Booking booking = ticket.getBooking();
+        boolean legacy = ticket.getCancellationFeePercent() == null && isLegacyPending(ticket);
+        if (legacy) {
+            RefundAmounts amounts = displayAmounts(ticket);
+            ticket.setCancellationFeePercent(amounts.percent());
+            ticket.setCancellationFee(amounts.fee());
+            ticket.setRefundAmount(amounts.refund());
+        }
+        if (ticket.getStatus() != TicketStatus.CANCELLED || ticket.getRefundAmount() == null
+                || ticket.getRefundAmount().signum() <= 0) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Vé không có khoản hoàn tiền chờ chuyển");
+        }
+        if (ticket.getRefundRecordedAt() == null) {
+            recordPartnerMovement(ticket, txCode, authentication);
+            ticketRepository.save(ticket);
+            if (legacy) {
+                booking.setRefundStatus("REFUNDED");
+                booking.setRefundedAt(ticket.getRefundRecordedAt());
+                booking.setRefundTxCode(txCode);
+                bookingRepository.save(booking);
             }
+        } else if (!txCode.equals(ticket.getRefundTransferCode())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Vé đã được xác nhận với mã giao dịch khác");
         }
-        return null;
+        Map<String, Object> result = new LinkedHashMap<>();
+        addRefundFields(result, ticket, displayAmounts(ticket));
+        result.put("canConfirmTransfer", false);
+        return ApiResponse.success("Đã xác nhận chuyển khoản hoàn tiền", result);
+    }
+
+    private Ticket lockCompanyTicket(String code, User staff) {
+        if (code == null || code.isBlank()) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Mã vé không được để trống");
+        }
+        Ticket ticket = ticketRepository.findByTicketCodeForUpdate(code.trim())
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy vé: " + code));
+        bookingRepository.findByIdForUpdate(ticket.getBooking().getId());
+        BusCompany company = ticket.getBooking().getTrip().getBusCompany();
+        if (company == null || !company.getId().equals(staff.getBusCompanyId())) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Vé không thuộc nhà xe của bạn");
+        }
+        return ticket;
+    }
+
+    private void recordPartnerMovement(Ticket ticket, String txCode, Authentication authentication) {
+        ticket.setRefundPartnerCredit(partnerShare(ticket.getCancellationFee()));
+        ticket.setRefundRecordedAt(LocalDateTime.now());
+        ticket.setRefundTransferCode(txCode);
+        ticket.setRefundRecordedBy(authentication.getName());
+    }
+
+    private static int hoursBeforeDeparture(Ticket ticket) {
+        LocalDateTime departure = ticket.getBooking().getTrip().getDepartureTime();
+        return departure == null ? 24 : (int) Math.max(0, Duration.between(LocalDateTime.now(), departure).toHours());
+    }
+
+    private static RefundAmounts calculateAmounts(Ticket ticket, int hours) {
+        int percent = hours < 2 ? 100 : hours < 12 ? 50 : hours < 24 ? 30 : 10;
+        BigDecimal price = ticket.getPrice();
+        BigDecimal fee = price.multiply(BigDecimal.valueOf(percent)).movePointLeft(2).setScale(2, RoundingMode.HALF_UP);
+        return new RefundAmounts(price, percent, fee, price.subtract(fee));
+    }
+
+    private static RefundAmounts displayAmounts(Ticket ticket) {
+        if (ticket.getStatus() != TicketStatus.CANCELLED) {
+            return calculateAmounts(ticket, hoursBeforeDeparture(ticket));
+        }
+        if (ticket.getCancellationFeePercent() != null) {
+            return new RefundAmounts(ticket.getRefundAmount().add(ticket.getCancellationFee()),
+                    ticket.getCancellationFeePercent(), ticket.getCancellationFee(), ticket.getRefundAmount());
+        }
+        Booking booking = ticket.getBooking();
+        BigDecimal fee = booking.getRefundFee();
+        BigDecimal refund = booking.getRefundAmount();
+        if (booking.getTickets() != null && booking.getTickets().size() == 1 && fee != null && refund != null
+                && fee.add(refund).signum() > 0) {
+            BigDecimal original = fee.add(refund);
+            int percent = fee.multiply(BigDecimal.valueOf(100)).divide(original, 0, RoundingMode.HALF_UP).intValue();
+            return new RefundAmounts(original, percent, fee, refund);
+        }
+        return new RefundAmounts(ticket.getPrice(), null, null, null);
+    }
+
+    private static void addRefundFields(Map<String, Object> item, Ticket ticket, RefundAmounts amounts) {
+        boolean tracked = ticket.getCancellationFeePercent() != null;
+        boolean cancelled = ticket.getStatus() == TicketStatus.CANCELLED;
+        String refundStatus = "NONE";
+        if (tracked) {
+            refundStatus = amounts.refund().signum() == 0 ? "NO_REFUND"
+                    : ticket.getRefundRecordedAt() != null ? "REFUNDED" : "PENDING";
+        } else if (cancelled && amounts.refund() != null) {
+            String txCode = ticket.getBooking().getRefundTxCode();
+            refundStatus = amounts.refund().signum() == 0 ? "NO_REFUND"
+                    : txCode != null && txCode.startsWith("COMPANY-REFUND-") ? "UNKNOWN"
+                    : ticket.getBooking().getRefundStatus();
+        } else if (cancelled) {
+            refundStatus = "UNKNOWN";
+        }
+        item.put("status", ticket.getStatus().name());
+        item.put("originalPrice", amounts.original());
+        item.put("cancellationFeePercent", amounts.percent());
+        item.put("cancellationFee", amounts.fee());
+        item.put("refundAmount", amounts.refund());
+        item.put("busCompanyShare", amounts.partnerShare());
+        item.put("platformShare", amounts.fee() == null ? null : amounts.fee().subtract(amounts.partnerShare()));
+        item.put("refundStatus", refundStatus);
+        item.put("refundTransferCode", tracked ? ticket.getRefundTransferCode()
+                : "REFUNDED".equals(refundStatus) ? ticket.getBooking().getRefundTxCode() : null);
+    }
+
+    private static boolean isAwaitingTransfer(Ticket ticket) {
+        return ticket.getStatus() == TicketStatus.CANCELLED && (ticket.getRefundAmount() != null
+                ? ticket.getRefundAmount().signum() > 0 && ticket.getRefundRecordedAt() == null
+                : isLegacyPending(ticket));
+    }
+
+    private static boolean isLegacyPending(Ticket ticket) {
+        if (ticket.getStatus() != TicketStatus.CANCELLED || !"PENDING".equals(ticket.getBooking().getRefundStatus())) {
+            return false;
+        }
+        BigDecimal refund = displayAmounts(ticket).refund();
+        return refund != null && refund.signum() > 0;
+    }
+
+    private static boolean canConfirmTransfer(User staff) {
+        return staff.getStaffRole() != StaffRole.DISPATCHER;
+    }
+
+    private static BigDecimal partnerShare(BigDecimal fee) {
+        return fee.multiply(new BigDecimal("0.80")).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private record RefundAmounts(BigDecimal original, Integer percent, BigDecimal fee, BigDecimal refund) {
+        BigDecimal partnerShare() {
+            return fee == null ? null : CompanyCancellationRefundController.partnerShare(fee);
+        }
+    }
+
+    private User requireCompanyStaff(Authentication authentication) {
+        User staff = securityService.requireStaffRole(authentication, StaffRole.OWNER, StaffRole.CASHIER, StaffRole.DISPATCHER);
+        if (staff.getBusCompanyId() == null) {
+            throw new AppException(ErrorCode.FORBIDDEN, "Tài khoản chưa được gán nhà xe");
+        }
+        return staff;
     }
 }
-

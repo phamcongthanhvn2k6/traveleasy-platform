@@ -732,9 +732,12 @@ public class BookingService {
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats"}, allEntries = true)
     public BookingResponse confirmRefund(Long bookingId, String txCode, String adminActor) {
-        Booking booking = bookingRepository.findById(bookingId)
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé"));
 
+        if (!"PENDING".equals(booking.getRefundStatus())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn không có khoản hoàn tiền chờ xác nhận");
+        }
         booking.setRefundStatus("REFUNDED");
         booking.setRefundTxCode(txCode != null && !txCode.isBlank() ? txCode.trim() : "VIETQR-NAPAS-247");
         booking.setRefundedAt(LocalDateTime.now());

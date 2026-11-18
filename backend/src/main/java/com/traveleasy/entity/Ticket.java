@@ -43,6 +43,25 @@ public class Ticket {
     @Builder.Default
     private TicketStatus status = TicketStatus.ISSUED;
 
+    private Integer cancellationFeePercent;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal cancellationFee;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal refundAmount;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal refundPartnerCredit;
+
+    private LocalDateTime refundRecordedAt;
+
+    @Column(length = 100)
+    private String refundTransferCode;
+
+    @Column(length = 150)
+    private String refundRecordedBy;
+
     @Column(name = "created_at", updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

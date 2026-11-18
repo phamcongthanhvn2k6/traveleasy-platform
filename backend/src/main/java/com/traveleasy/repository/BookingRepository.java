@@ -16,6 +16,10 @@ import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Booking b WHERE b.id = :id")
+    Optional<Booking> findByIdForUpdate(@Param("id") Long id);
+
     @EntityGraph(attributePaths = {"user", "trip", "trip.busCompany", "trip.route"})
     @Query(value = """
             SELECT b FROM Booking b LEFT JOIN b.trip t LEFT JOIN t.busCompany c LEFT JOIN t.route r
