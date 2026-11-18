@@ -66,6 +66,17 @@ interface BookingItem {
   note?: string;
   createdAt: string;
   tickets?: TicketItem[];
+
+  // Thông tin hoàn tiền
+  refundBankName?: string;
+  refundAccountNumber?: string;
+  refundAccountHolder?: string;
+  refundAmount?: number;
+  refundFee?: number;
+  refundStatus?: 'NONE' | 'PENDING' | 'REFUNDED' | 'REJECTED';
+  refundReason?: string;
+  refundTxCode?: string;
+  refundedAt?: string;
 }
 
 export const AdminBookingsPage: React.FC = () => {
@@ -82,6 +93,11 @@ export const AdminBookingsPage: React.FC = () => {
   const [interventionReason, setInterventionReason] = useState<string>('');
   const [customNote, setCustomNote] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Form STK hoàn tiền khi Admin can thiệp hủy đơn
+  const [adminRefundBank, setAdminRefundBank] = useState('MB');
+  const [adminRefundAccount, setAdminRefundAccount] = useState('');
+  const [adminRefundHolder, setAdminRefundHolder] = useState('');
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -124,6 +140,27 @@ export const AdminBookingsPage: React.FC = () => {
     setInterventionTarget(target);
     setInterventionReason('');
     setCustomNote('');
+    setAdminRefundBank(booking.refundBankName || 'MB');
+    setAdminRefundAccount(booking.refundAccountNumber || '');
+    setAdminRefundHolder(booking.refundAccountHolder || booking.customerName || '');
+  };
+
+  // Confirm refund execution
+  const handleConfirmRefund = async (bookingId: number) => {
+    const tx = prompt('Nhập mã đối soát / mã giao dịch chuyển khoản ngân hàng (Audit Code):', 'VIETQR-' + Date.now().toString().slice(-6));
+    if (tx === null) return;
+    try {
+      await api.post(`/admin/bookings/${bookingId}/confirm-refund`, null, {
+        params: { txCode: tx || 'VIETQR-MANUAL' }
+      });
+      setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, refundStatus: 'REFUNDED', refundTxCode: tx || 'VIETQR-MANUAL' } : b));
+      if (detailBooking && detailBooking.id === bookingId) {
+        setDetailBooking(prev => prev ? { ...prev, refundStatus: 'REFUNDED', refundTxCode: tx || 'VIETQR-MANUAL' } : null);
+      }
+      toast.success('Đã xác nhận chuyển khoản hoàn tiền thành công cho khách hàng!', 'Hoàn Tiền Hoàn Tất');
+    } catch (err: any) {
+      toast.error('Không thể xác nhận hoàn tiền: ' + (err?.response?.data?.message || err.message));
+    }
   };
 
   // Submit intervention
@@ -135,9 +172,13 @@ export const AdminBookingsPage: React.FC = () => {
       return;
     }
 
-    const fullReason = customNote.trim()
+    let fullReason = customNote.trim()
       ? `${interventionReason} - Ghi chú: ${customNote.trim()}`
       : interventionReason;
+
+    if (interventionTarget === 'CANCELLED' && adminRefundAccount.trim()) {
+      fullReason += ` [STK hoàn: ${adminRefundBank} - ${adminRefundAccount.trim()} - ${adminRefundHolder.trim().toUpperCase()}]`;
+    }
 
     setSubmitting(true);
     try {
@@ -152,13 +193,29 @@ export const AdminBookingsPage: React.FC = () => {
       setBookings(prev =>
         prev.map(b =>
           b.id === interventionBooking.id
-            ? { ...b, status: interventionTarget }
+            ? {
+                ...b,
+                status: interventionTarget,
+                refundBankName: adminRefundBank,
+                refundAccountNumber: adminRefundAccount.trim() || b.refundAccountNumber,
+                refundAccountHolder: adminRefundHolder.trim().toUpperCase() || b.refundAccountHolder,
+                refundStatus: interventionTarget === 'CANCELLED' ? 'PENDING' : b.refundStatus,
+                refundAmount: interventionTarget === 'CANCELLED' ? (b.refundAmount || Math.round(b.totalAmount * 0.9)) : b.refundAmount,
+              }
             : b
         )
       );
 
       if (detailBooking && detailBooking.id === interventionBooking.id) {
-        setDetailBooking(prev => prev ? { ...prev, status: interventionTarget } : null);
+        setDetailBooking(prev => prev ? {
+          ...prev,
+          status: interventionTarget,
+          refundBankName: adminRefundBank,
+          refundAccountNumber: adminRefundAccount.trim() || prev.refundAccountNumber,
+          refundAccountHolder: adminRefundHolder.trim().toUpperCase() || prev.refundAccountHolder,
+          refundStatus: interventionTarget === 'CANCELLED' ? 'PENDING' : prev.refundStatus,
+          refundAmount: interventionTarget === 'CANCELLED' ? (prev.refundAmount || Math.round(prev.totalAmount * 0.9)) : prev.refundAmount,
+        } : null);
       }
 
       if (interventionTarget === 'CANCELLED') {
@@ -1193,6 +1250,93 @@ export const AdminBookingsPage: React.FC = () => {
                   </table>
                 </div>
               </div>
+
+              {/* THÔNG TIN HOÀN TIỀN CHO KHÁCH HÀNG (Nếu đơn đã hủy hoặc có yêu cầu hoàn tiền) */}
+              {(detailBooking.status === 'CANCELLED' || (detailBooking.refundAmount && detailBooking.refundAmount > 0)) && (
+                <div style={{ marginTop: '20px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '12px', padding: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#9a3412', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      💰 THÔNG TIN ĐỐI SOÁT & HOÀN TIỀN (VIETQR NAPAS 24/7)
+                    </div>
+                    <span style={{
+                      fontSize: '11.5px',
+                      fontWeight: 800,
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: detailBooking.refundStatus === 'REFUNDED' ? '#dcfce7' : '#fef3c7',
+                      color: detailBooking.refundStatus === 'REFUNDED' ? '#15803d' : '#b45309',
+                      border: `1px solid ${detailBooking.refundStatus === 'REFUNDED' ? '#86efac' : '#fde68a'}`,
+                    }}>
+                      {detailBooking.refundStatus === 'REFUNDED' ? '● ĐÃ HOÀN TIỀN THÀNH CÔNG' : '⏳ CHỜ CHUYỂN KHOẢN HOÀN TIỀN'}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '12.5px', marginBottom: '12px' }}>
+                    <div>
+                      <span style={{ color: '#64748b' }}>Ngân hàng thụ hưởng:</span>{' '}
+                      <strong>{detailBooking.refundBankName || 'MB Bank (Quân Đội)'}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: '#64748b' }}>Số tài khoản:</span>{' '}
+                      <strong style={{ fontFamily: 'monospace', color: '#1d4ed8' }}>{detailBooking.refundAccountNumber || 'Chưa cung cấp'}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: '#64748b' }}>Chủ tài khoản:</span>{' '}
+                      <strong>{detailBooking.refundAccountHolder || detailBooking.customerName}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: '#64748b' }}>Số tiền hoàn (90%):</span>{' '}
+                      <strong style={{ color: '#ea580c', fontSize: '14px' }}>
+                        {(detailBooking.refundAmount || Math.round(detailBooking.totalAmount * 0.9)).toLocaleString('vi-VN')} đ
+                      </strong>
+                    </div>
+                    {detailBooking.refundTxCode && (
+                      <div style={{ gridColumn: 'span 2', color: '#16a34a', fontSize: '12px' }}>
+                        Mã giao dịch đối soát ngân hàng: <strong>{detailBooking.refundTxCode}</strong>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Ảnh VietQR Chuyển Khoản Tự Động */}
+                  {detailBooking.refundAccountNumber && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', backgroundColor: '#ffffff', padding: '12px', borderRadius: '10px', border: '1px solid #fed7aa', marginBottom: '10px' }}>
+                      <img
+                        src={`https://img.vietqr.io/image/${detailBooking.refundBankName || 'MB'}-${detailBooking.refundAccountNumber}-compact2.png?amount=${Math.round(detailBooking.refundAmount || detailBooking.totalAmount * 0.9)}&addInfo=HOANTIEN+${detailBooking.bookingCode}&accountName=${encodeURIComponent(detailBooking.refundAccountHolder || detailBooking.customerName)}`}
+                        alt="VietQR Payout"
+                        style={{ width: '105px', height: '105px', borderRadius: '8px', border: '1px solid #e2e8f0', objectFit: 'contain' }}
+                      />
+                      <div style={{ fontSize: '12px', color: '#475569', lineHeight: 1.5 }}>
+                        <div style={{ fontWeight: 800, color: '#0f172a', marginBottom: '2px' }}>Mã VietQR Chuyển Tiền Hoàn Tức Thì</div>
+                        Quét mã QR bằng App Ngân Hàng bất kỳ (MB Bank, VCB, BIDV, MoMo) để chuyển khoản hoàn tiền ngay lập tức mà không cần gõ STK.
+                      </div>
+                    </div>
+                  )}
+
+                  {detailBooking.refundStatus !== 'REFUNDED' && (
+                    <button
+                      onClick={() => handleConfirmRefund(detailBooking.id)}
+                      style={{
+                        width: '100%',
+                        backgroundColor: '#16a34a',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '9px 16px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 4px rgba(22, 163, 74, 0.25)',
+                      }}
+                    >
+                      <CheckCircle size={15} /> Xác Nhận Đã Chuyển Khoản Hoàn Tiền Thành Công
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}
@@ -1338,6 +1482,85 @@ export const AdminBookingsPage: React.FC = () => {
                   </>
                 )}
               </div>
+
+              {/* Thông tin hoàn tiền & STK khách hàng */}
+              {interventionTarget === 'CANCELLED' && (
+                <div style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 800, color: '#9a3412' }}>
+                      💰 Thông Tin Chuyển Khoản Hoàn Tiền (Napas 24/7)
+                    </span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#ea580c' }}>
+                      Số tiền hoàn (90%): {((interventionBooking.refundAmount || Math.round(interventionBooking.totalAmount * 0.9))).toLocaleString('vi-VN')} đ
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                        Ngân hàng nhận hoàn
+                      </label>
+                      <select
+                        value={adminRefundBank}
+                        onChange={e => setAdminRefundBank(e.target.value)}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', backgroundColor: '#ffffff' }}
+                      >
+                        <option value="MB">MB Bank (Quân Đội)</option>
+                        <option value="VCB">Vietcombank</option>
+                        <option value="TCB">Techcombank</option>
+                        <option value="BIDV">BIDV</option>
+                        <option value="CTG">VietinBank</option>
+                        <option value="ACB">ACB</option>
+                        <option value="VPB">VPBank</option>
+                        <option value="TPB">TPBank</option>
+                        <option value="VBA">Agribank</option>
+                        <option value="STB">Sacombank</option>
+                        <option value="MOMO">Ví MoMo</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                        Số tài khoản thụ hưởng
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Nhập STK khách..."
+                        value={adminRefundAccount}
+                        onChange={e => setAdminRefundAccount(e.target.value)}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '8px' }}>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                      Tên chủ tài khoản (viết hoa)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Tên chủ tài khoản..."
+                      value={adminRefundHolder}
+                      onChange={e => setAdminRefundHolder(e.target.value.toUpperCase())}
+                      style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  {adminRefundAccount.trim() && (
+                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #fdba74', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <img
+                        src={`https://img.vietqr.io/image/${adminRefundBank}-${adminRefundAccount.trim()}-compact2.png?amount=${Math.round(interventionBooking.refundAmount || interventionBooking.totalAmount * 0.9)}&addInfo=HOANTIEN+${interventionBooking.bookingCode}&accountName=${encodeURIComponent(adminRefundHolder.trim())}`}
+                        alt="VietQR Refund"
+                        style={{ width: '95px', height: '95px', borderRadius: '8px', border: '1px solid #fdba74', objectFit: 'contain', backgroundColor: '#ffffff' }}
+                      />
+                      <div style={{ fontSize: '11.5px', color: '#7c2d12', lineHeight: 1.5 }}>
+                        <strong>Mã VietQR Chuyển Tiền Hoàn 24/7:</strong><br />
+                        Kế toán quét mã này bằng App ngân hàng (MB Bank, VCB, MoMo) để chuyển khoản hoàn tiền ngay lập tức mà không sợ gõ sai STK hay số tiền.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Preset Reason Select */}
               <div style={{ marginBottom: '14px' }}>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../../../context/ThemeContext';
+import { toast } from '../../../../context/ToastContext';
 import { ArrowLeftRight, Calendar, Plus, ChevronLeft, ChevronRight, Search, MapPin, X } from 'lucide-react';
 import { POPULAR_CITIES } from '../../../../constants/popularCities';
 import { getLocalTodayDateString, getLocalNextDayString } from '../../../../utils/dateUtils';
@@ -48,6 +49,10 @@ export const TripSearchHeader: React.FC<Props> = ({
 
   const handleApplyEdit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (tempOrigin.trim() && tempDestination.trim() && tempOrigin.trim().toLowerCase() === tempDestination.trim().toLowerCase()) {
+      toast.warning('Điểm xuất phát và điểm đến không được trùng nhau! Vui lòng chọn điểm đến khác.', 'Trùng Điểm Đi / Đến');
+      return;
+    }
     onSearchChange(
       tempOrigin,
       tempDestination,

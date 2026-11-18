@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 /**
  * [S321] Quản Lý Biểu Phí & Tính Tiền Hoàn Hủy Vé Tự Động (/company/refunds)
@@ -308,25 +309,40 @@ public class CompanyCancellationRefundController {
         ticket.setStatus(TicketStatus.CANCELLED);
         ticketRepository.save(ticket);
 
-        // 2. Cập nhật booking nếu toàn bộ vé đã hủy
+        // 2. Cập nhật booking & đồng bộ trạng thái hoàn tiền sang REFUNDED
         Booking booking = ticket.getBooking();
-        if (booking != null && booking.getTickets() != null) {
-            boolean allCancelled = booking.getTickets().stream()
-                    .allMatch(t -> t.getId().equals(ticket.getId()) || t.getStatus() == TicketStatus.CANCELLED);
-            if (allCancelled) {
-                booking.setStatus(BookingStatus.CANCELLED);
-                bookingRepository.save(booking);
+        if (booking != null) {
+            booking.setRefundStatus("REFUNDED");
+            booking.setRefundedAt(LocalDateTime.now());
+            BigDecimal curRefund = booking.getRefundAmount() != null ? booking.getRefundAmount() : BigDecimal.ZERO;
+            booking.setRefundAmount(curRefund.add(refundAmount));
+            BigDecimal curFee = booking.getRefundFee() != null ? booking.getRefundFee() : BigDecimal.ZERO;
+            booking.setRefundFee(curFee.add(cancellationFee));
+            booking.setRefundTxCode("COMPANY-REFUND-" + ticket.getTicketCode());
 
-                // HOÀN LẠI LƯỢT KHUYẾN MẠI NẾU CÓ ÁP DỤNG VOUCHER
-                if (booking.getVoucherCode() != null && !booking.getVoucherCode().isBlank()) {
-                    promotionRepository.findByCodeIgnoreCase(booking.getVoucherCode().trim()).ifPresent(promo -> {
-                        if (promo.getUsedCount() != null && promo.getUsedCount() > 0) {
-                            promo.setUsedCount(promo.getUsedCount() - 1);
-                            promotionRepository.save(promo);
-                        }
-                    });
+            if (booking.getTickets() != null) {
+                boolean allCancelled = booking.getTickets().stream()
+                        .allMatch(t -> t.getId().equals(ticket.getId()) || t.getStatus() == TicketStatus.CANCELLED);
+                if (allCancelled) {
+                    booking.setStatus(BookingStatus.CANCELLED);
+                    // HOÀN LẠI LƯỢT KHUYẾN MẠI NẾU CÓ ÁP DỤNG VOUCHER
+                    if (booking.getVoucherCode() != null && !booking.getVoucherCode().isBlank()) {
+                        promotionRepository.findByCodeIgnoreCase(booking.getVoucherCode().trim()).ifPresent(promo -> {
+                            if (promo.getUsedCount() != null && promo.getUsedCount() > 0) {
+                                promo.setUsedCount(promo.getUsedCount() - 1);
+                                promotionRepository.save(promo);
+                            }
+                        });
+                    }
                 }
+                List<String> remaining = booking.getTickets().stream()
+                        .filter(t -> !t.getId().equals(ticket.getId()) && t.getStatus() != TicketStatus.CANCELLED)
+                        .map(Ticket::getSeatNumber)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+                booking.setSeatNumbers(String.join(", ", remaining));
             }
+            bookingRepository.save(booking);
         }
 
         // 3. Mở lại ghế trống về AVAILABLE trên bảng trip_seats và phát WebSocket SSE (DoD & BUG-NEW-04)

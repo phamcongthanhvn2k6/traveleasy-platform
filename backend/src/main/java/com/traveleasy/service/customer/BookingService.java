@@ -4,6 +4,8 @@ import com.traveleasy.common.exception.AppException;
 import com.traveleasy.common.exception.CustomSeatHoldException;
 import com.traveleasy.common.exception.ErrorCode;
 import com.traveleasy.dto.booking.BookingResponse;
+import com.traveleasy.dto.booking.CancelBookingRequest;
+import com.traveleasy.dto.booking.CancelPartialRequest;
 import com.traveleasy.dto.booking.CreateBookingRequest;
 import com.traveleasy.dto.booking.TicketResponse;
 import com.traveleasy.dto.trip.TripResponse;
@@ -434,6 +436,12 @@ public class BookingService {
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats", "trips_search"}, allEntries = true)
     public BookingResponse cancelBooking(Long bookingId, String userEmail) {
+        return cancelBooking(bookingId, userEmail, null);
+    }
+
+    @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats", "trips_search"}, allEntries = true)
+    public BookingResponse cancelBooking(Long bookingId, String userEmail, CancelBookingRequest refundReq) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé"));
 
@@ -460,6 +468,53 @@ public class BookingService {
         boolean hasUsedTicket = tickets.stream().anyMatch(t -> t.getStatus() == TicketStatus.USED);
         if (hasUsedTicket) {
             throw new AppException(ErrorCode.VALIDATION_ERROR, "Đơn đặt vé này đã có vé được soát lên xe (USED). Không thể thực hiện hủy vé!");
+        }
+
+        // TÍNH TOÁN TIỀN HOÀN TIỀN THEO BIỂU PHÍ (REFUND CALCULATION)
+        // Chỉ hoàn tiền nếu đơn đã thanh toán thành công (CONFIRMED) và KHÔNG PHẢI hình thức COD (chưa trả tiền)
+        boolean isActuallyPaid = (booking.getStatus() == BookingStatus.CONFIRMED) && (booking.getPaymentMethod() != PaymentMethod.COD);
+        BigDecimal totalPaid = booking.getTotalAmount() != null ? booking.getTotalAmount() : BigDecimal.ZERO;
+        
+        if (isActuallyPaid && totalPaid.compareTo(BigDecimal.ZERO) > 0) {
+            int feePercent = 10;
+            if (booking.getTrip() != null && booking.getTrip().getDepartureTime() != null) {
+                long hours = java.time.Duration.between(LocalDateTime.now(), booking.getTrip().getDepartureTime()).toHours();
+                if (hours < 12) {
+                    feePercent = 50;
+                } else if (hours < 24) {
+                    feePercent = 30;
+                } else {
+                    feePercent = 10;
+                }
+            }
+            BigDecimal fee = totalPaid.multiply(BigDecimal.valueOf(feePercent)).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            BigDecimal refund = totalPaid.subtract(fee);
+            booking.setRefundAmount(refund);
+            booking.setRefundFee(fee);
+            booking.setRefundStatus("PENDING");
+
+            if (refundReq != null) {
+                if (refundReq.getBankName() != null && !refundReq.getBankName().isBlank()) {
+                    booking.setRefundBankName(refundReq.getBankName().trim());
+                }
+                if (refundReq.getAccountNumber() != null && !refundReq.getAccountNumber().isBlank()) {
+                    booking.setRefundAccountNumber(refundReq.getAccountNumber().trim());
+                }
+                if (refundReq.getAccountHolder() != null && !refundReq.getAccountHolder().isBlank()) {
+                    booking.setRefundAccountHolder(refundReq.getAccountHolder().trim().toUpperCase());
+                }
+                if (refundReq.getReason() != null && !refundReq.getReason().isBlank()) {
+                    booking.setRefundReason(refundReq.getReason().trim());
+                }
+            }
+        } else {
+            // Đơn PENDING (chưa trả tiền) hoặc COD (thanh toán khi lên xe): Hủy an toàn, không phát sinh nghĩa vụ nợ hoàn tiền
+            booking.setRefundAmount(BigDecimal.ZERO);
+            booking.setRefundFee(BigDecimal.ZERO);
+            booking.setRefundStatus("NONE");
+            if (refundReq != null && refundReq.getReason() != null && !refundReq.getReason().isBlank()) {
+                booking.setRefundReason(refundReq.getReason().trim());
+            }
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
@@ -510,8 +565,11 @@ public class BookingService {
                         "CUSTOMER",
                         booking.getUser().getEmail(),
                         "🔄 Hủy vé thành công - Mã đơn " + booking.getBookingCode(),
-                        String.format("Đơn vé %s tuyến %s - %s đã được hủy thành công. Hệ thống đã giải phóng ghế %s.",
-                                booking.getBookingCode(), origin, dest, String.join(", ", seatCodes)),
+                        String.format("Đơn vé %s tuyến %s - %s đã được hủy thành công. Hệ thống đã tiếp nhận thông tin hoàn tiền %s đ về STK %s (%s).",
+                                booking.getBookingCode(), origin, dest,
+                                booking.getRefundAmount() != null ? booking.getRefundAmount() : 0,
+                                booking.getRefundAccountNumber() != null ? booking.getRefundAccountNumber() : "",
+                                booking.getRefundBankName() != null ? booking.getRefundBankName() : ""),
                         "/lookup?code=" + booking.getBookingCode(),
                         "NORMAL"
                 );
@@ -524,7 +582,17 @@ public class BookingService {
     }
 
     @Transactional
+    public BookingResponse cancelPartialTickets(Long bookingId, CancelPartialRequest request, String userEmail) {
+        return cancelPartialTickets(bookingId, request != null ? request.getTicketIds() : Collections.emptyList(), userEmail, request);
+    }
+
+    @Transactional
     public BookingResponse cancelPartialTickets(Long bookingId, List<Long> ticketIds, String userEmail) {
+        return cancelPartialTickets(bookingId, ticketIds, userEmail, null);
+    }
+
+    @Transactional
+    public BookingResponse cancelPartialTickets(Long bookingId, List<Long> ticketIds, String userEmail, CancelPartialRequest refundReq) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé"));
 
@@ -554,14 +622,70 @@ public class BookingService {
             }
         }
         List<String> releasedSeats = new ArrayList<>();
+        BigDecimal cancelledTicketsPrice = BigDecimal.ZERO;
 
         for (Ticket ticket : allTickets) {
             if (ticketIds.contains(ticket.getId()) && ticket.getStatus() != TicketStatus.CANCELLED) {
                 ticket.setStatus(TicketStatus.CANCELLED);
                 releasedSeats.add(ticket.getSeatNumber());
+                if (ticket.getPrice() != null) {
+                    cancelledTicketsPrice = cancelledTicketsPrice.add(ticket.getPrice());
+                }
             }
         }
         ticketRepository.saveAll(allTickets);
+
+        // Tính tiền hoàn cho phần vé hủy (Chỉ áp dụng nếu đơn đã trả tiền CONFIRMED và không phải COD)
+        boolean isActuallyPaid = (booking.getStatus() == BookingStatus.CONFIRMED) && (booking.getPaymentMethod() != PaymentMethod.COD);
+        if (isActuallyPaid && cancelledTicketsPrice.compareTo(BigDecimal.ZERO) > 0) {
+            int feePercent = 10;
+            if (booking.getTrip() != null && booking.getTrip().getDepartureTime() != null) {
+                long hours = java.time.Duration.between(LocalDateTime.now(), booking.getTrip().getDepartureTime()).toHours();
+                if (hours < 12) {
+                    feePercent = 50;
+                } else if (hours < 24) {
+                    feePercent = 30;
+                } else {
+                    feePercent = 10;
+                }
+            }
+            BigDecimal fee = cancelledTicketsPrice.multiply(BigDecimal.valueOf(feePercent)).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            BigDecimal refund = cancelledTicketsPrice.subtract(fee);
+            booking.setRefundAmount(refund);
+            booking.setRefundFee(fee);
+            booking.setRefundStatus("PENDING");
+
+            if (refundReq != null) {
+                if (refundReq.getBankName() != null && !refundReq.getBankName().isBlank()) {
+                    booking.setRefundBankName(refundReq.getBankName().trim());
+                }
+                if (refundReq.getAccountNumber() != null && !refundReq.getAccountNumber().isBlank()) {
+                    booking.setRefundAccountNumber(refundReq.getAccountNumber().trim());
+                }
+                if (refundReq.getAccountHolder() != null && !refundReq.getAccountHolder().isBlank()) {
+                    booking.setRefundAccountHolder(refundReq.getAccountHolder().trim().toUpperCase());
+                }
+                if (refundReq.getReason() != null && !refundReq.getReason().isBlank()) {
+                    booking.setRefundReason(refundReq.getReason().trim());
+                }
+            }
+        } else if (!isActuallyPaid) {
+            booking.setRefundAmount(BigDecimal.ZERO);
+            booking.setRefundFee(BigDecimal.ZERO);
+            booking.setRefundStatus("NONE");
+        }
+
+        // Cập nhật lại danh sách ghế còn lại và tổng tiền của đơn
+        List<String> remainingSeats = allTickets.stream()
+                .filter(t -> t.getStatus() != TicketStatus.CANCELLED)
+                .map(Ticket::getSeatNumber)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        booking.setSeatNumbers(String.join(", ", remainingSeats));
+        if (booking.getTotalAmount() != null) {
+            BigDecimal newTotal = booking.getTotalAmount().subtract(cancelledTicketsPrice);
+            booking.setTotalAmount(newTotal.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : newTotal);
+        }
 
         if (!releasedSeats.isEmpty()) {
             List<TripSeat> seats = tripSeatRepository.findByTripIdAndSeatCodeInWithLock(booking.getTrip().getId(), releasedSeats);
@@ -581,10 +705,40 @@ public class BookingService {
         boolean allCancelled = allTickets.stream().allMatch(t -> t.getStatus() == TicketStatus.CANCELLED);
         if (allCancelled) {
             booking.setStatus(BookingStatus.CANCELLED);
-            bookingRepository.save(booking);
+            // HOÀN LẠI LƯỢT KHUYẾN MẠI NẾU HỦY TOÀN BỘ ĐƠN
+            if (booking.getVoucherCode() != null && !booking.getVoucherCode().isBlank()) {
+                promotionRepository.findByCodeIgnoreCase(booking.getVoucherCode().trim()).ifPresent(promo -> {
+                    if (promo.getUsedCount() != null && promo.getUsedCount() > 0) {
+                        promo.setUsedCount(promo.getUsedCount() - 1);
+                        promotionRepository.save(promo);
+                        log.info("🔄 [VOUCHER RESTORED] Hoàn lại 1 lượt dùng cho mã: {}, Lượt dùng còn: {}/{}",
+                                promo.getCode(), promo.getUsedCount(), promo.getUsageLimit());
+                    }
+                });
+            }
         }
+        bookingRepository.save(booking);
 
         return mapToBookingResponse(booking, allTickets);
+    }
+
+    @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats"}, allEntries = true)
+    public BookingResponse confirmRefund(Long bookingId, String txCode, String adminActor) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé"));
+
+        booking.setRefundStatus("REFUNDED");
+        booking.setRefundTxCode(txCode != null && !txCode.isBlank() ? txCode.trim() : "VIETQR-NAPAS-247");
+        booking.setRefundedAt(LocalDateTime.now());
+        Booking saved = bookingRepository.save(booking);
+
+        log.info("💰 [REFUND COMPLETED] Ma don: {}, STK: {} ({}), So tien: {}d, Ma GD: {}, Boi: {}",
+                saved.getBookingCode(), saved.getRefundAccountNumber(), saved.getRefundBankName(),
+                saved.getRefundAmount(), saved.getRefundTxCode(), adminActor);
+
+        List<Ticket> tickets = ticketRepository.findByBookingId(saved.getId());
+        return mapToBookingResponse(saved, tickets);
     }
 
     @Transactional
@@ -801,6 +955,32 @@ public class BookingService {
         }
 
         if (targetStatus == BookingStatus.CANCELLED) {
+            // Chỉ tính toán số tiền hoàn và phí hủy nếu đơn đã thanh toán thành công (CONFIRMED) và không phải COD
+            boolean isActuallyPaid = (oldStatus == BookingStatus.CONFIRMED) && (booking.getPaymentMethod() != PaymentMethod.COD);
+            BigDecimal totalPaid = booking.getTotalAmount() != null ? booking.getTotalAmount() : BigDecimal.ZERO;
+            if (isActuallyPaid && totalPaid.compareTo(BigDecimal.ZERO) > 0 && (booking.getRefundAmount() == null || booking.getRefundAmount().compareTo(BigDecimal.ZERO) == 0)) {
+                int feePercent = 10;
+                if (trip != null && trip.getDepartureTime() != null) {
+                    long hours = java.time.Duration.between(LocalDateTime.now(), trip.getDepartureTime()).toHours();
+                    if (hours < 12) feePercent = 50;
+                    else if (hours < 24) feePercent = 30;
+                    else feePercent = 10;
+                }
+                BigDecimal fee = totalPaid.multiply(BigDecimal.valueOf(feePercent)).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+                BigDecimal refund = totalPaid.subtract(fee);
+                booking.setRefundAmount(refund);
+                booking.setRefundFee(fee);
+                booking.setRefundStatus("PENDING");
+            } else if (!isActuallyPaid) {
+                // Đơn PENDING hoặc COD: Hủy vé mà không phát sinh nợ hoàn tiền
+                booking.setRefundAmount(BigDecimal.ZERO);
+                booking.setRefundFee(BigDecimal.ZERO);
+                booking.setRefundStatus("NONE");
+            }
+            if (reason != null && !reason.isBlank()) {
+                booking.setRefundReason(reason.trim());
+            }
+
             // Hủy đơn an toàn:
             // 1. Cập nhật vé con sang CANCELLED
             if (tickets != null) {
@@ -902,6 +1082,15 @@ public class BookingService {
                 .status(b.getStatus())
                 .createdAt(b.getCreatedAt())
                 .tickets(ticketResponses)
+                .refundBankName(b.getRefundBankName())
+                .refundAccountNumber(b.getRefundAccountNumber())
+                .refundAccountHolder(b.getRefundAccountHolder())
+                .refundAmount(b.getRefundAmount())
+                .refundFee(b.getRefundFee())
+                .refundStatus(b.getRefundStatus())
+                .refundReason(b.getRefundReason())
+                .refundTxCode(b.getRefundTxCode())
+                .refundedAt(b.getRefundedAt())
                 .build();
     }
 

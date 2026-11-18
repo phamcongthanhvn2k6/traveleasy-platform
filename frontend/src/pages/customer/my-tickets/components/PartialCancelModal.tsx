@@ -2,7 +2,22 @@ import React, { useState } from 'react';
 import { Booking, Ticket } from '../../../../types';
 import api from '../../../../services/api';
 import { toast } from '../../../../context/ToastContext';
-import { X, AlertTriangle, CheckSquare, Square, Info } from 'lucide-react';
+import { X, AlertTriangle, CheckSquare, Square, Info, Landmark, CreditCard, User, HelpCircle } from 'lucide-react';
+
+const VIETNAMESE_BANKS = [
+  { code: 'MB', bin: '970422', name: 'MB Bank (Ngân Hàng Quân Đội)' },
+  { code: 'VCB', bin: '970436', name: 'Vietcombank (Ngoại Thương Việt Nam)' },
+  { code: 'TCB', bin: '970407', name: 'Techcombank (Kỹ Thương Việt Nam)' },
+  { code: 'BIDV', bin: '970418', name: 'BIDV (Đầu Tư và Phát Triển)' },
+  { code: 'CTG', bin: '970415', name: 'VietinBank (Công Thương Việt Nam)' },
+  { code: 'ACB', bin: '970416', name: 'ACB (Á Châu)' },
+  { code: 'VPB', bin: '970432', name: 'VPBank (Việt Nam Thịnh Vượng)' },
+  { code: 'TPB', bin: '970423', name: 'TPBank (Tiên Phong)' },
+  { code: 'VBA', bin: '970405', name: 'Agribank (Nông Nghiệp)' },
+  { code: 'STB', bin: '970403', name: 'Sacombank (Sài Gòn Thương Tín)' },
+  { code: 'HDB', bin: '970437', name: 'HDBank (Phát Triển TP.HCM)' },
+  { code: 'MOMO', bin: '970422', name: 'Ví Điện Tử MoMo' },
+];
 
 interface Props {
   booking: Booking;
@@ -15,6 +30,12 @@ export const PartialCancelModal: React.FC<Props> = ({ booking, onClose, onSucces
   const activeTickets = booking.tickets?.filter((t) => t.status === 'ISSUED') || [];
   const [selectedTicketIds, setSelectedTicketIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Thông tin tài khoản ngân hàng nhận tiền hoàn
+  const [bankCode, setBankCode] = useState('MB');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountHolder, setAccountHolder] = useState(booking.customerName || '');
+  const [cancelReason, setCancelReason] = useState('Khách có việc bận đột xuất');
 
   const toggleSelectTicket = (id: number) => {
     if (selectedTicketIds.includes(id)) {
@@ -58,10 +79,25 @@ export const PartialCancelModal: React.FC<Props> = ({ booking, onClose, onSucces
       return;
     }
 
+    if (refundAmount > 0 && !accountNumber.trim()) {
+      toast.warning('Vui lòng nhập số tài khoản ngân hàng để hệ thống chuyển khoản hoàn tiền!', 'Thiếu Thông Tin');
+      return;
+    }
+
+    if (refundAmount > 0 && !accountHolder.trim()) {
+      toast.warning('Vui lòng nhập tên chủ tài khoản ngân hàng!', 'Thiếu Thông Tin');
+      return;
+    }
+
     setLoading(true);
     try {
+      const selectedBank = VIETNAMESE_BANKS.find((b) => b.code === bankCode);
       const res = await api.post(`/bookings/${booking.id}/cancel-partial`, {
         ticketIds: selectedTicketIds,
+        bankName: selectedBank ? selectedBank.name : bankCode,
+        accountNumber: accountNumber.trim(),
+        accountHolder: accountHolder.trim().toUpperCase(),
+        reason: cancelReason.trim(),
       });
 
       const updated = res.data?.data || {
@@ -72,8 +108,8 @@ export const PartialCancelModal: React.FC<Props> = ({ booking, onClose, onSucces
       };
 
       toast.success(
-        `Đã hủy thành công ${selectedTicketIds.length} vé! Số tiền ${refundAmount.toLocaleString('vi-VN')} đ đang được hoàn về tài khoản.`,
-        'Hủy Vé Thành Công'
+        `Đã tiếp nhận yêu cầu hủy vé! Số tiền ${refundAmount.toLocaleString('vi-VN')} đ sẽ được chuyển về STK ${accountNumber} (${selectedBank?.code || bankCode}) trong vòng 1-24h.`,
+        'Yêu Cầu Hoàn Tiền Thành Công'
       );
       onSuccess(updated);
     } catch (err: any) {
@@ -84,7 +120,7 @@ export const PartialCancelModal: React.FC<Props> = ({ booking, onClose, onSucces
           selectedTicketIds.includes(t.id) ? { ...t, status: 'CANCELLED' } : t
         ),
       };
-      toast.success(`Đã hủy thành công ${selectedTicketIds.length} vé!`, 'Hủy Vé Thành Công');
+      toast.success(`Đã tiếp nhận yêu cầu hủy ${selectedTicketIds.length} vé!`, 'Hủy Vé Thành Công');
       onSuccess(updated);
     } finally {
       setLoading(false);
@@ -252,6 +288,115 @@ export const PartialCancelModal: React.FC<Props> = ({ booking, onClose, onSucces
             >
               <span>Số tiền hoàn về tài khoản:</span>
               <span>{refundAmount.toLocaleString('vi-VN')} đ</span>
+            </div>
+          </div>
+        )}
+
+        {/* THÔNG TIN TÀI KHOẢN NGÂN HÀNG NHẬN HOÀN TIỀN */}
+        {selectedTicketIds.length > 0 && refundAmount > 0 && (
+          <div
+            style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '20px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#1e293b' }}>
+              <Landmark size={18} color="#2563eb" />
+              <strong style={{ fontSize: '13.5px' }}>Thông Tin Nhận Tiền Hoàn (Chuyển Khoản 24/7)</strong>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                  Ngân hàng thụ hưởng <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <select
+                  value={bankCode}
+                  onChange={(e) => setBankCode(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    backgroundColor: '#ffffff',
+                    outline: 'none',
+                  }}
+                >
+                  {VIETNAMESE_BANKS.map((b) => (
+                    <option key={b.code} value={b.code}>
+                      [{b.code}] {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                    Số tài khoản <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="VD: 0944354398"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                    Chủ tài khoản (viết hoa) <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="VD: NGUYEN VAN A"
+                    value={accountHolder}
+                    onChange={(e) => setAccountHolder(e.target.value.toUpperCase())}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                  Lý do hủy vé
+                </label>
+                <input
+                  type="text"
+                  placeholder="VD: Có việc đột xuất, đổi kế hoạch đi lại..."
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              </div>
             </div>
           </div>
         )}

@@ -2,6 +2,7 @@ package com.traveleasy.controller.customer;
 
 import com.traveleasy.common.dto.ApiResponse;
 import com.traveleasy.dto.booking.BookingResponse;
+import com.traveleasy.dto.booking.CancelBookingRequest;
 import com.traveleasy.dto.booking.CancelPartialRequest;
 import com.traveleasy.dto.booking.CreateBookingRequest;
 import com.traveleasy.dto.booking.RescheduleRequest;
@@ -73,12 +74,13 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/cancel")
-    @Operation(summary = "Hủy toàn bộ đơn đặt vé và hoàn trả ghế trống")
+    @Operation(summary = "Hủy toàn bộ đơn đặt vé và hoàn trả ghế trống kèm thông tin nhận tiền hoàn")
     public ApiResponse<BookingResponse> cancelBooking(
             @PathVariable Long id,
+            @RequestBody(required = false) CancelBookingRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails != null ? userDetails.getUsername() : null;
-        return ApiResponse.success("Hủy vé thành công", bookingService.cancelBooking(id, email));
+        return ApiResponse.success("Hủy vé thành công", bookingService.cancelBooking(id, email, request));
     }
 
     @PostMapping("/{id}/cancel-partial")
@@ -88,7 +90,7 @@ public class BookingController {
             @Valid @RequestBody CancelPartialRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails != null ? userDetails.getUsername() : null;
-        return ApiResponse.success("Hủy vé từng phần thành công", bookingService.cancelPartialTickets(id, request.getTicketIds(), email));
+        return ApiResponse.success("Hủy vé từng phần thành công", bookingService.cancelPartialTickets(id, request, email));
     }
 
     @PostMapping("/{id}/reschedule")

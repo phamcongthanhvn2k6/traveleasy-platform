@@ -810,40 +810,6 @@ export const CustomerAuthPage: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Quick Demo Customer Accounts */}
-                <div style={{ marginBottom: '18px', padding: '10px 12px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#1d4ed8', marginBottom: '6px' }}>
-                    🔑 Tài khoản khách hàng mẫu (Mật khẩu demo: 123456789@):
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {[
-                      { label: 'Nguyễn Văn Du Khách', email: 'customer@gmail.com' },
-                      { label: 'Trần Thị Bích Ngọc', email: 'tranthib@gmail.com' },
-                    ].map((acc, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          setLoginIdentifier(acc.email);
-                          setLoginPassword('123456789@');
-                        }}
-                        style={{
-                          background: loginIdentifier === acc.email ? '#2563eb' : '#ffffff',
-                          color: loginIdentifier === acc.email ? '#ffffff' : '#1e40af',
-                          border: '1px solid #93c5fd',
-                          borderRadius: '6px',
-                          padding: '4px 8px',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {acc.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* SỐ ĐIỆN THOẠI HOẶC EMAIL */}
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
