@@ -124,6 +124,7 @@ export const AdminGpsFleetPage: React.FC = () => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
+  const markersRef = useRef<{ [tripId: number]: L.Marker }>({});
 
   // Tải snapshot đội xe trực tiếp từ CSDL & RAM GPS Realtime Service
   const fetchFleetVehicles = async (isSilent = false) => {
@@ -244,6 +245,7 @@ export const AdminGpsFleetPage: React.FC = () => {
     if (!mapInstanceRef.current || !markersGroupRef.current) return;
     markersGroupRef.current.clearLayers();
 
+    markersRef.current = {};
     filteredVehicles.forEach((v) => {
       const color = v.status === 'OVERSPEED' ? '#ef4444' : v.status === 'RUNNING' ? '#10b981' : '#f59e0b';
       const isSelected = selectedVehicle?.tripId === v.tripId;
@@ -270,9 +272,34 @@ export const AdminGpsFleetPage: React.FC = () => {
         `)
         .on('click', () => setSelectedVehicle(v));
 
+      markersRef.current[v.tripId] = marker;
       markersGroupRef.current?.addLayer(marker);
     });
   }, [vehicles, selectedCompany, selectedStatus, searchKeyword, selectedVehicle]);
+
+  // Điều hướng tâm bản đồ phóng to vào xe và mở popup
+  const handleFocusVehicle = (v: FleetVehicle) => {
+    setSelectedVehicle(v);
+
+    // 1. Tự động cuộn mượt màn hình lên bản đồ nếu người dùng đang xem bảng ở dưới
+    mapContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // 2. Di chuyển camera bản đồ vào xe được chọn (hiệu ứng bay flyTo mượt mà)
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([v.latitude, v.longitude], 14, {
+        animate: true,
+        duration: 1.2
+      });
+    }
+
+    // 3. Tự động mở popup chi tiết xe
+    setTimeout(() => {
+      const marker = markersRef.current[v.tripId];
+      if (marker) {
+        marker.openPopup();
+      }
+    }, 600);
+  };
 
   // Danh sách nhà xe duy nhất được trích xuất động từ CSDL
   const uniqueCompanies = Array.from(new Set(vehicles.map((v) => v.companyName))).filter(Boolean).sort();
@@ -493,8 +520,8 @@ export const AdminGpsFleetPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    if (mapInstanceRef.current) {
-                      mapInstanceRef.current.setView([selectedVehicle.latitude, selectedVehicle.longitude], 13);
+                    if (selectedVehicle) {
+                      handleFocusVehicle(selectedVehicle);
                     }
                   }}
                   className="w-full py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow"
@@ -574,15 +601,10 @@ export const AdminGpsFleetPage: React.FC = () => {
                   </td>
                   <td className="p-3 text-right">
                     <button
-                      onClick={() => {
-                        setSelectedVehicle(v);
-                        if (mapInstanceRef.current) {
-                          mapInstanceRef.current.setView([v.latitude, v.longitude], 12);
-                        }
-                      }}
-                      className="px-2.5 py-1 bg-indigo-600/80 hover:bg-indigo-600 text-white rounded-lg text-xs font-semibold transition-all"
+                      onClick={() => handleFocusVehicle(v)}
+                      className="px-2.5 py-1 bg-indigo-600/80 hover:bg-indigo-600 text-white rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1 shadow-sm"
                     >
-                      Theo dõi
+                      <Eye className="w-3 h-3" /> Theo dõi
                     </button>
                   </td>
                 </tr>

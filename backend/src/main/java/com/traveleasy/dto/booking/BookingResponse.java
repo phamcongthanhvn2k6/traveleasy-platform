@@ -36,4 +36,15 @@ public class BookingResponse {
     private String note;
     private LocalDateTime createdAt;
     private List<TicketResponse> tickets;
+
+    // Thông tin hoàn tiền (Refund Details)
+    private String refundBankName;
+    private String refundAccountNumber;
+    private String refundAccountHolder;
+    private BigDecimal refundAmount;
+    private BigDecimal refundFee;
+    private String refundStatus;
+    private String refundReason;
+    private String refundTxCode;
+    private LocalDateTime refundedAt;
 }

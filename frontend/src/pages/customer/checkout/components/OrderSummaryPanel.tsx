@@ -77,7 +77,10 @@ export const OrderSummaryPanel: React.FC<Props> = ({
         setDiscount(discountVal);
         setAppliedCode(cleanCode);
         onApplyVoucher(discountVal, cleanCode);
-        toast.success(data.message || `Áp dụng mã ${cleanCode} thành công!`, 'Mã Ưu Đãi Supabase');
+        toast.success(data.message || `Áp dụng mã ${cleanCode} thành công!`, 'Mã Ưu Đãi');
+        return;
+      } else if (res.data && !res.data.success) {
+        toast.warning(res.data.message || `Mã ưu đãi '${cleanCode}' không hợp lệ hoặc đã hết hạn!`, 'Mã Không Hợp Lệ');
         return;
       }
     } catch (err: any) {

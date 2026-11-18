@@ -220,6 +220,7 @@ public class PaymentService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"trips_search", "company_dashboard_stats", "admin_all_bookings"}, allEntries = true)
     public PaymentStatusResponse processVnPayCallback(Map<String, String> params) {
         String vnpSecureHash = params.get("vnp_SecureHash");
         Map<String, String> fields = new HashMap<>(params);
@@ -303,6 +304,7 @@ public class PaymentService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"trips_search", "company_dashboard_stats", "admin_all_bookings"}, allEntries = true)
     public PaymentStatusResponse confirmVietQrTransfer(String bookingCode, String manualRef) {
         Booking booking = bookingRepository.findByBookingCode(bookingCode)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé: " + bookingCode));
@@ -386,6 +388,7 @@ public class PaymentService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"trips_search", "company_dashboard_stats", "admin_all_bookings"}, allEntries = true)
     public PaymentStatusResponse processPayOsWebhook(Map<String, Object> webhookData) {
         log.info("PayOS Webhook received: {}", webhookData);
         Map<String, Object> data = null;
@@ -415,6 +418,7 @@ public class PaymentService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = {"trips_search", "company_dashboard_stats", "admin_all_bookings"}, allEntries = true)
     public PaymentStatusResponse mockPaymentSuccess(String bookingCode, PaymentMethod paymentMethod) {
         Booking booking = bookingRepository.findByBookingCode(bookingCode)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy đơn đặt vé: " + bookingCode));

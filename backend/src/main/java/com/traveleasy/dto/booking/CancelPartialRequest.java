@@ -8,4 +8,8 @@ import java.util.List;
 public class CancelPartialRequest {
     @NotEmpty(message = "Danh sách mã vé cần hủy không được để trống")
     private List<Long> ticketIds;
+    private String bankName;
+    private String accountNumber;
+    private String accountHolder;
+    private String reason;
 }

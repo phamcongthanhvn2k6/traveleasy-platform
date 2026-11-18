@@ -28,6 +28,7 @@ public class SeatRealtimeService {
     private final TripSeatRepository tripSeatRepository;
     private final com.traveleasy.repository.TripRepository tripRepository;
     private final com.traveleasy.repository.BookingRepository bookingRepository;
+    private final org.springframework.beans.factory.ObjectProvider<org.springframework.cache.CacheManager> cacheManagerProvider;
 
     // Map chứa các SseEmitter theo tripId
     private final ConcurrentHashMap<Long, CopyOnWriteArrayList<SseEmitter>> tripEmitters = new ConcurrentHashMap<>();
@@ -232,16 +233,8 @@ public class SeatRealtimeService {
         }
         tripSeatRepository.saveAllAndFlush(seats);
 
-        // Cập nhật số chỗ trống thực tế trên bảng trips để kết quả tìm kiếm toàn sàn khớp 100%
-        try {
-            tripRepository.findById(tripId).ifPresent(trip -> {
-                long availableCount = tripSeatRepository.countByTripIdAndStatus(tripId, SeatStatus.AVAILABLE);
-                trip.setAvailableSeats((int) availableCount);
-                tripRepository.saveAndFlush(trip);
-            });
-        } catch (Exception e) {
-            log.warn("Không thể cập nhật availableSeats trên trip {}: {}", tripId, e.getMessage());
-        }
+        // Cập nhật số chỗ trống thực tế trên bảng trips và chỉ xóa cache đúng tuyến/ngày của chuyến này
+        syncAvailableSeatsAndEvictCache(tripId);
 
         // Broadcast sự kiện LOCKED tới toàn bộ người dùng đang mở sơ đồ chuyến này
         for (SeatUpdateEvent ev : events) {
@@ -487,17 +480,7 @@ public class SeatRealtimeService {
             }
         }
 
-        try {
-            if (tripRepository != null) {
-                tripRepository.findById(tripId).ifPresent(trip -> {
-                    long availableCount = tripSeatRepository.countByTripIdAndStatus(tripId, SeatStatus.AVAILABLE);
-                    trip.setAvailableSeats((int) availableCount);
-                    tripRepository.saveAndFlush(trip);
-                });
-            }
-        } catch (Exception e) {
-            log.warn("Không thể cập nhật availableSeats sau khi release trên trip {}: {}", tripId, e.getMessage());
-        }
+        syncAvailableSeatsAndEvictCache(tripId);
     }
 
     /**
@@ -590,16 +573,46 @@ public class SeatRealtimeService {
             }
             if (!seatsToSave.isEmpty()) {
                 tripSeatRepository.saveAllAndFlush(seatsToSave);
-                if (tripRepository != null) {
-                    tripRepository.findById(tripId).ifPresent(trip -> {
-                        long availableCount = tripSeatRepository.countByTripIdAndStatus(tripId, SeatStatus.AVAILABLE);
-                        trip.setAvailableSeats((int) availableCount);
-                        tripRepository.saveAndFlush(trip);
-                    });
-                }
+                syncAvailableSeatsAndEvictCache(tripId);
             }
         } catch (Exception e) {
             log.error("Lỗi khi tự động giải phóng ghế hết hạn giữ chỗ cho tripId {}: {}", tripId, e.getMessage());
+        }
+    }
+
+    /**
+     * Đồng bộ lại số ghế trống trên Trip và xóa chọn lọc cache trips_search theo đúng tuyến/ngày
+     * để vừa tránh hiện tượng "ghế ma", vừa tránh Cache Trashing toàn sàn khi nhiều người giữ ghế đồng thời.
+     */
+    private void syncAvailableSeatsAndEvictCache(Long tripId) {
+        if (tripRepository == null || tripId == null) {
+            return;
+        }
+        try {
+            tripRepository.findByIdWithDetails(tripId)
+                    .or(() -> tripRepository.findById(tripId))
+                    .ifPresent(trip -> {
+                        long availableCount = tripSeatRepository.countByTripIdAndStatus(tripId, SeatStatus.AVAILABLE);
+                        trip.setAvailableSeats((int) availableCount);
+                        tripRepository.saveAndFlush(trip);
+                        evictTripsSearchCacheForTrip(trip);
+                    });
+        } catch (Exception e) {
+            log.warn("Không thể đồng bộ availableSeats hoặc xóa cache cho trip {}: {}", tripId, e.getMessage());
+        }
+    }
+
+    private void evictTripsSearchCacheForTrip(Trip trip) {
+        if (trip == null || cacheManagerProvider == null) {
+            return;
+        }
+        org.springframework.cache.CacheManager cacheManager = cacheManagerProvider.getIfAvailable();
+        if (cacheManager == null) {
+            return;
+        }
+        org.springframework.cache.Cache cache = cacheManager.getCache("trips_search");
+        if (cache != null) {
+            cache.clear();
         }
     }
 }

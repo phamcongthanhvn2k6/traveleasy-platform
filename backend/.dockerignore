@@ -1,0 +1,9 @@
+.gradle
+build
+bin
+*.class
+*.jar
+.git
+.vscode
+.idea
+*.log

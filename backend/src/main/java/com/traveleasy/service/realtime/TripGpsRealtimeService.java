@@ -313,7 +313,45 @@ public class TripGpsRealtimeService {
             routeCoords = PRESET_ROUTES.get("HCM_DALAT");
         }
 
-        double[] startCoord = routeCoords.get(0);
+        // Phân bổ vị trí và vận tốc xe đa dạng, thực tế mô phỏng theo vị trí dọc tuyến
+        int routeStep = (int) (Math.abs(tripId) % routeCoords.size());
+        double[] currentCoord = routeCoords.get(routeStep);
+
+        double heading = 45.0;
+        if (routeStep < routeCoords.size() - 1) {
+            double[] nextCoord = routeCoords.get(routeStep + 1);
+            heading = calculateBearing(currentCoord[0], currentCoord[1], nextCoord[0], nextCoord[1]);
+        }
+
+        // Tốc độ và trạng thái đa dạng:
+        // - Một số xe dừng tại trạm / bến xuất phát (0 km/h) -> STOPPED
+        // - Một số ít xe vi phạm quá tốc độ (>80 km/h) -> OVERSPEED để test radar cảnh báo
+        // - Còn lại chạy ổn định 60-78 km/h trên quốc lộ / cao tốc -> RUNNING
+        double speed;
+        String status;
+        if (routeStep == 0) {
+            speed = 0.0;
+            status = "STOPPED";
+        } else if (tripId % 11 == 0) {
+            speed = 84.0;
+            status = "OVERSPEED";
+        } else {
+            speed = 60.0 + ((tripId * 3) % 18); // 60 -> 77 km/h
+            status = "RUNNING";
+        }
+
+        double progress = Math.round(((double) (routeStep + 1) / routeCoords.size()) * 1000.0) / 10.0;
+        int remainingSteps = routeCoords.size() - 1 - routeStep;
+        int eta = Math.max(10, remainingSteps * 15);
+
+        String locationDesc = routeStep == 0
+                ? "Bến xe xuất phát: " + originCity
+                : (routeStep >= routeCoords.size() - 2
+                    ? "Sắp về đích: " + destinationCity
+                    : "Đang lưu thông trên hành trình hướng " + destinationCity);
+        String nextStation = routeStep >= routeCoords.size() - 2
+                ? "Bến xe kết thúc hành trình"
+                : "Trạm dừng chân cao tốc (Km " + (routeStep * 25 + 18) + ")";
 
         // Thông tin tài xế và kiểm định an toàn (Tự động đồng bộ từ phân công tổ lái TripCrew)
         String driverName = "Đội ngũ tài xế chuyên nghiệp";
@@ -348,20 +386,20 @@ public class TripGpsRealtimeService {
                 .licensePlate(plate)
                 .busType(busType)
                 .busCompanyName(companyName)
-                .latitude(startCoord[0])
-                .longitude(startCoord[1])
-                .speed(65.0)
-                .heading(45.0)
-                .currentLocationName("Khởi hành từ " + originCity)
-                .nextStationName("Trạm dừng chân cao tốc (Km 28)")
+                .latitude(currentCoord[0])
+                .longitude(currentCoord[1])
+                .speed(speed)
+                .heading(heading)
+                .currentLocationName(locationDesc)
+                .nextStationName(nextStation)
                 .nextStationDistanceKm(18.5)
-                .etaMinutes(25)
-                .progressPercent(5.0)
+                .etaMinutes(eta)
+                .progressPercent(progress)
                 .driverName(driverName)
                 .driverPhone(driverPhone)
                 .driverLicense(driverLicense)
                 .alcoholTested(alcoholTested)
-                .status("RUNNING")
+                .status(status)
                 .updatedAt(LocalDateTime.now().format(ISO_FORMATTER))
                 .routeCoordinates(routeCoords)
                 .build();

@@ -1,0 +1,139 @@
+services:
+  # 1. Prometheus - Thu thập và lưu trữ metrics (RED Metrics, JVM, HikariCP)
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: traveleasy-prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - default
+
+  # 2. Alertmanager - Quản lý và điều phối thông báo cảnh báo (Slack, Email, Telegram)
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: traveleasy-alertmanager
+    ports:
+      - "${ALERTMANAGER_PORT:-9093}:9093"
+    volumes:
+      - ./observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+    restart: unless-stopped
+    networks:
+      - default
+
+  # 3. Grafana - Trực quan hóa Dashboards, Logs (Loki) và Traces (Tempo)
+  # Lưu ý: Map cổng 3001 ở host để tránh trùng cổng 3000 với traveleasy-frontend
+  grafana:
+    image: grafana/grafana:11.1.4
+    container_name: traveleasy-grafana
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin123@}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    restart: unless-stopped
+    networks:
+      - default
+
+  # 4. Loki - Lưu trữ log tập trung dung lượng nhẹ
+  loki:
+    image: grafana/loki:3.1.1
+    container_name: traveleasy-loki
+    command: -config.file=/etc/loki/loki.yml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    restart: unless-stopped
+    networks:
+      - default
+
+  # 5. Grafana Alloy - Thu thập log container từ Docker socket và trích xuất Metadata gửi Loki
+  alloy:
+    image: grafana/alloy:v1.3.1
+    container_name: traveleasy-alloy
+    command:
+      - "run"
+      - "--server.http.listen-addr=0.0.0.0:12345"
+      - "--storage.path=/var/lib/alloy/data"
+      - "/etc/alloy/config.alloy"
+    ports:
+      - "12345:12345"
+    volumes:
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - alloy_data:/var/lib/alloy/data
+    depends_on:
+      - loki
+    restart: unless-stopped
+    networks:
+      - default
+
+  # 6. Tempo - Lưu trữ và trực quan hóa Distributed Tracing Waterfall
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: traveleasy-tempo
+    user: "0:0"
+    command:
+      - "-config.file=/etc/tempo/tempo.yaml"
+      - "-target=all"
+    volumes:
+      - ./observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo_data:/data/tempo
+    ports:
+      - "${TEMPO_PORT:-3220}:3200"
+    restart: unless-stopped
+    networks:
+      - default
+
+  # 7. OpenTelemetry Collector - Tiếp nhận OTLP Traces từ Backend xuất sang Tempo
+  otel-collector:
+    image: otel/opentelemetry-collector:0.107.0
+    container_name: traveleasy-otel-collector
+    command:
+      - "--config=/etc/otelcol/config.yaml"
+    volumes:
+      - ./observability/otel-collector/config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    depends_on:
+      - tempo
+    restart: unless-stopped
+    networks:
+      - default
+
+networks:
+  default:
+    name: traveleasy-network
+
+volumes:
+  prometheus_data:
+  alertmanager_data:
+  grafana_data:
+  loki_data:
+  alloy_data:
+  tempo_data:

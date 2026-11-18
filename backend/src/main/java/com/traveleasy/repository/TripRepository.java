@@ -3,6 +3,7 @@ package com.traveleasy.repository;
 import com.traveleasy.entity.Trip;
 import com.traveleasy.entity.TripStatus;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +15,12 @@ import java.util.Optional;
 
 @Repository
 public interface TripRepository extends JpaRepository<Trip, Long> {
-    @Query("SELECT t FROM Trip t JOIN FETCH t.route r JOIN FETCH t.busCompany bc WHERE t.id = :id")
+    @EntityGraph(attributePaths = {"busCompany", "route"})
+    @Query("SELECT t FROM Trip t")
+    List<Trip> findAllWithDetails();
+
+    @EntityGraph(attributePaths = {"busCompany", "route"})
+    @Query("SELECT t FROM Trip t WHERE t.id = :id")
     Optional<Trip> findByIdWithDetails(@Param("id") Long id);
 
     @Query("""
@@ -44,30 +50,39 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Query("UPDATE Trip t SET t.status = com.traveleasy.entity.TripStatus.COMPLETED WHERE t.status = com.traveleasy.entity.TripStatus.SCHEDULED AND t.departureTime < :now")
     int markPastTripsAsCompleted(@Param("now") LocalDateTime now);
 
+    @EntityGraph(attributePaths = {"busCompany", "route"})
     List<Trip> findByRouteIdAndDepartureTimeBetween(Long routeId, LocalDateTime start, LocalDateTime end);
+
     long countByStatus(TripStatus status);
-    @Query("SELECT t FROM Trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r ORDER BY t.departureTime DESC")
+
+    @EntityGraph(attributePaths = {"busCompany", "route"})
+    @Query("SELECT t FROM Trip t ORDER BY t.departureTime DESC")
     List<Trip> findAllByOrderByDepartureTimeDesc();
 
-    @Query("SELECT t FROM Trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE bc.id = :busCompanyId ORDER BY t.departureTime DESC")
+    @EntityGraph(attributePaths = {"busCompany", "route"})
+    @Query("SELECT t FROM Trip t WHERE t.busCompany.id = :busCompanyId ORDER BY t.departureTime DESC")
     List<Trip> findByBusCompanyIdOrderByDepartureTimeDesc(@Param("busCompanyId") Long busCompanyId);
 
-    @Query("SELECT t FROM Trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE bc.id = :busCompanyId ORDER BY t.departureTime DESC")
+    @EntityGraph(attributePaths = {"busCompany", "route"})
+    @Query("SELECT t FROM Trip t WHERE t.busCompany.id = :busCompanyId ORDER BY t.departureTime DESC")
     List<Trip> findByBusCompanyIdWithDetails(@Param("busCompanyId") Long busCompanyId);
 
     /**
      * [P2 PERF] Lấy top N chuyến xe mới nhất của nhà xe với LIMIT từ DB — tránh load toàn bộ.
      * Dùng cho Dashboard (top 5) và các tính năng cần phân trang nhỏ.
      */
-    @Query("SELECT t FROM Trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE bc.id = :busCompanyId ORDER BY t.departureTime DESC")
+    @EntityGraph(attributePaths = {"busCompany", "route"})
+    @Query("SELECT t FROM Trip t WHERE t.busCompany.id = :busCompanyId ORDER BY t.departureTime DESC")
     List<Trip> findTopNByBusCompanyId(@Param("busCompanyId") Long busCompanyId, Pageable pageable);
 
-    @Query("SELECT t FROM Trip t JOIN FETCH t.busCompany bc JOIN FETCH t.route r WHERE bc.id = :busCompanyId AND t.departureTime >= :startTime AND t.departureTime < :endTime ORDER BY t.departureTime ASC")
+    @EntityGraph(attributePaths = {"busCompany", "route"})
+    @Query("SELECT t FROM Trip t WHERE t.busCompany.id = :busCompanyId AND t.departureTime >= :startTime AND t.departureTime < :endTime ORDER BY t.departureTime ASC")
     List<Trip> findByBusCompanyIdAndDepartureTimeBetweenWithDetails(
             @Param("busCompanyId") Long busCompanyId,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
 
+    @EntityGraph(attributePaths = {"busCompany", "route"})
     List<Trip> findByBusCompanyId(Long busCompanyId);
     long countByBusCompanyId(Long busCompanyId);
     long countByBusCompanyIdAndStatus(Long busCompanyId, TripStatus status);
