@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { X, Tag, Check, Copy, Clock, Sparkles, Percent, Gift, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { X, Tag, Check, Copy, Clock, Sparkles, Percent, Gift, ChevronRight, Wallet, CheckCircle2, AlertOctagon } from 'lucide-react';
 import { toast } from '../context/ToastContext';
+import { VoucherWalletService } from '../services/voucherWalletService';
 
 export interface VoucherItem {
   code: string;
@@ -46,6 +47,16 @@ export const AVAILABLE_VOUCHERS: VoucherItem[] = [
     expiryDate: '31/12/2026',
   },
   {
+    code: 'PAYOS50',
+    title: 'Cổng PayOS VietQR - Giảm ngay 30.000 đ',
+    description: 'Áp dụng khi thanh toán trực tuyến qua cổng PayOS chuyển khoản 24/7',
+    discountType: 'FIXED',
+    discountValue: 30000,
+    minOrderValue: 150000,
+    expiryDate: '31/12/2026',
+    badge: 'VIETQR MB',
+  },
+  {
     code: 'HE2026',
     title: 'Chào Hè Sôi Động - Giảm 30.000 đ',
     description: 'Áp dụng cho các tuyến du lịch biển: Nha Trang, Vũng Tàu, Phan Thiết, Quy Nhơn',
@@ -80,7 +91,11 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
   orderTotal,
   appliedCode,
 }) => {
+  const [modalTab, setModalTab] = useState<'MY_WALLET' | 'ALL'>('MY_WALLET');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  // Danh sách mã voucher người dùng đã lưu trong ví
+  const ownedCodes = useMemo(() => VoucherWalletService.getOwnedVoucherCodes(), [isOpen]);
 
   if (!isOpen) return null;
 
@@ -92,10 +107,30 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const handleApply = (code: string) => {
-    onSelectVoucher(code);
+  const handleApply = (v: VoucherItem) => {
+    const isExpired = VoucherWalletService.isExpired(v.expiryDate);
+    if (isExpired) {
+      toast.error(`Mã ưu đãi [${v.code}] đã hết hạn sử dụng (${v.expiryDate})! Không thể áp dụng.`, 'Voucher Hết Hạn');
+      return;
+    }
+
+    if (orderTotal < v.minOrderValue) {
+      const missing = v.minOrderValue - orderTotal;
+      toast.warning(
+        `Đơn hàng chưa đạt mức tối thiểu ${v.minOrderValue.toLocaleString('vi-VN')} đ (còn thiếu ${missing.toLocaleString('vi-VN')} đ)!`,
+        'Chưa Đủ Điều Kiện'
+      );
+      return;
+    }
+
+    onSelectVoucher(v.code);
     onClose();
   };
+
+  // Lọc voucher hiển thị theo tab
+  const displayedVouchers = modalTab === 'MY_WALLET'
+    ? AVAILABLE_VOUCHERS.filter((v) => ownedCodes.includes(v.code.toUpperCase()))
+    : AVAILABLE_VOUCHERS;
 
   return (
     <div
@@ -117,9 +152,9 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
       <div
         style={{
           width: '100%',
-          maxWidth: '540px',
+          maxWidth: '560px',
           backgroundColor: '#ffffff',
-          borderRadius: '18px',
+          borderRadius: '20px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           overflow: 'hidden',
           display: 'flex',
@@ -141,9 +176,9 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
+                width: '38px',
+                height: '38px',
+                borderRadius: '12px',
                 backgroundColor: '#eff6ff',
                 display: 'flex',
                 alignItems: 'center',
@@ -151,14 +186,14 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
                 color: '#2563eb',
               }}
             >
-              <Gift size={20} />
+              <Gift size={22} />
             </div>
             <div>
               <div style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
-                Kho Voucher & Khuyến Mãi
+                Chọn Mã Ưu Đãi / Voucher
               </div>
               <div style={{ fontSize: '12px', color: '#64748b' }}>
-                Chọn một mã ưu đãi tốt nhất cho đơn hàng của bạn
+                Đơn hàng hiện tại: <strong style={{ color: '#0f172a' }}>{orderTotal.toLocaleString('vi-VN')} đ</strong>
               </div>
             </div>
           </div>
@@ -178,165 +213,281 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
           </button>
         </div>
 
+        {/* Tab Selection: Ví Của Tôi vs Tất Cả */}
+        <div
+          style={{
+            display: 'flex',
+            padding: '8px 16px',
+            gap: '8px',
+            backgroundColor: '#f1f5f9',
+            borderBottom: '1px solid #e2e8f0',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setModalTab('MY_WALLET')}
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              borderRadius: '10px',
+              border: 'none',
+              fontSize: '12.5px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              backgroundColor: modalTab === 'MY_WALLET' ? '#ffffff' : 'transparent',
+              color: modalTab === 'MY_WALLET' ? '#0f172a' : '#64748b',
+              boxShadow: modalTab === 'MY_WALLET' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Wallet size={15} color={modalTab === 'MY_WALLET' ? '#059669' : '#64748b'} />
+            <span>Ví Của Tôi ({AVAILABLE_VOUCHERS.filter(v => ownedCodes.includes(v.code.toUpperCase())).length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setModalTab('ALL')}
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              borderRadius: '10px',
+              border: 'none',
+              fontSize: '12.5px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              backgroundColor: modalTab === 'ALL' ? '#ffffff' : 'transparent',
+              color: modalTab === 'ALL' ? '#0f172a' : '#64748b',
+              boxShadow: modalTab === 'ALL' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Tag size={15} color={modalTab === 'ALL' ? '#ea580c' : '#64748b'} />
+            <span>Tất Cả Ưu Đãi ({AVAILABLE_VOUCHERS.length})</span>
+          </button>
+        </div>
+
         {/* List of Vouchers */}
         <div
           style={{
-            padding: '20px 22px',
+            padding: '16px 20px',
             overflowY: 'auto',
             display: 'flex',
             flexDirection: 'column',
-            gap: '14px',
+            gap: '12px',
             backgroundColor: '#ffffff',
           }}
         >
-          {AVAILABLE_VOUCHERS.map((v) => {
-            const isApplied = appliedCode === v.code;
-            const isEligible = orderTotal >= v.minOrderValue;
+          {displayedVouchers.length === 0 ? (
+            <div style={{ padding: '30px 20px', textAlign: 'center', color: '#64748b' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>👛</div>
+              <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '14px', marginBottom: '4px' }}>
+                Ví của bạn chưa có voucher phù hợp
+              </div>
+              <div style={{ fontSize: '12px' }}>
+                Vui lòng chuyển sang tab <strong>"Tất Cả Ưu Đãi"</strong> để áp dụng mã giảm giá khác.
+              </div>
+            </div>
+          ) : (
+            displayedVouchers.map((v) => {
+              const isApplied = appliedCode === v.code;
+              const isExpired = VoucherWalletService.isExpired(v.expiryDate);
+              const isSpendEligible = orderTotal >= v.minOrderValue;
+              const isEligible = isSpendEligible && !isExpired;
+              const isOwned = ownedCodes.includes(v.code.toUpperCase());
 
-            return (
-              <div
-                key={v.code}
-                style={{
-                  border: isApplied
-                    ? '2px solid #2563eb'
-                    : '1px solid #e2e8f0',
-                  borderRadius: '14px',
-                  padding: '16px 18px',
-                  backgroundColor: isApplied ? '#eff6ff' : '#ffffff',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                  position: 'relative',
-                  boxShadow: isApplied
-                    ? '0 4px 12px rgba(37, 99, 235, 0.12)'
-                    : '0 1px 3px rgba(0,0,0,0.02)',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                {/* Top Row: Code Badge & Apply Button */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div
-                      style={{
-                        backgroundColor: '#1e293b',
-                        color: '#ffffff',
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        fontFamily: 'monospace',
-                        fontWeight: 800,
-                        fontSize: '13px',
-                        letterSpacing: '0.8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      <Tag size={12} color="#38bdf8" />
-                      <span>{v.code}</span>
-                    </div>
-
-                    <button
-                      onClick={(e) => handleCopy(v.code, e)}
-                      title="Sao chép mã"
-                      style={{
-                        background: 'transparent',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '6px',
-                        padding: '4px 8px',
-                        color: '#475569',
-                        fontSize: '11px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
-                    >
-                      {copiedCode === v.code ? <Check size={12} color="#16a34a" /> : <Copy size={12} />}
-                      <span>{copiedCode === v.code ? 'Đã chép' : 'Sao chép'}</span>
-                    </button>
-
-                    {v.badge && (
-                      <span
-                        style={{
-                          backgroundColor: '#fef2f2',
-                          color: '#dc2626',
-                          fontSize: '10.5px',
-                          fontWeight: 800,
-                          padding: '3px 7px',
-                          borderRadius: '6px',
-                          border: '1px solid #fecaca',
-                        }}
-                      >
-                        {v.badge}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Apply action */}
-                  <button
-                    onClick={() => handleApply(v.code)}
-                    disabled={isApplied}
-                    style={{
-                      backgroundColor: isApplied ? '#16a34a' : '#2563eb',
-                      color: '#ffffff',
-                      border: 'none',
-                      padding: '7px 16px',
-                      borderRadius: '8px',
-                      fontWeight: 700,
-                      fontSize: '12.5px',
-                      cursor: isApplied ? 'default' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      boxShadow: isApplied ? 'none' : '0 2px 4px rgba(37, 99, 235, 0.25)',
-                    }}
-                  >
-                    {isApplied ? (
-                      <>
-                        <Check size={14} /> Đang dùng
-                      </>
-                    ) : (
-                      'Áp Dụng'
-                    )}
-                  </button>
-                </div>
-
-                {/* Content */}
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>
-                    {v.title}
-                  </div>
-                  <div style={{ fontSize: '12.5px', color: '#475569', marginTop: '3px', lineHeight: 1.4 }}>
-                    {v.description}
-                  </div>
-                </div>
-
-                {/* Footer conditions */}
+              return (
                 <div
+                  key={v.code}
                   style={{
+                    border: isApplied
+                      ? '2px solid #2563eb'
+                      : !isEligible
+                      ? '1px dashed #cbd5e1'
+                      : isOwned
+                      ? '1.5px solid #10b981'
+                      : '1px solid #e2e8f0',
+                    borderRadius: '14px',
+                    padding: '14px 16px',
+                    backgroundColor: isApplied
+                      ? '#eff6ff'
+                      : !isEligible
+                      ? '#f8fafc'
+                      : '#ffffff',
+                    opacity: !isEligible ? 0.75 : 1,
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '11.5px',
-                    color: '#64748b',
-                    paddingTop: '8px',
-                    borderTop: '1px dashed #e2e8f0',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    position: 'relative',
+                    boxShadow: isApplied
+                      ? '0 4px 12px rgba(37, 99, 235, 0.12)'
+                      : '0 1px 3px rgba(0,0,0,0.02)',
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Clock size={12} color="#94a3b8" />
-                    <span>HSD: {v.expiryDate}</span>
+                  {/* Top Row: Code Badge & Apply Button */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div
+                        style={{
+                          backgroundColor: '#1e293b',
+                          color: '#ffffff',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          fontFamily: 'monospace',
+                          fontWeight: 800,
+                          fontSize: '12px',
+                          letterSpacing: '0.8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                        }}
+                      >
+                        <Tag size={11} color="#38bdf8" />
+                        <span>{v.code}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => handleCopy(v.code, e)}
+                        title="Sao chép mã"
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          padding: '3px 7px',
+                          color: '#475569',
+                          fontSize: '11px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        {copiedCode === v.code ? <Check size={11} color="#16a34a" /> : <Copy size={11} />}
+                        <span>{copiedCode === v.code ? 'Đã chép' : 'Chép'}</span>
+                      </button>
+
+                      {isOwned && (
+                        <span
+                          style={{
+                            backgroundColor: '#ecfdf5',
+                            color: '#059669',
+                            fontSize: '10px',
+                            fontWeight: 800,
+                            padding: '2px 6px',
+                            borderRadius: '6px',
+                            border: '1px solid #a7f3d0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                          }}
+                        >
+                          <CheckCircle2 size={10} /> Đã trong ví
+                        </span>
+                      )}
+
+                      {v.badge && (
+                        <span
+                          style={{
+                            backgroundColor: '#fff7ed',
+                            color: '#ea580c',
+                            fontSize: '10px',
+                            fontWeight: 800,
+                            padding: '2px 6px',
+                            borderRadius: '6px',
+                            border: '1px solid #ffedd5',
+                          }}
+                        >
+                          {v.badge}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Apply action button */}
+                    <button
+                      type="button"
+                      onClick={() => handleApply(v)}
+                      disabled={isApplied || !isEligible}
+                      style={{
+                        backgroundColor: isApplied
+                          ? '#16a34a'
+                          : !isEligible
+                          ? '#94a3b8'
+                          : '#ea580c',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        cursor: isApplied || !isEligible ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        boxShadow: isEligible && !isApplied ? '0 2px 4px rgba(234, 88, 12, 0.25)' : 'none',
+                      }}
+                    >
+                      {isApplied ? (
+                        <>
+                          <Check size={13} /> Đang dùng
+                        </>
+                      ) : isExpired ? (
+                        'Đã Hết Hạn'
+                      ) : !isSpendEligible ? (
+                        'Chưa Đủ Tiền'
+                      ) : (
+                        'Áp Dụng'
+                      )}
+                    </button>
                   </div>
+
+                  {/* Content */}
                   <div>
-                    Đơn tối thiểu:{' '}
-                    <strong style={{ color: isEligible ? '#0f172a' : '#ea580c' }}>
-                      {v.minOrderValue.toLocaleString('vi-VN')} đ
-                    </strong>
+                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#0f172a' }}>
+                      {v.title}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#475569', marginTop: '2px', lineHeight: 1.4 }}>
+                      {v.description}
+                    </div>
+                  </div>
+
+                  {/* Footer conditions */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      fontSize: '11px',
+                      color: '#64748b',
+                      paddingTop: '6px',
+                      borderTop: '1px dashed #e2e8f0',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Clock size={11} color={isExpired ? '#e11d48' : '#94a3b8'} />
+                      <span style={{ color: isExpired ? '#e11d48' : '#64748b', fontWeight: isExpired ? 700 : 500 }}>
+                        HSD: {v.expiryDate} {isExpired ? '(Đã hết hạn)' : ''}
+                      </span>
+                    </div>
+                    <div>
+                      Đơn tối thiểu:{' '}
+                      <strong style={{ color: isSpendEligible ? '#0f172a' : '#ea580c' }}>
+                        {v.minOrderValue.toLocaleString('vi-VN')} đ
+                      </strong>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
 
         {/* Modal Bottom info bar */}
@@ -375,4 +526,3 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
 };
 
 export default VoucherModal;
-

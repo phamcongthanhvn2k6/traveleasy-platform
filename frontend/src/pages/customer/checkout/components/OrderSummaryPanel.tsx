@@ -91,26 +91,46 @@ export const OrderSummaryPanel: React.FC<Props> = ({
       }
     }
 
-    // Local fallback for offline/demo codes
+    // Local fallback for offline/demo codes with strict minimum spend checking
     if (cleanCode === 'TRAVELEASY' || cleanCode === 'VEXEREVIP' || cleanCode === 'GIAM50K' || cleanCode === 'DALATVIP') {
+      const minSpend = 200000;
+      if (baseTicketPrice < minSpend) {
+        toast.warning(`Mã ${cleanCode} yêu cầu đơn hàng tối thiểu ${minSpend.toLocaleString('vi-VN')} đ (Đơn hiện tại: ${baseTicketPrice.toLocaleString('vi-VN')} đ)`, 'Chưa Đạt Đơn Tối Thiểu');
+        return;
+      }
       const discountValue = 50000;
       setDiscount(discountValue);
       setAppliedCode(cleanCode);
       onApplyVoucher(discountValue, cleanCode);
       toast.success(`Áp dụng mã ${cleanCode} thành công! Giảm ngay 50.000 đ`, 'Mã Ưu Đãi');
     } else if (cleanCode === 'GIAM20' || cleanCode === 'SAPA20') {
+      const minSpend = 300000;
+      if (baseTicketPrice < minSpend) {
+        toast.warning(`Mã ${cleanCode} yêu cầu đơn hàng tối thiểu ${minSpend.toLocaleString('vi-VN')} đ (Đơn hiện tại: ${baseTicketPrice.toLocaleString('vi-VN')} đ)`, 'Chưa Đạt Đơn Tối Thiểu');
+        return;
+      }
       const discountValue = Math.min(100000, Math.round(baseTicketPrice * 0.2));
       setDiscount(discountValue);
       setAppliedCode(cleanCode);
       onApplyVoucher(discountValue, cleanCode);
       toast.success(`Áp dụng mã ${cleanCode} thành công! Giảm 20% (${discountValue.toLocaleString('vi-VN')} đ)`, 'Mã Ưu Đãi');
     } else if (cleanCode === 'PAYOS50' || cleanCode === 'HE2026') {
+      const minSpend = 150000;
+      if (baseTicketPrice < minSpend) {
+        toast.warning(`Mã ${cleanCode} yêu cầu đơn hàng tối thiểu ${minSpend.toLocaleString('vi-VN')} đ (Đơn hiện tại: ${baseTicketPrice.toLocaleString('vi-VN')} đ)`, 'Chưa Đạt Đơn Tối Thiểu');
+        return;
+      }
       const discountValue = 30000;
       setDiscount(discountValue);
       setAppliedCode(cleanCode);
       onApplyVoucher(discountValue, cleanCode);
       toast.success(`Áp dụng mã ${cleanCode} thành công! Giảm ngay 30.000 đ`, 'Mã Ưu Đãi');
     } else if (cleanCode === 'WELCOME50' || cleanCode === 'BANMOI15') {
+      const minSpend = 100000;
+      if (baseTicketPrice < minSpend) {
+        toast.warning(`Mã ${cleanCode} yêu cầu đơn hàng tối thiểu ${minSpend.toLocaleString('vi-VN')} đ`, 'Chưa Đạt Đơn Tối Thiểu');
+        return;
+      }
       const discountValue = Math.min(80000, Math.round(baseTicketPrice * 0.15));
       setDiscount(discountValue);
       setAppliedCode(cleanCode);

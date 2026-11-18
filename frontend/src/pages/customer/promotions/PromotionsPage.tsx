@@ -15,11 +15,15 @@ import {
   ArrowRight,
   TrendingUp,
   Percent,
-  Loader2
+  Loader2,
+  Wallet,
+  BookmarkCheck,
+  CheckCircle2
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { CLOUDINARY_IMAGES } from '../../../constants/cloudinaryImages';
+import { VoucherWalletService } from '../../../services/voucherWalletService';
 
 // Banners mặc định lấy từ Cloudinary chính thức
 const DEFAULT_SLIDES: IBannerSlide[] = [
@@ -69,8 +73,20 @@ export const PromotionsPage: React.FC = () => {
   const [selectedVoucher, setSelectedVoucher] = useState<IVoucher | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Danh sách các mã voucher người dùng đang sở hữu trong ví
+  const [ownedCodes, setOwnedCodes] = useState<string[]>(() => VoucherWalletService.getOwnedVoucherCodes());
+
   // FAQ Accordion State
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  // Lắng nghe sự kiện đồng bộ Ví Voucher
+  useEffect(() => {
+    const handleWalletUpdated = () => {
+      setOwnedCodes(VoucherWalletService.getOwnedVoucherCodes());
+    };
+    window.addEventListener('traveleasy_wallet_updated', handleWalletUpdated);
+    return () => window.removeEventListener('traveleasy_wallet_updated', handleWalletUpdated);
+  }, []);
 
   // Fetch real Banners & Vouchers from Supabase
   useEffect(() => {
@@ -135,6 +151,10 @@ export const PromotionsPage: React.FC = () => {
               ? [`${v.applicableOrigin} ➔ ${v.applicableDestination}`]
               : ['Toàn bộ các tuyến xe trên hệ thống TravelEasy'];
 
+            const expiryFormatted = v.endDate ? new Date(v.endDate).toLocaleDateString('vi-VN') : '31/12/2026';
+            const isExpired = VoucherWalletService.isExpired(expiryFormatted);
+            const isOutOfStock = v.usageLimit ? (v.usedCount || 0) >= v.usageLimit : false;
+
             return {
               id: `v-${v.id}`,
               code: v.code,
@@ -147,7 +167,7 @@ export const PromotionsPage: React.FC = () => {
               category: catType,
               categoryLabel: catLabel,
               badge: badge,
-              expiryDate: v.endDate ? new Date(v.endDate).toLocaleDateString('vi-VN') : '30/11/2026',
+              expiryDate: expiryFormatted,
               totalQuantity: v.usageLimit || 1000,
               usedQuantity: v.usedCount || 0,
               applicableRoutes: routes,
@@ -163,6 +183,8 @@ export const PromotionsPage: React.FC = () => {
                 origin: v.applicableOrigin,
                 destination: v.applicableDestination,
               } : undefined,
+              isExpired,
+              isOutOfStock,
             };
           });
 
@@ -177,21 +199,37 @@ export const PromotionsPage: React.FC = () => {
       });
   }, []);
 
-  // Filtered Vouchers
+  // Filtered Vouchers (Bao gồm cả Tab VÍ VOUCHER CỦA TÔI)
   const filteredVouchers = useMemo(() => {
+    if (activeTab === 'MY_WALLET') {
+      return vouchers.filter((v) => ownedCodes.includes(v.code.toUpperCase()));
+    }
     if (activeTab === 'ALL') return vouchers;
     return vouchers.filter((v) => v.category === activeTab);
-  }, [activeTab, vouchers]);
+  }, [activeTab, vouchers, ownedCodes]);
+
+  // Số lượng voucher đang sở hữu
+  const ownedVoucherCount = useMemo(() => {
+    return vouchers.filter((v) => ownedCodes.includes(v.code.toUpperCase())).length;
+  }, [vouchers, ownedCodes]);
 
   // Handle Testing Voucher Code in the search bar
   const handleTestCode = (code: string) => {
     const clean = code.trim().toUpperCase();
     const found = vouchers.find((v) => v.code.toUpperCase() === clean);
     if (found) {
+      const isExpired = VoucherWalletService.isExpired(found.expiryDate);
+      if (isExpired) {
+        return {
+          valid: false,
+          voucher: found,
+          message: `Mã ưu đãi [${found.code}] đã hết hạn sử dụng (${found.expiryDate}).`,
+        };
+      }
       return {
         valid: true,
         voucher: found,
-        message: `Mã ưu đãi [${found.code}] hợp lệ! Mức giảm: ${found.badge}. Áp dụng cho: ${found.applicableRoutes.join(', ')}.`,
+        message: `Mã ưu đãi [${found.code}] hợp lệ! Mức giảm: ${found.badge}. Đơn tối thiểu: ${found.minSpend.toLocaleString('vi-VN')}đ.`,
       };
     }
     return {
@@ -200,9 +238,47 @@ export const PromotionsPage: React.FC = () => {
     };
   };
 
-  // Điều hướng người dùng đi Săn Khuyến Mại
+  // Thêm voucher vào Ví của người dùng (Claim Voucher)
+  const handleClaimVoucher = (voucher: IVoucher) => {
+    if (VoucherWalletService.isExpired(voucher.expiryDate)) {
+      toast.warning(`Mã ưu đãi [${voucher.code}] đã hết hạn sử dụng!`, 'Không Thể Thêm');
+      return;
+    }
+    if (voucher.totalQuantity > 0 && voucher.usedQuantity >= voucher.totalQuantity) {
+      toast.warning(`Mã ưu đãi [${voucher.code}] đã hết lượt áp dụng!`, 'Không Thể Thêm');
+      return;
+    }
+
+    const success = VoucherWalletService.claimVoucher(voucher.code);
+    if (success) {
+      setOwnedCodes(VoucherWalletService.getOwnedVoucherCodes());
+      toast.success(
+        `Đã lưu mã [${voucher.code}] vào Ví Voucher của bạn! Bấm "Dùng ngay" khi đặt vé để được giảm giá.`,
+        'Thêm Voucher Thành Công'
+      );
+    } else {
+      toast.info(`Mã [${voucher.code}] đã có sẵn trong ví voucher của bạn!`, 'Ví Voucher');
+    }
+  };
+
+  // Điều hướng người dùng đi Săn Khuyến Mại & Áp Dụng Voucher
   const handleUseVoucher = (voucher: IVoucher) => {
-    toast.success(`Đã chọn mã ưu đãi [${voucher.code}]! Đang chuyển đến danh sách chuyến xe phù hợp...`, 'Săn Khuyến Mại');
+    // 1. Kiểm tra tính hợp lệ & còn hạn
+    if (VoucherWalletService.isExpired(voucher.expiryDate)) {
+      toast.error(`Mã ưu đãi [${voucher.code}] đã hết hạn sử dụng (${voucher.expiryDate})! Không thể áp dụng.`, 'Voucher Hết Hạn');
+      return;
+    }
+
+    if (voucher.totalQuantity > 0 && voucher.usedQuantity >= voucher.totalQuantity) {
+      toast.error(`Mã ưu đãi [${voucher.code}] đã hết lượt áp dụng trên hệ thống!`, 'Voucher Hết Lượt');
+      return;
+    }
+
+    // Tự động thêm vào ví nếu chưa có để đồng bộ
+    VoucherWalletService.claimVoucher(voucher.code);
+    setOwnedCodes(VoucherWalletService.getOwnedVoucherCodes());
+
+    toast.success(`Đã chọn mã ưu đãi [${voucher.code}]! Đang chuyển đến danh sách chuyến xe phù hợp...`, 'Đặt Vé Áp Dụng Ngay');
     
     // Lưu vào sessionStorage để bước thanh toán tự động prefill
     try {
@@ -225,6 +301,8 @@ export const PromotionsPage: React.FC = () => {
     if (voucher) {
       handleUseVoucher(voucher);
     } else {
+      VoucherWalletService.claimVoucher(code);
+      setOwnedCodes(VoucherWalletService.getOwnedVoucherCodes());
       toast.success(`Đã kích hoạt ưu đãi mã [${code}]!`, 'Áp Dụng Thành Công');
       navigate(`/search?voucher=${code}`);
     }
@@ -233,8 +311,12 @@ export const PromotionsPage: React.FC = () => {
   // FAQs Data
   const faqs = [
     {
-      q: 'Làm thế nào để săn và áp dụng mã giảm giá khi đặt vé xe?',
-      a: 'Bạn chỉ cần chọn mã voucher yêu thích tại trang Khuyến Mại và bấm "Dùng ngay" hoặc "Sao chép mã". Tại bước Thanh Toán (Checkout), hệ thống sẽ tự động trừ trực tiếp số tiền ưu đãi vào tổng thanh toán.',
+      q: 'Làm thế nào để thu thập voucher vào Ví Voucher cá nhân?',
+      a: 'Bạn chỉ cần tìm voucher mong muốn tại trang Khuyến Mại và bấm nút "Thêm Voucher". Voucher sẽ được lưu ngay vào Ví Voucher của bạn để sử dụng bất cứ lúc nào khi đặt vé.',
+    },
+    {
+      q: 'Làm thế nào để sử dụng mã giảm giá khi đặt vé xe?',
+      a: 'Sau khi đã lưu voucher vào ví, bạn chỉ cần bấm nút "Dùng Ngay" để hệ thống tự động lọc các chuyến xe phù hợp. Tại bước Thanh Toán (Checkout), hệ thống sẽ tự động trừ trực tiếp số tiền ưu đãi vào tổng thanh toán.',
     },
     {
       q: 'Tôi có thể dùng cùng lúc nhiều voucher cho một đơn hàng không?',
@@ -269,16 +351,19 @@ export const PromotionsPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Live Count Pill */}
-            <div className="flex items-center gap-2 bg-slate-800/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-700/80 text-xs text-slate-200">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-              <span>
-                Đã có{' '}
-                <strong className="text-white font-black text-sm">
-                  {vouchers.reduce((acc, v) => acc + (v.usedQuantity || 0), 0).toLocaleString('vi-VN')}
-                </strong>{' '}
-                lượt áp mã thành công
-              </span>
+            {/* Wallet Quick Access Pill */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('MY_WALLET')}
+                className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2 rounded-2xl shadow-lg border border-emerald-400/40 text-xs font-black transition-all active:scale-95"
+              >
+                <Wallet size={15} />
+                <span>Ví Voucher Của Tôi:</span>
+                <span className="bg-white text-emerald-800 px-2 py-0.5 rounded-full text-[11px] font-black">
+                  {ownedVoucherCount} mã
+                </span>
+              </button>
             </div>
           </div>
 
@@ -294,6 +379,7 @@ export const PromotionsPage: React.FC = () => {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           vouchers={vouchers}
+          ownedCodes={ownedCodes}
           onTestCode={handleTestCode}
           onApplyTestedVoucher={handleUseVoucher}
         />
@@ -302,7 +388,11 @@ export const PromotionsPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500 px-1">
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-700">
-              {isLoading ? 'Đang tải voucher...' : `Tìm thấy ${filteredVouchers.length} ưu đãi khả dụng:`}
+              {isLoading
+                ? 'Đang tải voucher...'
+                : activeTab === 'MY_WALLET'
+                ? `Ví của bạn có ${filteredVouchers.length} ưu đãi đã lưu:`
+                : `Tìm thấy ${filteredVouchers.length} ưu đãi khả dụng:`}
             </span>
             <span className="inline-flex items-center gap-1 text-emerald-600 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
               <ShieldCheck size={12} /> Cập nhật trực tiếp từ CSDL hệ thống
@@ -311,7 +401,11 @@ export const PromotionsPage: React.FC = () => {
 
           <div className="flex items-center gap-2 text-slate-400 text-[11px]">
             <Sparkles size={13} className="text-amber-500" />
-            <span>Mẹo: Nhấn "Dùng ngay" để được tự động áp mã vào chuyến đi phù hợp</span>
+            <span>
+              {activeTab === 'MY_WALLET'
+                ? 'Nhấn "Dùng ngay" trên voucher để áp dụng trực tiếp vào chuyến xe phù hợp'
+                : 'Nhấn "Thêm Voucher" để gom mã vào ví hoặc "Dùng ngay" để đi thẳng tới đặt vé'}
+            </span>
           </div>
         </div>
 
@@ -322,31 +416,58 @@ export const PromotionsPage: React.FC = () => {
             <div className="font-bold text-slate-700">Đang tải mã giảm giá từ database Supabase...</div>
           </div>
         ) : filteredVouchers.length === 0 ? (
-          <div className="py-16 text-center bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
-            <div className="w-14 h-14 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Percent size={28} />
+          activeTab === 'MY_WALLET' ? (
+            /* Empty State chuyên biệt cho Ví Voucher của tôi */
+            <div className="py-16 text-center bg-white rounded-3xl border border-slate-200 p-8 shadow-sm max-w-lg mx-auto">
+              <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-amber-200">
+                <Wallet size={32} />
+              </div>
+              <h4 className="font-extrabold text-slate-900 text-lg mb-1">Ví Voucher Của Bạn Đang Trống</h4>
+              <p className="text-xs text-slate-500 leading-relaxed mb-5 max-w-md mx-auto">
+                Bạn chưa lưu voucher nào vào ví cá nhân. Hãy khám phá các ưu đãi đặc quyền trên hệ thống và nhấn <strong className="text-orange-600">"Thêm Voucher"</strong> để lưu lại dùng dần khi đặt vé xe nhé!
+              </p>
+              <button
+                type="button"
+                onClick={() => setActiveTab('ALL')}
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl text-xs font-black shadow-md transition-all active:scale-95"
+              >
+                Khám Phá Ưu Đãi Ngay <ArrowRight size={14} />
+              </button>
             </div>
-            <h4 className="font-bold text-slate-800 text-base mb-1">Không có voucher trong mục này</h4>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
-              Các chương trình ưu đãi mới đang được cập nhật. Bạn vui lòng chọn tab "Tất cả" để khám phá thêm voucher khác.
-            </p>
-            <button
-              onClick={() => setActiveTab('ALL')}
-              className="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors"
-            >
-              Xem Tất Cả Voucher
-            </button>
-          </div>
+          ) : (
+            /* Empty State khi danh mục không có voucher */
+            <div className="py-16 text-center bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+              <div className="w-14 h-14 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Percent size={28} />
+              </div>
+              <h4 className="font-bold text-slate-800 text-base mb-1">Không có voucher trong mục này</h4>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
+                Các chương trình ưu đãi mới đang được cập nhật. Bạn vui lòng chọn tab "Tất cả ưu đãi" để khám phá thêm voucher khác.
+              </p>
+              <button
+                type="button"
+                onClick={() => setActiveTab('ALL')}
+                className="px-5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors"
+              >
+                Xem Tất Cả Voucher
+              </button>
+            </div>
+          )
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredVouchers.map((voucher) => (
-              <VoucherCard
-                key={voucher.id}
-                voucher={voucher}
-                onSelectDetail={setSelectedVoucher}
-                onUseNow={handleUseVoucher}
-              />
-            ))}
+            {filteredVouchers.map((voucher) => {
+              const isOwned = ownedCodes.includes(voucher.code.toUpperCase());
+              return (
+                <VoucherCard
+                  key={voucher.id}
+                  voucher={voucher}
+                  isOwned={isOwned}
+                  onSelectDetail={setSelectedVoucher}
+                  onUseNow={handleUseVoucher}
+                  onClaimVoucher={handleClaimVoucher}
+                />
+              );
+            })}
           </div>
         )}
 
@@ -355,7 +476,7 @@ export const PromotionsPage: React.FC = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center space-y-2 mb-8">
               <span className="text-xs font-black tracking-wider text-orange-400 uppercase">HƯỚNG DẪN 3 BƯỚC ĐƠN GIẢN</span>
-              <h3 className="text-xl md:text-2xl font-black text-white">Cách Săn & Áp Dụng Mã Giảm Giá Thành Công 100%</h3>
+              <h3 className="text-xl md:text-2xl font-black text-white">Cách Săn, Lưu & Áp Dụng Mã Giảm Giá Thành Công 100%</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -364,9 +485,9 @@ export const PromotionsPage: React.FC = () => {
                 <div className="w-8 h-8 rounded-xl bg-orange-500 text-white font-black flex items-center justify-center text-sm mb-3">
                   1
                 </div>
-                <h4 className="font-bold text-sm text-white mb-1">Chọn Mã Phù Hợp</h4>
+                <h4 className="font-bold text-sm text-white mb-1">Thu Thập Vào Ví</h4>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Lựa chọn ưu đãi theo nhu cầu: Khách mới, Tuyến đường hot hoặc Thanh toán trực tuyến PayOS / VietQR.
+                  Lựa chọn mã ưu đãi phù hợp và nhấn "Thêm Voucher" để lưu vào Ví Voucher cá nhân của bạn.
                 </p>
               </div>
 
@@ -377,7 +498,7 @@ export const PromotionsPage: React.FC = () => {
                 </div>
                 <h4 className="font-bold text-sm text-white mb-1">Bấm "Dùng Ngay"</h4>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Hệ thống tự động chuyển bạn đến danh sách chuyến xe tương ứng và áp sẵn mã voucher vào bộ nhớ tạm.
+                  Hệ thống tự động chuyển bạn đến danh sách chuyến xe tương ứng và áp sẵn mã voucher hợp lệ vào bộ nhớ tạm.
                 </p>
               </div>
 
@@ -411,6 +532,7 @@ export const PromotionsPage: React.FC = () => {
                   className="border border-slate-200 rounded-2xl overflow-hidden transition-colors"
                 >
                   <button
+                    type="button"
                     onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
                     className="w-full p-4 text-left font-bold text-xs md:text-sm text-slate-800 flex items-center justify-between hover:bg-slate-50 transition-colors"
                   >
@@ -433,9 +555,12 @@ export const PromotionsPage: React.FC = () => {
       {/* 5. VOUCHER DETAIL MODAL / DRAWER */}
       <VoucherDetailModal
         voucher={selectedVoucher}
+        isOwned={selectedVoucher ? ownedCodes.includes(selectedVoucher.code.toUpperCase()) : false}
         onClose={() => setSelectedVoucher(null)}
         onUseNow={handleUseVoucher}
+        onClaimVoucher={handleClaimVoucher}
       />
     </div>
   );
 };
+export default PromotionsPage;
