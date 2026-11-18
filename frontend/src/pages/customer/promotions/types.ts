@@ -1,4 +1,4 @@
-export type FilterType = 'ALL' | 'NEW_USER' | 'HOT_ROUTE' | 'ONLINE_PAYMENT';
+export type FilterType = 'ALL' | 'MY_WALLET' | 'NEW_USER' | 'HOT_ROUTE' | 'ONLINE_PAYMENT';
 
 export type DiscountType = 'FIXED' | 'PERCENT';
 
@@ -24,6 +24,9 @@ export interface IVoucher {
     origin?: string;
     destination?: string;
   };
+  isOwned?: boolean;
+  isExpired?: boolean;
+  isOutOfStock?: boolean;
 }
 
 export interface IBannerSlide {
@@ -38,4 +41,3 @@ export interface IBannerSlide {
   gradient: string;
   actionText: string;
 }
-

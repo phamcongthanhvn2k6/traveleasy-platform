@@ -1,22 +1,31 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, ArrowRight, ShieldCheck, Tag, Calendar, MapPin, CreditCard, AlertCircle } from 'lucide-react';
+import { X, Copy, Check, ArrowRight, ShieldCheck, Tag, Calendar, MapPin, CreditCard, AlertCircle, BookmarkPlus, CheckCircle2 } from 'lucide-react';
 import { IVoucher } from '../types';
 import { toast } from '../../../../context/ToastContext';
+import { VoucherWalletService } from '../../../../services/voucherWalletService';
 
 interface VoucherDetailModalProps {
   voucher: IVoucher | null;
+  isOwned?: boolean;
   onClose: () => void;
   onUseNow: (voucher: IVoucher) => void;
+  onClaimVoucher?: (voucher: IVoucher) => void;
 }
 
 export const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
   voucher,
+  isOwned = false,
   onClose,
   onUseNow,
+  onClaimVoucher,
 }) => {
   const [copied, setCopied] = useState(false);
 
   if (!voucher) return null;
+
+  const isExpired = voucher.isExpired || VoucherWalletService.isExpired(voucher.expiryDate);
+  const isOutOfStock = voucher.isOutOfStock || (voucher.totalQuantity > 0 && voucher.usedQuantity >= voucher.totalQuantity);
+  const isUnavailable = isExpired || isOutOfStock;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(voucher.code);
@@ -38,23 +47,37 @@ export const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header with Colorful Gradient Accent */}
-        <div className="relative bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 p-6 text-white shrink-0">
+        <div className={`relative p-6 text-white shrink-0 ${
+          isUnavailable
+            ? 'bg-gradient-to-r from-slate-600 to-slate-800'
+            : isOwned
+            ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700'
+            : 'bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600'
+        }`}>
           <button
+            type="button"
             onClick={onClose}
             className="absolute right-4 top-4 w-8 h-8 rounded-full bg-black/20 hover:bg-black/30 text-white flex items-center justify-center transition-colors"
           >
             <X size={18} />
           </button>
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase bg-white/20 backdrop-blur-sm mb-2">
-            <Tag size={12} /> {voucher.categoryLabel}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase bg-white/20 backdrop-blur-sm">
+              <Tag size={12} /> {voucher.categoryLabel}
+            </span>
+            {isOwned && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-black uppercase bg-white text-emerald-700 shadow-sm">
+                <CheckCircle2 size={12} /> Đã có trong ví của bạn
+              </span>
+            )}
           </div>
 
           <h3 className="text-xl font-black text-white leading-tight mb-1">
             {voucher.title}
           </h3>
 
-          <p className="text-xs text-amber-100 font-medium">
+          <p className="text-xs text-white/90 font-medium">
             {voucher.description}
           </p>
 
@@ -75,18 +98,20 @@ export const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
           {/* Validity & Usage Info */}
           <div className="grid grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80">
             <div className="flex items-center gap-2">
-              <Calendar size={16} className="text-orange-500 shrink-0" />
+              <Calendar size={16} className={isExpired ? 'text-rose-500' : 'text-orange-500'} />
               <div>
                 <div className="text-[10px] text-slate-400 font-bold uppercase">Hạn Sử Dụng</div>
-                <div className="font-extrabold text-slate-900">{voucher.expiryDate}</div>
+                <div className={`font-extrabold ${isExpired ? 'text-rose-600' : 'text-slate-900'}`}>
+                  {voucher.expiryDate} {isExpired ? '(Đã hết hạn)' : ''}
+                </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <ShieldCheck size={16} className="text-emerald-500 shrink-0" />
+              <ShieldCheck size={16} className={isOutOfStock ? 'text-rose-500' : 'text-emerald-500'} />
               <div>
                 <div className="text-[10px] text-slate-400 font-bold uppercase">Lượt Sử Dụng</div>
-                <div className="font-extrabold text-slate-900">
+                <div className={`font-extrabold ${isOutOfStock ? 'text-rose-600' : 'text-slate-900'}`}>
                   {voucher.usedQuantity} / {voucher.totalQuantity} lượt
                 </div>
               </div>
@@ -144,12 +169,13 @@ export const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
         <div className="p-4 md:p-5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">
           {/* Copy Button */}
           <button
+            type="button"
             onClick={handleCopy}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 font-bold text-slate-800 text-xs md:text-sm transition-all"
           >
             {copied ? (
               <>
-                <Check size={16} className="text-emerald-600" /> Đã Sao Chép Mã
+                <Check size={16} className="text-emerald-600" /> Đã Sao Chép
               </>
             ) : (
               <>
@@ -158,19 +184,39 @@ export const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
             )}
           </button>
 
-          {/* Use Now Button */}
-          <button
-            onClick={() => {
-              onClose();
-              onUseNow(voucher);
-            }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-black bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs md:text-sm shadow-md hover:shadow-orange-500/25 transition-all"
-          >
-            Đặt Vé Áp Dụng Ngay <ArrowRight size={16} />
-          </button>
+          {/* Primary Action Button */}
+          {isUnavailable ? (
+            <button
+              type="button"
+              disabled
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold bg-slate-200 text-slate-400 text-xs md:text-sm cursor-not-allowed"
+            >
+              {isExpired ? 'Ưu Đãi Đã Hết Hạn' : 'Ưu Đãi Đã Hết Lượt'}
+            </button>
+          ) : isOwned ? (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onUseNow(voucher);
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-black bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-xs md:text-sm shadow-md hover:shadow-orange-500/25 transition-all"
+            >
+              Đặt Vé Áp Dụng Ngay <ArrowRight size={16} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                onClaimVoucher?.(voucher);
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-black border-2 border-orange-500 bg-orange-500 hover:bg-orange-600 text-white text-xs md:text-sm shadow-md hover:shadow-orange-500/25 transition-all"
+            >
+              <BookmarkPlus size={16} /> Thêm Vào Ví Của Tôi
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 };
-
