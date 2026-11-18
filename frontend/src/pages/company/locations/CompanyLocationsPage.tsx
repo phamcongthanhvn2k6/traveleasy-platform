@@ -3,6 +3,7 @@ import { MapPin, Search, Plus, Edit2, Trash2, Building2, X, CheckCircle, Refresh
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { getStoredCompany } from '../../../utils/companyHelper';
+import { TableSkeleton } from '../../../components/common/Skeleton';
 
 interface CompanyLocationItem {
   id: string | number;
@@ -27,9 +28,18 @@ interface MasterLocation {
 export const CompanyLocationsPage: React.FC = () => {
   const currentCompany = getStoredCompany();
   const [search, setSearch] = useState('');
-  const [locations, setLocations] = useState<CompanyLocationItem[]>([]);
+  const cacheKey = `company_locations_cache_${currentCompany?.id || 'default'}`;
+  const [locations, setLocations] = useState<CompanyLocationItem[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_locations_cache_${currentCompany?.id || 'default'}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
   const [masterLocations, setMasterLocations] = useState<MasterLocation[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => {
+    try { return !sessionStorage.getItem(`company_locations_cache_${currentCompany?.id || 'default'}`); } catch { return true; }
+  });
 
   // Modal: Gán địa điểm mới
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -69,6 +79,7 @@ export const CompanyLocationsPage: React.FC = () => {
   };
 
   const loadLocations = async () => {
+    if (locations.length === 0) setLoading(true);
     try {
       const res = await api.get('/company/locations');
       if (res.data?.data && Array.isArray(res.data.data)) {
@@ -83,10 +94,13 @@ export const CompanyLocationsPage: React.FC = () => {
           pickupGuide: 'Đến quầy vé TravelEasy trước giờ xuất bến 30 phút.',
         }));
         setLocations(mapped);
+        try { sessionStorage.setItem(cacheKey, JSON.stringify(mapped)); } catch (e) {}
       }
     } catch (err) {
       console.error('Could not load company locations:', err);
       setLocations([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -367,17 +381,20 @@ export const CompanyLocationsPage: React.FC = () => {
               <th style={{ padding: '12px 18px', width: '100px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={5} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>
-                  Không tìm thấy địa điểm nào phù hợp.
-                </td>
-              </tr>
-            ) : (
-              filtered.map((item) => (
-                <tr
-                  key={item.id}
+          {loading && locations.length === 0 ? (
+            <TableSkeleton rows={5} columns={5} />
+          ) : (
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>
+                    Không tìm thấy địa điểm nào phù hợp.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((item) => (
+                  <tr
+                    key={item.id}
                   style={{
                     borderBottom: '1px solid #f1f5f9',
                     transition: 'background-color 0.1s ease',
@@ -460,6 +477,7 @@ export const CompanyLocationsPage: React.FC = () => {
               ))
             )}
           </tbody>
+        )}
         </table>
       </div>
 

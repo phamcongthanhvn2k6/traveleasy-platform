@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
+import { TableSkeleton } from '../../../components/common/Skeleton';
 
 export interface ShuttleItem {
   id: number | string;
@@ -84,8 +85,16 @@ const DEFAULT_SAMPLE_SHUTTLES: ShuttleItem[] = [
 ];
 
 export const ShuttleManagementPage: React.FC = () => {
-  const [requests, setRequests] = useState<ShuttleItem[]>(DEFAULT_SAMPLE_SHUTTLES);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [requests, setRequests] = useState<ShuttleItem[]>(() => {
+    try {
+      const cached = sessionStorage.getItem('company_shuttles_cache');
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return DEFAULT_SAMPLE_SHUTTLES;
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    try { return !sessionStorage.getItem('company_shuttles_cache'); } catch { return false; }
+  });
 
   // Bộ lọc
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -128,9 +137,11 @@ export const ShuttleManagementPage: React.FC = () => {
       if (res.data && res.data.success && Array.isArray(res.data.data)) {
         if (res.data.data.length > 0) {
           setRequests(res.data.data);
+          try { sessionStorage.setItem('company_shuttles_cache', JSON.stringify(res.data.data)); } catch (e) {}
         } else if (selectedTrip === 'ALL' && selectedTimeSlot === 'ALL' && selectedStatus === 'ALL') {
           // Nếu danh sách rỗng, dùng mẫu mặc định để người dùng tương tác
           setRequests(DEFAULT_SAMPLE_SHUTTLES);
+          try { sessionStorage.setItem('company_shuttles_cache', JSON.stringify(DEFAULT_SAMPLE_SHUTTLES)); } catch (e) {}
         } else {
           setRequests([]);
         }
@@ -425,7 +436,10 @@ export const ShuttleManagementPage: React.FC = () => {
                 <th className="py-3 px-4 text-right">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+            {loading && requests.length === 0 ? (
+              <TableSkeleton rows={5} columns={7} />
+            ) : (
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {filteredRequests.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-10 text-slate-400">
@@ -534,6 +548,7 @@ export const ShuttleManagementPage: React.FC = () => {
                 ))
               )}
             </tbody>
+          )}
           </table>
         </div>
       </div>

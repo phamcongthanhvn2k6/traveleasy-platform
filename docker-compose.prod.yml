@@ -13,7 +13,7 @@ services:
       SUPABASE_DB_USERNAME: postgres.ctvcwhdepzyvqsncbslf
       SUPABASE_DB_PASSWORD: thanhtyou123@
       JWT_SECRET: TravelEasyDevSecretKeyForLocalDevelopmentOnlyDoNotUseInProduction2026
-      APP_FRONTEND_URL: http://103.72.57.149
+      APP_FRONTEND_URL: https://traveleasy-app.phamcongt56.workers.dev
       SPRING_MAIL_HOST: smtp.gmail.com
       SPRING_MAIL_PORT: 587
       SPRING_MAIL_USERNAME: phamcongt56@gmail.com

@@ -28,8 +28,12 @@ public class AdminTripController {
 
     @GetMapping("/trips")
     @Operation(summary = "Lấy toàn bộ danh sách chuyến xe trên sàn cho Quản trị viên")
-    public ApiResponse<List<TripResponse>> getAllTrips() {
-        return ApiResponse.success(adminTripService.getAllTrips());
+    public ApiResponse<List<TripResponse>> getAllTrips(@RequestParam(required = false) Integer limit) {
+        List<TripResponse> all = adminTripService.getAllTrips();
+        if (limit != null && limit > 0 && all.size() > limit) {
+            return ApiResponse.success(all.subList(0, limit));
+        }
+        return ApiResponse.success(all);
     }
 
     @GetMapping("/bookings")

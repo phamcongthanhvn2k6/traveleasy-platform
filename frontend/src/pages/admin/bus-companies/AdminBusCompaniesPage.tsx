@@ -1047,13 +1047,17 @@ export const AdminBusCompaniesPage: React.FC = () => {
                                   color: c.status === 'PENDING' || c.status === 'PENDING_SUPPLEMENT' ? '#ffffff' : '#334155',
                                   border: c.status === 'PENDING' || c.status === 'PENDING_SUPPLEMENT' ? '1px solid #1d4ed8' : '1px solid #cbd5e1',
                                   borderRadius: '6px',
-                                  padding: '6px 12px',
+                                  padding: '6px 10px',
                                   fontSize: '12px',
                                   fontWeight: 700,
                                   cursor: 'pointer',
                                   display: 'inline-flex',
                                   alignItems: 'center',
+                                  justifyContent: 'center',
                                   gap: '4px',
+                                  width: '120px',
+                                  height: '31px',
+                                  boxSizing: 'border-box',
                                   boxShadow: c.status === 'PENDING' ? '0 2px 4px rgba(37,99,235,0.25)' : 'none',
                                 }}
                               >
@@ -1073,12 +1077,18 @@ export const AdminBusCompaniesPage: React.FC = () => {
                                   padding: '6px 9px',
                                   fontSize: '12px',
                                   cursor: 'pointer',
+                                  width: '31px',
+                                  height: '31px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  boxSizing: 'border-box',
                                 }}
                               >
                                 <Edit2 size={13} />
                               </button>
 
-                              {/* Ngưng hoặc mở lại */}
+                              {/* Ngưng hoặc mở lại (hoặc placeholder để các nút luôn thẳng hàng) */}
                               {c.status === 'ACTIVE' ? (
                                 <button
                                   onClick={() => toggleCompanyStatus(c.id)}
@@ -1091,6 +1101,12 @@ export const AdminBusCompaniesPage: React.FC = () => {
                                     padding: '6px 9px',
                                     fontSize: '12px',
                                     cursor: 'pointer',
+                                    width: '31px',
+                                    height: '31px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxSizing: 'border-box',
                                   }}
                                 >
                                   <Ban size={13} />
@@ -1107,11 +1123,26 @@ export const AdminBusCompaniesPage: React.FC = () => {
                                     padding: '6px 9px',
                                     fontSize: '12px',
                                     cursor: 'pointer',
+                                    width: '31px',
+                                    height: '31px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    boxSizing: 'border-box',
                                   }}
                                 >
                                   <Check size={13} />
                                 </button>
-                              ) : null}
+                              ) : (
+                                <div
+                                  style={{
+                                    width: '31px',
+                                    height: '31px',
+                                    display: 'inline-block',
+                                    boxSizing: 'border-box',
+                                  }}
+                                />
+                              )}
 
                               {/* Xóa mềm */}
                               <button
@@ -1125,6 +1156,12 @@ export const AdminBusCompaniesPage: React.FC = () => {
                                   padding: '6px 9px',
                                   fontSize: '12px',
                                   cursor: 'pointer',
+                                  width: '31px',
+                                  height: '31px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  boxSizing: 'border-box',
                                 }}
                               >
                                 <Trash2 size={13} />

@@ -3,6 +3,7 @@ import { Plus, Shield, Edit2, Trash2, CheckCircle, X, Info, Lock, ShieldCheck, R
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
 import { getStoredCompany } from '../../../utils/companyHelper';
+import { CardSkeleton } from '../../../components/common/Skeleton';
 
 export interface PolicyRule {
   condition: string;
@@ -22,12 +23,21 @@ export interface CancellationPolicy {
 }
 
 export const CompanyCancellationPoliciesPage: React.FC = () => {
-  const [policies, setPolicies] = useState<CancellationPolicy[]>([]);
-  const [loading, setLoading] = useState(true);
-
   // Nhận diện nhà xe đang đăng nhập từ tài khoản người dùng
   const companyInfo = getStoredCompany();
   const currentCompany = companyInfo.name;
+  const cacheKey = `company_policies_cache_${companyInfo?.id || 'default'}`;
+
+  const [policies, setPolicies] = useState<CancellationPolicy[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    try { return !sessionStorage.getItem(cacheKey); } catch { return true; }
+  });
 
   const isSystemCheck = (p: any) => {
     const bName = (p.busCompanyName || '').toLowerCase().trim();
@@ -82,6 +92,7 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
           };
         });
         setPolicies(mapped);
+        try { sessionStorage.setItem(cacheKey, JSON.stringify(mapped)); } catch (e) {}
       }
     } catch (err: any) {
       if (err?.response?.status === 401) return;
@@ -297,10 +308,8 @@ export const CompanyCancellationPoliciesPage: React.FC = () => {
       </div>
 
       {/* Loading state */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b' }}>
-          Đang tải danh sách chính sách hoàn hủy của {currentCompany}...
-        </div>
+      {loading && policies.length === 0 ? (
+        <CardSkeleton count={6} />
       ) : policies.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
           Chưa có chính sách hoàn hủy nào. Hãy nhấn <strong>"Tạo chính sách riêng"</strong> để bắt đầu.

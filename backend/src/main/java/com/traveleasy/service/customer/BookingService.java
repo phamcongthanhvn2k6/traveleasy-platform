@@ -38,6 +38,7 @@ public class BookingService {
     private final TripService tripService;
     private final SeatRealtimeService seatRealtimeService;
     private final com.traveleasy.service.company.DynamicPricingService dynamicPricingService;
+    private final com.traveleasy.service.common.NotificationService notificationService;
 
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = {"admin_all_bookings", "system_stats", "company_dashboard_stats", "trips_search"}, allEntries = true)
@@ -95,13 +96,20 @@ public class BookingService {
 
         boolean isPosChannel = isAuthorizedPos;
 
-        // BẢO VỆ NGHIỆP VỤ: Kênh online đóng bán trước giờ khởi hành 15 phút (Cut-off Booking Window)
-        if (!isPosChannel && trip.getDepartureTime() != null) {
-            LocalDateTime now = LocalDateTime.now();
-            long minutesUntilDeparture = java.time.Duration.between(now, trip.getDepartureTime()).toMinutes();
-            if (minutesUntilDeparture < 15 && minutesUntilDeparture >= 0) {
-                throw new AppException(ErrorCode.VALIDATION_ERROR,
-                        "Chuyến xe sắp khởi hành trong vòng " + minutesUntilDeparture + " phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, vui lòng mua vé trực tiếp tại quầy bến xe!");
+        // BẢO VỆ NGHIỆP VỤ: Kênh online đóng bán trước giờ khởi hành 15 phút (Cut-off Booking Window) hoặc khi chuyến đã xuất bến
+        if (!isPosChannel) {
+            if (trip.getStatus() != null && trip.getStatus() != TripStatus.SCHEDULED) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe này hiện không mở bán trực tuyến!");
+            }
+            if (trip.getDepartureTime() != null) {
+                LocalDateTime now = LocalDateTime.now();
+                long minutesUntilDeparture = java.time.Duration.between(now, trip.getDepartureTime()).toMinutes();
+                if (minutesUntilDeparture < 15) {
+                    throw new AppException(ErrorCode.VALIDATION_ERROR,
+                            minutesUntilDeparture < 0
+                                    ? "Chuyến xe đã khởi hành, không thể đặt vé trực tuyến!"
+                                    : "Chuyến xe sắp khởi hành trong vòng " + minutesUntilDeparture + " phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, vui lòng mua vé trực tiếp tại quầy bến xe!");
+                }
             }
         }
 
@@ -309,6 +317,26 @@ public class BookingService {
         List<String> bookedCodes = requestedSeats.stream().map(TripSeat::getSeatCode).collect(Collectors.toList());
         seatRealtimeService.broadcastBooked(trip.getId(), bookedCodes);
 
+        // Tự động lưu thông báo đặt vé thành công cho khách hàng
+        if (notificationService != null && user != null && user.getEmail() != null) {
+            try {
+                String origin = trip.getRoute() != null ? trip.getRoute().getDepartureLocation() : "";
+                String dest = trip.getRoute() != null ? trip.getRoute().getArrivalLocation() : "";
+                notificationService.createNotification(
+                        "BOOKING",
+                        "CUSTOMER",
+                        user.getEmail(),
+                        "🎟️ Đặt vé thành công - Mã đơn " + bookingCode,
+                        String.format("Đơn vé %s (%d vé, ghế: %s) tuyến %s đi %s đã được ghi nhận thành công.",
+                                bookingCode, requestedSeats.size(), String.join(", ", bookedCodes), origin, dest),
+                        "/lookup?code=" + bookingCode,
+                        "HIGH"
+                );
+            } catch (Exception e) {
+                log.warn("Không thể lưu thông báo đặt vé: {}", e.getMessage());
+            }
+        }
+
         return mapToBookingResponse(savedBooking, tickets);
     }
 
@@ -469,6 +497,26 @@ public class BookingService {
         // Broadcast thời gian thực ghế đã được giải phóng (Màu Trắng - AVAILABLE)
         seatRealtimeService.broadcastReleased(trip.getId(), seatCodes);
         seatRealtimeService.removeSeatHolders(trip.getId(), seatCodes);
+
+        // Tự động lưu thông báo hủy vé cho khách hàng
+        if (notificationService != null && booking.getUser() != null && booking.getUser().getEmail() != null) {
+            try {
+                String origin = trip.getRoute() != null ? trip.getRoute().getDepartureLocation() : "";
+                String dest = trip.getRoute() != null ? trip.getRoute().getArrivalLocation() : "";
+                notificationService.createNotification(
+                        "BOOKING",
+                        "CUSTOMER",
+                        booking.getUser().getEmail(),
+                        "🔄 Hủy vé thành công - Mã đơn " + booking.getBookingCode(),
+                        String.format("Đơn vé %s tuyến %s - %s đã được hủy thành công. Hệ thống đã giải phóng ghế %s.",
+                                booking.getBookingCode(), origin, dest, String.join(", ", seatCodes)),
+                        "/lookup?code=" + booking.getBookingCode(),
+                        "NORMAL"
+                );
+            } catch (Exception e) {
+                log.warn("Không thể lưu thông báo hủy vé: {}", e.getMessage());
+            }
+        }
 
         return mapToBookingResponse(booking, tickets);
     }
@@ -646,8 +694,30 @@ public class BookingService {
             }
         }
 
+        Set<Long> routeIds = bookings.stream()
+                .map(b -> b.getTrip() != null && b.getTrip().getRoute() != null ? b.getTrip().getRoute().getId() : null)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, List<PickupDropoffPoint>> routePointsMap = new HashMap<>();
+        if (!routeIds.isEmpty() && pointRepository != null) {
+            List<PickupDropoffPoint> allPoints = pointRepository.findByRouteIdInOrderByDisplayOrderAsc(routeIds);
+            for (PickupDropoffPoint p : allPoints) {
+                if (p.getRoute() != null && p.getRoute().getId() != null) {
+                    routePointsMap.computeIfAbsent(p.getRoute().getId(), k -> new ArrayList<>()).add(p);
+                }
+            }
+        }
+
         return bookings.stream()
-                .map(b -> mapToBookingResponse(b, ticketsByBooking.getOrDefault(b.getId(), Collections.emptyList())))
+                .map(b -> {
+                    Long rId = b.getTrip() != null && b.getTrip().getRoute() != null ? b.getTrip().getRoute().getId() : null;
+                    return mapToBookingResponse(
+                            b,
+                            ticketsByBooking.getOrDefault(b.getId(), Collections.emptyList()),
+                            routePointsMap.getOrDefault(rId, Collections.emptyList())
+                    );
+                })
                 .collect(Collectors.toList());
     }
 
@@ -667,8 +737,30 @@ public class BookingService {
             }
         }
 
+        Set<Long> routeIds = bookings.stream()
+                .map(b -> b.getTrip() != null && b.getTrip().getRoute() != null ? b.getTrip().getRoute().getId() : null)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, List<PickupDropoffPoint>> routePointsMap = new HashMap<>();
+        if (!routeIds.isEmpty() && pointRepository != null) {
+            List<PickupDropoffPoint> allPoints = pointRepository.findByRouteIdInOrderByDisplayOrderAsc(routeIds);
+            for (PickupDropoffPoint p : allPoints) {
+                if (p.getRoute() != null && p.getRoute().getId() != null) {
+                    routePointsMap.computeIfAbsent(p.getRoute().getId(), k -> new ArrayList<>()).add(p);
+                }
+            }
+        }
+
         return bookings.stream()
-                .map(b -> mapToBookingResponse(b, ticketsByBooking.getOrDefault(b.getId(), Collections.emptyList())))
+                .map(b -> {
+                    Long rId = b.getTrip() != null && b.getTrip().getRoute() != null ? b.getTrip().getRoute().getId() : null;
+                    return mapToBookingResponse(
+                            b,
+                            ticketsByBooking.getOrDefault(b.getId(), Collections.emptyList()),
+                            routePointsMap.getOrDefault(rId, Collections.emptyList())
+                    );
+                })
                 .collect(Collectors.toList());
     }
 

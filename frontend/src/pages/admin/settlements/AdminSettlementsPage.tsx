@@ -415,189 +415,199 @@ export const AdminSettlementsPage: React.FC = () => {
       {/* 4. Table */}
       <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto', width: '100%' }}>
-          <table style={{ width: '100%', minWidth: '1200px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+          <table style={{ width: '100%', minWidth: '980px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12.5px' }}>
             <thead>
               <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 700 }}>
-                <th style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>MÃ ĐỐI SOÁT & KỲ</th>
-                <th style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>ĐỐI TÁC NHÀ XE</th>
-                <th style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>TK NGÂN HÀNG THỤ HƯỞNG</th>
-                <th style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>SỐ VÉ BÁN</th>
-                <th style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>DOANH THU GỘP</th>
-                <th style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>HOA HỒNG SÀN</th>
-                <th style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>THỰC CHUYỂN NHÀ XE</th>
-                <th style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>TRẠNG THÁI</th>
-                <th style={{ padding: '13px 16px', textAlign: 'right', whiteSpace: 'nowrap' }}>THAO TÁC</th>
+                <th style={{ padding: '11px 12px', whiteSpace: 'nowrap' }}>ĐỐI TÁC & MÃ ĐỐI SOÁT</th>
+                <th style={{ padding: '11px 12px', whiteSpace: 'nowrap' }}>TK NGÂN HÀNG THỤ HƯỞNG</th>
+                <th style={{ padding: '11px 12px', whiteSpace: 'nowrap' }}>SỐ VÉ</th>
+                <th style={{ padding: '11px 12px', whiteSpace: 'nowrap' }}>DOANH THU GỘP</th>
+                <th style={{ padding: '11px 12px', whiteSpace: 'nowrap' }}>HOA HỒNG SÀN</th>
+                <th style={{ padding: '11px 12px', whiteSpace: 'nowrap' }}>THỰC CHUYỂN</th>
+                <th style={{ padding: '11px 12px', whiteSpace: 'nowrap' }}>TRẠNG THÁI</th>
+                <th style={{ padding: '11px 12px', textAlign: 'right', whiteSpace: 'nowrap' }}>THAO TÁC</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                  <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                     Đang nạp dữ liệu quyết toán từ CSDL...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                  <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
                     Không có bản ghi quyết toán nào phù hợp.
                   </td>
                 </tr>
               ) : (
-                filtered.map((s) => (
-                  <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>
-                      <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#1e3a8a', backgroundColor: '#eff6ff', padding: '2px 7px', borderRadius: '5px', border: '1px solid #bfdbfe' }}>
-                        {s.code}
-                      </span>
-                      <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '3px' }}>{s.periodName}</div>
-                    </td>
+                filtered.map((s) => {
+                  const isZeroRevenue = (s.grossAmount ?? 0) === 0 && (s.ticketCount ?? 0) === 0;
+                  const isPaid = s.status === 'PAID';
+                  const isReconciled = s.status === 'RECONCILED';
+                  const isPending = s.status === 'PENDING' && !isZeroRevenue;
 
-                    <td style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>
-                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{s.companyName}</div>
-                      <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }}>
-                        Mã đối tác: #{s.companyId}
-                      </div>
-                    </td>
+                  return (
+                    <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '11px 12px', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '13px' }}>{s.companyName}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px', fontSize: '11px' }}>
+                          <span style={{ fontFamily: 'monospace', fontWeight: 800, color: '#1e3a8a', backgroundColor: '#eff6ff', padding: '1px 5px', borderRadius: '4px', border: '1px solid #bfdbfe' }}>
+                            {s.code}
+                          </span>
+                          <span style={{ color: '#64748b' }}>• #{s.companyId}</span>
+                          <span style={{ color: '#94a3b8' }}>• {s.periodName}</span>
+                        </div>
+                      </td>
 
-                    <td style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>
-                      <div style={{ fontWeight: 700, color: '#1e3a8a', fontFamily: 'monospace' }}>
-                        {s.bankAccount?.accountNumber}
-                      </div>
-                      <div style={{ fontSize: '11.5px', color: '#475569', marginTop: '2px' }}>
-                        {s.bankAccount?.bankName}
-                      </div>
-                    </td>
+                      <td style={{ padding: '11px 12px', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontWeight: 700, color: '#1e3a8a', fontFamily: 'monospace', fontSize: '12px' }}>
+                          {s.bankAccount?.accountNumber}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#475569', marginTop: '1px' }}>
+                          {s.bankAccount?.bankName}
+                        </div>
+                      </td>
 
-                    <td style={{ padding: '13px 16px', whiteSpace: 'nowrap', fontWeight: 600 }}>
-                      {s.ticketCount.toLocaleString('vi-VN')} vé
-                    </td>
+                      <td style={{ padding: '11px 12px', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                        {s.ticketCount.toLocaleString('vi-VN')} vé
+                      </td>
 
-                    <td style={{ padding: '13px 16px', whiteSpace: 'nowrap', fontWeight: 700 }}>
-                      {s.grossAmount.toLocaleString('vi-VN')} đ
-                    </td>
+                      <td style={{ padding: '11px 12px', whiteSpace: 'nowrap', fontWeight: 700 }}>
+                        {s.grossAmount.toLocaleString('vi-VN')} đ
+                      </td>
 
-                    <td style={{ padding: '13px 16px', whiteSpace: 'nowrap', color: '#16a34a', fontWeight: 700 }}>
-                      -{s.platformCommission.toLocaleString('vi-VN')} đ{' '}
-                      <span style={{ fontSize: '11px', color: '#64748b' }}>({s.commissionRate}%)</span>
-                    </td>
+                      <td style={{ padding: '11px 12px', whiteSpace: 'nowrap', color: isZeroRevenue ? '#64748b' : '#16a34a', fontWeight: 700 }}>
+                        {isZeroRevenue ? '0 đ' : `-${s.platformCommission.toLocaleString('vi-VN')} đ`}
+                        <span style={{ fontSize: '10.5px', color: '#64748b', marginLeft: '3px' }}>({s.commissionRate}%)</span>
+                      </td>
 
-                    <td style={{ padding: '13px 16px', whiteSpace: 'nowrap', fontWeight: 900, color: '#2563eb', fontSize: '14px' }}>
-                      {s.netPayable.toLocaleString('vi-VN')} đ
-                    </td>
+                      <td style={{ padding: '11px 12px', whiteSpace: 'nowrap', fontWeight: 800, color: isZeroRevenue ? '#64748b' : '#2563eb', fontSize: '13.5px' }}>
+                        {s.netPayable.toLocaleString('vi-VN')} đ
+                      </td>
 
-                    <td style={{ padding: '13px 16px', whiteSpace: 'nowrap' }}>
-                      <span
-                        style={{
-                          padding: '3px 8px',
-                          borderRadius: '6px',
-                          fontSize: '11.5px',
-                          fontWeight: 700,
-                          backgroundColor:
-                            s.status === 'PAID'
+                      <td style={{ padding: '11px 12px', whiteSpace: 'nowrap' }}>
+                        <span
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            backgroundColor: isPaid
                               ? '#f0fdf4'
-                              : s.status === 'RECONCILED'
+                              : isReconciled
                               ? '#eff6ff'
+                              : isZeroRevenue
+                              ? '#f8fafc'
                               : '#fffbeb',
-                          color:
-                            s.status === 'PAID'
+                            color: isPaid
                               ? '#16a34a'
-                              : s.status === 'RECONCILED'
+                              : isReconciled
                               ? '#2563eb'
+                              : isZeroRevenue
+                              ? '#64748b'
                               : '#d97706',
-                          border: `1px solid ${
-                            s.status === 'PAID'
-                              ? '#bbf7d0'
-                              : s.status === 'RECONCILED'
-                              ? '#bfdbfe'
-                              : '#fed7aa'
-                          }`,
-                        }}
-                      >
-                        {s.status === 'PAID' && '● ĐÃ GIẢI NGÂN'}
-                        {s.status === 'RECONCILED' && '⏳ CHỜ GIẢI NGÂN'}
-                        {s.status === 'PENDING' && '⚙️ ĐANG ĐỐI SOÁT'}
-                      </span>
-                    </td>
+                            border: `1px solid ${
+                              isPaid
+                                ? '#bbf7d0'
+                                : isReconciled
+                                ? '#bfdbfe'
+                                : isZeroRevenue
+                                ? '#e2e8f0'
+                                : '#fed7aa'
+                            }`,
+                          }}
+                        >
+                          {isPaid && '● ĐÃ GIẢI NGÂN'}
+                          {isReconciled && '⏳ CHỜ GIẢI NGÂN'}
+                          {isPending && '⚙️ ĐANG ĐỐI SOÁT'}
+                          {isZeroRevenue && '○ CHƯA PHÁT SINH'}
+                        </span>
+                      </td>
 
-                    <td style={{ padding: '13px 16px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                        {s.status === 'PENDING' && (
-                          <button
-                            onClick={() => handleReconcile(s)}
-                            style={{
-                              backgroundColor: '#eff6ff',
-                              color: '#2563eb',
-                              border: '1px solid #bfdbfe',
-                              padding: '5px 10px',
-                              borderRadius: '6px',
-                              fontSize: '11.5px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Chốt Đối Soát
-                          </button>
-                        )}
+                      <td style={{ padding: '11px 12px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                          {isPending && (
+                            <button
+                              onClick={() => handleReconcile(s)}
+                              style={{
+                                backgroundColor: '#eff6ff',
+                                color: '#2563eb',
+                                border: '1px solid #bfdbfe',
+                                padding: '5px 8px',
+                                borderRadius: '6px',
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Chốt Đối Soát
+                            </button>
+                          )}
 
-                        {s.status === 'RECONCILED' && (
-                          <button
-                            onClick={() => openPayoutModal(s)}
-                            style={{
-                              backgroundColor: '#16a34a',
-                              color: '#ffffff',
-                              border: 'none',
-                              padding: '5px 12px',
-                              borderRadius: '6px',
-                              fontSize: '11.5px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              boxShadow: '0 2px 4px rgba(22,163,74,0.25)',
-                            }}
-                          >
-                            <QrCode size={13} /> VietQR Payout
-                          </button>
-                        )}
+                          {isReconciled && (
+                            <button
+                              onClick={() => openPayoutModal(s)}
+                              style={{
+                                backgroundColor: '#16a34a',
+                                color: '#ffffff',
+                                border: 'none',
+                                padding: '5px 10px',
+                                borderRadius: '6px',
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                boxShadow: '0 2px 4px rgba(22,163,74,0.25)',
+                              }}
+                            >
+                              <QrCode size={13} /> VietQR Payout
+                            </button>
+                          )}
 
-                        {s.status === 'PAID' && (
+                          {isPaid && (
+                            <button
+                              onClick={() => setSelectedSettlement(s)}
+                              style={{
+                                backgroundColor: '#f8fafc',
+                                color: '#16a34a',
+                                border: '1px solid #bbf7d0',
+                                padding: '5px 8px',
+                                borderRadius: '6px',
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Biên Lai #{s.payoutTxHash?.slice(-6) || 'PAID'}
+                            </button>
+                          )}
+
                           <button
                             onClick={() => setSelectedSettlement(s)}
                             style={{
-                              backgroundColor: '#f8fafc',
-                              color: '#16a34a',
-                              border: '1px solid #bbf7d0',
-                              padding: '5px 9px',
+                              backgroundColor: '#ffffff',
+                              color: '#475569',
+                              border: '1px solid #cbd5e1',
+                              padding: '5px 8px',
                               borderRadius: '6px',
                               fontSize: '11.5px',
-                              fontWeight: 700,
+                              fontWeight: 600,
                               cursor: 'pointer',
                             }}
                           >
-                            Biên Lai #{s.payoutTxHash?.slice(-6) || 'PAID'}
+                            Chi Tiết
                           </button>
-                        )}
-
-                        <button
-                          onClick={() => setSelectedSettlement(s)}
-                          style={{
-                            backgroundColor: '#ffffff',
-                            color: '#475569',
-                            border: '1px solid #cbd5e1',
-                            padding: '5px 9px',
-                            borderRadius: '6px',
-                            fontSize: '11.5px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Chi Tiết
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

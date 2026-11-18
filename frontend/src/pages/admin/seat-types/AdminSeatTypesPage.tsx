@@ -258,7 +258,7 @@ export const AdminSeatTypesPage: React.FC = () => {
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>MÔ TẢ TIỆN ÍCH</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>HỆ SỐ GIÁ</th>
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px' }}>TRẠNG THÁI</th>
-              <th style={{ padding: '12px 18px', width: '190px', textAlign: 'right' }}>THAO TÁC</th>
+              <th style={{ padding: '12px 18px', width: '220px', minWidth: '190px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
           <tbody>
@@ -326,15 +326,19 @@ export const AdminSeatTypesPage: React.FC = () => {
                           backgroundColor: '#eff6ff',
                           color: '#2563eb',
                           border: '1px solid #bfdbfe',
-                          padding: '5px 10px',
+                          padding: '6px 14px',
                           borderRadius: '6px',
-                          fontSize: '11.5px',
+                          fontSize: '12px',
                           fontWeight: 700,
                           cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '4px',
+                          justifyContent: 'center',
+                          gap: '5px',
+                          height: '32px',
+                          whiteSpace: 'nowrap',
                           transition: 'all 0.15s ease',
+                          boxSizing: 'border-box'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.backgroundColor = '#dbeafe';
@@ -354,12 +358,18 @@ export const AdminSeatTypesPage: React.FC = () => {
                           backgroundColor: item.status === 'ACTIVE' ? '#fef2f2' : '#ecfdf5',
                           color: item.status === 'ACTIVE' ? '#dc2626' : '#059669',
                           border: `1px solid ${item.status === 'ACTIVE' ? '#fecaca' : '#a7f3d0'}`,
-                          padding: '5px 10px',
+                          padding: '6px 14px',
                           borderRadius: '6px',
-                          fontSize: '11.5px',
+                          fontSize: '12px',
                           fontWeight: 700,
                           cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          height: '32px',
+                          whiteSpace: 'nowrap',
                           transition: 'all 0.15s ease',
+                          boxSizing: 'border-box'
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.backgroundColor = item.status === 'ACTIVE' ? '#fee2e2' : '#d1fae5';

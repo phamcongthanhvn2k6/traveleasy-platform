@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   FileText,
   Ban,
-  Clock
+  Clock,
+  Bell
 } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
@@ -90,6 +91,17 @@ export const AdminUsersPage: React.FC = () => {
   const [editRole, setEditRole] = useState<'ADMIN' | 'OPERATOR' | 'CUSTOMER'>('CUSTOMER');
   const [editPassword, setEditPassword] = useState('');
   const [updating, setUpdating] = useState(false);
+
+  // Send Notification Modal State
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const [targetUser, setTargetUser] = useState<UserItem | null>(null);
+  const [notifyTargetRole, setNotifyTargetRole] = useState<'ALL' | 'CUSTOMER' | 'OPERATOR' | 'ADMIN'>('CUSTOMER');
+  const [notifyType, setNotifyType] = useState('PROMOTION');
+  const [notifyTitle, setNotifyTitle] = useState('');
+  const [notifyMessage, setNotifyMessage] = useState('');
+  const [notifyLink, setNotifyLink] = useState('/promotions');
+  const [notifyPriority, setNotifyPriority] = useState<'NORMAL' | 'HIGH'>('NORMAL');
+  const [sendingNotify, setSendingNotify] = useState(false);
 
   // Xác định tài khoản Admin hiện tại đăng nhập
   const getCurrentUserEmail = (): string => {
@@ -358,6 +370,41 @@ Bạn có chắc chắn muốn phê duyệt và kích hoạt tài khoản Quản
     }
   };
 
+  const handleSendNotification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!notifyTitle.trim()) {
+      toast.warning('Vui lòng nhập tiêu đề thông báo', 'Thiếu Thông Tin');
+      return;
+    }
+    if (!notifyMessage.trim()) {
+      toast.warning('Vui lòng nhập nội dung thông báo', 'Thiếu Thông Tin');
+      return;
+    }
+    setSendingNotify(true);
+    try {
+      await api.post('/notifications/send', {
+        recipientEmail: targetUser?.email || null,
+        targetRole: targetUser ? targetUser.role : notifyTargetRole,
+        type: notifyType,
+        title: notifyTitle.trim(),
+        message: notifyMessage.trim(),
+        link: notifyLink.trim() || '/',
+        priority: notifyPriority,
+      });
+      toast.success(
+        targetUser
+          ? `Đã gửi thông báo thành công đến "${targetUser.fullName}"!`
+          : `Đã phát thông báo thành công đến nhóm vai trò [${notifyTargetRole}]!`,
+        'Thành Công'
+      );
+      setShowNotifyModal(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Không thể gửi thông báo lúc này', 'Lỗi Gửi');
+    } finally {
+      setSendingNotify(false);
+    }
+  };
+
   const handleDeleteUser = async (u: UserItem) => {
     if (u.role === 'ADMIN' && u.email === 'admin@traveleasy.vn') {
       toast.error('Không thể xóa tài khoản Quản trị viên Tối cao!', 'Bảo Vệ Hệ Thống');
@@ -508,6 +555,34 @@ Bạn có chắc chắn muốn chuyển tài khoản "${u.email}" (${u.fullName}
           >
             <Plus size={16} />
             Thêm Người Dùng Mới
+          </button>
+
+          <button
+            onClick={() => {
+              setTargetUser(null);
+              setNotifyTargetRole('CUSTOMER');
+              setNotifyTitle('');
+              setNotifyMessage('');
+              setNotifyLink('/promotions');
+              setShowNotifyModal(true);
+            }}
+            style={{
+              backgroundColor: '#16a34a',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '9px 18px',
+              fontSize: '13px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(22,163,74,0.25)',
+            }}
+          >
+            <Bell size={16} />
+            Gửi Thông Báo Cho Users
           </button>
         </div>
       </div>
@@ -840,6 +915,33 @@ Bạn có chắc chắn muốn chuyển tài khoản "${u.email}" (${u.fullName}
                                     }}
                                   >
                                     <Edit2 size={12} /> Sửa
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      setTargetUser(u);
+                                      setNotifyTargetRole(u.role);
+                                      setNotifyTitle(`Thông báo gửi đến ${u.fullName}`);
+                                      setNotifyMessage('');
+                                      setNotifyLink(u.role === 'OPERATOR' ? '/company/dashboard' : '/my-tickets');
+                                      setShowNotifyModal(true);
+                                    }}
+                                    title="Gửi thông báo riêng đến tài khoản này"
+                                    style={{
+                                      backgroundColor: '#eff6ff',
+                                      color: '#2563eb',
+                                      border: '1px solid #bfdbfe',
+                                      borderRadius: '6px',
+                                      padding: '5px 9px',
+                                      fontSize: '12px',
+                                      fontWeight: 600,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                    }}
+                                  >
+                                    <Bell size={12} /> Báo tin
                                   </button>
 
                                   {!isRootAdmin && (
@@ -1677,6 +1779,246 @@ Bạn có chắc chắn muốn chuyển tài khoản "${u.email}" (${u.fullName}
                   }}
                 >
                   {updating ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: GỬI THÔNG BÁO CHO NGƯỜI DÙNG / TOÀN BỘ HỆ THỐNG */}
+      {/* ========================================================================= */}
+      {showNotifyModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '14px',
+              width: '100%',
+              maxWidth: '560px',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+              position: 'relative',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Bell size={20} color="#16a34a" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#0f172a' }}>
+                    {targetUser ? `Gửi Thông Báo Riêng Cho ${targetUser.fullName}` : 'Phát Thông Báo Toàn Hệ Thống'}
+                  </h3>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>
+                    Thông báo sẽ được lưu trực tiếp vào CSDL Supabase và đẩy real-time đến chuông thông báo.
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNotifyModal(false)}
+                style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#64748b' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendNotification}>
+              {targetUser ? (
+                <div style={{ backgroundColor: '#f0f9ff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #bfdbfe', marginBottom: '14px', fontSize: '12.5px', color: '#0369a1' }}>
+                  <strong>Người nhận:</strong> {targetUser.fullName} ({targetUser.email}) — Vai trò: <strong>{targetUser.role}</strong>
+                </div>
+              ) : (
+                <div style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: '#334155' }}>
+                    Nhóm đối tượng nhận thông báo *
+                  </label>
+                  <select
+                    value={notifyTargetRole}
+                    onChange={(e: any) => setNotifyTargetRole(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="CUSTOMER">Tất cả Khách Hàng (CUSTOMER)</option>
+                    <option value="OPERATOR">Tất cả Đối Tác Nhà Xe (OPERATOR)</option>
+                    <option value="ADMIN">Tất cả Quản Trị Viên (ADMIN)</option>
+                    <option value="ALL">Toàn Bộ Người Dùng (ALL)</option>
+                  </select>
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: '#334155' }}>
+                    Loại thông báo *
+                  </label>
+                  <select
+                    value={notifyType}
+                    onChange={(e) => setNotifyType(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="PROMOTION">🎁 Khuyến mãi & Voucher</option>
+                    <option value="BOOKING">🎟️ Vé & Chuyến đi</option>
+                    <option value="SYSTEM">🔔 Thông báo hệ thống</option>
+                    <option value="FINANCE">💵 Tài chính & Đối soát</option>
+                    <option value="SECURITY">🛡️ An ninh mạng & Bảo mật</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: '#334155' }}>
+                    Mức độ ưu tiên
+                  </label>
+                  <select
+                    value={notifyPriority}
+                    onChange={(e: any) => setNotifyPriority(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="NORMAL">Bình thường (Normal)</option>
+                    <option value="HIGH">Quan trọng (High - Gắn huy hiệu đỏ)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: '#334155' }}>
+                  Tiêu đề thông báo *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: 🎁 Tặng bạn mã giảm giá 50k nhân dịp cuối tuần"
+                  value={notifyTitle}
+                  onChange={(e) => setNotifyTitle(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                  required
+                />
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: '#334155' }}>
+                  Nội dung chi tiết *
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder="Nhập nội dung đầy đủ của thông báo..."
+                  value={notifyMessage}
+                  onChange={(e) => setNotifyMessage(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    fontFamily: 'inherit',
+                  }}
+                  required
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: '#334155' }}>
+                  Liên kết khi người dùng nhấn xem (Link URL)
+                </label>
+                <input
+                  type="text"
+                  placeholder="/promotions hoặc /my-tickets"
+                  value={notifyLink}
+                  onChange={(e) => setNotifyLink(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowNotifyModal(false)}
+                  style={{
+                    backgroundColor: '#f1f5f9',
+                    color: '#475569',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '9px 18px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingNotify}
+                  style={{
+                    backgroundColor: '#16a34a',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '9px 22px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: sendingNotify ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)',
+                  }}
+                >
+                  <Send size={15} />
+                  {sendingNotify ? 'Đang gửi thông báo...' : 'Gửi Thông Báo Ngay'}
                 </button>
               </div>
             </form>

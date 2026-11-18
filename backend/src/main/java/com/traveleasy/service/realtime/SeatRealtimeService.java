@@ -7,6 +7,7 @@ import com.traveleasy.dto.trip.SeatUpdateEvent;
 import com.traveleasy.entity.SeatStatus;
 import com.traveleasy.entity.Trip;
 import com.traveleasy.entity.TripSeat;
+import com.traveleasy.entity.TripStatus;
 import com.traveleasy.repository.TripSeatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -154,13 +155,20 @@ public class SeatRealtimeService {
             return Collections.emptyList();
         }
 
-        // BẢO VỆ NGHIỆP VỤ: Kênh trực tuyến không cho phép giữ chỗ chuyến xe sắp khởi hành trong vòng < 15 phút
+        // BẢO VỆ NGHIỆP VỤ: Kênh trực tuyến không cho phép giữ chỗ chuyến xe đã qua giờ hoặc sắp khởi hành trong vòng < 15 phút
         Trip targetTrip = (tripRepository != null) ? tripRepository.findById(tripId).orElse(null) : null;
-        if (targetTrip != null && targetTrip.getDepartureTime() != null) {
-            long minutesUntilDeparture = java.time.Duration.between(LocalDateTime.now(), targetTrip.getDepartureTime()).toMinutes();
-            if (minutesUntilDeparture < 15 && minutesUntilDeparture >= 0) {
-                throw new AppException(ErrorCode.VALIDATION_ERROR,
-                        "Chuyến xe sắp khởi hành trong vòng " + minutesUntilDeparture + " phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, quý khách vui lòng mua vé trực tiếp tại quầy bến xe!");
+        if (targetTrip != null) {
+            if (targetTrip.getStatus() != null && targetTrip.getStatus() != TripStatus.SCHEDULED) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR, "Chuyến xe này hiện không mở bán trực tuyến!");
+            }
+            if (targetTrip.getDepartureTime() != null) {
+                long minutesUntilDeparture = java.time.Duration.between(LocalDateTime.now(), targetTrip.getDepartureTime()).toMinutes();
+                if (minutesUntilDeparture < 15) {
+                    throw new AppException(ErrorCode.VALIDATION_ERROR,
+                            minutesUntilDeparture < 0
+                                    ? "Chuyến xe đã khởi hành, không thể chọn hoặc giữ chỗ trực tuyến!"
+                                    : "Chuyến xe sắp khởi hành trong vòng " + minutesUntilDeparture + " phút nữa (< 15 phút). Kênh trực tuyến đã đóng bán vé, quý khách vui lòng mua vé trực tiếp tại quầy bến xe!");
+                }
             }
         }
 

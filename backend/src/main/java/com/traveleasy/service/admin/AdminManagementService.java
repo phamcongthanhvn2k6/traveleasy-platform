@@ -631,7 +631,9 @@ public class AdminManagementService {
         if (request.getAddress() != null) loc.setAddress(request.getAddress());
         if (request.getRoutesCount() != null) loc.setRoutesCount(request.getRoutesCount());
         if (request.getStatus() != null) loc.setStatus(request.getStatus().toUpperCase());
-        return locationRepository.save(loc);
+        Location saved = locationRepository.save(loc);
+        logAction("admin@traveleasy.vn", "UPDATE_LOCATION", "locations #" + id, "-", "{\"name\": \"" + saved.getName() + "\", \"status\": \"" + saved.getStatus() + "\"}");
+        return saved;
     }
 
     @Transactional
@@ -1221,6 +1223,7 @@ public class AdminManagementService {
     // 13. DASHBOARD METRICS & REVENUE TREND
     // ==========================================
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "admin_dashboard_stats")
     public DashboardStatsResponse getDashboardStats() {
         long totalTrips = tripRepository.count();
         long scheduledTrips = tripRepository.countByStatus(com.traveleasy.entity.TripStatus.SCHEDULED);
@@ -1243,6 +1246,7 @@ public class AdminManagementService {
     }
 
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "admin_revenue_trend")
     public List<DailyRevenueDto> getRevenueTrend() {
         java.time.LocalDate today = java.time.LocalDate.now();
         java.time.LocalDateTime sevenDaysAgo = today.minusDays(6).atStartOfDay();

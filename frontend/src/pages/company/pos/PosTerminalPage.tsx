@@ -33,6 +33,7 @@ import {
   Zap,
   Filter
 } from 'lucide-react';
+import { Skeleton } from '../../../components/common/Skeleton';
 
 export interface PosTicketItem {
   ticketId?: number;
@@ -147,19 +148,45 @@ export default function PosTerminalPage() {
 
   // Terminal & Shift State
   const [selectedTerminal, setSelectedTerminal] = useState(TERMINALS[0]);
-  const [currentShift, setCurrentShift] = useState<PosShiftReport | null>(null);
-  const [shiftReports, setShiftReports] = useState<PosShiftReport[]>([]);
+  const [currentShift, setCurrentShift] = useState<PosShiftReport | null>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_pos_shift_${currentCompany.id}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return null;
+  });
+  const [shiftReports, setShiftReports] = useState<PosShiftReport[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_pos_shift_reports_${currentCompany.id}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
   const [recentReceipts, setRecentReceipts] = useState<PosReceiptData[]>([]);
 
   // Trips & Seats State
-  const [trips, setTrips] = useState<any[]>([]);
+  const [trips, setTrips] = useState<any[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(`company_pos_trips_${currentCompany.id}`) ||
+                     sessionStorage.getItem(`company_trips_cache_${currentCompany.id}`);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
   const [tripSearchQuery, setTripSearchQuery] = useState('');
   const [selectedRouteFilter, setSelectedRouteFilter] = useState<string>('ALL');
   const [selectedDateFilter, setSelectedDateFilter] = useState<string>('ALL');
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<string[]>([]);
   const [selectedBusTypes, setSelectedBusTypes] = useState<string[]>([]);
   const [onlyAvailableTrips, setOnlyAvailableTrips] = useState<boolean>(false);
-  const [loadingTrips, setLoadingTrips] = useState(false);
+  const [loadingTrips, setLoadingTrips] = useState(() => {
+    try {
+      return !sessionStorage.getItem(`company_pos_trips_${currentCompany.id}`) &&
+             !sessionStorage.getItem(`company_trips_cache_${currentCompany.id}`);
+    } catch (e) {
+      return true;
+    }
+  });
   const [selectedTrip, setSelectedTrip] = useState<any | null>(null);
   const [seatMap, setSeatMap] = useState<SeatCell[]>([]);
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
@@ -219,9 +246,15 @@ export default function PosTerminalPage() {
 
       if (currentRes.data?.data) {
         setCurrentShift(currentRes.data.data);
+        try {
+          sessionStorage.setItem(`company_pos_shift_${currentCompany.id}`, JSON.stringify(currentRes.data.data));
+        } catch (e) {}
       }
       if (Array.isArray(listRes.data?.data)) {
         setShiftReports(listRes.data.data);
+        try {
+          sessionStorage.setItem(`company_pos_shift_reports_${currentCompany.id}`, JSON.stringify(listRes.data.data));
+        } catch (e) {}
       }
       if (Array.isArray(recentRes.data?.data)) {
         setRecentReceipts(recentRes.data.data);
@@ -258,32 +291,35 @@ export default function PosTerminalPage() {
   }, []);
 
   const fetchCompanyTrips = useCallback(async () => {
-    setLoadingTrips(true);
+    if (trips.length === 0) setLoadingTrips(true);
     try {
       const res = await api.get('/company/trips', {
         params: { companyId: currentCompany.id }
       });
       const list = Array.isArray(res.data?.data) ? res.data.data : [];
       setTrips(list);
-      if (list.length > 0) {
-        loadTripSeats(list[0], false);
+      try {
+        sessionStorage.setItem(`company_pos_trips_${currentCompany.id}`, JSON.stringify(list));
+      } catch (e) {}
+      if (list.length > 0 && !selectedTrip) {
+        setSelectedTrip(list[0]);
       }
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Không thể tải danh sách chuyến xe!', 'Lỗi tải chuyến');
-      setTrips([]);
+      if (trips.length === 0) setTrips([]);
     } finally {
       setLoadingTrips(false);
     }
-  }, [currentCompany.id, loadTripSeats]);
+  }, [currentCompany.id, selectedTrip, trips.length]);
 
   useEffect(() => {
     fetchCompanyTrips();
     fetchShiftAndRecentData();
   }, [fetchCompanyTrips, fetchShiftAndRecentData]);
 
-  // Kết nối luồng Server-Sent Events (SSE) đồng bộ trạng thái ghế thời gian thực
+  // Kết nối luồng Server-Sent Events (SSE) đồng bộ trạng thái ghế thời gian thực (Chỉ kích hoạt khi đang mở sơ đồ ghế Bước 2)
   useEffect(() => {
-    if (!selectedTrip?.id || typeof EventSource === 'undefined') {
+    if (!selectedTrip?.id || activeStep !== 2 || typeof EventSource === 'undefined') {
       setRealtimeConnected(false);
       return;
     }
@@ -769,6 +805,26 @@ export default function PosTerminalPage() {
     getTripTimeSlot,
     getTripBusType
   ]);
+
+  const [posPage, setPosPage] = useState<number>(1);
+  const posPageSize = 24;
+
+  useEffect(() => {
+    setPosPage(1);
+  }, [
+    selectedRouteFilter,
+    selectedDateFilter,
+    selectedTimeSlots,
+    selectedBusTypes,
+    onlyAvailableTrips,
+    tripSearchQuery
+  ]);
+
+  const totalPosPages = Math.ceil(filteredTrips.length / posPageSize) || 1;
+  const visibleTrips = useMemo(() => {
+    const start = (posPage - 1) * posPageSize;
+    return filteredTrips.slice(start, start + posPageSize);
+  }, [filteredTrips, posPage, posPageSize]);
 
   const displayedSeats = seatMap.filter((s) =>
     activeFloorTab === 'ALL' ? true : s.floor === activeFloorTab
@@ -1350,8 +1406,25 @@ export default function PosTerminalPage() {
 
           {/* DANH SÁCH CHUYẾN XE BÊN PHẢI (9/12) */}
           <div className="lg:col-span-9">
-            {loadingTrips ? (
-              <div className="py-16 text-center text-xs text-slate-400">Đang tải chuyến xe...</div>
+            {loadingTrips && trips.length === 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-3">
+                    <div className="flex justify-between items-center">
+                      <Skeleton width="130px" height="18px" rounded="rounded" />
+                      <Skeleton width="75px" height="20px" rounded="rounded" />
+                    </div>
+                    <div className="flex gap-2">
+                      <Skeleton width="100px" height="14px" rounded="rounded" />
+                      <Skeleton width="60px" height="14px" rounded="rounded" />
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex justify-between">
+                      <Skeleton width="80px" height="14px" rounded="rounded" />
+                      <Skeleton width="50px" height="14px" rounded="rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : filteredTrips.length === 0 ? (
               <div className="py-16 text-center text-xs text-slate-400 space-y-2">
                 <p>Không có chuyến xe phù hợp với bộ lọc.</p>
@@ -1366,54 +1439,85 @@ export default function PosTerminalPage() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[560px] overflow-y-auto pr-1">
-                {filteredTrips.map((t) => {
-                  const isSelected = selectedTrip?.id === t.id;
-                  const routeTitle = getTripRouteTitle(t);
-                  const plate = t.vehiclePlate || t.licensePlate || '51B-299.88';
-                  return (
-                    <div
-                      key={t.id}
-                      onClick={() => loadTripSeats(t, true)}
-                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
-                        isSelected
-                          ? 'border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-500/20'
-                          : 'border-slate-200 bg-white hover:border-indigo-400 hover:shadow-sm'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="font-bold text-slate-900 text-sm">{routeTitle}</p>
-                          <span className="font-mono-pos text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                            {formatVnd(t.price)}
-                          </span>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[560px] overflow-y-auto pr-1">
+                  {visibleTrips.map((t) => {
+                    const isSelected = selectedTrip?.id === t.id;
+                    const routeTitle = getTripRouteTitle(t);
+                    const plate = t.vehiclePlate || t.licensePlate || '51B-299.88';
+                    return (
+                      <div
+                        key={t.id}
+                        onClick={() => loadTripSeats(t, true)}
+                        className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
+                          isSelected
+                            ? 'border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-500/20'
+                            : 'border-slate-200 bg-white hover:border-indigo-400 hover:shadow-sm'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-bold text-slate-900 text-sm">{routeTitle}</p>
+                            <span className="font-mono-pos text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                              {formatVnd(t.price)}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-xs text-slate-600 mt-2 font-mono-pos">
+                            <span className="inline-flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                              {formatDateTime(t.departureTime)}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <Bus className="w-3.5 h-3.5 text-slate-400" />
+                              {plate}
+                            </span>
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-3 text-xs text-slate-600 mt-2 font-mono-pos">
-                          <span className="inline-flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-indigo-500" />
-                            {formatDateTime(t.departureTime)}
+                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-xs">
+                          <span className="font-semibold text-indigo-700">
+                            Trống {t.availableSeats ?? 0}/{t.totalSeats ?? 34}
                           </span>
-                          <span className="inline-flex items-center gap-1">
-                            <Bus className="w-3.5 h-3.5 text-slate-400" />
-                            {plate}
+                          <span className="inline-flex items-center gap-1 font-semibold text-indigo-600">
+                            <span>Chọn ghế</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
                           </span>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
 
-                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-xs">
-                        <span className="font-semibold text-indigo-700">
-                          Trống {t.availableSeats ?? 0}/{t.totalSeats ?? 34}
-                        </span>
-                        <span className="inline-flex items-center gap-1 font-semibold text-indigo-600">
-                          <span>Chọn ghế</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </span>
-                      </div>
+                {totalPosPages > 1 && (
+                  <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100 text-xs text-slate-500">
+                    <span>
+                      Hiển thị <strong>{Math.min((posPage - 1) * posPageSize + 1, filteredTrips.length)} – {Math.min(posPage * posPageSize, filteredTrips.length)}</strong> trong số <strong>{filteredTrips.length}</strong> chuyến
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={posPage === 1}
+                        onClick={() => setPosPage((p) => Math.max(1, p - 1))}
+                        className="px-2.5 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer text-xs font-semibold"
+                      >
+                        Trang trước
+                      </button>
+                      <span className="px-2 font-bold text-slate-700">
+                        {posPage} / {totalPosPages}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={posPage >= totalPosPages}
+                        onClick={() => setPosPage((p) => Math.min(totalPosPages, p + 1))}
+                        className="px-2.5 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 cursor-pointer text-xs font-semibold"
+                      >
+                        Trang sau
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
