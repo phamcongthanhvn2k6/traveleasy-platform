@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare, Flag, X, Send, AlertTriangle, CheckCircle } from 'lucide-react';
 import { toast } from '../../../context/ToastContext';
 import api from '../../../services/api';
+import { getStoredCompany } from '../../../utils/companyHelper';
+import { TableSkeleton } from '../../../components/common/Skeleton';
 
 export interface CompanyReviewItem {
   id: string;
@@ -17,14 +19,29 @@ export interface CompanyReviewItem {
   reviewedAt: string;
 }
 
-const STORAGE_KEY = 'traveleasy_company_reviews';
+// Cache key theo từng nhà xe — tránh lẫn lộn dữ liệu giữa các tài khoản
+const getReviewsCacheKey = () => {
+  try {
+    const company = getStoredCompany();
+    return `company_reviews_cache_${company?.id || 'default'}`;
+  } catch { return 'company_reviews_cache_default'; }
+};
 
 export const CompanyReviewsPage: React.FC = () => {
-  const [reviews, setReviews] = useState<CompanyReviewItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Khởi tạo ngay từ sessionStorage — 0ms nếu đã cache
+  const [reviews, setReviews] = useState<CompanyReviewItem[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(getReviewsCacheKey());
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    try { return !sessionStorage.getItem(getReviewsCacheKey()); } catch { return true; }
+  });
 
   const fetchReviewsFromDb = async () => {
-    setLoading(true);
+    if (reviews.length === 0) setLoading(true);
     try {
       const res = await api.get('/company/reviews');
       if (res.data?.data && Array.isArray(res.data.data)) {
@@ -42,6 +59,8 @@ export const CompanyReviewsPage: React.FC = () => {
           reviewedAt: r.createdAt ? new Date(r.createdAt).toLocaleDateString('vi-VN') : '',
         }));
         setReviews(mapped);
+        // Lưu vào sessionStorage để lần sau tải tức thì
+        try { sessionStorage.setItem(getReviewsCacheKey(), JSON.stringify(mapped)); } catch (e) {}
       }
     } catch (err: any) {
       if (err?.response?.status === 401) return;
@@ -67,10 +86,10 @@ export const CompanyReviewsPage: React.FC = () => {
   const [reportReason, setReportReason] = useState('Nội dung thô tục hoặc không phù hợp');
   const [reportNote, setReportNote] = useState('');
 
-  // Persist to localStorage
+  // Persist to localStorage (giữ cho backward compat với STORAGE_KEY cũ)
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(reviews));
+      localStorage.setItem('traveleasy_company_reviews', JSON.stringify(reviews));
     } catch {
       // ignore
     }
@@ -238,47 +257,50 @@ export const CompanyReviewsPage: React.FC = () => {
               <th style={{ padding: '12px 18px', color: '#64748b', fontWeight: 600, fontSize: '11px', letterSpacing: '0.5px', textAlign: 'right' }}>THAO TÁC</th>
             </tr>
           </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={7} style={{ padding: '36px', textAlign: 'center', color: '#94a3b8' }}>
-                  Không có đánh giá nào phù hợp với bộ lọc hiện tại.
-                </td>
-              </tr>
-            ) : (
-              filtered.map((r) => (
-                <tr
-                  key={r.id}
-                  style={{
-                    borderBottom: '1px solid #f1f5f9',
-                    transition: 'background-color 0.1s ease',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <td style={{ padding: '14px 18px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          size={14}
-                          fill={star <= r.rating ? '#f59e0b' : 'none'}
-                          color={star <= r.rating ? '#f59e0b' : '#cbd5e1'}
-                        />
-                      ))}
-                    </div>
+          {loading && reviews.length === 0 ? (
+            <TableSkeleton rows={5} columns={7} />
+          ) : (
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: '36px', textAlign: 'center', color: '#94a3b8' }}>
+                    Không có đánh giá nào phù hợp với bộ lọc hiện tại.
                   </td>
-                  <td style={{ padding: '14px 18px', color: '#0f172a', fontWeight: 500, maxWidth: '280px' }}>
-                    <div>"{r.comment}"</div>
-                    {r.isReported && (
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          color: '#dc2626',
+                </tr>
+              ) : (
+                filtered.map((r) => (
+                  <tr
+                    key={r.id}
+                    style={{
+                      borderBottom: '1px solid #f1f5f9',
+                      transition: 'background-color 0.1s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  >
+                    <td style={{ padding: '14px 18px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={14}
+                            fill={star <= r.rating ? '#f59e0b' : 'none'}
+                            color={star <= r.rating ? '#f59e0b' : '#cbd5e1'}
+                          />
+                        ))}
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 18px', color: '#0f172a', fontWeight: 500, maxWidth: '280px' }}>
+                      <div>"{r.comment}"</div>
+                      {r.isReported && (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: '#dc2626',
                           backgroundColor: '#fef2f2',
                           padding: '2px 6px',
                           borderRadius: '4px',
@@ -371,6 +393,7 @@ export const CompanyReviewsPage: React.FC = () => {
               ))
             )}
           </tbody>
+        )}
         </table>
       </div>
 

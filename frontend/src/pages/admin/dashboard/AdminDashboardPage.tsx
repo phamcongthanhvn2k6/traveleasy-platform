@@ -2,29 +2,41 @@ import React, { useState, useEffect } from 'react';
 import { Users, Bus, TrendingUp, Ticket, Calendar, ArrowUpRight, CheckCircle2, Clock } from 'lucide-react';
 import api from '../../../services/api';
 import { RevenueChart } from '../../../components/RevenueChart';
+import { Skeleton, CardSkeleton } from '../../../components/common/Skeleton';
 
 export const AdminDashboardPage: React.FC = () => {
+  const getCachedDashboard = () => {
+    try {
+      const raw = sessionStorage.getItem('traveleasy_admin_dashboard_cache');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const initialCache = getCachedDashboard();
+
   const [stats, setStats] = useState({
-    userCount: 0,
-    busCompanyCount: 0,
-    pendingCompanies: 0,
-    revenue: '0 đ',
-    confirmedBookings: 0,
-    totalTrips: 0,
+    userCount: initialCache?.stats?.userCount ?? 0,
+    busCompanyCount: initialCache?.stats?.busCompanyCount ?? 0,
+    pendingCompanies: initialCache?.stats?.pendingCompanies ?? 0,
+    revenue: initialCache?.stats?.revenue ?? '0 đ',
+    confirmedBookings: initialCache?.stats?.confirmedBookings ?? 0,
+    totalTrips: initialCache?.stats?.totalTrips ?? 0,
   });
 
-  const [upcomingTrips, setUpcomingTrips] = useState<any[]>([]);
-  const [revenueTrend, setRevenueTrend] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [upcomingTrips, setUpcomingTrips] = useState<any[]>(initialCache?.upcomingTrips ?? []);
+  const [revenueTrend, setRevenueTrend] = useState<any[]>(initialCache?.revenueTrend ?? []);
+  const [loading, setLoading] = useState(!initialCache);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      setLoading(true);
+      if (!initialCache) setLoading(true);
       try {
         const [statsRes, companiesRes, tripsRes, trendRes] = await Promise.allSettled([
           api.get('/admin/dashboard/stats'),
           api.get('/admin/bus-companies'),
-          api.get('/admin/trips'),
+          api.get('/admin/trips?limit=5'),
           api.get('/admin/dashboard/revenue-trend'),
         ]);
 
@@ -50,9 +62,10 @@ export const AdminDashboardPage: React.FC = () => {
           pending = companiesRes.value.data.data.filter((c: any) => c.status === 'PENDING' || c.status === 'PENDING_APPROVAL').length;
         }
 
+        let mappedTrips: any[] = [];
         if (tripsRes.status === 'fulfilled' && Array.isArray(tripsRes.value.data?.data)) {
           const rawTrips = tripsRes.value.data.data.slice(0, 5);
-          setUpcomingTrips(rawTrips.map((t: any) => ({
+          mappedTrips = rawTrips.map((t: any) => ({
             code: `${t.originCity} → ${t.destinationCity}`,
             company: t.busCompanyName,
             departureTime: new Date(t.departureTime).toLocaleString('vi-VN', {
@@ -64,25 +77,38 @@ export const AdminDashboardPage: React.FC = () => {
             badgeColor: t.status === 'SCHEDULED' ? '#2563eb' : t.status === 'CANCELLED' ? '#ef4444' : '#16a34a',
             badgeBg: t.status === 'SCHEDULED' ? '#eff6ff' : t.status === 'CANCELLED' ? '#fef2f2' : '#f0fdf4',
             badgeBorder: t.status === 'SCHEDULED' ? '#bfdbfe' : t.status === 'CANCELLED' ? '#fecaca' : '#bbf7d0',
-          })));
+          }));
+          setUpcomingTrips(mappedTrips);
         }
 
+        let mappedTrend: any[] = [];
         if (trendRes.status === 'fulfilled' && Array.isArray(trendRes.value.data?.data)) {
-          setRevenueTrend(trendRes.value.data.data.map((item: any) => ({
+          mappedTrend = trendRes.value.data.data.map((item: any) => ({
             label: item.label,
             revenue: Number(item.revenue) || 0,
             bookings: item.bookings || 0
-          })));
+          }));
+          setRevenueTrend(mappedTrend);
         }
 
-        setStats({
+        const newStats = {
           userCount: uCount,
           busCompanyCount: cCount,
           pendingCompanies: pending,
           revenue: revenueFormatted,
           confirmedBookings: confirmedCount,
           totalTrips: tCount,
-        });
+        };
+
+        setStats(newStats);
+
+        // Lưu vào sessionStorage để lần sau hiển thị tức thì 0ms (Stale-While-Revalidate)
+        sessionStorage.setItem('traveleasy_admin_dashboard_cache', JSON.stringify({
+          stats: newStats,
+          upcomingTrips: mappedTrips,
+          revenueTrend: mappedTrend,
+          timestamp: Date.now()
+        }));
       } catch (err) {
         console.error('Failed to load dashboard metrics:', err);
       } finally {
@@ -156,52 +182,56 @@ export const AdminDashboardPage: React.FC = () => {
       </div>
 
       {/* 1. TOP STATS ROW (Responsive Grid) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: '16px', marginBottom: '24px' }}>
-        {kpiStats.map((item, idx) => {
-          const Icon = item.icon;
-          return (
-            <div
-              key={idx}
-              style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                padding: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '16px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-              }}
-            >
+      {loading && !initialCache ? (
+        <CardSkeleton count={4} />
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: '16px', marginBottom: '24px' }}>
+          {kpiStats.map((item, idx) => {
+            const Icon = item.icon;
+            return (
               <div
+                key={idx}
                 style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '10px',
-                  backgroundColor: item.iconBg,
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '20px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
+                  gap: '16px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                 }}
               >
-                <Icon size={22} color={item.iconColor} />
+                <div
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '10px',
+                    backgroundColor: item.iconBg,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={22} color={item.iconColor} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>
+                    {item.label}
+                  </div>
+                  <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>
+                    {item.value}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#16a34a', fontWeight: 600, marginTop: '4px' }}>
+                    {item.subtext}
+                  </div>
+                </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>
-                  {item.label}
-                </div>
-                <div style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>
-                  {item.value}
-                </div>
-                <div style={{ fontSize: '12px', color: '#16a34a', fontWeight: 600, marginTop: '4px' }}>
-                  {item.subtext}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* 2. MAIN CONTENT (Responsive Grid: Chart & Real Upcoming Trips) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))', gap: '20px', marginBottom: '24px' }}>

@@ -16,3 +16,4 @@ public class SendNotificationRequest {
     private String link;
     private String priority;       // NORMAL, HIGH
 }
+

@@ -41,10 +41,23 @@ import {
   PriceSimulationRequest,
   PriceSimulationResponse
 } from '../../../types';
+import { CardSkeleton } from '../../../components/common/Skeleton';
+import { getStoredCompany } from '../../../utils/companyHelper';
 
 export const CompanyPricingRulesPage: React.FC = () => {
-  const [rules, setRules] = useState<CompanyPricingRule[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const currentCompany = getStoredCompany();
+  const cacheKey = `company_pricing_rules_cache_${currentCompany?.id || 'default'}`;
+
+  const [rules, setRules] = useState<CompanyPricingRule[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch (e) {}
+    return [];
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    try { return !sessionStorage.getItem(cacheKey); } catch { return true; }
+  });
   const [activeTab, setActiveTab] = useState<'ALL' | 'ACTIVE' | 'SURCHARGE' | 'DISCOUNT'>('ALL');
 
   // Modal State
@@ -87,10 +100,12 @@ export const CompanyPricingRulesPage: React.FC = () => {
   // Tải danh sách quy tắc từ API backend
   const fetchRules = async () => {
     try {
-      setLoading(true);
+      if (rules.length === 0) setLoading(true);
       const res = await api.get('/company/pricing-rules');
       if (res.data) {
-        setRules(Array.isArray(res.data) ? res.data : (res.data.data || []));
+        const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
+        setRules(data);
+        try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch (e) {}
       }
     } catch (err: any) {
       console.error('Lỗi khi tải danh sách quy tắc giá:', err);
@@ -439,11 +454,8 @@ export const CompanyPricingRulesPage: React.FC = () => {
         </div>
 
         {/* Danh sách thẻ quy tắc */}
-        {loading ? (
-          <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-400">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-indigo-500" />
-            <p className="text-sm">Đang tải dữ liệu chính sách giá từ máy chủ...</p>
-          </div>
+        {loading && rules.length === 0 ? (
+          <CardSkeleton count={6} />
         ) : filteredRules.length === 0 ? (
           <div className="bg-white p-12 rounded-2xl border border-slate-200 shadow-sm text-center text-slate-500">
             <Tag className="w-12 h-12 text-slate-300 mx-auto mb-3" />

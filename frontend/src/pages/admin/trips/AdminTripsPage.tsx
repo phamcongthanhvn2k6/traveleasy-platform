@@ -8,6 +8,7 @@ import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
 import { PassengerManifestModal } from '../../../components/PassengerManifestModal';
 import { Pagination } from '../../../components/Pagination';
+import { TableSkeleton, CardSkeleton } from '../../../components/common/Skeleton';
 
 interface TripItem {
   id: number;
@@ -26,8 +27,19 @@ interface TripItem {
 }
 
 export const AdminTripsPage: React.FC = () => {
-  const [trips, setTrips] = useState<TripItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const getCachedTrips = (): TripItem[] | null => {
+    try {
+      const raw = sessionStorage.getItem('traveleasy_admin_trips_cache');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const initialCache = getCachedTrips();
+
+  const [trips, setTrips] = useState<TripItem[]>(initialCache || []);
+  const [loading, setLoading] = useState(!initialCache);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'SCHEDULED' | 'DEPARTED' | 'CANCELLED'>('ALL');
   const [selectedCompany, setSelectedCompany] = useState<string>('ALL');
@@ -40,11 +52,16 @@ export const AdminTripsPage: React.FC = () => {
   const [manifestTrip, setManifestTrip] = useState<TripItem | null>(null);
 
   const fetchTrips = async () => {
-    setLoading(true);
+    if (!initialCache) setLoading(true);
     try {
       const res = await api.get('/admin/trips');
       if (res.data?.data && Array.isArray(res.data.data)) {
         setTrips(res.data.data);
+        try {
+          sessionStorage.setItem('traveleasy_admin_trips_cache', JSON.stringify(res.data.data));
+        } catch {
+          // Bỏ qua nếu quota vượt quá, state trong RAM vẫn lưu đủ dữ liệu
+        }
       }
     } catch (err: any) {
       if (err?.response?.status === 401) return;
@@ -250,51 +267,55 @@ export const AdminTripsPage: React.FC = () => {
       </div>
 
       {/* KPI Command Bar */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px', marginBottom: '20px' }}>
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tổng Chuyến Toàn Sàn</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Bus size={18} />
+      {loading && trips.length === 0 ? (
+        <CardSkeleton count={4} />
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tổng Chuyến Toàn Sàn</span>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Bus size={18} />
+              </div>
             </div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a' }}>{trips.length}</div>
+            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Trên toàn bộ mạng lưới tuyến liên tỉnh</div>
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a' }}>{trips.length}</div>
-          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Trên toàn bộ mạng lưới tuyến liên tỉnh</div>
-        </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Đang Mở Bán Vé</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <CheckCircle size={18} />
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Đang Mở Bán Vé</span>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CheckCircle size={18} />
+              </div>
             </div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#059669' }}>{scheduledCount}</div>
+            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Sẵn sàng đón khách và nhận đơn trực tuyến</div>
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#059669' }}>{scheduledCount}</div>
-          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Sẵn sàng đón khách và nhận đơn trực tuyến</div>
-        </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Lấp Đầy Trung Bình</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fffbeb', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <BarChart3 size={18} />
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Lấp Đầy Trung Bình</span>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fffbeb', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <BarChart3 size={18} />
+              </div>
             </div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#d97706' }}>{avgOccupancy}%</div>
+            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Đã bán {totalBooked} / {totalCapacity} tổng ghế mở bán</div>
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#d97706' }}>{avgOccupancy}%</div>
-          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Đã bán {totalBooked} / {totalCapacity} tổng ghế mở bán</div>
-        </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Đình Chỉ / Tạm Hủy</span>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fef2f2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <AlertTriangle size={18} />
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Đình Chỉ / Tạm Hủy</span>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fef2f2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertTriangle size={18} />
+              </div>
             </div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: cancelledCount > 0 ? '#dc2626' : '#64748b' }}>{cancelledCount}</div>
+            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Cần Admin theo dõi hoàn tiền hoặc chuyển chuyến</div>
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: cancelledCount > 0 ? '#dc2626' : '#64748b' }}>{cancelledCount}</div>
-          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Cần Admin theo dõi hoàn tiền hoặc chuyển chuyến</div>
         </div>
-      </div>
+      )}
 
       {/* Info Notice Card: Governance */}
       <div
@@ -433,25 +454,21 @@ export const AdminTripsPage: React.FC = () => {
                 <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: 700, fontSize: '11.5px', letterSpacing: '0.5px', textAlign: 'right', whiteSpace: 'nowrap' }}>ĐIỀU PHỐI SÀN</th>
               </tr>
             </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-                    <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 8px auto', display: 'block' }} />
-                    Đang tải danh sách chuyến xe từ CSDL Supabase...
-                  </td>
-                </tr>
-              ) : paginatedTrips.length === 0 ? (
-                <tr>
-                  <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-                    Không tìm thấy chuyến xe nào phù hợp với bộ lọc hiện tại.
-                  </td>
-                </tr>
-              ) : (
-                paginatedTrips.map(t => {
-                  const isScheduled = t.status === 'SCHEDULED';
-                  const depDate = new Date(t.departureTime);
-                  const timeFormatted = depDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            {loading && trips.length === 0 ? (
+              <TableSkeleton rows={8} columns={9} />
+            ) : (
+              <tbody>
+                {paginatedTrips.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                      Không tìm thấy chuyến xe nào phù hợp với bộ lọc hiện tại.
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedTrips.map(t => {
+                    const isScheduled = t.status === 'SCHEDULED';
+                    const depDate = new Date(t.departureTime);
+                    const timeFormatted = depDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
                   const dateFormatted = depDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
                   
                   const bookedCount = t.totalSeats - t.availableSeats;
@@ -625,7 +642,8 @@ export const AdminTripsPage: React.FC = () => {
                 })
               )}
             </tbody>
-          </table>
+          )}
+        </table>
         </div>
 
         {/* Pagination Toolbar */}

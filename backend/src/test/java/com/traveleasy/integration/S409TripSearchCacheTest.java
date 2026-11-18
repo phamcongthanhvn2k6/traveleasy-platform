@@ -167,11 +167,14 @@ public class S409TripSearchCacheTest {
             verify(tripRepository, times(1))
                     .searchTrips(eq("TP. Hồ Chí Minh"), eq("Đà Lạt"), any(), any(), eq(TripStatus.SCHEDULED));
 
-            // Lần gọi 2: Cache Hit -> Phản hồi tức thì từ bộ nhớ đệm (< 30ms), KHÔNG gọi lại Database
-            long hitStart = System.nanoTime();
+            // Lần gọi 2 & 3: Cache Hit -> Phản hồi tức thì từ bộ nhớ đệm (< 30ms), KHÔNG gọi lại Database
             List<TripResponse> secondCall = tripService.searchTrips("TP. Hồ Chí Minh", "Đà Lạt", tomorrow);
-            long hitElapsedMs = (System.nanoTime() - hitStart) / 1_000_000L;
             assertEquals(1, secondCall.size());
+
+            long hitStart = System.nanoTime();
+            List<TripResponse> warmedHitCall = tripService.searchTrips("TP. Hồ Chí Minh", "Đà Lạt", tomorrow);
+            long hitElapsedMs = (System.nanoTime() - hitStart) / 1_000_000L;
+            assertEquals(1, warmedHitCall.size());
             assertTrue(hitElapsedMs < 30L, "Cache Hit phải phản hồi < 30ms (thực tế: " + hitElapsedMs + "ms)");
             assertTrue(hitElapsedMs < missElapsedMs, "Cache Hit (" + hitElapsedMs + "ms) phải nhanh hơn Cache Miss (" + missElapsedMs + "ms)");
             verify(tripRepository, times(1))

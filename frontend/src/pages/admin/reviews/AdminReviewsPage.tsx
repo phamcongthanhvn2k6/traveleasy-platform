@@ -674,8 +674,13 @@ export const AdminReviewsPage: React.FC = () => {
                           cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
+                          justifyContent: 'center',
                           gap: '4px',
+                          width: '106px',
+                          height: '32px',
+                          whiteSpace: 'nowrap',
                           boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                          boxSizing: 'border-box'
                         }}
                       >
                         <Eye size={13} /> Xem chi tiết
@@ -697,7 +702,9 @@ export const AdminReviewsPage: React.FC = () => {
                           cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
+                          justifyContent: 'center',
                           gap: '4px',
+                          width: '108px',
                           height: '32px',
                           whiteSpace: 'nowrap',
                           transition: 'all 0.15s ease',
@@ -731,7 +738,9 @@ export const AdminReviewsPage: React.FC = () => {
                           cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
+                          justifyContent: 'center',
                           gap: '4px',
+                          width: '84px',
                           height: '32px',
                           whiteSpace: 'nowrap',
                           transition: 'all 0.15s ease',

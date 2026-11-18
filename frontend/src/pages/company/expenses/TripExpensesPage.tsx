@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import api from '../../../services/api';
 import { toast } from '../../../context/ToastContext';
+import { TableSkeleton } from '../../../components/common/Skeleton';
 
 export interface TripProfitLossItem {
   tripId: number;
@@ -340,12 +341,15 @@ export const TripExpensesPage: React.FC = () => {
                 <th className="py-3 px-4 text-center">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-xs">
-              {summary.trips.map((r) => (
-                <tr
-                  key={r.tripId}
-                  className={`transition ${r.isLoss ? 'bg-rose-50/60 dark:bg-rose-950/20 hover:bg-rose-100/50' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30'}`}
-                >
+            {loading && summary.trips.length === 0 ? (
+              <TableSkeleton rows={5} columns={11} />
+            ) : (
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-xs">
+                {summary.trips.map((r) => (
+                  <tr
+                    key={r.tripId}
+                    className={`transition ${r.isLoss ? 'bg-rose-50/60 dark:bg-rose-950/20 hover:bg-rose-100/50' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30'}`}
+                  >
                   <td className="py-3 px-4 font-sans">
                     <p className="font-bold text-slate-900 dark:text-white text-sm">{r.routeName}</p>
                     <p className="text-xs text-slate-500 mt-0.5">
@@ -423,7 +427,8 @@ export const TripExpensesPage: React.FC = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          )}
+        </table>
         </div>
       </div>
 
