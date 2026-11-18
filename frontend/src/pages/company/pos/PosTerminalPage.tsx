@@ -152,14 +152,14 @@ export default function PosTerminalPage() {
     try {
       const cached = sessionStorage.getItem(`company_pos_shift_${currentCompany.id}`);
       if (cached) return JSON.parse(cached);
-    } catch (e) {}
+    } catch (e) { }
     return null;
   });
   const [shiftReports, setShiftReports] = useState<PosShiftReport[]>(() => {
     try {
       const cached = sessionStorage.getItem(`company_pos_shift_reports_${currentCompany.id}`);
       if (cached) return JSON.parse(cached);
-    } catch (e) {}
+    } catch (e) { }
     return [];
   });
   const [recentReceipts, setRecentReceipts] = useState<PosReceiptData[]>([]);
@@ -168,9 +168,9 @@ export default function PosTerminalPage() {
   const [trips, setTrips] = useState<any[]>(() => {
     try {
       const cached = sessionStorage.getItem(`company_pos_trips_${currentCompany.id}`) ||
-                     sessionStorage.getItem(`company_trips_cache_${currentCompany.id}`);
+        sessionStorage.getItem(`company_trips_cache_${currentCompany.id}`);
       if (cached) return JSON.parse(cached);
-    } catch (e) {}
+    } catch (e) { }
     return [];
   });
   const [tripSearchQuery, setTripSearchQuery] = useState('');
@@ -182,7 +182,7 @@ export default function PosTerminalPage() {
   const [loadingTrips, setLoadingTrips] = useState(() => {
     try {
       return !sessionStorage.getItem(`company_pos_trips_${currentCompany.id}`) &&
-             !sessionStorage.getItem(`company_trips_cache_${currentCompany.id}`);
+        !sessionStorage.getItem(`company_trips_cache_${currentCompany.id}`);
     } catch (e) {
       return true;
     }
@@ -219,9 +219,10 @@ export default function PosTerminalPage() {
   const baseTotal = unitPrice * seatCount;
   const insuranceTotal = hasInsurance ? seatCount * 25000 : 0;
   const finalTotal = baseTotal + insuranceTotal;
+  const sanitizedCashDigits = cashReceivedInput.replace(/[^\d]/g, '');
   const numericCashReceived =
-    cashReceivedInput.trim() !== '' ? Math.max(0, Number(cashReceivedInput) || 0) : finalTotal;
-  const isCashInsufficient = paymentMethod === 'CASH' && cashReceivedInput.trim() !== '' && numericCashReceived < finalTotal;
+    sanitizedCashDigits !== '' ? Number(sanitizedCashDigits) : finalTotal;
+  const isCashInsufficient = paymentMethod === 'CASH' && sanitizedCashDigits !== '' && numericCashReceived < finalTotal;
   const cashShortageAmount = isCashInsufficient ? finalTotal - numericCashReceived : 0;
   const changeAmount = paymentMethod === 'CASH' ? Math.max(0, numericCashReceived - finalTotal) : 0;
 
@@ -248,13 +249,13 @@ export default function PosTerminalPage() {
         setCurrentShift(currentRes.data.data);
         try {
           sessionStorage.setItem(`company_pos_shift_${currentCompany.id}`, JSON.stringify(currentRes.data.data));
-        } catch (e) {}
+        } catch (e) { }
       }
       if (Array.isArray(listRes.data?.data)) {
         setShiftReports(listRes.data.data);
         try {
           sessionStorage.setItem(`company_pos_shift_reports_${currentCompany.id}`, JSON.stringify(listRes.data.data));
-        } catch (e) {}
+        } catch (e) { }
       }
       if (Array.isArray(recentRes.data?.data)) {
         setRecentReceipts(recentRes.data.data);
@@ -300,7 +301,7 @@ export default function PosTerminalPage() {
       setTrips(list);
       try {
         sessionStorage.setItem(`company_pos_trips_${currentCompany.id}`, JSON.stringify(list));
-      } catch (e) {}
+      } catch (e) { }
       if (list.length > 0 && !selectedTrip) {
         setSelectedTrip(list[0]);
       }
@@ -537,8 +538,8 @@ export default function PosTerminalPage() {
       if (e.key === 'Enter') {
         const target = e.target as HTMLElement | null;
         const tag = target?.tagName?.toUpperCase();
-        // Không cướp Enter khi đang bấm nút khác hoặc nhập ở màn hình tìm kiếm
-        if (tag === 'TEXTAREA' || tag === 'BUTTON') return;
+        // Không cướp Enter khi đang focus trong bất kỳ ô nhập liệu hoặc nút bấm nào (chống xuất vé sớm / máy quét mã vạch)
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SELECT') return;
         if (showOpenShiftModal || showCloseShiftModal || showShortcutGuide) return;
 
         if (activeReceiptModal) {
@@ -552,6 +553,7 @@ export default function PosTerminalPage() {
           return;
         }
         if (activeStep === 3 && selectedSeats.length > 0) {
+          if (issuingTicket || isCashInsufficient) return;
           e.preventDefault();
           handleIssueAndPrintTicket();
           return;
@@ -654,6 +656,8 @@ export default function PosTerminalPage() {
     showShortcutGuide,
     selectedTrip,
     selectedSeats.length,
+    issuingTicket,
+    isCashInsufficient,
     currentShift,
     shiftReports,
     loadTripSeats,
@@ -882,16 +886,14 @@ export default function PosTerminalPage() {
                 Xuất vé &lt; 10 giây • In nhiệt 80mm
               </span>
               <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium border ${
-                  realtimeConnected
+                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium border ${realtimeConnected
                     ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                     : 'bg-slate-800 text-slate-300 border-slate-700'
-                }`}
+                  }`}
               >
                 <span
-                  className={`w-2 h-2 rounded-full ${
-                    realtimeConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-                  }`}
+                  className={`w-2 h-2 rounded-full ${realtimeConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                    }`}
                 />
                 {realtimeConnected ? 'Đồng bộ ghế SSE Live' : 'Đồng bộ tức thì'}
               </span>
@@ -912,11 +914,10 @@ export default function PosTerminalPage() {
                     key={term.id}
                     type="button"
                     onClick={() => setSelectedTerminal(term)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
-                      active
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${active
                         ? 'bg-amber-500 text-slate-950 shadow-sm'
                         : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
-                    }`}
+                      }`}
                   >
                     <MapPin className="w-3.5 h-3.5" />
                     <span>{term.name}</span>
@@ -1097,11 +1098,10 @@ export default function PosTerminalPage() {
           <button
             type="button"
             onClick={() => setActiveStep(1)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
-              activeStep === 1
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${activeStep === 1
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-            }`}
+              }`}
           >
             <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center font-mono-pos text-[11px] font-bold">
               {activeStep > 1 ? <Check className="w-3 h-3" /> : '1'}
@@ -1115,13 +1115,12 @@ export default function PosTerminalPage() {
             type="button"
             disabled={!selectedTrip}
             onClick={() => selectedTrip && setActiveStep(2)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
-              activeStep === 2
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${activeStep === 2
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : selectedSeats.length > 0
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-slate-100 text-slate-600'
-            }`}
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-slate-100 text-slate-600'
+              }`}
           >
             <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center font-mono-pos text-[11px] font-bold">
               2
@@ -1137,11 +1136,10 @@ export default function PosTerminalPage() {
             type="button"
             disabled={selectedSeats.length === 0}
             onClick={() => selectedSeats.length > 0 && setActiveStep(3)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
-              activeStep === 3
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${activeStep === 3
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-slate-100 text-slate-600'
-            }`}
+              }`}
           >
             <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center font-mono-pos text-[11px] font-bold">
               3
@@ -1310,33 +1308,30 @@ export default function PosTerminalPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedDateFilter('ALL')}
-                  className={`py-1.5 rounded-lg font-semibold border cursor-pointer transition ${
-                    selectedDateFilter === 'ALL'
+                  className={`py-1.5 rounded-lg font-semibold border cursor-pointer transition ${selectedDateFilter === 'ALL'
                       ? 'bg-indigo-600 text-white border-indigo-600'
                       : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                  }`}
+                    }`}
                 >
                   Tất cả
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedDateFilter(todayIsoDate)}
-                  className={`py-1.5 rounded-lg font-semibold border cursor-pointer transition ${
-                    selectedDateFilter === todayIsoDate
+                  className={`py-1.5 rounded-lg font-semibold border cursor-pointer transition ${selectedDateFilter === todayIsoDate
                       ? 'bg-indigo-600 text-white border-indigo-600'
                       : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                  }`}
+                    }`}
                 >
                   Hôm nay
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedDateFilter(tomorrowIsoDate)}
-                  className={`py-1.5 rounded-lg font-semibold border cursor-pointer transition ${
-                    selectedDateFilter === tomorrowIsoDate
+                  className={`py-1.5 rounded-lg font-semibold border cursor-pointer transition ${selectedDateFilter === tomorrowIsoDate
                       ? 'bg-indigo-600 text-white border-indigo-600'
                       : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                  }`}
+                    }`}
                 >
                   Ngày mai
                 </button>
@@ -1449,11 +1444,10 @@ export default function PosTerminalPage() {
                       <div
                         key={t.id}
                         onClick={() => loadTripSeats(t, true)}
-                        className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
-                          isSelected
+                        className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${isSelected
                             ? 'border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-500/20'
                             : 'border-slate-200 bg-white hover:border-indigo-400 hover:shadow-sm'
-                        }`}
+                          }`}
                       >
                         <div>
                           <div className="flex items-start justify-between gap-2">
@@ -1580,11 +1574,10 @@ export default function PosTerminalPage() {
                     key={String(tab.id)}
                     type="button"
                     onClick={() => setActiveFloorTab(tab.id)}
-                    className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold transition cursor-pointer ${
-                      activeFloorTab === tab.id
+                    className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold transition cursor-pointer ${activeFloorTab === tab.id
                         ? 'bg-slate-900 text-white'
                         : 'text-slate-600 hover:bg-slate-200/70'
-                    }`}
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -1802,11 +1795,10 @@ export default function PosTerminalPage() {
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('CASH')}
-                  className={`py-2.5 px-4 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 cursor-pointer ${
-                    paymentMethod === 'CASH'
+                  className={`py-2.5 px-4 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 cursor-pointer ${paymentMethod === 'CASH'
                       ? 'bg-indigo-600 text-white border-indigo-600'
                       : 'bg-slate-50 text-slate-700 border-slate-200'
-                  }`}
+                    }`}
                 >
                   <Banknote className="w-4 h-4" />
                   <span>Tiền mặt (F4)</span>
@@ -1814,11 +1806,10 @@ export default function PosTerminalPage() {
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('QR')}
-                  className={`py-2.5 px-4 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 cursor-pointer ${
-                    paymentMethod === 'QR'
+                  className={`py-2.5 px-4 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 cursor-pointer ${paymentMethod === 'QR'
                       ? 'bg-indigo-600 text-white border-indigo-600'
                       : 'bg-slate-50 text-slate-700 border-slate-200'
-                  }`}
+                    }`}
                 >
                   <QrCode className="w-4 h-4" />
                   <span>VietQR</span>
@@ -1846,26 +1837,23 @@ export default function PosTerminalPage() {
                   </div>
                   <input
                     id="pos-cash-received"
-                    type="number"
-                    min={0}
-                    step={1000}
-                    value={cashReceivedInput}
-                    onChange={(e) => setCashReceivedInput(e.target.value)}
+                    type="text"
+                    inputMode="numeric"
+                    value={sanitizedCashDigits !== '' ? Number(sanitizedCashDigits).toLocaleString('vi-VN') : ''}
+                    onChange={(e) => setCashReceivedInput(e.target.value.replace(/[^\d]/g, ''))}
                     placeholder={`Mặc định: ${finalTotal.toLocaleString('vi-VN')} đ`}
-                    className={`w-full px-3.5 py-2.5 bg-white border rounded-xl text-base font-mono-pos font-bold focus:outline-none focus:ring-2 ${
-                      isCashInsufficient
+                    className={`w-full px-3.5 py-2.5 bg-white border rounded-xl text-base font-mono-pos font-bold focus:outline-none focus:ring-2 ${isCashInsufficient
                         ? 'border-rose-400 text-rose-700 focus:ring-rose-500'
                         : 'border-slate-300 text-slate-900 focus:ring-indigo-500'
-                    }`}
+                      }`}
                   />
                   <div className="flex items-center justify-between text-sm pt-2 border-t border-slate-200">
                     <span className="text-slate-600 font-medium">
                       {isCashInsufficient ? 'Khách đưa còn thiếu:' : 'Tiền thừa thối lại khách:'}
                     </span>
                     <span
-                      className={`font-mono-pos font-bold text-lg ${
-                        isCashInsufficient ? 'text-rose-600' : 'text-emerald-700'
-                      }`}
+                      className={`font-mono-pos font-bold text-lg ${isCashInsufficient ? 'text-rose-600' : 'text-emerald-700'
+                        }`}
                     >
                       {isCashInsufficient ? `-${formatVnd(cashShortageAmount)}` : formatVnd(changeAmount)}
                     </span>
@@ -1955,11 +1943,10 @@ export default function PosTerminalPage() {
                         </td>
                         <td className="py-2.5 px-3.5 text-center">
                           <span
-                            className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              s.status === 'OPEN'
+                            className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${s.status === 'OPEN'
                                 ? 'bg-emerald-100 text-emerald-800'
                                 : 'bg-slate-200 text-slate-700'
-                            }`}
+                              }`}
                           >
                             {s.status === 'OPEN' ? 'Mở' : 'Đóng'}
                           </span>
