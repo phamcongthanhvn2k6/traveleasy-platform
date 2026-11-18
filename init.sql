@@ -90,6 +90,15 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     discount_amount NUMERIC DEFAULT 0,
     insurance_amount NUMERIC DEFAULT 0,
     voucher_code VARCHAR(50),
+    refund_bank_name VARCHAR(100),
+    refund_account_number VARCHAR(50),
+    refund_account_holder VARCHAR(100),
+    refund_amount NUMERIC(12, 2),
+    refund_fee NUMERIC(12, 2),
+    refund_status VARCHAR(30) DEFAULT 'NONE',
+    refund_reason VARCHAR(255),
+    refund_tx_code VARCHAR(100),
+    refunded_at TIMESTAMP WITHOUT TIME ZONE,
     CONSTRAINT pk_bookings PRIMARY KEY (id)
 );
 
@@ -1007,7 +1016,12 @@ INSERT INTO public.promotions (id, code, title, description, discount_type, disc
 (3, 'WELCOME50', 'Chào Bạn Mới - Giảm 15% Vé Đầu Tiên', 'Dành riêng cho khách hàng đăng ký tài khoản mới và đặt vé lần đầu tiên trên TravelEasy', 'PERCENT', 15.00, 150000.00, 80000.00, '2026-10-29 06:38:16.540144', '2027-01-27 06:38:16.540144', 2000, 1420, 'NEW_CUSTOMER', NULL, NULL, 'BẠN MỚI 15%', 'Chỉ áp dụng cho tài khoản chưa từng hoàn tất chuyến đi nào trên hệ thống.', TRUE, '2026-10-29 06:38:16.540144'),
 (4, 'PAYOS50', 'Giảm 30.000đ Khi Quét Mã VietQR / PayOS', 'Thanh toán trực tuyến không tiền mặt qua cổng PayOS hoặc quét mã VietQR ngân hàng', 'FIXED', 30000.00, 200000.00, 30000.00, '2026-10-29 06:38:16.540144', '2027-01-27 06:38:16.540144', 1500, 890, 'ONLINE_PAYMENT', NULL, NULL, 'PAYOS -30K', 'Áp dụng tự động khi chọn hình thức thanh toán VietQR / PayOS tại bước thanh toán.', TRUE, '2026-10-29 06:38:16.540144'),
 (5, 'VETAO15', 'Giảm 15% Tuyến Biển Vũng Tàu - Nha Trang', 'Kỳ nghỉ biển trọn vẹn với vé xe giường nằm và limousine giảm ngay 15%', 'PERCENT', 15.00, 200000.00, 60000.00, '2026-10-29 06:38:16.540144', '2027-01-27 06:38:16.540144', 800, 410, 'HOT_ROUTE', 'TP. Hồ Chí Minh', 'Vũng Tàu', 'BIỂN XANH 15%', 'Áp dụng cho tuyến TP.HCM đi Vũng Tàu, Nha Trang, Phan Thiết.', TRUE, '2026-10-29 06:38:16.540144'),
-(6, 'HOTLINE10', 'Tri Ân Khách Hàng Thân Thiết - Giảm 10%', 'Mã giảm giá định kỳ dành tặng hành khách đồng hành cùng TravelEasy', 'PERCENT', 10.00, 100000.00, 50000.00, '2026-10-29 06:38:16.540144', '2027-01-27 06:38:16.540144', 3000, 2150, 'ALL', NULL, NULL, 'TRI ÂN 10%', 'Áp dụng cho toàn bộ các tuyến đường trên toàn quốc.', TRUE, '2026-10-29 06:38:16.540144');
+(6, 'HOTLINE10', 'Tri Ân Khách Hàng Thân Thiết - Giảm 10%', 'Mã giảm giá định kỳ dành tặng hành khách đồng hành cùng TravelEasy', 'PERCENT', 10.00, 100000.00, 50000.00, '2026-10-29 06:38:16.540144', '2027-01-27 06:38:16.540144', 3000, 2150, 'ALL', NULL, NULL, 'TRI ÂN 10%', 'Áp dụng cho toàn bộ các tuyến đường trên toàn quốc.', TRUE, '2026-10-29 06:38:16.540144'),
+(7, 'TRAVELEASY', 'Giảm 50.000 đ cho khách hàng mới', 'Áp dụng cho mọi tuyến xe khách toàn quốc với đơn từ 200.000 đ', 'FIXED', 50000.00, 200000.00, 50000.00, '2026-01-01 00:00:00', '2027-12-31 23:59:59', 5000, 120, 'NEW_CUSTOMER', NULL, NULL, 'HOT NHẤT', 'Áp dụng cho mọi tuyến xe khách toàn quốc với đơn từ 200.000 đ', TRUE, '2026-11-18 12:00:00'),
+(8, 'GIAM20', 'Giảm 20% khi đặt từ 2 vé', 'Ưu đãi nhóm bạn & gia đình, giảm tối đa 100.000 đ trên tổng hóa đơn', 'PERCENT', 20.00, 300000.00, 100000.00, '2026-01-01 00:00:00', '2027-12-31 23:59:59', 5000, 450, 'ALL', NULL, NULL, 'TIẾT KIỆM', 'Ưu đãi nhóm bạn & gia đình, giảm tối đa 100.000 đ trên tổng hóa đơn', TRUE, '2026-11-18 12:00:00'),
+(9, 'VEXEREVIP', 'Tri ân thành viên VIP - Giảm 50.000 đ', 'Dành riêng cho khách hàng đã từng đặt vé trên hệ thống TravelEasy', 'FIXED', 50000.00, 250000.00, 50000.00, '2026-01-01 00:00:00', '2027-12-31 23:59:59', 3000, 310, 'ALL', NULL, NULL, 'VIP -50K', 'Dành riêng cho khách hàng đã từng đặt vé trên hệ thống TravelEasy', TRUE, '2026-11-18 12:00:00'),
+(10, 'HE2026', 'Chào Hè Sôi Động - Giảm 30.000 đ', 'Áp dụng cho các tuyến du lịch biển: Nha Trang, Vũng Tàu, Phan Thiết, Quy Nhơn', 'FIXED', 30000.00, 150000.00, 30000.00, '2026-01-01 00:00:00', '2027-12-31 23:59:59', 4000, 820, 'HOT_ROUTE', NULL, NULL, 'CHÀO HÈ', 'Áp dụng cho các chuyến xe du lịch biển.', TRUE, '2026-11-18 12:00:00'),
+(11, 'DATSOM20K', 'Đặt vé sớm - Giảm ngay 20.000 đ', 'Áp dụng khi đặt vé trước giờ khởi hành ít nhất 2 ngày', 'FIXED', 20000.00, 100000.00, 20000.00, '2026-01-01 00:00:00', '2027-12-31 23:59:59', 5000, 610, 'ALL', NULL, NULL, 'ĐẶT SỚM', 'Áp dụng khi đặt vé trước giờ khởi hành.', TRUE, '2026-11-18 12:00:00');
 
 -- -----------------------------------------------------
 -- Data for table: review_reports (15 rows)

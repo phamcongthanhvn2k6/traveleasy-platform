@@ -108,6 +108,26 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Query("SELECT t FROM Trip t ORDER BY t.departureTime DESC")
     List<Trip> findAllByOrderByDepartureTimeDesc();
 
+    /**
+     * [S306 TELEMATICS] Lấy danh sách chuyến xe đang/sắp vận hành kèm Company và Route (1 query duy nhất, khử N+1)
+     */
+    @EntityGraph(attributePaths = {"busCompany", "route"})
+    @Query("""
+        SELECT t FROM Trip t
+        WHERE t.status != com.traveleasy.entity.TripStatus.CANCELLED
+          AND t.departureTime >= :startTime
+        ORDER BY t.departureTime ASC
+    """)
+    List<Trip> findActiveFleetTrips(@Param("startTime") LocalDateTime startTime, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"busCompany", "route"})
+    @Query("""
+        SELECT t FROM Trip t
+        WHERE t.status != com.traveleasy.entity.TripStatus.CANCELLED
+        ORDER BY t.departureTime DESC
+    """)
+    List<Trip> findTopFleetTrips(Pageable pageable);
+
     @EntityGraph(attributePaths = {"busCompany", "route"})
     @Query("SELECT t FROM Trip t WHERE t.busCompany.id = :busCompanyId ORDER BY t.departureTime DESC")
     List<Trip> findByBusCompanyIdOrderByDepartureTimeDesc(@Param("busCompanyId") Long busCompanyId);

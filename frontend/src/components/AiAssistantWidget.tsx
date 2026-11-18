@@ -348,6 +348,9 @@ export const AiAssistantWidget: React.FC = () => {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastSendTimeRef = useRef<number>(0);
+  const spamCountRef = useRef<number>(0);
+  const [isCooldown, setIsCooldown] = useState<boolean>(false);
 
   const handleCopyVoucher = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -383,6 +386,29 @@ export const AiAssistantWidget: React.FC = () => {
   const handleSend = async (customText?: string) => {
     const textToSend = (customText || input).trim();
     if (!textToSend || loading) return;
+
+    if (isCooldown) {
+      toast.warning('Bạn đang nhắn tin quá dồn dập! Vui lòng chờ vài giây để tiếp tục.', 'Bảo Vệ Trợ Lý AI');
+      return;
+    }
+
+    const now = Date.now();
+    if (now - lastSendTimeRef.current < 2000) {
+      spamCountRef.current += 1;
+      if (spamCountRef.current >= 3) {
+        setIsCooldown(true);
+        toast.error('Phát hiện spam gửi tin nhắn liên tục! Hệ thống tạm nghỉ 8 giây.', 'Chống Spam');
+        setTimeout(() => {
+          setIsCooldown(false);
+          spamCountRef.current = 0;
+        }, 8000);
+        return;
+      }
+      toast.warning('Vui lòng đợi 2 giây để trợ lý AI kịp phản hồi nhé!', 'Thao Tác Nhanh');
+      return;
+    }
+    lastSendTimeRef.current = now;
+    spamCountRef.current = 0;
 
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
@@ -1285,10 +1311,11 @@ export const AiAssistantWidget: React.FC = () => {
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="Nhập câu hỏi (Ví dụ: Chuyến xe đi Đà Lạt...)"
+                disabled={loading || isCooldown}
+                placeholder={isCooldown ? 'Hệ thống đang tạm nghỉ chống spam (8s)...' : loading ? 'Trợ lý AI đang soạn câu trả lời...' : 'Nhập câu hỏi (Ví dụ: Chuyến xe đi Đà Lạt...)'}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                onKeyDown={(e) => e.key === 'Enter' && !loading && !isCooldown && handleSend()}
                 style={{
                   flex: 1,
                   padding: '11px 14px',
@@ -1296,8 +1323,9 @@ export const AiAssistantWidget: React.FC = () => {
                   border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                   fontSize: '13px',
                   outline: 'none',
-                  backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+                  backgroundColor: isCooldown ? (isDark ? '#1e293b' : '#f1f5f9') : (isDark ? '#0f172a' : '#f8fafc'),
                   color: isDark ? '#f8fafc' : '#0f172a',
+                  cursor: isCooldown || loading ? 'not-allowed' : 'text',
                   transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
                 }}
                 onFocus={(e) => {
@@ -1311,10 +1339,10 @@ export const AiAssistantWidget: React.FC = () => {
               />
               <button
                 onClick={() => handleSend()}
-                disabled={loading || !input.trim()}
+                disabled={loading || isCooldown || !input.trim()}
                 style={{
-                  backgroundColor: input.trim() && !loading ? '#2563eb' : (isDark ? '#334155' : '#e2e8f0'),
-                  color: input.trim() && !loading ? '#ffffff' : (isDark ? '#64748b' : '#94a3b8'),
+                  backgroundColor: input.trim() && !loading && !isCooldown ? '#2563eb' : (isDark ? '#334155' : '#e2e8f0'),
+                  color: input.trim() && !loading && !isCooldown ? '#ffffff' : (isDark ? '#64748b' : '#94a3b8'),
                   border: 'none',
                   width: '42px',
                   height: '42px',
@@ -1322,10 +1350,10 @@ export const AiAssistantWidget: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
+                  cursor: input.trim() && !loading && !isCooldown ? 'pointer' : 'not-allowed',
                   transition: 'all 0.15s ease',
                   flexShrink: 0,
-                  boxShadow: input.trim() && !loading ? '0 4px 12px rgba(37, 99, 235, 0.3)' : 'none',
+                  boxShadow: input.trim() && !loading && !isCooldown ? '0 4px 12px rgba(37, 99, 235, 0.3)' : 'none',
                 }}
               >
                 <Send size={17} />

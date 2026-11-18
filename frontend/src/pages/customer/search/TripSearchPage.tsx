@@ -165,6 +165,10 @@ export const TripSearchPage: React.FC = () => {
   }, [origin, destination, date]);
 
   const handleSearchChange = (newOrigin: string, newDestination: string, newDate: string, newReturnDate?: string) => {
+    if (newOrigin && newDestination && newOrigin.trim().toLowerCase() === newDestination.trim().toLowerCase()) {
+      toast.warning('Điểm xuất phát và điểm đến không được trùng nhau! Vui lòng chọn lộ trình khác.', 'Trùng Điểm Đi / Đến');
+      return;
+    }
     const nextParams: Record<string, string> = {};
     if (newOrigin && newOrigin.trim() !== '') nextParams.origin = newOrigin.trim();
     if (newDestination && newDestination.trim() !== '') nextParams.destination = newDestination.trim();

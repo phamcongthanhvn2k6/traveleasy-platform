@@ -75,6 +75,34 @@ public class Booking {
     @Column(name = "staff_user_id")
     private Long staffUserId;
 
+    @Column(name = "refund_bank_name", length = 100)
+    private String refundBankName;
+
+    @Column(name = "refund_account_number", length = 50)
+    private String refundAccountNumber;
+
+    @Column(name = "refund_account_holder", length = 100)
+    private String refundAccountHolder;
+
+    @Column(name = "refund_amount", precision = 12, scale = 2)
+    private BigDecimal refundAmount;
+
+    @Column(name = "refund_fee", precision = 12, scale = 2)
+    private BigDecimal refundFee;
+
+    @Column(name = "refund_status", length = 30)
+    @Builder.Default
+    private String refundStatus = "NONE"; // NONE, PENDING, REFUNDED, REJECTED
+
+    @Column(name = "refund_reason", length = 255)
+    private String refundReason;
+
+    @Column(name = "refund_tx_code", length = 100)
+    private String refundTxCode;
+
+    @Column(name = "refunded_at")
+    private LocalDateTime refundedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 20)
     @Builder.Default

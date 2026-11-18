@@ -43,12 +43,12 @@ public class TripAutomationService {
     private static final List<RouteScheduleTemplate> DEFAULT_TEMPLATES = List.of(
             // 1. TP.HCM <-> Đà Lạt
             new RouteScheduleTemplate(
-                    "TP. Hồ Chí Minh", "Đà Lạt", "TravelEasy Express",
+                    "TP. Hồ Chí Minh", "Đà Lạt", "Thành Bưởi",
                     List.of("00:30", "04:30", "07:00", "09:30", "11:00", "13:30", "15:30", "18:00", "22:30", "23:00"),
                     BusType.LIMOUSINE, BigDecimal.valueOf(390000), 6.5
             ),
             new RouteScheduleTemplate(
-                    "Đà Lạt", "TP. Hồ Chí Minh", "TravelEasy Express",
+                    "Đà Lạt", "TP. Hồ Chí Minh", "Thành Bưởi",
                     List.of("00:30", "04:30", "07:00", "09:30", "11:00", "13:30", "15:30", "18:00", "22:30", "23:00"),
                     BusType.LIMOUSINE, BigDecimal.valueOf(390000), 6.5
             ),
@@ -65,32 +65,54 @@ public class TripAutomationService {
             ),
             // 3. TP.HCM <-> Nha Trang
             new RouteScheduleTemplate(
-                    "TP. Hồ Chí Minh", "Nha Trang", "Phương Trang FUTA Bus Lines",
+                    "TP. Hồ Chí Minh", "Nha Trang", "Phương Trang (FUTA Bus Lines)",
                     List.of("07:30", "11:00", "13:30", "17:45", "22:30", "23:00"),
                     BusType.SLEEPER, BigDecimal.valueOf(320000), 8.0
             ),
             // 4. TP.HCM <-> Vũng Tàu
             new RouteScheduleTemplate(
-                    "TP. Hồ Chí Minh", "Vũng Tàu", "Hoa Mai Limousine",
+                    "TP. Hồ Chí Minh", "Vũng Tàu", "Xe Khách Hoa Mai",
                     List.of("06:00", "07:30", "09:30", "11:30", "13:30", "15:30", "17:00", "19:00"),
                     BusType.LIMOUSINE, BigDecimal.valueOf(190000), 2.0
             ),
             new RouteScheduleTemplate(
-                    "Vũng Tàu", "TP. Hồ Chí Minh", "Hoa Mai Limousine",
+                    "Vũng Tàu", "TP. Hồ Chí Minh", "Xe Khách Hoa Mai",
                     List.of("06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"),
                     BusType.LIMOUSINE, BigDecimal.valueOf(190000), 2.0
             ),
-            // 5. Hà Nội <-> Hải Phòng
+            // 5. TP.HCM <-> Phan Thiết
             new RouteScheduleTemplate(
-                    "Hà Nội", "Hải Phòng", "DCar Limousine VIP",
-                    List.of("06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"),
-                    BusType.LIMOUSINE, BigDecimal.valueOf(220000), 1.5
+                    "TP. Hồ Chí Minh", "Phan Thiết", "Kumho Samco Buslines",
+                    List.of("06:30", "08:30", "11:00", "14:00", "16:30", "18:30", "21:30"),
+                    BusType.LIMOUSINE, BigDecimal.valueOf(199000), 3.8
             ),
-            // 6. Đà Nẵng <-> Quy Nhơn
             new RouteScheduleTemplate(
-                    "Đà Nẵng", "Quy Nhơn", "An Phú Quý Limousine",
-                    List.of("07:00", "13:15", "19:30"),
-                    BusType.SLEEPER, BigDecimal.valueOf(300000), 5.5
+                    "Phan Thiết", "TP. Hồ Chí Minh", "Kumho Samco Buslines",
+                    List.of("06:30", "08:30", "11:00", "14:00", "16:30", "18:30", "21:30"),
+                    BusType.LIMOUSINE, BigDecimal.valueOf(199000), 3.8
+            ),
+            // 6. TP.HCM <-> Buôn Ma Thuột
+            new RouteScheduleTemplate(
+                    "TP. Hồ Chí Minh", "Buôn Ma Thuột", "Kumho Samco Buslines",
+                    List.of("08:00", "12:30", "18:00", "21:30", "22:30"),
+                    BusType.LIMOUSINE, BigDecimal.valueOf(299000), 7.5
+            ),
+            // 7. TP.HCM <-> Cần Thơ
+            new RouteScheduleTemplate(
+                    "TP. Hồ Chí Minh", "Cần Thơ", "Phương Trang (FUTA Bus Lines)",
+                    List.of("06:00", "08:30", "11:00", "13:30", "15:30", "18:00", "20:30"),
+                    BusType.SLEEPER, BigDecimal.valueOf(165000), 3.5
+            ),
+            new RouteScheduleTemplate(
+                    "Cần Thơ", "TP. Hồ Chí Minh", "Phương Trang (FUTA Bus Lines)",
+                    List.of("06:30", "09:00", "11:30", "14:00", "16:00", "18:30", "21:00"),
+                    BusType.SLEEPER, BigDecimal.valueOf(165000), 3.5
+            ),
+            // 8. Đà Nẵng <-> Quy Nhơn
+            new RouteScheduleTemplate(
+                    "Đà Nẵng", "Quy Nhơn", "Phương Trang (FUTA Bus Lines)",
+                    List.of("07:00", "09:30", "13:30", "17:00", "19:30"),
+                    BusType.SLEEPER, BigDecimal.valueOf(250000), 5.5
             )
     );
 
@@ -303,7 +325,9 @@ public class TripAutomationService {
         Route route = routeOpt.get();
         // Chỉ gán chuyến khi tìm thấy chính xác nhà xe sở hữu template;
         // TUYỆT ĐỐI không fallback sang findAll().findFirst() để tránh tự sinh chuyến gán nhầm cho nhà xe mới đăng ký
-        BusCompany company = busCompanyRepository.findByName(tmpl.companyName).orElse(null);
+        BusCompany company = busCompanyRepository.findByName(tmpl.companyName)
+                .or(() -> busCompanyRepository.findByNameContainingIgnoreCase(tmpl.companyName))
+                .orElse(null);
 
         if (company == null) {
             return 0;

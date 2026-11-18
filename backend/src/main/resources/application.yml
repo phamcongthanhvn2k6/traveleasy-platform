@@ -10,7 +10,7 @@ spring:
   main:
     allow-circular-references: true
   application:
-    name: traveleasy-backend
+    name: ${OTEL_SERVICE_NAME:traveleasy-backend}
   mail:
     host: ${SPRING_MAIL_HOST:smtp.gmail.com}
     port: ${SPRING_MAIL_PORT:587}
@@ -62,6 +62,29 @@ spring:
           order_updates: true
           lob:
             non_contextual_creation: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: ${OTEL_SERVICE_NAME:traveleasy-backend}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}
 
 app:
   frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}

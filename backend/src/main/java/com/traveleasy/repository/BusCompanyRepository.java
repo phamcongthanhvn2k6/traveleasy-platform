@@ -13,8 +13,12 @@ import java.util.Optional;
 @Repository
 public interface BusCompanyRepository extends JpaRepository<BusCompany, Long> {
     Optional<BusCompany> findFirstByName(String name);
+    Optional<BusCompany> findFirstByNameContainingIgnoreCase(String name);
     default Optional<BusCompany> findByName(String name) {
         return findFirstByName(name);
+    }
+    default Optional<BusCompany> findByNameContainingIgnoreCase(String name) {
+        return findFirstByNameContainingIgnoreCase(name);
     }
     boolean existsByName(String name);
     Optional<BusCompany> findByEmail(String email);

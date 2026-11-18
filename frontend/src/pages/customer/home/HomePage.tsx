@@ -177,6 +177,10 @@ export const HomePage: React.FC = () => {
 
 
   const handleSearch = (origin: string, destination: string, date: string, returnDate?: string) => {
+    if (origin && destination && origin.trim().toLowerCase() === destination.trim().toLowerCase()) {
+      toast.warning('Điểm xuất phát và điểm đến không được trùng nhau! Vui lòng chọn lộ trình khác.', 'Trùng Điểm Đi / Đến');
+      return;
+    }
     // ponytail: forward optional returnDate as query param
     const returnParam = returnDate ? `&returnDate=${encodeURIComponent(returnDate)}` : '';
     navigate(`/search?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&date=${encodeURIComponent(date)}${returnParam}`);
@@ -988,40 +992,116 @@ export const HomePage: React.FC = () => {
           })()}
         </div>
 
-        {/* ponytail: Slider Pagination Dots (WCAG 2.5.8 Min Target Size Compliant) */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginTop: '14px' }}>
-          {[0, 1, 2, 3].map((idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => {
-                setSliderIndex(idx);
-                if (routesSliderRef.current) {
-                  routesSliderRef.current.scrollTo({ left: idx * 320 * 2, behavior: 'smooth' });
-                }
-              }}
-              aria-label={`Chuyển đến trang danh sách tuyến xe ${idx + 1}`}
-              style={{
-                minWidth: '36px',
-                minHeight: '36px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'transparent',
-                border: 'none',
-                padding: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              <span style={{
-                width: sliderIndex === idx ? '24px' : '8px',
-                height: '8px',
-                borderRadius: '4px',
-                backgroundColor: sliderIndex === idx ? '#2563eb' : (isDark ? '#334155' : '#cbd5e1'),
-                transition: 'all 0.25s ease'
-              }} />
-            </button>
-          ))}
+        {/* Navigation Controls: Mũi tên Trái / Phải & Dots Điều Hướng Thân Thiện */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginTop: '16px' }}>
+          <button
+            type="button"
+            onClick={() => {
+              if (routesSliderRef.current) {
+                routesSliderRef.current.scrollBy({ left: -320, behavior: 'smooth' });
+              }
+              setSliderIndex(prev => Math.max(0, prev - 1));
+            }}
+            aria-label="Tuyến trước đó"
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: isDark ? '#1e293b' : '#ffffff',
+              border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+              color: isDark ? '#f8fafc' : '#0f172a',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = '#2563eb';
+              e.currentTarget.style.color = '#ffffff';
+              e.currentTarget.style.borderColor = '#2563eb';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#ffffff';
+              e.currentTarget.style.color = isDark ? '#f8fafc' : '#0f172a';
+              e.currentTarget.style.borderColor = isDark ? '#334155' : '#cbd5e1';
+            }}
+          >
+            <ChevronLeft size={18} />
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {[0, 1, 2, 3].map((idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setSliderIndex(idx);
+                  if (routesSliderRef.current) {
+                    routesSliderRef.current.scrollTo({ left: idx * 320 * 2, behavior: 'smooth' });
+                  }
+                }}
+                aria-label={`Chuyển đến trang danh sách tuyến xe ${idx + 1}`}
+                style={{
+                  minWidth: '24px',
+                  minHeight: '24px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: '2px',
+                  cursor: 'pointer'
+                }}
+              >
+                <span style={{
+                  width: sliderIndex === idx ? '22px' : '7px',
+                  height: '7px',
+                  borderRadius: '4px',
+                  backgroundColor: sliderIndex === idx ? '#2563eb' : (isDark ? '#334155' : '#cbd5e1'),
+                  transition: 'all 0.25s ease'
+                }} />
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (routesSliderRef.current) {
+                routesSliderRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+              }
+              setSliderIndex(prev => Math.min(3, prev + 1));
+            }}
+            aria-label="Tuyến tiếp theo"
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: isDark ? '#1e293b' : '#ffffff',
+              border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+              color: isDark ? '#f8fafc' : '#0f172a',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = '#2563eb';
+              e.currentTarget.style.color = '#ffffff';
+              e.currentTarget.style.borderColor = '#2563eb';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#ffffff';
+              e.currentTarget.style.color = isDark ? '#f8fafc' : '#0f172a';
+              e.currentTarget.style.borderColor = isDark ? '#334155' : '#cbd5e1';
+            }}
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
       </section>
 

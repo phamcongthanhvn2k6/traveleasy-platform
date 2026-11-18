@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { Bus, Plane, Train, Car, Calendar, ArrowRightLeft, Search, Plus, Check } from 'lucide-react';
+import { Bus, Plane, Train, Car, Calendar, ArrowRightLeft, Search, Plus, Check, AlertTriangle, X } from 'lucide-react';
 import { getLocalTodayDateString, getLocalNextDayString } from '../utils/dateUtils';
 import { POPULAR_CITIES } from '../constants/popularCities';
+import { toast } from '../context/ToastContext';
 
 interface Props {
   onSearch: (origin: string, destination: string, date: string, returnDate?: string) => void;
@@ -31,6 +32,7 @@ export const SearchTripBar: React.FC<Props> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [swapRotation, setSwapRotation] = useState(0);
   const [tabNotice, setTabNotice] = useState<string | null>(null);
+  const [showInDevModal, setShowInDevModal] = useState(false);
 
   const handleSwap = () => {
     setValidationError(null);
@@ -48,11 +50,21 @@ export const SearchTripBar: React.FC<Props> = ({
     }
   };
 
+  const getServiceName = (tab: 'bus' | 'plane' | 'train' | 'car') => {
+    switch (tab) {
+      case 'plane': return 'Vé Máy Bay';
+      case 'train': return 'Vé Tàu Hỏa';
+      case 'car': return 'Thuê Xe Tự Lái';
+      default: return 'Vé Xe Khách';
+    }
+  };
+
   const handleTabChange = (tab: 'bus' | 'plane' | 'train' | 'car') => {
     setActiveTab(tab);
     if (tab !== 'bus') {
-      setTabNotice(`Dịch vụ ${tab === 'plane' ? 'Vé Máy Bay' : tab === 'train' ? 'Tàu Hỏa' : 'Thuê Xe'} đang liên kết mở rộng cùng đối tác hàng không/đường sắt. Hiện tại hệ thống đang ưu tiên tìm kiếm chuyến Xe Khách toàn quốc.`);
-      setTimeout(() => setTabNotice(null), 4000);
+      const name = getServiceName(tab);
+      setTabNotice(`⚠️ Lưu ý: Tính năng đặt ${name} đang trong lộ trình phát triển và hoàn thiện kỹ thuật liên kết cùng đối tác hàng không & đường sắt, chưa mở bán chính thức.`);
+      toast.info(`Dịch vụ ${name} hiện chưa được hoàn thiện nhằm tránh gây hiểu lầm. Quý khách vui lòng chọn Xe Khách để đặt chỗ ngay!`, 'Tính Năng Đang Phát Triển');
     } else {
       setTabNotice(null);
     }
@@ -61,6 +73,15 @@ export const SearchTripBar: React.FC<Props> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    // Nếu người dùng chọn Máy bay, Tàu hỏa, hoặc Thuê xe rồi nhấn Tìm kiếm:
+    // Hiển thị modal nhắc nhở rõ ràng rằng tính năng chưa hoàn thiện để tránh gây hiểu lầm!
+    if (activeTab !== 'bus') {
+      setShowInDevModal(true);
+      const name = getServiceName(activeTab);
+      toast.warning(`Tính năng ${name} chưa được hoàn thiện trên hệ thống. Vui lòng chuyển sang đặt vé Xe Khách!`, 'Chưa Mở Bán');
+      return;
+    }
 
     if (!origin.trim() || !destination.trim()) {
       setValidationError('Vui lòng chọn đầy đủ điểm xuất phát và điểm đến.');
@@ -299,24 +320,53 @@ export const SearchTripBar: React.FC<Props> = ({
           }
         `}</style>
 
-        {tabNotice && (
+        {activeTab !== 'bus' && (
           <div
             role="status"
             style={{
-              backgroundColor: '#eff6ff',
-              color: '#1d4ed8',
-              border: '1px solid #bfdbfe',
-              borderRadius: '10px',
-              padding: '10px 14px',
-              fontSize: '13.5px',
+              backgroundColor: '#fff7ed',
+              color: '#c2410c',
+              border: '1px solid #ffedd5',
+              borderRadius: '12px',
+              padding: '12px 16px',
+              fontSize: '13px',
               fontWeight: 600,
-              marginBottom: '14px',
+              marginBottom: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px'
+              justifyContent: 'space-between',
+              gap: '12px',
+              flexWrap: 'wrap',
+              boxShadow: '0 2px 8px rgba(234, 88, 12, 0.08)'
             }}
           >
-            <span>ℹ️</span> {tabNotice}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '240px' }}>
+              <AlertTriangle size={18} color="#ea580c" style={{ flexShrink: 0 }} />
+              <span>
+                <strong>Tính năng chưa hoàn thiện:</strong> Dịch vụ {getServiceName(activeTab)} đang được phát triển liên kết đối tác, chưa mở bán chính thức. Vui lòng chuyển sang tab <strong>"Xe khách"</strong> để tìm kiếm và đặt vé tức thì!
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('bus');
+                setTabNotice(null);
+              }}
+              style={{
+                backgroundColor: '#ea580c',
+                color: '#ffffff',
+                border: 'none',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'background 0.2s'
+              }}
+            >
+              Chuyển Về Xe Khách
+            </button>
           </div>
         )}
 
@@ -603,6 +653,154 @@ export const SearchTripBar: React.FC<Props> = ({
           </button>
         </div>
       </form>
+
+      {/* POPUP NHẮC NHỞ TÍNH NĂNG CHƯA HOÀN THIỆN ĐỂ TRÁNH HIỂU LẦM */}
+      {showInDevModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowInDevModal(false);
+          }}
+        >
+          <div 
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              backgroundColor: '#ffffff',
+              borderRadius: '24px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              padding: '28px',
+              position: 'relative',
+              textAlign: 'center',
+              border: '1px solid #e2e8f0'
+            }}
+          >
+            {/* Nút đóng */}
+            <button
+              type="button"
+              onClick={() => setShowInDevModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                padding: '6px',
+                borderRadius: '8px'
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            {/* Icon dịch vụ */}
+            <div style={{
+              width: '68px',
+              height: '68px',
+              borderRadius: '20px',
+              backgroundColor: activeTab === 'plane' ? '#eff6ff' : activeTab === 'train' ? '#fef2f2' : '#fff7ed',
+              color: activeTab === 'plane' ? '#2563eb' : activeTab === 'train' ? '#dc2626' : '#ea580c',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px'
+            }}>
+              {activeTab === 'plane' && <Plane size={34} />}
+              {activeTab === 'train' && <Train size={34} />}
+              {activeTab === 'car' && <Car size={34} />}
+            </div>
+
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
+              Tính Năng Đang Được Hoàn Thiện
+            </h3>
+
+            <div style={{
+              backgroundColor: '#fff7ed',
+              borderRadius: '12px',
+              padding: '10px 14px',
+              border: '1px solid #ffedd5',
+              marginBottom: '14px',
+              fontSize: '12.5px',
+              fontWeight: 700,
+              color: '#c2410c',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}>
+              <AlertTriangle size={15} />
+              Dịch vụ {getServiceName(activeTab)} chưa mở bán chính thức
+            </div>
+
+            <p style={{ fontSize: '13.5px', color: '#475569', lineHeight: 1.6, marginBottom: '22px' }}>
+              Hệ thống đang trong quá trình phát triển và hoàn thiện kỹ thuật liên kết cùng các đối tác hàng không & đường sắt Việt Nam. Nhằm tránh gây nhầm lẫn khi tìm kiếm, TravelEasy hiện tại phục vụ chuyên sâu cho <strong style={{ color: '#0f172a' }}>hơn 140+ tuyến xe khách liên tỉnh toàn quốc</strong>.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowInDevModal(false);
+                  setActiveTab('bus');
+                  setTabNotice(null);
+                  if (origin.trim() && destination.trim() && departureDate.trim()) {
+                    onSearch(origin.trim(), destination.trim(), departureDate, hasReturnDate ? returnDate : undefined);
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  padding: '13px 20px',
+                  borderRadius: '14px',
+                  border: 'none',
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  fontSize: '14.5px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Bus size={18} /> Chuyển Sang Tìm Vé Xe Khách
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowInDevModal(false)}
+                style={{
+                  width: '100%',
+                  padding: '11px 20px',
+                  borderRadius: '14px',
+                  border: '1px solid #cbd5e1',
+                  backgroundColor: '#f8fafc',
+                  color: '#475569',
+                  fontSize: '13.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Tôi Đã Hiểu & Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

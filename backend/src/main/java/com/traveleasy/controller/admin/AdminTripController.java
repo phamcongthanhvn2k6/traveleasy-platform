@@ -51,6 +51,14 @@ public class AdminTripController {
         return ApiResponse.success("Cập nhật trạng thái đơn vé thành công", bookingService.updateBookingStatusWithReason(id, status, reason));
     }
 
+    @PostMapping("/bookings/{id}/confirm-refund")
+    @Operation(summary = "Xác nhận đã chuyển khoản hoàn tiền thành công cho khách hàng")
+    public ApiResponse<BookingResponse> confirmRefund(
+            @PathVariable Long id,
+            @RequestParam(required = false) String txCode) {
+        return ApiResponse.success("Đã xác nhận chuyển khoản hoàn tiền thành công", bookingService.confirmRefund(id, txCode, "Admin Hệ Thống"));
+    }
+
     @PostMapping("/trips")
     @Operation(summary = "Tạo chuyến xe mới (Tự động sinh kho ghế 2 tầng A01-A17, B01-B17)")
     public ApiResponse<TripResponse> createTrip(@Valid @RequestBody CreateTripRequest request) {
