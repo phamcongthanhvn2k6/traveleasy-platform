@@ -204,6 +204,7 @@ export default function PosTerminalPage() {
   // Modals State
   const [showShortcutGuide, setShowShortcutGuide] = useState(false);
   const [activeReceiptModal, setActiveReceiptModal] = useState<PosReceiptData | null>(null);
+  const [hasPrintedActiveReceipt, setHasPrintedActiveReceipt] = useState(false);
   const [showOpenShiftModal, setShowOpenShiftModal] = useState(false);
   const [openShiftCashier, setOpenShiftCashier] = useState('Phạm Thanh Phong');
   const [openShiftInitialCash, setOpenShiftInitialCash] = useState<number>(1000000);
@@ -532,6 +533,10 @@ export default function PosTerminalPage() {
     }
   };
 
+  useEffect(() => {
+    setHasPrintedActiveReceipt(false);
+  }, [activeReceiptModal]);
+
   // Phím tắt toàn cục F1 - F9, Enter chốt vé / in nhanh + ESC quay lại bước trước
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -544,7 +549,13 @@ export default function PosTerminalPage() {
 
         if (activeReceiptModal) {
           e.preventDefault();
-          window.print();
+          if (!hasPrintedActiveReceipt) {
+            setHasPrintedActiveReceipt(true);
+            window.print();
+          } else {
+            setActiveReceiptModal(null);
+            setActiveStep(2);
+          }
           return;
         }
         if (activeStep === 2 && selectedSeats.length > 0) {
@@ -650,6 +661,7 @@ export default function PosTerminalPage() {
   }, [
     activeStep,
     activeReceiptModal,
+    hasPrintedActiveReceipt,
     activeZReportModal,
     showOpenShiftModal,
     showCloseShiftModal,
@@ -1827,7 +1839,10 @@ export default function PosTerminalPage() {
                         <button
                           key={idx}
                           type="button"
-                          onClick={() => setCashReceivedInput(String(amt))}
+                          onClick={() => {
+                            setCashReceivedInput(String(amt));
+                            document.getElementById('pos-cash-received')?.focus();
+                          }}
                           className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-xs font-mono-pos font-semibold text-slate-700 hover:border-indigo-500 cursor-pointer"
                         >
                           {idx === 0 ? 'Đủ' : `${amt / 1000}k`}
@@ -1839,8 +1854,22 @@ export default function PosTerminalPage() {
                     id="pos-cash-received"
                     type="text"
                     inputMode="numeric"
+                    maxLength={15}
                     value={sanitizedCashDigits !== '' ? Number(sanitizedCashDigits).toLocaleString('vi-VN') : ''}
-                    onChange={(e) => setCashReceivedInput(e.target.value.replace(/[^\d]/g, ''))}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^\d]/g, '');
+                      if (raw.length <= 11) {
+                        setCashReceivedInput(raw);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!isCashInsufficient && !issuingTicket && selectedSeats.length > 0) {
+                          handleIssueAndPrintTicket();
+                        }
+                      }
+                    }}
                     placeholder={`Mặc định: ${finalTotal.toLocaleString('vi-VN')} đ`}
                     className={`w-full px-3.5 py-2.5 bg-white border rounded-xl text-base font-mono-pos font-bold focus:outline-none focus:ring-2 ${isCashInsufficient
                         ? 'border-rose-400 text-rose-700 focus:ring-rose-500'
@@ -2141,11 +2170,14 @@ export default function PosTerminalPage() {
             <div className="flex items-center gap-2.5 mt-4 pt-3 border-t border-slate-100 shrink-0 no-print">
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={() => {
+                  setHasPrintedActiveReceipt(true);
+                  window.print();
+                }}
                 className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 cursor-pointer shadow"
               >
                 <Printer className="w-4 h-4" />
-                <span>In Nhiệt 80mm (Enter)</span>
+                <span>{hasPrintedActiveReceipt ? 'In lại 80mm' : 'In Nhiệt 80mm (Enter)'}</span>
               </button>
               <button
                 type="button"
@@ -2155,14 +2187,14 @@ export default function PosTerminalPage() {
                 }}
                 className="py-3 px-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-xl text-sm cursor-pointer"
               >
-                Bán tiếp chuyến này
+                {hasPrintedActiveReceipt ? 'Bán tiếp chuyến này (Enter)' : 'Bán tiếp chuyến này'}
               </button>
               <button
                 type="button"
                 onClick={() => setActiveReceiptModal(null)}
                 className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm cursor-pointer"
               >
-                Đóng
+                Đóng (ESC)
               </button>
             </div>
           </div>
