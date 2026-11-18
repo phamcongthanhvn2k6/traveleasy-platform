@@ -53,6 +53,39 @@ class AdminPromotionControllerTest {
     }
 
     @Test
+    void createPromotion_rejectsEndBeforeStart() {
+        LocalDateTime start = LocalDateTime.of(2026, 11, 18, 12, 0);
+        testPromo.setStartDate(start);
+        testPromo.setEndDate(start.minusMinutes(1));
+
+        assertThrows(AppException.class, () -> controller.createPromotion(testPromo));
+        verify(promotionRepository, never()).save(any(Promotion.class));
+    }
+
+    @Test
+    void createPromotion_acceptsEndEqualToStart() {
+        LocalDateTime start = LocalDateTime.of(2026, 11, 18, 12, 0);
+        testPromo.setStartDate(start);
+        testPromo.setEndDate(start);
+        when(promotionRepository.save(testPromo)).thenReturn(testPromo);
+
+        assertTrue(controller.createPromotion(testPromo).isSuccess());
+    }
+
+    @Test
+    void updatePromotion_rejectsEndBeforeExistingStart() {
+        LocalDateTime start = LocalDateTime.of(2026, 11, 18, 12, 0);
+        testPromo.setStartDate(start);
+        testPromo.setEndDate(start.plusDays(1));
+        Promotion update = Promotion.builder().endDate(start.minusMinutes(1)).build();
+        when(promotionRepository.findById(1L)).thenReturn(Optional.of(testPromo));
+
+        assertThrows(AppException.class, () -> controller.updatePromotion(1L, update));
+        assertEquals(start.plusDays(1), testPromo.getEndDate());
+        verify(promotionRepository, never()).save(any(Promotion.class));
+    }
+
+    @Test
     @DisplayName("TC-01: Admin lấy danh sách toàn bộ khuyến mại sàn thành công")
     void testGetAllPromotions_Success() {
         when(promotionRepository.findAll()).thenReturn(List.of(testPromo));
