@@ -224,8 +224,7 @@ public class CompanySettlementSchemaInitializer implements CommandLineRunner {
                 "UPDATE users SET bus_company_id = 5 WHERE (email = 'hoamai@gmail.com' OR email = 'dieuhanh@hoamaivungtau.com.vn') AND bus_company_id IS NULL; " +
                 "UPDATE users SET bus_company_id = 6 WHERE (email = 'dieuhanh@hoanglongasia.com') AND bus_company_id IS NULL; " +
                 "UPDATE users SET bus_company_id = 7 WHERE (email = 'dieuhanh@vanminh74.vn') AND bus_company_id IS NULL; " +
-                "UPDATE users SET bus_company_id = 9 WHERE (email = 'haivan@gmail.com' OR email = 'dieuhanh@haivan.com') AND bus_company_id IS NULL; " +
-                "UPDATE users SET bus_company_id = 14 WHERE email = 'phamcongt56@gmail.com' AND bus_company_id IS NULL;"
+                "UPDATE users SET bus_company_id = 9 WHERE (email = 'haivan@gmail.com' OR email = 'dieuhanh@haivan.com') AND bus_company_id IS NULL;"
             );
             // [S315 & S320] Đánh Index tối ưu hóa truy vấn CSDL cho PostgreSQL / Supabase
             try {

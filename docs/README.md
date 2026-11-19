@@ -133,6 +133,9 @@ Tài liệu quản lý tiến độ, ma trận phân bổ công việc và kịc
 * 📄 [KICH_BAN_DEMO_BAO_VE_DO_AN_15_PHUT.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/KICH_BAN_DEMO_BAO_VE_DO_AN_15_PHUT.md) *(Live Demo Runbook)*  
   * **Nội dung**: Kịch bản trình diễn bảo vệ đồ án 15 phút chi tiết từng giây, lời thoại mẫu cho các thành viên, thao tác trực quan từng màn hình và bộ câu hỏi phản biện của Hội đồng kèm câu trả lời chuẩn 10/10.
 
+* 📄 [CAM_NANG_BAO_VE_PHAN_HE_DOI_TAC_VA_KIEN_TRUC_CSDL_THANH.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/CAM_NANG_BAO_VE_PHAN_HE_DOI_TAC_VA_KIEN_TRUC_CSDL_THANH.md) *(Cẩm Nang Riêng Cho Thành)*  
+  * **Nội dung**: Cẩm nang bảo vệ đồ án chuyên sâu dành riêng cho Leader Phạm Công Thành: Lời thoại mở đầu kiến trúc, phân hệ Đối tác Nhà xe (Company Portal), CSDL 44 bảng Supabase, quầy POS bến xe, sổ chi phí P&L và bộ câu hỏi phản biện 10/10 điểm.
+
 * 📄 **Chi Tiết Báo Cáo Từng Sprint**:
   * [SPRINT_1_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_1_README.md): Nền tảng Core, Xác thực JWT, CSDL chuẩn Supabase và Quản trị Danh mục (35 thẻ | Done).
   * [SPRINT_2_README.md](file:///c:/Users/LEGION/OneDrive/Máy%20tính/Nhom7_QUANLYNHAXE/docs/04-agile-and-sprints/SPRINT_2_README.md): Tìm kiếm vé xe đa tiêu chí, Chọn sơ đồ ghế 2 tầng, Thanh toán VNPAY & VietQR, Soát vé camera (39 thẻ | Done).

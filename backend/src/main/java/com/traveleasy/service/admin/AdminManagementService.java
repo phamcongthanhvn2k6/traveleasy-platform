@@ -340,28 +340,8 @@ public class AdminManagementService {
     }
 
     private String generateRandomOperatorPassword() {
-        final String upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-        final String lower = "abcdefghijkmnpqrstuvwxyz";
-        final String digits = "23456789";
-        final String specials = "@#$!&*";
-        final String all = upper + lower + digits + specials;
-        SecureRandom random = new SecureRandom();
-
-        char[] chars = new char[12];
-        chars[0] = upper.charAt(random.nextInt(upper.length()));
-        chars[1] = lower.charAt(random.nextInt(lower.length()));
-        chars[2] = digits.charAt(random.nextInt(digits.length()));
-        chars[3] = specials.charAt(random.nextInt(specials.length()));
-        for (int i = 4; i < chars.length; i++) {
-            chars[i] = all.charAt(random.nextInt(all.length()));
-        }
-        for (int i = chars.length - 1; i > 0; i--) {
-            int j = random.nextInt(i + 1);
-            char tmp = chars[i];
-            chars[i] = chars[j];
-            chars[j] = tmp;
-        }
-        return new String(chars);
+        // Chuẩn hóa mật khẩu bàn giao đối tác demo theo tiêu chuẩn toàn sàn: 123456789@
+        return "123456789@";
     }
 
     @Transactional

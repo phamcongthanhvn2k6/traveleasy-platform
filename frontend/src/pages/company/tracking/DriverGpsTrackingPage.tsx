@@ -24,7 +24,8 @@ import {
   Phone,
   Bus,
   Layers,
-  ChevronRight
+  ChevronRight,
+  ExternalLink
 } from 'lucide-react';
 
 interface TripSummary {
@@ -41,12 +42,38 @@ export const DriverGpsTrackingPage: React.FC = () => {
   const tripIdParam = searchParams.get('tripId');
 
   const [availableTrips, setAvailableTrips] = useState<TripSummary[]>([
-    { id: 706, route: 'Hà Nội ➔ Sa Pa', plate: '29B-888.66', busType: 'LIMOUSINE VIP', departureTime: '15:30' },
-    { id: 656, route: 'TP. Hồ Chí Minh ➔ Đà Lạt', plate: '51B-889.99', busType: 'LIMOUSINE 34 PHÒNG', departureTime: '15:30' },
-    { id: 724, route: 'Sa Pa ➔ Hà Nội', plate: '29B-999.88', busType: 'LIMOUSINE EXPRESS', departureTime: '16:00' }
+    { id: 863, route: 'TP. Hồ Chí Minh ➔ Đà Lạt (FUTA)', plate: '51B-998.12', busType: 'LIMOUSINE 34 CHỖ', departureTime: '22:30' },
+    { id: 864, route: 'TP. Hồ Chí Minh ➔ Đà Lạt (FUTA)', plate: '51B-289.99', busType: 'LIMOUSINE 34 CHỖ', departureTime: '06:00' },
+    { id: 865, route: 'TP. Hồ Chí Minh ➔ Đà Lạt (FUTA)', plate: '51B-124.56', busType: 'LIMOUSINE 34 CHỖ', departureTime: '08:30' },
+    { id: 884, route: 'TP. Hồ Chí Minh ➔ Nha Trang (FUTA)', plate: '51B-334.55', busType: 'LIMOUSINE VIP', departureTime: '07:00' }
   ]);
 
-  const [selectedTripId, setSelectedTripId] = useState<number>(Number(tripIdParam) || 656);
+  const [selectedTripId, setSelectedTripId] = useState<number>(Number(tripIdParam) || 863);
+
+  // Tự động tải danh sách chuyến xe thực tế của riêng nhà xe đăng nhập (Tenant-Scoped)
+  useEffect(() => {
+    api.get('/company/trips')
+      .then((res) => {
+        const data = res.data?.data;
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: TripSummary[] = data.slice(0, 8).map((t: any) => ({
+            id: t.id,
+            route: t.routeName || (t.originCity && t.destinationCity ? `${t.originCity} ➔ ${t.destinationCity}` : `Chuyến #${t.id}`),
+            plate: t.licensePlate || t.vehiclePlate || '51B-998.12',
+            busType: t.busType || 'LIMOUSINE 34 CHỖ',
+            departureTime: t.departureTime ? (typeof t.departureTime === 'string' && t.departureTime.length >= 16 ? t.departureTime.substring(11, 16) : '22:30') : '22:30'
+          }));
+          setAvailableTrips(mapped);
+          if (!tripIdParam && mapped.length > 0) {
+            const has863 = mapped.find((m) => m.id === 863);
+            setSelectedTripId(has863 ? 863 : mapped[0].id);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn('Không thể tải danh sách chuyến xe từ API:', err);
+      });
+  }, [tripIdParam]);
   const [isSharingGps, setIsSharingGps] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [currentCoord, setCurrentCoord] = useState<{ lat: number; lng: number } | null>(null);
@@ -245,6 +272,16 @@ export const DriverGpsTrackingPage: React.FC = () => {
                 #{t.id} • {t.route} ({t.plate})
               </button>
             ))}
+            <a
+              href={`/tracking/${selectedTripId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-900/30 transition-all border border-emerald-400/50"
+              title="Mở giao diện khách hàng theo dõi chuyến xe này trong tab mới"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Xem Bản Đồ Khách Hàng (#{selectedTripId})
+            </a>
           </div>
         </div>
 

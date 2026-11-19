@@ -1,6 +1,6 @@
 # 🚍 TRAVELEASY PLATFORM — HỆ THỐNG QUẢN LÝ NHÀ XE & ĐẶT VÉ XE KHÁCH LIÊN TỈNH TRỰC TUYẾN
 ## TÀI LIỆU ĐẶC TẢ TOÀN DIỆN: YÊU CẦU PHẦN MỀM (SRS), THIẾT KẾ DOMAIN (DDD), KIẾN TRÚC HỆ THỐNG, CSDL & KẾ HOẠCH BẢO VỆ 100/100 ĐIỂM
-### DỰ ÁN TỐT NGHIỆP RIKKEI PRE-OJT (SPRINT 7 NGÀY) — NHÓM 7
+### ĐỒ ÁN TỐT NGHIỆP OJT CAPSTONE (4 SPRINTS / 4 TUẦN) — NHÓM 7
 ### MÃ DỰ ÁN: `PRJ-TRAVELEASY-MVP-01` | MÔ HÌNH VẬN HÀNH: VEXERE PLATFORM
 
 ---
@@ -8,7 +8,7 @@
 [![Production Cloudflare](https://img.shields.io/badge/Production-Cloudflare_Workers_Edge-F38020.svg?logo=cloudflare)](https://travelessy-app.phamcongt56.workers.dev)
 [![Backend VPS](https://img.shields.io/badge/Backend_VPS-103.72.57.149-E95420.svg?logo=ubuntu)](http://103.72.57.149)
 [![Swagger UI](https://img.shields.io/badge/Swagger-OpenAPI_3.0-85EA2D.svg?logo=swagger)](http://103.72.57.149/swagger-ui/index.html)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_36_Tables-3ECF8E.svg?logo=supabase)](https://supabase.com/dashboard/project/ctvcwhdepzyvqsncbslf/database/schemas)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_44_Tables-3ECF8E.svg?logo=supabase)](https://supabase.com/dashboard/project/ctvcwhdepzyvqsncbslf/database/schemas)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-21%20LTS-orange.svg)](https://www.oracle.com/java/)
 [![React](https://img.shields.io/badge/React-18.3-blue.svg)](https://react.dev/)
@@ -26,10 +26,10 @@
 > 1. `docs/01-requirements/SRS_Vexere.md` (Đặc tả yêu cầu phần mềm chuẩn IEEE Std 830-1998, 37 Use Cases, 40 Business Rules)
 > 2. `docs/01-requirements/domain.md` (Domain Model DDD: 13 Bounded Contexts, 19 Aggregate Roots, 13 Entities, 13 Value Objects, 14 Services, 23 Enums, 5 State Machines)
 > 3. `docs/02-architecture-and-db/class_diagram.md` (Class Diagram v2 Canonical với 6 Mermaid Context Diagrams & Ownership Rules O1-O5)
-> 4. `docs/02-architecture-and-db/database_design.md` & `docs/schema.sql` (Thiết kế CSDL Production 36 bảng MySQL 8.0, Triggers, Invariants)
+> 4. `docs/02-architecture-and-db/database_design.md` & `docs/02-architecture-and-db/schema.sql` (Thiết kế CSDL Production 44 bảng Supabase Cloud PostgreSQL, Triggers, Invariants)
 > 5. `docs/02-architecture-and-db/PROJECT_ARCHITECTURE.md` (Kiến trúc Modular Monolith Spring Boot 3 + Clean Architecture + React Vite TS)
 > 6. `docs/03-api-and-deployment/GIT_WORKFLOW.md` (Quy chuẩn phân nhánh Git, Conventional Commits, Pull Request & Branch Protection)
-> 7. `docs/ĐẶC TẢ YÊU CẦU DỰ ÁN (SRS) Rikkei ECommerce QuickShop (MVP).docx` (Sprint 7 ngày, Tiêu chí đánh giá 100 điểm: 60 FR + 40 NFR)
+> 7. `docs/04-agile-and-sprints/KICH_BAN_DEMO_BAO_VE_DO_AN_15_PHUT.md` (Kịch bản trình diễn bảo vệ đồ án 15 phút, Tiêu chí đánh giá 100 điểm: 60 FR + 40 NFR)
 
 ---
 
@@ -38,7 +38,7 @@
 * **Lĩnh vực**: Sàn thương mại điện tử Đặt vé xe khách & Hệ thống Điều hành Vận tải hành khách liên tỉnh (Mô hình Vexere.com).
 * **Đơn vị thực hiện**: **Nhóm 7** (Sĩ số: 6 thành viên).
 * **Nhóm trưởng (Team Leader & Architect)**: **Phạm Công Thành** (`Phamcongt56@gmail.com` - GitHub: `phamcongthanhvn2k6`).
-* **Thời gian thực hiện**: Sprint 7 ngày (Agile / Scrum).
+* **Thời gian thực hiện**: 4 Sprints / 4 Tuần (14/11/2026 – 20/11/2026 bảo vệ OJT Capstone).
 * **Mục tiêu điểm số**: **100/100 ĐIỂM TUYỆT ĐỐI** (60 Điểm Functional Requirements + 40 Điểm Non-Functional Requirements & QA).
 
 ### 🔗 HỆ THỐNG TÀI NGUYÊN TRỰC TUYẾN DỰ ÁN (PROJECT LIVE RESOURCES)
@@ -107,11 +107,11 @@
    - 5.5 Booking, Payment & Refund Context (Core Domain)
    - 5.6 Review, Notification, Admin Config & Audit Context
    - 5.7 Các quy tắc sở hữu (Ownership Rules O1 - O5) & Bất biến lịch sử
-6. [THIẾT KẾ CƠ SỞ DỮ LIỆU MYSQL 8.0 & ERD (36 BẢNG CHUẨN HÓA)](#6-thiết-kế-cơ-sở-dữ-liệu-mysql-80--erd-36-bảng-chuẩn-hóa)
+6. [THIẾT KẾ CƠ SỞ DỮ LIỆU SUPABASE POSTGRESQL & ERD (44 BẢNG CHUẨN HÓA)](#6-thiết-kế-cơ-sở-dữ-liệu-supabase-postgresql--erd-44-bảng-chuẩn-hóa)
    - 6.1 Sơ đồ quan hệ thực thể tổng thể (ERD Mermaid)
-   - 6.2 Bảng đặc tả chi tiết 36 bảng CSDL (Khớp 100% `docs/schema.sql` và `init.sql`)
+   - 6.2 Bảng đặc tả chi tiết CSDL (Khớp 100% `docs/02-architecture-and-db/schema.sql` và `init.sql`)
    - 6.3 Cơ chế trừ ghế nguyên tử, chống tranh chấp (Pessimistic Lock `FOR UPDATE`)
-   - 6.4 Dữ liệu mẫu khởi tạo trực quan (Seed Data chi tiết cho 36 bảng)
+   - 6.4 Dữ liệu mẫu khởi tạo trực quan (Seed Data chi tiết trên Supabase Cloud)
 7. [BỘ 25 TEST CASES KIỂM THỬ TOÀN DIỆN (100% PASS)](#7-bộ-25-test-cases-kiểm-thử-toàn-diện-100-pass)
 8. [HƯỚNG DẪN CÀI ĐẶT & VẬN HÀNH (QUICKSTART CHUẨN A-Z)](#8-hướng-dẫn-cài-đặt--vận-hành-quickstart-chuẩn-a-z)
    - Cách 1: Khởi chạy siêu tốc với Dev Profile (Zero-Setup / In-Memory H2 DB)
@@ -707,8 +707,7 @@ Hệ thống TravelEasy áp dụng kiến trúc **Modular Monolith** kết hợp
   * Bản đồ & Radar: Leaflet / OpenStreetMap tương tác định vị GPS xe di chuyển thời gian thực.
   * HTTP Client: Axios 1.7 (Interceptors tự động đính kèm JWT Bearer, xử lý Timeout & Refresh).
 * **Database & Caching Layer**:
-  * RDBMS Cloud: PostgreSQL 16 trên Supabase (36 bảng chuẩn hóa 3NF, Triggers, Invariants).
-  * RDBMS Local: MySQL 8.0 Community Server (InnoDB Engine, utf8mb4_unicode_ci).
+  * RDBMS Cloud & Testing: PostgreSQL 16 trên Supabase Cloud (44 bảng chuẩn hóa 3NF, Triggers, Invariants) kết hợp HikariCP Connection Pool và H2 Database cho kiểm thử tự động.
   * Concurrency Locks: Pessimistic Lock `@Lock(PESSIMISTIC_WRITE)` và Server-Sent Events (SSE) cập nhật ghế thời gian thực.
 * **DevOps & Infrastructure**:
   * Containerization: Docker & Docker Compose v3.8.
@@ -736,10 +735,10 @@ graph TD
         AiController --> AiService["AiService (Travel Advice Engine)"]
     end
 
-    BookingService -->|Lock & Update| MySQL_DB[("MySQL 8.0 Database (36 Canonical Tables)")]:::db
-    TripService -->|Read Only| MySQL_DB
-    AdminTripService -->|CRUD Trips & Seats| MySQL_DB
-    AuthService -->|User Identity| MySQL_DB
+    BookingService -->|Lock & Update| DB[("Supabase PostgreSQL Database (44 Canonical Tables)")]:::db
+    TripService -->|Read Only| DB
+    AdminTripService -->|CRUD Trips & Seats| DB
+    AuthService -->|User Identity| DB
 
     BookingService -.->|Hold Keys TTL 180s/600s| Redis_Cache[("Redis (Distributed Hold State)")]:::cache
 
@@ -1224,10 +1223,10 @@ classDiagram
 
 ---
 
-## 6. THIẾT KẾ CƠ SỞ DỮ LIỆU MYSQL 8.0 & ERD (36 BẢNG CHUẨN HÓA)
+## 6. THIẾT KẾ CƠ SỞ DỮ LIỆU SUPABASE POSTGRESQL & ERD (44 BẢNG CHUẨN HÓA)
 
 > **Khớp 100% tài liệu kiến trúc**:  
-> Cơ sở dữ liệu của dự án được triển khai đầy đủ **36 bảng chuẩn hóa** theo đúng file [`docs/schema.sql`](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/docs/schema.sql) và [`init.sql`](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/init.sql), đồng thời tích hợp các View tương thích (`routes`, `pickup_dropoff_points`) và nạp sẵn 100% dữ liệu mẫu sinh động.
+> Cơ sở dữ liệu của dự án được triển khai đầy đủ **44 bảng chuẩn hóa 3NF** (36 bảng cốt lõi + 8 bảng mở rộng hệ sinh thái) theo đúng file [`docs/02-architecture-and-db/schema.sql`](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/docs/02-architecture-and-db/schema.sql) và [`init.sql`](file:///c:/Users/LEGION/OneDrive/Máy tính/Nhom7_QUANLYNHAXE/init.sql), đồng thời tích hợp các View tương thích (`routes`, `pickup_dropoff_points`) và nạp sẵn 100% dữ liệu mẫu sinh động trên Supabase Cloud.
 
 ### 6.1 Sơ đồ quan hệ thực thể tổng thể (ERD Mermaid)
 
