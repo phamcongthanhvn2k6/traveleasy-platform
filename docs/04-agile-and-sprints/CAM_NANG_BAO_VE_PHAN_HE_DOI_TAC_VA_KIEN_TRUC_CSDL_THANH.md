@@ -166,3 +166,4 @@ com.traveleasy/
 - [ ] **Mở sẵn PgAdmin hoặc Console Supabase**: Để sẵn tab truy vấn `SELECT * FROM trips;` nếu Thầy Cô yêu cầu xem trực tiếp bảng dữ liệu thực tế.
 - [ ] **Tắt thông báo máy tính**: Tắt Zalo, Facebook, Teams, Telegram để không bị gián đoạn màn hình chiếu.
 - [ ] **Giữ tâm thế tự tin**: Thành là Leader và nắm toàn bộ bức tranh kiến trúc, trả lời bình tĩnh, khúc chiết, lễ phép và quyết đoán! 🏆🚀
+
