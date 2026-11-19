@@ -56,7 +56,17 @@ export const DriverGpsTrackingPage: React.FC = () => {
       .then((res) => {
         const data = res.data?.data;
         if (Array.isArray(data) && data.length > 0) {
-          const mapped: TripSummary[] = data.slice(0, 8).map((t: any) => ({
+          // Luôn luôn ưu tiên đưa chuyến #863 (TP.HCM -> Đà Lạt - chuyến xe có vé thật của khách) lên đầu tiên
+          const trip863 = data.find((t: any) => t.id === 863);
+          const otherTrips = data.filter((t: any) => t.id !== 863);
+          const prioritizedList = trip863
+            ? [trip863, ...otherTrips.slice(0, 7)]
+            : [
+                { id: 863, routeName: 'TP. Hồ Chí Minh ➔ Đà Lạt (FUTA)', licensePlate: '51B-998.12', busType: 'LIMOUSINE 34 CHỖ', departureTime: '22:30' },
+                ...data.slice(0, 7)
+              ];
+
+          const mapped: TripSummary[] = prioritizedList.map((t: any) => ({
             id: t.id,
             route: t.routeName || (t.originCity && t.destinationCity ? `${t.originCity} ➔ ${t.destinationCity}` : `Chuyến #${t.id}`),
             plate: t.licensePlate || t.vehiclePlate || '51B-998.12',
@@ -64,10 +74,7 @@ export const DriverGpsTrackingPage: React.FC = () => {
             departureTime: t.departureTime ? (typeof t.departureTime === 'string' && t.departureTime.length >= 16 ? t.departureTime.substring(11, 16) : '22:30') : '22:30'
           }));
           setAvailableTrips(mapped);
-          if (!tripIdParam && mapped.length > 0) {
-            const has863 = mapped.find((m) => m.id === 863);
-            setSelectedTripId(has863 ? 863 : mapped[0].id);
-          }
+          setSelectedTripId(Number(tripIdParam) || 863);
         }
       })
       .catch((err) => {
