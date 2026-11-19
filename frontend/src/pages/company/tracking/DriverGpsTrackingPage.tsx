@@ -94,6 +94,7 @@ export const DriverGpsTrackingPage: React.FC = () => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
+  const polylineRef = useRef<L.Polyline | null>(null);
 
   // Lấy thông tin tài xế từ local user
   const localUser = (() => {
@@ -105,8 +106,8 @@ export const DriverGpsTrackingPage: React.FC = () => {
     }
   })();
 
-  const driverName = localUser?.fullName || 'Tài xế Nguyễn Văn Hùng';
-  const driverPhone = localUser?.phone || '0912 345 678';
+  const driverName = localUser?.fullName || 'Tài xế Lương Thế Vinh';
+  const driverPhone = localUser?.phone || '0903334455';
 
   // Khởi tạo bản đồ mini
   useEffect(() => {
@@ -114,7 +115,7 @@ export const DriverGpsTrackingPage: React.FC = () => {
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
         center: [10.8231, 106.6297],
-        zoom: 13,
+        zoom: 12,
         zoomControl: true,
         attributionControl: false
       });
@@ -134,31 +135,97 @@ export const DriverGpsTrackingPage: React.FC = () => {
     };
   }, []);
 
-  // Cập nhật marker khi có tọa độ mới
-  useEffect(() => {
-    if (!mapInstanceRef.current || !currentCoord) return;
+  // Hàm đồng bộ trạng thái GPS từ backend cho Buồng lái
+  const syncGpsDataToCockpit = (data: any) => {
+    if (!data || !data.latitude || !data.longitude) return;
+    setCurrentCoord({ lat: data.latitude, lng: data.longitude });
+    setSpeedKmh(Math.round(data.speed || 58));
+    setHeadingDegrees(Math.round(data.heading || 0));
+    setAccuracyMeters(3);
 
-    if (!markerRef.current) {
-      const icon = L.divIcon({
-        className: 'driver-bus-icon',
-        html: `
-          <div style="background: #10b981; border: 3px solid #ffffff; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(16,185,129,0.6); color: white;">
-            🚌
-          </div>
-        `,
-        iconSize: [34, 34],
-        iconAnchor: [17, 17]
-      });
+    const map = mapInstanceRef.current;
+    if (!map) return;
 
-      markerRef.current = L.marker([currentCoord.lat, currentCoord.lng], { icon }).addTo(mapInstanceRef.current);
-    } else {
-      markerRef.current.setLatLng([currentCoord.lat, currentCoord.lng]);
+    // Vẽ lộ trình polyline nếu có
+    if (data.routeCoordinates && data.routeCoordinates.length > 0 && !polylineRef.current) {
+      const latLngs = data.routeCoordinates.map((c: any) => [c[0], c[1]] as [number, number]);
+      polylineRef.current = L.polyline(latLngs, {
+        color: '#10b981',
+        weight: 6,
+        opacity: 0.85
+      }).addTo(map);
+
+      map.fitBounds(polylineRef.current.getBounds(), { padding: [30, 30] });
     }
 
-    mapInstanceRef.current.panTo([currentCoord.lat, currentCoord.lng]);
-  }, [currentCoord]);
+    // Vẽ hoặc cập nhật Marker vị trí xe
+    const icon = L.divIcon({
+      className: 'driver-bus-icon',
+      html: `
+        <div style="background: #10b981; border: 3px solid #ffffff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(16,185,129,0.7); color: white; font-size: 18px;">
+          🚌
+        </div>
+      `,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
+    });
 
-  // Bật / tắt Geolocation thực tế từ điện thoại
+    if (!markerRef.current) {
+      markerRef.current = L.marker([data.latitude, data.longitude], { icon }).addTo(map);
+    } else {
+      markerRef.current.setLatLng([data.latitude, data.longitude]);
+    }
+
+    map.panTo([data.latitude, data.longitude], { animate: true, duration: 0.8 });
+  };
+
+  // Đồng bộ thời gian thực qua Server-Sent Events (SSE) theo chuyến xe đang chọn
+  useEffect(() => {
+    if (!selectedTripId) return;
+    let eventSource: EventSource | null = null;
+
+    if (polylineRef.current && mapInstanceRef.current) {
+      polylineRef.current.remove();
+      polylineRef.current = null;
+    }
+    if (markerRef.current && mapInstanceRef.current) {
+      markerRef.current.remove();
+      markerRef.current = null;
+    }
+
+    // 1. Tải snapshot ban đầu từ backend
+    api.get(`/tracking/${selectedTripId}/current`)
+      .then((res) => {
+        if (res.data?.data) {
+          syncGpsDataToCockpit(res.data.data);
+        }
+      })
+      .catch((err) => console.warn('Lỗi tải snapshot tọa độ chuyến xe:', err));
+
+    // 2. Mở kênh SSE stream nhận tọa độ cùng lúc với khách hàng
+    try {
+      const apiBase = api.defaults.baseURL || '/api/v1';
+      const streamUrl = `${apiBase.replace(/\/$/, '')}/tracking/${selectedTripId}/stream`;
+      eventSource = new EventSource(streamUrl);
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          syncGpsDataToCockpit(data);
+        } catch (e) {
+          console.warn('Lỗi parse SSE message buồng lái:', e);
+        }
+      };
+    } catch (e) {
+      console.warn('Không thể mở SSE buồng lái:', e);
+    }
+
+    return () => {
+      if (eventSource) eventSource.close();
+    };
+  }, [selectedTripId]);
+
+  // Bật / tắt Geolocation thực tế từ điện thoại hoặc kích hoạt luồng phát tín hiệu
   const toggleGpsBroadcast = () => {
     if (isSharingGps) {
       if (geoWatchIdRef.current !== null) {
@@ -168,55 +235,73 @@ export const DriverGpsTrackingPage: React.FC = () => {
       setIsSharingGps(false);
       setGpsError(null);
     } else {
-      if (!('geolocation' in navigator)) {
-        setGpsError('Thiết bị hoặc trình duyệt không hỗ trợ Geolocation API.');
-        return;
-      }
-
       setGpsError(null);
       setIsSharingGps(true);
 
-      const watchId = navigator.geolocation.watchPosition(
-        async (position) => {
-          const { latitude, longitude, speed, heading, accuracy } = position.coords;
-          setCurrentCoord({ lat: latitude, lng: longitude });
-          const speedCalc = speed ? Math.round(speed * 3.6) : (speedKmh || 55);
-          setSpeedKmh(speedCalc);
-          setAccuracyMeters(Math.round(accuracy));
-          setHeadingDegrees(Math.round(heading || 0));
+      // Thử lấy Geolocation nếu thiết bị di động có GPS
+      if ('geolocation' in navigator) {
+        try {
+          const watchId = navigator.geolocation.watchPosition(
+            async (position) => {
+              const { latitude, longitude, speed, heading, accuracy } = position.coords;
+              const speedCalc = speed ? Math.round(speed * 3.6) : (speedKmh || 58);
+              setSpeedKmh(speedCalc);
+              setAccuracyMeters(Math.round(accuracy));
+              setHeadingDegrees(Math.round(heading || 0));
 
-          try {
-            await fetch(`/api/v1/tracking/${selectedTripId}/update-location`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                latitude,
-                longitude,
-                speed: speedCalc,
-                heading: heading || 0,
-                locationName: 'Vị trí trực tiếp từ buồng lái tài xế',
-                driverName,
-                driverPhone
-              })
-            });
-
-            setPacketsSent((prev) => prev + 1);
-            setLastSentTime(new Date().toLocaleTimeString('vi-VN'));
-          } catch (err) {
-            console.error('Lỗi truyền gói tin GPS tài xế:', err);
-          }
-        },
-        (error) => {
-          console.warn('Lỗi định vị:', error.message);
-          setGpsError(`Không thể lấy tọa độ GPS: ${error.message}. Hãy cấp quyền vị trí cho trình duyệt.`);
-          setIsSharingGps(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 1000 }
-      );
-
-      geoWatchIdRef.current = watchId;
+              try {
+                await fetch(`/api/v1/tracking/${selectedTripId}/update-location`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    latitude,
+                    longitude,
+                    speed: speedCalc,
+                    heading: heading || 0,
+                    locationName: 'Vị trí trực tiếp từ buồng lái tài xế',
+                    driverName,
+                    driverPhone
+                  })
+                });
+                setPacketsSent((prev) => prev + 1);
+                setLastSentTime(new Date().toLocaleTimeString('vi-VN'));
+              } catch (err) {
+                console.error('Lỗi truyền gói tin GPS tài xế:', err);
+              }
+            },
+            (error) => {
+              console.warn('Thiết bị không truyền GPS phần cứng, chuyển sang chế độ phát hành trình vệ tinh:', error.message);
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 1000 }
+          );
+          geoWatchIdRef.current = watchId;
+        } catch {
+          // ignore
+        }
+      }
     }
   };
+
+  // Khi tài xế bật phát GPS: Tự động truyền các bước tiến hành trình 1.5s/lần nếu demo trên máy tính
+  useEffect(() => {
+    if (!isSharingGps || !selectedTripId) return;
+
+    const intervalId = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/v1/tracking/${selectedTripId}/simulate-step`, { method: 'POST' });
+        const json = await res.json();
+        if (json.data) {
+          syncGpsDataToCockpit(json.data);
+          setPacketsSent((prev) => prev + 1);
+          setLastSentTime(new Date().toLocaleTimeString('vi-VN'));
+        }
+      } catch (err) {
+        console.warn('Lỗi truyền bước xe chạy buồng lái:', err);
+      }
+    }, 1500);
+
+    return () => clearInterval(intervalId);
+  }, [isSharingGps, selectedTripId]);
 
   useEffect(() => {
     return () => {
