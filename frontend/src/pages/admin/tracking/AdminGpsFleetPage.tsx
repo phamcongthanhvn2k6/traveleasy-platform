@@ -39,7 +39,7 @@ interface FleetVehicle {
   latitude: number;
   longitude: number;
   heading: number;
-  status: 'RUNNING' | 'STOPPED' | 'OVERSPEED';
+  status: 'RUNNING' | 'STOPPED';
   alcoholTested: boolean;
   etaMinutes: number;
   lastPing: string;
@@ -67,8 +67,7 @@ export const AdminGpsFleetPage: React.FC = () => {
       const res = await api.get('/tracking/fleet-snapshot');
       if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
         const mapped: FleetVehicle[] = res.data.data.map((item: any) => {
-          const speed = item.speed !== undefined && item.speed !== null ? item.speed : 60;
-          const status = speed > 80 ? 'OVERSPEED' : speed === 0 ? 'STOPPED' : 'RUNNING';
+          const status = item.status === 'STOPPED' ? 'STOPPED' : 'RUNNING';
           return {
             tripId: item.tripId,
             licensePlate: item.licensePlate || '51B-888.99',
@@ -76,7 +75,7 @@ export const AdminGpsFleetPage: React.FC = () => {
             route: item.routeName || `${item.originCity || 'Điểm đi'} ➔ ${item.destinationCity || 'Điểm đến'}`,
             driverName: item.driverName || 'Tài xế phân công',
             driverPhone: item.driverPhone || '0909 123 456',
-            speed: Math.round(speed),
+            speed: 0,
             latitude: item.latitude || 10.8231,
             longitude: item.longitude || 106.6297,
             heading: item.heading || 0,
@@ -124,21 +123,20 @@ export const AdminGpsFleetPage: React.FC = () => {
         const item = res.data.data;
         setVehicles(prev => prev.map(v => {
           if (v.tripId === tripId) {
-            const speed = Math.round(item.speed || v.speed);
             return {
               ...v,
               latitude: item.latitude,
               longitude: item.longitude,
-              speed,
+              speed: 0,
               heading: item.heading || v.heading,
-              status: speed > 80 ? 'OVERSPEED' : speed === 0 ? 'STOPPED' : 'RUNNING',
+              status: item.status === 'STOPPED' ? 'STOPPED' : 'RUNNING',
               etaMinutes: item.etaMinutes || v.etaMinutes,
               lastPing: 'Vừa xong'
             };
           }
           return v;
         }));
-        toast.success(`Đã mô phỏng bước di chuyển cho xe #${tripId}! Tọa độ & Vận tốc đã cập nhật.`, 'Live GPS Radar');
+        toast.success(`Đã cập nhật vị trí GPS cho xe #${tripId}!`, 'Live GPS Radar');
       }
     } catch (err: any) {
       toast.error('Không thể mô phỏng bước di chuyển', 'Lỗi Radar');
@@ -181,7 +179,7 @@ export const AdminGpsFleetPage: React.FC = () => {
 
     markersRef.current = {};
     filteredVehicles.forEach((v) => {
-      const color = v.status === 'OVERSPEED' ? '#ef4444' : v.status === 'RUNNING' ? '#10b981' : '#f59e0b';
+      const color = v.status === 'RUNNING' ? '#10b981' : '#f59e0b';
       const isSelected = selectedVehicle?.tripId === v.tripId;
 
       const icon = L.divIcon({
@@ -200,7 +198,7 @@ export const AdminGpsFleetPage: React.FC = () => {
           <div style="font-family: sans-serif; font-size: 12px; color: #0f172a;">
             <strong>${v.licensePlate}</strong> (${v.companyName})<br/>
             Tuyến: ${v.route}<br/>
-            Tốc độ: <strong>${v.speed} km/h</strong><br/>
+            Trạng thái: <strong>${v.status === 'RUNNING' ? 'Đang chạy' : 'Dừng đỗ'}</strong><br/>
             Tài xế: ${v.driverName} (${v.driverPhone})
           </div>
         `)
@@ -252,7 +250,6 @@ export const AdminGpsFleetPage: React.FC = () => {
   });
 
   const runningCount = vehicles.filter((v) => v.status === 'RUNNING').length;
-  const overspeedCount = vehicles.filter((v) => v.status === 'OVERSPEED').length;
   const stoppedCount = vehicles.filter((v) => v.status === 'STOPPED').length;
 
   return (
@@ -270,7 +267,7 @@ export const AdminGpsFleetPage: React.FC = () => {
             <Navigation className="w-6 h-6 text-indigo-400" /> Trung Tâm Điều Hành & Giám Sát GPS Xe Toàn Sàn
           </h1>
           <p className="text-xs text-slate-300 mt-1">
-            Theo dõi vị trí, tốc độ, trạng thái an toàn của tất cả các phương tiện đang hoạt động trên hệ thống TravelEasy.
+            Theo dõi vị trí, lộ trình và trạng thái vận hành của tất cả các phương tiện đang hoạt động trên hệ thống TravelEasy.
           </p>
         </div>
 
@@ -309,18 +306,10 @@ export const AdminGpsFleetPage: React.FC = () => {
 
         <div className="bg-slate-800/90 p-4 rounded-xl border border-slate-700">
           <span className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-            <Gauge className="w-4 h-4 text-sky-400" /> Xe đang lăn bánh
+            <Navigation className="w-4 h-4 text-sky-400" /> Xe đang lăn bánh
           </span>
           <p className="text-2xl md:text-3xl font-black text-sky-400 mt-1">{runningCount}</p>
           <span className="text-[11px] text-slate-400">Đang lưu thông trên cao tốc & QL</span>
-        </div>
-
-        <div className="bg-slate-800/90 p-4 rounded-xl border border-slate-700">
-          <span className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-            <AlertTriangle className="w-4 h-4 text-rose-400" /> Cảnh báo vượt tốc độ
-          </span>
-          <p className="text-2xl md:text-3xl font-black text-rose-400 mt-1">{overspeedCount}</p>
-          <span className="text-[11px] text-rose-300 font-semibold">{overspeedCount > 0 ? 'Cần cảnh báo tài xế (>80km/h)' : 'Không có vi phạm'}</span>
         </div>
 
         <div className="bg-slate-800/90 p-4 rounded-xl border border-slate-700">
@@ -329,6 +318,14 @@ export const AdminGpsFleetPage: React.FC = () => {
           </span>
           <p className="text-2xl md:text-3xl font-black text-amber-400 mt-1">{stoppedCount}</p>
           <span className="text-[11px] text-slate-400">Dừng đón trả hoặc nghỉ trạm dừng chân</span>
+        </div>
+
+        <div className="bg-slate-800/90 p-4 rounded-xl border border-slate-700">
+          <span className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
+            <ShieldCheck className="w-4 h-4 text-purple-400" /> Kiểm tra an toàn
+          </span>
+          <p className="text-2xl md:text-3xl font-black text-purple-300 mt-1">100%</p>
+          <span className="text-[11px] text-emerald-400 font-semibold">Đạt chuẩn nồng độ cồn 0.00 mg/L</span>
         </div>
       </div>
 
@@ -366,7 +363,6 @@ export const AdminGpsFleetPage: React.FC = () => {
           >
             <option value="ALL">Tất cả trạng thái</option>
             <option value="RUNNING">Đang chạy</option>
-            <option value="OVERSPEED">Cảnh báo tốc độ</option>
             <option value="STOPPED">Dừng đỗ</option>
           </select>
         </div>
@@ -385,7 +381,6 @@ export const AdminGpsFleetPage: React.FC = () => {
             </span>
             <div className="flex items-center gap-3 text-xs">
               <span className="flex items-center gap-1 text-emerald-400"><span className="w-2 h-2 rounded-full bg-emerald-400"></span> Đang chạy</span>
-              <span className="flex items-center gap-1 text-rose-400"><span className="w-2 h-2 rounded-full bg-rose-400"></span> Quá tốc độ</span>
               <span className="flex items-center gap-1 text-amber-400"><span className="w-2 h-2 rounded-full bg-amber-400"></span> Dừng đỗ</span>
             </div>
           </div>
@@ -404,13 +399,11 @@ export const AdminGpsFleetPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-base font-black text-white">{selectedVehicle.licensePlate}</span>
                   <span className={`px-2 py-0.5 rounded font-bold text-[11px] ${
-                    selectedVehicle.status === 'OVERSPEED'
-                      ? 'bg-rose-950 text-rose-300 border border-rose-500/50'
-                      : selectedVehicle.status === 'RUNNING'
+                    selectedVehicle.status === 'RUNNING'
                       ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/50'
                       : 'bg-amber-950 text-amber-300 border border-amber-500/50'
                   }`}>
-                    {selectedVehicle.status === 'OVERSPEED' ? 'VƯỢT TỐC ĐỘ' : selectedVehicle.status === 'RUNNING' ? 'ĐANG CHẠY' : 'DỪNG ĐỖ'}
+                    {selectedVehicle.status === 'RUNNING' ? 'ĐANG CHẠY' : 'DỪNG ĐỖ'}
                   </span>
                 </div>
                 <p className="text-slate-300 font-medium mt-1">{selectedVehicle.companyName}</p>
@@ -419,8 +412,8 @@ export const AdminGpsFleetPage: React.FC = () => {
 
               <div className="space-y-2 pt-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Vận tốc hiện tại:</span>
-                  <span className="font-bold text-white text-sm">{selectedVehicle.speed} km/h</span>
+                  <span className="text-slate-400">Tọa độ GPS:</span>
+                  <span className="font-mono text-emerald-300 text-xs">[{selectedVehicle.latitude.toFixed(4)}, {selectedVehicle.longitude.toFixed(4)}]</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Tài xế phụ trách:</span>
@@ -494,7 +487,7 @@ export const AdminGpsFleetPage: React.FC = () => {
                 <th className="p-3">Đối Tác Nhà Xe</th>
                 <th className="p-3">Tuyến Đường Vận Hành</th>
                 <th className="p-3">Tài Xế Buồng Lái</th>
-                <th className="p-3">Vận Tốc</th>
+                <th className="p-3">Tọa Độ GPS</th>
                 <th className="p-3">Trạng Thái</th>
                 <th className="p-3">An Toàn Sức Khỏe</th>
                 <th className="p-3 text-right">Thao Tác</th>
@@ -534,19 +527,17 @@ export const AdminGpsFleetPage: React.FC = () => {
                     <td className="p-3 text-slate-300 font-medium">{v.route}</td>
                     <td className="p-3 text-slate-300">{v.driverName}</td>
                     <td className="p-3">
-                      <span className={`font-bold ${v.speed > 80 ? 'text-rose-400' : 'text-slate-200'}`}>
-                        {v.speed} km/h
+                      <span className="font-mono text-emerald-300 text-[11px]">
+                        [{v.latitude.toFixed(4)}, {v.longitude.toFixed(4)}]
                       </span>
                     </td>
                     <td className="p-3">
                       <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                        v.status === 'OVERSPEED'
-                          ? 'bg-rose-950 text-rose-300 border border-rose-500/40'
-                          : v.status === 'RUNNING'
+                        v.status === 'RUNNING'
                           ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
                           : 'bg-amber-950 text-amber-300 border border-amber-500/40'
                       }`}>
-                        {v.status === 'OVERSPEED' ? 'Quá tốc độ' : v.status === 'RUNNING' ? 'Đang chạy' : 'Dừng đỗ'}
+                        {v.status === 'RUNNING' ? 'Đang chạy' : 'Dừng đỗ'}
                       </span>
                     </td>
                     <td className="p-3">

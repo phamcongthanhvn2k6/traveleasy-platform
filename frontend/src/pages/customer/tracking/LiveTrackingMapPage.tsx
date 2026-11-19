@@ -386,8 +386,7 @@ export default function LiveTrackingMapPage() {
       busMarkerRef.current.bindPopup(`
         <div class="p-1 text-xs">
           <p class="font-bold text-emerald-700">${data.licensePlate} (${data.busCompanyName})</p>
-          <p class="text-slate-600">Vận tốc: <b>${Math.round(data.speed)} km/h</b></p>
-          <p class="text-slate-500">${data.currentLocationName}</p>
+          <p class="text-slate-500">${data.currentLocationName || 'Đang di chuyển theo lộ trình'}</p>
         </div>
       `);
     } else {
@@ -776,7 +775,7 @@ export default function LiveTrackingMapPage() {
         </div>
 
         {/* CÁC THẺ KPI TỔNG QUAN HÀNH TRÌNH */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700">
             <div className="flex items-center justify-between text-slate-400 mb-1">
               <span className="text-xs font-semibold">Thời gian đến điểm đón (ETA)</span>
@@ -792,19 +791,6 @@ export default function LiveTrackingMapPage() {
               ></div>
             </div>
             <p className="text-[11px] text-slate-400 mt-1">Đã hoàn thành {tripData?.progressPercent ?? 35}% hành trình</p>
-          </div>
-
-          <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700">
-            <div className="flex items-center justify-between text-slate-400 mb-1">
-              <span className="text-xs font-semibold">Tốc độ hiện tại</span>
-              <Gauge className="w-4 h-4 text-cyan-400" />
-            </div>
-            <div className="text-2xl font-black text-cyan-400">
-              {Math.round(tripData?.speed ?? 65)} <span className="text-sm font-normal text-slate-400">km/h</span>
-            </div>
-            <p className="text-[11px] text-emerald-400 font-semibold mt-3 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Đúng tốc độ quy định cao tốc
-            </p>
           </div>
 
           <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700">
@@ -828,8 +814,8 @@ export default function LiveTrackingMapPage() {
             <div className="text-lg font-black text-purple-300 mt-0.5">
               {tripData?.licensePlate || '51B-889.99'}
             </div>
-            <p className="text-[11px] text-slate-400 mt-1 truncate">
-              {tripData?.busType || 'Limousine 34 Phòng VIP'}
+            <p className="text-xs text-slate-400 mt-1">
+              {tripData?.busCompanyName || 'Phương Trang'} • {tripData?.busType || 'LIMOUSINE 34 CHỖ'}
             </p>
           </div>
         </div>

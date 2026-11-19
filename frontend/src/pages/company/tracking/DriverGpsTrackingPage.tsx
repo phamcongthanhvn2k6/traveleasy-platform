@@ -409,28 +409,28 @@ export const DriverGpsTrackingPage: React.FC = () => {
           </p>
         </div>
 
-        {/* BẢNG ĐỒNG HỒ ĐO TỐC ĐỘ & THÔNG SỐ VỆ TINH */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* THÔNG SỐ VỆ TINH & TÍN HIỆU ĐỊNH VỊ */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
             <span className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-              <Gauge className="w-4 h-4 text-amber-400" /> Tốc độ xe chạy
+              <Clock className="w-4 h-4 text-purple-400" /> Tín hiệu phát vệ tinh
             </span>
             <p className="text-2xl md:text-3xl font-black text-white mt-1">
-              {speedKmh} <span className="text-xs text-slate-400 font-normal">km/h</span>
+              {packetsSent} <span className="text-xs text-slate-400 font-normal">packets</span>
             </p>
-            <span className={`text-[11px] font-bold ${speedKmh > 80 ? 'text-rose-400' : 'text-emerald-400'}`}>
-              {speedKmh > 80 ? '⚠️ Vượt tốc độ quy định!' : '✔ Tốc độ an toàn'}
+            <span className="text-[11px] text-emerald-400 font-semibold">
+              {lastSentTime ? `Lần cuối: ${lastSentTime}` : 'Đang chờ phát'}
             </span>
           </div>
 
           <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
             <span className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-              <Navigation className="w-4 h-4 text-sky-400" /> Hướng la bàn
+              <Navigation className="w-4 h-4 text-sky-400" /> Hướng di chuyển
             </span>
             <p className="text-2xl md:text-3xl font-black text-white mt-1">
               {headingDegrees}° <span className="text-xs text-slate-400 font-normal">Heading</span>
             </p>
-            <span className="text-[11px] text-slate-400">Góc quay so với hướng Bắc</span>
+            <span className="text-[11px] text-slate-400">Góc quay theo lộ trình</span>
           </div>
 
           <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
@@ -438,21 +438,9 @@ export const DriverGpsTrackingPage: React.FC = () => {
               <MapPin className="w-4 h-4 text-emerald-400" /> Độ chính xác GPS
             </span>
             <p className="text-2xl md:text-3xl font-black text-white mt-1">
-              {accuracyMeters !== null ? `±${accuracyMeters}m` : '--'}
+              {accuracyMeters !== null ? `±${accuracyMeters}m` : '±3m'}
             </p>
             <span className="text-[11px] text-slate-400">Sai số vệ tinh thực tế</span>
-          </div>
-
-          <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-            <span className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-              <Clock className="w-4 h-4 text-purple-400" /> Gói tin đã truyền
-            </span>
-            <p className="text-2xl md:text-3xl font-black text-white mt-1">
-              {packetsSent} <span className="text-xs text-slate-400 font-normal">packets</span>
-            </p>
-            <span className="text-[11px] text-slate-400">
-              {lastSentTime ? `Lần cuối: ${lastSentTime}` : 'Chưa phát'}
-            </span>
           </div>
         </div>
 
